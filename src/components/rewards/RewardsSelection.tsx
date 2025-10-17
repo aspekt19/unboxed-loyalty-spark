@@ -31,14 +31,40 @@ export function RewardsSelection() {
 
   // Загрузка токенов
   useEffect(() => {
-    const customerTokens = localStorage.getItem('customerTokens');
-    if (customerTokens) {
-      const programs = JSON.parse(customerTokens);
-      setTokens(programs);
-      if (programs.length > 0 && !selectedTokenAddress) {
-        setSelectedTokenAddress(programs[0].address);
+    const loadPrograms = () => {
+      const loyaltyPrograms = localStorage.getItem('loyaltyPrograms');
+      if (loyaltyPrograms) {
+        const programs = JSON.parse(loyaltyPrograms);
+        // Только активные программы с tokenAddress
+        const activePrograms = programs
+          .filter((p: any) => p.tokenAddress)
+          .map((p: any) => ({
+            address: p.tokenAddress,
+            name: p.name,
+            symbol: p.symbol,
+          }));
+        setTokens(activePrograms);
+        if (activePrograms.length > 0 && !selectedTokenAddress) {
+          setSelectedTokenAddress(activePrograms[0].address);
+        }
       }
-    }
+    };
+
+    loadPrograms();
+
+    // Слушаем обновления программ и наград
+    window.addEventListener('loyaltyProgramsUpdated', loadPrograms);
+    window.addEventListener('rewardsUpdated', () => {
+      if (selectedTokenAddress) {
+        const rewards = getRewardsByToken(selectedTokenAddress);
+        setAvailableRewards(rewards);
+      }
+    });
+
+    return () => {
+      window.removeEventListener('loyaltyProgramsUpdated', loadPrograms);
+      window.removeEventListener('rewardsUpdated', loadPrograms);
+    };
   }, []);
 
   // Загрузка наград для выбранного токена
