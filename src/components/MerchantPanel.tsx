@@ -1,5 +1,8 @@
 import { CreateLoyaltyProgram } from './CreateLoyaltyProgram';
 import { CreatedPrograms } from './CreatedPrograms';
+import { CreateReward } from './rewards/CreateReward';
+import { RewardsList } from './rewards/RewardsList';
+import { VouchersManagement } from './rewards/VouchersManagement';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -100,6 +103,12 @@ export function MerchantPanel() {
           </form>
         </CardContent>
       </Card>
+
+      <CreateReward />
+      
+      <RewardsList />
+      
+      <VouchersManagement />
     </div>
   );
 }
