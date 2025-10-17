@@ -32,15 +32,10 @@ export function WalletConnectButton() {
                   <button
                     onClick={openConnectModal}
                     type="button"
-                    className="group relative px-6 py-3 rounded-xl font-semibold text-white transition-all duration-300 overflow-hidden flex items-center gap-2"
-                    style={{ 
-                      background: 'linear-gradient(135deg, hsl(270 100% 68%), hsl(320 100% 65%))',
-                      boxShadow: '0 4px 20px rgba(168, 85, 247, 0.4)'
-                    }}
+                    className="px-5 py-2.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center gap-2"
                   >
-                    <Wallet className="h-5 w-5 relative z-10" />
-                    <span className="relative z-10">Connect Wallet</span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-accent to-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <Wallet className="h-4 w-4" />
+                    <span>Connect Wallet</span>
                   </button>
                 );
               }
@@ -50,11 +45,7 @@ export function WalletConnectButton() {
                   <button
                     onClick={openChainModal}
                     type="button"
-                    className="px-6 py-3 rounded-xl font-semibold text-white transition-all duration-300"
-                    style={{ 
-                      background: 'linear-gradient(135deg, hsl(0 85% 60%), hsl(20 85% 60%))',
-                      boxShadow: '0 4px 20px rgba(239, 68, 68, 0.4)'
-                    }}
+                    className="px-5 py-2.5 rounded-lg font-semibold text-background bg-destructive hover:bg-destructive/90 transition-all duration-200"
                   >
                     Wrong network
                   </button>
@@ -62,28 +53,24 @@ export function WalletConnectButton() {
               }
 
               return (
-                <div className="flex gap-3">
+                <div className="flex gap-2">
                   <button
                     onClick={openChainModal}
                     type="button"
-                    className="group relative px-4 py-3 rounded-xl font-medium transition-all duration-300 flex items-center gap-2"
-                    style={{
-                      background: 'hsl(var(--card))',
-                      border: '2px solid hsl(var(--border))',
-                    }}
+                    className="px-3 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 border border-border hover:bg-secondary"
                   >
                     {chain.hasIcon && (
-                      <div className="w-5 h-5 rounded-full overflow-hidden">
+                      <div className="w-4 h-4 rounded-full overflow-hidden">
                         {chain.iconUrl && (
                           <img
                             alt={chain.name ?? 'Chain icon'}
                             src={chain.iconUrl}
-                            className="w-5 h-5"
+                            className="w-4 h-4"
                           />
                         )}
                       </div>
                     )}
-                    <span className="bg-gradient-to-r from-secondary to-accent bg-clip-text text-transparent font-semibold">
+                    <span className="text-foreground text-sm font-semibold">
                       {chain.name}
                     </span>
                   </button>
@@ -91,14 +78,9 @@ export function WalletConnectButton() {
                   <button
                     onClick={openAccountModal}
                     type="button"
-                    className="group relative px-5 py-3 rounded-xl font-semibold text-white transition-all duration-300 overflow-hidden"
-                    style={{ 
-                      background: 'linear-gradient(135deg, hsl(270 100% 68%), hsl(320 100% 65%))',
-                      boxShadow: '0 4px 20px rgba(168, 85, 247, 0.4)'
-                    }}
+                    className="px-4 py-2.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200"
                   >
-                    <span className="relative z-10">{account.displayName}</span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-accent to-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <span className="text-sm">{account.displayName}</span>
                   </button>
                 </div>
               );
