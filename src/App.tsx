@@ -8,6 +8,8 @@ import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { config, rainbowKitLocale } from "./config/wagmi";
 import "@rainbow-me/rainbowkit/styles.css";
 import Index from "./pages/Index";
+import CustomerPage from "./pages/CustomerPage";
+import MerchantPage from "./pages/MerchantPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +24,8 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/customer" element={<CustomerPage />} />
+              <Route path="/merchant" element={<MerchantPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

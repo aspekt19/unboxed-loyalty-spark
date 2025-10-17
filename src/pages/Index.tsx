@@ -1,8 +1,8 @@
 import { WalletConnectButton } from '@/components/WalletConnectButton';
-import { MerchantPanel } from '@/components/MerchantPanel';
-import { CustomerPanel } from '@/components/CustomerPanel';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sparkles } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Sparkles, ShoppingBag, Store, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Index = () => {
   return (
@@ -25,38 +25,61 @@ const Index = () => {
       </header>
 
       <main className="container mx-auto px-4 py-12">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-3 bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-5xl font-bold mb-4 bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
               Decentralized Loyalty Rewards
             </h2>
-            <p className="text-muted-foreground text-lg">
-              Create, manage, and transfer loyalty tokens on the blockchain
+            <p className="text-muted-foreground text-xl max-w-2xl mx-auto">
+              Create, manage, and transfer loyalty tokens on the blockchain. Choose your role to get started.
             </p>
           </div>
 
-          <Tabs defaultValue="customer" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 h-16 bg-card p-1.5 shadow-soft border-2 border-primary/10">
-              <TabsTrigger 
-                value="customer" 
-                className="text-lg font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow"
-              >
-                Customer
-              </TabsTrigger>
-              <TabsTrigger 
-                value="merchant" 
-                className="text-lg font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow"
-              >
-                Merchant
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="customer" className="mt-8">
-              <CustomerPanel />
-            </TabsContent>
-            <TabsContent value="merchant" className="mt-8">
-              <MerchantPanel />
-            </TabsContent>
-          </Tabs>
+          <div className="grid md:grid-cols-2 gap-8">
+            <Card className="bg-card border-2 border-primary/20 shadow-glow hover:shadow-xl transition-all hover:-translate-y-1">
+              <CardHeader className="text-center pb-4">
+                <div className="mx-auto h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-glow mb-4">
+                  <ShoppingBag className="h-8 w-8 text-primary-foreground" />
+                </div>
+                <CardTitle className="text-3xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                  Customer Portal
+                </CardTitle>
+                <CardDescription className="text-base mt-2">
+                  View your loyalty token balance, redeem rewards, and exchange tokens on decentralized exchanges
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="text-center">
+                <Link to="/customer">
+                  <Button size="lg" className="w-full group">
+                    Access Customer Portal
+                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border-2 border-primary/20 shadow-glow hover:shadow-xl transition-all hover:-translate-y-1">
+              <CardHeader className="text-center pb-4">
+                <div className="mx-auto h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-glow mb-4">
+                  <Store className="h-8 w-8 text-primary-foreground" />
+                </div>
+                <CardTitle className="text-3xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                  Merchant Portal
+                </CardTitle>
+                <CardDescription className="text-base mt-2">
+                  Create loyalty programs, deploy tokens, and issue rewards to your customers on the blockchain
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="text-center">
+                <Link to="/merchant">
+                  <Button size="lg" className="w-full group">
+                    Access Merchant Portal
+                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </main>
     </div>
