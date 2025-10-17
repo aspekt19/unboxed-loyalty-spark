@@ -1,4 +1,5 @@
 import { CreateLoyaltyProgram } from './CreateLoyaltyProgram';
+import { CreatedPrograms } from './CreatedPrograms';
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -6,22 +7,29 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useMintTokens } from '@/hooks/useMintTokens';
 import { toast } from 'sonner';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export function MerchantPanel() {
   const [recipientAddress, setRecipientAddress] = useState('');
   const [amount, setAmount] = useState('');
+  const [selectedProgram, setSelectedProgram] = useState<{ name: string; symbol: string; tokenAddress: string } | null>(null);
   const { mintTokens, isPending, isSuccess } = useMintTokens();
 
   const handleMint = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!selectedProgram) {
+      toast.error('Please select a loyalty program first');
+      return;
+    }
     
     if (!recipientAddress || !amount) {
       toast.error('Please fill all fields');
       return;
     }
 
-    await mintTokens(recipientAddress, amount);
+    await mintTokens(selectedProgram.tokenAddress, recipientAddress, amount);
   };
 
   if (isSuccess) {
@@ -32,6 +40,8 @@ export function MerchantPanel() {
     <div className="space-y-6">
       <CreateLoyaltyProgram />
       
+      <CreatedPrograms onSelectProgram={setSelectedProgram} />
+      
       <Card className="border-2 bg-gradient-to-br from-card to-muted/30">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -41,6 +51,15 @@ export function MerchantPanel() {
           <CardDescription>Distribute loyalty tokens to customers</CardDescription>
         </CardHeader>
         <CardContent>
+          {!selectedProgram && (
+            <Alert className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Please select a loyalty program above before issuing rewards
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <form onSubmit={handleMint} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="recipient">Customer Wallet Address</Label>
@@ -63,9 +82,9 @@ export function MerchantPanel() {
                 disabled={isPending}
               />
             </div>
-            <Button type="submit" disabled={isPending} className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90">
+            <Button type="submit" disabled={isPending || !selectedProgram} className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90">
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Issue Tokens
+              {selectedProgram ? `Issue ${selectedProgram.symbol}` : 'Issue Tokens'}
             </Button>
           </form>
         </CardContent>

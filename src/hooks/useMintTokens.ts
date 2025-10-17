@@ -10,12 +10,12 @@ export function useMintTokens() {
     hash,
   });
 
-  const mintTokens = (recipientAddress: string, amount: string) => {
+  const mintTokens = (tokenAddress: string, recipientAddress: string, amount: string) => {
     try {
       const amountInWei = parseUnits(amount, 18);
       
       writeContract({
-        address: CONTRACTS.LOYAL_SPARK_ERC20.address,
+        address: tokenAddress as `0x${string}`,
         abi: CONTRACTS.LOYAL_SPARK_ERC20.abi,
         functionName: 'mint',
         args: [recipientAddress as `0x${string}`, amountInWei],
