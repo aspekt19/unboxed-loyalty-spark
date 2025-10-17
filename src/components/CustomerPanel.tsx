@@ -26,12 +26,12 @@ export function CustomerPanel() {
   const { balances, isLoading, refetch } = useMultiTokenBalance(tokens);
   const { burnTokens, isPending, isSuccess } = useBurnTokens();
 
-  // Load created programs from localStorage
+  // Load tokens from localStorage (populated by TokenList)
   useEffect(() => {
     const loadTokens = () => {
-      const savedPrograms = localStorage.getItem('createdPrograms');
-      if (savedPrograms) {
-        const programs = JSON.parse(savedPrograms);
+      const customerTokens = localStorage.getItem('customerTokens');
+      if (customerTokens) {
+        const programs = JSON.parse(customerTokens);
         setTokens(programs);
         if (programs.length > 0 && !selectedTokenAddress) {
           setSelectedTokenAddress(programs[0].address);
