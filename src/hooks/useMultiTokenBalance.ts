@@ -1,6 +1,6 @@
 import { useAccount, usePublicClient } from 'wagmi';
 import { formatUnits } from 'viem';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 export interface TokenInfo {
   address: string;
@@ -23,6 +23,10 @@ export function useMultiTokenBalance(tokens: TokenInfo[]) {
   const publicClient = usePublicClient();
   const [balances, setBalances] = useState<Array<TokenInfo & { balance: string; rawBalance: bigint }>>([]);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Create a stable reference for tokens to prevent unnecessary refetches
+  const tokenAddressesRef = useRef<string>('');
+  const currentAddresses = tokens.map(t => t.address).sort().join(',');
 
   const fetchBalances = async () => {
     console.log('useMultiTokenBalance: fetchBalances called');
@@ -32,6 +36,11 @@ export function useMultiTokenBalance(tokens: TokenInfo[]) {
     
     if (!address || !publicClient || tokens.length === 0) {
       console.log('useMultiTokenBalance: Skipping fetch - missing dependencies');
+      // Don't clear balances if we just don't have tokens yet
+      if (tokens.length === 0 && balances.length > 0) {
+        console.log('useMultiTokenBalance: Keeping existing balances');
+        return;
+      }
       setBalances([]);
       return;
     }
@@ -73,20 +82,21 @@ export function useMultiTokenBalance(tokens: TokenInfo[]) {
       setBalances(results);
     } catch (error) {
       console.error('useMultiTokenBalance: Error fetching balances:', error);
-      setBalances([]);
+      // Don't clear balances on error
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Create a stable dependency from token addresses
-  const tokenAddresses = tokens.map(t => t.address).sort().join(',');
-
   useEffect(() => {
-    console.log('useMultiTokenBalance: Fetching balances for', tokens.length, 'tokens', tokens);
-    fetchBalances();
+    // Only fetch if token addresses actually changed
+    if (currentAddresses !== tokenAddressesRef.current) {
+      console.log('useMultiTokenBalance: Token addresses changed, fetching balances');
+      tokenAddressesRef.current = currentAddresses;
+      fetchBalances();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address, tokenAddresses, publicClient]);
+  }, [currentAddresses, address, publicClient]);
 
   return {
     balances,
