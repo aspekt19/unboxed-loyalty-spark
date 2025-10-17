@@ -14,7 +14,7 @@ export function MerchantPanel() {
   const [recipientAddress, setRecipientAddress] = useState('');
   const [amount, setAmount] = useState('');
   const [selectedProgram, setSelectedProgram] = useState<{ name: string; symbol: string; tokenAddress: string } | null>(null);
-  const { mintTokens, isPending, isSuccess } = useMintTokens();
+  const { mintTokens, isPending, isSuccess, reset } = useMintTokens();
 
   const handleMint = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,13 +34,18 @@ export function MerchantPanel() {
 
   useEffect(() => {
     if (isSuccess) {
+      console.log('Mint successful, resetting form');
       toast.success('Tokens minted successfully!');
       setRecipientAddress('');
       setAmount('');
       // Trigger event to refresh token lists on customer side
       window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
+      // Reset the transaction state after a brief delay
+      setTimeout(() => {
+        reset();
+      }, 2000);
     }
-  }, [isSuccess]);
+  }, [isSuccess, reset]);
 
   return (
     <div className="space-y-6">

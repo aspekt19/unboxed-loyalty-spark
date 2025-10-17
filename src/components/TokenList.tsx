@@ -33,9 +33,17 @@ export function TokenList() {
   useEffect(() => {
     loadTokensFromBlockchain();
     
-    const handleUpdate = () => loadTokensFromBlockchain();
+    const handleUpdate = () => {
+      console.log('loyaltyProgramsUpdated event received, refetching...');
+      loadTokensFromBlockchain();
+      // Also refetch balances after a short delay to allow blockchain to update
+      setTimeout(() => {
+        refetch();
+      }, 2000);
+    };
     window.addEventListener('loyaltyProgramsUpdated', handleUpdate);
     return () => window.removeEventListener('loyaltyProgramsUpdated', handleUpdate);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [publicClient]);
 
   const loadTokensFromBlockchain = async () => {

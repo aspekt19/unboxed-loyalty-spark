@@ -70,9 +70,10 @@ export function useMultiTokenBalance(tokens: TokenInfo[]) {
   };
 
   useEffect(() => {
-    console.log('useMultiTokenBalance: Fetching balances for', tokens.length, 'tokens');
+    console.log('useMultiTokenBalance: Fetching balances for', tokens.length, 'tokens', tokens);
     fetchBalances();
-  }, [address, JSON.stringify(tokens.map(t => t.address)), publicClient]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address, tokens.length, publicClient]);
 
   return {
     balances,

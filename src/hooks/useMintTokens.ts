@@ -4,7 +4,7 @@ import { parseUnits } from 'viem';
 import { toast } from 'sonner';
 
 export function useMintTokens() {
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
+  const { writeContract, data: hash, isPending, error, reset } = useWriteContract();
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
@@ -13,6 +13,8 @@ export function useMintTokens() {
   const mintTokens = (tokenAddress: string, recipientAddress: string, amount: string) => {
     try {
       const amountInWei = parseUnits(amount, 18);
+      
+      console.log('Minting tokens:', { tokenAddress, recipientAddress, amount: amountInWei.toString() });
       
       writeContract({
         address: tokenAddress as `0x${string}`,
@@ -32,5 +34,6 @@ export function useMintTokens() {
     isSuccess,
     hash,
     error,
+    reset,
   };
 }
