@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,8 @@ import { Loader2, Plus } from 'lucide-react';
 export function CreateLoyaltyProgram() {
   const [programName, setProgramName] = useState('');
   const [tokenSymbol, setTokenSymbol] = useState('');
-  const { deployToken, isPending, isSuccess } = useDeployLoyaltyToken();
+  const { deployToken, isPending, isSuccess, deployedTokenAddress } = useDeployLoyaltyToken();
+  const savedRef = useRef(false);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,19 +21,35 @@ export function CreateLoyaltyProgram() {
       return;
     }
 
+    savedRef.current = false;
     deployToken(programName, tokenSymbol);
   };
 
   // Watch for success and handle post-deployment actions
-  if (isSuccess && programName && tokenSymbol) {
-    toast.success(`Loyalty program "${programName}" created!`);
-    // Save to localStorage for tracking
-    const savedPrograms = JSON.parse(localStorage.getItem('loyaltyPrograms') || '[]');
-    savedPrograms.push({ name: programName, symbol: tokenSymbol, timestamp: Date.now() });
-    localStorage.setItem('loyaltyPrograms', JSON.stringify(savedPrograms));
-    setProgramName('');
-    setTokenSymbol('');
-  }
+  useEffect(() => {
+    if (isSuccess && programName && tokenSymbol && deployedTokenAddress && !savedRef.current) {
+      toast.success(`Loyalty program "${programName}" created!`);
+      // Save to localStorage with token address
+      const savedPrograms = JSON.parse(localStorage.getItem('loyaltyPrograms') || '[]');
+      savedPrograms.push({ 
+        name: programName, 
+        symbol: tokenSymbol, 
+        timestamp: Date.now(),
+        tokenAddress: deployedTokenAddress 
+      });
+      localStorage.setItem('loyaltyPrograms', JSON.stringify(savedPrograms));
+      savedRef.current = true;
+      
+      // Clear form after a short delay to show success
+      setTimeout(() => {
+        setProgramName('');
+        setTokenSymbol('');
+      }, 500);
+      
+      // Trigger a custom event to notify other components
+      window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
+    }
+  }, [isSuccess, programName, tokenSymbol, deployedTokenAddress]);
 
   return (
     <Card className="border-2 bg-gradient-to-br from-card to-muted/30">

@@ -1,10 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Coins, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Coins, Calendar, Check, Trash2 } from 'lucide-react';
 import { usePublicClient } from 'wagmi';
 import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface LoyaltyProgram {
   name: string;
@@ -22,39 +34,49 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     const loadPrograms = async () => {
       const savedPrograms = JSON.parse(localStorage.getItem('loyaltyPrograms') || '[]');
       
-      // Try to fetch token addresses from events
+      // Try to fetch token addresses from events for programs that don't have one
       if (publicClient && savedPrograms.length > 0) {
-        try {
-          const logs = await publicClient.getLogs({
-            address: CONTRACTS.LOYALTY_TOKEN_FACTORY.address,
-            event: {
-              type: 'event',
-              name: 'LoyaltyTokenCreated',
-              inputs: [
-                { name: 'tokenAddress', type: 'address', indexed: true },
-                { name: 'merchantAddress', type: 'address', indexed: true },
-                { name: 'name', type: 'string', indexed: false },
-                { name: 'symbol', type: 'string', indexed: false },
-              ],
-            },
-            fromBlock: 'earliest',
-            toBlock: 'latest',
-          });
+        const programsWithoutAddress = savedPrograms.filter((p: LoyaltyProgram) => !p.tokenAddress);
+        
+        if (programsWithoutAddress.length > 0) {
+          try {
+            const logs = await publicClient.getLogs({
+              address: CONTRACTS.LOYALTY_TOKEN_FACTORY.address,
+              event: {
+                type: 'event',
+                name: 'LoyaltyTokenCreated',
+                inputs: [
+                  { name: 'tokenAddress', type: 'address', indexed: true },
+                  { name: 'merchantAddress', type: 'address', indexed: true },
+                  { name: 'name', type: 'string', indexed: false },
+                  { name: 'symbol', type: 'string', indexed: false },
+                ],
+              },
+              fromBlock: 'earliest',
+              toBlock: 'latest',
+            });
 
-          // Match programs with their token addresses
-          const updatedPrograms = savedPrograms.map((prog: LoyaltyProgram) => {
-            const matchingLog = logs.find(log => 
-              log.args.name === prog.name && log.args.symbol === prog.symbol
-            );
-            return {
-              ...prog,
-              tokenAddress: matchingLog?.args.tokenAddress || undefined,
-            };
-          });
+            // Match programs with their token addresses
+            const updatedPrograms = savedPrograms.map((prog: LoyaltyProgram) => {
+              if (prog.tokenAddress) return prog; // Already has address
+              
+              const matchingLog = logs.find(log => 
+                log.args.name === prog.name && log.args.symbol === prog.symbol
+              );
+              return {
+                ...prog,
+                tokenAddress: matchingLog?.args.tokenAddress || undefined,
+              };
+            });
 
-          setPrograms(updatedPrograms);
-        } catch (error) {
-          console.error('Error fetching token addresses:', error);
+            setPrograms(updatedPrograms);
+            // Update localStorage with fetched addresses
+            localStorage.setItem('loyaltyPrograms', JSON.stringify(updatedPrograms));
+          } catch (error) {
+            console.error('Error fetching token addresses:', error);
+            setPrograms(savedPrograms);
+          }
+        } else {
           setPrograms(savedPrograms);
         }
       } else {
@@ -63,6 +85,11 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     };
 
     loadPrograms();
+    
+    // Listen for updates from CreateLoyaltyProgram
+    const handleUpdate = () => loadPrograms();
+    window.addEventListener('loyaltyProgramsUpdated', handleUpdate);
+    return () => window.removeEventListener('loyaltyProgramsUpdated', handleUpdate);
   }, [publicClient]);
 
   const handleSelectProgram = (program: LoyaltyProgram, index: number) => {
@@ -73,6 +100,20 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     setSelectedProgram(index.toString());
     onSelectProgram(program as LoyaltyProgram & { tokenAddress: string });
     toast.success(`Selected ${program.name}`);
+  };
+
+  const handleDeleteProgram = (index: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updatedPrograms = programs.filter((_, i) => i !== index);
+    setPrograms(updatedPrograms);
+    localStorage.setItem('loyaltyPrograms', JSON.stringify(updatedPrograms));
+    
+    // Clear selection if the deleted program was selected
+    if (selectedProgram === index.toString()) {
+      setSelectedProgram(null);
+    }
+    
+    toast.success('Program deleted');
   };
 
   if (programs.length === 0) {
@@ -95,16 +136,23 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
               key={index}
               onClick={() => handleSelectProgram(program, index)}
               className={`p-4 rounded-lg border-2 transition-all ${
-                program.tokenAddress ? 'cursor-pointer hover:border-primary/50' : 'cursor-not-allowed opacity-50'
+                program.tokenAddress ? 'cursor-pointer hover:border-primary/50 hover:shadow-md' : 'cursor-not-allowed opacity-50'
               } ${
                 selectedProgram === index.toString()
-                  ? 'border-primary bg-primary/5 shadow-lg'
+                  ? 'border-primary bg-primary/5 shadow-lg ring-2 ring-primary/20'
                   : 'border-border'
               }`}
             >
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-semibold text-lg">{program.name}</h3>
+              <div className="flex justify-between items-start gap-3">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-lg">{program.name}</h3>
+                    {selectedProgram === index.toString() && (
+                      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground">
+                        <Check className="h-3 w-3" />
+                      </div>
+                    )}
+                  </div>
                   <p className="text-sm text-muted-foreground">Symbol: {program.symbol}</p>
                   {program.tokenAddress && (
                     <p className="text-xs text-muted-foreground mt-1 font-mono">
@@ -113,9 +161,40 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
                   )}
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                  <Badge variant={program.tokenAddress ? "default" : "secondary"}>
-                    {program.tokenAddress ? "Active" : "Pending"}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={program.tokenAddress ? "default" : "secondary"}>
+                      {program.tokenAddress ? "Active" : "Pending"}
+                    </Badge>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Loyalty Program?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete "{program.name}"? This will only remove it from your console. The token contract will remain on the blockchain.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={(e) => handleDeleteProgram(index, e)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Calendar className="h-3 w-3" />
                     {new Date(program.timestamp).toLocaleDateString()}
