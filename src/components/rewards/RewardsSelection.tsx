@@ -64,27 +64,38 @@ export function RewardsSelection() {
     loadPrograms();
 
     // Слушаем обновления программ и наград
-    window.addEventListener('loyaltyProgramsUpdated', loadPrograms);
-    window.addEventListener('rewardsUpdated', () => {
+    const handleRewardsUpdate = () => {
+      console.log('rewardsUpdated event received');
       if (selectedTokenAddress) {
+        console.log('Reloading rewards for:', selectedTokenAddress);
         const rewards = getRewardsByToken(selectedTokenAddress);
+        console.log('Updated rewards:', rewards);
         setAvailableRewards(rewards);
       }
-    });
+    };
+
+    window.addEventListener('loyaltyProgramsUpdated', loadPrograms);
+    window.addEventListener('rewardsUpdated', handleRewardsUpdate);
 
     return () => {
       window.removeEventListener('loyaltyProgramsUpdated', loadPrograms);
-      window.removeEventListener('rewardsUpdated', loadPrograms);
+      window.removeEventListener('rewardsUpdated', handleRewardsUpdate);
     };
   }, []);
 
   // Загрузка наград для выбранного токена
   useEffect(() => {
-    if (selectedTokenAddress) {
-      const rewards = getRewardsByToken(selectedTokenAddress);
-      setAvailableRewards(rewards);
-      setSelectedRewardId('');
-    }
+    const loadRewardsForToken = () => {
+      if (selectedTokenAddress) {
+        console.log('Loading rewards for token:', selectedTokenAddress);
+        const rewards = getRewardsByToken(selectedTokenAddress);
+        console.log('Found rewards:', rewards);
+        setAvailableRewards(rewards);
+        setSelectedRewardId('');
+      }
+    };
+
+    loadRewardsForToken();
   }, [selectedTokenAddress]);
 
   // Обработка успешного сжигания
