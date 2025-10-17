@@ -36,7 +36,7 @@ export function DexIntegration({ tokenAddress }: DexIntegrationProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ArrowRightLeft className="h-5 w-5 text-primary" />
-          Exchange Tokens
+          Exchange Loyalty Tokens
         </CardTitle>
         <CardDescription>
           Trade your loyalty tokens on decentralized exchanges
