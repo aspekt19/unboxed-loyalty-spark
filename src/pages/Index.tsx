@@ -1,7 +1,7 @@
 import { WalletConnectButton } from '@/components/WalletConnectButton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Sparkles, ShoppingBag, Store, ArrowRight, TrendingUp, Wallet } from 'lucide-react';
+import { Sparkles, ShoppingBag, Store, ArrowRight, Wallet } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Index = () => {
