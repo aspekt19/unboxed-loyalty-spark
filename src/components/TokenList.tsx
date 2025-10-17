@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,25 +31,19 @@ export function TokenList() {
   const { balances, isLoading, refetch } = useMultiTokenBalance(allTokens);
   const { transferTokens, isPending, isSuccess } = useTransferTokens();
 
-  // Debug log when wallet connects
-  useEffect(() => {
-    console.log('=== TokenList: Wallet address changed ===');
-    console.log('Wallet address:', walletAddress);
-    console.log('PublicClient available:', !!publicClient);
-    if (walletAddress && publicClient) {
-      console.log('TokenList: Wallet connected, loading tokens...');
-      loadTokensFromBlockchain();
-    }
-  }, [walletAddress, publicClient]);
+  // Track if initial load is complete
+  const hasLoadedRef = useRef(false);
 
-  // Load tokens on mount
+  // Load tokens from blockchain once when component mounts or wallet connects
   useEffect(() => {
-    console.log('TokenList: Component mounted, publicClient:', !!publicClient);
-    if (publicClient) {
+    if (publicClient && walletAddress && !hasLoadedRef.current) {
+      console.log('=== TokenList: Initial load - wallet connected ===');
+      console.log('Wallet address:', walletAddress);
+      hasLoadedRef.current = true;
       loadTokensFromBlockchain();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [publicClient, walletAddress]);
 
   // Listen for loyalty program updates
   useEffect(() => {
