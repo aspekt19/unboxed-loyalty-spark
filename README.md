@@ -48,7 +48,7 @@ Loyal Spark is a Web3-native loyalty rewards platform that leverages ERC-20 smar
 - **Network**: Base Mainnet (Chain ID: 8453)
 - **Factory Contract**: `0x61b154cAE13F2312D33397419195753D3849F858`
 - **Token Contract**: `0xc46481b25a0E6161d87F84C0dd2B0721B891cB4e`
-- **Token Standard**: ERC-1155 (Multi-Token)
+- **Token Standard**: ERC-20 (Multi-Token)
 
 ### Core Functions
 
