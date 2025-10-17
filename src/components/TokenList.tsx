@@ -178,12 +178,7 @@ export function TokenList() {
     parseFloat(token.balance) > 0
   );
 
-  // Debug log balances
-  useEffect(() => {
-    console.log('TokenList: All tokens:', allTokens);
-    console.log('TokenList: All balances:', balances);
-    console.log('TokenList: Tokens with balance:', tokensWithBalance);
-  }, [allTokens, balances, tokensWithBalance]);
+  console.log('TokenList render - tokens:', allTokens.length, 'balances:', balances.length, 'with balance:', tokensWithBalance.length);
 
   const handleTransfer = async (e: React.FormEvent) => {
     e.preventDefault();
