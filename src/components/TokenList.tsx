@@ -78,24 +78,33 @@ export function TokenList() {
     console.log('TokenList: Factory address:', CONTRACTS.LOYALTY_TOKEN_FACTORY.address);
     
     try {
+      // Get current block to calculate a reasonable starting block
+      const currentBlock = await publicClient.getBlockNumber();
+      console.log('TokenList: Current block:', currentBlock);
+      
+      // Search from ~7 days ago (assuming 2 second blocks = ~302,400 blocks)
+      const fromBlock = currentBlock > 302400n ? currentBlock - 302400n : 0n;
+      console.log('TokenList: Searching from block:', fromBlock);
+
       // Find the LoyaltyTokenCreated event ABI
       const eventAbi = CONTRACTS.LOYALTY_TOKEN_FACTORY.abi.find(
         (item) => item.type === 'event' && item.name === 'LoyaltyTokenCreated'
-      );
+      ) as any;
 
       if (!eventAbi) {
         console.error('TokenList: LoyaltyTokenCreated event not found in ABI');
+        loadTokensFromLocalStorage();
         setIsLoadingTokens(false);
         return;
       }
 
-      console.log('TokenList: Querying logs with event:', eventAbi);
+      console.log('TokenList: Querying logs...');
 
       // Fetch all LoyaltyTokenCreated events from the factory contract
       const logs = await publicClient.getLogs({
         address: CONTRACTS.LOYALTY_TOKEN_FACTORY.address,
         event: eventAbi,
-        fromBlock: BigInt(0),
+        fromBlock: fromBlock,
         toBlock: 'latest',
       });
 
@@ -111,12 +120,15 @@ export function TokenList() {
       setAllTokens(tokens);
       
       // Trigger balance fetch after tokens are set
-      setTimeout(() => {
-        console.log('TokenList: Triggering balance refetch');
-        refetch();
-      }, 500);
+      if (tokens.length > 0) {
+        setTimeout(() => {
+          console.log('TokenList: Triggering balance refetch');
+          refetch();
+        }, 500);
+      }
     } catch (error) {
       console.error('TokenList: Failed to load tokens from blockchain:', error);
+      console.log('TokenList: Falling back to localStorage');
       // Fallback to localStorage if blockchain query fails
       loadTokensFromLocalStorage();
     } finally {
