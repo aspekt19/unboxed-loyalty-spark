@@ -30,7 +30,15 @@ export function loadRewards(): Reward[] {
 // Получение наград для конкретного токена
 export function getRewardsByToken(tokenAddress: string): Reward[] {
   const rewards = loadRewards();
-  return rewards.filter(r => r.tokenAddress.toLowerCase() === tokenAddress.toLowerCase() && r.isActive);
+  console.log('getRewardsByToken - searching for:', tokenAddress);
+  console.log('getRewardsByToken - all rewards:', rewards);
+  const filtered = rewards.filter(r => {
+    const matches = r.tokenAddress.toLowerCase() === tokenAddress.toLowerCase() && r.isActive;
+    console.log(`Reward ${r.name}: tokenAddress=${r.tokenAddress}, matches=${matches}, isActive=${r.isActive}`);
+    return matches;
+  });
+  console.log('getRewardsByToken - filtered:', filtered);
+  return filtered;
 }
 
 // Сохранение ваучеров в localStorage
