@@ -24,7 +24,10 @@ export function saveRewards(rewards: Reward[]): void {
 // Загрузка наград из localStorage
 export function loadRewards(): Reward[] {
   const stored = localStorage.getItem('merchantRewards');
-  return stored ? JSON.parse(stored) : [];
+  console.log('loadRewards - raw localStorage:', stored);
+  const rewards = stored ? JSON.parse(stored) : [];
+  console.log('loadRewards - parsed rewards:', rewards);
+  return rewards;
 }
 
 // Получение наград для конкретного токена
