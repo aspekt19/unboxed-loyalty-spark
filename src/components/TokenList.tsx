@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useTokenBalance } from '@/hooks/useTokenBalance';
+import { useMultiTokenBalance, type TokenInfo } from '@/hooks/useMultiTokenBalance';
 import { useTransferTokens } from '@/hooks/useTransferTokens';
 import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
@@ -17,29 +17,47 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 
-interface Token {
-  name: string;
-  symbol: string;
-  address: string;
-}
-
 export function TokenList() {
-  const [selectedToken, setSelectedToken] = useState<Token | null>(null);
+  const [selectedToken, setSelectedToken] = useState<TokenInfo | null>(null);
   const [recipientAddress, setRecipientAddress] = useState('');
   const [transferAmount, setTransferAmount] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [allTokens, setAllTokens] = useState<TokenInfo[]>([]);
 
-  const { balance, isLoading, refetch } = useTokenBalance();
+  const { balances, isLoading, refetch } = useMultiTokenBalance(allTokens);
   const { transferTokens, isPending, isSuccess } = useTransferTokens();
 
-  // Default token for now
-  const tokens: Token[] = [
-    {
-      name: 'Loyal Spark',
-      symbol: 'LSP',
-      address: CONTRACTS.LOYAL_SPARK_ERC20.address,
-    },
-  ];
+  useEffect(() => {
+    loadTokens();
+    
+    const handleUpdate = () => loadTokens();
+    window.addEventListener('loyaltyProgramsUpdated', handleUpdate);
+    return () => window.removeEventListener('loyaltyProgramsUpdated', handleUpdate);
+  }, []);
+
+  const loadTokens = () => {
+    const stored = localStorage.getItem('loyaltyPrograms');
+    if (stored) {
+      try {
+        const programs = JSON.parse(stored);
+        const tokens: TokenInfo[] = programs
+          .filter((p: any) => p.tokenAddress && p.tokenAddress !== 'pending')
+          .map((p: any) => ({
+            address: p.tokenAddress,
+            name: p.name,
+            symbol: p.symbol,
+          }));
+        setAllTokens(tokens);
+      } catch (error) {
+        console.error('Failed to load tokens:', error);
+      }
+    }
+  };
+
+  // Filter to only show tokens with non-zero balances
+  const tokensWithBalance = balances.filter(token => 
+    parseFloat(token.balance) > 0
+  );
 
   const handleTransfer = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +67,8 @@ export function TokenList() {
       return;
     }
 
-    if (parseFloat(transferAmount) > parseFloat(balance)) {
+    const tokenBalance = balances.find(b => b.address === selectedToken.address);
+    if (!tokenBalance || parseFloat(transferAmount) > parseFloat(tokenBalance.balance)) {
       toast.error('Insufficient balance');
       return;
     }
@@ -77,7 +96,21 @@ export function TokenList() {
         <CardDescription>Manage tokens from different merchants</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {tokens.map((token) => (
+        {isLoading && allTokens.length > 0 && (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        )}
+        
+        {!isLoading && tokensWithBalance.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground">
+            <Coins className="h-12 w-12 mx-auto mb-2 opacity-50" />
+            <p>No loyalty tokens yet</p>
+            <p className="text-sm">Tokens will appear here when merchants credit them to your wallet</p>
+          </div>
+        )}
+        
+        {tokensWithBalance.map((token) => (
           <div
             key={token.address}
             className="flex items-center justify-between p-4 rounded-lg bg-gradient-to-r from-primary/5 to-secondary/5 border-2 border-primary/10 hover:border-primary/30 transition-all"
@@ -95,11 +128,7 @@ export function TokenList() {
             <div className="flex items-center gap-4">
               <div className="text-right">
                 <p className="text-2xl font-bold">
-                  {isLoading ? (
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                  ) : (
-                    parseFloat(balance).toFixed(2)
-                  )}
+                  {parseFloat(token.balance).toFixed(2)}
                 </p>
                 <p className="text-xs text-muted-foreground">{token.symbol}</p>
               </div>
@@ -144,7 +173,7 @@ export function TokenList() {
                         disabled={isPending}
                       />
                       <p className="text-xs text-muted-foreground">
-                        Available: {parseFloat(balance).toFixed(2)} {token.symbol}
+                        Available: {parseFloat(token.balance).toFixed(2)} {token.symbol}
                       </p>
                     </div>
                     <Button type="submit" disabled={isPending} className="w-full">
