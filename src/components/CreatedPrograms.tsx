@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Coins, Calendar } from 'lucide-react';
 import { usePublicClient } from 'wagmi';
 import { CONTRACTS } from '@/config/contracts';
+import { toast } from 'sonner';
 
 interface LoyaltyProgram {
   name: string;
@@ -65,10 +66,13 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
   }, [publicClient]);
 
   const handleSelectProgram = (program: LoyaltyProgram, index: number) => {
-    if (program.tokenAddress) {
-      setSelectedProgram(index.toString());
-      onSelectProgram(program as LoyaltyProgram & { tokenAddress: string });
+    if (!program.tokenAddress) {
+      toast.error('This program is still pending. Please wait for the transaction to complete.');
+      return;
     }
+    setSelectedProgram(index.toString());
+    onSelectProgram(program as LoyaltyProgram & { tokenAddress: string });
+    toast.success(`Selected ${program.name}`);
   };
 
   if (programs.length === 0) {
@@ -90,11 +94,13 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
             <div
               key={index}
               onClick={() => handleSelectProgram(program, index)}
-              className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
+              className={`p-4 rounded-lg border-2 transition-all ${
+                program.tokenAddress ? 'cursor-pointer hover:border-primary/50' : 'cursor-not-allowed opacity-50'
+              } ${
                 selectedProgram === index.toString()
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border hover:border-primary/50'
-              } ${!program.tokenAddress ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  ? 'border-primary bg-primary/5 shadow-lg'
+                  : 'border-border'
+              }`}
             >
               <div className="flex justify-between items-start">
                 <div>
