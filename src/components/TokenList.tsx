@@ -51,7 +51,7 @@ export function TokenList() {
           name: 'LoyaltyTokenCreated',
           inputs: [
             { type: 'address', name: 'tokenAddress', indexed: true },
-            { type: 'address', name: 'owner', indexed: true },
+            { type: 'address', name: 'merchantAddress', indexed: true },
             { type: 'string', name: 'name', indexed: false },
             { type: 'string', name: 'symbol', indexed: false },
           ],
@@ -59,6 +59,8 @@ export function TokenList() {
         fromBlock: 'earliest',
         toBlock: 'latest',
       });
+
+      console.log('Loaded loyalty tokens from blockchain:', logs.length);
 
       const tokens: TokenInfo[] = logs.map((log: any) => ({
         address: log.args.tokenAddress,
