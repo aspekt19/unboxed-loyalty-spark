@@ -172,6 +172,18 @@ export function TokenList() {
 
   console.log('TokenList render - tokens:', allTokens.length, 'balances:', balances.length, 'with balance:', tokensWithBalance.length);
 
+  // Watch for successful transfer
+  useEffect(() => {
+    if (isSuccess) {
+      toast.success('Tokens transferred successfully!');
+      setRecipientAddress('');
+      setTransferAmount('');
+      setDialogOpen(false);
+      setSelectedToken(null);
+      refetch(); // Refetch balances to show updated amounts
+    }
+  }, [isSuccess, refetch]);
+
   const handleTransfer = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -192,14 +204,6 @@ export function TokenList() {
       transferAmount,
       CONTRACTS.LOYAL_SPARK_ERC20.abi
     );
-
-    if (isSuccess) {
-      toast.success('Tokens transferred successfully!');
-      setRecipientAddress('');
-      setTransferAmount('');
-      setDialogOpen(false);
-      refetch();
-    }
   };
 
   return (
@@ -262,59 +266,62 @@ export function TokenList() {
                 <p className="text-xs text-muted-foreground">{token.symbol}</p>
               </div>
 
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    size="sm"
-                    onClick={() => setSelectedToken(token)}
-                    className="bg-gradient-to-r from-primary to-secondary hover:opacity-90"
-                  >
-                    <Send className="h-4 w-4 mr-1" />
-                    Send
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Transfer {token.symbol}</DialogTitle>
-                    <DialogDescription>
-                      Send {token.name} tokens to another address
-                    </DialogDescription>
-                  </DialogHeader>
-                  <form onSubmit={handleTransfer} className="space-y-4 mt-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="recipient">Recipient Address</Label>
-                      <Input
-                        id="recipient"
-                        placeholder="0x..."
-                        value={recipientAddress}
-                        onChange={(e) => setRecipientAddress(e.target.value)}
-                        disabled={isPending}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="transfer-amount">Amount</Label>
-                      <Input
-                        id="transfer-amount"
-                        type="number"
-                        placeholder="0.00"
-                        value={transferAmount}
-                        onChange={(e) => setTransferAmount(e.target.value)}
-                        disabled={isPending}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Available: {parseFloat(token.balance).toFixed(2)} {token.symbol}
-                      </p>
-                    </div>
-                    <Button type="submit" disabled={isPending} className="w-full">
-                      {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Transfer Tokens
-                    </Button>
-                  </form>
-                </DialogContent>
-              </Dialog>
+              <Button
+                size="sm"
+                onClick={() => {
+                  setSelectedToken(token);
+                  setDialogOpen(true);
+                }}
+                className="bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+              >
+                <Send className="h-4 w-4 mr-1" />
+                Send
+              </Button>
             </div>
           </div>
         ))}
+
+        {/* Transfer Dialog - Outside the map to use selectedToken state */}
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Transfer {selectedToken?.symbol}</DialogTitle>
+              <DialogDescription>
+                Send {selectedToken?.name} tokens to another address
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleTransfer} className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label htmlFor="recipient">Recipient Address</Label>
+                <Input
+                  id="recipient"
+                  placeholder="0x..."
+                  value={recipientAddress}
+                  onChange={(e) => setRecipientAddress(e.target.value)}
+                  disabled={isPending}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="transfer-amount">Amount</Label>
+                <Input
+                  id="transfer-amount"
+                  type="number"
+                  placeholder="0.00"
+                  value={transferAmount}
+                  onChange={(e) => setTransferAmount(e.target.value)}
+                  disabled={isPending}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Available: {selectedToken ? parseFloat(balances.find(b => b.address === selectedToken.address)?.balance || '0').toFixed(2) : '0.00'} {selectedToken?.symbol}
+                </p>
+              </div>
+              <Button type="submit" disabled={isPending} className="w-full">
+                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Transfer Tokens
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
