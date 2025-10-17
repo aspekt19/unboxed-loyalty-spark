@@ -11,7 +11,7 @@ import { useBurnTokens } from '@/hooks/useBurnTokens';
 import { useMultiTokenBalance } from '@/hooks/useMultiTokenBalance';
 import { CONTRACTS } from '@/config/contracts';
 import { Reward, Voucher } from '@/types/rewards';
-import { getRewardsByToken, generateVoucherCode, loadVouchers, saveVouchers } from '@/lib/vouchers';
+import { getRewardsByToken, createVoucher, generateVoucherCode } from '@/lib/vouchers';
 
 interface TokenInfo {
   address: string;
@@ -64,11 +64,11 @@ export function RewardsSelection() {
     loadPrograms();
 
     // Слушаем обновления программ и наград
-    const handleRewardsUpdate = () => {
+    const handleRewardsUpdate = async () => {
       console.log('rewardsUpdated event received');
       if (selectedTokenAddress) {
         console.log('Reloading rewards for:', selectedTokenAddress);
-        const rewards = getRewardsByToken(selectedTokenAddress);
+        const rewards = await getRewardsByToken(selectedTokenAddress);
         console.log('Updated rewards:', rewards);
         setAvailableRewards(rewards);
       }
@@ -85,10 +85,10 @@ export function RewardsSelection() {
 
   // Загрузка наград для выбранного токена
   useEffect(() => {
-    const loadRewardsForToken = () => {
+    const loadRewardsForToken = async () => {
       if (selectedTokenAddress) {
         console.log('Loading rewards for token:', selectedTokenAddress);
-        const rewards = getRewardsByToken(selectedTokenAddress);
+        const rewards = await getRewardsByToken(selectedTokenAddress);
         console.log('Found rewards:', rewards);
         setAvailableRewards(rewards);
         setSelectedRewardId('');
@@ -100,36 +100,39 @@ export function RewardsSelection() {
 
   // Обработка успешного сжигания
   useEffect(() => {
-    if (isSuccess && selectedRewardId && address) {
-      const reward = availableRewards.find(r => r.id === selectedRewardId);
-      const token = tokens.find(t => t.address === selectedTokenAddress);
-      
-      if (reward && token) {
-        // Создаем ваучер
-        const voucher: Voucher = {
-          id: `voucher_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          code: generateVoucherCode(),
-          rewardId: reward.id,
-          rewardName: reward.name,
-          rewardDescription: reward.description,
-          tokenAddress: selectedTokenAddress,
-          tokenSymbol: token.symbol,
-          customerAddress: address,
-          merchantAddress: reward.merchantAddress,
-          status: 'active',
-          cost: reward.cost,
-          activatedAt: new Date().toISOString(),
-        };
+    const handleVoucherCreation = async () => {
+      if (isSuccess && selectedRewardId && address) {
+        const reward = availableRewards.find(r => r.id === selectedRewardId);
+        const token = tokens.find(t => t.address === selectedTokenAddress);
+        
+        if (reward && token) {
+          const voucherCode = generateVoucherCode();
+          const voucher = await createVoucher({
+            code: voucherCode,
+            rewardId: reward.id,
+            rewardName: reward.name,
+            rewardDescription: reward.description,
+            tokenAddress: selectedTokenAddress,
+            tokenSymbol: token.symbol,
+            customerAddress: address,
+            merchantAddress: reward.merchantAddress,
+            status: 'active',
+            cost: reward.cost,
+          });
 
-        const vouchers = loadVouchers();
-        vouchers.push(voucher);
-        saveVouchers(vouchers);
-
-        toast.success(`Voucher activated! Code: ${voucher.code}`);
-        setSelectedRewardId('');
-        setTimeout(() => refetch(), 1000);
+          if (voucher) {
+            toast.success(`Voucher activated! Code: ${voucherCode}`);
+            setSelectedRewardId('');
+            setTimeout(() => refetch(), 1000);
+            window.dispatchEvent(new Event('vouchersUpdated'));
+          } else {
+            toast.error('Failed to create voucher');
+          }
+        }
       }
-    }
+    };
+
+    handleVoucherCreation();
   }, [isSuccess, selectedRewardId, availableRewards, tokens, selectedTokenAddress, address, refetch]);
 
   const handleActivate = () => {

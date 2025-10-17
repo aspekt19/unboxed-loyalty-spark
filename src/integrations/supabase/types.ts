@@ -14,7 +14,98 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      rewards: {
+        Row: {
+          cost: number
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          merchant_address: string
+          name: string
+          token_address: string
+          updated_at: string
+        }
+        Insert: {
+          cost: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          merchant_address: string
+          name: string
+          token_address: string
+          updated_at?: string
+        }
+        Update: {
+          cost?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          merchant_address?: string
+          name?: string
+          token_address?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      vouchers: {
+        Row: {
+          activated_at: string
+          code: string
+          cost: number
+          customer_address: string
+          id: string
+          merchant_address: string
+          reward_description: string | null
+          reward_id: string
+          reward_name: string
+          status: string
+          token_address: string
+          token_symbol: string
+          used_at: string | null
+        }
+        Insert: {
+          activated_at?: string
+          code: string
+          cost: number
+          customer_address: string
+          id?: string
+          merchant_address: string
+          reward_description?: string | null
+          reward_id: string
+          reward_name: string
+          status?: string
+          token_address: string
+          token_symbol: string
+          used_at?: string | null
+        }
+        Update: {
+          activated_at?: string
+          code?: string
+          cost?: number
+          customer_address?: string
+          id?: string
+          merchant_address?: string
+          reward_description?: string | null
+          reward_id?: string
+          reward_name?: string
+          status?: string
+          token_address?: string
+          token_symbol?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vouchers_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "rewards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

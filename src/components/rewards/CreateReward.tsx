@@ -8,8 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { Plus } from 'lucide-react';
 import { useAccount } from 'wagmi';
-import { Reward } from '@/types/rewards';
-import { saveRewards, loadRewards } from '@/lib/vouchers';
+import { createReward } from '@/lib/vouchers';
 
 interface TokenInfo {
   address: string;
@@ -51,7 +50,7 @@ export function CreateReward() {
     return () => window.removeEventListener('loyaltyProgramsUpdated', loadPrograms);
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!address) {
@@ -70,23 +69,22 @@ export function CreateReward() {
       return;
     }
 
-    const newReward: Reward = {
-      id: `reward_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    const result = await createReward({
       tokenAddress: formData.tokenAddress,
       merchantAddress: address,
       name: formData.name,
       description: formData.description,
       cost,
-      createdAt: new Date().toISOString(),
       isActive: true,
-    };
+    });
 
-    const rewards = loadRewards();
-    rewards.push(newReward);
-    saveRewards(rewards);
-
-    toast.success('Reward created successfully!');
-    setFormData({ tokenAddress: '', name: '', description: '', cost: '' });
+    if (result) {
+      toast.success('Reward created successfully!');
+      setFormData({ tokenAddress: '', name: '', description: '', cost: '' });
+      window.dispatchEvent(new Event('rewardsUpdated'));
+    } else {
+      toast.error('Failed to create reward');
+    }
   };
 
   return (

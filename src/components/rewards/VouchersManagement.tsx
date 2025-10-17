@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { Ticket, CheckCircle2, Search } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { Voucher } from '@/types/rewards';
-import { getMerchantVouchers, loadVouchers, saveVouchers } from '@/lib/vouchers';
+import { getMerchantVouchers, updateVoucherStatus } from '@/lib/vouchers';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export function VouchersManagement() {
@@ -16,9 +16,9 @@ export function VouchersManagement() {
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [searchCode, setSearchCode] = useState('');
 
-  const loadMerchantVouchers = () => {
+  const loadMerchantVouchers = async () => {
     if (!address) return;
-    const merchantVouchers = getMerchantVouchers(address);
+    const merchantVouchers = await getMerchantVouchers(address);
     setVouchers(merchantVouchers);
   };
 
@@ -28,13 +28,14 @@ export function VouchersManagement() {
     return () => window.removeEventListener('vouchersUpdated', loadMerchantVouchers);
   }, [address]);
 
-  const handleMarkAsUsed = (voucherId: string, code: string) => {
-    const allVouchers = loadVouchers();
-    const updated = allVouchers.map(v =>
-      v.id === voucherId ? { ...v, status: 'used' as const, usedAt: new Date().toISOString() } : v
-    );
-    saveVouchers(updated);
-    toast.success(`Voucher ${code} marked as used`);
+  const handleMarkAsUsed = async (voucherId: string, code: string) => {
+    const success = await updateVoucherStatus(voucherId, 'used');
+    if (success) {
+      toast.success(`Voucher ${code} marked as used`);
+      window.dispatchEvent(new Event('vouchersUpdated'));
+    } else {
+      toast.error('Failed to update voucher');
+    }
   };
 
   const filteredVouchers = searchCode

@@ -1,4 +1,5 @@
 import { Reward, Voucher } from '@/types/rewards';
+import { supabase } from '@/integrations/supabase/client';
 
 // Генерация уникального кода ваучера
 export function generateVoucherCode(): string {
@@ -15,61 +16,296 @@ export function generateVoucherCode(): string {
   return `LOYAL-${code}`;
 }
 
-// Сохранение наград в localStorage
-export function saveRewards(rewards: Reward[]): void {
-  localStorage.setItem('merchantRewards', JSON.stringify(rewards));
-  window.dispatchEvent(new Event('rewardsUpdated'));
+// Создание награды в базе данных
+export async function createReward(reward: Omit<Reward, 'id' | 'createdAt'>): Promise<Reward | null> {
+  const { data, error } = await supabase
+    .from('rewards')
+    .insert({
+      token_address: reward.tokenAddress,
+      merchant_address: reward.merchantAddress,
+      name: reward.name,
+      description: reward.description,
+      cost: reward.cost,
+      is_active: reward.isActive,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating reward:', error);
+    return null;
+  }
+
+  return {
+    id: data.id,
+    tokenAddress: data.token_address,
+    merchantAddress: data.merchant_address,
+    name: data.name,
+    description: data.description,
+    cost: Number(data.cost),
+    createdAt: data.created_at,
+    isActive: data.is_active,
+  };
 }
 
-// Загрузка наград из localStorage
-export function loadRewards(): Reward[] {
-  const stored = localStorage.getItem('merchantRewards');
-  console.log('loadRewards - raw localStorage:', stored);
-  const rewards = stored ? JSON.parse(stored) : [];
-  console.log('loadRewards - parsed rewards:', rewards);
-  return rewards;
+// Загрузка всех наград
+export async function loadRewards(): Promise<Reward[]> {
+  const { data, error } = await supabase
+    .from('rewards')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error loading rewards:', error);
+    return [];
+  }
+
+  return data.map(r => ({
+    id: r.id,
+    tokenAddress: r.token_address,
+    merchantAddress: r.merchant_address,
+    name: r.name,
+    description: r.description || '',
+    cost: Number(r.cost),
+    createdAt: r.created_at,
+    isActive: r.is_active,
+  }));
+}
+
+// Загрузка наград мерчанта
+export async function getMerchantRewards(merchantAddress: string): Promise<Reward[]> {
+  const { data, error } = await supabase
+    .from('rewards')
+    .select('*')
+    .eq('merchant_address', merchantAddress)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error loading merchant rewards:', error);
+    return [];
+  }
+
+  return data.map(r => ({
+    id: r.id,
+    tokenAddress: r.token_address,
+    merchantAddress: r.merchant_address,
+    name: r.name,
+    description: r.description || '',
+    cost: Number(r.cost),
+    createdAt: r.created_at,
+    isActive: r.is_active,
+  }));
 }
 
 // Получение наград для конкретного токена
-export function getRewardsByToken(tokenAddress: string): Reward[] {
-  const rewards = loadRewards();
-  console.log('getRewardsByToken - searching for:', tokenAddress);
-  console.log('getRewardsByToken - all rewards:', rewards);
-  const filtered = rewards.filter(r => {
-    const matches = r.tokenAddress.toLowerCase() === tokenAddress.toLowerCase() && r.isActive;
-    console.log(`Reward ${r.name}: tokenAddress=${r.tokenAddress}, matches=${matches}, isActive=${r.isActive}`);
-    return matches;
-  });
-  console.log('getRewardsByToken - filtered:', filtered);
-  return filtered;
+export async function getRewardsByToken(tokenAddress: string): Promise<Reward[]> {
+  const { data, error } = await supabase
+    .from('rewards')
+    .select('*')
+    .eq('token_address', tokenAddress)
+    .eq('is_active', true)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error loading rewards by token:', error);
+    return [];
+  }
+
+  return data.map(r => ({
+    id: r.id,
+    tokenAddress: r.token_address,
+    merchantAddress: r.merchant_address,
+    name: r.name,
+    description: r.description || '',
+    cost: Number(r.cost),
+    createdAt: r.created_at,
+    isActive: r.is_active,
+  }));
 }
 
-// Сохранение ваучеров в localStorage
-export function saveVouchers(vouchers: Voucher[]): void {
-  localStorage.setItem('customerVouchers', JSON.stringify(vouchers));
-  window.dispatchEvent(new Event('vouchersUpdated'));
+// Обновление награды
+export async function updateReward(rewardId: string, updates: Partial<Reward>): Promise<boolean> {
+  const dbUpdates: any = {};
+  
+  if (updates.name !== undefined) dbUpdates.name = updates.name;
+  if (updates.description !== undefined) dbUpdates.description = updates.description;
+  if (updates.cost !== undefined) dbUpdates.cost = updates.cost;
+  if (updates.isActive !== undefined) dbUpdates.is_active = updates.isActive;
+
+  const { error } = await supabase
+    .from('rewards')
+    .update(dbUpdates)
+    .eq('id', rewardId);
+
+  if (error) {
+    console.error('Error updating reward:', error);
+    return false;
+  }
+
+  return true;
 }
 
-// Загрузка ваучеров из localStorage
-export function loadVouchers(): Voucher[] {
-  const stored = localStorage.getItem('customerVouchers');
-  return stored ? JSON.parse(stored) : [];
+// Удаление награды
+export async function deleteReward(rewardId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('rewards')
+    .delete()
+    .eq('id', rewardId);
+
+  if (error) {
+    console.error('Error deleting reward:', error);
+    return false;
+  }
+
+  return true;
 }
 
-// Получение ваучеров покупателя
-export function getCustomerVouchers(customerAddress: string): Voucher[] {
-  const vouchers = loadVouchers();
-  return vouchers.filter(v => v.customerAddress.toLowerCase() === customerAddress.toLowerCase());
+// Создание ваучера в базе данных
+export async function createVoucher(voucher: Omit<Voucher, 'id' | 'activatedAt'>): Promise<Voucher | null> {
+  const { data, error } = await supabase
+    .from('vouchers')
+    .insert({
+      code: voucher.code,
+      reward_id: voucher.rewardId,
+      reward_name: voucher.rewardName,
+      reward_description: voucher.rewardDescription,
+      token_address: voucher.tokenAddress,
+      token_symbol: voucher.tokenSymbol,
+      customer_address: voucher.customerAddress,
+      merchant_address: voucher.merchantAddress,
+      status: voucher.status,
+      cost: voucher.cost,
+      used_at: voucher.usedAt,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating voucher:', error);
+    return null;
+  }
+
+  return {
+    id: data.id,
+    code: data.code,
+    rewardId: data.reward_id,
+    rewardName: data.reward_name,
+    rewardDescription: data.reward_description || '',
+    tokenAddress: data.token_address,
+    tokenSymbol: data.token_symbol,
+    customerAddress: data.customer_address,
+    merchantAddress: data.merchant_address,
+    status: data.status as 'active' | 'used' | 'expired',
+    cost: Number(data.cost),
+    activatedAt: data.activated_at,
+    usedAt: data.used_at,
+  };
 }
 
-// Получение ваучеров мерчанта
-export function getMerchantVouchers(merchantAddress: string): Voucher[] {
-  const vouchers = loadVouchers();
-  return vouchers.filter(v => v.merchantAddress.toLowerCase() === merchantAddress.toLowerCase());
+// Загрузка ваучеров покупателя
+export async function getCustomerVouchers(customerAddress: string): Promise<Voucher[]> {
+  const { data, error } = await supabase
+    .from('vouchers')
+    .select('*')
+    .eq('customer_address', customerAddress)
+    .order('activated_at', { ascending: false });
+
+  if (error) {
+    console.error('Error loading customer vouchers:', error);
+    return [];
+  }
+
+  return data.map(v => ({
+    id: v.id,
+    code: v.code,
+    rewardId: v.reward_id,
+    rewardName: v.reward_name,
+    rewardDescription: v.reward_description || '',
+    tokenAddress: v.token_address,
+    tokenSymbol: v.token_symbol,
+    customerAddress: v.customer_address,
+    merchantAddress: v.merchant_address,
+    status: v.status as 'active' | 'used' | 'expired',
+    cost: Number(v.cost),
+    activatedAt: v.activated_at,
+    usedAt: v.used_at,
+  }));
+}
+
+// Загрузка ваучеров мерчанта
+export async function getMerchantVouchers(merchantAddress: string): Promise<Voucher[]> {
+  const { data, error } = await supabase
+    .from('vouchers')
+    .select('*')
+    .eq('merchant_address', merchantAddress)
+    .order('activated_at', { ascending: false });
+
+  if (error) {
+    console.error('Error loading merchant vouchers:', error);
+    return [];
+  }
+
+  return data.map(v => ({
+    id: v.id,
+    code: v.code,
+    rewardId: v.reward_id,
+    rewardName: v.reward_name,
+    rewardDescription: v.reward_description || '',
+    tokenAddress: v.token_address,
+    tokenSymbol: v.token_symbol,
+    customerAddress: v.customer_address,
+    merchantAddress: v.merchant_address,
+    status: v.status as 'active' | 'used' | 'expired',
+    cost: Number(v.cost),
+    activatedAt: v.activated_at,
+    usedAt: v.used_at,
+  }));
+}
+
+// Обновление статуса ваучера
+export async function updateVoucherStatus(
+  voucherId: string,
+  status: 'active' | 'used' | 'expired'
+): Promise<boolean> {
+  const updates: any = { status };
+  if (status === 'used') {
+    updates.used_at = new Date().toISOString();
+  }
+
+  const { error } = await supabase
+    .from('vouchers')
+    .update(updates)
+    .eq('id', voucherId);
+
+  if (error) {
+    console.error('Error updating voucher status:', error);
+    return false;
+  }
+
+  return true;
 }
 
 // Получение награды по ID
-export function getRewardById(rewardId: string): Reward | undefined {
-  const rewards = loadRewards();
-  return rewards.find(r => r.id === rewardId);
+export async function getRewardById(rewardId: string): Promise<Reward | null> {
+  const { data, error } = await supabase
+    .from('rewards')
+    .select('*')
+    .eq('id', rewardId)
+    .single();
+
+  if (error) {
+    console.error('Error loading reward by ID:', error);
+    return null;
+  }
+
+  return {
+    id: data.id,
+    tokenAddress: data.token_address,
+    merchantAddress: data.merchant_address,
+    name: data.name,
+    description: data.description || '',
+    cost: Number(data.cost),
+    createdAt: data.created_at,
+    isActive: data.is_active,
+  };
 }

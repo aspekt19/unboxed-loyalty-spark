@@ -6,29 +6,28 @@ import { toast } from 'sonner';
 import { Gift, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { Reward } from '@/types/rewards';
-import { loadRewards, saveRewards } from '@/lib/vouchers';
+import { getMerchantRewards, updateReward, deleteReward } from '@/lib/vouchers';
 
 export function RewardsList() {
   const { address } = useAccount();
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [tokens, setTokens] = useState<Map<string, { name: string; symbol: string }>>(new Map());
 
-  const loadData = () => {
+  const loadData = async () => {
     if (!address) return;
 
-    const allRewards = loadRewards();
-    const merchantRewards = allRewards.filter(
-      r => r.merchantAddress.toLowerCase() === address.toLowerCase()
-    );
+    const merchantRewards = await getMerchantRewards(address);
     setRewards(merchantRewards);
 
     // Загружаем информацию о токенах
-    const merchantPrograms = localStorage.getItem('merchantPrograms');
-    if (merchantPrograms) {
-      const programs = JSON.parse(merchantPrograms);
+    const loyaltyPrograms = localStorage.getItem('loyaltyPrograms');
+    if (loyaltyPrograms) {
+      const programs = JSON.parse(loyaltyPrograms);
       const tokenMap = new Map();
       programs.forEach((p: any) => {
-        tokenMap.set(p.address.toLowerCase(), { name: p.name, symbol: p.symbol });
+        if (p.tokenAddress) {
+          tokenMap.set(p.tokenAddress.toLowerCase(), { name: p.name, symbol: p.symbol });
+        }
       });
       setTokens(tokenMap);
     }
@@ -40,20 +39,27 @@ export function RewardsList() {
     return () => window.removeEventListener('rewardsUpdated', loadData);
   }, [address]);
 
-  const handleToggleActive = (rewardId: string) => {
-    const allRewards = loadRewards();
-    const updated = allRewards.map(r =>
-      r.id === rewardId ? { ...r, isActive: !r.isActive } : r
-    );
-    saveRewards(updated);
-    toast.success('Reward status updated');
+  const handleToggleActive = async (rewardId: string) => {
+    const reward = rewards.find(r => r.id === rewardId);
+    if (!reward) return;
+
+    const success = await updateReward(rewardId, { isActive: !reward.isActive });
+    if (success) {
+      toast.success('Reward status updated');
+      window.dispatchEvent(new Event('rewardsUpdated'));
+    } else {
+      toast.error('Failed to update reward');
+    }
   };
 
-  const handleDelete = (rewardId: string) => {
-    const allRewards = loadRewards();
-    const updated = allRewards.filter(r => r.id !== rewardId);
-    saveRewards(updated);
-    toast.success('Reward deleted');
+  const handleDelete = async (rewardId: string) => {
+    const success = await deleteReward(rewardId);
+    if (success) {
+      toast.success('Reward deleted');
+      window.dispatchEvent(new Event('rewardsUpdated'));
+    } else {
+      toast.error('Failed to delete reward');
+    }
   };
 
   if (!address) {

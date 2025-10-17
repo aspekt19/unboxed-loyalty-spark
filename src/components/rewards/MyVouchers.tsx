@@ -12,9 +12,9 @@ export function MyVouchers() {
   const { address } = useAccount();
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
 
-  const loadVouchers = () => {
+  const loadVouchers = async () => {
     if (!address) return;
-    const customerVouchers = getCustomerVouchers(address);
+    const customerVouchers = await getCustomerVouchers(address);
     setVouchers(customerVouchers);
   };
 
