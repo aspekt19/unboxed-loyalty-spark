@@ -3,20 +3,33 @@ export const CONTRACTS = {
     address: '0x61b154cAE13F2312D33397419195753D3849F858' as `0x${string}`,
     abi: [
       {
-        inputs: [],
-        name: 'deployLoyaltyToken',
-        outputs: [{ name: 'tokenAddress', type: 'address' }],
+        inputs: [
+          { name: '_name', type: 'string' },
+          { name: '_symbol', type: 'string' },
+          { name: '_merchantAddress', type: 'address' },
+        ],
+        name: 'createLoyaltyToken',
+        outputs: [{ name: 'tokenProxy', type: 'address' }],
         stateMutability: 'nonpayable',
         type: 'function',
       },
       {
         anonymous: false,
         inputs: [
-          { indexed: true, name: 'merchant', type: 'address' },
           { indexed: true, name: 'tokenAddress', type: 'address' },
+          { indexed: true, name: 'merchantAddress', type: 'address' },
+          { indexed: false, name: 'name', type: 'string' },
+          { indexed: false, name: 'symbol', type: 'string' },
         ],
         name: 'LoyaltyTokenCreated',
         type: 'event',
+      },
+      {
+        inputs: [],
+        name: 'tokenImplementation',
+        outputs: [{ name: '', type: 'address' }],
+        stateMutability: 'view',
+        type: 'function',
       },
     ] as const,
   },

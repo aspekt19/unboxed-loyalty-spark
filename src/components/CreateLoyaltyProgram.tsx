@@ -20,18 +20,19 @@ export function CreateLoyaltyProgram() {
       return;
     }
 
-    await deployToken();
-    
-    if (isSuccess) {
-      toast.success(`Loyalty program "${programName}" created!`);
-      // Save to localStorage for tracking
-      const savedPrograms = JSON.parse(localStorage.getItem('loyaltyPrograms') || '[]');
-      savedPrograms.push({ name: programName, symbol: tokenSymbol, timestamp: Date.now() });
-      localStorage.setItem('loyaltyPrograms', JSON.stringify(savedPrograms));
-      setProgramName('');
-      setTokenSymbol('');
-    }
+    deployToken(programName, tokenSymbol);
   };
+
+  // Watch for success and handle post-deployment actions
+  if (isSuccess && programName && tokenSymbol) {
+    toast.success(`Loyalty program "${programName}" created!`);
+    // Save to localStorage for tracking
+    const savedPrograms = JSON.parse(localStorage.getItem('loyaltyPrograms') || '[]');
+    savedPrograms.push({ name: programName, symbol: tokenSymbol, timestamp: Date.now() });
+    localStorage.setItem('loyaltyPrograms', JSON.stringify(savedPrograms));
+    setProgramName('');
+    setTokenSymbol('');
+  }
 
   return (
     <Card className="border-2 bg-gradient-to-br from-card to-muted/30">
