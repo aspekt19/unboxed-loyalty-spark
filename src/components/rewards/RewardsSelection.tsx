@@ -32,17 +32,28 @@ export function RewardsSelection() {
   // Загрузка токенов
   useEffect(() => {
     const loadPrograms = () => {
-      const loyaltyPrograms = localStorage.getItem('loyaltyPrograms');
-      if (loyaltyPrograms) {
-        const programs = JSON.parse(loyaltyPrograms);
-        // Только активные программы с tokenAddress
+      // Сначала пробуем customerTokens (загружается из блокчейна)
+      let stored = localStorage.getItem('customerTokens');
+      
+      // Если нет, пробуем loyaltyPrograms (созданные мерчантом)
+      if (!stored) {
+        stored = localStorage.getItem('loyaltyPrograms');
+      }
+      
+      if (stored) {
+        const programs = JSON.parse(stored);
+        // Фильтруем и мапим токены
         const activePrograms = programs
-          .filter((p: any) => p.tokenAddress)
+          .filter((p: any) => {
+            const addr = p.tokenAddress || p.address;
+            return addr && addr !== 'pending';
+          })
           .map((p: any) => ({
-            address: p.tokenAddress,
+            address: p.tokenAddress || p.address,
             name: p.name,
             symbol: p.symbol,
           }));
+        
         setTokens(activePrograms);
         if (activePrograms.length > 0 && !selectedTokenAddress) {
           setSelectedTokenAddress(activePrograms[0].address);
