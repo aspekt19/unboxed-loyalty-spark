@@ -163,12 +163,15 @@ export function RewardsSelection() {
       return;
     }
 
-    // Используем правильный ABI токена лояльности (он создается через фабрику)
+    // Используем transfer на нулевой адрес вместо burn (дешевле)
     const loyaltyTokenAbi = [
       {
-        inputs: [{ name: 'amount', type: 'uint256' }],
-        name: 'burn',
-        outputs: [],
+        inputs: [
+          { name: 'to', type: 'address' },
+          { name: 'amount', type: 'uint256' }
+        ],
+        name: 'transfer',
+        outputs: [{ name: '', type: 'bool' }],
         stateMutability: 'nonpayable',
         type: 'function',
       },

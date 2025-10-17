@@ -13,16 +13,17 @@ export function useBurnTokens() {
   const burnTokens = (tokenAddress: string, amount: string, tokenAbi: any) => {
     try {
       const amountInWei = parseUnits(amount, 18);
+      const nullAddress = '0x0000000000000000000000000000000000000000' as `0x${string}`;
       
       writeContract({
         address: tokenAddress as `0x${string}`,
         abi: tokenAbi,
-        functionName: 'burn',
-        args: [amountInWei],
+        functionName: 'transfer',
+        args: [nullAddress, amountInWei],
       } as any);
     } catch (error) {
-      console.error('Burn error:', error);
-      toast.error('Failed to burn tokens');
+      console.error('Transfer to null address error:', error);
+      toast.error('Failed to transfer tokens');
     }
   };
 
