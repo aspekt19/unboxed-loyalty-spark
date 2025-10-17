@@ -12,11 +12,25 @@ import CustomerPage from "./pages/CustomerPage";
 import MerchantPage from "./pages/MerchantPage";
 import NotFound from "./pages/NotFound";
 import { AnimatePresence } from "framer-motion";
+import { useEffect } from "react";
+import { migrateAllData } from "./lib/migrateLocalStorageData";
 
 const queryClient = new QueryClient();
 
 function AnimatedRoutes() {
   const location = useLocation();
+
+  // Миграция данных из localStorage в базу данных при первой загрузке
+  useEffect(() => {
+    const migrationKey = 'data_migrated_to_cloud';
+    const alreadyMigrated = localStorage.getItem(migrationKey);
+    
+    if (!alreadyMigrated) {
+      migrateAllData().then(() => {
+        localStorage.setItem(migrationKey, 'true');
+      });
+    }
+  }, []);
 
   return (
     <AnimatePresence mode="wait">
