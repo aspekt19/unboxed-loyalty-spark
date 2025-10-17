@@ -30,21 +30,28 @@ export function TokenList() {
   const { balances, isLoading, refetch } = useMultiTokenBalance(allTokens);
   const { transferTokens, isPending, isSuccess } = useTransferTokens();
 
+  // Load tokens on mount and when wallet connects
   useEffect(() => {
+    console.log('TokenList: Loading tokens, publicClient:', !!publicClient);
     loadTokensFromBlockchain();
-    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [publicClient]);
+
+  // Listen for loyalty program updates
+  useEffect(() => {
     const handleUpdate = () => {
       console.log('loyaltyProgramsUpdated event received, refetching...');
       loadTokensFromBlockchain();
       // Also refetch balances after a short delay to allow blockchain to update
       setTimeout(() => {
+        console.log('Refetching balances after program update');
         refetch();
       }, 2000);
     };
     window.addEventListener('loyaltyProgramsUpdated', handleUpdate);
     return () => window.removeEventListener('loyaltyProgramsUpdated', handleUpdate);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [publicClient]);
+  }, []);
 
   const loadTokensFromBlockchain = async () => {
     if (!publicClient) return;

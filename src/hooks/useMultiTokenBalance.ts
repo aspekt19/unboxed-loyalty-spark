@@ -69,11 +69,14 @@ export function useMultiTokenBalance(tokens: TokenInfo[]) {
     }
   };
 
+  // Create a stable dependency from token addresses
+  const tokenAddresses = tokens.map(t => t.address).sort().join(',');
+
   useEffect(() => {
     console.log('useMultiTokenBalance: Fetching balances for', tokens.length, 'tokens', tokens);
     fetchBalances();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address, tokens.length, publicClient]);
+  }, [address, tokenAddresses, publicClient]);
 
   return {
     balances,
