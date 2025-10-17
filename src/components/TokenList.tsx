@@ -174,15 +174,19 @@ export function TokenList() {
 
   // Watch for successful transfer
   useEffect(() => {
-    if (isSuccess) {
+    if (isSuccess && dialogOpen) {
       toast.success('Tokens transferred successfully!');
       setRecipientAddress('');
       setTransferAmount('');
-      setDialogOpen(false);
       setSelectedToken(null);
-      refetch(); // Refetch balances to show updated amounts
+      setDialogOpen(false);
+      
+      // Refetch balances after a brief delay to ensure transaction is indexed
+      setTimeout(() => {
+        refetch();
+      }, 1000);
     }
-  }, [isSuccess, refetch]);
+  }, [isSuccess, dialogOpen, refetch]);
 
   const handleTransfer = async (e: React.FormEvent) => {
     e.preventDefault();
