@@ -9,8 +9,7 @@ import { Gift, AlertCircle, Loader2, Ticket } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { useBurnTokens } from '@/hooks/useBurnTokens';
 import { useMultiTokenBalance } from '@/hooks/useMultiTokenBalance';
-import { CONTRACTS } from '@/config/contracts';
-import { Reward, Voucher } from '@/types/rewards';
+import { Reward } from '@/types/rewards';
 import { getRewardsByToken, createVoucher, generateVoucherCode } from '@/lib/vouchers';
 
 interface TokenInfo {
@@ -164,7 +163,18 @@ export function RewardsSelection() {
       return;
     }
 
-    burnTokens(selectedTokenAddress, reward.cost.toString(), CONTRACTS.LOYAL_SPARK_ERC20.abi);
+    // Используем правильный ABI токена лояльности (он создается через фабрику)
+    const loyaltyTokenAbi = [
+      {
+        inputs: [{ name: 'amount', type: 'uint256' }],
+        name: 'burn',
+        outputs: [],
+        stateMutability: 'nonpayable',
+        type: 'function',
+      },
+    ] as const;
+    
+    burnTokens(selectedTokenAddress, reward.cost.toString(), loyaltyTokenAbi);
   };
 
   const selectedToken = tokens.find(t => t.address === selectedTokenAddress);
