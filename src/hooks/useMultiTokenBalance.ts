@@ -59,6 +59,7 @@ export function useMultiTokenBalance(tokens: TokenInfo[]) {
       });
 
       const results = await Promise.all(balancePromises);
+      console.log('useMultiTokenBalance: Fetched balances:', results);
       setBalances(results);
     } catch (error) {
       console.error('Error fetching balances:', error);
@@ -69,8 +70,9 @@ export function useMultiTokenBalance(tokens: TokenInfo[]) {
   };
 
   useEffect(() => {
+    console.log('useMultiTokenBalance: Fetching balances for', tokens.length, 'tokens');
     fetchBalances();
-  }, [address, tokens.length, publicClient]);
+  }, [address, tokens, publicClient]);
 
   return {
     balances,

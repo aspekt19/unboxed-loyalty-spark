@@ -68,6 +68,7 @@ export function TokenList() {
         symbol: log.args.symbol,
       }));
 
+      console.log('TokenList: Setting tokens:', tokens);
       setAllTokens(tokens);
     } catch (error) {
       console.error('Failed to load tokens from blockchain:', error);
