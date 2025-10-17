@@ -1,0 +1,163 @@
+import { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useTokenBalance } from '@/hooks/useTokenBalance';
+import { useTransferTokens } from '@/hooks/useTransferTokens';
+import { CONTRACTS } from '@/config/contracts';
+import { toast } from 'sonner';
+import { Loader2, Send, Coins } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+
+interface Token {
+  name: string;
+  symbol: string;
+  address: string;
+}
+
+export function TokenList() {
+  const [selectedToken, setSelectedToken] = useState<Token | null>(null);
+  const [recipientAddress, setRecipientAddress] = useState('');
+  const [transferAmount, setTransferAmount] = useState('');
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const { balance, isLoading, refetch } = useTokenBalance();
+  const { transferTokens, isPending, isSuccess } = useTransferTokens();
+
+  // Default token for now
+  const tokens: Token[] = [
+    {
+      name: 'Loyal Spark',
+      symbol: 'LSP',
+      address: CONTRACTS.LOYAL_SPARK_ERC20.address,
+    },
+  ];
+
+  const handleTransfer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!selectedToken || !recipientAddress || !transferAmount) {
+      toast.error('Please fill all fields');
+      return;
+    }
+
+    if (parseFloat(transferAmount) > parseFloat(balance)) {
+      toast.error('Insufficient balance');
+      return;
+    }
+
+    await transferTokens(
+      selectedToken.address,
+      recipientAddress,
+      transferAmount,
+      CONTRACTS.LOYAL_SPARK_ERC20.abi
+    );
+
+    if (isSuccess) {
+      toast.success('Tokens transferred successfully!');
+      setRecipientAddress('');
+      setTransferAmount('');
+      setDialogOpen(false);
+      refetch();
+    }
+  };
+
+  return (
+    <Card className="border-2 bg-gradient-to-br from-card to-muted/30">
+      <CardHeader>
+        <CardTitle>Your Loyalty Tokens</CardTitle>
+        <CardDescription>Manage tokens from different merchants</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {tokens.map((token) => (
+          <div
+            key={token.address}
+            className="flex items-center justify-between p-4 rounded-lg bg-gradient-to-r from-primary/5 to-secondary/5 border-2 border-primary/10 hover:border-primary/30 transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                <Coins className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <div>
+                <p className="font-semibold">{token.name}</p>
+                <p className="text-sm text-muted-foreground">{token.symbol}</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <p className="text-2xl font-bold">
+                  {isLoading ? (
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  ) : (
+                    parseFloat(balance).toFixed(2)
+                  )}
+                </p>
+                <p className="text-xs text-muted-foreground">{token.symbol}</p>
+              </div>
+
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    onClick={() => setSelectedToken(token)}
+                    className="bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+                  >
+                    <Send className="h-4 w-4 mr-1" />
+                    Send
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Transfer {token.symbol}</DialogTitle>
+                    <DialogDescription>
+                      Send {token.name} tokens to another address
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleTransfer} className="space-y-4 mt-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="recipient">Recipient Address</Label>
+                      <Input
+                        id="recipient"
+                        placeholder="0x..."
+                        value={recipientAddress}
+                        onChange={(e) => setRecipientAddress(e.target.value)}
+                        disabled={isPending}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="transfer-amount">Amount</Label>
+                      <Input
+                        id="transfer-amount"
+                        type="number"
+                        placeholder="0.00"
+                        value={transferAmount}
+                        onChange={(e) => setTransferAmount(e.target.value)}
+                        disabled={isPending}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Available: {parseFloat(balance).toFixed(2)} {token.symbol}
+                      </p>
+                    </div>
+                    <Button type="submit" disabled={isPending} className="w-full">
+                      {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Transfer Tokens
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}

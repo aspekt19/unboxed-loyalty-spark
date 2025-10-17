@@ -1,16 +1,17 @@
+import { TokenList } from './TokenList';
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { useTokenBalance } from '@/hooks/useTokenBalance';
 import { useBurnTokens } from '@/hooks/useBurnTokens';
+import { useTokenBalance } from '@/hooks/useTokenBalance';
 import { toast } from 'sonner';
-import { Loader2, Coins } from 'lucide-react';
+import { Loader2, Gift } from 'lucide-react';
 
 export function CustomerPanel() {
   const [redeemAmount, setRedeemAmount] = useState('');
-  const { balance, isLoading: balanceLoading, refetch } = useTokenBalance();
+  const { balance, refetch } = useTokenBalance();
   const { burnTokens, isPending, isSuccess } = useBurnTokens();
 
   const handleRedeem = async (e: React.FormEvent) => {
@@ -35,44 +36,37 @@ export function CustomerPanel() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Customer Portal</CardTitle>
-        <CardDescription>View and redeem your loyalty tokens</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
-          <div className="flex items-center gap-2">
-            <Coins className="h-5 w-5 text-primary" />
-            <span className="font-medium">Your Balance</span>
-          </div>
-          <div className="text-2xl font-bold">
-            {balanceLoading ? (
-              <Loader2 className="h-6 w-6 animate-spin" />
-            ) : (
-              `${parseFloat(balance).toFixed(2)} LSP`
-            )}
-          </div>
-        </div>
-
-        <form onSubmit={handleRedeem} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="redeem-amount">Redeem Amount</Label>
-            <Input
-              id="redeem-amount"
-              type="number"
-              placeholder="Enter amount to redeem"
-              value={redeemAmount}
-              onChange={(e) => setRedeemAmount(e.target.value)}
-              disabled={isPending}
-            />
-          </div>
-          <Button type="submit" disabled={isPending || balanceLoading} className="w-full">
-            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Redeem Tokens
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      <TokenList />
+      
+      <Card className="border-2 bg-gradient-to-br from-card to-muted/30">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Gift className="h-5 w-5 text-primary" />
+            Redeem Rewards
+          </CardTitle>
+          <CardDescription>Burn tokens to claim rewards from merchants</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleRedeem} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="redeem-amount">Redeem Amount</Label>
+              <Input
+                id="redeem-amount"
+                type="number"
+                placeholder="Enter amount to redeem"
+                value={redeemAmount}
+                onChange={(e) => setRedeemAmount(e.target.value)}
+                disabled={isPending}
+              />
+            </div>
+            <Button type="submit" disabled={isPending} className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90">
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Redeem Tokens
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
