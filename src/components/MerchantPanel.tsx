@@ -1,6 +1,6 @@
 import { CreateLoyaltyProgram } from './CreateLoyaltyProgram';
 import { CreatedPrograms } from './CreatedPrograms';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -32,9 +32,15 @@ export function MerchantPanel() {
     await mintTokens(selectedProgram.tokenAddress, recipientAddress, amount);
   };
 
-  if (isSuccess) {
-    toast.success('Tokens minted successfully!');
-  }
+  useEffect(() => {
+    if (isSuccess) {
+      toast.success('Tokens minted successfully!');
+      setRecipientAddress('');
+      setAmount('');
+      // Trigger event to refresh token lists on customer side
+      window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
+    }
+  }, [isSuccess]);
 
   return (
     <div className="space-y-6">

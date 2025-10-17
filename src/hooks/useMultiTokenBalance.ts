@@ -72,7 +72,7 @@ export function useMultiTokenBalance(tokens: TokenInfo[]) {
   useEffect(() => {
     console.log('useMultiTokenBalance: Fetching balances for', tokens.length, 'tokens');
     fetchBalances();
-  }, [address, tokens, publicClient]);
+  }, [address, JSON.stringify(tokens.map(t => t.address)), publicClient]);
 
   return {
     balances,
