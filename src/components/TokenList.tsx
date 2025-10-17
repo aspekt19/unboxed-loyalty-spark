@@ -8,7 +8,7 @@ import { useTransferTokens } from '@/hooks/useTransferTokens';
 import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
 import { Loader2, Send, Coins } from 'lucide-react';
-import { usePublicClient } from 'wagmi';
+import { usePublicClient, useAccount } from 'wagmi';
 import {
   Dialog,
   DialogContent,
@@ -27,8 +27,14 @@ export function TokenList() {
   const [isLoadingTokens, setIsLoadingTokens] = useState(true);
 
   const publicClient = usePublicClient();
+  const { address: walletAddress } = useAccount();
   const { balances, isLoading, refetch } = useMultiTokenBalance(allTokens);
   const { transferTokens, isPending, isSuccess } = useTransferTokens();
+
+  // Debug log when wallet connects
+  useEffect(() => {
+    console.log('TokenList: Wallet address changed:', walletAddress);
+  }, [walletAddress]);
 
   // Load tokens on mount and when wallet connects
   useEffect(() => {
@@ -54,9 +60,15 @@ export function TokenList() {
   }, []);
 
   const loadTokensFromBlockchain = async () => {
-    if (!publicClient) return;
+    if (!publicClient) {
+      console.log('TokenList: No publicClient available');
+      return;
+    }
     
     setIsLoadingTokens(true);
+    console.log('TokenList: Loading tokens from blockchain...');
+    console.log('TokenList: Factory address:', CONTRACTS.LOYALTY_TOKEN_FACTORY.address);
+    
     try {
       // Fetch all LoyaltyTokenCreated events from the factory contract
       const logs = await publicClient.getLogs({
@@ -75,7 +87,7 @@ export function TokenList() {
         toBlock: 'latest',
       });
 
-      console.log('Loaded loyalty tokens from blockchain:', logs.length);
+      console.log('TokenList: Loaded loyalty tokens from blockchain:', logs.length);
 
       const tokens: TokenInfo[] = logs.map((log: any) => ({
         address: log.args.tokenAddress,
@@ -83,10 +95,16 @@ export function TokenList() {
         symbol: log.args.symbol,
       }));
 
-      console.log('TokenList: Setting tokens:', tokens);
+      console.log('TokenList: Parsed tokens:', tokens);
       setAllTokens(tokens);
+      
+      // Trigger balance fetch after tokens are set
+      setTimeout(() => {
+        console.log('TokenList: Triggering balance refetch');
+        refetch();
+      }, 500);
     } catch (error) {
-      console.error('Failed to load tokens from blockchain:', error);
+      console.error('TokenList: Failed to load tokens from blockchain:', error);
       // Fallback to localStorage if blockchain query fails
       loadTokensFromLocalStorage();
     } finally {
@@ -117,6 +135,13 @@ export function TokenList() {
   const tokensWithBalance = balances.filter(token => 
     parseFloat(token.balance) > 0
   );
+
+  // Debug log balances
+  useEffect(() => {
+    console.log('TokenList: All tokens:', allTokens);
+    console.log('TokenList: All balances:', balances);
+    console.log('TokenList: Tokens with balance:', tokensWithBalance);
+  }, [allTokens, balances, tokensWithBalance]);
 
   const handleTransfer = async (e: React.FormEvent) => {
     e.preventDefault();

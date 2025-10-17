@@ -25,7 +25,13 @@ export function useMultiTokenBalance(tokens: TokenInfo[]) {
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchBalances = async () => {
+    console.log('useMultiTokenBalance: fetchBalances called');
+    console.log('useMultiTokenBalance: address:', address);
+    console.log('useMultiTokenBalance: publicClient:', !!publicClient);
+    console.log('useMultiTokenBalance: tokens:', tokens);
+    
     if (!address || !publicClient || tokens.length === 0) {
+      console.log('useMultiTokenBalance: Skipping fetch - missing dependencies');
       setBalances([]);
       return;
     }
@@ -34,6 +40,8 @@ export function useMultiTokenBalance(tokens: TokenInfo[]) {
     try {
       const balancePromises = tokens.map(async (token) => {
         try {
+          console.log(`useMultiTokenBalance: Fetching balance for ${token.symbol} at ${token.address}`);
+          
           const balance = await publicClient.readContract({
             address: token.address as `0x${string}`,
             abi: ERC20_ABI,
@@ -43,13 +51,15 @@ export function useMultiTokenBalance(tokens: TokenInfo[]) {
           
           const formattedBalance = formatUnits(balance as bigint, 18);
           
+          console.log(`useMultiTokenBalance: Balance for ${token.symbol}:`, formattedBalance);
+          
           return {
             ...token,
             balance: formattedBalance,
             rawBalance: balance as bigint,
           };
         } catch (error) {
-          console.error(`Error fetching balance for ${token.symbol}:`, error);
+          console.error(`useMultiTokenBalance: Error fetching balance for ${token.symbol}:`, error);
           return {
             ...token,
             balance: '0',
@@ -59,10 +69,10 @@ export function useMultiTokenBalance(tokens: TokenInfo[]) {
       });
 
       const results = await Promise.all(balancePromises);
-      console.log('useMultiTokenBalance: Fetched balances:', results);
+      console.log('useMultiTokenBalance: All fetched balances:', results);
       setBalances(results);
     } catch (error) {
-      console.error('Error fetching balances:', error);
+      console.error('useMultiTokenBalance: Error fetching balances:', error);
       setBalances([]);
     } finally {
       setIsLoading(false);
