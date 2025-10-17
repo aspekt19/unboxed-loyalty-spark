@@ -78,20 +78,24 @@ export function TokenList() {
     console.log('TokenList: Factory address:', CONTRACTS.LOYALTY_TOKEN_FACTORY.address);
     
     try {
+      // Find the LoyaltyTokenCreated event ABI
+      const eventAbi = CONTRACTS.LOYALTY_TOKEN_FACTORY.abi.find(
+        (item) => item.type === 'event' && item.name === 'LoyaltyTokenCreated'
+      );
+
+      if (!eventAbi) {
+        console.error('TokenList: LoyaltyTokenCreated event not found in ABI');
+        setIsLoadingTokens(false);
+        return;
+      }
+
+      console.log('TokenList: Querying logs with event:', eventAbi);
+
       // Fetch all LoyaltyTokenCreated events from the factory contract
       const logs = await publicClient.getLogs({
         address: CONTRACTS.LOYALTY_TOKEN_FACTORY.address,
-        event: {
-          type: 'event',
-          name: 'LoyaltyTokenCreated',
-          inputs: [
-            { type: 'address', name: 'tokenAddress', indexed: true },
-            { type: 'address', name: 'merchantAddress', indexed: true },
-            { type: 'string', name: 'name', indexed: false },
-            { type: 'string', name: 'symbol', indexed: false },
-          ],
-        },
-        fromBlock: 'earliest',
+        event: eventAbi,
+        fromBlock: BigInt(0),
         toBlock: 'latest',
       });
 
