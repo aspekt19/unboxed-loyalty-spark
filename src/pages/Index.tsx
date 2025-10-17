@@ -1,159 +1,187 @@
 import { WalletConnectButton } from '@/components/WalletConnectButton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Sparkles, ShoppingBag, Store, ArrowRight, Wallet } from 'lucide-react';
+import { Sparkles, ShoppingBag, Store, ArrowRight, Shield, Zap, Globe, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Index = () => {
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Vibrant animated background orbs */}
-      <div className="absolute top-32 left-20 w-96 h-96 bg-primary/25 rounded-full blur-3xl floating" />
-      <div className="absolute bottom-32 right-20 w-[500px] h-[500px] bg-secondary/25 rounded-full blur-3xl floating" style={{ animationDelay: '1.5s' }} />
-      <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-accent/20 rounded-full blur-3xl floating" style={{ animationDelay: '3s' }} />
-      <div className="absolute bottom-1/4 left-1/3 w-72 h-72 opacity-30 rounded-full blur-3xl floating" style={{ background: 'hsl(45 100% 60% / 0.2)', animationDelay: '2s' }} />
+    <div className="min-h-screen relative overflow-hidden bg-background">
+      {/* Subtle animated background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5" />
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-blob" />
+      <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-blob animation-delay-2000" />
+      <div className="absolute bottom-1/4 left-1/3 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-blob animation-delay-4000" />
 
-      <header className="glass-effect sticky top-0 z-50 border-b-2 border-primary/20">
-        <div className="container mx-auto px-4 py-5 flex justify-between items-center">
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="relative h-14 w-14 rounded-2xl bg-gradient-to-br from-primary via-accent to-secondary flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:rotate-6" style={{ boxShadow: '0 0 30px rgba(168, 85, 247, 0.5)' }}>
-              <Sparkles className="h-8 w-8 text-white" />
-              <div className="absolute -inset-1 bg-gradient-to-br from-primary to-accent rounded-2xl opacity-0 group-hover:opacity-70 blur-md transition-opacity" />
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
+        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <div className="relative h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+              <Sparkles className="h-5 w-5 text-primary-foreground" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold">
-                <span className="bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
-                  Loyal Spark
-                </span>
-              </h1>
-              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <div className="h-1.5 w-1.5 rounded-full bg-secondary animate-pulse" />
-                BASE Network
-              </p>
-            </div>
+            <span className="text-xl font-bold text-foreground">Loyal Spark</span>
           </Link>
           <WalletConnectButton />
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-16 relative z-10">
-        <div className="max-w-6xl mx-auto">
-          {/* Hero Section */}
-          <div className="text-center mb-20">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-effect mb-6 animate-fade-in border border-secondary/30">
-              <Wallet className="h-4 w-4 text-secondary" />
-              <span className="text-sm font-medium">Built on Web3 • Powered by BASE</span>
-            </div>
-            <h2 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-              <span className="bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
-                Loyalty Rewards,
-              </span>
-              <br />
-              <span className="bg-gradient-to-r from-secondary to-accent bg-clip-text text-transparent">
-                Web3 Style
-              </span>
-            </h2>
-            <p className="text-foreground/80 text-xl md:text-2xl max-w-3xl mx-auto leading-relaxed">
-              Mint, manage & trade loyalty tokens on-chain 
-              <br />
-              <span className="bg-gradient-to-r from-accent to-primary bg-clip-text text-transparent font-semibold">Decentralized. Transparent. Yours.</span>
-            </p>
+      <main className="container mx-auto px-6 relative z-10">
+        {/* Hero Section */}
+        <section className="py-24 md:py-32 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 border border-border mb-8 opacity-0 animate-fade-in">
+            <div className="h-2 w-2 rounded-full bg-secondary animate-pulse" />
+            <span className="text-sm font-medium text-muted-foreground">Built on BASE Network</span>
+          </div>
+          
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight tracking-tight opacity-0 animate-fade-in animation-delay-200">
+            <span className="text-foreground">Discover loyalty</span>
+            <br />
+            <span className="text-foreground">rewards</span>{' '}
+            <span className="text-gradient">reimagined.</span>
+          </h1>
+          
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-12 opacity-0 animate-fade-in animation-delay-400">
+            Mint, manage and trade loyalty tokens on-chain. Built for the next generation of customer engagement.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center opacity-0 animate-fade-in animation-delay-600">
+            <Link to="/customer">
+              <Button size="lg" className="h-12 px-8 text-base font-semibold rounded-full bg-foreground text-background hover:bg-foreground/90 transition-all duration-300 hover:scale-105">
+                Get started
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+            <Link to="/merchant">
+              <Button size="lg" variant="outline" className="h-12 px-8 text-base font-semibold rounded-full border-2 transition-all duration-300 hover:scale-105">
+                For merchants
+              </Button>
+            </Link>
           </div>
 
-          {/* Portal Cards */}
-          <div className="grid md:grid-cols-2 gap-8">
+          {/* Trust badges */}
+          <div className="mt-20 opacity-0 animate-fade-in animation-delay-800">
+            <p className="text-sm text-muted-foreground mb-6">Powered by</p>
+            <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 text-muted-foreground/60">
+              <div className="font-semibold text-lg">BASE</div>
+              <div className="font-semibold text-lg">Web3</div>
+              <div className="font-semibold text-lg">ERC-20</div>
+              <div className="font-semibold text-lg">Decentralized</div>
+            </div>
+          </div>
+        </section>
+
+        {/* Portal Cards */}
+        <section className="py-16 md:py-24">
+          <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
             {/* Customer Card */}
-            <Card className="glass-effect hover-lift group relative overflow-hidden border-2 border-primary/30 bg-card/80">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/15 via-transparent to-accent/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/30 rounded-full blur-3xl" />
+            <Card className="group relative overflow-hidden border-2 transition-all duration-500 hover:border-primary/50 hover:shadow-2xl hover:-translate-y-2 opacity-0 animate-fade-in animation-delay-1000">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               
-              <CardHeader className="text-center pb-6 relative z-10">
-                <div className="mx-auto h-24 w-24 rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-all duration-300 relative" style={{ background: 'linear-gradient(135deg, hsl(270 100% 68%), hsl(320 100% 65%))', boxShadow: '0 0 40px rgba(168, 85, 247, 0.6)' }}>
-                  <ShoppingBag className="h-11 w-11 text-white" strokeWidth={2.5} />
-                  <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-primary to-accent opacity-0 group-hover:opacity-50 blur-xl transition-opacity" />
+              <CardHeader className="text-center pb-4 relative">
+                <div className="mx-auto h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center mb-6 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
+                  <ShoppingBag className="h-8 w-8 text-primary-foreground" strokeWidth={2} />
                 </div>
-                <CardTitle className="text-4xl font-bold mb-3">
-                  <span className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-                    Customers
-                  </span>
+                <CardTitle className="text-3xl font-bold text-foreground mb-3">
+                  For Customers
                 </CardTitle>
-                <CardDescription className="text-base text-foreground/75 leading-relaxed">
-                  View balance • Redeem rewards • Trade on DEXs
-                  <br />
-                  <span className="bg-gradient-to-r from-secondary via-accent to-secondary bg-clip-text text-transparent font-semibold mt-1 inline-block">Your loyalty, your control</span>
+                <CardDescription className="text-base text-muted-foreground">
+                  View your loyalty tokens, redeem rewards, and trade on decentralized exchanges.
                 </CardDescription>
               </CardHeader>
               
-              <CardContent className="text-center relative z-10 pb-8">
+              <CardContent className="text-center relative pb-8">
                 <Link to="/customer">
-                  <Button size="lg" className="w-full group/btn text-white font-semibold text-lg h-14 transition-all duration-300 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, hsl(270 100% 68%), hsl(320 100% 65%))', boxShadow: '0 8px 25px rgba(168, 85, 247, 0.4)' }}>
-                    <span className="relative z-10 flex items-center justify-center">
-                      Enter Portal
-                      <ArrowRight className="ml-2 h-5 w-5 group-hover/btn:translate-x-2 transition-transform duration-300" />
-                    </span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-accent to-primary opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
+                  <Button size="lg" className="w-full h-12 text-base font-semibold rounded-xl bg-foreground text-background hover:bg-foreground/90 transition-all duration-300 group-hover:scale-105">
+                    Enter Portal
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                   </Button>
                 </Link>
               </CardContent>
             </Card>
 
             {/* Merchant Card */}
-            <Card className="glass-effect hover-lift group relative overflow-hidden border-2 border-secondary/30 bg-card/80">
-              <div className="absolute inset-0 bg-gradient-to-br from-secondary/15 via-transparent to-accent/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="absolute -top-10 -left-10 w-40 h-40 bg-secondary/30 rounded-full blur-3xl" />
+            <Card className="group relative overflow-hidden border-2 transition-all duration-500 hover:border-secondary/50 hover:shadow-2xl hover:-translate-y-2 opacity-0 animate-fade-in animation-delay-1200">
+              <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               
-              <CardHeader className="text-center pb-6 relative z-10">
-                <div className="mx-auto h-24 w-24 rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-all duration-300 relative" style={{ background: 'linear-gradient(135deg, hsl(180 100% 60%), hsl(200 100% 65%))', boxShadow: '0 0 40px rgba(56, 189, 248, 0.6)' }}>
-                  <Store className="h-11 w-11 text-white" strokeWidth={2.5} />
-                  <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-secondary to-accent opacity-0 group-hover:opacity-50 blur-xl transition-opacity" />
+              <CardHeader className="text-center pb-4 relative">
+                <div className="mx-auto h-16 w-16 rounded-2xl bg-gradient-to-br from-secondary to-accent flex items-center justify-center mb-6 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
+                  <Store className="h-8 w-8 text-secondary-foreground" strokeWidth={2} />
                 </div>
-                <CardTitle className="text-4xl font-bold mb-3">
-                  <span className="bg-gradient-to-r from-secondary via-accent to-secondary bg-clip-text text-transparent">
-                    Merchants
-                  </span>
+                <CardTitle className="text-3xl font-bold text-foreground mb-3">
+                  For Merchants
                 </CardTitle>
-                <CardDescription className="text-base text-foreground/75 leading-relaxed">
-                  Deploy tokens • Issue rewards • Build programs
-                  <br />
-                  <span className="bg-gradient-to-r from-accent via-primary to-accent bg-clip-text text-transparent font-semibold mt-1 inline-block">Loyalty reimagined</span>
+                <CardDescription className="text-base text-muted-foreground">
+                  Deploy your loyalty token, issue rewards, and build engaging programs.
                 </CardDescription>
               </CardHeader>
               
-              <CardContent className="text-center relative z-10 pb-8">
+              <CardContent className="text-center relative pb-8">
                 <Link to="/merchant">
-                  <Button size="lg" className="w-full group/btn text-white font-semibold text-lg h-14 transition-all duration-300 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, hsl(180 100% 60%), hsl(200 100% 65%))', boxShadow: '0 8px 25px rgba(56, 189, 248, 0.4)' }}>
-                    <span className="relative z-10 flex items-center justify-center">
-                      Enter Portal
-                      <ArrowRight className="ml-2 h-5 w-5 group-hover/btn:translate-x-2 transition-transform duration-300" />
-                    </span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-accent to-secondary opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" />
+                  <Button size="lg" className="w-full h-12 text-base font-semibold rounded-xl bg-foreground text-background hover:bg-foreground/90 transition-all duration-300 group-hover:scale-105">
+                    Enter Portal
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                   </Button>
                 </Link>
               </CardContent>
             </Card>
           </div>
+        </section>
 
-          {/* Feature Pills */}
-          <div className="flex flex-wrap justify-center gap-4 mt-16">
-            {[
-              { emoji: '🔒', text: 'Secure', gradient: 'from-primary to-accent' },
-              { emoji: '⚡', text: 'Fast', gradient: 'from-secondary to-primary' },
-              { emoji: '🌐', text: 'Decentralized', gradient: 'from-accent to-secondary' },
-              { emoji: '💎', text: 'Tradeable', gradient: 'from-primary to-secondary' }
-            ].map((feature) => (
-              <div 
-                key={feature.text} 
-                className="px-6 py-3 rounded-full glass-effect border-2 border-primary/20 text-sm font-medium hover:border-accent/50 transition-all cursor-default group/pill"
-              >
-                <span className="mr-2">{feature.emoji}</span>
-                <span className={`bg-gradient-to-r ${feature.gradient} bg-clip-text text-transparent font-semibold`}>
-                  {feature.text}
-                </span>
-              </div>
-            ))}
+        {/* Features */}
+        <section className="py-16 md:py-24">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-16 opacity-0 animate-fade-in animation-delay-1400">
+              Why <span className="text-gradient">Loyal Spark</span>?
+            </h2>
+            
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {[
+                { icon: Shield, title: 'Secure', description: 'Smart contract based security', delay: '1600' },
+                { icon: Zap, title: 'Fast', description: 'Instant transactions on BASE', delay: '1700' },
+                { icon: Globe, title: 'Decentralized', description: 'True ownership of rewards', delay: '1800' },
+                { icon: TrendingUp, title: 'Tradeable', description: 'Exchange on any DEX', delay: '1900' }
+              ].map((feature) => (
+                <div 
+                  key={feature.title} 
+                  className={`text-center group opacity-0 animate-fade-in animation-delay-${feature.delay}`}
+                >
+                  <div className="mx-auto h-12 w-12 rounded-xl bg-muted flex items-center justify-center mb-4 transition-all duration-300 group-hover:bg-primary/10 group-hover:scale-110">
+                    <feature.icon className="h-6 w-6 text-foreground transition-colors duration-300 group-hover:text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground mb-2">{feature.title}</h3>
+                  <p className="text-sm text-muted-foreground">{feature.description}</p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="py-16 md:py-24">
+          <div className="max-w-3xl mx-auto text-center opacity-0 animate-fade-in animation-delay-2000">
+            <h2 className="text-3xl md:text-5xl font-bold mb-6 text-foreground">
+              Ready to get started?
+            </h2>
+            <p className="text-lg text-muted-foreground mb-8">
+              Join the future of loyalty rewards today.
+            </p>
+            <Link to="/customer">
+              <Button size="lg" className="h-14 px-10 text-lg font-semibold rounded-full bg-foreground text-background hover:bg-foreground/90 transition-all duration-300 hover:scale-105">
+                Launch App
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+          </div>
+        </section>
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-border/40 py-8 mt-16">
+        <div className="container mx-auto px-6 text-center text-sm text-muted-foreground">
+          <p>© 2024 Loyal Spark. Built on BASE Network.</p>
+        </div>
+      </footer>
     </div>
   );
 };
