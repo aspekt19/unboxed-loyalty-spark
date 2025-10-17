@@ -28,10 +28,27 @@ export function CreateReward() {
   });
 
   useEffect(() => {
-    const merchantPrograms = localStorage.getItem('merchantPrograms');
-    if (merchantPrograms) {
-      setTokens(JSON.parse(merchantPrograms));
-    }
+    const loadPrograms = () => {
+      const loyaltyPrograms = localStorage.getItem('loyaltyPrograms');
+      if (loyaltyPrograms) {
+        const programs = JSON.parse(loyaltyPrograms);
+        // Only show programs with tokenAddress
+        const activePrograms = programs
+          .filter((p: any) => p.tokenAddress)
+          .map((p: any) => ({
+            address: p.tokenAddress,
+            name: p.name,
+            symbol: p.symbol,
+          }));
+        setTokens(activePrograms);
+      }
+    };
+
+    loadPrograms();
+
+    // Listen for updates when new programs are created
+    window.addEventListener('loyaltyProgramsUpdated', loadPrograms);
+    return () => window.removeEventListener('loyaltyProgramsUpdated', loadPrograms);
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
