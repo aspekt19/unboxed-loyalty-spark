@@ -4,7 +4,7 @@ A decentralized loyalty program built on Base Mainnet, enabling merchants to cre
 
 ## Overview
 
-Loyal Spark is a Web3-native loyalty rewards platform that leverages ERC-1155 smart contracts on Base Mainnet to provide transparent, decentralized loyalty programs for small and medium-sized businesses.
+Loyal Spark is a Web3-native loyalty rewards platform that leverages ERC-20 smart contracts on Base Mainnet to provide transparent, decentralized loyalty programs for small and medium-sized businesses.
 
 ### Merchant Features
 - **Create Loyalty Programs**: Create custom loyalty programs with unique names and symbols
