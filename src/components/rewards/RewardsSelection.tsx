@@ -163,15 +163,12 @@ export function RewardsSelection() {
       return;
     }
 
-    // Используем transfer на нулевой адрес вместо burn (дешевле)
+    // Сжигаем токены при активации ваучера
     const loyaltyTokenAbi = [
       {
-        inputs: [
-          { name: 'to', type: 'address' },
-          { name: 'amount', type: 'uint256' }
-        ],
-        name: 'transfer',
-        outputs: [{ name: '', type: 'bool' }],
+        inputs: [{ name: 'amount', type: 'uint256' }],
+        name: 'burn',
+        outputs: [],
         stateMutability: 'nonpayable',
         type: 'function',
       },
