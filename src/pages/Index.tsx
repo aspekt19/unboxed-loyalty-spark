@@ -36,11 +36,17 @@ const Index = () => {
           </div>
 
           <Tabs defaultValue="customer" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 h-12 bg-muted/50 p-1">
-              <TabsTrigger value="customer" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground">
+            <TabsList className="grid w-full grid-cols-2 h-16 bg-card p-1.5 shadow-soft border-2 border-primary/10">
+              <TabsTrigger 
+                value="customer" 
+                className="text-lg font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow"
+              >
                 Customer
               </TabsTrigger>
-              <TabsTrigger value="merchant" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground">
+              <TabsTrigger 
+                value="merchant" 
+                className="text-lg font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-primary-foreground data-[state=active]:shadow-glow"
+              >
                 Merchant
               </TabsTrigger>
             </TabsList>
