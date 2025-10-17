@@ -10,13 +10,13 @@ export function useBurnTokens() {
     hash,
   });
 
-  const burnTokens = (amount: string) => {
+  const burnTokens = (tokenAddress: string, amount: string, tokenAbi: any) => {
     try {
       const amountInWei = parseUnits(amount, 18);
       
       writeContract({
-        address: CONTRACTS.LOYAL_SPARK_ERC20.address,
-        abi: CONTRACTS.LOYAL_SPARK_ERC20.abi,
+        address: tokenAddress as `0x${string}`,
+        abi: tokenAbi,
         functionName: 'burn',
         args: [amountInWei],
       } as any);
