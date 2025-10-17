@@ -8,6 +8,7 @@ import { useTransferTokens } from '@/hooks/useTransferTokens';
 import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
 import { Loader2, Send, Coins } from 'lucide-react';
+import { usePublicClient } from 'wagmi';
 import {
   Dialog,
   DialogContent,
@@ -23,19 +24,59 @@ export function TokenList() {
   const [transferAmount, setTransferAmount] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [allTokens, setAllTokens] = useState<TokenInfo[]>([]);
+  const [isLoadingTokens, setIsLoadingTokens] = useState(true);
 
+  const publicClient = usePublicClient();
   const { balances, isLoading, refetch } = useMultiTokenBalance(allTokens);
   const { transferTokens, isPending, isSuccess } = useTransferTokens();
 
   useEffect(() => {
-    loadTokens();
+    loadTokensFromBlockchain();
     
-    const handleUpdate = () => loadTokens();
+    const handleUpdate = () => loadTokensFromBlockchain();
     window.addEventListener('loyaltyProgramsUpdated', handleUpdate);
     return () => window.removeEventListener('loyaltyProgramsUpdated', handleUpdate);
-  }, []);
+  }, [publicClient]);
 
-  const loadTokens = () => {
+  const loadTokensFromBlockchain = async () => {
+    if (!publicClient) return;
+    
+    setIsLoadingTokens(true);
+    try {
+      // Fetch all LoyaltyTokenCreated events from the factory contract
+      const logs = await publicClient.getLogs({
+        address: CONTRACTS.LOYALTY_TOKEN_FACTORY.address,
+        event: {
+          type: 'event',
+          name: 'LoyaltyTokenCreated',
+          inputs: [
+            { type: 'address', name: 'tokenAddress', indexed: true },
+            { type: 'address', name: 'owner', indexed: true },
+            { type: 'string', name: 'name', indexed: false },
+            { type: 'string', name: 'symbol', indexed: false },
+          ],
+        },
+        fromBlock: 'earliest',
+        toBlock: 'latest',
+      });
+
+      const tokens: TokenInfo[] = logs.map((log: any) => ({
+        address: log.args.tokenAddress,
+        name: log.args.name,
+        symbol: log.args.symbol,
+      }));
+
+      setAllTokens(tokens);
+    } catch (error) {
+      console.error('Failed to load tokens from blockchain:', error);
+      // Fallback to localStorage if blockchain query fails
+      loadTokensFromLocalStorage();
+    } finally {
+      setIsLoadingTokens(false);
+    }
+  };
+
+  const loadTokensFromLocalStorage = () => {
     const stored = localStorage.getItem('loyaltyPrograms');
     if (stored) {
       try {
@@ -49,7 +90,7 @@ export function TokenList() {
           }));
         setAllTokens(tokens);
       } catch (error) {
-        console.error('Failed to load tokens:', error);
+        console.error('Failed to load tokens from localStorage:', error);
       }
     }
   };
@@ -96,13 +137,13 @@ export function TokenList() {
         <CardDescription>Manage tokens from different merchants</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {isLoading && allTokens.length > 0 && (
+        {(isLoading || isLoadingTokens) && (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         )}
         
-        {!isLoading && tokensWithBalance.length === 0 && (
+        {!isLoading && !isLoadingTokens && tokensWithBalance.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
             <Coins className="h-12 w-12 mx-auto mb-2 opacity-50" />
             <p>No loyalty tokens yet</p>
