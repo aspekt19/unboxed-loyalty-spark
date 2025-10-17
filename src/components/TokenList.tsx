@@ -45,16 +45,12 @@ export function TokenList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [publicClient, walletAddress]);
 
-  // Listen for loyalty program updates
+  // Listen for loyalty program updates from merchant
   useEffect(() => {
     const handleUpdate = () => {
-      console.log('loyaltyProgramsUpdated event received, refetching...');
+      console.log('loyaltyProgramsUpdated event received, reloading tokens...');
+      hasLoadedRef.current = false; // Allow reload
       loadTokensFromBlockchain();
-      // Also refetch balances after a short delay to allow blockchain to update
-      setTimeout(() => {
-        console.log('Refetching balances after program update');
-        refetch();
-      }, 2000);
     };
     window.addEventListener('loyaltyProgramsUpdated', handleUpdate);
     return () => window.removeEventListener('loyaltyProgramsUpdated', handleUpdate);
@@ -136,10 +132,6 @@ export function TokenList() {
       // Save to localStorage for future use
       if (tokens.length > 0) {
         localStorage.setItem('customerTokens', JSON.stringify(tokens));
-        setTimeout(() => {
-          console.log('TokenList: Triggering balance refetch');
-          refetch();
-        }, 500);
       }
     } catch (error) {
       console.error('TokenList: Failed to load tokens from blockchain:', error);
