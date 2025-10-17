@@ -78,14 +78,10 @@ export function TokenList() {
     console.log('TokenList: Factory address:', CONTRACTS.LOYALTY_TOKEN_FACTORY.address);
     
     try {
-      // Get current block to calculate a reasonable starting block
+      // Get current block
       const currentBlock = await publicClient.getBlockNumber();
       console.log('TokenList: Current block:', currentBlock);
       
-      // Search from ~7 days ago (assuming 2 second blocks = ~302,400 blocks)
-      const fromBlock = currentBlock > 302400n ? currentBlock - 302400n : 0n;
-      console.log('TokenList: Searching from block:', fromBlock);
-
       // Find the LoyaltyTokenCreated event ABI
       const eventAbi = CONTRACTS.LOYALTY_TOKEN_FACTORY.abi.find(
         (item) => item.type === 'event' && item.name === 'LoyaltyTokenCreated'
@@ -98,19 +94,43 @@ export function TokenList() {
         return;
       }
 
-      console.log('TokenList: Querying logs...');
+      // Query in chunks to avoid "exceed maximum block range" error
+      const CHUNK_SIZE = 40000n; // Stay under 50k limit
+      const LOOKBACK_BLOCKS = 200000n; // ~5 days on Base (2 sec blocks)
+      const fromBlock = currentBlock > LOOKBACK_BLOCKS ? currentBlock - LOOKBACK_BLOCKS : 0n;
+      
+      console.log('TokenList: Querying from block:', fromBlock, 'to', currentBlock);
 
-      // Fetch all LoyaltyTokenCreated events from the factory contract
-      const logs = await publicClient.getLogs({
-        address: CONTRACTS.LOYALTY_TOKEN_FACTORY.address,
-        event: eventAbi,
-        fromBlock: fromBlock,
-        toBlock: 'latest',
-      });
+      let allLogs: any[] = [];
+      let currentChunkStart = fromBlock;
 
-      console.log('TokenList: Loaded loyalty tokens from blockchain:', logs.length);
+      while (currentChunkStart <= currentBlock) {
+        const currentChunkEnd = currentChunkStart + CHUNK_SIZE > currentBlock 
+          ? currentBlock 
+          : currentChunkStart + CHUNK_SIZE;
 
-      const tokens: TokenInfo[] = logs.map((log: any) => ({
+        console.log(`TokenList: Querying chunk ${currentChunkStart} to ${currentChunkEnd}`);
+
+        try {
+          const logs = await publicClient.getLogs({
+            address: CONTRACTS.LOYALTY_TOKEN_FACTORY.address,
+            event: eventAbi,
+            fromBlock: currentChunkStart,
+            toBlock: currentChunkEnd,
+          });
+
+          allLogs = [...allLogs, ...logs];
+          console.log(`TokenList: Found ${logs.length} events in this chunk`);
+        } catch (chunkError) {
+          console.error(`TokenList: Error querying chunk:`, chunkError);
+        }
+
+        currentChunkStart = currentChunkEnd + 1n;
+      }
+
+      console.log('TokenList: Total events found:', allLogs.length);
+
+      const tokens: TokenInfo[] = allLogs.map((log: any) => ({
         address: log.args.tokenAddress,
         name: log.args.name,
         symbol: log.args.symbol,
@@ -119,8 +139,9 @@ export function TokenList() {
       console.log('TokenList: Parsed tokens:', tokens);
       setAllTokens(tokens);
       
-      // Trigger balance fetch after tokens are set
+      // Save to localStorage for future use
       if (tokens.length > 0) {
+        localStorage.setItem('customerTokens', JSON.stringify(tokens));
         setTimeout(() => {
           console.log('TokenList: Triggering balance refetch');
           refetch();
@@ -129,7 +150,6 @@ export function TokenList() {
     } catch (error) {
       console.error('TokenList: Failed to load tokens from blockchain:', error);
       console.log('TokenList: Falling back to localStorage');
-      // Fallback to localStorage if blockchain query fails
       loadTokensFromLocalStorage();
     } finally {
       setIsLoadingTokens(false);
@@ -137,21 +157,25 @@ export function TokenList() {
   };
 
   const loadTokensFromLocalStorage = () => {
-    const stored = localStorage.getItem('loyaltyPrograms');
+    // Try customer-specific localStorage first, then fall back to merchant's
+    const stored = localStorage.getItem('customerTokens') || localStorage.getItem('loyaltyPrograms');
     if (stored) {
       try {
         const programs = JSON.parse(stored);
         const tokens: TokenInfo[] = programs
           .filter((p: any) => p.tokenAddress && p.tokenAddress !== 'pending')
           .map((p: any) => ({
-            address: p.tokenAddress,
+            address: p.tokenAddress || p.address,
             name: p.name,
             symbol: p.symbol,
           }));
+        console.log('TokenList: Loaded tokens from localStorage:', tokens);
         setAllTokens(tokens);
       } catch (error) {
         console.error('Failed to load tokens from localStorage:', error);
       }
+    } else {
+      console.log('TokenList: No tokens in localStorage');
     }
   };
 
