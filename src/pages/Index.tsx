@@ -7,10 +7,10 @@ import { Sparkles } from 'lucide-react';
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b-2 border-border/50 bg-gradient-to-r from-card to-background backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b-2 border-primary/20 bg-card shadow-soft sticky top-0 z-50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-glow">
               <Sparkles className="h-6 w-6 text-primary-foreground" />
             </div>
             <div>

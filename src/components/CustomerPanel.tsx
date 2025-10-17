@@ -1,4 +1,5 @@
 import { TokenList } from './TokenList';
+import { DexIntegration } from './DexIntegration';
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -6,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useBurnTokens } from '@/hooks/useBurnTokens';
 import { useTokenBalance } from '@/hooks/useTokenBalance';
+import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
 import { Loader2, Gift } from 'lucide-react';
 
@@ -38,6 +40,8 @@ export function CustomerPanel() {
   return (
     <div className="space-y-6">
       <TokenList />
+      
+      <DexIntegration tokenAddress={CONTRACTS.LOYAL_SPARK_ERC20.address} />
       
       <Card className="border-2 bg-gradient-to-br from-card to-muted/30">
         <CardHeader>

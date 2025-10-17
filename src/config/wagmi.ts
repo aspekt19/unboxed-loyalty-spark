@@ -7,3 +7,5 @@ export const config = getDefaultConfig({
   chains: [base],
   ssr: false,
 });
+
+export const rainbowKitLocale = 'en';
