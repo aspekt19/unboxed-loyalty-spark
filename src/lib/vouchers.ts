@@ -21,8 +21,8 @@ export async function createReward(reward: Omit<Reward, 'id' | 'createdAt'>): Pr
   const { data, error } = await supabase
     .from('rewards')
     .insert({
-      token_address: reward.tokenAddress,
-      merchant_address: reward.merchantAddress,
+      token_address: reward.tokenAddress.toLowerCase(),
+      merchant_address: reward.merchantAddress.toLowerCase(),
       name: reward.name,
       description: reward.description,
       cost: reward.cost,
@@ -77,7 +77,7 @@ export async function getMerchantRewards(merchantAddress: string): Promise<Rewar
   const { data, error } = await supabase
     .from('rewards')
     .select('*')
-    .eq('merchant_address', merchantAddress)
+    .eq('merchant_address', merchantAddress.toLowerCase())
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -102,7 +102,7 @@ export async function getRewardsByToken(tokenAddress: string): Promise<Reward[]>
   const { data, error } = await supabase
     .from('rewards')
     .select('*')
-    .eq('token_address', tokenAddress)
+    .eq('token_address', tokenAddress.toLowerCase())
     .eq('is_active', true)
     .order('created_at', { ascending: false });
 
@@ -169,10 +169,10 @@ export async function createVoucher(voucher: Omit<Voucher, 'id' | 'activatedAt'>
       reward_id: voucher.rewardId,
       reward_name: voucher.rewardName,
       reward_description: voucher.rewardDescription,
-      token_address: voucher.tokenAddress,
+      token_address: voucher.tokenAddress.toLowerCase(),
       token_symbol: voucher.tokenSymbol,
-      customer_address: voucher.customerAddress,
-      merchant_address: voucher.merchantAddress,
+      customer_address: voucher.customerAddress.toLowerCase(),
+      merchant_address: voucher.merchantAddress.toLowerCase(),
       status: voucher.status,
       cost: voucher.cost,
       used_at: voucher.usedAt,
@@ -207,7 +207,7 @@ export async function getCustomerVouchers(customerAddress: string): Promise<Vouc
   const { data, error } = await supabase
     .from('vouchers')
     .select('*')
-    .eq('customer_address', customerAddress)
+    .eq('customer_address', customerAddress.toLowerCase())
     .order('activated_at', { ascending: false });
 
   if (error) {
@@ -237,7 +237,7 @@ export async function getMerchantVouchers(merchantAddress: string): Promise<Vouc
   const { data, error } = await supabase
     .from('vouchers')
     .select('*')
-    .eq('merchant_address', merchantAddress)
+    .eq('merchant_address', merchantAddress.toLowerCase())
     .order('activated_at', { ascending: false });
 
   if (error) {
