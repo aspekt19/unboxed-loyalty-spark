@@ -64,11 +64,8 @@ export function RewardsSelection() {
 
     // Слушаем обновления программ и наград
     const handleRewardsUpdate = async () => {
-      console.log('rewardsUpdated event received');
       if (selectedTokenAddress) {
-        console.log('Reloading rewards for:', selectedTokenAddress);
         const rewards = await getRewardsByToken(selectedTokenAddress);
-        console.log('Updated rewards:', rewards);
         setAvailableRewards(rewards);
       }
     };
@@ -86,9 +83,7 @@ export function RewardsSelection() {
   useEffect(() => {
     const loadRewardsForToken = async () => {
       if (selectedTokenAddress) {
-        console.log('Loading rewards for token:', selectedTokenAddress);
         const rewards = await getRewardsByToken(selectedTokenAddress);
-        console.log('Found rewards:', rewards);
         setAvailableRewards(rewards);
         setSelectedRewardId('');
       }

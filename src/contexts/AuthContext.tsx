@@ -76,7 +76,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       toast.success('Successfully signed in with wallet');
     } catch (error: any) {
-      console.error('Sign in error:', error);
       toast.error(error.message || 'Failed to sign in');
     } finally {
       setIsLoading(false);
@@ -89,7 +88,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
       toast.success('Signed out successfully');
     } catch (error: any) {
-      console.error('Sign out error:', error);
       toast.error('Failed to sign out');
     }
   };

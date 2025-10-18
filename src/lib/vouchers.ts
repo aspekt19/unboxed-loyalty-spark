@@ -32,7 +32,6 @@ export async function createReward(reward: Omit<Reward, 'id' | 'createdAt'>): Pr
     .single();
 
   if (error) {
-    console.error('Error creating reward:', error);
     return null;
   }
 
@@ -56,7 +55,6 @@ export async function loadRewards(): Promise<Reward[]> {
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error loading rewards:', error);
     return [];
   }
 
@@ -81,7 +79,6 @@ export async function getMerchantRewards(merchantAddress: string): Promise<Rewar
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error loading merchant rewards:', error);
     return [];
   }
 
@@ -107,7 +104,6 @@ export async function getRewardsByToken(tokenAddress: string): Promise<Reward[]>
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error loading rewards by token:', error);
     return [];
   }
 
@@ -138,7 +134,6 @@ export async function updateReward(rewardId: string, updates: Partial<Reward>): 
     .eq('id', rewardId);
 
   if (error) {
-    console.error('Error updating reward:', error);
     return false;
   }
 
@@ -153,7 +148,6 @@ export async function deleteReward(rewardId: string): Promise<boolean> {
     .eq('id', rewardId);
 
   if (error) {
-    console.error('Error deleting reward:', error);
     return false;
   }
 
@@ -181,7 +175,6 @@ export async function createVoucher(voucher: Omit<Voucher, 'id' | 'activatedAt'>
     .single();
 
   if (error) {
-    console.error('Error creating voucher:', error);
     return null;
   }
 
@@ -211,7 +204,6 @@ export async function getCustomerVouchers(customerAddress: string): Promise<Vouc
     .order('activated_at', { ascending: false });
 
   if (error) {
-    console.error('Error loading customer vouchers:', error);
     return [];
   }
 
@@ -241,7 +233,6 @@ export async function getMerchantVouchers(merchantAddress: string): Promise<Vouc
     .order('activated_at', { ascending: false });
 
   if (error) {
-    console.error('Error loading merchant vouchers:', error);
     return [];
   }
 
@@ -278,7 +269,6 @@ export async function updateVoucherStatus(
     .eq('id', voucherId);
 
   if (error) {
-    console.error('Error updating voucher status:', error);
     return false;
   }
 
@@ -294,7 +284,6 @@ export async function getRewardById(rewardId: string): Promise<Reward | null> {
     .single();
 
   if (error) {
-    console.error('Error loading reward by ID:', error);
     return null;
   }
 

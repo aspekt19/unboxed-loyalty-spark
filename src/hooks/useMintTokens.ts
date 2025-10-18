@@ -14,8 +14,6 @@ export function useMintTokens() {
     try {
       const amountInWei = parseUnits(amount, 18);
       
-      console.log('Minting tokens:', { tokenAddress, recipientAddress, amount: amountInWei.toString() });
-      
       writeContract({
         address: tokenAddress as `0x${string}`,
         abi: CONTRACTS.LOYAL_SPARK_ERC20.abi,

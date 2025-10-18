@@ -37,7 +37,6 @@ export function MerchantPanel() {
 
   useEffect(() => {
     if (isSuccess) {
-      console.log('Mint successful, resetting form');
       toast.success('Tokens minted successfully!');
       setRecipientAddress('');
       setAmount('');
