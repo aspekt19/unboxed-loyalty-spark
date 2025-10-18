@@ -105,11 +105,9 @@ Loyal Spark is a decentralized loyalty rewards platform built on the BASE Networ
 ### Contact Information
 
 **Media Inquiries:**
-Email: press@loyalspark.online
+Email: gerassyk@gmail.com
 Website: https://loyalspark.online
 
-**Partnership Opportunities:**
-Email: partnerships@loyalspark.online
 
 **Follow Us:**
 - Twitter/X: https://x.com/Loyal_Spark
