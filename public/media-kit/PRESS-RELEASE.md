@@ -10,7 +10,7 @@
 
 ---
 
-**[City, Date]** – Loyal Spark, an innovative decentralized loyalty rewards platform, announces its official launch on the BASE Network, bringing a new era of customer rewards that combines true ownership, transparency, and tradeable value.
+**Loyal Spark, an innovative decentralized loyalty rewards platform, announces its official launch on the BASE Network, bringing a new era of customer rewards that combines true ownership, transparency, and tradeable value.
 
 #### The Problem with Traditional Loyalty Programs
 
