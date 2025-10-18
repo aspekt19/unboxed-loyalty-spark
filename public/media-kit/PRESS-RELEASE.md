@@ -111,8 +111,6 @@ Website: https://loyalspark.online
 
 **Follow Us:**
 - Twitter/X: https://x.com/Loyal_Spark
-- LinkedIn: 
-- Discord: 
 
 ---
 
