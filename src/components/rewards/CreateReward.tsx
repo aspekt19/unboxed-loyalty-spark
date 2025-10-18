@@ -9,6 +9,9 @@ import { toast } from 'sonner';
 import { Plus } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { createReward } from '@/lib/vouchers';
+import { useAuth } from '@/contexts/AuthContext';
+import { rewardSchema } from '@/lib/validationSchemas';
+import { AuthPrompt } from '@/components/AuthPrompt';
 
 interface TokenInfo {
   address: string;
@@ -18,6 +21,7 @@ interface TokenInfo {
 
 export function CreateReward() {
   const { address } = useAccount();
+  const { user } = useAuth();
   const [tokens, setTokens] = useState<TokenInfo[]>([]);
   const [formData, setFormData] = useState({
     tokenAddress: '',
@@ -53,6 +57,11 @@ export function CreateReward() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!user) {
+      toast.error('Please sign in with your wallet first');
+      return;
+    }
+
     if (!address) {
       toast.error('Please connect your wallet');
       return;
@@ -64,8 +73,17 @@ export function CreateReward() {
     }
 
     const cost = parseFloat(formData.cost);
-    if (cost <= 0) {
-      toast.error('Cost must be greater than 0');
+
+    // Validate input data
+    const validation = rewardSchema.safeParse({
+      tokenAddress: formData.tokenAddress,
+      name: formData.name,
+      description: formData.description,
+      cost,
+    });
+
+    if (!validation.success) {
+      toast.error(validation.error.errors[0].message);
       return;
     }
 
@@ -90,6 +108,7 @@ export function CreateReward() {
   return (
     <Card className="border-2">
       <CardHeader>
+        <AuthPrompt />
         <CardTitle className="flex items-center gap-2">
           <Plus className="h-5 w-5 text-primary" />
           Create New Reward
