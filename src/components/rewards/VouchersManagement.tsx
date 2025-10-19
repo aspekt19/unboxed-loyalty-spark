@@ -32,8 +32,15 @@ export function VouchersManagement() {
 
   useEffect(() => {
     loadMerchantVouchers();
-    window.addEventListener('vouchersUpdated', loadMerchantVouchers);
-    return () => window.removeEventListener('vouchersUpdated', loadMerchantVouchers);
+    
+    const handleUpdate = () => loadMerchantVouchers();
+    window.addEventListener('vouchersUpdated', handleUpdate);
+    window.addEventListener('profileMigrated', handleUpdate);
+    
+    return () => {
+      window.removeEventListener('vouchersUpdated', handleUpdate);
+      window.removeEventListener('profileMigrated', handleUpdate);
+    };
   }, [address]);
 
   const handleMarkAsUsed = async (voucherId: string, code: string) => {

@@ -70,6 +70,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (migrationError) throw migrationError;
 
+      // Dispatch event after successful profile migration
+      window.dispatchEvent(new Event('profileMigrated'));
+
       toast.success('Successfully signed in with wallet');
     } catch (error: any) {
       console.error('Sign in error:', error);
