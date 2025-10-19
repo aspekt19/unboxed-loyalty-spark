@@ -167,16 +167,25 @@ export function RewardsSelection() {
   }, [isSuccess, selectedRewardId, availableRewards, tokens, selectedTokenAddress, address, refetch]);
 
   const handleApprove = () => {
+    console.log('RewardsSelection: handleApprove called');
+    console.log('RewardsSelection: selectedTokenAddress:', selectedTokenAddress);
+    console.log('RewardsSelection: MERCHANT_ADDRESS:', MERCHANT_ADDRESS);
+    console.log('RewardsSelection: selectedRewardId:', selectedRewardId);
+    console.log('RewardsSelection: selectedRewardForSpender:', selectedRewardForSpender);
+    
     if (!selectedTokenAddress) {
+      console.log('RewardsSelection: Error - No token selected');
       toast.error('Please select a loyalty program');
       return;
     }
 
     if (!MERCHANT_ADDRESS || MERCHANT_ADDRESS === '0x0000000000000000000000000000000000000000') {
+      console.log('RewardsSelection: Error - Invalid merchant address');
       toast.error('Merchant address not found');
       return;
     }
 
+    console.log('RewardsSelection: Calling approveTokens...');
     // Даем approve адресу мерчанта, чтобы он мог управлять нашими токенами
     approveTokens(selectedTokenAddress, MERCHANT_ADDRESS, CONTRACTS.LOYAL_SPARK_ERC20.abi);
   };
