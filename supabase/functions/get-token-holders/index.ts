@@ -26,8 +26,8 @@ serve(async (req) => {
 
     console.log('Fetching token holders for:', tokenAddress);
 
-    // RPC endpoint for Base network
-    const BASE_RPC_URL = 'https://mainnet.base.org';
+    // RPC endpoint for Base network - using public node
+    const BASE_RPC_URL = 'https://base-rpc.publicnode.com';
     
     // ERC20 ABI for balanceOf
     const ERC20_ABI = [
