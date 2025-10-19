@@ -161,33 +161,54 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
           const currentBlock = await publicClient.getBlockNumber();
           console.log('Current block:', currentBlock);
           
-          const BLOCK_RANGE = 200000;
-          let fromBlock = currentBlock - BigInt(BLOCK_RANGE);
-          if (fromBlock < 0n) fromBlock = 0n;
-
+          const CHUNK_SIZE = 40000n; // Stay under 50k limit
+          const LOOKBACK_BLOCKS = 200000n;
+          const fromBlock = currentBlock > LOOKBACK_BLOCKS ? currentBlock - LOOKBACK_BLOCKS : 0n;
+          
           console.log('Fetching logs from block', fromBlock, 'to', currentBlock);
           
-          const logs = await publicClient.getLogs({
-            address: program.tokenAddress as `0x${string}`,
-            event: {
-              type: 'event',
-              name: 'Transfer',
-              inputs: [
-                { name: 'from', type: 'address', indexed: true },
-                { name: 'to', type: 'address', indexed: true },
-                { name: 'value', type: 'uint256', indexed: false },
-              ],
-            },
-            args: {
-              from: '0x0000000000000000000000000000000000000000' as `0x${string}`,
-            },
-            fromBlock,
-            toBlock: currentBlock,
-          });
+          // Query in chunks to avoid "exceed maximum block range" error
+          let allLogs: any[] = [];
+          let currentChunkStart = fromBlock;
 
-          console.log('Logs received:', logs.length);
+          while (currentChunkStart <= currentBlock) {
+            const currentChunkEnd = currentChunkStart + CHUNK_SIZE > currentBlock 
+              ? currentBlock 
+              : currentChunkStart + CHUNK_SIZE;
 
-          const totalIssued = logs.reduce((sum, log) => {
+            console.log(`Querying chunk ${currentChunkStart} to ${currentChunkEnd}`);
+
+            try {
+              const logs = await publicClient.getLogs({
+                address: program.tokenAddress as `0x${string}`,
+                event: {
+                  type: 'event',
+                  name: 'Transfer',
+                  inputs: [
+                    { name: 'from', type: 'address', indexed: true },
+                    { name: 'to', type: 'address', indexed: true },
+                    { name: 'value', type: 'uint256', indexed: false },
+                  ],
+                },
+                args: {
+                  from: '0x0000000000000000000000000000000000000000' as `0x${string}`,
+                },
+                fromBlock: currentChunkStart,
+                toBlock: currentChunkEnd,
+              });
+
+              allLogs = [...allLogs, ...logs];
+              console.log(`Found ${logs.length} events in this chunk`);
+            } catch (chunkError) {
+              console.error(`Error querying chunk:`, chunkError);
+            }
+
+            currentChunkStart = currentChunkEnd + 1n;
+          }
+
+          console.log('Total logs received:', allLogs.length);
+
+          const totalIssued = allLogs.reduce((sum, log) => {
             if (log.args.value) {
               return sum + Number(log.args.value) / 1e18;
             }
