@@ -7,8 +7,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import { Gift, AlertCircle, Loader2, Ticket } from 'lucide-react';
 import { useAccount } from 'wagmi';
+import { parseUnits } from 'viem';
 import { useBurnTokens } from '@/hooks/useBurnTokens';
+import { useApproveTokens, useCheckAllowance } from '@/hooks/useApproveTokens';
 import { useMultiTokenBalance } from '@/hooks/useMultiTokenBalance';
+import { CONTRACTS } from '@/config/contracts';
 import { Reward } from '@/types/rewards';
 import { getRewardsByToken, createVoucher, generateVoucherCode } from '@/lib/vouchers';
 
@@ -27,6 +30,21 @@ export function RewardsSelection() {
   
   const { balances, isLoading: balancesLoading, refetch } = useMultiTokenBalance(tokens);
   const { burnTokens, isPending, isSuccess } = useBurnTokens();
+  const { approveTokens, isPending: isApproving, isSuccess: isApproved } = useApproveTokens();
+  
+  // TODO: В продакшене это должен быть адрес контракта мерчанта/казначейства
+  // Для MVP используем адрес пользователя, но это временное решение
+  const SYSTEM_SPENDER = address || '0x0000000000000000000000000000000000000000';
+  
+  // Проверяем allowance для выбранного токена
+  const { data: allowance, refetch: refetchAllowance } = useCheckAllowance(
+    selectedTokenAddress,
+    address,
+    SYSTEM_SPENDER,
+    CONTRACTS.LOYAL_SPARK_ERC20.abi
+  );
+  
+  const allowanceAmount = (allowance as bigint | undefined) || 0n;
 
   // Загрузка токенов
   useEffect(() => {
@@ -92,6 +110,14 @@ export function RewardsSelection() {
     loadRewardsForToken();
   }, [selectedTokenAddress]);
 
+  // Обновление allowance после успешного approve
+  useEffect(() => {
+    if (isApproved) {
+      toast.success('Tokens approved! You can now activate rewards.');
+      refetchAllowance();
+    }
+  }, [isApproved, refetchAllowance]);
+
   // Обработка успешного сжигания
   useEffect(() => {
     const handleVoucherCreation = async () => {
@@ -129,6 +155,15 @@ export function RewardsSelection() {
     handleVoucherCreation();
   }, [isSuccess, selectedRewardId, availableRewards, tokens, selectedTokenAddress, address, refetch]);
 
+  const handleApprove = () => {
+    if (!selectedTokenAddress) {
+      toast.error('Please select a loyalty program');
+      return;
+    }
+
+    approveTokens(selectedTokenAddress, SYSTEM_SPENDER, CONTRACTS.LOYAL_SPARK_ERC20.abi);
+  };
+
   const handleActivate = () => {
     if (!address) {
       toast.error('Please connect your wallet');
@@ -158,7 +193,16 @@ export function RewardsSelection() {
       return;
     }
 
-    // Сжигаем токены при активации ваучера
+    // Проверяем allowance перед сжиганием
+    const requiredAmount = parseUnits(reward.cost.toString(), 18);
+    if (allowanceAmount < requiredAmount) {
+      toast.error('Please approve tokens first');
+      return;
+    }
+
+    // NOTE: Временное решение для MVP - покупатель сам сжигает токены
+    // В Enterprise версии здесь будет вызов Edge Function, который выполнит
+    // transferFrom от имени мерчанта/системы для контролируемого списания
     const loyaltyTokenAbi = [
       {
         inputs: [{ name: 'amount', type: 'uint256' }],
@@ -170,6 +214,15 @@ export function RewardsSelection() {
     ] as const;
     
     burnTokens(selectedTokenAddress, reward.cost.toString(), loyaltyTokenAbi);
+  };
+
+  // Проверяем, нужно ли approve для выбранной награды
+  const needsApproval = () => {
+    if (!selectedRewardId) return false;
+    const reward = availableRewards.find(r => r.id === selectedRewardId);
+    if (!reward) return false;
+    const requiredAmount = parseUnits(reward.cost.toString(), 18);
+    return allowanceAmount < requiredAmount;
   };
 
   const selectedToken = tokens.find(t => t.address === selectedTokenAddress);
@@ -263,14 +316,34 @@ export function RewardsSelection() {
               </div>
             )}
 
-            <Button
-              onClick={handleActivate}
-              disabled={!selectedRewardId || isPending || balancesLoading}
-              className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
-            >
-              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Activate Voucher
-            </Button>
+            {selectedRewardId && needsApproval() && (
+              <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+                <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <AlertDescription className="text-blue-900 dark:text-blue-100">
+                  First-time setup: Approve the system to manage your loyalty tokens. This is a one-time action per program.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {needsApproval() ? (
+              <Button
+                onClick={handleApprove}
+                disabled={isApproving || balancesLoading}
+                className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:opacity-90"
+              >
+                {isApproving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Approve Token Spending
+              </Button>
+            ) : (
+              <Button
+                onClick={handleActivate}
+                disabled={!selectedRewardId || isPending || balancesLoading}
+                className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+              >
+                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Activate Voucher
+              </Button>
+            )}
           </div>
         )}
       </CardContent>
