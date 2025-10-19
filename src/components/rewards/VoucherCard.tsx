@@ -58,9 +58,9 @@ export function VoucherCard({ voucher }: VoucherCardProps) {
             <div className="p-2 rounded-lg bg-primary/10">
               <Ticket className="h-5 w-5 text-primary" />
             </div>
-            <div>
-              <h3 className="font-semibold text-lg">{voucher.rewardName}</h3>
-              <p className="text-sm text-muted-foreground">{voucher.rewardDescription}</p>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-lg truncate">{voucher.rewardName}</h3>
+              <p className="text-sm text-muted-foreground line-clamp-2">{voucher.rewardDescription}</p>
             </div>
           </div>
           <Badge variant={getStatusColor()}>{getStatusLabel()}</Badge>
@@ -69,12 +69,13 @@ export function VoucherCard({ voucher }: VoucherCardProps) {
         <div className="p-4 bg-muted rounded-lg space-y-2">
           <div className="text-xs text-muted-foreground uppercase tracking-wider">Voucher Code</div>
           <div className="flex items-center justify-between gap-2">
-            <code className="text-2xl font-bold tracking-wider">{voucher.code}</code>
+            <code className="text-xl md:text-2xl font-bold tracking-wider break-all">{voucher.code}</code>
             <Button
               size="icon"
               variant="ghost"
               onClick={handleCopy}
               disabled={copied}
+              className="flex-shrink-0"
             >
               {copied ? (
                 <CheckCircle2 className="h-4 w-4 text-green-500" />

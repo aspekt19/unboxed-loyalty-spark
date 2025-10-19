@@ -365,25 +365,34 @@ export function RewardsSelection() {
               </Alert>
             )}
 
-            {needsApproval() ? (
+            {selectedRewardId && needsApproval() ? (
               <Button
-                onClick={handleApprove}
-                disabled={isApproving || balancesLoading}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  console.log('Button clicked!');
+                  handleApprove();
+                }}
+                disabled={isApproving || balancesLoading || !selectedRewardId}
                 className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:opacity-90"
               >
                 {isApproving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Approve Token Spending
               </Button>
-            ) : (
+            ) : selectedRewardId ? (
               <Button
-                onClick={handleActivate}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleActivate();
+                }}
                 disabled={!selectedRewardId || isPending || balancesLoading}
                 className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
               >
                 {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Activate Voucher
               </Button>
-            )}
+            ) : null}
           </div>
         )}
       </CardContent>
