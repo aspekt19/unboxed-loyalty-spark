@@ -106,7 +106,7 @@ export function CustomerFiltersPanel() {
   }
 
   return (
-    <Card className="border-2 flex flex-col max-h-[calc(100vh-2rem)]">
+    <Card className="border-2 h-full flex flex-col">
       <CardHeader className="flex-shrink-0">
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-primary" />
@@ -114,7 +114,7 @@ export function CustomerFiltersPanel() {
         </CardTitle>
         <CardDescription>Your loyalty programs overview</CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 overflow-hidden">
+      <CardContent className="flex-1 overflow-hidden flex flex-col">
         {isLoading || balancesLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -128,7 +128,7 @@ export function CustomerFiltersPanel() {
             </AlertDescription>
           </Alert>
         ) : (
-          <ScrollArea className="h-full">
+          <ScrollArea className="flex-1">
             <div className="space-y-3 pr-4 pb-4">
               {programsWithBalance.map((program) => {
                 const balance = balances.find(b => b.address === program.address);
