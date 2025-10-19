@@ -250,16 +250,36 @@ export function RewardsSelection() {
 
   // Проверяем, нужно ли approve для выбранной награды
   const needsApproval = () => {
-    if (!selectedRewardId) return false;
+    console.log('=== needsApproval check ===');
+    console.log('selectedRewardId:', selectedRewardId);
+    if (!selectedRewardId) {
+      console.log('No reward selected');
+      return false;
+    }
     const reward = availableRewards.find(r => r.id === selectedRewardId);
-    if (!reward) return false;
+    console.log('Found reward:', reward);
+    if (!reward) {
+      console.log('Reward not found');
+      return false;
+    }
     const requiredAmount = parseUnits(reward.cost.toString(), 18);
+    console.log('Required amount:', requiredAmount.toString());
+    console.log('Current allowance:', allowanceAmount.toString());
+    console.log('Needs approval:', allowanceAmount < requiredAmount);
     return allowanceAmount < requiredAmount;
   };
 
   const selectedToken = tokens.find(t => t.address === selectedTokenAddress);
   const selectedBalance = balances.find(b => b.address === selectedTokenAddress);
   const selectedReward = availableRewards.find(r => r.id === selectedRewardId);
+  
+  console.log('=== RewardsSelection render ===');
+  console.log('selectedTokenAddress:', selectedTokenAddress);
+  console.log('selectedRewardId:', selectedRewardId);
+  console.log('selectedReward:', selectedReward);
+  console.log('MERCHANT_ADDRESS:', MERCHANT_ADDRESS);
+  console.log('allowanceAmount:', allowanceAmount.toString());
+  console.log('needsApproval():', needsApproval());
   
   // Фильтруем токены, показываем только с ненулевым балансом
   const tokensWithBalance = tokens.filter(token => {
