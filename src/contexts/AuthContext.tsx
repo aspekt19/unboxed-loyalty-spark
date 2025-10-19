@@ -63,23 +63,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (authError) throw authError;
 
       // Use security definer function to migrate wallet profile
-      console.log('[AuthContext] Migrating profile for wallet:', address.toLowerCase(), 'to user:', authData.user.id);
       const { error: migrationError } = await supabase.rpc('migrate_wallet_profile', {
         p_wallet_address: address.toLowerCase(),
         p_new_user_id: authData.user.id,
       });
 
-      if (migrationError) {
-        console.error('[AuthContext] Migration error:', migrationError);
-        throw migrationError;
-      }
+      if (migrationError) throw migrationError;
 
-      console.log('[AuthContext] Profile migration successful, dispatching event after delay');
-      // Wait for profile migration to complete, then trigger reload
-      setTimeout(() => {
-        console.log('[AuthContext] Dispatching profileMigrated event');
-        window.dispatchEvent(new Event('profileMigrated'));
-      }, 1000);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      window.dispatchEvent(new Event('profileMigrated'));
 
       toast.success('Successfully signed in with wallet');
     } catch (error: any) {

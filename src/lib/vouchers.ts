@@ -226,36 +226,34 @@ export async function getCustomerVouchers(customerAddress: string): Promise<Vouc
 
 // Загрузка ваучеров мерчанта
 export async function getMerchantVouchers(merchantAddress: string): Promise<Voucher[]> {
-  console.log('[vouchers.ts] getMerchantVouchers called for:', merchantAddress.toLowerCase());
-  
-  const { data, error } = await supabase
-    .from('vouchers')
-    .select('*')
-    .eq('merchant_address', merchantAddress.toLowerCase())
-    .order('activated_at', { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from('vouchers')
+      .select('*')
+      .eq('merchant_address', merchantAddress.toLowerCase())
+      .order('activated_at', { ascending: false });
 
-  if (error) {
-    console.error('[vouchers.ts] Error loading vouchers:', error);
+    if (error) throw error;
+    
+    return (data || []).map(v => ({
+      id: v.id,
+      code: v.code,
+      rewardId: v.reward_id,
+      rewardName: v.reward_name,
+      rewardDescription: v.reward_description || '',
+      tokenAddress: v.token_address,
+      tokenSymbol: v.token_symbol,
+      customerAddress: v.customer_address,
+      merchantAddress: v.merchant_address,
+      status: v.status as 'active' | 'used' | 'expired',
+      cost: Number(v.cost),
+      activatedAt: v.activated_at,
+      usedAt: v.used_at,
+    }));
+  } catch (error) {
+    console.error('Failed to load merchant vouchers:', error);
     return [];
   }
-
-  console.log('[vouchers.ts] Vouchers data from DB:', data?.length || 0, data);
-  
-  return data.map(v => ({
-    id: v.id,
-    code: v.code,
-    rewardId: v.reward_id,
-    rewardName: v.reward_name,
-    rewardDescription: v.reward_description || '',
-    tokenAddress: v.token_address,
-    tokenSymbol: v.token_symbol,
-    customerAddress: v.customer_address,
-    merchantAddress: v.merchant_address,
-    status: v.status as 'active' | 'used' | 'expired',
-    cost: Number(v.cost),
-    activatedAt: v.activated_at,
-    usedAt: v.used_at,
-  }));
 }
 
 // Обновление статуса ваучера

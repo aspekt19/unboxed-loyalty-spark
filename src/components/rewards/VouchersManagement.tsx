@@ -10,6 +10,7 @@ import { useAccount } from 'wagmi';
 import { Voucher } from '@/types/rewards';
 import { getMerchantVouchers, updateVoucherStatus } from '@/lib/vouchers';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { supabase } from '@/integrations/supabase/client';
 
 export function VouchersManagement() {
   const { address } = useAccount();
@@ -17,13 +18,8 @@ export function VouchersManagement() {
   const [searchCode, setSearchCode] = useState('');
 
   const loadMerchantVouchers = async () => {
-    if (!address) {
-      console.log('[VouchersManagement] No address, skipping load');
-      return;
-    }
-    console.log('[VouchersManagement] Loading vouchers for merchant:', address);
+    if (!address) return;
     const merchantVouchers = await getMerchantVouchers(address);
-    console.log('[VouchersManagement] Loaded vouchers:', merchantVouchers.length, merchantVouchers);
     setVouchers(merchantVouchers);
   };
 
@@ -36,22 +32,37 @@ export function VouchersManagement() {
   }, [address]);
 
   useEffect(() => {
-    console.log('[VouchersManagement] Effect triggered, address:', address);
     loadMerchantVouchers();
     
     const handleUpdate = () => {
-      console.log('[VouchersManagement] Event received, reloading vouchers');
-      loadMerchantVouchers();
+      setTimeout(() => loadMerchantVouchers(), 500);
     };
     
-    console.log('[VouchersManagement] Adding event listeners');
     window.addEventListener('vouchersUpdated', handleUpdate);
     window.addEventListener('profileMigrated', handleUpdate);
     
+    // Подписка на realtime обновления ваучеров
+    const channel = supabase
+      .channel('vouchers_merchant')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'vouchers',
+          filter: `merchant_address=eq.${address?.toLowerCase()}`,
+        },
+        () => {
+          console.log('Voucher changed, reloading...');
+          loadMerchantVouchers();
+        }
+      )
+      .subscribe();
+    
     return () => {
-      console.log('[VouchersManagement] Removing event listeners');
       window.removeEventListener('vouchersUpdated', handleUpdate);
       window.removeEventListener('profileMigrated', handleUpdate);
+      supabase.removeChannel(channel);
     };
   }, [address]);
 
