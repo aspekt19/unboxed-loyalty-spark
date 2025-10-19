@@ -29,6 +29,8 @@ interface LoyaltyProgram {
 interface TokenStats {
   [tokenAddress: string]: {
     totalIssued: number;
+    merchantBalance: number;
+    holdersBalance: number;
   };
 }
 
@@ -158,7 +160,60 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
             return sum;
           }, 0);
 
-          stats[program.tokenAddress] = { totalIssued };
+          // Получаем баланс мерчанта через RPC
+          let merchantBalance = 0;
+          try {
+            const balanceResponse = await fetch('https://mainnet.base.org', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                jsonrpc: '2.0',
+                method: 'eth_call',
+                params: [
+                  {
+                    to: program.tokenAddress,
+                    data: `0x70a08231000000000000000000000000${address.slice(2)}`,
+                  },
+                  'latest',
+                ],
+                id: 1,
+              }),
+            });
+            const balanceData = await balanceResponse.json();
+            if (balanceData.result) {
+              merchantBalance = parseInt(balanceData.result, 16) / 1e18;
+            }
+          } catch (error) {
+            console.error('Error fetching merchant balance:', error);
+          }
+
+          // Получаем балансы всех держателей через edge function
+          let holdersBalance = 0;
+          try {
+            const response = await fetch(
+              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-token-holders`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  tokenAddress: program.tokenAddress,
+                }),
+              }
+            );
+
+            if (response.ok) {
+              const data = await response.json();
+              holdersBalance = data.holders.reduce((sum: number, holder: any) => {
+                return sum + parseFloat(holder.balance);
+              }, 0);
+            }
+          } catch (error) {
+            console.error('Error fetching holders:', error);
+          }
+
+          stats[program.tokenAddress] = { totalIssued, merchantBalance, holdersBalance };
         } catch (error) {
           console.error(`Error loading stats for ${program.name}:`, error);
         }
@@ -293,11 +348,25 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
                         {program.tokenAddress.slice(0, 6)}...{program.tokenAddress.slice(-4)}
                       </p>
                       {tokenStats[program.tokenAddress] && (
-                        <div className="mt-2 text-sm">
-                          <span className="text-muted-foreground">Total Issued: </span>
-                          <span className="font-semibold text-primary">
-                            {tokenStats[program.tokenAddress].totalIssued.toFixed(2)} {program.symbol}
-                          </span>
+                        <div className="mt-2 space-y-1 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Total Issued: </span>
+                            <span className="font-semibold text-primary">
+                              {tokenStats[program.tokenAddress].totalIssued.toFixed(2)} {program.symbol}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Your Balance: </span>
+                            <span className="font-semibold">
+                              {tokenStats[program.tokenAddress].merchantBalance.toFixed(2)} {program.symbol}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Users Balance: </span>
+                            <span className="font-semibold">
+                              {tokenStats[program.tokenAddress].holdersBalance.toFixed(2)} {program.symbol}
+                            </span>
+                          </div>
                         </div>
                       )}
                     </>
