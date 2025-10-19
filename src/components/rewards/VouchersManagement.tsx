@@ -11,14 +11,16 @@ import { Voucher } from '@/types/rewards';
 import { getMerchantVouchers, updateVoucherStatus } from '@/lib/vouchers';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function VouchersManagement() {
   const { address } = useAccount();
+  const { session } = useAuth();
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [searchCode, setSearchCode] = useState('');
 
   const loadMerchantVouchers = async () => {
-    if (!address) return;
+    if (!address || !session) return;
     const merchantVouchers = await getMerchantVouchers(address);
     setVouchers(merchantVouchers);
   };
@@ -32,6 +34,9 @@ export function VouchersManagement() {
   }, [address]);
 
   useEffect(() => {
+    // Загружаем ваучеры только если есть адрес и пользователь авторизован
+    if (!address || !session) return;
+    
     loadMerchantVouchers();
     
     const handleUpdate = () => {
@@ -50,7 +55,7 @@ export function VouchersManagement() {
           event: '*',
           schema: 'public',
           table: 'vouchers',
-          filter: `merchant_address=eq.${address?.toLowerCase()}`,
+          filter: `merchant_address=eq.${address.toLowerCase()}`,
         },
         () => {
           console.log('Voucher changed, reloading...');
@@ -64,7 +69,7 @@ export function VouchersManagement() {
       window.removeEventListener('profileMigrated', handleUpdate);
       supabase.removeChannel(channel);
     };
-  }, [address]);
+  }, [address, session]);
 
   const handleMarkAsUsed = async (voucherId: string, code: string) => {
     const success = await updateVoucherStatus(voucherId, 'used');

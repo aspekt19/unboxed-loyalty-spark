@@ -8,13 +8,15 @@ import { Voucher } from '@/types/rewards';
 import { getCustomerVouchers } from '@/lib/vouchers';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function MyVouchers() {
   const { address } = useAccount();
+  const { session } = useAuth();
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
 
   const loadVouchers = async () => {
-    if (!address) return;
+    if (!address || !session) return;
     const customerVouchers = await getCustomerVouchers(address);
     setVouchers(customerVouchers);
   };
@@ -27,6 +29,9 @@ export function MyVouchers() {
   }, [address]);
 
   useEffect(() => {
+    // Загружаем ваучеры только если есть адрес и пользователь авторизован
+    if (!address || !session) return;
+    
     loadVouchers();
     window.addEventListener('vouchersUpdated', loadVouchers);
     
@@ -39,7 +44,7 @@ export function MyVouchers() {
           event: '*',
           schema: 'public',
           table: 'vouchers',
-          filter: address ? `customer_address=eq.${address.toLowerCase()}` : undefined,
+          filter: `customer_address=eq.${address.toLowerCase()}`,
         },
         (payload) => {
           console.log('Voucher status changed:', payload);
@@ -52,7 +57,7 @@ export function MyVouchers() {
       window.removeEventListener('vouchersUpdated', loadVouchers);
       supabase.removeChannel(channel);
     };
-  }, [address]);
+  }, [address, session]);
 
   if (!address) {
     return null;
