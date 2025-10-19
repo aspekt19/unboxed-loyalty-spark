@@ -41,13 +41,20 @@ export function IssuedTokensHistory() {
   }, [address, publicClient]);
 
   const loadIssuedTokens = async () => {
-    if (!publicClient || !address) return;
+    if (!publicClient || !address) {
+      console.log('IssuedTokensHistory: No publicClient or address');
+      return;
+    }
 
+    console.log('IssuedTokensHistory: Loading issued tokens...');
     setIsLoading(true);
     try {
       // Загружаем программы мерчанта из localStorage
       const loyaltyPrograms = localStorage.getItem('loyaltyPrograms');
+      console.log('IssuedTokensHistory: loyaltyPrograms from localStorage:', loyaltyPrograms);
+      
       if (!loyaltyPrograms) {
+        console.log('IssuedTokensHistory: No programs found in localStorage');
         setHistory([]);
         setIsLoading(false);
         return;
@@ -55,14 +62,15 @@ export function IssuedTokensHistory() {
 
       const programs = JSON.parse(loyaltyPrograms);
       const activePrograms = programs.filter((p: any) => p.tokenAddress);
+      console.log('IssuedTokensHistory: Active programs:', activePrograms);
 
       const allIssuedTokens: IssuedToken[] = [];
 
       // Для каждой программы получаем Transfer events (минтинг)
       for (const program of activePrograms) {
         try {
-          // Transfer event signature
-          const transferEventSignature = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+          console.log(`IssuedTokensHistory: Fetching logs for ${program.name} (${program.tokenAddress})`);
+          
           const zeroAddress = '0x0000000000000000000000000000000000000000';
 
           // Получаем Transfer события где from = 0x0 (минтинг)
@@ -83,6 +91,8 @@ export function IssuedTokensHistory() {
             fromBlock: 'earliest',
             toBlock: 'latest',
           });
+
+          console.log(`IssuedTokensHistory: Found ${logs.length} transfer events for ${program.name}`);
 
           // Обрабатываем события
           for (const log of logs) {
