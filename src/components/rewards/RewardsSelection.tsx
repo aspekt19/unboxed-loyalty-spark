@@ -15,11 +15,15 @@ import { CONTRACTS } from '@/config/contracts';
 import { Reward } from '@/types/rewards';
 import { getRewardsByToken, createVoucher, generateVoucherCode } from '@/lib/vouchers';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { ProgramExpirationInfo } from '@/components/ProgramExpirationInfo';
 
 interface TokenInfo {
   address: string;
   name: string;
   symbol: string;
+  expirationDate?: string;
+  status?: 'active' | 'expiring_soon' | 'expired';
 }
 
 export function RewardsSelection() {
@@ -67,35 +71,41 @@ export function RewardsSelection() {
     }
   }, [address]);
 
-  // Загрузка токенов
+  // Загрузка токенов из БД
   useEffect(() => {
-    const loadPrograms = () => {
-      // Сначала пробуем customerTokens (загружается из блокчейна)
-      let stored = localStorage.getItem('customerTokens');
-      
-      // Если нет, пробуем loyaltyPrograms (созданные мерчантом)
-      if (!stored) {
-        stored = localStorage.getItem('loyaltyPrograms');
-      }
-      
-      if (stored) {
-        const programs = JSON.parse(stored);
-        // Фильтруем и мапим токены
-        const activePrograms = programs
-          .filter((p: any) => {
-            const addr = p.tokenAddress || p.address;
-            return addr && addr !== 'pending';
-          })
-          .map((p: any) => ({
-            address: p.tokenAddress || p.address,
+    const loadPrograms = async () => {
+      try {
+        // Загружаем все активные программы лояльности из БД
+        const { data: programs, error } = await supabase
+          .from('loyalty_programs')
+          .select('*')
+          .in('status', ['active', 'expiring_soon'])
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error loading programs:', error);
+          return;
+        }
+
+        if (programs && programs.length > 0) {
+          const activePrograms = programs.map(p => ({
+            address: p.token_address,
             name: p.name,
             symbol: p.symbol,
+            expirationDate: p.expiration_date,
+            status: p.status as 'active' | 'expiring_soon' | 'expired',
           }));
-        
-        setTokens(activePrograms);
-        if (activePrograms.length > 0 && !selectedTokenAddress) {
-          setSelectedTokenAddress(activePrograms[0].address);
+
+          setTokens(activePrograms);
+          if (activePrograms.length > 0 && !selectedTokenAddress) {
+            setSelectedTokenAddress(activePrograms[0].address);
+          }
+
+          // Сохраняем в localStorage для обратной совместимости
+          localStorage.setItem('customerTokens', JSON.stringify(activePrograms));
         }
+      } catch (error) {
+        console.error('Error in loadPrograms:', error);
       }
     };
 
@@ -112,9 +122,27 @@ export function RewardsSelection() {
     window.addEventListener('loyaltyProgramsUpdated', loadPrograms);
     window.addEventListener('rewardsUpdated', handleRewardsUpdate);
 
+    // Подписка на realtime обновления программ лояльности
+    const channel = supabase
+      .channel('loyalty_programs_customer')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'loyalty_programs',
+        },
+        () => {
+          console.log('Loyalty program changed, reloading...');
+          loadPrograms();
+        }
+      )
+      .subscribe();
+
     return () => {
       window.removeEventListener('loyaltyProgramsUpdated', loadPrograms);
       window.removeEventListener('rewardsUpdated', handleRewardsUpdate);
+      supabase.removeChannel(channel);
     };
   }, []);
 
@@ -324,9 +352,18 @@ export function RewardsSelection() {
             </div>
 
             {selectedToken && selectedBalance && (
-              <div className="text-sm text-muted-foreground">
-                Available: {selectedBalance.balance} {selectedToken.symbol}
-              </div>
+              <>
+                <div className="text-sm text-muted-foreground">
+                  Available: {selectedBalance.balance} {selectedToken.symbol}
+                </div>
+                {selectedToken.expirationDate && selectedToken.status && (
+                  <ProgramExpirationInfo
+                    expirationDate={selectedToken.expirationDate}
+                    status={selectedToken.status}
+                    tokenSymbol={selectedToken.symbol}
+                  />
+                )}
+              </>
             )}
 
             {selectedTokenAddress && (
