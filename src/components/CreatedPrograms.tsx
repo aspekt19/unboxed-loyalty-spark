@@ -254,15 +254,15 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
   }
 
   return (
-    <Card className="border-2 bg-gradient-to-br from-card to-muted/30">
-      <CardHeader>
+    <Card className="border-2 bg-gradient-to-br from-card to-muted/30 flex flex-col max-h-[calc(100vh-2rem)]">
+      <CardHeader className="flex-shrink-0">
         <CardTitle className="flex items-center gap-2">
           <Coins className="h-5 w-5 text-primary" />
           Your Loyalty Programs
         </CardTitle>
         <CardDescription>Select a program to issue rewards</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 overflow-hidden">
         <div className="space-y-3">
           {programs.map((program, index) => (
             <div

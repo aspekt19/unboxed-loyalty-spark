@@ -58,15 +58,15 @@ export function VouchersManagement() {
   }
 
   return (
-    <Card className="border-2">
-      <CardHeader>
+    <Card className="border-2 flex flex-col max-h-[calc(100vh-2rem)]">
+      <CardHeader className="flex-shrink-0">
         <CardTitle className="flex items-center gap-2">
           <Ticket className="h-5 w-5 text-primary" />
           Issued Vouchers
         </CardTitle>
         <CardDescription>Manage customer vouchers</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="flex-1 overflow-hidden space-y-4">
         <div className="space-y-2">
           <Label htmlFor="search">Search by Code</Label>
           <div className="relative">

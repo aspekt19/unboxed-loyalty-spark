@@ -75,15 +75,15 @@ export function RewardsList() {
   }
 
   return (
-    <Card className="border-2">
-      <CardHeader>
+    <Card className="border-2 flex flex-col max-h-[calc(100vh-2rem)]">
+      <CardHeader className="flex-shrink-0">
         <CardTitle className="flex items-center gap-2">
           <Gift className="h-5 w-5 text-primary" />
           Rewards Catalog
         </CardTitle>
         <CardDescription>Manage your loyalty rewards</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 overflow-hidden">
         {rewards.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">
             No rewards created yet. Create your first reward above!
