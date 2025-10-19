@@ -7,6 +7,7 @@ import { useAccount } from 'wagmi';
 import { Voucher } from '@/types/rewards';
 import { getCustomerVouchers } from '@/lib/vouchers';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { supabase } from '@/integrations/supabase/client';
 
 export function MyVouchers() {
   const { address } = useAccount();
@@ -28,7 +29,29 @@ export function MyVouchers() {
   useEffect(() => {
     loadVouchers();
     window.addEventListener('vouchersUpdated', loadVouchers);
-    return () => window.removeEventListener('vouchersUpdated', loadVouchers);
+    
+    // Подписка на изменения в таблице vouchers для реалтайм обновлений
+    const channel = supabase
+      .channel('vouchers-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'vouchers',
+          filter: address ? `customer_address=eq.${address.toLowerCase()}` : undefined,
+        },
+        (payload) => {
+          console.log('Voucher status changed:', payload);
+          loadVouchers();
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      window.removeEventListener('vouchersUpdated', loadVouchers);
+      supabase.removeChannel(channel);
+    };
   }, [address]);
 
   if (!address) {
