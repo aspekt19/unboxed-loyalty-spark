@@ -226,48 +226,20 @@ export function RewardsSelection() {
       return;
     }
 
-    // Проверяем allowance перед сжиганием
-    const requiredAmount = parseUnits(reward.cost.toString(), 18);
-    if (allowanceAmount < requiredAmount) {
-      toast.error('Please approve tokens first');
-      return;
-    }
-
-    // NOTE: Временное решение для MVP - покупатель сам сжигает токены
-    // В Enterprise версии здесь будет вызов Edge Function, который выполнит
-    // transferFrom от имени мерчанта/системы для контролируемого списания
-    const loyaltyTokenAbi = [
-      {
-        inputs: [{ name: 'amount', type: 'uint256' }],
-        name: 'burn',
-        outputs: [],
-        stateMutability: 'nonpayable',
-        type: 'function',
-      },
-    ] as const;
-    
-    burnTokens(selectedTokenAddress, reward.cost.toString(), loyaltyTokenAbi);
+    // Используем transfer для отправки токенов мерчанту
+    // Мерчант потом сможет их сжечь или использовать по своему усмотрению
+    burnTokens(
+      selectedTokenAddress, 
+      reward.cost.toString(), 
+      CONTRACTS.LOYAL_SPARK_ERC20.abi,
+      reward.merchantAddress
+    );
   };
 
   // Проверяем, нужно ли approve для выбранной награды
+  // Approve больше не нужен, так как используется простой transfer
   const needsApproval = () => {
-    console.log('=== needsApproval check ===');
-    console.log('selectedRewardId:', selectedRewardId);
-    if (!selectedRewardId) {
-      console.log('No reward selected');
-      return false;
-    }
-    const reward = availableRewards.find(r => r.id === selectedRewardId);
-    console.log('Found reward:', reward);
-    if (!reward) {
-      console.log('Reward not found');
-      return false;
-    }
-    const requiredAmount = parseUnits(reward.cost.toString(), 18);
-    console.log('Required amount:', requiredAmount.toString());
-    console.log('Current allowance:', allowanceAmount.toString());
-    console.log('Needs approval:', allowanceAmount < requiredAmount);
-    return allowanceAmount < requiredAmount;
+    return false;
   };
 
   const selectedToken = tokens.find(t => t.address === selectedTokenAddress);
@@ -379,62 +351,20 @@ export function RewardsSelection() {
               </div>
             )}
 
-            {selectedRewardId && needsApproval() && (
-              <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-                <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                <AlertDescription className="text-blue-900 dark:text-blue-100">
-                  First-time setup: Approve the merchant to manage your loyalty tokens. This allows the merchant to redeem your tokens when you activate rewards, and to burn tokens if the program closes.
-                </AlertDescription>
-              </Alert>
+            {selectedRewardId && (
+              <Button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleActivate();
+                }}
+                disabled={!selectedRewardId || isPending || balancesLoading}
+                className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+              >
+                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Activate Voucher
+              </Button>
             )}
-
-            {(() => {
-              const needsApprove = selectedRewardId && needsApproval();
-              console.log('🎯 RENDER DECISION: needsApprove =', needsApprove);
-              console.log('🎯 Button will be disabled:', isApproving || balancesLoading);
-              
-              if (needsApprove) {
-                console.log('✅ RENDERING APPROVE BUTTON');
-                return (
-                  <Button
-                    type="button"
-                    onClick={(e) => {
-                      console.log('🔵 BUTTON PHYSICALLY CLICKED - Event fired!');
-                      console.log('Button disabled?', isApproving || balancesLoading);
-                      console.log('isApproving:', isApproving);
-                      console.log('balancesLoading:', balancesLoading);
-                      handleApprove();
-                    }}
-                    disabled={isApproving || balancesLoading}
-                    className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:opacity-90"
-                  >
-                    {isApproving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Approve Token Spending
-                  </Button>
-                );
-              }
-              
-              if (selectedRewardId) {
-                console.log('✅ RENDERING ACTIVATE BUTTON');
-                return (
-                  <Button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleActivate();
-                    }}
-                    disabled={!selectedRewardId || isPending || balancesLoading}
-                    className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
-                  >
-                    {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Activate Voucher
-                  </Button>
-                );
-              }
-              
-              console.log('⚠️ NO BUTTON RENDERED');
-              return null;
-            })()}
           </div>
         )}
       </CardContent>

@@ -10,19 +10,29 @@ export function useBurnTokens() {
     hash,
   });
 
-  const burnTokens = (tokenAddress: string, amount: string, tokenAbi: any) => {
+  const burnTokens = (tokenAddress: string, amount: string, tokenAbi: any, recipientAddress?: string) => {
     try {
       const amountInWei = parseUnits(amount, 18);
       
-      writeContract({
-        address: tokenAddress as `0x${string}`,
-        abi: tokenAbi,
-        functionName: 'burn',
-        args: [amountInWei],
-      } as any);
+      // Если указан recipientAddress, используем transfer, иначе burn
+      if (recipientAddress) {
+        writeContract({
+          address: tokenAddress as `0x${string}`,
+          abi: tokenAbi,
+          functionName: 'transfer',
+          args: [recipientAddress as `0x${string}`, amountInWei],
+        } as any);
+      } else {
+        writeContract({
+          address: tokenAddress as `0x${string}`,
+          abi: tokenAbi,
+          functionName: 'burn',
+          args: [amountInWei],
+        } as any);
+      }
     } catch (error) {
-      console.error('Burn error:', error);
-      toast.error('Failed to burn tokens');
+      console.error('Token transfer/burn error:', error);
+      toast.error('Failed to process tokens');
     }
   };
 
