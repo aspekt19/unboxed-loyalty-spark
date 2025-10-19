@@ -8,6 +8,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { formatUnits } from 'viem';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface IssuedToken {
   recipient: string;
@@ -21,6 +23,7 @@ interface IssuedToken {
 
 export function IssuedTokensHistory() {
   const { address } = useAccount();
+  const { session } = useAuth();
   const publicClient = usePublicClient();
   const [history, setHistory] = useState<IssuedToken[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,8 +31,9 @@ export function IssuedTokensHistory() {
   const [programs, setPrograms] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!address) {
+    if (!address || !session) {
       setHistory([]);
+      setPrograms([]);
       return;
     }
 
@@ -42,31 +46,47 @@ export function IssuedTokensHistory() {
 
     window.addEventListener('loyaltyProgramsUpdated', handleUpdate);
     return () => window.removeEventListener('loyaltyProgramsUpdated', handleUpdate);
-  }, [address, publicClient]);
+  }, [address, session, publicClient]);
 
   const loadIssuedTokens = async () => {
-    if (!publicClient || !address) {
-      console.log('IssuedTokensHistory: No publicClient or address');
+    if (!publicClient || !address || !session) {
+      console.log('IssuedTokensHistory: No publicClient, address or session');
       return;
     }
 
     console.log('IssuedTokensHistory: Loading issued tokens...');
     setIsLoading(true);
     try {
-      // Загружаем программы мерчанта из localStorage
-      const loyaltyPrograms = localStorage.getItem('loyaltyPrograms');
-      console.log('IssuedTokensHistory: loyaltyPrograms from localStorage:', loyaltyPrograms);
-      
-      if (!loyaltyPrograms) {
-        console.log('IssuedTokensHistory: No programs found in localStorage');
+      // Загружаем программы мерчанта из БД
+      const { data: programsData, error } = await supabase
+        .from('loyalty_programs')
+        .select('*')
+        .eq('merchant_address', address.toLowerCase())
+        .in('status', ['active', 'expiring_soon'])
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('IssuedTokensHistory: Error loading programs:', error);
         setHistory([]);
         setPrograms([]);
         setIsLoading(false);
         return;
       }
 
-      const programsList = JSON.parse(loyaltyPrograms);
-      const activePrograms = programsList.filter((p: any) => p.tokenAddress);
+      if (!programsData || programsData.length === 0) {
+        console.log('IssuedTokensHistory: No programs found for merchant');
+        setHistory([]);
+        setPrograms([]);
+        setIsLoading(false);
+        return;
+      }
+
+      const activePrograms = programsData.map(p => ({
+        name: p.name,
+        symbol: p.symbol,
+        tokenAddress: p.token_address,
+      }));
+      
       console.log('IssuedTokensHistory: Active programs:', activePrograms);
       setPrograms(activePrograms);
 
