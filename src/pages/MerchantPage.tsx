@@ -35,7 +35,7 @@ const MerchantPage = () => {
 
         <main className="container mx-auto px-6 py-12 relative">
           <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6">
-            <aside className="lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)] overflow-y-auto">
+            <aside className="lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)]">
               <IssuedTokensHistory />
             </aside>
             <div className="max-w-4xl">

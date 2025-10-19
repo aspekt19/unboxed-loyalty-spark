@@ -132,6 +132,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     if (!address || !publicClient) return;
 
     const loadTokenStats = async () => {
+      console.log('Loading token stats for programs:', programs.length);
       const stats: TokenStats = {};
       const activePrograms = programs.filter(p => p.tokenAddress);
 
@@ -139,8 +140,10 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         if (!program.tokenAddress) continue;
 
         try {
+          console.log(`Fetching stats for ${program.name} (${program.tokenAddress})`);
+          
           const currentBlock = await publicClient.getBlockNumber();
-          const BLOCK_RANGE = 10000;
+          const BLOCK_RANGE = 200000; // Увеличиваем диапазон для полной истории
           let fromBlock = currentBlock - BigInt(BLOCK_RANGE);
           if (fromBlock < 0n) fromBlock = 0n;
 
@@ -169,29 +172,29 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
             return sum;
           }, 0);
 
-          // Получаем баланс мерчанта через RPC
+          console.log(`Total issued for ${program.name}:`, totalIssued);
+
+          // Получаем баланс мерчанта используя viem
           let merchantBalance = 0;
           try {
-            const balanceResponse = await fetch('https://mainnet.base.org', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                jsonrpc: '2.0',
-                method: 'eth_call',
-                params: [
-                  {
-                    to: program.tokenAddress,
-                    data: `0x70a08231000000000000000000000000${address.slice(2)}`,
-                  },
-                  'latest',
-                ],
-                id: 1,
-              }),
-            });
-            const balanceData = await balanceResponse.json();
-            if (balanceData.result) {
-              merchantBalance = parseInt(balanceData.result, 16) / 1e18;
-            }
+            const ERC20_ABI = [
+              {
+                inputs: [{ name: 'account', type: 'address' }],
+                name: 'balanceOf',
+                outputs: [{ name: '', type: 'uint256' }],
+                stateMutability: 'view',
+                type: 'function',
+              }
+            ] as const;
+            
+            const balance = await publicClient.readContract({
+              address: program.tokenAddress as `0x${string}`,
+              abi: ERC20_ABI,
+              functionName: 'balanceOf',
+              args: [address],
+            } as any);
+            merchantBalance = Number(balance) / 1e18;
+            console.log(`Merchant balance for ${program.name}:`, merchantBalance);
           } catch (error) {
             console.error('Error fetching merchant balance:', error);
           }
@@ -199,12 +202,14 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
           // Получаем балансы всех держателей через edge function
           let holdersBalance = 0;
           try {
+            console.log('Fetching holders balance via edge function...');
             const response = await fetch(
               `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-token-holders`,
               {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
                 },
                 body: JSON.stringify({
                   tokenAddress: program.tokenAddress,
@@ -214,9 +219,17 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
 
             if (response.ok) {
               const data = await response.json();
+              console.log('Holders data received:', data);
               holdersBalance = data.holders.reduce((sum: number, holder: any) => {
-                return sum + parseFloat(holder.balance);
+                // Исключаем баланс мерчанта из общего баланса пользователей
+                if (holder.address.toLowerCase() !== address.toLowerCase()) {
+                  return sum + parseFloat(holder.balance);
+                }
+                return sum;
               }, 0);
+              console.log(`Users balance for ${program.name}:`, holdersBalance);
+            } else {
+              console.error('Edge function error:', await response.text());
             }
           } catch (error) {
             console.error('Error fetching holders:', error);
@@ -228,11 +241,21 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         }
       }
 
+      console.log('Final token stats:', stats);
       setTokenStats(stats);
     };
 
     if (programs.length > 0) {
       loadTokenStats();
+      
+      // Обновляем статистику при изменении программ
+      const handleUpdate = () => {
+        console.log('Programs updated, reloading stats');
+        loadTokenStats();
+      };
+      window.addEventListener('loyaltyProgramsUpdated', handleUpdate);
+      
+      return () => window.removeEventListener('loyaltyProgramsUpdated', handleUpdate);
     }
   }, [programs, publicClient, address]);
 

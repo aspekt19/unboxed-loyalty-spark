@@ -149,15 +149,15 @@ export function IssuedTokensHistory() {
     : history.filter(item => item.tokenAddress === selectedProgramFilter);
 
   return (
-    <Card className="border-2 h-full">
-      <CardHeader>
+    <Card className="border-2 h-full flex flex-col">
+      <CardHeader className="flex-shrink-0">
         <CardTitle className="flex items-center gap-2">
           <History className="h-5 w-5 text-primary" />
           Issued Tokens History
         </CardTitle>
         <CardDescription>Track all loyalty tokens you've issued to customers</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 overflow-hidden flex flex-col">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -171,8 +171,8 @@ export function IssuedTokensHistory() {
             </AlertDescription>
           </Alert>
         ) : (
-          <div className="space-y-4">
-            <div className="space-y-3">
+          <div className="flex flex-col h-full gap-4">
+            <div className="space-y-3 flex-shrink-0">
               <div className="flex items-center gap-2">
                 <Filter className="h-4 w-4 text-muted-foreground" />
                 <Label htmlFor="program-filter" className="text-sm font-medium">
@@ -194,13 +194,13 @@ export function IssuedTokensHistory() {
               </Select>
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-shrink-0">
               <p className="text-sm text-muted-foreground">
                 Showing: <span className="font-semibold">{filteredHistory.length}</span> of {history.length} transactions
               </p>
             </div>
             
-            <ScrollArea className="h-[500px] pr-4">
+            <ScrollArea className="flex-1 pr-4">
               <div className="space-y-3 pb-4">
                  {filteredHistory.map((item, index) => (
                   <div
