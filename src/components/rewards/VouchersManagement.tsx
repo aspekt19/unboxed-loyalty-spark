@@ -17,8 +17,13 @@ export function VouchersManagement() {
   const [searchCode, setSearchCode] = useState('');
 
   const loadMerchantVouchers = async () => {
-    if (!address) return;
+    if (!address) {
+      console.log('[VouchersManagement] No address, skipping load');
+      return;
+    }
+    console.log('[VouchersManagement] Loading vouchers for merchant:', address);
     const merchantVouchers = await getMerchantVouchers(address);
+    console.log('[VouchersManagement] Loaded vouchers:', merchantVouchers.length, merchantVouchers);
     setVouchers(merchantVouchers);
   };
 
@@ -31,13 +36,20 @@ export function VouchersManagement() {
   }, [address]);
 
   useEffect(() => {
+    console.log('[VouchersManagement] Effect triggered, address:', address);
     loadMerchantVouchers();
     
-    const handleUpdate = () => loadMerchantVouchers();
+    const handleUpdate = () => {
+      console.log('[VouchersManagement] Event received, reloading vouchers');
+      loadMerchantVouchers();
+    };
+    
+    console.log('[VouchersManagement] Adding event listeners');
     window.addEventListener('vouchersUpdated', handleUpdate);
     window.addEventListener('profileMigrated', handleUpdate);
     
     return () => {
+      console.log('[VouchersManagement] Removing event listeners');
       window.removeEventListener('vouchersUpdated', handleUpdate);
       window.removeEventListener('profileMigrated', handleUpdate);
     };
