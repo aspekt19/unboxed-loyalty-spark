@@ -280,6 +280,8 @@ export function RewardsSelection() {
   console.log('selectedReward:', selectedReward);
   console.log('MERCHANT_ADDRESS:', MERCHANT_ADDRESS);
   console.log('allowanceAmount:', allowanceAmount.toString());
+  console.log('isApproving:', isApproving);
+  console.log('balancesLoading:', balancesLoading);
   console.log('needsApproval():', needsApproval());
   
   // Фильтруем токены, показываем только с ненулевым балансом
@@ -386,36 +388,53 @@ export function RewardsSelection() {
               </Alert>
             )}
 
-            {selectedRewardId && needsApproval() ? (
-              <Button
-                type="button"
-                onClick={(e) => {
-                  console.log('🔵 BUTTON PHYSICALLY CLICKED - Event fired!');
-                  console.log('Button disabled?', isApproving || balancesLoading);
-                  console.log('isApproving:', isApproving);
-                  console.log('balancesLoading:', balancesLoading);
-                  handleApprove();
-                }}
-                disabled={isApproving || balancesLoading}
-                className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:opacity-90"
-              >
-                {isApproving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Approve Token Spending
-              </Button>
-            ) : selectedRewardId ? (
-              <Button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleActivate();
-                }}
-                disabled={!selectedRewardId || isPending || balancesLoading}
-                className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
-              >
-                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Activate Voucher
-              </Button>
-            ) : null}
+            {(() => {
+              const needsApprove = selectedRewardId && needsApproval();
+              console.log('🎯 RENDER DECISION: needsApprove =', needsApprove);
+              console.log('🎯 Button will be disabled:', isApproving || balancesLoading);
+              
+              if (needsApprove) {
+                console.log('✅ RENDERING APPROVE BUTTON');
+                return (
+                  <Button
+                    type="button"
+                    onClick={(e) => {
+                      console.log('🔵 BUTTON PHYSICALLY CLICKED - Event fired!');
+                      console.log('Button disabled?', isApproving || balancesLoading);
+                      console.log('isApproving:', isApproving);
+                      console.log('balancesLoading:', balancesLoading);
+                      handleApprove();
+                    }}
+                    disabled={isApproving || balancesLoading}
+                    className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:opacity-90"
+                  >
+                    {isApproving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Approve Token Spending
+                  </Button>
+                );
+              }
+              
+              if (selectedRewardId) {
+                console.log('✅ RENDERING ACTIVATE BUTTON');
+                return (
+                  <Button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleActivate();
+                    }}
+                    disabled={!selectedRewardId || isPending || balancesLoading}
+                    className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+                  >
+                    {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Activate Voucher
+                  </Button>
+                );
+              }
+              
+              console.log('⚠️ NO BUTTON RENDERED');
+              return null;
+            })()}
           </div>
         )}
       </CardContent>

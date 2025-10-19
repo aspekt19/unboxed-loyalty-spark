@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { maxUint256 } from 'viem';
 import { toast } from 'sonner';
@@ -9,11 +10,11 @@ export function useApproveTokens() {
     hash,
   });
 
-  const approveTokens = (tokenAddress: string, spenderAddress: string, tokenAbi: any) => {
-    console.log('useApproveTokens: approveTokens called');
+  const approveTokens = useCallback((tokenAddress: string, spenderAddress: string, tokenAbi: any) => {
+    console.log('🚀 useApproveTokens: approveTokens called');
     console.log('useApproveTokens: tokenAddress:', tokenAddress);
     console.log('useApproveTokens: spenderAddress:', spenderAddress);
-    console.log('useApproveTokens: tokenAbi:', tokenAbi);
+    console.log('useApproveTokens: isPending:', isPending);
     
     try {
       console.log('useApproveTokens: Calling writeContract...');
@@ -28,7 +29,9 @@ export function useApproveTokens() {
       console.error('useApproveTokens: Error in approveTokens:', error);
       toast.error('Failed to approve tokens');
     }
-  };
+  }, [writeContract, isPending]);
+
+  console.log('useApproveTokens hook: isPending =', isPending, 'isConfirming =', isConfirming);
 
   return {
     approveTokens,
