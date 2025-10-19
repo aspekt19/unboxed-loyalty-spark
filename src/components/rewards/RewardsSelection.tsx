@@ -228,6 +228,12 @@ export function RewardsSelection() {
   const selectedToken = tokens.find(t => t.address === selectedTokenAddress);
   const selectedBalance = balances.find(b => b.address === selectedTokenAddress);
   const selectedReward = availableRewards.find(r => r.id === selectedRewardId);
+  
+  // Фильтруем токены, показываем только с ненулевым балансом
+  const tokensWithBalance = tokens.filter(token => {
+    const balance = balances.find(b => b.address === token.address);
+    return balance && parseFloat(balance.balance) > 0;
+  });
 
   return (
     <Card className="border-2 bg-gradient-to-br from-card to-muted/30">
@@ -239,11 +245,13 @@ export function RewardsSelection() {
         <CardDescription>Choose a reward and activate your voucher</CardDescription>
       </CardHeader>
       <CardContent>
-        {tokens.length === 0 ? (
+        {tokensWithBalance.length === 0 ? (
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              No loyalty programs available. Ask a merchant to issue you loyalty tokens!
+              {tokens.length === 0 
+                ? 'No loyalty programs available. Ask a merchant to issue you loyalty tokens!'
+                : 'You have no tokens in your loyalty programs. Ask a merchant to issue you tokens!'}
             </AlertDescription>
           </Alert>
         ) : (
@@ -259,7 +267,7 @@ export function RewardsSelection() {
                   <SelectValue placeholder="Select a program" />
                 </SelectTrigger>
                 <SelectContent>
-                  {tokens.map((token) => {
+                  {tokensWithBalance.map((token) => {
                     const balance = balances.find(b => b.address === token.address);
                     return (
                       <SelectItem key={token.address} value={token.address}>
