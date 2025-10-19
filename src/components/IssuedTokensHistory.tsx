@@ -3,9 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { usePublicClient, useAccount } from 'wagmi';
-import { History, Loader2, AlertCircle } from 'lucide-react';
+import { History, Loader2, AlertCircle, Filter } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { formatUnits } from 'viem';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 interface IssuedToken {
   recipient: string;
@@ -22,6 +24,8 @@ export function IssuedTokensHistory() {
   const publicClient = usePublicClient();
   const [history, setHistory] = useState<IssuedToken[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedProgramFilter, setSelectedProgramFilter] = useState<string>('all');
+  const [programs, setPrograms] = useState<any[]>([]);
 
   useEffect(() => {
     if (!address) {
@@ -56,15 +60,21 @@ export function IssuedTokensHistory() {
       if (!loyaltyPrograms) {
         console.log('IssuedTokensHistory: No programs found in localStorage');
         setHistory([]);
+        setPrograms([]);
         setIsLoading(false);
         return;
       }
 
-      const programs = JSON.parse(loyaltyPrograms);
-      const activePrograms = programs.filter((p: any) => p.tokenAddress);
+      const programsList = JSON.parse(loyaltyPrograms);
+      const activePrograms = programsList.filter((p: any) => p.tokenAddress);
       console.log('IssuedTokensHistory: Active programs:', activePrograms);
+      setPrograms(activePrograms);
 
       const allIssuedTokens: IssuedToken[] = [];
+
+      // Получаем текущий блок
+      const currentBlock = await publicClient.getBlockNumber();
+      const BLOCK_RANGE = 10000; // Уменьшаем диапазон до 10000 блоков
 
       // Для каждой программы получаем Transfer events (минтинг)
       for (const program of activePrograms) {
@@ -73,7 +83,10 @@ export function IssuedTokensHistory() {
           
           const zeroAddress = '0x0000000000000000000000000000000000000000';
 
-          // Получаем Transfer события где from = 0x0 (минтинг)
+          // Запрашиваем блоки порциями
+          let fromBlock = currentBlock - BigInt(BLOCK_RANGE);
+          if (fromBlock < 0n) fromBlock = 0n;
+
           const logs = await publicClient.getLogs({
             address: program.tokenAddress as `0x${string}`,
             event: {
@@ -88,8 +101,8 @@ export function IssuedTokensHistory() {
             args: {
               from: zeroAddress as `0x${string}`,
             },
-            fromBlock: 'earliest',
-            toBlock: 'latest',
+            fromBlock,
+            toBlock: currentBlock,
           });
 
           console.log(`IssuedTokensHistory: Found ${logs.length} transfer events for ${program.name}`);
@@ -130,8 +143,13 @@ export function IssuedTokensHistory() {
     return null;
   }
 
+  // Фильтруем историю по выбранной программе
+  const filteredHistory = selectedProgramFilter === 'all' 
+    ? history 
+    : history.filter(item => item.tokenAddress === selectedProgramFilter);
+
   return (
-    <Card className="border-2">
+    <Card className="border-2 h-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <History className="h-5 w-5 text-primary" />
@@ -154,15 +172,37 @@ export function IssuedTokensHistory() {
           </Alert>
         ) : (
           <div className="space-y-4">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <Label htmlFor="program-filter" className="text-sm font-medium">
+                  Filter by Program
+                </Label>
+              </div>
+              <Select value={selectedProgramFilter} onValueChange={setSelectedProgramFilter}>
+                <SelectTrigger id="program-filter">
+                  <SelectValue placeholder="All Programs" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Programs</SelectItem>
+                  {programs.map((program) => (
+                    <SelectItem key={program.tokenAddress} value={program.tokenAddress}>
+                      {program.name} ({program.symbol})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                Total transactions: <span className="font-semibold">{history.length}</span>
+                Showing: <span className="font-semibold">{filteredHistory.length}</span> of {history.length} transactions
               </p>
             </div>
             
-            <ScrollArea className="h-[400px] pr-4">
+            <ScrollArea className="h-[500px] pr-4">
               <div className="space-y-3">
-                {history.map((item, index) => (
+                {filteredHistory.map((item, index) => (
                   <div
                     key={`${item.transactionHash}-${index}`}
                     className="flex items-start justify-between p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"

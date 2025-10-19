@@ -1,5 +1,6 @@
 import { WalletConnectButton } from '@/components/WalletConnectButton';
 import { MerchantPanel } from '@/components/MerchantPanel';
+import { IssuedTokensHistory } from '@/components/IssuedTokensHistory';
 import { Sparkles, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -33,8 +34,13 @@ const MerchantPage = () => {
         </header>
 
         <main className="container mx-auto px-6 py-12 relative">
-          <div className="max-w-4xl mx-auto">
-            <MerchantPanel />
+          <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6">
+            <aside className="lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)] overflow-y-auto">
+              <IssuedTokensHistory />
+            </aside>
+            <div className="max-w-4xl">
+              <MerchantPanel />
+            </div>
           </div>
         </main>
       </div>
