@@ -201,7 +201,7 @@ export function IssuedTokensHistory() {
             </div>
             
             <ScrollArea className="h-[500px] pr-4">
-              <div className="space-y-3">
+              <div className="space-y-3 pb-4">
                 {filteredHistory.map((item, index) => (
                   <div
                     key={`${item.transactionHash}-${index}`}
