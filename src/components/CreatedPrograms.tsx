@@ -102,18 +102,59 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     toast.success(`Selected ${program.name}`);
   };
 
-  const handleDeleteProgram = (index: number, e: React.MouseEvent) => {
+  const handleDeleteProgram = async (index: number, e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    const program = programs[index];
+    
+    // Если есть tokenAddress, деактивируем все связанные данные в БД
+    if (program.tokenAddress) {
+      try {
+        // Импортируем supabase
+        const { supabase } = await import('@/integrations/supabase/client');
+        
+        // 1. Деактивируем все награды этой программы
+        const { error: rewardsError } = await supabase
+          .from('rewards')
+          .update({ is_active: false })
+          .eq('token_address', program.tokenAddress.toLowerCase());
+        
+        if (rewardsError) {
+          console.error('Error deactivating rewards:', rewardsError);
+        }
+        
+        // 2. Закрываем все активные ваучеры этой программы
+        const { error: vouchersError } = await supabase
+          .from('vouchers')
+          .update({ status: 'expired' })
+          .eq('token_address', program.tokenAddress.toLowerCase())
+          .eq('status', 'active');
+        
+        if (vouchersError) {
+          console.error('Error closing vouchers:', vouchersError);
+        }
+        
+        // Отправляем события обновления
+        window.dispatchEvent(new Event('rewardsUpdated'));
+        window.dispatchEvent(new Event('vouchersUpdated'));
+      } catch (error) {
+        console.error('Error closing program:', error);
+        toast.error('Failed to close program completely');
+        return;
+      }
+    }
+    
+    // 3. Удаляем программу из localStorage
     const updatedPrograms = programs.filter((_, i) => i !== index);
     setPrograms(updatedPrograms);
     localStorage.setItem('loyaltyPrograms', JSON.stringify(updatedPrograms));
     
-    // Clear selection if the deleted program was selected
+    // Очищаем выбор, если удалили выбранную программу
     if (selectedProgram === index.toString()) {
       setSelectedProgram(null);
     }
     
-    toast.success('Program deleted');
+    toast.success('Program closed successfully');
   };
 
   if (programs.length === 0) {
@@ -178,9 +219,19 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Loyalty Program?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to delete "{program.name}"? This will only remove it from your console. The token contract will remain on the blockchain.
+                          <AlertDialogTitle>Close Loyalty Program?</AlertDialogTitle>
+                          <AlertDialogDescription className="space-y-2">
+                            <p>
+                              Are you sure you want to close "{program.name}"? This action will:
+                            </p>
+                            <ul className="list-disc pl-5 space-y-1 text-sm">
+                              <li>Deactivate all rewards for this program</li>
+                              <li>Mark all active vouchers as expired</li>
+                              <li>Remove the program from your console</li>
+                            </ul>
+                            <p className="text-amber-600 dark:text-amber-400 font-medium pt-2">
+                              ⚠️ Note: Tokens will remain on users' wallets. To burn all tokens, you'll need the Enterprise version with burnFrom functionality.
+                            </p>
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -189,7 +240,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
                             onClick={(e) => handleDeleteProgram(index, e)}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                           >
-                            Delete
+                            Close Program
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
