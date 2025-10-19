@@ -14,6 +14,7 @@ import { useMultiTokenBalance } from '@/hooks/useMultiTokenBalance';
 import { CONTRACTS } from '@/config/contracts';
 import { Reward } from '@/types/rewards';
 import { getRewardsByToken, createVoucher, generateVoucherCode } from '@/lib/vouchers';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface TokenInfo {
   address: string;
@@ -23,6 +24,7 @@ interface TokenInfo {
 
 export function RewardsSelection() {
   const { address } = useAccount();
+  const { user, session, signInWithWallet, isLoading: authLoading } = useAuth();
   const [tokens, setTokens] = useState<TokenInfo[]>([]);
   const [selectedTokenAddress, setSelectedTokenAddress] = useState<string>('');
   const [selectedRewardId, setSelectedRewardId] = useState<string>('');
@@ -46,6 +48,14 @@ export function RewardsSelection() {
   );
   
   const allowanceAmount = (allowance as bigint | undefined) || 0n;
+
+  // Автоматическая аутентификация при подключении кошелька
+  useEffect(() => {
+    if (address && !session && !authLoading) {
+      console.log('Auto-signing in with wallet...');
+      signInWithWallet();
+    }
+  }, [address, session, authLoading]);
 
   // Очищаем данные при отключении кошелька
   useEffect(() => {
@@ -197,9 +207,16 @@ export function RewardsSelection() {
     console.log('approveTokens CALLED');
   }, [selectedRewardId, selectedTokenAddress, MERCHANT_ADDRESS, isApproving, balancesLoading, approveTokens]);
 
-  const handleActivate = () => {
+  const handleActivate = async () => {
     if (!address) {
       toast.error('Please connect your wallet');
+      return;
+    }
+
+    // Проверяем авторизацию
+    if (!session) {
+      toast.error('Authenticating your wallet...');
+      await signInWithWallet();
       return;
     }
 
