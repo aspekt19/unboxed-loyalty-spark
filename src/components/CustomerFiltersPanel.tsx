@@ -196,7 +196,7 @@ export function CustomerFiltersPanel({ onFilterChange }: CustomerFiltersPanelPro
               </div>
               
               <ScrollArea className="h-[250px]">
-                <div className="space-y-2 pr-4">
+                <div className="space-y-2 pr-4 pb-4">
                   {tokensWithBalance.map((token) => {
                     const balance = balances.find(b => b.address === token.address);
                     const isSelected = selectedProgramAddress === token.address;
@@ -246,7 +246,7 @@ export function CustomerFiltersPanel({ onFilterChange }: CustomerFiltersPanelPro
                 </Alert>
               ) : (
                 <ScrollArea className="h-[300px]">
-                  <div className="space-y-4 pr-4">
+                  <div className="space-y-4 pr-4 pb-4">
                     {Object.entries(rewardsByMerchant).map(([merchantAddr, rewards]) => (
                       <div key={merchantAddr} className="space-y-2">
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">

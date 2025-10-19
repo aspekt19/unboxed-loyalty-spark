@@ -35,7 +35,7 @@ export function RewardsSelection() {
   // Получаем адрес мерчанта из выбранной награды
   // Покупатели дают approve адресу мерчанта, чтобы он мог сжигать токены
   const selectedRewardForSpender = availableRewards.find(r => r.id === selectedRewardId);
-  const MERCHANT_ADDRESS = selectedRewardForSpender?.merchantAddress || address || '0x0000000000000000000000000000000000000000';
+  const MERCHANT_ADDRESS = selectedRewardForSpender?.merchantAddress || '0x0000000000000000000000000000000000000000';
   
   // Проверяем allowance для выбранного токена (разрешение дано мерчанту)
   const { data: allowance, refetch: refetchAllowance } = useCheckAllowance(
@@ -173,6 +173,12 @@ export function RewardsSelection() {
     console.log('RewardsSelection: selectedRewardId:', selectedRewardId);
     console.log('RewardsSelection: selectedRewardForSpender:', selectedRewardForSpender);
     
+    if (!selectedRewardId) {
+      console.log('RewardsSelection: Error - No reward selected');
+      toast.error('Please select a reward first');
+      return;
+    }
+    
     if (!selectedTokenAddress) {
       console.log('RewardsSelection: Error - No token selected');
       toast.error('Please select a loyalty program');
@@ -181,7 +187,7 @@ export function RewardsSelection() {
 
     if (!MERCHANT_ADDRESS || MERCHANT_ADDRESS === '0x0000000000000000000000000000000000000000') {
       console.log('RewardsSelection: Error - Invalid merchant address');
-      toast.error('Merchant address not found');
+      toast.error('Merchant address not found. Please select a valid reward.');
       return;
     }
 
