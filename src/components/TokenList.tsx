@@ -236,9 +236,12 @@ export function TokenList() {
 
   console.log('TokenList render - tokens:', allTokens.length, 'balances:', balances.length, 'with balance:', tokensWithBalance.length);
 
-  // Watch for successful transfer
+  // Track previous isSuccess state to detect transitions
+  const prevIsSuccessRef = useRef(false);
+  
+  // Watch for successful transfer - only trigger on transition from false to true
   useEffect(() => {
-    if (isSuccess && dialogOpen) {
+    if (isSuccess && !prevIsSuccessRef.current && dialogOpen) {
       toast.success('Tokens transferred successfully!');
       setRecipientAddress('');
       setTransferAmount('');
@@ -250,6 +253,7 @@ export function TokenList() {
         refetch();
       }, 1000);
     }
+    prevIsSuccessRef.current = isSuccess;
   }, [isSuccess, dialogOpen, refetch]);
 
   const handleTransfer = async (e: React.FormEvent) => {
