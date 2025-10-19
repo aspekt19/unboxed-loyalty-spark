@@ -3,6 +3,7 @@ import { CreatedPrograms } from './CreatedPrograms';
 import { CreateReward } from './rewards/CreateReward';
 import { RewardsList } from './rewards/RewardsList';
 import { VouchersManagement } from './rewards/VouchersManagement';
+import { IssuedTokensHistory } from './IssuedTokensHistory';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -126,6 +127,8 @@ export function MerchantPanel() {
           <CreateReward />
           
           <RewardsList />
+          
+          <IssuedTokensHistory />
           
           <VouchersManagement />
         </>
