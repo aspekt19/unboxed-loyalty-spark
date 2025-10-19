@@ -47,17 +47,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       setIsLoading(true);
-      
-      // Create a message to sign
-      const message = `Sign in to Loyal Spark\n\nWallet: ${address}\nTimestamp: ${Date.now()}`;
-      
-      // Request signature from wallet
-      const signature = await signMessageAsync({ 
-        message,
-        account: address,
-      });
 
-      // Sign in with Supabase using custom authentication
+      // Sign in with Supabase using anonymous authentication
       const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
       
       if (authError) throw authError;
@@ -80,12 +71,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [address, isConnected, signMessageAsync]);
+  }, [address, isConnected]);
 
   useEffect(() => {
     // Автоматический вход при подключении кошелька
     if (isConnected && address && !user) {
-      console.log('[AuthContext] Wallet connected, auto sign-in for:', address);
       signInWithWallet();
     }
   }, [isConnected, address, user, signInWithWallet]);
