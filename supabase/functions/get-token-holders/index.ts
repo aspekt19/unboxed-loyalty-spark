@@ -43,36 +43,72 @@ serve(async (req) => {
     // Transfer event signature
     const TRANSFER_EVENT_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 
-    // Fetch Transfer events to get all holders
-    const logsResponse = await fetch(BASE_RPC_URL, {
+    // Get current block number
+    const blockResponse = await fetch(BASE_RPC_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         jsonrpc: '2.0',
         id: 1,
-        method: 'eth_getLogs',
-        params: [{
-          address: tokenAddress,
-          topics: [TRANSFER_EVENT_TOPIC],
-          fromBlock: '0x0',
-          toBlock: 'latest',
-        }],
+        method: 'eth_blockNumber',
+        params: [],
       }),
     });
 
-    const logsData = await logsResponse.json();
-    
-    if (logsData.error) {
-      throw new Error(`RPC Error: ${logsData.error.message}`);
+    const blockData = await blockResponse.json();
+    if (blockData.error) {
+      throw new Error(`RPC Error: ${blockData.error.message}`);
     }
 
-    const logs = logsData.result || [];
-    console.log(`Found ${logs.length} transfer events`);
+    const currentBlock = parseInt(blockData.result, 16);
+    console.log(`Current block: ${currentBlock}`);
+
+    // Fetch logs in chunks to avoid "exceed maximum block range" error
+    const CHUNK_SIZE = 40000;
+    const FROM_BLOCK = Math.max(0, currentBlock - 200000); // Last ~200k blocks
+    let allLogs: any[] = [];
+
+    console.log(`Fetching logs from block ${FROM_BLOCK} to ${currentBlock}`);
+
+    for (let startBlock = FROM_BLOCK; startBlock <= currentBlock; startBlock += CHUNK_SIZE) {
+      const endBlock = Math.min(startBlock + CHUNK_SIZE - 1, currentBlock);
+      
+      console.log(`Querying chunk ${startBlock} to ${endBlock}`);
+      
+      const logsResponse = await fetch(BASE_RPC_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'eth_getLogs',
+          params: [{
+            address: tokenAddress,
+            topics: [TRANSFER_EVENT_TOPIC],
+            fromBlock: `0x${startBlock.toString(16)}`,
+            toBlock: `0x${endBlock.toString(16)}`,
+          }],
+        }),
+      });
+
+      const logsData = await logsResponse.json();
+      
+      if (logsData.error) {
+        console.error(`Error fetching chunk ${startBlock}-${endBlock}:`, logsData.error);
+        continue; // Skip this chunk and continue with next
+      }
+
+      const chunkLogs = logsData.result || [];
+      allLogs = allLogs.concat(chunkLogs);
+      console.log(`Found ${chunkLogs.length} events in this chunk`);
+    }
+
+    console.log(`Total logs received: ${allLogs.length}`);
 
     // Extract unique addresses (recipients from Transfer events)
     const uniqueAddresses = new Set<string>();
     
-    for (const log of logs) {
+    for (const log of allLogs) {
       // topics[2] is the 'to' address in Transfer event
       if (log.topics[2]) {
         const toAddress = '0x' + log.topics[2].slice(26); // Remove padding
