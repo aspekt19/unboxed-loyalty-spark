@@ -44,6 +44,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
   const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
   const [tokenStats, setTokenStats] = useState<TokenStats>({});
+  const [isLoadingStats, setIsLoadingStats] = useState(false);
   const publicClient = usePublicClient();
   const { address } = useAccount();
   const { burnAllTokens, isBurning, progress } = useBurnAllTokens();
@@ -133,6 +134,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
 
     const loadTokenStats = async () => {
       console.log('Loading token stats for programs:', programs.length);
+      setIsLoadingStats(true);
       const stats: TokenStats = {};
       const activePrograms = programs.filter(p => p.tokenAddress);
 
@@ -243,6 +245,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
 
       console.log('Final token stats:', stats);
       setTokenStats(stats);
+      setIsLoadingStats(false);
     };
 
     if (programs.length > 0) {
@@ -379,7 +382,12 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
                       <p className="text-xs text-muted-foreground mt-1 font-mono">
                         {program.tokenAddress.slice(0, 6)}...{program.tokenAddress.slice(-4)}
                       </p>
-                      {tokenStats[program.tokenAddress] && (
+                      {isLoadingStats ? (
+                        <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          <span>Loading balances...</span>
+                        </div>
+                      ) : tokenStats[program.tokenAddress] ? (
                         <div className="mt-2 space-y-1 text-sm">
                           <div>
                             <span className="text-muted-foreground">Total Issued: </span>
@@ -400,7 +408,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
                             </span>
                           </div>
                         </div>
-                      )}
+                      ) : null}
                     </>
                   )}
                 </div>
