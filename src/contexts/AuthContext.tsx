@@ -57,22 +57,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         account: address,
       });
 
+      // Check if profile already exists for this wallet
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .eq('wallet_address', address.toLowerCase())
+        .maybeSingle();
+
       // Sign in with Supabase using custom authentication
       const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
       
       if (authError) throw authError;
 
-      // Create or update profile with wallet address
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert({
-          user_id: authData.user.id,
-          wallet_address: address.toLowerCase(),
-        }, {
-          onConflict: 'user_id'
-        });
+      if (existingProfile) {
+        // Update existing profile with new user_id
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            user_id: authData.user.id,
+          })
+          .eq('wallet_address', address.toLowerCase());
 
-      if (profileError) throw profileError;
+        if (updateError) throw updateError;
+      } else {
+        // Create new profile
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: authData.user.id,
+            wallet_address: address.toLowerCase(),
+          });
+
+        if (insertError) throw insertError;
+      }
 
       toast.success('Successfully signed in with wallet');
     } catch (error: any) {

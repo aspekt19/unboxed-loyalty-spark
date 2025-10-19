@@ -11,15 +11,25 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useMintTokens } from '@/hooks/useMintTokens';
 import { useAccount } from 'wagmi';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Loader2, Sparkles, AlertCircle, Wallet } from 'lucide-react';
 
 export function MerchantPanel() {
   const { address } = useAccount();
+  const { session, signInWithWallet, isLoading: authLoading } = useAuth();
   const [recipientAddress, setRecipientAddress] = useState('');
   const [amount, setAmount] = useState('');
   const [selectedProgram, setSelectedProgram] = useState<{ name: string; symbol: string; tokenAddress: string } | null>(null);
   const { mintTokens, isPending, isSuccess, reset } = useMintTokens();
+
+  // Автоматическая аутентификация при подключении кошелька
+  useEffect(() => {
+    if (address && !session && !authLoading) {
+      console.log('Auto-signing in merchant wallet...');
+      signInWithWallet();
+    }
+  }, [address, session, authLoading]);
 
   // Сбрасываем выбранную программу при отключении кошелька
   useEffect(() => {
