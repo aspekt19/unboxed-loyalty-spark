@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { useAccount, useSignMessage } from 'wagmi';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signInWithWallet = async () => {
+  const signInWithWallet = useCallback(async () => {
     if (!address || !isConnected) {
       toast.error('Please connect your wallet first');
       return;
@@ -88,7 +88,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [address, isConnected, signMessageAsync]);
+
+  useEffect(() => {
+    // Автоматический вход при подключении кошелька
+    if (isConnected && address && !user) {
+      console.log('[AuthContext] Wallet connected, auto sign-in for:', address);
+      signInWithWallet();
+    }
+  }, [isConnected, address, user, signInWithWallet]);
 
   const signOut = async () => {
     try {
