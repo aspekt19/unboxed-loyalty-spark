@@ -8,16 +8,27 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { useMintTokens } from '@/hooks/useMintTokens';
-import { toast } from 'sonner';
-import { Loader2, Sparkles, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useMintTokens } from '@/hooks/useMintTokens';
+import { useAccount } from 'wagmi';
+import { toast } from 'sonner';
+import { Loader2, Sparkles, AlertCircle, Wallet } from 'lucide-react';
 
 export function MerchantPanel() {
+  const { address } = useAccount();
   const [recipientAddress, setRecipientAddress] = useState('');
   const [amount, setAmount] = useState('');
   const [selectedProgram, setSelectedProgram] = useState<{ name: string; symbol: string; tokenAddress: string } | null>(null);
   const { mintTokens, isPending, isSuccess, reset } = useMintTokens();
+
+  // Сбрасываем выбранную программу при отключении кошелька
+  useEffect(() => {
+    if (!address) {
+      setSelectedProgram(null);
+      setRecipientAddress('');
+      setAmount('');
+    }
+  }, [address]);
 
   const handleMint = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,63 +62,74 @@ export function MerchantPanel() {
 
   return (
     <div className="space-y-6">
-      <CreateLoyaltyProgram />
-      
-      <CreatedPrograms onSelectProgram={setSelectedProgram} />
-      
-      <Card className="border-2 bg-gradient-to-br from-card to-muted/30">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            Issue Rewards
-          </CardTitle>
-          <CardDescription>Distribute loyalty tokens to customers</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {!selectedProgram && (
-            <Alert className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Please select a loyalty program above before issuing rewards
-              </AlertDescription>
-            </Alert>
-          )}
+      {!address ? (
+        <Alert>
+          <Wallet className="h-4 w-4" />
+          <AlertDescription>
+            Please connect your wallet to access the merchant panel
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <>
+          <CreateLoyaltyProgram />
           
-          <form onSubmit={handleMint} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="recipient">Customer Wallet Address</Label>
-              <Input
-                id="recipient"
-                placeholder="0x..."
-                value={recipientAddress}
-                onChange={(e) => setRecipientAddress(e.target.value)}
-                disabled={isPending}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="amount">Token Amount</Label>
-              <Input
-                id="amount"
-                type="number"
-                placeholder="100"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                disabled={isPending}
-              />
-            </div>
-            <Button type="submit" disabled={isPending || !selectedProgram} className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90">
-              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {selectedProgram ? `Issue ${selectedProgram.symbol}` : 'Issue Tokens'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+          <CreatedPrograms onSelectProgram={setSelectedProgram} />
+          
+          <Card className="border-2 bg-gradient-to-br from-card to-muted/30">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                Issue Rewards
+              </CardTitle>
+              <CardDescription>Distribute loyalty tokens to customers</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {!selectedProgram && (
+                <Alert className="mb-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Please select a loyalty program above before issuing rewards
+                  </AlertDescription>
+                </Alert>
+              )}
+              
+              <form onSubmit={handleMint} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="recipient">Customer Wallet Address</Label>
+                  <Input
+                    id="recipient"
+                    placeholder="0x..."
+                    value={recipientAddress}
+                    onChange={(e) => setRecipientAddress(e.target.value)}
+                    disabled={isPending}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="amount">Token Amount</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    placeholder="100"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    disabled={isPending}
+                  />
+                </div>
+                <Button type="submit" disabled={isPending || !selectedProgram} className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90">
+                  {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {selectedProgram ? `Issue ${selectedProgram.symbol}` : 'Issue Tokens'}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
 
-      <CreateReward />
-      
-      <RewardsList />
-      
-      <VouchersManagement />
+          <CreateReward />
+          
+          <RewardsList />
+          
+          <VouchersManagement />
+        </>
+      )}
     </div>
   );
 }

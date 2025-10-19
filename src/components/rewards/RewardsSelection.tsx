@@ -47,6 +47,16 @@ export function RewardsSelection() {
   
   const allowanceAmount = (allowance as bigint | undefined) || 0n;
 
+  // Очищаем данные при отключении кошелька
+  useEffect(() => {
+    if (!address) {
+      setTokens([]);
+      setSelectedTokenAddress('');
+      setSelectedRewardId('');
+      setAvailableRewards([]);
+    }
+  }, [address]);
+
   // Загрузка токенов
   useEffect(() => {
     const loadPrograms = () => {

@@ -4,17 +4,32 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useDeployLoyaltyToken } from '@/hooks/useDeployLoyaltyToken';
+import { useAccount } from 'wagmi';
 import { toast } from 'sonner';
 import { Loader2, Plus } from 'lucide-react';
 
 export function CreateLoyaltyProgram() {
+  const { address } = useAccount();
   const [programName, setProgramName] = useState('');
   const [tokenSymbol, setTokenSymbol] = useState('');
   const { deployToken, isPending, isSuccess, deployedTokenAddress } = useDeployLoyaltyToken();
   const savedRef = useRef(false);
 
+  // Очищаем форму при отключении кошелька
+  useEffect(() => {
+    if (!address) {
+      setProgramName('');
+      setTokenSymbol('');
+    }
+  }, [address]);
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!address) {
+      toast.error('Please connect your wallet first');
+      return;
+    }
     
     if (!programName || !tokenSymbol) {
       toast.error('Please fill all fields');

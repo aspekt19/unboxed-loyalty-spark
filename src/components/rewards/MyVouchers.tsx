@@ -18,6 +18,13 @@ export function MyVouchers() {
     setVouchers(customerVouchers);
   };
 
+  // Очищаем ваучеры при отключении кошелька
+  useEffect(() => {
+    if (!address) {
+      setVouchers([]);
+    }
+  }, [address]);
+
   useEffect(() => {
     loadVouchers();
     window.addEventListener('vouchersUpdated', loadVouchers);

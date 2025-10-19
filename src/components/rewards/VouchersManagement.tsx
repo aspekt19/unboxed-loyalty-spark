@@ -22,6 +22,14 @@ export function VouchersManagement() {
     setVouchers(merchantVouchers);
   };
 
+  // Очищаем ваучеры при отключении кошелька
+  useEffect(() => {
+    if (!address) {
+      setVouchers([]);
+      setSearchCode('');
+    }
+  }, [address]);
+
   useEffect(() => {
     loadMerchantVouchers();
     window.addEventListener('vouchersUpdated', loadMerchantVouchers);

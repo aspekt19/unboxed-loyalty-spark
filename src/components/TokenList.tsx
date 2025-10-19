@@ -34,6 +34,18 @@ export function TokenList() {
   // Track if initial load is complete
   const hasLoadedRef = useRef(false);
 
+  // Очищаем токены при отключении кошелька
+  useEffect(() => {
+    if (!walletAddress) {
+      setAllTokens([]);
+      setSelectedToken(null);
+      setRecipientAddress('');
+      setTransferAmount('');
+      setDialogOpen(false);
+      hasLoadedRef.current = false;
+    }
+  }, [walletAddress]);
+
   // Load tokens from blockchain once when component mounts or wallet connects
   useEffect(() => {
     if (publicClient && walletAddress && !hasLoadedRef.current) {

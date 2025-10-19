@@ -31,6 +31,13 @@ export function CreateReward() {
   });
 
   useEffect(() => {
+    // Очищаем токены при отключении кошелька
+    if (!address) {
+      setTokens([]);
+      setFormData({ tokenAddress: '', name: '', description: '', cost: '' });
+      return;
+    }
+
     const loadPrograms = () => {
       const loyaltyPrograms = localStorage.getItem('loyaltyPrograms');
       if (loyaltyPrograms) {
@@ -52,18 +59,18 @@ export function CreateReward() {
     // Listen for updates when new programs are created
     window.addEventListener('loyaltyProgramsUpdated', loadPrograms);
     return () => window.removeEventListener('loyaltyProgramsUpdated', loadPrograms);
-  }, []);
+  }, [address]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!user) {
-      toast.error('Please sign in with your wallet first');
+    if (!address) {
+      toast.error('Please connect your wallet');
       return;
     }
 
-    if (!address) {
-      toast.error('Please connect your wallet');
+    if (!user) {
+      toast.error('Please sign in with your wallet first');
       return;
     }
 
@@ -104,6 +111,10 @@ export function CreateReward() {
       toast.error('Failed to create reward');
     }
   };
+
+  if (!address) {
+    return null;
+  }
 
   return (
     <Card className="border-2">

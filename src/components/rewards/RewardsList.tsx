@@ -33,6 +33,14 @@ export function RewardsList() {
     }
   };
 
+  // Очищаем награды при отключении кошелька
+  useEffect(() => {
+    if (!address) {
+      setRewards([]);
+      setTokens(new Map());
+    }
+  }, [address]);
+
   useEffect(() => {
     loadData();
     window.addEventListener('rewardsUpdated', loadData);

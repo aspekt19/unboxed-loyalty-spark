@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Coins, Calendar, Check, Trash2, Loader2 } from 'lucide-react';
-import { usePublicClient } from 'wagmi';
+import { usePublicClient, useAccount } from 'wagmi';
 import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
 import { useBurnAllTokens } from '@/hooks/useBurnAllTokens';
@@ -31,9 +31,23 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
   const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
   const publicClient = usePublicClient();
+  const { address } = useAccount();
   const { burnAllTokens, isBurning, progress } = useBurnAllTokens();
 
+  // Очищаем программы при отключении кошелька
   useEffect(() => {
+    if (!address) {
+      setPrograms([]);
+      setSelectedProgram(null);
+    }
+  }, [address]);
+
+  useEffect(() => {
+    // Не загружаем программы, если кошелек не подключен
+    if (!address) {
+      return;
+    }
+
     const loadPrograms = async () => {
       const savedPrograms = JSON.parse(localStorage.getItem('loyaltyPrograms') || '[]');
       
@@ -93,7 +107,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     const handleUpdate = () => loadPrograms();
     window.addEventListener('loyaltyProgramsUpdated', handleUpdate);
     return () => window.removeEventListener('loyaltyProgramsUpdated', handleUpdate);
-  }, [publicClient]);
+  }, [publicClient, address]);
 
   const handleSelectProgram = (program: LoyaltyProgram, index: number) => {
     if (!program.tokenAddress) {
