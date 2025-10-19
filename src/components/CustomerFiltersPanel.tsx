@@ -3,165 +3,116 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAccount } from 'wagmi';
-import { Filter, Loader2, AlertCircle, Coins, Gift, Store } from 'lucide-react';
+import { Sparkles, Loader2, AlertCircle, Coins, Clock } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useMultiTokenBalance } from '@/hooks/useMultiTokenBalance';
-import { getRewardsByToken } from '@/lib/vouchers';
-import { Reward } from '@/types/rewards';
-import { Separator } from '@/components/ui/separator';
-import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
+
+interface LoyaltyProgram {
+  id: string;
+  token_address: string;
+  name: string;
+  symbol: string;
+  status: string;
+  expiration_date: string;
+  merchant_address: string;
+}
 
 interface TokenInfo {
   address: string;
   name: string;
   symbol: string;
+  status: string;
+  expirationDate: string;
 }
 
-interface CustomerFiltersPanelProps {
-  onFilterChange?: (filters: {
-    selectedProgram: string | null;
-    selectedReward: string | null;
-  }) => void;
-}
-
-export function CustomerFiltersPanel({ onFilterChange }: CustomerFiltersPanelProps) {
+export function CustomerFiltersPanel() {
   const { address } = useAccount();
-  const [tokens, setTokens] = useState<TokenInfo[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedProgramAddress, setSelectedProgramAddress] = useState<string | null>(null);
-  const [selectedRewardId, setSelectedRewardId] = useState<string | null>(null);
-  const [allRewards, setAllRewards] = useState<Reward[]>([]);
+  const [programs, setPrograms] = useState<TokenInfo[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { balances, isLoading: balancesLoading } = useMultiTokenBalance(tokens);
+  const { balances, isLoading: balancesLoading } = useMultiTokenBalance(programs);
 
-  // Загрузка программ
+  // Load active programs from Supabase
   useEffect(() => {
     if (!address) {
-      setTokens([]);
-      setSelectedProgramAddress(null);
-      setSelectedRewardId(null);
+      setPrograms([]);
       return;
     }
 
-    const loadPrograms = () => {
-      setIsLoading(true);
-      let stored = localStorage.getItem('customerTokens');
-      
-      if (!stored) {
-        stored = localStorage.getItem('loyaltyPrograms');
-      }
-      
-      if (stored) {
-        const programs = JSON.parse(stored);
-        const activePrograms = programs
-          .filter((p: any) => {
-            const addr = p.tokenAddress || p.address;
-            return addr && addr !== 'pending';
-          })
-          .map((p: any) => ({
-            address: p.tokenAddress || p.address,
-            name: p.name,
-            symbol: p.symbol,
-          }));
-        
-        setTokens(activePrograms);
-      }
-      setIsLoading(false);
+    loadActivePrograms();
+
+    // Subscribe to realtime updates
+    const channel = supabase
+      .channel('customer_loyalty_programs')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'loyalty_programs',
+        },
+        () => {
+          console.log('Programs updated, reloading...');
+          loadActivePrograms();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
     };
-
-    loadPrograms();
-
-    window.addEventListener('loyaltyProgramsUpdated', loadPrograms);
-    return () => window.removeEventListener('loyaltyProgramsUpdated', loadPrograms);
   }, [address]);
 
-  // Загрузка всех наград для всех программ
-  useEffect(() => {
-    const loadAllRewards = async () => {
-      if (tokens.length === 0) return;
+  const loadActivePrograms = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('loyalty_programs')
+        .select('*')
+        .in('status', ['active', 'expiring_soon'])
+        .order('created_at', { ascending: false });
 
-      const rewardsPromises = tokens.map(token => getRewardsByToken(token.address));
-      const rewardsArrays = await Promise.all(rewardsPromises);
-      const flatRewards = rewardsArrays.flat();
-      setAllRewards(flatRewards);
-    };
+      if (error) {
+        console.error('Error loading programs:', error);
+        return;
+      }
 
-    loadAllRewards();
+      const programsData: TokenInfo[] = data.map((prog: LoyaltyProgram) => ({
+        address: prog.token_address,
+        name: prog.name,
+        symbol: prog.symbol,
+        status: prog.status,
+        expirationDate: prog.expiration_date,
+      }));
 
-    const handleRewardsUpdate = () => {
-      loadAllRewards();
-    };
-
-    window.addEventListener('rewardsUpdated', handleRewardsUpdate);
-    return () => window.removeEventListener('rewardsUpdated', handleRewardsUpdate);
-  }, [tokens]);
-
-  // Уведомление родителя об изменении фильтров
-  useEffect(() => {
-    if (onFilterChange) {
-      onFilterChange({
-        selectedProgram: selectedProgramAddress,
-        selectedReward: selectedRewardId,
-      });
+      setPrograms(programsData);
+    } catch (error) {
+      console.error('Failed to load programs:', error);
+    } finally {
+      setIsLoading(false);
     }
-  }, [selectedProgramAddress, selectedRewardId, onFilterChange]);
+  };
 
-  // Фильтруем токены с ненулевым балансом
-  const tokensWithBalance = tokens.filter(token => {
-    const balance = balances.find(b => b.address === token.address);
+  // Filter programs with non-zero balance
+  const programsWithBalance = programs.filter(program => {
+    const balance = balances.find(b => b.address === program.address);
     return balance && parseFloat(balance.balance) > 0;
   });
-
-  // Фильтруем награды по выбранной программе
-  const filteredRewards = selectedProgramAddress
-    ? allRewards.filter(r => r.tokenAddress === selectedProgramAddress)
-    : allRewards;
-
-  // Группируем награды по мерчантам
-  const rewardsByMerchant = filteredRewards.reduce((acc, reward) => {
-    const merchantAddr = reward.merchantAddress || 'Unknown';
-    if (!acc[merchantAddr]) {
-      acc[merchantAddr] = [];
-    }
-    acc[merchantAddr].push(reward);
-    return acc;
-  }, {} as Record<string, Reward[]>);
 
   if (!address) {
     return null;
   }
 
-  const handleProgramClick = (programAddress: string) => {
-    if (selectedProgramAddress === programAddress) {
-      setSelectedProgramAddress(null);
-      setSelectedRewardId(null);
-    } else {
-      setSelectedProgramAddress(programAddress);
-      setSelectedRewardId(null);
-    }
-  };
-
-  const handleRewardClick = (rewardId: string) => {
-    if (selectedRewardId === rewardId) {
-      setSelectedRewardId(null);
-    } else {
-      setSelectedRewardId(rewardId);
-    }
-  };
-
-  const clearFilters = () => {
-    setSelectedProgramAddress(null);
-    setSelectedRewardId(null);
-  };
-
   return (
     <Card className="border-2 flex flex-col max-h-[calc(100vh-2rem)]">
       <CardHeader className="flex-shrink-0">
         <CardTitle className="flex items-center gap-2">
-          <Filter className="h-5 w-5 text-primary" />
-          Filters
+          <Sparkles className="h-5 w-5 text-primary" />
+          Active Programs
         </CardTitle>
-        <CardDescription>Browse programs and rewards</CardDescription>
+        <CardDescription>Your loyalty programs overview</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden">
         {isLoading || balancesLoading ? (
@@ -169,128 +120,56 @@ export function CustomerFiltersPanel({ onFilterChange }: CustomerFiltersPanelPro
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
             <span className="ml-2 text-sm text-muted-foreground">Loading...</span>
           </div>
-        ) : tokensWithBalance.length === 0 ? (
+        ) : programsWithBalance.length === 0 ? (
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              No loyalty tokens yet. Get tokens from merchants to see them here!
+              No active programs yet. Get tokens from merchants to see them here!
             </AlertDescription>
           </Alert>
         ) : (
-          <div className="space-y-4">
-            {(selectedProgramAddress || selectedRewardId) && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={clearFilters}
-                className="w-full"
-              >
-                Clear Filters
-              </Button>
-            )}
-
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Coins className="h-4 w-4 text-muted-foreground" />
-                <h3 className="text-sm font-semibold">Loyalty Programs</h3>
-              </div>
-              
-              <ScrollArea className="h-[250px]">
-                <div className="space-y-2 pr-4 pb-4">
-                  {tokensWithBalance.map((token) => {
-                    const balance = balances.find(b => b.address === token.address);
-                    const isSelected = selectedProgramAddress === token.address;
-                    
-                    return (
-                      <button
-                        key={token.address}
-                        onClick={() => handleProgramClick(token.address)}
-                        className={`w-full text-left p-3 rounded-lg border transition-all ${
-                          isSelected
-                            ? 'border-primary bg-primary/10'
-                            : 'border-border bg-muted/30 hover:bg-muted/50'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <p className="font-semibold text-sm">{token.name}</p>
-                            <p className="text-xs text-muted-foreground">{token.symbol}</p>
-                          </div>
-                          <Badge variant={isSelected ? "default" : "outline"} className="ml-2">
-                            {balance?.balance || '0'}
-                          </Badge>
+          <ScrollArea className="h-full">
+            <div className="space-y-3 pr-4 pb-4">
+              {programsWithBalance.map((program) => {
+                const balance = balances.find(b => b.address === program.address);
+                const isExpiringSoon = program.status === 'expiring_soon';
+                
+                return (
+                  <div
+                    key={program.address}
+                    className="p-4 rounded-lg border bg-gradient-to-br from-card to-muted/30 space-y-3"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold">{program.name}</h3>
+                          {isExpiringSoon && (
+                            <Badge variant="destructive" className="text-xs">
+                              Expiring Soon
+                            </Badge>
+                          )}
                         </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </ScrollArea>
-            </div>
-
-            <Separator />
-
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Gift className="h-4 w-4 text-muted-foreground" />
-                <h3 className="text-sm font-semibold">Available Rewards</h3>
-              </div>
-              
-              {filteredRewards.length === 0 ? (
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription className="text-xs">
-                    {selectedProgramAddress
-                      ? 'No rewards available for this program.'
-                      : 'No rewards available yet.'}
-                  </AlertDescription>
-                </Alert>
-              ) : (
-                <ScrollArea className="h-[300px]">
-                  <div className="space-y-4 pr-4 pb-4">
-                    {Object.entries(rewardsByMerchant).map(([merchantAddr, rewards]) => (
-                      <div key={merchantAddr} className="space-y-2">
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Store className="h-3 w-3" />
-                          <span className="font-mono">
-                            {merchantAddr.slice(0, 6)}...{merchantAddr.slice(-4)}
-                          </span>
-                        </div>
-                        
-                        {rewards.map((reward) => {
-                          const isSelected = selectedRewardId === reward.id;
-                          const token = tokens.find(t => t.address === reward.tokenAddress);
-                          
-                          return (
-                            <button
-                              key={reward.id}
-                              onClick={() => handleRewardClick(reward.id)}
-                              className={`w-full text-left p-3 rounded-lg border transition-all ${
-                                isSelected
-                                  ? 'border-primary bg-primary/10'
-                                  : 'border-border bg-muted/30 hover:bg-muted/50'
-                              }`}
-                            >
-                              <div className="space-y-1">
-                                <div className="flex items-center justify-between">
-                                  <p className="font-semibold text-sm">{reward.name}</p>
-                                  <Badge variant={isSelected ? "default" : "secondary"} className="text-xs">
-                                    {reward.cost} {token?.symbol}
-                                  </Badge>
-                                </div>
-                                <p className="text-xs text-muted-foreground line-clamp-2">
-                                  {reward.description}
-                                </p>
-                              </div>
-                            </button>
-                          );
-                        })}
+                        <p className="text-sm text-muted-foreground">{program.symbol}</p>
                       </div>
-                    ))}
+                      <div className="text-right">
+                        <p className="text-2xl font-bold">
+                          {parseFloat(balance?.balance || '0').toFixed(0)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{program.symbol}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      <span>
+                        Expires: {format(new Date(program.expirationDate), 'MMM dd, yyyy')}
+                      </span>
+                    </div>
                   </div>
-                </ScrollArea>
-              )}
+                );
+              })}
             </div>
-          </div>
+          </ScrollArea>
         )}
       </CardContent>
     </Card>

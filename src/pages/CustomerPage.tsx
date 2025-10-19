@@ -5,8 +5,15 @@ import { Sparkles, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import PageTransition from '@/components/PageTransition';
+import { useEffect } from 'react';
+import { initializeCleanState } from '@/lib/clearOldData';
 
 const CustomerPage = () => {
+  // Clear old test data on first load
+  useEffect(() => {
+    initializeCleanState();
+  }, []);
+
   return (
     <PageTransition>
       <div className="min-h-screen bg-white">
