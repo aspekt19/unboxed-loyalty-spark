@@ -21,14 +21,26 @@ const queryClient = new QueryClient();
 function AnimatedRoutes() {
   const location = useLocation();
 
-  // Миграция данных из localStorage в базу данных при первой загрузке
+  // Автоматическая миграция данных из localStorage в БД при каждой загрузке
+  // (если есть данные для миграции)
   useEffect(() => {
     const migrationKey = 'data_migrated_to_cloud';
-    const alreadyMigrated = localStorage.getItem(migrationKey);
+    const lastMigrationTime = localStorage.getItem(migrationKey);
+    const now = Date.now();
     
-    if (!alreadyMigrated) {
+    // Проверяем, есть ли данные в localStorage для миграции
+    const hasRewards = localStorage.getItem('merchantRewards');
+    const hasVouchers = localStorage.getItem('customerVouchers');
+    
+    // Мигрируем если:
+    // 1. Никогда не мигрировали ИЛИ
+    // 2. Прошло более 1 часа с последней миграции И есть данные для миграции
+    const shouldMigrate = !lastMigrationTime || 
+      ((now - parseInt(lastMigrationTime)) > 3600000 && (hasRewards || hasVouchers));
+    
+    if (shouldMigrate) {
       migrateAllData().then(() => {
-        localStorage.setItem(migrationKey, 'true');
+        localStorage.setItem(migrationKey, now.toString());
       });
     }
   }, []);

@@ -1,28 +1,11 @@
 import { WalletConnectButton } from '@/components/WalletConnectButton';
 import { MerchantPanel } from '@/components/MerchantPanel';
-import { Sparkles, ArrowLeft, Database } from 'lucide-react';
+import { Sparkles, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import PageTransition from '@/components/PageTransition';
-import { migrateAllData } from '@/lib/migrateLocalStorageData';
-import { toast } from 'sonner';
-import { useState } from 'react';
 
 const MerchantPage = () => {
-  const [isMigrating, setIsMigrating] = useState(false);
-
-  const handleMigrateData = async () => {
-    setIsMigrating(true);
-    try {
-      await migrateAllData();
-      toast.success('Data migration completed!');
-    } catch (error) {
-      toast.error('Failed to migrate data');
-      console.error('Migration error:', error);
-    } finally {
-      setIsMigrating(false);
-    }
-  };
 
   return (
     <PageTransition>
@@ -45,19 +28,7 @@ const MerchantPage = () => {
                 <p className="text-xs text-muted-foreground">Merchant Portal</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleMigrateData}
-                disabled={isMigrating}
-                className="gap-2"
-              >
-                <Database className="h-4 w-4" />
-                {isMigrating ? 'Migrating...' : 'Migrate Data'}
-              </Button>
-              <WalletConnectButton />
-            </div>
+            <WalletConnectButton />
           </div>
         </header>
 
