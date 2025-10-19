@@ -228,26 +228,17 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
           let holdersBalance = 0;
           try {
             console.log('Fetching holders balance via edge function...');
-            const response = await fetch(
-              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-token-holders`,
-              {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-                },
-                body: JSON.stringify({
-                  tokenAddress: program.tokenAddress,
-                }),
-              }
-            );
+            const { data: holdersData, error: holdersError } = await supabase.functions.invoke('get-token-holders', {
+              body: { tokenAddress: program.tokenAddress }
+            });
 
-            console.log('Edge function response status:', response.status);
+            console.log('Edge function response:', holdersData, holdersError);
 
-            if (response.ok) {
-              const data = await response.json();
-              console.log('Holders data received:', data);
-              holdersBalance = data.holders.reduce((sum: number, holder: any) => {
+            if (holdersError) {
+              console.error('Edge function error:', holdersError);
+            } else if (holdersData?.holders) {
+              console.log('Holders data received:', holdersData);
+              holdersBalance = holdersData.holders.reduce((sum: number, holder: any) => {
                 // Исключаем баланс мерчанта из общего баланса пользователей
                 if (holder.address.toLowerCase() !== address.toLowerCase()) {
                   return sum + parseFloat(holder.balance);
@@ -255,9 +246,6 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
                 return sum;
               }, 0);
               console.log(`Users balance for ${program.name}:`, holdersBalance);
-            } else {
-              const errorText = await response.text();
-              console.error('Edge function error:', errorText);
             }
           } catch (error) {
             console.error('Error fetching holders:', error);
