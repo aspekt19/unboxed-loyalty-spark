@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { maxUint256 } from 'viem';
 import { toast } from 'sonner';
@@ -10,28 +10,55 @@ export function useApproveTokens() {
     hash,
   });
 
+  // Логируем ошибки
+  useEffect(() => {
+    if (error) {
+      console.error('❌ useApproveTokens ERROR:', error);
+      toast.error(`Approval failed: ${error.message}`);
+    }
+  }, [error]);
+
+  // Логируем изменения hash
+  useEffect(() => {
+    if (hash) {
+      console.log('✅ Transaction hash received:', hash);
+      toast.success('Approval transaction submitted!');
+    }
+  }, [hash]);
+
   const approveTokens = useCallback((tokenAddress: string, spenderAddress: string, tokenAbi: any) => {
     console.log('🚀 useApproveTokens: approveTokens called');
     console.log('useApproveTokens: tokenAddress:', tokenAddress);
     console.log('useApproveTokens: spenderAddress:', spenderAddress);
-    console.log('useApproveTokens: isPending:', isPending);
+    console.log('useApproveTokens: isPending before call:', isPending);
     
     try {
-      console.log('useApproveTokens: Calling writeContract...');
+      console.log('useApproveTokens: Calling writeContract with args:', {
+        address: tokenAddress,
+        spender: spenderAddress,
+        amount: maxUint256.toString(),
+      });
+      
       writeContract({
         address: tokenAddress as `0x${string}`,
         abi: tokenAbi,
         functionName: 'approve',
         args: [spenderAddress as `0x${string}`, maxUint256],
       } as any);
-      console.log('useApproveTokens: writeContract called successfully');
+      
+      console.log('useApproveTokens: writeContract called');
     } catch (error) {
-      console.error('useApproveTokens: Error in approveTokens:', error);
-      toast.error('Failed to approve tokens');
+      console.error('❌ useApproveTokens: Caught error:', error);
+      toast.error('Failed to initiate approval');
     }
   }, [writeContract, isPending]);
 
-  console.log('useApproveTokens hook: isPending =', isPending, 'isConfirming =', isConfirming);
+  console.log('useApproveTokens hook state:', { 
+    isPending, 
+    isConfirming, 
+    hash: hash ? 'exists' : 'null',
+    error: error ? error.message : 'null'
+  });
 
   return {
     approveTokens,
