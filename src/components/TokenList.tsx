@@ -9,6 +9,7 @@ import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
 import { Loader2, Send, Coins } from 'lucide-react';
 import { usePublicClient, useAccount } from 'wagmi';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
   DialogContent,
@@ -25,6 +26,7 @@ export function TokenList() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [allTokens, setAllTokens] = useState<TokenInfo[]>([]);
   const [isLoadingTokens, setIsLoadingTokens] = useState(true);
+  const [activePrograms, setActivePrograms] = useState<Set<string>>(new Set());
 
   const publicClient = usePublicClient();
   const { address: walletAddress } = useAccount();
@@ -57,12 +59,39 @@ export function TokenList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [publicClient, walletAddress]);
 
+  // Load active programs from Supabase
+  useEffect(() => {
+    loadActivePrograms();
+    
+    // Subscribe to realtime updates
+    const channel = supabase
+      .channel('loyalty_programs_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'loyalty_programs',
+        },
+        () => {
+          console.log('Loyalty programs changed, reloading active programs...');
+          loadActivePrograms();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   // Listen for loyalty program updates from merchant
   useEffect(() => {
     const handleUpdate = () => {
       console.log('loyaltyProgramsUpdated event received, reloading tokens...');
       hasLoadedRef.current = false; // Allow reload
       loadTokensFromBlockchain();
+      loadActivePrograms();
     };
     window.addEventListener('loyaltyProgramsUpdated', handleUpdate);
     return () => window.removeEventListener('loyaltyProgramsUpdated', handleUpdate);
@@ -154,6 +183,28 @@ export function TokenList() {
     }
   };
 
+  const loadActivePrograms = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('loyalty_programs')
+        .select('token_address')
+        .in('status', ['active', 'expiring_soon']);
+
+      if (error) {
+        console.error('Error loading active programs:', error);
+        return;
+      }
+
+      const activeProgramAddresses = new Set(
+        data.map(program => program.token_address.toLowerCase())
+      );
+      console.log('Active programs loaded:', activeProgramAddresses.size);
+      setActivePrograms(activeProgramAddresses);
+    } catch (error) {
+      console.error('Failed to load active programs:', error);
+    }
+  };
+
   const loadTokensFromLocalStorage = () => {
     // Try customer-specific localStorage first, then fall back to merchant's
     const stored = localStorage.getItem('customerTokens') || localStorage.getItem('loyaltyPrograms');
@@ -177,9 +228,10 @@ export function TokenList() {
     }
   };
 
-  // Filter to only show tokens with non-zero balances
+  // Filter to only show tokens with non-zero balances and from active programs
   const tokensWithBalance = balances.filter(token => 
-    parseFloat(token.balance) > 0
+    parseFloat(token.balance) > 0 && 
+    (activePrograms.size === 0 || activePrograms.has(token.address.toLowerCase()))
   );
 
   console.log('TokenList render - tokens:', allTokens.length, 'balances:', balances.length, 'with balance:', tokensWithBalance.length);
