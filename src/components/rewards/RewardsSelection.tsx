@@ -182,7 +182,7 @@ export function RewardsSelection() {
             rewardName: reward.name,
             rewardDescription: reward.description,
             tokenAddress: selectedTokenAddress,
-            tokenSymbol: token.symbol,
+            tokenSymbol: token.name,
             customerAddress: address,
             merchantAddress: reward.merchantAddress,
             status: 'active',
