@@ -202,12 +202,12 @@ export function IssuedTokensHistory() {
             
             <ScrollArea className="h-[500px] pr-4">
               <div className="space-y-3 pb-4">
-                {filteredHistory.map((item, index) => (
+                 {filteredHistory.map((item, index) => (
                   <div
                     key={`${item.transactionHash}-${index}`}
-                    className="flex items-start justify-between p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
+                    className="flex flex-col gap-3 p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
                   >
-                    <div className="flex-1 space-y-1">
+                    <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <Badge variant="outline" className="font-mono text-xs">
                           {item.tokenSymbol}
@@ -233,7 +233,7 @@ export function IssuedTokensHistory() {
                       href={`https://basescan.org/tx/${item.transactionHash}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs text-primary hover:underline ml-4 flex-shrink-0"
+                      className="text-xs text-primary hover:underline self-start"
                     >
                       View on BaseScan ↗
                     </a>

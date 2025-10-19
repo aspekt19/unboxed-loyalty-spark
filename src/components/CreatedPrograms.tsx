@@ -26,10 +26,17 @@ interface LoyaltyProgram {
   tokenAddress?: string;
 }
 
+interface TokenStats {
+  [tokenAddress: string]: {
+    totalIssued: number;
+  };
+}
+
 export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program: LoyaltyProgram & { tokenAddress: string }) => void }) {
   const [programs, setPrograms] = useState<LoyaltyProgram[]>([]);
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
   const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
+  const [tokenStats, setTokenStats] = useState<TokenStats>({});
   const publicClient = usePublicClient();
   const { address } = useAccount();
   const { burnAllTokens, isBurning, progress } = useBurnAllTokens();
@@ -108,6 +115,62 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     window.addEventListener('loyaltyProgramsUpdated', handleUpdate);
     return () => window.removeEventListener('loyaltyProgramsUpdated', handleUpdate);
   }, [publicClient, address]);
+
+  // Load token statistics
+  useEffect(() => {
+    if (!address || !publicClient) return;
+
+    const loadTokenStats = async () => {
+      const stats: TokenStats = {};
+      const activePrograms = programs.filter(p => p.tokenAddress);
+
+      for (const program of activePrograms) {
+        if (!program.tokenAddress) continue;
+
+        try {
+          const currentBlock = await publicClient.getBlockNumber();
+          const BLOCK_RANGE = 10000;
+          let fromBlock = currentBlock - BigInt(BLOCK_RANGE);
+          if (fromBlock < 0n) fromBlock = 0n;
+
+          const logs = await publicClient.getLogs({
+            address: program.tokenAddress as `0x${string}`,
+            event: {
+              type: 'event',
+              name: 'Transfer',
+              inputs: [
+                { name: 'from', type: 'address', indexed: true },
+                { name: 'to', type: 'address', indexed: true },
+                { name: 'value', type: 'uint256', indexed: false },
+              ],
+            },
+            args: {
+              from: '0x0000000000000000000000000000000000000000' as `0x${string}`,
+            },
+            fromBlock,
+            toBlock: currentBlock,
+          });
+
+          const totalIssued = logs.reduce((sum, log) => {
+            if (log.args.value) {
+              return sum + Number(log.args.value) / 1e18;
+            }
+            return sum;
+          }, 0);
+
+          stats[program.tokenAddress] = { totalIssued };
+        } catch (error) {
+          console.error(`Error loading stats for ${program.name}:`, error);
+        }
+      }
+
+      setTokenStats(stats);
+    };
+
+    if (programs.length > 0) {
+      loadTokenStats();
+    }
+  }, [programs, publicClient, address]);
 
   const handleSelectProgram = (program: LoyaltyProgram, index: number) => {
     if (!program.tokenAddress) {
@@ -225,9 +288,19 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
                   </div>
                   <p className="text-sm text-muted-foreground">Symbol: {program.symbol}</p>
                   {program.tokenAddress && (
-                    <p className="text-xs text-muted-foreground mt-1 font-mono">
-                      {program.tokenAddress.slice(0, 6)}...{program.tokenAddress.slice(-4)}
-                    </p>
+                    <>
+                      <p className="text-xs text-muted-foreground mt-1 font-mono">
+                        {program.tokenAddress.slice(0, 6)}...{program.tokenAddress.slice(-4)}
+                      </p>
+                      {tokenStats[program.tokenAddress] && (
+                        <div className="mt-2 text-sm">
+                          <span className="text-muted-foreground">Total Issued: </span>
+                          <span className="font-semibold text-primary">
+                            {tokenStats[program.tokenAddress].totalIssued.toFixed(2)} {program.symbol}
+                          </span>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
                 <div className="flex flex-col items-end gap-2">
