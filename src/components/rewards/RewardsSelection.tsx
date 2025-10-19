@@ -167,33 +167,34 @@ export function RewardsSelection() {
   }, [isSuccess, selectedRewardId, availableRewards, tokens, selectedTokenAddress, address, refetch]);
 
   const handleApprove = () => {
-    console.log('RewardsSelection: handleApprove called');
-    console.log('RewardsSelection: selectedTokenAddress:', selectedTokenAddress);
-    console.log('RewardsSelection: MERCHANT_ADDRESS:', MERCHANT_ADDRESS);
-    console.log('RewardsSelection: selectedRewardId:', selectedRewardId);
-    console.log('RewardsSelection: selectedRewardForSpender:', selectedRewardForSpender);
+    console.log('=== APPROVE BUTTON CLICKED ===');
+    console.log('selectedTokenAddress:', selectedTokenAddress);
+    console.log('MERCHANT_ADDRESS:', MERCHANT_ADDRESS);
+    console.log('selectedRewardId:', selectedRewardId);
+    console.log('isApproving:', isApproving);
+    console.log('balancesLoading:', balancesLoading);
     
     if (!selectedRewardId) {
-      console.log('RewardsSelection: Error - No reward selected');
+      console.log('ERROR: No reward selected');
       toast.error('Please select a reward first');
       return;
     }
     
     if (!selectedTokenAddress) {
-      console.log('RewardsSelection: Error - No token selected');
+      console.log('ERROR: No token selected');
       toast.error('Please select a loyalty program');
       return;
     }
 
     if (!MERCHANT_ADDRESS || MERCHANT_ADDRESS === '0x0000000000000000000000000000000000000000') {
-      console.log('RewardsSelection: Error - Invalid merchant address');
+      console.log('ERROR: Invalid merchant address');
       toast.error('Merchant address not found. Please select a valid reward.');
       return;
     }
 
-    console.log('RewardsSelection: Calling approveTokens...');
-    // Даем approve адресу мерчанта, чтобы он мог управлять нашими токенами
+    console.log('CALLING approveTokens NOW...');
     approveTokens(selectedTokenAddress, MERCHANT_ADDRESS, CONTRACTS.LOYAL_SPARK_ERC20.abi);
+    console.log('approveTokens CALLED');
   };
 
   const handleActivate = () => {
@@ -388,12 +389,8 @@ export function RewardsSelection() {
             {selectedRewardId && needsApproval() ? (
               <Button
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  console.log('Button clicked!');
-                  handleApprove();
-                }}
-                disabled={isApproving || balancesLoading || !selectedRewardId}
+                onClick={handleApprove}
+                disabled={isApproving || balancesLoading}
                 className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:opacity-90"
               >
                 {isApproving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

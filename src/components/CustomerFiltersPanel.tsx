@@ -155,15 +155,15 @@ export function CustomerFiltersPanel({ onFilterChange }: CustomerFiltersPanelPro
   };
 
   return (
-    <Card className="border-2 h-full">
-      <CardHeader>
+    <Card className="border-2 flex flex-col max-h-[calc(100vh-2rem)]">
+      <CardHeader className="flex-shrink-0">
         <CardTitle className="flex items-center gap-2">
           <Filter className="h-5 w-5 text-primary" />
           Filters
         </CardTitle>
         <CardDescription>Browse programs and rewards</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 overflow-hidden">
         {isLoading || balancesLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
