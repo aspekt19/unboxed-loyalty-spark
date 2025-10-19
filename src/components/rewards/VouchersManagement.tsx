@@ -46,9 +46,10 @@ export function VouchersManagement() {
     window.addEventListener('vouchersUpdated', handleUpdate);
     window.addEventListener('profileMigrated', handleUpdate);
     
-    // Подписка на realtime обновления ваучеров
+    // Подписка на realtime обновления ваучеров с уникальным именем канала
+    const channelName = `vouchers_merchant_${address.toLowerCase()}`;
     const channel = supabase
-      .channel('vouchers_merchant')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -67,7 +68,7 @@ export function VouchersManagement() {
     return () => {
       window.removeEventListener('vouchersUpdated', handleUpdate);
       window.removeEventListener('profileMigrated', handleUpdate);
-      supabase.removeChannel(channel);
+      channel.unsubscribe();
     };
   }, [address, session]);
 

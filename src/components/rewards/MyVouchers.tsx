@@ -35,9 +35,10 @@ export function MyVouchers() {
     loadVouchers();
     window.addEventListener('vouchersUpdated', loadVouchers);
     
-    // Подписка на изменения в таблице vouchers для реалтайм обновлений
+    // Подписка на изменения в таблице vouchers для реалтайм обновлений с уникальным именем канала
+    const channelName = `vouchers_customer_${address.toLowerCase()}`;
     const channel = supabase
-      .channel('vouchers-changes')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -55,7 +56,7 @@ export function MyVouchers() {
     
     return () => {
       window.removeEventListener('vouchersUpdated', loadVouchers);
-      supabase.removeChannel(channel);
+      channel.unsubscribe();
     };
   }, [address, session]);
 
