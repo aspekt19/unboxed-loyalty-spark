@@ -244,10 +244,32 @@ export function RewardsSelection() {
       return;
     }
 
-    // Проверяем авторизацию
+    // Проверяем авторизацию и ждем завершения
     if (!session) {
-      toast.error('Authenticating your wallet...');
-      await signInWithWallet();
+      toast.info('Authenticating your wallet...');
+      try {
+        await signInWithWallet();
+        // Даем время на создание профиля
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Проверяем, что профиль создан
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('wallet_address')
+          .eq('wallet_address', address.toLowerCase())
+          .single();
+        
+        if (!profile) {
+          toast.error('Failed to create profile. Please try again.');
+          return;
+        }
+        
+        toast.success('Authenticated! You can now activate the voucher.');
+      } catch (error) {
+        console.error('Authentication error:', error);
+        toast.error('Authentication failed. Please try again.');
+        return;
+      }
       return;
     }
 
