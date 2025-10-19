@@ -130,13 +130,27 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
 
   // Load token statistics
   useEffect(() => {
-    if (!address || !publicClient) return;
+    if (!address) {
+      console.log('No address, skipping stats load');
+      return;
+    }
+    
+    if (!publicClient) {
+      console.log('No publicClient, skipping stats load');
+      return;
+    }
 
     const loadTokenStats = async () => {
-      console.log('Loading token stats for programs:', programs.length);
+      const activePrograms = programs.filter(p => p.tokenAddress);
+      console.log('Loading token stats for programs:', activePrograms.length, activePrograms);
+      
+      if (activePrograms.length === 0) {
+        console.log('No active programs with token address');
+        return;
+      }
+
       setIsLoadingStats(true);
       const stats: TokenStats = {};
-      const activePrograms = programs.filter(p => p.tokenAddress);
 
       for (const program of activePrograms) {
         if (!program.tokenAddress) continue;
@@ -145,10 +159,14 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
           console.log(`Fetching stats for ${program.name} (${program.tokenAddress})`);
           
           const currentBlock = await publicClient.getBlockNumber();
-          const BLOCK_RANGE = 200000; // Увеличиваем диапазон для полной истории
+          console.log('Current block:', currentBlock);
+          
+          const BLOCK_RANGE = 200000;
           let fromBlock = currentBlock - BigInt(BLOCK_RANGE);
           if (fromBlock < 0n) fromBlock = 0n;
 
+          console.log('Fetching logs from block', fromBlock, 'to', currentBlock);
+          
           const logs = await publicClient.getLogs({
             address: program.tokenAddress as `0x${string}`,
             event: {
@@ -166,6 +184,8 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
             fromBlock,
             toBlock: currentBlock,
           });
+
+          console.log('Logs received:', logs.length);
 
           const totalIssued = logs.reduce((sum, log) => {
             if (log.args.value) {
@@ -189,14 +209,17 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
               }
             ] as const;
             
+            console.log('Fetching merchant balance for address:', address);
+            
             const balance = await publicClient.readContract({
               address: program.tokenAddress as `0x${string}`,
               abi: ERC20_ABI,
               functionName: 'balanceOf',
               args: [address],
             } as any);
+            
             merchantBalance = Number(balance) / 1e18;
-            console.log(`Merchant balance for ${program.name}:`, merchantBalance);
+            console.log(`Merchant balance for ${program.name}:`, merchantBalance, 'raw:', balance);
           } catch (error) {
             console.error('Error fetching merchant balance:', error);
           }
@@ -219,6 +242,8 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
               }
             );
 
+            console.log('Edge function response status:', response.status);
+
             if (response.ok) {
               const data = await response.json();
               console.log('Holders data received:', data);
@@ -231,13 +256,15 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
               }, 0);
               console.log(`Users balance for ${program.name}:`, holdersBalance);
             } else {
-              console.error('Edge function error:', await response.text());
+              const errorText = await response.text();
+              console.error('Edge function error:', errorText);
             }
           } catch (error) {
             console.error('Error fetching holders:', error);
           }
 
           stats[program.tokenAddress] = { totalIssued, merchantBalance, holdersBalance };
+          console.log(`Stats for ${program.name}:`, stats[program.tokenAddress]);
         } catch (error) {
           console.error(`Error loading stats for ${program.name}:`, error);
         }
@@ -249,16 +276,11 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     };
 
     if (programs.length > 0) {
+      console.log('Programs array has items, loading stats');
       loadTokenStats();
-      
-      // Обновляем статистику при изменении программ
-      const handleUpdate = () => {
-        console.log('Programs updated, reloading stats');
-        loadTokenStats();
-      };
-      window.addEventListener('loyaltyProgramsUpdated', handleUpdate);
-      
-      return () => window.removeEventListener('loyaltyProgramsUpdated', handleUpdate);
+    } else {
+      console.log('Programs array is empty');
+      setIsLoadingStats(false);
     }
   }, [programs, publicClient, address]);
 

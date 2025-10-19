@@ -18,10 +18,10 @@ serve(async (req) => {
   }
 
   try {
-    const { tokenAddress, factoryAddress } = await req.json();
+    const { tokenAddress } = await req.json();
 
-    if (!tokenAddress || !factoryAddress) {
-      throw new Error('tokenAddress and factoryAddress are required');
+    if (!tokenAddress) {
+      throw new Error('tokenAddress is required');
     }
 
     console.log('Fetching token holders for:', tokenAddress);
@@ -114,9 +114,11 @@ serve(async (req) => {
         if (result && result.result) {
           const balance = BigInt(result.result);
           if (balance > 0n) {
+            // Convert from wei to tokens (18 decimals)
+            const balanceInTokens = Number(balance) / 1e18;
             holders.push({
               address: batch[j],
-              balance: balance.toString(),
+              balance: balanceInTokens.toString(),
             });
           }
         }
