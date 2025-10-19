@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -166,7 +166,7 @@ export function RewardsSelection() {
     handleVoucherCreation();
   }, [isSuccess, selectedRewardId, availableRewards, tokens, selectedTokenAddress, address, refetch]);
 
-  const handleApprove = () => {
+  const handleApprove = useCallback(() => {
     console.log('=== APPROVE BUTTON CLICKED ===');
     console.log('selectedTokenAddress:', selectedTokenAddress);
     console.log('MERCHANT_ADDRESS:', MERCHANT_ADDRESS);
@@ -195,7 +195,7 @@ export function RewardsSelection() {
     console.log('CALLING approveTokens NOW...');
     approveTokens(selectedTokenAddress, MERCHANT_ADDRESS, CONTRACTS.LOYAL_SPARK_ERC20.abi);
     console.log('approveTokens CALLED');
-  };
+  }, [selectedRewardId, selectedTokenAddress, MERCHANT_ADDRESS, isApproving, balancesLoading, approveTokens]);
 
   const handleActivate = () => {
     if (!address) {
@@ -389,7 +389,13 @@ export function RewardsSelection() {
             {selectedRewardId && needsApproval() ? (
               <Button
                 type="button"
-                onClick={handleApprove}
+                onClick={(e) => {
+                  console.log('🔵 BUTTON PHYSICALLY CLICKED - Event fired!');
+                  console.log('Button disabled?', isApproving || balancesLoading);
+                  console.log('isApproving:', isApproving);
+                  console.log('balancesLoading:', balancesLoading);
+                  handleApprove();
+                }}
                 disabled={isApproving || balancesLoading}
                 className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:opacity-90"
               >
