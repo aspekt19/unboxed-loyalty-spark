@@ -1,0 +1,146 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+interface TokenHolder {
+  address: string;
+  balance: string;
+}
+
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { tokenAddress, factoryAddress } = await req.json();
+
+    if (!tokenAddress || !factoryAddress) {
+      throw new Error('tokenAddress and factoryAddress are required');
+    }
+
+    console.log('Fetching token holders for:', tokenAddress);
+
+    // RPC endpoint for Base network
+    const BASE_RPC_URL = 'https://mainnet.base.org';
+    
+    // ERC20 ABI for balanceOf
+    const ERC20_ABI = [
+      {
+        inputs: [{ name: 'account', type: 'address' }],
+        name: 'balanceOf',
+        outputs: [{ name: '', type: 'uint256' }],
+        stateMutability: 'view',
+        type: 'function',
+      },
+    ];
+
+    // Transfer event signature
+    const TRANSFER_EVENT_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+
+    // Fetch Transfer events to get all holders
+    const logsResponse = await fetch(BASE_RPC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'eth_getLogs',
+        params: [{
+          address: tokenAddress,
+          topics: [TRANSFER_EVENT_TOPIC],
+          fromBlock: '0x0',
+          toBlock: 'latest',
+        }],
+      }),
+    });
+
+    const logsData = await logsResponse.json();
+    
+    if (logsData.error) {
+      throw new Error(`RPC Error: ${logsData.error.message}`);
+    }
+
+    const logs = logsData.result || [];
+    console.log(`Found ${logs.length} transfer events`);
+
+    // Extract unique addresses (recipients from Transfer events)
+    const uniqueAddresses = new Set<string>();
+    
+    for (const log of logs) {
+      // topics[2] is the 'to' address in Transfer event
+      if (log.topics[2]) {
+        const toAddress = '0x' + log.topics[2].slice(26); // Remove padding
+        uniqueAddresses.add(toAddress.toLowerCase());
+      }
+    }
+
+    console.log(`Found ${uniqueAddresses.size} unique addresses`);
+
+    // Batch fetch balances
+    const holders: TokenHolder[] = [];
+    const batchSize = 100;
+    const addresses = Array.from(uniqueAddresses);
+
+    for (let i = 0; i < addresses.length; i += batchSize) {
+      const batch = addresses.slice(i, i + batchSize);
+      
+      const balanceCalls = batch.map((address, idx) => ({
+        jsonrpc: '2.0',
+        id: idx,
+        method: 'eth_call',
+        params: [{
+          to: tokenAddress,
+          data: `0x70a08231000000000000000000000000${address.slice(2)}`, // balanceOf(address)
+        }, 'latest'],
+      }));
+
+      const balanceResponse = await fetch(BASE_RPC_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(balanceCalls),
+      });
+
+      const balanceData = await balanceResponse.json();
+      
+      // Process batch results
+      for (let j = 0; j < batch.length; j++) {
+        const result = Array.isArray(balanceData) ? balanceData[j] : balanceData;
+        if (result && result.result) {
+          const balance = BigInt(result.result);
+          if (balance > 0n) {
+            holders.push({
+              address: batch[j],
+              balance: balance.toString(),
+            });
+          }
+        }
+      }
+    }
+
+    console.log(`Found ${holders.length} holders with non-zero balance`);
+
+    return new Response(
+      JSON.stringify({ holders }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      }
+    );
+  } catch (error) {
+    console.error('Error in get-token-holders:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      }
+    );
+  }
+});

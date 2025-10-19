@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Coins, Calendar, Check, Trash2 } from 'lucide-react';
+import { Coins, Calendar, Check, Trash2, Loader2 } from 'lucide-react';
 import { usePublicClient } from 'wagmi';
 import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
+import { useBurnAllTokens } from '@/hooks/useBurnAllTokens';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,7 +29,9 @@ interface LoyaltyProgram {
 export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program: LoyaltyProgram & { tokenAddress: string }) => void }) {
   const [programs, setPrograms] = useState<LoyaltyProgram[]>([]);
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
+  const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
   const publicClient = usePublicClient();
+  const { burnAllTokens, isBurning, progress } = useBurnAllTokens();
 
   useEffect(() => {
     const loadPrograms = async () => {
@@ -102,10 +105,11 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     toast.success(`Selected ${program.name}`);
   };
 
-  const handleDeleteProgram = async (index: number, e: React.MouseEvent) => {
+  const handleDeleteProgram = async (index: number, e: React.MouseEvent, burnTokens: boolean) => {
     e.stopPropagation();
     
     const program = programs[index];
+    setDeletingIndex(index);
     
     // Если есть tokenAddress, деактивируем все связанные данные в БД
     if (program.tokenAddress) {
@@ -113,7 +117,16 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         // Импортируем supabase
         const { supabase } = await import('@/integrations/supabase/client');
         
-        // 1. Деактивируем все награды этой программы
+        // 1. Если выбрано сжигание токенов, сжигаем их у всех пользователей
+        if (burnTokens) {
+          toast.info('Burning tokens from all users who approved...');
+          const burnSuccess = await burnAllTokens(program.tokenAddress);
+          if (!burnSuccess) {
+            toast.warning('Some tokens could not be burned, but continuing with program closure');
+          }
+        }
+        
+        // 2. Деактивируем все награды этой программы
         const { error: rewardsError } = await supabase
           .from('rewards')
           .update({ is_active: false })
@@ -123,7 +136,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
           console.error('Error deactivating rewards:', rewardsError);
         }
         
-        // 2. Закрываем все активные ваучеры этой программы
+        // 3. Закрываем все активные ваучеры этой программы
         const { error: vouchersError } = await supabase
           .from('vouchers')
           .update({ status: 'expired' })
@@ -140,11 +153,12 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
       } catch (error) {
         console.error('Error closing program:', error);
         toast.error('Failed to close program completely');
+        setDeletingIndex(null);
         return;
       }
     }
     
-    // 3. Удаляем программу из localStorage
+    // 4. Удаляем программу из localStorage
     const updatedPrograms = programs.filter((_, i) => i !== index);
     setPrograms(updatedPrograms);
     localStorage.setItem('loyaltyPrograms', JSON.stringify(updatedPrograms));
@@ -154,6 +168,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
       setSelectedProgram(null);
     }
     
+    setDeletingIndex(null);
     toast.success('Program closed successfully');
   };
 
@@ -220,27 +235,50 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>Close Loyalty Program?</AlertDialogTitle>
-                          <AlertDialogDescription className="space-y-2">
+                          <AlertDialogDescription className="space-y-3">
                             <p>
-                              Are you sure you want to close "{program.name}"? This action will:
+                              Choose how to close "{program.name}":
                             </p>
-                            <ul className="list-disc pl-5 space-y-1 text-sm">
-                              <li>Deactivate all rewards for this program</li>
-                              <li>Mark all active vouchers as expired</li>
-                              <li>Remove the program from your console</li>
-                            </ul>
-                            <p className="text-amber-600 dark:text-amber-400 font-medium pt-2">
-                              ⚠️ Note: Tokens will remain on users' wallets. To burn all tokens, you'll need the Enterprise version with burnFrom functionality.
-                            </p>
+                            <div className="space-y-2 text-sm">
+                              <p className="font-medium">This action will:</p>
+                              <ul className="list-disc pl-5 space-y-1">
+                                <li>Deactivate all rewards for this program</li>
+                                <li>Mark all active vouchers as expired</li>
+                                <li>Remove the program from your console</li>
+                              </ul>
+                            </div>
+                            <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded p-3">
+                              <p className="text-sm text-blue-900 dark:text-blue-100">
+                                💡 <strong>Burn tokens option:</strong> Will attempt to burn tokens from all users who have approved your address. Users who haven't approved will keep their tokens.
+                              </p>
+                            </div>
                           </AlertDialogDescription>
                         </AlertDialogHeader>
-                        <AlertDialogFooter>
+                        <AlertDialogFooter className="flex-col sm:flex-row gap-2">
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
                           <AlertDialogAction
-                            onClick={(e) => handleDeleteProgram(index, e)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={(e) => handleDeleteProgram(index, e, false)}
+                            className="bg-amber-600 text-white hover:bg-amber-700"
+                            disabled={deletingIndex === index}
                           >
-                            Close Program
+                            {deletingIndex === index && !isBurning ? (
+                              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Closing...</>
+                            ) : (
+                              'Close (Keep Tokens)'
+                            )}
+                          </AlertDialogAction>
+                          <AlertDialogAction
+                            onClick={(e) => handleDeleteProgram(index, e, true)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            disabled={deletingIndex === index}
+                          >
+                            {isBurning ? (
+                              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Burning {progress.current}/{progress.total}...</>
+                            ) : deletingIndex === index ? (
+                              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</>
+                            ) : (
+                              'Close & Burn Tokens'
+                            )}
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>

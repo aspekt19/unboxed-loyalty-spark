@@ -32,15 +32,16 @@ export function RewardsSelection() {
   const { burnTokens, isPending, isSuccess } = useBurnTokens();
   const { approveTokens, isPending: isApproving, isSuccess: isApproved } = useApproveTokens();
   
-  // TODO: В продакшене это должен быть адрес контракта мерчанта/казначейства
-  // Для MVP используем адрес пользователя, но это временное решение
-  const SYSTEM_SPENDER = address || '0x0000000000000000000000000000000000000000';
+  // Получаем адрес мерчанта из выбранной награды
+  // Покупатели дают approve адресу мерчанта, чтобы он мог сжигать токены
+  const selectedRewardForSpender = availableRewards.find(r => r.id === selectedRewardId);
+  const MERCHANT_ADDRESS = selectedRewardForSpender?.merchantAddress || address || '0x0000000000000000000000000000000000000000';
   
-  // Проверяем allowance для выбранного токена
+  // Проверяем allowance для выбранного токена (разрешение дано мерчанту)
   const { data: allowance, refetch: refetchAllowance } = useCheckAllowance(
     selectedTokenAddress,
     address,
-    SYSTEM_SPENDER,
+    MERCHANT_ADDRESS,
     CONTRACTS.LOYAL_SPARK_ERC20.abi
   );
   
@@ -161,7 +162,13 @@ export function RewardsSelection() {
       return;
     }
 
-    approveTokens(selectedTokenAddress, SYSTEM_SPENDER, CONTRACTS.LOYAL_SPARK_ERC20.abi);
+    if (!MERCHANT_ADDRESS || MERCHANT_ADDRESS === '0x0000000000000000000000000000000000000000') {
+      toast.error('Merchant address not found');
+      return;
+    }
+
+    // Даем approve адресу мерчанта, чтобы он мог управлять нашими токенами
+    approveTokens(selectedTokenAddress, MERCHANT_ADDRESS, CONTRACTS.LOYAL_SPARK_ERC20.abi);
   };
 
   const handleActivate = () => {
@@ -328,7 +335,7 @@ export function RewardsSelection() {
               <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
                 <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                 <AlertDescription className="text-blue-900 dark:text-blue-100">
-                  First-time setup: Approve the system to manage your loyalty tokens. This is a one-time action per program.
+                  First-time setup: Approve the merchant to manage your loyalty tokens. This allows the merchant to redeem your tokens when you activate rewards, and to burn tokens if the program closes.
                 </AlertDescription>
               </Alert>
             )}
