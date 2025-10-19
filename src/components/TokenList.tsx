@@ -98,6 +98,16 @@ export function TokenList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Listen for token balance updates
+  useEffect(() => {
+    const handleBalanceUpdate = () => {
+      console.log('tokenBalancesUpdated event received, refetching balances...');
+      refetch();
+    };
+    window.addEventListener('tokenBalancesUpdated', handleBalanceUpdate);
+    return () => window.removeEventListener('tokenBalancesUpdated', handleBalanceUpdate);
+  }, [refetch]);
+
   const loadTokensFromBlockchain = async () => {
     if (!publicClient) {
       console.log('TokenList: No publicClient available');

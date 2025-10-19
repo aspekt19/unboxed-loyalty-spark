@@ -32,7 +32,7 @@ export function CustomerFiltersPanel() {
   const [programs, setPrograms] = useState<TokenInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const { balances, isLoading: balancesLoading } = useMultiTokenBalance(programs);
+  const { balances, isLoading: balancesLoading, refetch } = useMultiTokenBalance(programs);
 
   // Load active programs from Supabase
   useEffect(() => {
@@ -64,6 +64,16 @@ export function CustomerFiltersPanel() {
       supabase.removeChannel(channel);
     };
   }, [address]);
+
+  // Listen for token balance updates
+  useEffect(() => {
+    const handleBalanceUpdate = () => {
+      console.log('tokenBalancesUpdated event received in filters, refetching balances...');
+      refetch();
+    };
+    window.addEventListener('tokenBalancesUpdated', handleBalanceUpdate);
+    return () => window.removeEventListener('tokenBalancesUpdated', handleBalanceUpdate);
+  }, [refetch]);
 
   const loadActivePrograms = async () => {
     setIsLoading(true);

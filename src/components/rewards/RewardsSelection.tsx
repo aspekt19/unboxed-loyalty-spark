@@ -194,6 +194,7 @@ export function RewardsSelection() {
             setSelectedRewardId('');
             setTimeout(() => refetch(), 1000);
             window.dispatchEvent(new Event('vouchersUpdated'));
+            window.dispatchEvent(new Event('tokenBalancesUpdated'));
           } else {
             toast.error('Failed to create voucher');
           }
