@@ -178,6 +178,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      migrate_wallet_profile: {
+        Args: { p_new_user_id: string; p_wallet_address: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

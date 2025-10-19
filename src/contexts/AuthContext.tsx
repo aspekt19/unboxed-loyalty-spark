@@ -57,42 +57,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         account: address,
       });
 
-      // Check if profile already exists for this wallet
-      const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('user_id')
-        .eq('wallet_address', address.toLowerCase())
-        .maybeSingle();
-
       // Sign in with Supabase using custom authentication
       const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
       
       if (authError) throw authError;
 
-      if (existingProfile) {
-        // Update existing profile with new user_id
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({
-            user_id: authData.user.id,
-          })
-          .eq('wallet_address', address.toLowerCase());
+      // Use security definer function to migrate wallet profile
+      const { error: migrationError } = await supabase.rpc('migrate_wallet_profile', {
+        p_wallet_address: address.toLowerCase(),
+        p_new_user_id: authData.user.id,
+      });
 
-        if (updateError) throw updateError;
-      } else {
-        // Create new profile
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert({
-            user_id: authData.user.id,
-            wallet_address: address.toLowerCase(),
-          });
-
-        if (insertError) throw insertError;
-      }
+      if (migrationError) throw migrationError;
 
       toast.success('Successfully signed in with wallet');
     } catch (error: any) {
+      console.error('Sign in error:', error);
       toast.error(error.message || 'Failed to sign in');
     } finally {
       setIsLoading(false);
