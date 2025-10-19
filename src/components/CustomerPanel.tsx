@@ -1,4 +1,5 @@
 import { TokenList } from './TokenList';
+import { DexIntegration } from './DexIntegration';
 import { RewardsSelection } from './rewards/RewardsSelection';
 import { MyVouchers } from './rewards/MyVouchers';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -26,6 +27,8 @@ export function CustomerPanel() {
       <RewardsSelection />
       
       <MyVouchers />
+      
+      <DexIntegration />
     </div>
   );
 }
