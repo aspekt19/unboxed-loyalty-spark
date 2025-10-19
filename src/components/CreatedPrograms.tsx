@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Coins, Calendar, Check, Trash2, Loader2 } from 'lucide-react';
+import { Coins, Calendar, Check, Trash2, Loader2, Clock, AlertTriangle } from 'lucide-react';
 import { usePublicClient, useAccount } from 'wagmi';
 import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
 import { useBurnAllTokens } from '@/hooks/useBurnAllTokens';
+import { supabase } from '@/integrations/supabase/client';
+import { format, formatDistanceToNow } from 'date-fns';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,10 +22,13 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface LoyaltyProgram {
+  id?: string;
   name: string;
   symbol: string;
   timestamp: number;
   tokenAddress?: string;
+  expirationDate?: string;
+  status?: 'active' | 'expiring_soon' | 'expired';
 }
 
 interface TokenStats {
@@ -58,55 +63,37 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     }
 
     const loadPrograms = async () => {
-      const savedPrograms = JSON.parse(localStorage.getItem('loyaltyPrograms') || '[]');
-      
-      // Try to fetch token addresses from events for programs that don't have one
-      if (publicClient && savedPrograms.length > 0) {
-        const programsWithoutAddress = savedPrograms.filter((p: LoyaltyProgram) => !p.tokenAddress);
-        
-        if (programsWithoutAddress.length > 0) {
-          try {
-            const logs = await publicClient.getLogs({
-              address: CONTRACTS.LOYALTY_TOKEN_FACTORY.address,
-              event: {
-                type: 'event',
-                name: 'LoyaltyTokenCreated',
-                inputs: [
-                  { name: 'tokenAddress', type: 'address', indexed: true },
-                  { name: 'merchantAddress', type: 'address', indexed: true },
-                  { name: 'name', type: 'string', indexed: false },
-                  { name: 'symbol', type: 'string', indexed: false },
-                ],
-              },
-              fromBlock: 'earliest',
-              toBlock: 'latest',
-            });
+      try {
+        // Загружаем программы из БД
+        const { data: dbPrograms, error } = await supabase
+          .from('loyalty_programs')
+          .select('*')
+          .eq('merchant_address', address.toLowerCase())
+          .order('created_at', { ascending: false });
 
-            // Match programs with their token addresses
-            const updatedPrograms = savedPrograms.map((prog: LoyaltyProgram) => {
-              if (prog.tokenAddress) return prog; // Already has address
-              
-              const matchingLog = logs.find(log => 
-                log.args.name === prog.name && log.args.symbol === prog.symbol
-              );
-              return {
-                ...prog,
-                tokenAddress: matchingLog?.args.tokenAddress || undefined,
-              };
-            });
-
-            setPrograms(updatedPrograms);
-            // Update localStorage with fetched addresses
-            localStorage.setItem('loyaltyPrograms', JSON.stringify(updatedPrograms));
-          } catch (error) {
-            console.error('Error fetching token addresses:', error);
-            setPrograms(savedPrograms);
-          }
-        } else {
-          setPrograms(savedPrograms);
+        if (error) {
+          console.error('Error loading programs from DB:', error);
+          toast.error('Failed to load programs');
+          return;
         }
-      } else {
-        setPrograms(savedPrograms);
+
+        // Преобразуем данные из БД в формат LoyaltyProgram
+        const programs: LoyaltyProgram[] = dbPrograms.map(prog => ({
+          id: prog.id,
+          name: prog.name,
+          symbol: prog.symbol,
+          timestamp: new Date(prog.created_at).getTime(),
+          tokenAddress: prog.token_address,
+          expirationDate: prog.expiration_date,
+          status: prog.status as 'active' | 'expiring_soon' | 'expired',
+        }));
+
+        setPrograms(programs);
+
+        // Синхронизируем с localStorage для обратной совместимости
+        localStorage.setItem('loyaltyPrograms', JSON.stringify(programs));
+      } catch (error) {
+        console.error('Error in loadPrograms:', error);
       }
     };
 
@@ -115,8 +102,30 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     // Listen for updates from CreateLoyaltyProgram
     const handleUpdate = () => loadPrograms();
     window.addEventListener('loyaltyProgramsUpdated', handleUpdate);
-    return () => window.removeEventListener('loyaltyProgramsUpdated', handleUpdate);
-  }, [publicClient, address]);
+
+    // Подписка на realtime обновления
+    const channel = supabase
+      .channel('loyalty_programs_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'loyalty_programs',
+          filter: `merchant_address=eq.${address.toLowerCase()}`,
+        },
+        () => {
+          console.log('Loyalty program changed, reloading...');
+          loadPrograms();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      window.removeEventListener('loyaltyProgramsUpdated', handleUpdate);
+      supabase.removeChannel(channel);
+    };
+  }, [address]);
 
   // Load token statistics
   useEffect(() => {
@@ -374,9 +383,15 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <div className="flex items-center gap-2">
-                    <Badge variant={program.tokenAddress ? "default" : "secondary"}>
-                      {program.tokenAddress ? "Active" : "Pending"}
-                    </Badge>
+                    {program.status === 'expiring_soon' ? (
+                      <Badge variant="destructive" className="bg-amber-600">
+                        Expiring Soon
+                      </Badge>
+                    ) : (
+                      <Badge variant={program.tokenAddress ? "default" : "secondary"}>
+                        {program.tokenAddress ? "Active" : "Pending"}
+                      </Badge>
+                    )}
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button

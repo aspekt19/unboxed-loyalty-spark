@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      loyalty_programs: {
+        Row: {
+          created_at: string
+          expiration_date: string
+          expiration_warning_sent: boolean
+          id: string
+          merchant_address: string
+          name: string
+          status: string
+          symbol: string
+          token_address: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expiration_date: string
+          expiration_warning_sent?: boolean
+          id?: string
+          merchant_address: string
+          name: string
+          status?: string
+          symbol: string
+          token_address: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expiration_date?: string
+          expiration_warning_sent?: boolean
+          id?: string
+          merchant_address?: string
+          name?: string
+          status?: string
+          symbol?: string
+          token_address?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -135,7 +174,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_program_expiration: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

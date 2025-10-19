@@ -3,15 +3,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useDeployLoyaltyToken } from '@/hooks/useDeployLoyaltyToken';
 import { useAccount } from 'wagmi';
 import { toast } from 'sonner';
-import { Loader2, Plus } from 'lucide-react';
+import { Loader2, Plus, CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 export function CreateLoyaltyProgram() {
   const { address } = useAccount();
   const [programName, setProgramName] = useState('');
   const [tokenSymbol, setTokenSymbol] = useState('');
+  const [expirationDate, setExpirationDate] = useState<Date>();
   const { deployToken, isPending, isSuccess, deployedTokenAddress } = useDeployLoyaltyToken();
   const savedRef = useRef(false);
 
@@ -20,6 +26,7 @@ export function CreateLoyaltyProgram() {
     if (!address) {
       setProgramName('');
       setTokenSymbol('');
+      setExpirationDate(undefined);
     }
   }, [address]);
 
@@ -36,35 +43,68 @@ export function CreateLoyaltyProgram() {
       return;
     }
 
+    if (!expirationDate) {
+      toast.error('Please select expiration date');
+      return;
+    }
+
+    if (expirationDate <= new Date()) {
+      toast.error('Expiration date must be in the future');
+      return;
+    }
+
     savedRef.current = false;
     deployToken(programName, tokenSymbol);
   };
 
   // Watch for success and handle post-deployment actions
   useEffect(() => {
-    if (isSuccess && programName && tokenSymbol && deployedTokenAddress && !savedRef.current) {
-      toast.success(`Loyalty program "${programName}" created!`);
-      // Save to localStorage with token address
-      const savedPrograms = JSON.parse(localStorage.getItem('loyaltyPrograms') || '[]');
-      savedPrograms.push({ 
-        name: programName, 
-        symbol: tokenSymbol, 
-        timestamp: Date.now(),
-        tokenAddress: deployedTokenAddress 
-      });
-      localStorage.setItem('loyaltyPrograms', JSON.stringify(savedPrograms));
+    if (isSuccess && programName && tokenSymbol && deployedTokenAddress && expirationDate && !savedRef.current) {
+      // Сохраняем в БД
+      const saveToDatabase = async () => {
+        const { error } = await supabase
+          .from('loyalty_programs')
+          .insert({
+            token_address: deployedTokenAddress.toLowerCase(),
+            merchant_address: address!.toLowerCase(),
+            name: programName,
+            symbol: tokenSymbol,
+            expiration_date: expirationDate.toISOString(),
+          });
+
+        if (error) {
+          console.error('Error saving program to DB:', error);
+          toast.error('Program deployed but failed to save to database');
+        } else {
+          toast.success(`Loyalty program "${programName}" created!`);
+          
+          // Save to localStorage для обратной совместимости
+          const savedPrograms = JSON.parse(localStorage.getItem('loyaltyPrograms') || '[]');
+          savedPrograms.push({ 
+            name: programName, 
+            symbol: tokenSymbol, 
+            timestamp: Date.now(),
+            tokenAddress: deployedTokenAddress,
+            expirationDate: expirationDate.toISOString()
+          });
+          localStorage.setItem('loyaltyPrograms', JSON.stringify(savedPrograms));
+          
+          // Clear form after a short delay to show success
+          setTimeout(() => {
+            setProgramName('');
+            setTokenSymbol('');
+            setExpirationDate(undefined);
+          }, 500);
+          
+          // Trigger a custom event to notify other components
+          window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
+        }
+      };
+
       savedRef.current = true;
-      
-      // Clear form after a short delay to show success
-      setTimeout(() => {
-        setProgramName('');
-        setTokenSymbol('');
-      }, 500);
-      
-      // Trigger a custom event to notify other components
-      window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
+      saveToDatabase();
     }
-  }, [isSuccess, programName, tokenSymbol, deployedTokenAddress]);
+  }, [isSuccess, programName, tokenSymbol, deployedTokenAddress, expirationDate, address]);
 
   return (
     <Card className="border-2 bg-gradient-to-br from-card to-muted/30">
@@ -97,6 +137,38 @@ export function CreateLoyaltyProgram() {
               disabled={isPending}
               maxLength={10}
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="expiration-date">Program Expiration Date</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  id="expiration-date"
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !expirationDate && "text-muted-foreground"
+                  )}
+                  disabled={isPending}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {expirationDate ? format(expirationDate, "PPP") : <span>Pick expiration date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={expirationDate}
+                  onSelect={setExpirationDate}
+                  disabled={(date) => date < new Date()}
+                  initialFocus
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+            <p className="text-xs text-muted-foreground">
+              After this date, you'll have 24 hours to extend or close the program
+            </p>
           </div>
           <Button type="submit" disabled={isPending} className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90">
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
