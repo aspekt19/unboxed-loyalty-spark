@@ -10,6 +10,7 @@ import "@rainbow-me/rainbowkit/styles.css";
 import Index from "./pages/Index";
 import CustomerPage from "./pages/CustomerPage";
 import MerchantPage from "./pages/MerchantPage";
+import PitchDeck from "./pages/PitchDeck";
 import NotFound from "./pages/NotFound";
 import { AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
@@ -51,6 +52,7 @@ function AnimatedRoutes() {
         <Route path="/" element={<Index />} />
         <Route path="/customer" element={<CustomerPage />} />
         <Route path="/merchant" element={<MerchantPage />} />
+        <Route path="/pitch" element={<PitchDeck />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
