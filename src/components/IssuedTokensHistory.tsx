@@ -97,41 +97,57 @@ export function IssuedTokensHistory() {
 
       // Получаем текущий блок
       const currentBlock = await publicClient.getBlockNumber();
-      const BLOCK_RANGE = 100000; // Увеличиваем диапазон до 100000 блоков (~2 недели на Base)
-
+      const CHUNK_SIZE = 40000n; // Stay under 50k limit
+      const LOOKBACK_BLOCKS = 200000n; // Look back ~2 weeks
+      
       // Для каждой программы получаем Transfer events (минтинг)
       for (const program of activePrograms) {
         try {
           console.log(`IssuedTokensHistory: Fetching logs for ${program.name} (${program.tokenAddress})`);
           
           const zeroAddress = '0x0000000000000000000000000000000000000000';
+          const fromBlock = currentBlock > LOOKBACK_BLOCKS ? currentBlock - LOOKBACK_BLOCKS : 0n;
 
-          // Запрашиваем блоки порциями
-          let fromBlock = currentBlock - BigInt(BLOCK_RANGE);
-          if (fromBlock < 0n) fromBlock = 0n;
+          // Query in chunks to avoid "exceed maximum block range" error
+          let allLogs: any[] = [];
+          let currentChunkStart = fromBlock;
 
-          const logs = await publicClient.getLogs({
-            address: program.tokenAddress as `0x${string}`,
-            event: {
-              type: 'event',
-              name: 'Transfer',
-              inputs: [
-                { name: 'from', type: 'address', indexed: true },
-                { name: 'to', type: 'address', indexed: true },
-                { name: 'value', type: 'uint256', indexed: false },
-              ],
-            },
-            args: {
-              from: zeroAddress as `0x${string}`,
-            },
-            fromBlock,
-            toBlock: currentBlock,
-          });
+          while (currentChunkStart <= currentBlock) {
+            const currentChunkEnd = currentChunkStart + CHUNK_SIZE > currentBlock 
+              ? currentBlock 
+              : currentChunkStart + CHUNK_SIZE;
 
-          console.log(`IssuedTokensHistory: Found ${logs.length} transfer events for ${program.name}`);
+            try {
+              const logs = await publicClient.getLogs({
+                address: program.tokenAddress as `0x${string}`,
+                event: {
+                  type: 'event',
+                  name: 'Transfer',
+                  inputs: [
+                    { name: 'from', type: 'address', indexed: true },
+                    { name: 'to', type: 'address', indexed: true },
+                    { name: 'value', type: 'uint256', indexed: false },
+                  ],
+                },
+                args: {
+                  from: zeroAddress as `0x${string}`,
+                },
+                fromBlock: currentChunkStart,
+                toBlock: currentChunkEnd,
+              });
+
+              allLogs = [...allLogs, ...logs];
+            } catch (chunkError) {
+              console.error(`Error querying chunk:`, chunkError);
+            }
+
+            currentChunkStart = currentChunkEnd + 1n;
+          }
+
+          console.log(`IssuedTokensHistory: Found ${allLogs.length} transfer events for ${program.name}`);
 
           // Обрабатываем события
-          for (const log of logs) {
+          for (const log of allLogs) {
             if (!log.args.to || !log.args.value) continue;
 
             // Получаем блок для timestamp
