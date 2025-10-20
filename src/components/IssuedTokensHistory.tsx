@@ -57,12 +57,15 @@ export function IssuedTokensHistory() {
     console.log('IssuedTokensHistory: Loading issued tokens...');
     setIsLoading(true);
     try {
-      // Загружаем программы мерчанта из БД
+      // Загружаем программы мерчанта из БД (включая недавно истекшие за последние 30 дней)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
       const { data: programsData, error } = await supabase
         .from('loyalty_programs')
         .select('*')
         .eq('merchant_address', address.toLowerCase())
-        .in('status', ['active', 'expiring_soon'])
+        .or(`status.in.(active,expiring_soon),and(status.eq.expired,expiration_date.gte.${thirtyDaysAgo.toISOString()})`)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -94,7 +97,7 @@ export function IssuedTokensHistory() {
 
       // Получаем текущий блок
       const currentBlock = await publicClient.getBlockNumber();
-      const BLOCK_RANGE = 10000; // Уменьшаем диапазон до 10000 блоков
+      const BLOCK_RANGE = 100000; // Увеличиваем диапазон до 100000 блоков (~2 недели на Base)
 
       // Для каждой программы получаем Transfer events (минтинг)
       for (const program of activePrograms) {
