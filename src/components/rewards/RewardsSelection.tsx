@@ -34,9 +34,11 @@ export function RewardsSelection() {
   const [selectedTokenAddress, setSelectedTokenAddress] = useState<string>('');
   const [selectedRewardId, setSelectedRewardId] = useState<string>('');
   const [availableRewards, setAvailableRewards] = useState<Reward[]>([]);
+  // Отслеживаем hash транзакции для предотвращения дублирования ваучеров
+  const [processedHash, setProcessedHash] = useState<string | undefined>(undefined);
   
   const { balances, isLoading: balancesLoading, refetch } = useMultiTokenBalance(tokens);
-  const { burnTokens, isPending, isSuccess } = useBurnTokens();
+  const { burnTokens, isPending, isSuccess, hash } = useBurnTokens();
   const { approveTokens, isPending: isApproving, isSuccess: isApproved } = useApproveTokens();
   
   // Check if selected program is paused
@@ -193,11 +195,15 @@ export function RewardsSelection() {
   // Обработка успешного сжигания
   useEffect(() => {
     const handleVoucherCreation = async () => {
-      if (isSuccess && selectedRewardId && address) {
+      // Проверяем, что транзакция успешна, есть новый hash и он еще не обработан
+      if (isSuccess && hash && hash !== processedHash && selectedRewardId && address) {
         const reward = availableRewards.find(r => r.id === selectedRewardId);
         const token = tokens.find(t => t.address === selectedTokenAddress);
         
         if (reward && token) {
+          // Помечаем hash как обработанный сразу, чтобы избежать дублирования
+          setProcessedHash(hash);
+          
           const voucherCode = generateVoucherCode();
           const voucher = await createVoucher({
             code: voucherCode,
@@ -228,7 +234,7 @@ export function RewardsSelection() {
     };
 
     handleVoucherCreation();
-  }, [isSuccess, selectedRewardId, availableRewards, tokens, selectedTokenAddress, address, refetch]);
+  }, [isSuccess, hash, processedHash, selectedRewardId, availableRewards, tokens, selectedTokenAddress, address, refetch]);
 
   const handleApprove = useCallback(() => {
     console.log('=== APPROVE BUTTON CLICKED ===');

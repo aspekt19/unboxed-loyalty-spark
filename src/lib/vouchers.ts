@@ -103,14 +103,20 @@ export async function getMerchantRewards(merchantAddress: string): Promise<Rewar
 // Получение наград для конкретного токена
 export async function getRewardsByToken(tokenAddress: string): Promise<Reward[]> {
   // Сначала проверяем статус программы лояльности
-  const { data: program } = await supabase
+  const { data: program, error: programError } = await supabase
     .from('loyalty_programs')
     .select('status')
     .eq('token_address', tokenAddress.toLowerCase())
     .single();
   
+  if (programError) {
+    console.error('Error fetching program status:', programError);
+    return [];
+  }
+  
   // Если программа неактивна (expired, paused и т.д.), не показываем награды
-  if (program && !['active', 'expiring_soon'].includes(program.status)) {
+  if (!program || !['active', 'expiring_soon'].includes(program.status)) {
+    console.log(`Program ${tokenAddress} is not active, status:`, program?.status);
     return [];
   }
 
@@ -213,19 +219,45 @@ export async function createVoucher(voucher: Omit<Voucher, 'id' | 'activatedAt'>
   };
 }
 
-// Загрузка ваучеров покупателя
+// Загрузка ваучеров покупателя (фильтруем по статусу программы)
 export async function getCustomerVouchers(customerAddress: string): Promise<Voucher[]> {
-  const { data, error } = await supabase
+  const { data: allVouchers, error } = await supabase
     .from('vouchers')
     .select('*')
     .eq('customer_address', customerAddress.toLowerCase())
     .order('activated_at', { ascending: false });
 
   if (error) {
+    console.error('Error fetching customer vouchers:', error);
     return [];
   }
-
-  return data.map(v => ({
+  
+  if (!allVouchers || allVouchers.length === 0) {
+    return [];
+  }
+  
+  // Проверяем статус программы для каждого ваучера
+  const vouchersWithStatus = await Promise.all(
+    allVouchers.map(async (voucher) => {
+      const { data: program } = await supabase
+        .from('loyalty_programs')
+        .select('status')
+        .eq('token_address', voucher.token_address.toLowerCase())
+        .single();
+      
+      return {
+        ...voucher,
+        programStatus: program?.status
+      };
+    })
+  );
+  
+  // Возвращаем только ваучеры активных или истекающих программ
+  const activeVouchers = vouchersWithStatus.filter(v => 
+    v.programStatus === 'active' || v.programStatus === 'expiring_soon'
+  );
+  
+  return activeVouchers.map(v => ({
     id: v.id,
     code: v.code,
     rewardId: v.reward_id,
