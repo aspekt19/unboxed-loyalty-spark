@@ -319,14 +319,14 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     try {
       if (isPaused) {
         await activateProgram(program.tokenAddress as `0x${string}`);
-        toast.success('Программа активирована успешно');
+        toast.success('Program activated successfully');
       } else {
         await deactivateProgram(program.tokenAddress as `0x${string}`);
-        toast.success('Программа деактивирована успешно');
+        toast.success('Program deactivated successfully');
       }
     } catch (error) {
       console.error('Error toggling program:', error);
-      toast.error('Не удалось изменить статус программы');
+      toast.error('Failed to change program status');
     } finally {
       setToggledProgram(null);
     }

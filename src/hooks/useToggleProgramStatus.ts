@@ -8,9 +8,9 @@ export function useToggleProgramStatus() {
     hash,
   });
 
-  const deactivateProgram = (tokenAddress: `0x${string}`) => {
+  const deactivateProgram = async (tokenAddress: `0x${string}`) => {
     try {
-      writeContract({
+      await writeContract({
         address: tokenAddress,
         abi: [
           {
@@ -29,9 +29,9 @@ export function useToggleProgramStatus() {
     }
   };
 
-  const activateProgram = (tokenAddress: `0x${string}`) => {
+  const activateProgram = async (tokenAddress: `0x${string}`) => {
     try {
-      writeContract({
+      await writeContract({
         address: tokenAddress,
         abi: [
           {

@@ -46,7 +46,7 @@ export function ProgramControlButtons({
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            {isPaused ? 'Активировать программу' : 'Деактивировать программу'}
+            {isPaused ? 'Activate Program' : 'Deactivate Program'}
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

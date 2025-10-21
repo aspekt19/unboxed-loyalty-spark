@@ -13,10 +13,10 @@ export function useDeployLoyaltyToken() {
     hash,
   });
 
-  // Extract token address from transaction receipt
+  // Extract token address from transaction receipt and enable minting
   useEffect(() => {
-    const extractTokenAddress = async () => {
-      if (isSuccess && receipt && publicClient) {
+    const extractTokenAddressAndEnableMinting = async () => {
+      if (isSuccess && receipt && publicClient && address) {
         try {
           const logs = receipt.logs;
           // Find the LoyaltyTokenCreated event log
@@ -33,6 +33,23 @@ export function useDeployLoyaltyToken() {
             // The first indexed parameter (tokenAddress) is in topics[1]
             const tokenAddress = '0x' + eventLog.topics[1].slice(-40);
             setDeployedTokenAddress(tokenAddress);
+
+            // Automatically enable minting for the new token
+            console.log('Enabling minting for newly created token:', tokenAddress);
+            toast.info('Enabling minting for your new loyalty program...');
+            
+            try {
+              await writeContract({
+                address: tokenAddress as `0x${string}`,
+                abi: CONTRACTS.LOYAL_SPARK_ERC20.abi,
+                functionName: 'enableMinting',
+              } as any);
+              
+              toast.success('Minting enabled! You can now issue tokens.');
+            } catch (enableError) {
+              console.error('Error enabling minting:', enableError);
+              toast.warning('Token created but please enable minting manually before issuing tokens');
+            }
           }
         } catch (error) {
           console.error('Error extracting token address:', error);
@@ -40,8 +57,8 @@ export function useDeployLoyaltyToken() {
       }
     };
 
-    extractTokenAddress();
-  }, [isSuccess, receipt, publicClient]);
+    extractTokenAddressAndEnableMinting();
+  }, [isSuccess, receipt, publicClient, address, writeContract]);
 
   const deployToken = (name: string, symbol: string) => {
     if (!address) {
