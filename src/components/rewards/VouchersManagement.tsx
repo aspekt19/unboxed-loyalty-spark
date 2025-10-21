@@ -72,6 +72,24 @@ export function VouchersManagement() {
     };
   }, [address, session]);
 
+  // Auto-refresh vouchers every 5 seconds for real-time updates
+  useEffect(() => {
+    if (!address || !session) {
+      return;
+    }
+
+    console.log('Starting auto-refresh for merchant vouchers...');
+    const interval = setInterval(() => {
+      console.log('Auto-refreshing merchant vouchers...');
+      loadMerchantVouchers();
+    }, 5000); // Refresh every 5 seconds
+
+    return () => {
+      console.log('Stopping auto-refresh for merchant vouchers');
+      clearInterval(interval);
+    };
+  }, [address, session]);
+
   const handleMarkAsUsed = async (voucherId: string, code: string) => {
     const success = await updateVoucherStatus(voucherId, 'used');
     if (success) {
