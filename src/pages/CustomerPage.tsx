@@ -25,9 +25,11 @@ const CustomerPage = () => {
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
               </Link>
-              <div className="h-9 w-9 rounded-lg bg-black flex items-center justify-center">
-                <Sparkles className="h-5 w-5 text-white" />
-              </div>
+              <img 
+                src="/new-favicon.png" 
+                alt="Loyal Spark" 
+                className="h-9 w-9 rounded-lg" 
+              />
               <div>
                 <h1 className="text-xl font-bold text-foreground tracking-tight">
                   Loyal Spark

@@ -13,9 +13,11 @@ const Index = () => {
         <header className="sticky top-0 z-50 border-b border-border bg-white/80 backdrop-blur-xl">
           <div className="container mx-auto px-6 py-4 flex justify-between items-center">
             <Link to="/" className="flex items-center gap-2.5 group">
-              <div className="relative h-9 w-9 rounded-lg bg-black flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
-                <Sparkles className="h-5 w-5 text-white" />
-              </div>
+              <img 
+                src="/new-favicon.png" 
+                alt="Loyal Spark" 
+                className="h-9 w-9 rounded-lg transition-transform duration-300 group-hover:scale-105" 
+              />
               <span className="text-xl font-bold text-foreground tracking-tight">Loyal Spark</span>
             </Link>
             <WalletConnectButton />
