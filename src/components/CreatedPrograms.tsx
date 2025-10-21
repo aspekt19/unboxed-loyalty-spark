@@ -316,11 +316,43 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     
     try {
       if (shouldPause) {
+        // Ставим программу на паузу
         await pauseProgram(program.tokenAddress as `0x${string}`);
-        toast.success('Program paused successfully');
+        
+        // Деактивируем все награды этой программы
+        const { error: rewardsError } = await supabase
+          .from('rewards')
+          .update({ is_active: false })
+          .eq('token_address', program.tokenAddress.toLowerCase());
+        
+        if (rewardsError) {
+          console.error('Error deactivating rewards:', rewardsError);
+          toast.warning('Program paused, but some rewards could not be deactivated');
+        } else {
+          // Отправляем событие обновления наград
+          window.dispatchEvent(new Event('rewardsUpdated'));
+        }
+        
+        toast.success('Program and rewards paused successfully');
       } else {
+        // Активируем программу
         await unpauseProgram(program.tokenAddress as `0x${string}`);
-        toast.success('Program utility activated! If minting is disabled, enable it separately.');
+        
+        // Активируем все награды этой программы обратно
+        const { error: rewardsError } = await supabase
+          .from('rewards')
+          .update({ is_active: true })
+          .eq('token_address', program.tokenAddress.toLowerCase());
+        
+        if (rewardsError) {
+          console.error('Error reactivating rewards:', rewardsError);
+          toast.warning('Program activated, but some rewards could not be reactivated');
+        } else {
+          // Отправляем событие обновления наград
+          window.dispatchEvent(new Event('rewardsUpdated'));
+        }
+        
+        toast.success('Program and rewards activated! If minting is disabled, enable it separately.');
       }
     } catch (error) {
       console.error('Error toggling program:', error);

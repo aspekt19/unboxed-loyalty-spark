@@ -1,110 +1,86 @@
-# Loyal Spark - Документация Смарт-Контрактов
+# LoyalSparkERC20 - Документация Смарт-Контракта
 
 ## Обзор
 
-Loyal Spark использует систему смарт-контрактов на блокчейне Base для управления программами лояльности. Архитектура состоит из двух основных контрактов:
+LoyalSparkERC20 - расширенная реализация ERC20 токена с функциями управления программой лояльности, включая mint, burn, pause и статус активности.
 
-1. **LoyaltyTokenFactory** - Фабрика для создания новых токенов лояльности
-2. **LoyalSparkERC20** - Реализация токена лояльности с расширенной функциональностью
+**Официальный сайт проекта:** [https://loyalspark.online](https://loyalspark.online)
 
 ## Адреса Контрактов (Base Mainnet)
 
-- **LoyaltyTokenFactory**: `0x5F3DdBa12580CFdc6016258774cCc19C4250dA80`
 - **LoyalSparkERC20 (Implementation)**: `0xe6BA426C9c51281B929a17444De02c65815E27C3`
 - **Chain ID**: `8453` (Base Mainnet)
 
 ---
 
-## 1. LoyaltyTokenFactory
+## Стандартные ERC20 Функции
 
-### Описание
+### `balanceOf(address account) → uint256` (view)
 
-Фабричный контракт, отвечающий за создание и управление токенами лояльности. Использует паттерн прокси для экономии газа при деплое новых программ.
+Возвращает баланс токенов на указанном адресе.
 
-### Основные Функции
-
-#### `createLoyaltyToken(string _name, string _symbol, address _merchantAddress) → address`
-
-Создает новый токен лояльности для мерчанта.
-
-**Параметры:**
-- `_name` - Название программы лояльности (например, "FREE POPCORN")
-- `_symbol` - Символ токена (например, "POP")
-- `_merchantAddress` - Адрес кошелька мерчанта-владельца
-
-**Возвращает:**
-- Адрес нового прокси-контракта токена
-
-**События:**
-- `LoyaltyTokenCreated(address indexed tokenAddress, address indexed merchantAddress, string name, string symbol)`
-
-**Пример использования:**
+**Пример:**
 ```javascript
-const tx = await factoryContract.createLoyaltyToken(
-  "Cinema Rewards",
-  "CINEMA",
-  merchantAddress
-);
+const balance = await tokenContract.balanceOf(userAddress);
 ```
 
-#### `reactivateExistingToken(address _tokenProxyAddress)`
+### `transfer(address to, uint256 amount) → bool`
 
-Реактивирует ранее созданный токен лояльности.
+Переводит токены на указанный адрес.
 
-**Параметры:**
-- `_tokenProxyAddress` - Адрес прокси-контракта токена
+**Пример:**
+```javascript
+await tokenContract.transfer(recipientAddress, ethers.parseUnits("10", 18));
+```
 
-**События:**
-- `LoyaltyTokenReactivated(address indexed tokenAddress, address indexed activatedBy, string message)`
+### `approve(address spender, uint256 amount) → bool`
 
-#### `tokenImplementation() → address` (view)
+Разрешает указанному адресу тратить токены от имени владельца.
 
-Возвращает адрес имплементации токена.
+**Пример:**
+```javascript
+await tokenContract.approve(spenderAddress, ethers.parseUnits("100", 18));
+```
 
-#### `factoryAdmin() → address` (view)
+### `allowance(address owner, address spender) → uint256` (view)
 
-Возвращает адрес администратора фабрики.
+Возвращает количество токенов, которое `spender` может потратить от имени `owner`.
+
+**Пример:**
+```javascript
+const allowance = await tokenContract.allowance(ownerAddress, spenderAddress);
+```
+
+### `transferFrom(address from, address to, uint256 amount) → bool`
+
+Переводит токены от одного адреса другому (требуется предварительный `approve`).
+
+**Пример:**
+```javascript
+await tokenContract.transferFrom(fromAddress, toAddress, ethers.parseUnits("50", 18));
+```
+
+### `name() → string` (view)
+
+Возвращает название токена.
+
+### `symbol() → string` (view)
+
+Возвращает символ токена.
+
+### `decimals() → uint8` (view)
+
+Возвращает количество десятичных знаков (обычно 18).
+
+### `totalSupply() → uint256` (view)
+
+Возвращает общее количество выпущенных токенов.
 
 ---
 
-## 2. LoyalSparkERC20
+## Расширенные Функции Управления
 
-### Описание
-
-Расширенная реализация ERC20 токена с функциями управления программой лояльности, включая mint, burn, pause и статус активности.
-
-### Стандартные ERC20 Функции
-
-#### `balanceOf(address account) → uint256` (view)
-Возвращает баланс токенов на указанном адресе.
-
-#### `transfer(address to, uint256 amount) → bool`
-Переводит токены на указанный адрес.
-
-#### `approve(address spender, uint256 amount) → bool`
-Разрешает указанному адресу тратить токены от имени владельца.
-
-#### `allowance(address owner, address spender) → uint256` (view)
-Возвращает количество токенов, которое `spender` может потратить от имени `owner`.
-
-#### `transferFrom(address from, address to, uint256 amount) → bool`
-Переводит токены от одного адреса другому (требуется предварительный `approve`).
-
-#### `name() → string` (view)
-Возвращает название токена.
-
-#### `symbol() → string` (view)
-Возвращает символ токена.
-
-#### `decimals() → uint8` (view)
-Возвращает количество десятичных знаков (обычно 18).
-
-#### `totalSupply() → uint256` (view)
-Возвращает общее количество выпущенных токенов.
-
-### Расширенные Функции Управления
-
-#### `mint(address account, uint256 amount)`
+### `mint(address account, uint256 amount)`
 
 Выпускает новые токены на указанный адрес.
 
@@ -122,7 +98,7 @@ const tx = await factoryContract.createLoyaltyToken(
 await tokenContract.mint(customerAddress, ethers.parseUnits("100", 18));
 ```
 
-#### `burn(address account, uint256 amount)`
+### `burn(address account, uint256 amount)`
 
 Сжигает (уничтожает) токены с указанного адреса.
 
@@ -143,23 +119,35 @@ await tokenContract.mint(customerAddress, ethers.parseUnits("100", 18));
 await tokenContract.burn(customerAddress, balance);
 ```
 
-### Функции Управления Статусом
+---
 
-#### `enableMinting()`
+## Функции Управления Статусом
+
+### `enableMinting()`
 
 Включает возможность выпуска новых токенов.
 
 **Ограничения:**
 - Только владелец
 
-#### `disableMinting()`
+**Пример:**
+```javascript
+await tokenContract.enableMinting();
+```
+
+### `disableMinting()`
 
 Отключает возможность выпуска новых токенов.
 
 **Ограничения:**
 - Только владелец
 
-#### `pauseUtility()`
+**Пример:**
+```javascript
+await tokenContract.disableMinting();
+```
+
+### `pauseUtility()`
 
 Приостанавливает использование токенов (переводы, активацию вознаграждений).
 
@@ -170,16 +158,28 @@ await tokenContract.burn(customerAddress, balance);
 - Все `transfer` и `transferFrom` будут отклонены
 - Токены остаются на балансе, но не могут быть использованы
 
-#### `unpauseUtility()`
+**Пример:**
+```javascript
+await tokenContract.pauseUtility();
+```
+
+### `unpauseUtility()`
 
 Возобновляет использование токенов.
 
 **Ограничения:**
 - Только владелец
 
-### Функции Просмотра Статуса
+**Пример:**
+```javascript
+await tokenContract.unpauseUtility();
+```
 
-#### `isMintingActive() → bool` (view)
+---
+
+## Функции Просмотра Статуса
+
+### `isMintingActive() → bool` (view)
 
 Проверяет, активен ли минтинг токенов.
 
@@ -187,7 +187,12 @@ await tokenContract.burn(customerAddress, balance);
 - `true` - минтинг разрешен
 - `false` - минтинг заблокирован
 
-#### `isUtilityActive() → bool` (view)
+**Пример:**
+```javascript
+const isActive = await tokenContract.isMintingActive();
+```
+
+### `isUtilityActive() → bool` (view)
 
 Проверяет, активно ли использование токенов (не на паузе).
 
@@ -195,33 +200,34 @@ await tokenContract.burn(customerAddress, balance);
 - `true` - токены можно переводить и использовать
 - `false` - токены на паузе
 
-#### `getMerchantAddress() → address` (view)
+**Пример:**
+```javascript
+const isActive = await tokenContract.isUtilityActive();
+```
+
+### `getMerchantAddress() → address` (view)
 
 Возвращает адрес мерчанта-владельца программы.
 
-#### `owner() → address` (view)
+**Пример:**
+```javascript
+const merchantAddress = await tokenContract.getMerchantAddress();
+```
+
+### `owner() → address` (view)
 
 Возвращает адрес владельца контракта (обычно совпадает с мерчантом).
 
----
-
-## Жизненный Цикл Программы Лояльности
-
-### 1. Создание Программы
-
+**Пример:**
 ```javascript
-// Мерчант создает программу через фабрику
-const tx = await factoryContract.createLoyaltyToken(
-  "Summer Promo",
-  "SUMMER",
-  merchantWallet
-);
-
-const receipt = await tx.wait();
-const tokenAddress = receipt.logs[0].args.tokenAddress;
+const owner = await tokenContract.owner();
 ```
 
-### 2. Выпуск Токенов Клиентам
+---
+
+## Жизненный Цикл Программы
+
+### 1. Выпуск Токенов Клиентам
 
 ```javascript
 // Мерчант выпускает токены клиенту
@@ -231,7 +237,7 @@ await loyaltyToken.mint(
 );
 ```
 
-### 3. Использование Токенов
+### 2. Использование Токенов
 
 ```javascript
 // Клиент переводит токены мерчанту для активации вознаграждения
@@ -241,7 +247,7 @@ await loyaltyToken.transfer(
 );
 ```
 
-### 4. Приостановка Программы
+### 3. Приостановка Программы
 
 ```javascript
 // Мерчант временно приостанавливает программу
@@ -251,14 +257,14 @@ await loyaltyToken.pauseUtility();
 const isActive = await loyaltyToken.isUtilityActive(); // false
 ```
 
-### 5. Возобновление Программы
+### 4. Возобновление Программы
 
 ```javascript
 // Мерчант возобновляет программу
 await loyaltyToken.unpauseUtility();
 ```
 
-### 6. Удаление Программы
+### 5. Удаление Программы
 
 ```javascript
 // Получение всех держателей токенов
@@ -309,20 +315,20 @@ for (let i = 0; i < holders.length; i += 5) {
 
 ## Интеграция с Frontend
 
-### Подключение к Контрактам
+### Подключение к Контракту
 
 ```javascript
 import { CONTRACTS } from '@/config/contracts';
 import { useWriteContract, useReadContract } from 'wagmi';
 
-// Создание программы
+// Минтинг токенов
 const { writeContract } = useWriteContract();
 
 await writeContract({
-  address: CONTRACTS.LOYALTY_TOKEN_FACTORY.address,
-  abi: CONTRACTS.LOYALTY_TOKEN_FACTORY.abi,
-  functionName: 'createLoyaltyToken',
-  args: [name, symbol, merchantAddress],
+  address: tokenAddress,
+  abi: CONTRACTS.LOYAL_SPARK_ERC20.abi,
+  functionName: 'mint',
+  args: [recipientAddress, amount],
 });
 ```
 
@@ -337,24 +343,21 @@ const { data: isActive } = useReadContract({
 });
 ```
 
-### События и Логи
+### Управление Статусом
 
 ```javascript
-// Получение истории создания токенов
-const logs = await publicClient.getLogs({
-  address: CONTRACTS.LOYALTY_TOKEN_FACTORY.address,
-  event: {
-    type: 'event',
-    name: 'LoyaltyTokenCreated',
-    inputs: [
-      { indexed: true, name: 'tokenAddress', type: 'address' },
-      { indexed: true, name: 'merchantAddress', type: 'address' },
-      { indexed: false, name: 'name', type: 'string' },
-      { indexed: false, name: 'symbol', type: 'string' },
-    ],
-  },
-  fromBlock: startBlock,
-  toBlock: 'latest',
+// Пауза программы
+await writeContract({
+  address: tokenAddress,
+  abi: CONTRACTS.LOYAL_SPARK_ERC20.abi,
+  functionName: 'pauseUtility',
+});
+
+// Возобновление программы
+await writeContract({
+  address: tokenAddress,
+  abi: CONTRACTS.LOYAL_SPARK_ERC20.abi,
+  functionName: 'unpauseUtility',
 });
 ```
 
@@ -374,22 +377,21 @@ const logs = await publicClient.getLogs({
 
 Да, используя стандартную функцию `transferOwnership` (если реализована в контракте).
 
-### Сколько стоит создание программы?
-
-Стоимость зависит от цены газа в сети Base. Примерно 0.0001-0.001 ETH за транзакцию создания.
-
 ### Можно ли использовать токены на DEX?
 
 Да, токены полностью совместимы со стандартом ERC20 и могут торговаться на любых DEX (Uniswap, SushiSwap и т.д.).
+
+### Что происходит при попытке transfer на паузе?
+
+Транзакция будет отклонена с ошибкой, токены останутся на балансе отправителя.
 
 ---
 
 ## Поддержка
 
 Для вопросов и поддержки:
-- GitHub: [Loyal Spark Repository]
+- Официальный сайт: [https://loyalspark.online](https://loyalspark.online)
 - Email: support@loyalspark.io
-- Discord: [Community Server]
 
 ## Лицензия
 
