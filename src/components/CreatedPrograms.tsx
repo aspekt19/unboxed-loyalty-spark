@@ -335,7 +335,23 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
           window.dispatchEvent(new Event('rewardsUpdated'));
         }
         
-        toast.success('Program and rewards paused successfully');
+        // Деактивируем все активные ваучеры этой программы
+        const { error: vouchersError } = await supabase
+          .from('vouchers')
+          .update({ status: 'expired' })
+          .eq('token_address', program.tokenAddress.toLowerCase())
+          .eq('status', 'active');
+        
+        if (vouchersError) {
+          console.error('Error deactivating vouchers:', vouchersError);
+          toast.warning('Program paused, but some vouchers could not be deactivated');
+        } else {
+          console.log('Vouchers deactivated successfully for paused program');
+          // Отправляем событие обновления ваучеров
+          window.dispatchEvent(new Event('vouchersUpdated'));
+        }
+        
+        toast.success('Program, rewards, and vouchers paused successfully');
       } else {
         // Активируем программу
         await unpauseProgram(program.tokenAddress as `0x${string}`);

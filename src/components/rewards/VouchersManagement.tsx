@@ -194,7 +194,7 @@ export function VouchersManagement() {
                 <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
                   Used Vouchers ({usedVouchers.length})
                 </h3>
-                <ScrollArea className="h-[300px] pr-4">
+                <ScrollArea className="h-[400px] pr-4">
                   <div className="space-y-2">
                     {usedVouchers.map((voucher) => (
                       <div
