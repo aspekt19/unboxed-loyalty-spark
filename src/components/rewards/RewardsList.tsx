@@ -158,9 +158,11 @@ export function RewardsList() {
                     key={reward.id}
                     className="flex items-start justify-between p-4 border rounded-lg bg-muted/30"
                   >
-                    <div className="flex-1 space-y-1">
+                  <div className="flex-1 space-y-1">
                       <div className="flex items-center gap-2">
-                        <h4 className="font-semibold">{reward.name}</h4>
+                        <h4 className={`font-semibold ${!reward.isActive ? 'text-muted-foreground' : ''}`}>
+                          {reward.name}
+                        </h4>
                         <Badge variant={reward.isActive ? 'default' : 'secondary'}>
                           {reward.isActive ? 'Active' : 'Inactive'}
                         </Badge>
@@ -174,6 +176,11 @@ export function RewardsList() {
                           </span>
                         )}
                       </div>
+                      {!reward.isActive && (
+                        <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                          Program is paused - reward cannot be used
+                        </p>
+                      )}
                     </div>
                     <div className="flex gap-2">
                       <Button
@@ -181,6 +188,7 @@ export function RewardsList() {
                         variant="ghost"
                         onClick={() => handleEditClick(reward)}
                         title="Edit"
+                        disabled={!reward.isActive}
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -189,6 +197,7 @@ export function RewardsList() {
                         variant="ghost"
                         onClick={() => handleToggleActive(reward.id)}
                         title={reward.isActive ? 'Deactivate' : 'Activate'}
+                        disabled={!reward.isActive}
                       >
                         {reward.isActive ? (
                           <ToggleRight className="h-4 w-4" />

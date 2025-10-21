@@ -66,6 +66,7 @@ export function MyVouchers() {
   }
 
   const activeVouchers = vouchers.filter(v => v.status === 'active');
+  const inactiveVouchers = vouchers.filter(v => v.status === 'expired');
   const usedVouchers = vouchers.filter(v => v.status === 'used');
 
   return (
@@ -87,9 +88,12 @@ export function MyVouchers() {
           </Alert>
         ) : (
           <Tabs defaultValue="active" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="active">
                 Active ({activeVouchers.length})
+              </TabsTrigger>
+              <TabsTrigger value="inactive">
+                Inactive ({inactiveVouchers.length})
               </TabsTrigger>
               <TabsTrigger value="used">
                 Used ({usedVouchers.length})
@@ -106,6 +110,31 @@ export function MyVouchers() {
                   <div className="space-y-4">
                     {activeVouchers.map(voucher => (
                       <VoucherCard key={voucher.id} voucher={voucher} />
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="inactive" className="mt-4">
+              {inactiveVouchers.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  No inactive vouchers
+                </p>
+              ) : (
+                <ScrollArea className="h-[400px] pr-4">
+                  <div className="space-y-4">
+                    {inactiveVouchers.map(voucher => (
+                      <div key={voucher.id} className="relative">
+                        <VoucherCard voucher={voucher} />
+                        <div className="absolute top-2 right-2">
+                          <Alert className="w-auto py-1 px-2 border-amber-200 bg-amber-50 dark:bg-amber-950 dark:border-amber-800">
+                            <AlertDescription className="text-xs text-amber-900 dark:text-amber-100">
+                              Program inactive - cannot be used
+                            </AlertDescription>
+                          </Alert>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </ScrollArea>

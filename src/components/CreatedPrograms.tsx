@@ -334,6 +334,17 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
           console.error('Error updating program status to paused in DB:', programError);
         }
         
+        // Деактивируем все награды этой программы
+        const { error: rewardsError } = await supabase
+          .from('rewards')
+          .update({ is_active: false })
+          .eq('token_address', program.tokenAddress.toLowerCase())
+          .eq('merchant_address', address!.toLowerCase());
+        
+        if (rewardsError) {
+          console.error('Error deactivating rewards:', rewardsError);
+        }
+        
         // Деактивируем все активные ваучеры этой программы
         const { error: vouchersError } = await supabase
           .from('vouchers')
@@ -343,8 +354,6 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         
         if (vouchersError) {
           console.error('Error deactivating vouchers:', vouchersError);
-        } else {
-          console.log('Vouchers deactivated successfully for paused program');
         }
         
         // Отправляем события обновления
@@ -352,7 +361,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         window.dispatchEvent(new Event('vouchersUpdated'));
         window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
         
-        toast.success('Program paused successfully. Rewards and vouchers are now hidden.');
+        toast.success('Program paused. Rewards and vouchers are now inactive.');
       } else {
         // Активируем программу в смарт-контракте
         await unpauseProgram(program.tokenAddress as `0x${string}`);
@@ -371,6 +380,17 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
           console.error('Error updating program status to active in DB:', programError);
         }
         
+        // Активируем все награды этой программы
+        const { error: rewardsError } = await supabase
+          .from('rewards')
+          .update({ is_active: true })
+          .eq('token_address', program.tokenAddress.toLowerCase())
+          .eq('merchant_address', address!.toLowerCase());
+        
+        if (rewardsError) {
+          console.error('Error activating rewards:', rewardsError);
+        }
+        
         // Активируем обратно все истекшие ваучеры этой программы
         const { error: vouchersError } = await supabase
           .from('vouchers')
@@ -380,8 +400,6 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         
         if (vouchersError) {
           console.error('Error reactivating vouchers:', vouchersError);
-        } else {
-          console.log('Vouchers reactivated successfully for unpaused program');
         }
         
         // Отправляем события обновления
@@ -389,7 +407,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         window.dispatchEvent(new Event('vouchersUpdated'));
         window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
         
-        toast.success('Program activated! Rewards and vouchers are now visible. If minting is disabled, enable it separately.');
+        toast.success('Program activated. Rewards and vouchers are now active again.');
       }
     } catch (error) {
       console.error('Error toggling program:', error);

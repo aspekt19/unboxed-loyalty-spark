@@ -40,7 +40,7 @@ export function CreateReward() {
     }
 
     const loadPrograms = async () => {
-      // Загружаем только активные программы из БД
+      // Загружаем только активные программы из БД для создания наград
       const { data: programs, error } = await supabase
         .from('loyalty_programs')
         .select('token_address, name, symbol, status')

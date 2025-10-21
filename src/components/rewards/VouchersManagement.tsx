@@ -159,12 +159,14 @@ export function VouchersManagement() {
                     {activeVouchers.map((voucher) => (
                       <div
                         key={voucher.id}
-                        className="flex items-center justify-between p-4 border rounded-lg bg-primary/5"
+                        className={`flex items-center justify-between p-4 border rounded-lg ${voucher.status === 'active' ? 'bg-primary/5' : 'bg-muted/50 opacity-70'}`}
                       >
                         <div className="flex-1 space-y-1">
                           <div className="flex items-center gap-2">
                             <code className="font-bold">{voucher.code}</code>
-                            <Badge>Active</Badge>
+                            <Badge variant={voucher.status === 'active' ? 'default' : 'secondary'}>
+                              {voucher.status === 'active' ? 'Active' : 'Inactive'}
+                            </Badge>
                           </div>
                           <div className="text-sm font-medium">{voucher.rewardName}</div>
                           <div className="text-xs text-muted-foreground">
@@ -173,11 +175,17 @@ export function VouchersManagement() {
                           <div className="text-xs text-muted-foreground">
                             Customer: {voucher.customerAddress.slice(0, 6)}...{voucher.customerAddress.slice(-4)}
                           </div>
+                          {voucher.status !== 'active' && (
+                            <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                              Program is paused - voucher cannot be used
+                            </p>
+                          )}
                         </div>
                         <Button
                           size="sm"
                           onClick={() => handleMarkAsUsed(voucher.id, voucher.code)}
                           className="gap-2"
+                          disabled={voucher.status !== 'active'}
                         >
                           <CheckCircle2 className="h-4 w-4" />
                           Mark as Used
