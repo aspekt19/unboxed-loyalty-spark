@@ -330,8 +330,16 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
           }
         );
         
-        if (programError || !updateSuccess) {
+        if (programError) {
           console.error('Error updating program status to paused in DB:', programError);
+          toast.error('Failed to update program status in database');
+          return;
+        }
+        
+        if (!updateSuccess) {
+          console.error('Failed to update program - user may not own this program');
+          toast.error('Failed to update program status');
+          return;
         }
         
         // Деактивируем все награды этой программы
@@ -376,8 +384,16 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
           }
         );
         
-        if (programError || !updateSuccess) {
+        if (programError) {
           console.error('Error updating program status to active in DB:', programError);
+          toast.error('Failed to update program status in database');
+          return;
+        }
+        
+        if (!updateSuccess) {
+          console.error('Failed to update program - user may not own this program');
+          toast.error('Failed to update program status');
+          return;
         }
         
         // Активируем все награды этой программы
