@@ -3,11 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { usePublicClient, useAccount } from 'wagmi';
-import { History, Loader2, AlertCircle, Filter } from 'lucide-react';
+import { History, Loader2, AlertCircle, Filter, Search } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { formatUnits } from 'viem';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -28,6 +29,7 @@ export function IssuedTokensHistory() {
   const [history, setHistory] = useState<IssuedToken[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedProgramFilter, setSelectedProgramFilter] = useState<string>('all');
+  const [customerSearch, setCustomerSearch] = useState<string>('');
   const [programs, setPrograms] = useState<any[]>([]);
 
   useEffect(() => {
@@ -182,10 +184,17 @@ export function IssuedTokensHistory() {
     return null;
   }
 
-  // Фильтруем историю по выбранной программе
-  const filteredHistory = selectedProgramFilter === 'all' 
-    ? history 
-    : history.filter(item => item.tokenAddress === selectedProgramFilter);
+  // Фильтруем историю по выбранной программе и адресу покупателя
+  const filteredHistory = history.filter(item => {
+    // Фильтр по программе
+    const programMatch = selectedProgramFilter === 'all' || item.tokenAddress === selectedProgramFilter;
+    
+    // Фильтр по адресу покупателя (если есть поисковый запрос)
+    const customerMatch = !customerSearch || 
+      item.recipient.toLowerCase().includes(customerSearch.toLowerCase().trim());
+    
+    return programMatch && customerMatch;
+  });
 
   return (
     <Card className="border-2 h-full flex flex-col">
@@ -231,6 +240,23 @@ export function IssuedTokensHistory() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-3 flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <Label htmlFor="customer-search" className="text-sm font-medium">
+                  Search by Customer Address
+                </Label>
+              </div>
+              <Input
+                id="customer-search"
+                type="text"
+                placeholder="Enter wallet address (0x...)"
+                value={customerSearch}
+                onChange={(e) => setCustomerSearch(e.target.value)}
+                className="font-mono text-sm"
+              />
             </div>
 
             <div className="flex items-center justify-between flex-shrink-0">
