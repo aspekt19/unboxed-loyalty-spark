@@ -8,6 +8,7 @@ LoyalSparkERC20 is an extended ERC20 token implementation with loyalty program m
 
 ## Contract Addresses (Base Mainnet)
 
+- **LoyaltyTokenFactory**: `0x5F3DdBa12580CFdc6016258774cCc19C4250dA80`
 - **LoyalSparkERC20 (Implementation)**: `0xe6BA426C9c51281B929a17444De02c65815E27C3`
 - **Chain ID**: `8453` (Base Mainnet)
 
