@@ -367,6 +367,19 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
           // Не прерываем выполнение, т.к. основная операция (unpause) уже выполнена
         }
         
+        // Активируем обратно все истекшие ваучеры этой программы
+        const { error: vouchersError } = await supabase
+          .from('vouchers')
+          .update({ status: 'active' })
+          .eq('token_address', program.tokenAddress.toLowerCase())
+          .eq('status', 'expired');
+        
+        if (vouchersError) {
+          console.error('Error reactivating vouchers:', vouchersError);
+        } else {
+          console.log('Vouchers reactivated successfully for unpaused program');
+        }
+        
         // Отправляем события обновления
         window.dispatchEvent(new Event('rewardsUpdated'));
         window.dispatchEvent(new Event('vouchersUpdated'));
