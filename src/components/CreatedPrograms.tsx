@@ -350,6 +350,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         // Отправляем события обновления
         window.dispatchEvent(new Event('rewardsUpdated'));
         window.dispatchEvent(new Event('vouchersUpdated'));
+        window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
         
         toast.success('Program paused successfully. Rewards and vouchers are now hidden.');
       } else {
@@ -387,6 +388,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         // Отправляем события обновления
         window.dispatchEvent(new Event('rewardsUpdated'));
         window.dispatchEvent(new Event('vouchersUpdated'));
+        window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
         
         toast.success('Program activated! Rewards and vouchers are now visible. If minting is disabled, enable it separately.');
       }

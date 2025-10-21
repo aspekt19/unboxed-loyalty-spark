@@ -12,6 +12,7 @@ import { createReward } from '@/lib/vouchers';
 import { useAuth } from '@/contexts/AuthContext';
 import { rewardSchema } from '@/lib/validationSchemas';
 import { AuthPrompt } from '@/components/AuthPrompt';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TokenInfo {
   address: string;
@@ -38,25 +39,34 @@ export function CreateReward() {
       return;
     }
 
-    const loadPrograms = () => {
-      const loyaltyPrograms = localStorage.getItem('loyaltyPrograms');
-      if (loyaltyPrograms) {
-        const programs = JSON.parse(loyaltyPrograms);
-        // Only show programs with tokenAddress
-        const activePrograms = programs
-          .filter((p: any) => p.tokenAddress)
-          .map((p: any) => ({
-            address: p.tokenAddress,
-            name: p.name,
-            symbol: p.symbol,
-          }));
+    const loadPrograms = async () => {
+      // Загружаем только активные программы из БД
+      const { data: programs, error } = await supabase
+        .from('loyalty_programs')
+        .select('token_address, name, symbol, status')
+        .eq('merchant_address', address.toLowerCase())
+        .in('status', ['active', 'expiring_soon']);
+      
+      if (error) {
+        console.error('Error loading programs for rewards:', error);
+        return;
+      }
+
+      if (programs && programs.length > 0) {
+        const activePrograms = programs.map((p: any) => ({
+          address: p.token_address,
+          name: p.name,
+          symbol: p.symbol,
+        }));
         setTokens(activePrograms);
+      } else {
+        setTokens([]);
       }
     };
 
     loadPrograms();
 
-    // Listen for updates when new programs are created
+    // Listen for updates when programs status changes
     window.addEventListener('loyaltyProgramsUpdated', loadPrograms);
     return () => window.removeEventListener('loyaltyProgramsUpdated', loadPrograms);
   }, [address]);
