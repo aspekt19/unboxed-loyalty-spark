@@ -73,18 +73,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .select('user_id, wallet_address')
           .eq('wallet_address', address.toLowerCase())
           .eq('user_id', authData.user.id)
-          .single();
+          .maybeSingle();
 
         if (!profileError && profile) {
           profileVerified = true;
           console.log('Profile verified:', profile);
         } else {
           retries++;
-          console.log(`Profile verification attempt ${retries}/${maxRetries}`);
+          console.log(`Profile verification attempt ${retries}/${maxRetries}`, profileError);
         }
       }
 
       if (!profileVerified) {
+        console.error('Failed to verify profile creation after', maxRetries, 'attempts');
         throw new Error('Failed to verify profile creation');
       }
 
