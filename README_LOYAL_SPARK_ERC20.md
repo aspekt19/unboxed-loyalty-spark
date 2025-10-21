@@ -1,276 +1,276 @@
-# LoyalSparkERC20 - Документация Смарт-Контракта
+# LoyalSparkERC20 - Smart Contract Documentation
 
-## Обзор
+## Overview
 
-LoyalSparkERC20 - расширенная реализация ERC20 токена с функциями управления программой лояльности, включая mint, burn, pause и статус активности.
+LoyalSparkERC20 is an extended ERC20 token implementation with loyalty program management functions, including mint, burn, pause, and activity status.
 
-**Официальный сайт проекта:** [https://loyalspark.online](https://loyalspark.online)
+**Official project website:** [https://loyalspark.online](https://loyalspark.online)
 
-## Адреса Контрактов (Base Mainnet)
+## Contract Addresses (Base Mainnet)
 
 - **LoyalSparkERC20 (Implementation)**: `0xe6BA426C9c51281B929a17444De02c65815E27C3`
 - **Chain ID**: `8453` (Base Mainnet)
 
 ---
 
-## Стандартные ERC20 Функции
+## Standard ERC20 Functions
 
 ### `balanceOf(address account) → uint256` (view)
 
-Возвращает баланс токенов на указанном адресе.
+Returns the token balance at the specified address.
 
-**Пример:**
+**Example:**
 ```javascript
 const balance = await tokenContract.balanceOf(userAddress);
 ```
 
 ### `transfer(address to, uint256 amount) → bool`
 
-Переводит токены на указанный адрес.
+Transfers tokens to the specified address.
 
-**Пример:**
+**Example:**
 ```javascript
 await tokenContract.transfer(recipientAddress, ethers.parseUnits("10", 18));
 ```
 
 ### `approve(address spender, uint256 amount) → bool`
 
-Разрешает указанному адресу тратить токены от имени владельца.
+Allows the specified address to spend tokens on behalf of the owner.
 
-**Пример:**
+**Example:**
 ```javascript
 await tokenContract.approve(spenderAddress, ethers.parseUnits("100", 18));
 ```
 
 ### `allowance(address owner, address spender) → uint256` (view)
 
-Возвращает количество токенов, которое `spender` может потратить от имени `owner`.
+Returns the amount of tokens that `spender` can spend on behalf of `owner`.
 
-**Пример:**
+**Example:**
 ```javascript
 const allowance = await tokenContract.allowance(ownerAddress, spenderAddress);
 ```
 
 ### `transferFrom(address from, address to, uint256 amount) → bool`
 
-Переводит токены от одного адреса другому (требуется предварительный `approve`).
+Transfers tokens from one address to another (requires prior `approve`).
 
-**Пример:**
+**Example:**
 ```javascript
 await tokenContract.transferFrom(fromAddress, toAddress, ethers.parseUnits("50", 18));
 ```
 
 ### `name() → string` (view)
 
-Возвращает название токена.
+Returns the token name.
 
 ### `symbol() → string` (view)
 
-Возвращает символ токена.
+Returns the token symbol.
 
 ### `decimals() → uint8` (view)
 
-Возвращает количество десятичных знаков (обычно 18).
+Returns the number of decimal places (typically 18).
 
 ### `totalSupply() → uint256` (view)
 
-Возвращает общее количество выпущенных токенов.
+Returns the total supply of issued tokens.
 
 ---
 
-## Расширенные Функции Управления
+## Extended Management Functions
 
 ### `mint(address account, uint256 amount)`
 
-Выпускает новые токены на указанный адрес.
+Mints new tokens to the specified address.
 
-**Ограничения:**
-- Может вызываться только владельцем (мерчантом)
-- Требуется активный статус минтинга (`isMintingActive == true`)
+**Restrictions:**
+- Can only be called by the owner (merchant)
+- Requires active minting status (`isMintingActive == true`)
 
-**Параметры:**
-- `account` - Адрес получателя токенов
-- `amount` - Количество токенов (в wei, т.е. с учетом 18 decimals)
+**Parameters:**
+- `account` - Token recipient address
+- `amount` - Token amount (in wei, i.e., with 18 decimals)
 
-**Пример:**
+**Example:**
 ```javascript
-// Выпустить 100 токенов
+// Mint 100 tokens
 await tokenContract.mint(customerAddress, ethers.parseUnits("100", 18));
 ```
 
 ### `burn(address account, uint256 amount)`
 
-Сжигает (уничтожает) токены с указанного адреса.
+Burns (destroys) tokens from the specified address.
 
-**Ограничения:**
-- Может вызываться только владельцем (мерчантом)
-- Не требует `approve` от держателя токенов
+**Restrictions:**
+- Can only be called by the owner (merchant)
+- Does not require `approve` from token holder
 
-**Параметры:**
-- `account` - Адрес, с которого сжигаются токены
-- `amount` - Количество токенов для сжигания
+**Parameters:**
+- `account` - Address from which tokens are burned
+- `amount` - Amount of tokens to burn
 
-**Использование:**
-Используется при удалении программы лояльности для сжигания всех существующих токенов.
+**Usage:**
+Used when deleting a loyalty program to burn all existing tokens.
 
-**Пример:**
+**Example:**
 ```javascript
-// Сжечь все токены пользователя
+// Burn all user tokens
 await tokenContract.burn(customerAddress, balance);
 ```
 
 ---
 
-## Функции Управления Статусом
+## Status Management Functions
 
 ### `enableMinting()`
 
-Включает возможность выпуска новых токенов.
+Enables the ability to mint new tokens.
 
-**Ограничения:**
-- Только владелец
+**Restrictions:**
+- Owner only
 
-**Пример:**
+**Example:**
 ```javascript
 await tokenContract.enableMinting();
 ```
 
 ### `disableMinting()`
 
-Отключает возможность выпуска новых токенов.
+Disables the ability to mint new tokens.
 
-**Ограничения:**
-- Только владелец
+**Restrictions:**
+- Owner only
 
-**Пример:**
+**Example:**
 ```javascript
 await tokenContract.disableMinting();
 ```
 
 ### `pauseUtility()`
 
-Приостанавливает использование токенов (переводы, активацию вознаграждений).
+Pauses token usage (transfers, reward activation).
 
-**Ограничения:**
-- Только владелец
+**Restrictions:**
+- Owner only
 
-**Эффекты:**
-- Все `transfer` и `transferFrom` будут отклонены
-- Токены остаются на балансе, но не могут быть использованы
+**Effects:**
+- All `transfer` and `transferFrom` calls will be rejected
+- Tokens remain in balance but cannot be used
 
-**Пример:**
+**Example:**
 ```javascript
 await tokenContract.pauseUtility();
 ```
 
 ### `unpauseUtility()`
 
-Возобновляет использование токенов.
+Resumes token usage.
 
-**Ограничения:**
-- Только владелец
+**Restrictions:**
+- Owner only
 
-**Пример:**
+**Example:**
 ```javascript
 await tokenContract.unpauseUtility();
 ```
 
 ---
 
-## Функции Просмотра Статуса
+## Status View Functions
 
 ### `isMintingActive() → bool` (view)
 
-Проверяет, активен ли минтинг токенов.
+Checks if token minting is active.
 
-**Возвращает:**
-- `true` - минтинг разрешен
-- `false` - минтинг заблокирован
+**Returns:**
+- `true` - minting is allowed
+- `false` - minting is blocked
 
-**Пример:**
+**Example:**
 ```javascript
 const isActive = await tokenContract.isMintingActive();
 ```
 
 ### `isUtilityActive() → bool` (view)
 
-Проверяет, активно ли использование токенов (не на паузе).
+Checks if token usage is active (not paused).
 
-**Возвращает:**
-- `true` - токены можно переводить и использовать
-- `false` - токены на паузе
+**Returns:**
+- `true` - tokens can be transferred and used
+- `false` - tokens are paused
 
-**Пример:**
+**Example:**
 ```javascript
 const isActive = await tokenContract.isUtilityActive();
 ```
 
 ### `getMerchantAddress() → address` (view)
 
-Возвращает адрес мерчанта-владельца программы.
+Returns the merchant owner address of the program.
 
-**Пример:**
+**Example:**
 ```javascript
 const merchantAddress = await tokenContract.getMerchantAddress();
 ```
 
 ### `owner() → address` (view)
 
-Возвращает адрес владельца контракта (обычно совпадает с мерчантом).
+Returns the contract owner address (typically matches the merchant).
 
-**Пример:**
+**Example:**
 ```javascript
 const owner = await tokenContract.owner();
 ```
 
 ---
 
-## Жизненный Цикл Программы
+## Program Lifecycle
 
-### 1. Выпуск Токенов Клиентам
+### 1. Issuing Tokens to Customers
 
 ```javascript
-// Мерчант выпускает токены клиенту
+// Merchant mints tokens to customer
 await loyaltyToken.mint(
   customerAddress,
   ethers.parseUnits("50", 18) // 50 токенов
 );
 ```
 
-### 2. Использование Токенов
+### 2. Using Tokens
 
 ```javascript
-// Клиент переводит токены мерчанту для активации вознаграждения
+// Customer transfers tokens to merchant to activate reward
 await loyaltyToken.transfer(
   merchantAddress,
   ethers.parseUnits("10", 18) // 10 токенов за вознаграждение
 );
 ```
 
-### 3. Приостановка Программы
+### 3. Pausing the Program
 
 ```javascript
-// Мерчант временно приостанавливает программу
+// Merchant temporarily pauses the program
 await loyaltyToken.pauseUtility();
 
-// Проверка статуса
+// Check status
 const isActive = await loyaltyToken.isUtilityActive(); // false
 ```
 
-### 4. Возобновление Программы
+### 4. Resuming the Program
 
 ```javascript
-// Мерчант возобновляет программу
+// Merchant resumes the program
 await loyaltyToken.unpauseUtility();
 ```
 
-### 5. Удаление Программы
+### 5. Deleting the Program
 
 ```javascript
-// Получение всех держателей токенов
+// Get all token holders
 const holders = await getTokenHolders(tokenAddress);
 
-// Сжигание токенов у всех держателей пакетами по 5
+// Burn tokens from all holders in batches of 5
 for (let i = 0; i < holders.length; i += 5) {
   const batch = holders.slice(i, i + 5);
   
@@ -285,43 +285,43 @@ for (let i = 0; i < holders.length; i += 5) {
 
 ---
 
-## Безопасность и Ограничения
+## Security and Restrictions
 
-### Контроль Доступа
+### Access Control
 
-- **Только владелец** может:
-  - Выпускать токены (`mint`)
-  - Сжигать токены (`burn`)
-  - Включать/отключать минтинг
-  - Приостанавливать/возобновлять использование
+- **Owner only** can:
+  - Mint tokens (`mint`)
+  - Burn tokens (`burn`)
+  - Enable/disable minting
+  - Pause/unpause usage
 
-### Защита от Злоупотреблений
+### Protection Against Abuse
 
-1. **Pause механизм**: Позволяет мерчанту мгновенно остановить все операции с токенами
-2. **Burn без approve**: Мерчант может сжечь токены у любого держателя без предварительного разрешения (для закрытия программы)
-3. **Disable minting**: Предотвращает выпуск новых токенов после завершения программы
+1. **Pause mechanism**: Allows merchant to instantly stop all token operations
+2. **Burn without approve**: Merchant can burn tokens from any holder without prior approval (for program closure)
+3. **Disable minting**: Prevents minting of new tokens after program completion
 
-### Статусы Программы
+### Program Status States
 
-Программа может находиться в одном из состояний:
+The program can be in one of the following states:
 
-| Статус | isMintingActive | isUtilityActive | Описание |
+| Status | isMintingActive | isUtilityActive | Description |
 |--------|----------------|-----------------|----------|
-| **Активна** | ✅ true | ✅ true | Полностью рабочая программа |
-| **На паузе** | ✅ true | ❌ false | Токены заморожены, минтинг возможен |
-| **Закрыта** | ❌ false | ❌ false | Программа завершена |
+| **Active** | ✅ true | ✅ true | Fully operational program |
+| **Paused** | ✅ true | ❌ false | Tokens frozen, minting possible |
+| **Closed** | ❌ false | ❌ false | Program completed |
 
 ---
 
-## Интеграция с Frontend
+## Frontend Integration
 
-### Подключение к Контракту
+### Connecting to the Contract
 
 ```javascript
 import { CONTRACTS } from '@/config/contracts';
 import { useWriteContract, useReadContract } from 'wagmi';
 
-// Минтинг токенов
+// Minting tokens
 const { writeContract } = useWriteContract();
 
 await writeContract({
@@ -332,10 +332,10 @@ await writeContract({
 });
 ```
 
-### Чтение Статуса
+### Reading Status
 
 ```javascript
-// Проверка статуса программы
+// Checking program status
 const { data: isActive } = useReadContract({
   address: tokenAddress,
   abi: CONTRACTS.LOYAL_SPARK_ERC20.abi,
@@ -343,17 +343,17 @@ const { data: isActive } = useReadContract({
 });
 ```
 
-### Управление Статусом
+### Managing Status
 
 ```javascript
-// Пауза программы
+// Pause program
 await writeContract({
   address: tokenAddress,
   abi: CONTRACTS.LOYAL_SPARK_ERC20.abi,
   functionName: 'pauseUtility',
 });
 
-// Возобновление программы
+// Resume program
 await writeContract({
   address: tokenAddress,
   abi: CONTRACTS.LOYAL_SPARK_ERC20.abi,
@@ -363,36 +363,36 @@ await writeContract({
 
 ---
 
-## Часто Задаваемые Вопросы
+## Frequently Asked Questions
 
-### Можно ли восстановить сожженные токены?
+### Can burned tokens be recovered?
 
-Нет, сожженные токены удаляются навсегда и не могут быть восстановлены.
+No, burned tokens are permanently deleted and cannot be recovered.
 
-### Что происходит с токенами на паузе?
+### What happens to tokens when paused?
 
-Токены остаются на балансе держателей, но не могут быть переведены или использованы до снятия паузы.
+Tokens remain in holders' balances but cannot be transferred or used until the pause is lifted.
 
-### Можно ли изменить владельца программы?
+### Can the program owner be changed?
 
-Да, используя стандартную функцию `transferOwnership` (если реализована в контракте).
+Yes, using the standard `transferOwnership` function (if implemented in the contract).
 
-### Можно ли использовать токены на DEX?
+### Can tokens be used on DEXs?
 
-Да, токены полностью совместимы со стандартом ERC20 и могут торговаться на любых DEX (Uniswap, SushiSwap и т.д.).
+Yes, tokens are fully ERC20 compliant and can be traded on any DEX (Uniswap, SushiSwap, etc.).
 
-### Что происходит при попытке transfer на паузе?
+### What happens when trying to transfer while paused?
 
-Транзакция будет отклонена с ошибкой, токены останутся на балансе отправителя.
+The transaction will be rejected with an error, and tokens will remain in the sender's balance.
 
 ---
 
-## Поддержка
+## Support
 
-Для вопросов и поддержки:
-- Официальный сайт: [https://loyalspark.online](https://loyalspark.online)
+For questions and support:
+- Official website: [https://loyalspark.online](https://loyalspark.online)
 - Email: support@loyalspark.io
 
-## Лицензия
+## License
 
-MIT License - см. LICENSE файл для деталей.
+MIT License - see LICENSE file for details.

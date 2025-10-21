@@ -1,12 +1,12 @@
-# LoyaltyTokenFactory - Документация Смарт-Контракта
+# LoyaltyTokenFactory - Smart Contract Documentation
 
-## Обзор
+## Overview
 
-LoyaltyTokenFactory - фабричный контракт для создания и управления токенами лояльности на блокчейне Base. Использует паттерн прокси для экономии газа при деплое новых программ.
+LoyaltyTokenFactory is a factory contract for creating and managing loyalty tokens on the Base blockchain. It uses the proxy pattern to save gas when deploying new programs.
 
-**Официальный сайт проекта:** [https://loyalspark.online](https://loyalspark.online)
+**Official project website:** [https://loyalspark.online](https://loyalspark.online)
 
-## Адреса Контрактов (Base Mainnet)
+## Contract Addresses (Base Mainnet)
 
 - **LoyaltyTokenFactory**: `0x5F3DdBa12580CFdc6016258774cCc19C4250dA80`
 - **LoyalSparkERC20 (Implementation)**: `0xe6BA426C9c51281B929a17444De02c65815E27C3`
@@ -14,24 +14,24 @@ LoyaltyTokenFactory - фабричный контракт для создани�
 
 ---
 
-## Основные Функции
+## Main Functions
 
 ### `createLoyaltyToken(string _name, string _symbol, address _merchantAddress) → address`
 
-Создает новый токен лояльности для мерчанта.
+Creates a new loyalty token for a merchant.
 
-**Параметры:**
-- `_name` - Название программы лояльности (например, "FREE POPCORN")
-- `_symbol` - Символ токена (например, "POP")
-- `_merchantAddress` - Адрес кошелька мерчанта-владельца
+**Parameters:**
+- `_name` - Loyalty program name (e.g., "FREE POPCORN")
+- `_symbol` - Token symbol (e.g., "POP")
+- `_merchantAddress` - Merchant owner wallet address
 
-**Возвращает:**
-- Адрес нового прокси-контракта токена
+**Returns:**
+- Address of the new token proxy contract
 
-**События:**
+**Events:**
 - `LoyaltyTokenCreated(address indexed tokenAddress, address indexed merchantAddress, string name, string symbol)`
 
-**Пример использования:**
+**Usage Example:**
 ```javascript
 const tx = await factoryContract.createLoyaltyToken(
   "Cinema Rewards",
@@ -45,45 +45,45 @@ const tokenAddress = receipt.logs[0].args.tokenAddress;
 
 ### `reactivateExistingToken(address _tokenProxyAddress)`
 
-Реактивирует ранее созданный токен лояльности.
+Reactivates a previously created loyalty token.
 
-**Параметры:**
-- `_tokenProxyAddress` - Адрес прокси-контракта токена
+**Parameters:**
+- `_tokenProxyAddress` - Token proxy contract address
 
-**События:**
+**Events:**
 - `LoyaltyTokenReactivated(address indexed tokenAddress, address indexed activatedBy, string message)`
 
-**Пример использования:**
+**Usage Example:**
 ```javascript
 await factoryContract.reactivateExistingToken(tokenProxyAddress);
 ```
 
 ### `tokenImplementation() → address` (view)
 
-Возвращает адрес имплементации токена.
+Returns the token implementation address.
 
-**Пример:**
+**Example:**
 ```javascript
 const implementationAddress = await factoryContract.tokenImplementation();
 ```
 
 ### `factoryAdmin() → address` (view)
 
-Возвращает адрес администратора фабрики.
+Returns the factory administrator address.
 
-**Пример:**
+**Example:**
 ```javascript
 const adminAddress = await factoryContract.factoryAdmin();
 ```
 
 ---
 
-## Жизненный Цикл Программы Лояльности
+## Loyalty Program Lifecycle
 
-### 1. Создание Программы
+### 1. Creating a Program
 
 ```javascript
-// Мерчант создает программу через фабрику
+// Merchant creates a program through the factory
 const tx = await factoryContract.createLoyaltyToken(
   "Summer Promo",
   "SUMMER",
@@ -94,47 +94,47 @@ const receipt = await tx.wait();
 const tokenAddress = receipt.logs[0].args.tokenAddress;
 ```
 
-### 2. Реактивация Существующей Программы
+### 2. Reactivating an Existing Program
 
 ```javascript
-// Мерчант реактивирует ранее созданную программу
+// Merchant reactivates a previously created program
 await factoryContract.reactivateExistingToken(existingTokenAddress);
 ```
 
 ---
 
-## События
+## Events
 
 ### LoyaltyTokenCreated
 
-Генерируется при создании нового токена лояльности.
+Emitted when a new loyalty token is created.
 
-**Параметры:**
-- `tokenAddress` (indexed) - Адрес созданного токена
-- `merchantAddress` (indexed) - Адрес мерчанта-владельца
-- `name` - Название программы
-- `symbol` - Символ токена
+**Parameters:**
+- `tokenAddress` (indexed) - Address of the created token
+- `merchantAddress` (indexed) - Merchant owner address
+- `name` - Program name
+- `symbol` - Token symbol
 
 ### LoyaltyTokenReactivated
 
-Генерируется при реактивации токена.
+Emitted when a token is reactivated.
 
-**Параметры:**
-- `tokenAddress` (indexed) - Адрес реактивированного токена
-- `activatedBy` (indexed) - Адрес активировавшего
-- `message` - Сообщение о реактивации
+**Parameters:**
+- `tokenAddress` (indexed) - Address of the reactivated token
+- `activatedBy` (indexed) - Address of the activator
+- `message` - Reactivation message
 
 ---
 
-## Интеграция с Frontend
+## Frontend Integration
 
-### Подключение к Контракту
+### Connecting to the Contract
 
 ```javascript
 import { CONTRACTS } from '@/config/contracts';
 import { useWriteContract, useReadContract } from 'wagmi';
 
-// Создание программы
+// Creating a program
 const { writeContract } = useWriteContract();
 
 await writeContract({
@@ -145,10 +145,10 @@ await writeContract({
 });
 ```
 
-### Получение Событий Создания
+### Getting Creation Events
 
 ```javascript
-// Получение истории создания токенов
+// Fetching token creation history
 const logs = await publicClient.getLogs({
   address: CONTRACTS.LOYALTY_TOKEN_FACTORY.address,
   event: {
@@ -168,49 +168,49 @@ const logs = await publicClient.getLogs({
 
 ---
 
-## Безопасность
+## Security
 
-### Контроль Доступа
+### Access Control
 
-- Только администратор фабрики может обновлять implementation контракт
-- Каждый мерчант получает полный контроль над своим токеном лояльности
-- Фабрика использует паттерн прокси для безопасного апгрейда
+- Only the factory administrator can update the implementation contract
+- Each merchant receives full control over their loyalty token
+- The factory uses the proxy pattern for secure upgrades
 
-### Паттерн Прокси
+### Proxy Pattern
 
-Фабрика создает минимальные прокси-контракты, указывающие на единую имплементацию LoyalSparkERC20. Это позволяет:
-- Экономить газ при создании новых программ
-- Обновлять логику токенов без изменения адресов
-- Изолировать состояние каждой программы
-
----
-
-## Часто Задаваемые Вопросы
-
-### Сколько стоит создание программы?
-
-Стоимость зависит от цены газа в сети Base. Примерно 0.0001-0.001 ETH за транзакцию создания.
-
-### Можно ли создать несколько программ одним мерчантом?
-
-Да, один мерчант может создать неограниченное количество программ лояльности.
-
-### Можно ли изменить implementation после создания токена?
-
-Да, администратор фабрики может обновить implementation, и все существующие прокси автоматически будут использовать новую версию.
-
-### Как проверить, что токен был создан через фабрику?
-
-Можно проверить события `LoyaltyTokenCreated` или вызвать `tokenImplementation()` у прокси и сравнить с адресом из фабрики.
+The factory creates minimal proxy contracts pointing to a single LoyalSparkERC20 implementation. This allows:
+- Saving gas when creating new programs
+- Updating token logic without changing addresses
+- Isolating the state of each program
 
 ---
 
-## Поддержка
+## Frequently Asked Questions
 
-Для вопросов и поддержки:
-- Официальный сайт: [https://loyalspark.online](https://loyalspark.online)
+### How much does it cost to create a program?
+
+The cost depends on the gas price on the Base network. Approximately 0.0001-0.001 ETH per creation transaction.
+
+### Can a merchant create multiple programs?
+
+Yes, a merchant can create an unlimited number of loyalty programs.
+
+### Can the implementation be changed after token creation?
+
+Yes, the factory administrator can update the implementation, and all existing proxies will automatically use the new version.
+
+### How to verify that a token was created through the factory?
+
+You can check the `LoyaltyTokenCreated` events or call `tokenImplementation()` on the proxy and compare it with the address from the factory.
+
+---
+
+## Support
+
+For questions and support:
+- Official website: [https://loyalspark.online](https://loyalspark.online)
 - Email: support@loyalspark.io
 
-## Лицензия
+## License
 
-MIT License - см. LICENSE файл для деталей.
+MIT License - see LICENSE file for details.
