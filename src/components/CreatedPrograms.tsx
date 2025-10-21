@@ -400,10 +400,14 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         const { error: rewardsError } = await supabase
           .from('rewards')
           .update({ is_active: false })
-          .eq('token_address', program.tokenAddress.toLowerCase());
+          .eq('token_address', program.tokenAddress.toLowerCase())
+          .eq('merchant_address', address.toLowerCase());
         
         if (rewardsError) {
           console.error('Error deactivating rewards:', rewardsError);
+          toast.error('Failed to deactivate rewards');
+        } else {
+          console.log('Rewards deactivated successfully');
         }
         
         // 3. Закрываем все активные ваучеры этой программы
