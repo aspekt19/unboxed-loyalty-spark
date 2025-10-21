@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { VoucherCard } from './VoucherCard';
 import { Ticket, AlertCircle } from 'lucide-react';
 import { useAccount } from 'wagmi';
@@ -95,27 +96,35 @@ export function MyVouchers() {
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="active" className="space-y-4 mt-4">
+            <TabsContent value="active" className="mt-4">
               {activeVouchers.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
                   No active vouchers
                 </p>
               ) : (
-                activeVouchers.map(voucher => (
-                  <VoucherCard key={voucher.id} voucher={voucher} />
-                ))
+                <ScrollArea className="h-[400px] pr-4">
+                  <div className="space-y-4">
+                    {activeVouchers.map(voucher => (
+                      <VoucherCard key={voucher.id} voucher={voucher} />
+                    ))}
+                  </div>
+                </ScrollArea>
               )}
             </TabsContent>
             
-            <TabsContent value="used" className="space-y-4 mt-4">
+            <TabsContent value="used" className="mt-4">
               {usedVouchers.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
                   No used vouchers
                 </p>
               ) : (
-                usedVouchers.map(voucher => (
-                  <VoucherCard key={voucher.id} voucher={voucher} />
-                ))
+                <ScrollArea className="h-[400px] pr-4">
+                  <div className="space-y-4">
+                    {usedVouchers.map(voucher => (
+                      <VoucherCard key={voucher.id} voucher={voucher} />
+                    ))}
+                  </div>
+                </ScrollArea>
               )}
             </TabsContent>
           </Tabs>
