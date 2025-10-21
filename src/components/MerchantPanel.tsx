@@ -22,8 +22,9 @@ export function MerchantPanel() {
   const [recipientAddress, setRecipientAddress] = useState('');
   const [amount, setAmount] = useState('');
   const [selectedProgram, setSelectedProgram] = useState<{ name: string; symbol: string; tokenAddress: string } | null>(null);
-  const { mintTokens, isPending, isSuccess, reset } = useMintTokens();
   
+  // Always call hooks in the same order, regardless of conditions
+  const { mintTokens, isPending, isSuccess, reset } = useMintTokens();
   const { isPaused, isMintingActive, isUtilityActive } = useCheckProgramStatus(
     selectedProgram?.tokenAddress as `0x${string}` | undefined
   );

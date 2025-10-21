@@ -109,11 +109,11 @@ export function CreateReward() {
         setFormData({ tokenAddress: '', name: '', description: '', cost: '' });
         window.dispatchEvent(new Event('rewardsUpdated'));
       } else {
-        toast.error('Failed to create reward. Check console for details.');
+        toast.error('Failed to create reward. This may be due to authentication issues. Please sign in with your wallet first.');
       }
     } catch (error) {
       console.error('Error creating reward:', error);
-      toast.error('Failed to create reward. Check console for details.');
+      toast.error('Failed to create reward. Please ensure you are signed in with your wallet.');
     }
   };
 
@@ -124,7 +124,6 @@ export function CreateReward() {
   return (
     <Card className="border-2">
       <CardHeader>
-        <AuthPrompt />
         <CardTitle className="flex items-center gap-2">
           <Plus className="h-5 w-5 text-primary" />
           Create New Reward
@@ -132,6 +131,7 @@ export function CreateReward() {
         <CardDescription>Add a new reward to your loyalty program catalog</CardDescription>
       </CardHeader>
       <CardContent>
+        <AuthPrompt />
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="token">Loyalty Program</Label>
@@ -184,7 +184,7 @@ export function CreateReward() {
             />
           </div>
 
-          <Button type="submit" className="w-full">
+          <Button type="submit" className="w-full" disabled={!user}>
             Create Reward
           </Button>
         </form>

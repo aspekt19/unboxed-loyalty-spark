@@ -32,7 +32,12 @@ export async function createReward(reward: Omit<Reward, 'id' | 'createdAt'>): Pr
     .single();
 
   if (error) {
-    console.error('Failed to create reward:', error);
+    console.error('Failed to create reward - Supabase error:', {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code,
+    });
     return null;
   }
 
