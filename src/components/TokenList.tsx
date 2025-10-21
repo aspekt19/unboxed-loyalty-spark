@@ -117,7 +117,7 @@ export function TokenList() {
     console.log('Starting auto-refresh for token balances...');
     const interval = setInterval(() => {
       console.log('Auto-refreshing token balances...');
-      refetch();
+      refetch(true); // Silent refetch - don't show loading indicator
     }, 5000); // Refresh every 5 seconds
 
     return () => {

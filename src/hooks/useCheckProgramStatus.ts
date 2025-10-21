@@ -15,7 +15,9 @@ export function useCheckProgramStatus(tokenAddress: `0x${string}` | undefined) {
     functionName: 'isMintingActive',
     query: {
       enabled: !!tokenAddress,
-      refetchInterval: 3000, // Auto-refresh every 3 seconds for real-time updates
+      refetchInterval: 10000, // Увеличено с 3 до 10 секунд
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
     },
   });
 
@@ -33,7 +35,9 @@ export function useCheckProgramStatus(tokenAddress: `0x${string}` | undefined) {
     functionName: 'isUtilityActive',
     query: {
       enabled: !!tokenAddress,
-      refetchInterval: 3000, // Auto-refresh every 3 seconds for real-time updates
+      refetchInterval: 10000, // Увеличено с 3 до 10 секунд
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
     },
   });
 

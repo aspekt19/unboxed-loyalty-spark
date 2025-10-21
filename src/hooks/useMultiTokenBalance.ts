@@ -23,12 +23,13 @@ export function useMultiTokenBalance(tokens: TokenInfo[]) {
   const publicClient = usePublicClient();
   const [balances, setBalances] = useState<Array<TokenInfo & { balance: string; rawBalance: bigint }>>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const isInitialLoadRef = useRef(true);
   
   // Create a stable reference for tokens to prevent unnecessary refetches
   const tokenAddressesRef = useRef<string>('');
   const currentAddresses = tokens.map(t => t.address).sort().join(',');
 
-  const fetchBalances = async () => {
+  const fetchBalances = async (silent = false) => {
     console.log('useMultiTokenBalance: fetchBalances called');
     console.log('useMultiTokenBalance: address:', address);
     console.log('useMultiTokenBalance: publicClient:', !!publicClient);
@@ -45,7 +46,10 @@ export function useMultiTokenBalance(tokens: TokenInfo[]) {
       return;
     }
 
-    setIsLoading(true);
+    // Only show loading indicator on initial load or non-silent fetches
+    if (!silent && isInitialLoadRef.current) {
+      setIsLoading(true);
+    }
     try {
       const balancePromises = tokens.map(async (token) => {
         try {
@@ -80,11 +84,14 @@ export function useMultiTokenBalance(tokens: TokenInfo[]) {
       const results = await Promise.all(balancePromises);
       console.log('useMultiTokenBalance: All fetched balances:', results);
       setBalances(results);
+      isInitialLoadRef.current = false;
     } catch (error) {
       console.error('useMultiTokenBalance: Error fetching balances:', error);
       // Don't clear balances on error
     } finally {
-      setIsLoading(false);
+      if (!silent || isInitialLoadRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 

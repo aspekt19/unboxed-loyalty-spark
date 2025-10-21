@@ -69,7 +69,7 @@ export function CustomerFiltersPanel() {
   useEffect(() => {
     const handleBalanceUpdate = () => {
       console.log('tokenBalancesUpdated event received in filters, refetching balances...');
-      refetch();
+      refetch(true); // Silent refetch
     };
     window.addEventListener('tokenBalancesUpdated', handleBalanceUpdate);
     return () => window.removeEventListener('tokenBalancesUpdated', handleBalanceUpdate);
