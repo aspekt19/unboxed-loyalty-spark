@@ -19,7 +19,7 @@ export function ProgramStatusBadge({ tokenAddress, fallbackStatus }: ProgramStat
   if (isPaused) {
     return (
       <Badge variant="secondary" className="bg-gray-500 text-white">
-        Paused
+        Деактивирована
       </Badge>
     );
   }
@@ -27,14 +27,14 @@ export function ProgramStatusBadge({ tokenAddress, fallbackStatus }: ProgramStat
   if (fallbackStatus === 'expiring_soon') {
     return (
       <Badge variant="destructive" className="bg-amber-600">
-        Expiring Soon
+        Истекает скоро
       </Badge>
     );
   }
 
   return (
     <Badge variant="default">
-      Active
+      Активна
     </Badge>
   );
 }

@@ -8,7 +8,7 @@ export function useToggleProgramStatus() {
     hash,
   });
 
-  const pauseProgram = (tokenAddress: `0x${string}`) => {
+  const deactivateProgram = (tokenAddress: `0x${string}`) => {
     try {
       writeContract({
         address: tokenAddress,
@@ -24,12 +24,12 @@ export function useToggleProgramStatus() {
         functionName: 'pauseUtility',
       } as any);
     } catch (err) {
-      console.error('Error pausing program:', err);
-      toast.error('Failed to pause program');
+      console.error('Error deactivating program:', err);
+      toast.error('Failed to deactivate program');
     }
   };
 
-  const unpauseProgram = (tokenAddress: `0x${string}`) => {
+  const activateProgram = (tokenAddress: `0x${string}`) => {
     try {
       writeContract({
         address: tokenAddress,
@@ -45,14 +45,14 @@ export function useToggleProgramStatus() {
         functionName: 'unpauseUtility',
       } as any);
     } catch (err) {
-      console.error('Error unpausing program:', err);
-      toast.error('Failed to unpause program');
+      console.error('Error activating program:', err);
+      toast.error('Failed to activate program');
     }
   };
 
   return {
-    pauseProgram,
-    unpauseProgram,
+    deactivateProgram,
+    activateProgram,
     isPending,
     isConfirming,
     isSuccess,

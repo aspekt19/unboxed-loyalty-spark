@@ -53,7 +53,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
   const publicClient = usePublicClient();
   const { address } = useAccount();
   const { burnAllTokens, isBurning, progress } = useBurnAllTokens();
-  const { pauseProgram, unpauseProgram, isPending: isToggling, isSuccess: toggleSuccess } = useToggleProgramStatus();
+  const { deactivateProgram, activateProgram, isPending: isToggling, isSuccess: toggleSuccess } = useToggleProgramStatus();
 
   // Очищаем программы при отключении кошелька
   useEffect(() => {
@@ -318,15 +318,15 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     
     try {
       if (isPaused) {
-        await unpauseProgram(program.tokenAddress as `0x${string}`);
-        toast.success('Program reactivated successfully');
+        await activateProgram(program.tokenAddress as `0x${string}`);
+        toast.success('Программа активирована успешно');
       } else {
-        await pauseProgram(program.tokenAddress as `0x${string}`);
-        toast.success('Program paused successfully');
+        await deactivateProgram(program.tokenAddress as `0x${string}`);
+        toast.success('Программа деактивирована успешно');
       }
     } catch (error) {
       console.error('Error toggling program:', error);
-      toast.error('Failed to toggle program status');
+      toast.error('Не удалось изменить статус программы');
     } finally {
       setToggledProgram(null);
     }
@@ -479,24 +479,23 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
                       fallbackStatus={program.status || (program.tokenAddress ? 'active' : 'pending')}
                     />
                     {program.tokenAddress && (
-                      <ProgramControlButtons
-                        tokenAddress={program.tokenAddress}
-                        isToggling={isToggling && toggledProgram === program.tokenAddress}
-                        onToggle={(isPaused) => handleToggleProgram(program, isPaused, {} as React.MouseEvent)}
-                        onDelete={() => {}}
-                      />
-                    )}
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="hidden"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
+                      <>
+                        <ProgramControlButtons
+                          tokenAddress={program.tokenAddress}
+                          isToggling={isToggling && toggledProgram === program.tokenAddress}
+                          onToggle={(isPaused) => handleToggleProgram(program, isPaused, {} as React.MouseEvent)}
+                        />
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>Close Loyalty Program?</AlertDialogTitle>
@@ -548,6 +547,8 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
+                      </>
+                    )}
                   </div>
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Calendar className="h-3 w-3" />

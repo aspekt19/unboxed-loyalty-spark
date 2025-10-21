@@ -1,4 +1,4 @@
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { CONTRACTS } from '@/config/contracts';
 import { parseUnits } from 'viem';
 import { toast } from 'sonner';
@@ -10,7 +10,7 @@ export function useMintTokens() {
     hash,
   });
 
-  const mintTokens = (tokenAddress: string, recipientAddress: string, amount: string) => {
+  const mintTokens = async (tokenAddress: string, recipientAddress: string, amount: string) => {
     try {
       const amountInWei = parseUnits(amount, 18);
       

@@ -12,14 +12,12 @@ interface ProgramControlButtonsProps {
   tokenAddress: string;
   isToggling: boolean;
   onToggle: (isPaused: boolean) => void;
-  onDelete: () => void;
 }
 
 export function ProgramControlButtons({ 
   tokenAddress, 
   isToggling, 
-  onToggle, 
-  onDelete 
+  onToggle
 }: ProgramControlButtonsProps) {
   const { isPaused } = useCheckProgramStatus(tokenAddress as `0x${string}`);
 
@@ -48,7 +46,7 @@ export function ProgramControlButtons({
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            {isPaused ? 'Reactivate Program' : 'Pause Program'}
+            {isPaused ? 'Активировать программу' : 'Деактивировать программу'}
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
