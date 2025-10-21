@@ -1,7 +1,7 @@
 import { useReadContract } from 'wagmi';
 
 export function useCheckProgramStatus(tokenAddress: `0x${string}` | undefined) {
-  const { data: isMintingActive } = useReadContract({
+  const { data: isMintingActive, isError: mintingError } = useReadContract({
     address: tokenAddress,
     abi: [
       {
@@ -15,13 +15,13 @@ export function useCheckProgramStatus(tokenAddress: `0x${string}` | undefined) {
     functionName: 'isMintingActive',
     query: {
       enabled: !!tokenAddress,
-      refetchInterval: 10000, // Увеличено с 3 до 10 секунд
+      refetchInterval: 10000,
       refetchOnMount: false,
       refetchOnWindowFocus: false,
     },
   });
 
-  const { data: isUtilityActive } = useReadContract({
+  const { data: isUtilityActive, isError: utilityError } = useReadContract({
     address: tokenAddress,
     abi: [
       {
@@ -35,15 +35,19 @@ export function useCheckProgramStatus(tokenAddress: `0x${string}` | undefined) {
     functionName: 'isUtilityActive',
     query: {
       enabled: !!tokenAddress,
-      refetchInterval: 10000, // Увеличено с 3 до 10 секунд
+      refetchInterval: 10000,
       refetchOnMount: false,
       refetchOnWindowFocus: false,
     },
   });
 
+  // Если есть ошибки при чтении статуса, это может быть старый контракт
+  const hasErrors = mintingError || utilityError;
+
   return {
     isMintingActive: isMintingActive ?? false,
     isUtilityActive: isUtilityActive ?? false,
     isPaused: !(isMintingActive && isUtilityActive),
+    hasStatusErrors: hasErrors,
   };
 }

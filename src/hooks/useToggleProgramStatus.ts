@@ -23,9 +23,17 @@ export function useToggleProgramStatus() {
         ] as const,
         functionName: 'pauseUtility',
       } as any);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error pausing program:', err);
-      toast.error('Failed to pause program');
+      
+      // Проверяем, отменил ли пользователь транзакцию
+      if (err?.message?.includes('User denied') || err?.message?.includes('User rejected')) {
+        toast.error('Transaction cancelled by user');
+      } else if (err?.message?.includes('gas')) {
+        toast.error('Transaction gas estimation failed. The program may already be paused or the contract version is incompatible.');
+      } else {
+        toast.error('Failed to pause program. Please check the program status.');
+      }
     }
   };
 
@@ -44,9 +52,17 @@ export function useToggleProgramStatus() {
         ] as const,
         functionName: 'unpauseUtility',
       } as any);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error activating program:', err);
-      toast.error('Failed to activate program');
+      
+      // Проверяем, отменил ли пользователь транзакцию
+      if (err?.message?.includes('User denied') || err?.message?.includes('User rejected')) {
+        toast.error('Transaction cancelled by user');
+      } else if (err?.message?.includes('gas')) {
+        toast.error('Transaction gas estimation failed. The program may already be active or the contract version is incompatible.');
+      } else {
+        toast.error('Failed to activate program. Please check the program status.');
+      }
     }
   };
 

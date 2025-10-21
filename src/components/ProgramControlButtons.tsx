@@ -25,7 +25,7 @@ export function ProgramControlButtons({
   onActivate,
   onDelete
 }: ProgramControlButtonsProps) {
-  const { isPaused } = useCheckProgramStatus(tokenAddress as `0x${string}`);
+  const { isPaused, hasStatusErrors } = useCheckProgramStatus(tokenAddress as `0x${string}`);
 
   return (
     <div className="flex items-center gap-1">
@@ -42,7 +42,7 @@ export function ProgramControlButtons({
                   e.stopPropagation();
                   onPause();
                 }}
-                disabled={isToggling || isPaused}
+                disabled={isToggling || isPaused || hasStatusErrors}
               >
                 {isToggling && !isPaused ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -52,7 +52,9 @@ export function ProgramControlButtons({
               </Button>
             </span>
           </TooltipTrigger>
-          <TooltipContent>Pause Program</TooltipContent>
+          <TooltipContent>
+            {hasStatusErrors ? 'Status check failed - old contract version?' : 'Pause Program'}
+          </TooltipContent>
         </Tooltip>
 
         {/* Activate Button */}
@@ -67,7 +69,7 @@ export function ProgramControlButtons({
                   e.stopPropagation();
                   onActivate();
                 }}
-                disabled={isToggling || !isPaused}
+                disabled={isToggling || !isPaused || hasStatusErrors}
               >
                 {isToggling && isPaused ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -77,7 +79,9 @@ export function ProgramControlButtons({
               </Button>
             </span>
           </TooltipTrigger>
-          <TooltipContent>Activate Program</TooltipContent>
+          <TooltipContent>
+            {hasStatusErrors ? 'Status check failed - old contract version?' : 'Activate Program'}
+          </TooltipContent>
         </Tooltip>
 
         {/* Delete Button */}

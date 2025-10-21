@@ -8,12 +8,21 @@ interface ProgramStatusBadgeProps {
 }
 
 export function ProgramStatusBadge({ tokenAddress, fallbackStatus }: ProgramStatusBadgeProps) {
-  const { isPaused, isMintingActive, isUtilityActive } = useCheckProgramStatus(
+  const { isPaused, isMintingActive, isUtilityActive, hasStatusErrors } = useCheckProgramStatus(
     tokenAddress as `0x${string}` | undefined
   );
 
   if (!tokenAddress) {
     return <Badge variant="secondary">{fallbackStatus || 'Pending'}</Badge>;
+  }
+
+  // Если не можем проверить статус, показываем предупреждение
+  if (hasStatusErrors) {
+    return (
+      <Badge variant="secondary" className="bg-gray-400 text-white">
+        Status Unknown
+      </Badge>
+    );
   }
 
   if (isPaused) {
