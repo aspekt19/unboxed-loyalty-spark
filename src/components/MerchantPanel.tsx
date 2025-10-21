@@ -13,7 +13,8 @@ import { useMintTokens } from '@/hooks/useMintTokens';
 import { useAccount } from 'wagmi';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { Loader2, Sparkles, AlertCircle, Wallet } from 'lucide-react';
+import { Loader2, Sparkles, AlertCircle, Wallet, AlertTriangle } from 'lucide-react';
+import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
 
 export function MerchantPanel() {
   const { address } = useAccount();
@@ -22,6 +23,10 @@ export function MerchantPanel() {
   const [amount, setAmount] = useState('');
   const [selectedProgram, setSelectedProgram] = useState<{ name: string; symbol: string; tokenAddress: string } | null>(null);
   const { mintTokens, isPending, isSuccess, reset } = useMintTokens();
+  
+  const { isPaused, isMintingActive, isUtilityActive } = useCheckProgramStatus(
+    selectedProgram?.tokenAddress as `0x${string}` | undefined
+  );
 
   // Автоматическая аутентификация при подключении кошелька
   useEffect(() => {
@@ -45,6 +50,11 @@ export function MerchantPanel() {
     
     if (!selectedProgram) {
       toast.error('Please select a loyalty program first');
+      return;
+    }
+
+    if (isPaused || !isMintingActive) {
+      toast.error('Please activate the program first before issuing tokens');
       return;
     }
     
@@ -103,6 +113,15 @@ export function MerchantPanel() {
                 </Alert>
               )}
               
+              {selectedProgram && (isPaused || !isMintingActive) && (
+                <Alert variant="destructive" className="mb-4">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    This program is currently inactive. Please activate it using the play button in the Created Programs section before issuing tokens.
+                  </AlertDescription>
+                </Alert>
+              )}
+              
               <form onSubmit={handleMint} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="recipient">Customer Wallet Address</Label>
@@ -125,7 +144,11 @@ export function MerchantPanel() {
                     disabled={isPending}
                   />
                 </div>
-                <Button type="submit" disabled={isPending || !selectedProgram} className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90">
+                <Button 
+                  type="submit" 
+                  disabled={isPending || !selectedProgram || isPaused || !isMintingActive} 
+                  className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+                >
                   {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {selectedProgram ? `Issue ${selectedProgram.symbol}` : 'Issue Tokens'}
                 </Button>
