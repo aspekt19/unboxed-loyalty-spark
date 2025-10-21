@@ -128,8 +128,8 @@ export function RewardsSelection() {
     window.addEventListener('loyaltyProgramsUpdated', loadPrograms);
     window.addEventListener('rewardsUpdated', handleRewardsUpdate);
 
-    // Подписка на realtime обновления программ лояльности
-    const channel = supabase
+    // Подписка на realtime обновления программ лояльности и наград
+    const programsChannel = supabase
       .channel('loyalty_programs_customer')
       .on(
         'postgres_changes',
@@ -145,10 +145,27 @@ export function RewardsSelection() {
       )
       .subscribe();
 
+    const rewardsChannel = supabase
+      .channel('rewards_customer')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'rewards',
+        },
+        () => {
+          console.log('Rewards changed, reloading...');
+          handleRewardsUpdate();
+        }
+      )
+      .subscribe();
+
     return () => {
       window.removeEventListener('loyaltyProgramsUpdated', loadPrograms);
       window.removeEventListener('rewardsUpdated', handleRewardsUpdate);
-      supabase.removeChannel(channel);
+      supabase.removeChannel(programsChannel);
+      supabase.removeChannel(rewardsChannel);
     };
   }, []);
 

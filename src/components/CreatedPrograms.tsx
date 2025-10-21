@@ -401,13 +401,15 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
           .from('rewards')
           .update({ is_active: false })
           .eq('token_address', program.tokenAddress.toLowerCase())
-          .eq('merchant_address', address.toLowerCase());
+          .eq('merchant_address', address?.toLowerCase());
         
         if (rewardsError) {
           console.error('Error deactivating rewards:', rewardsError);
           toast.error('Failed to deactivate rewards');
         } else {
           console.log('Rewards deactivated successfully');
+          // Уведомляем об обновлении наград
+          window.dispatchEvent(new Event('rewardsUpdated'));
         }
         
         // 3. Закрываем все активные ваучеры этой программы
