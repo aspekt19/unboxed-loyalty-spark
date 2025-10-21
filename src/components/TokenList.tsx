@@ -108,6 +108,24 @@ export function TokenList() {
     return () => window.removeEventListener('tokenBalancesUpdated', handleBalanceUpdate);
   }, [refetch]);
 
+  // Auto-refresh balances every 5 seconds for real-time updates
+  useEffect(() => {
+    if (!walletAddress || allTokens.length === 0) {
+      return;
+    }
+
+    console.log('Starting auto-refresh for token balances...');
+    const interval = setInterval(() => {
+      console.log('Auto-refreshing token balances...');
+      refetch();
+    }, 5000); // Refresh every 5 seconds
+
+    return () => {
+      console.log('Stopping auto-refresh for token balances');
+      clearInterval(interval);
+    };
+  }, [walletAddress, allTokens.length, refetch]);
+
   const loadTokensFromBlockchain = async () => {
     if (!publicClient) {
       console.log('TokenList: No publicClient available');
