@@ -1,7 +1,10 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { Wallet } from 'lucide-react';
+import { Wallet, LogOut } from 'lucide-react';
+import { useDisconnect } from 'wagmi';
 
 export function WalletConnectButton() {
+  const { disconnect } = useDisconnect();
+  
   return (
     <ConnectButton.Custom>
       {({
@@ -81,6 +84,15 @@ export function WalletConnectButton() {
                     className="px-4 py-2.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200"
                   >
                     <span className="text-sm">{account.displayName}</span>
+                  </button>
+
+                  <button
+                    onClick={() => disconnect()}
+                    type="button"
+                    className="px-3 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 border border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                    title="Disconnect wallet"
+                  >
+                    <LogOut className="h-4 w-4" />
                   </button>
                 </div>
               );
