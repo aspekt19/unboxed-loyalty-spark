@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { Ticket, CheckCircle2, Search } from 'lucide-react';
 import { useAccount } from 'wagmi';
@@ -148,36 +149,38 @@ export function VouchersManagement() {
                 <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
                   Active Vouchers ({activeVouchers.length})
                 </h3>
-                <div className="space-y-2">
-                  {activeVouchers.map((voucher) => (
-                    <div
-                      key={voucher.id}
-                      className="flex items-center justify-between p-4 border rounded-lg bg-primary/5"
-                    >
-                      <div className="flex-1 space-y-1">
-                        <div className="flex items-center gap-2">
-                          <code className="font-bold">{voucher.code}</code>
-                          <Badge>Active</Badge>
-                        </div>
-                        <div className="text-sm font-medium">{voucher.rewardName}</div>
-                        <div className="text-xs text-muted-foreground">
-                          Activated: {new Date(voucher.activatedAt).toLocaleDateString()}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Customer: {voucher.customerAddress.slice(0, 6)}...{voucher.customerAddress.slice(-4)}
-                        </div>
-                      </div>
-                      <Button
-                        size="sm"
-                        onClick={() => handleMarkAsUsed(voucher.id, voucher.code)}
-                        className="gap-2"
+                <ScrollArea className="h-[400px] pr-4">
+                  <div className="space-y-2">
+                    {activeVouchers.map((voucher) => (
+                      <div
+                        key={voucher.id}
+                        className="flex items-center justify-between p-4 border rounded-lg bg-primary/5"
                       >
-                        <CheckCircle2 className="h-4 w-4" />
-                        Mark as Used
-                      </Button>
-                    </div>
-                  ))}
-                </div>
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <code className="font-bold">{voucher.code}</code>
+                            <Badge>Active</Badge>
+                          </div>
+                          <div className="text-sm font-medium">{voucher.rewardName}</div>
+                          <div className="text-xs text-muted-foreground">
+                            Activated: {new Date(voucher.activatedAt).toLocaleDateString()}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Customer: {voucher.customerAddress.slice(0, 6)}...{voucher.customerAddress.slice(-4)}
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={() => handleMarkAsUsed(voucher.id, voucher.code)}
+                          className="gap-2"
+                        >
+                          <CheckCircle2 className="h-4 w-4" />
+                          Mark as Used
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
               </div>
             )}
 
@@ -186,25 +189,27 @@ export function VouchersManagement() {
                 <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
                   Used Vouchers ({usedVouchers.length})
                 </h3>
-                <div className="space-y-2">
-                  {usedVouchers.map((voucher) => (
-                    <div
-                      key={voucher.id}
-                      className="flex items-center justify-between p-4 border rounded-lg opacity-60"
-                    >
-                      <div className="flex-1 space-y-1">
-                        <div className="flex items-center gap-2">
-                          <code className="font-bold">{voucher.code}</code>
-                          <Badge variant="secondary">Used</Badge>
-                        </div>
-                        <div className="text-sm font-medium">{voucher.rewardName}</div>
-                        <div className="text-xs text-muted-foreground">
-                          Used: {voucher.usedAt && new Date(voucher.usedAt).toLocaleDateString()}
+                <ScrollArea className="h-[300px] pr-4">
+                  <div className="space-y-2">
+                    {usedVouchers.map((voucher) => (
+                      <div
+                        key={voucher.id}
+                        className="flex items-center justify-between p-4 border rounded-lg opacity-60"
+                      >
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <code className="font-bold">{voucher.code}</code>
+                            <Badge variant="secondary">Used</Badge>
+                          </div>
+                          <div className="text-sm font-medium">{voucher.rewardName}</div>
+                          <div className="text-xs text-muted-foreground">
+                            Used: {voucher.usedAt && new Date(voucher.usedAt).toLocaleDateString()}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                </ScrollArea>
               </div>
             )}
           </div>
