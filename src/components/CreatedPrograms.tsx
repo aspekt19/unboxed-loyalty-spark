@@ -310,14 +310,25 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
   };
 
   const handleToggleProgram = async (program: LoyaltyProgram, shouldPause: boolean) => {
-    if (!program.tokenAddress) return;
+    if (!program.tokenAddress || !program.id) return;
     
     setToggledProgram(program.tokenAddress);
     
     try {
       if (shouldPause) {
-        // Ставим программу на паузу
+        // Ставим программу на паузу в смарт-контракте
         await pauseProgram(program.tokenAddress as `0x${string}`);
+        
+        // Обновляем статус программы в БД
+        const { error: programError } = await supabase
+          .from('loyalty_programs')
+          .update({ status: 'expired' })
+          .eq('id', program.id);
+        
+        if (programError) {
+          console.error('Error updating program status in DB:', programError);
+          toast.warning('Program paused in blockchain, but DB status could not be updated');
+        }
         
         // Деактивируем все награды этой программы
         const { error: rewardsError } = await supabase
@@ -353,8 +364,19 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         
         toast.success('Program, rewards, and vouchers paused successfully');
       } else {
-        // Активируем программу
+        // Активируем программу в смарт-контракте
         await unpauseProgram(program.tokenAddress as `0x${string}`);
+        
+        // Обновляем статус программы в БД
+        const { error: programError } = await supabase
+          .from('loyalty_programs')
+          .update({ status: 'active' })
+          .eq('id', program.id);
+        
+        if (programError) {
+          console.error('Error updating program status in DB:', programError);
+          toast.warning('Program activated in blockchain, but DB status could not be updated');
+        }
         
         // Активируем все награды этой программы обратно
         const { error: rewardsError } = await supabase
