@@ -46,7 +46,7 @@ interface TokenStats {
 export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program: LoyaltyProgram & { tokenAddress: string }) => void }) {
   const [programs, setPrograms] = useState<LoyaltyProgram[]>([]);
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
-  const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
+  const [deletingProgramId, setDeletingProgramId] = useState<string | null>(null);
   const [tokenStats, setTokenStats] = useState<TokenStats>({});
   const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [toggledProgram, setToggledProgram] = useState<string | null>(null);
@@ -405,13 +405,15 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     }
   };
 
-  const handleDeleteProgram = async (index: number, e: React.MouseEvent, burnTokens: boolean) => {
-    e.stopPropagation();
+  const handleDeleteProgram = async (programId: string, burnTokens: boolean) => {
+    const program = programs.find(p => p.id === programId);
+    if (!program) return;
     
-    const program = programs[index];
-    setDeletingIndex(index);
+    setDeletingProgramId(programId);
     
     try {
+      console.log('Starting program deletion:', programId);
+      
       // Если есть tokenAddress, деактивируем все связанные данные в БД
       if (program.tokenAddress) {
         // 1. Если выбрано сжигание токенов, сжигаем их у всех пользователей
@@ -439,29 +441,30 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         window.dispatchEvent(new Event('vouchersUpdated'));
       }
       
-      // 3. Удаляем программу из БД (если есть id)
-      if (program.id) {
-        const { error: deleteError } = await supabase
-          .from('loyalty_programs')
-          .delete()
-          .eq('id', program.id);
-        
-        if (deleteError) {
-          console.error('Error deleting program from DB:', deleteError);
-          toast.error('Failed to delete program from database');
-          return;
-        }
+      // 3. Удаляем программу из БД
+      console.log('Deleting program from DB:', programId);
+      const { error: deleteError } = await supabase
+        .from('loyalty_programs')
+        .delete()
+        .eq('id', programId);
+      
+      if (deleteError) {
+        console.error('Error deleting program from DB:', deleteError);
+        toast.error('Failed to delete program from database');
+        return;
       }
       
+      console.log('Program deleted successfully from DB');
+      
       // 4. Сразу обновляем локальное состояние без ожидания realtime
-      const updatedPrograms = programs.filter((_, i) => i !== index);
+      const updatedPrograms = programs.filter(p => p.id !== programId);
       setPrograms(updatedPrograms);
       
       // 5. Удаляем программу из localStorage
       localStorage.setItem('loyaltyPrograms', JSON.stringify(updatedPrograms));
       
       // Очищаем выбор, если удалили выбранную программу
-      if (selectedProgram === index.toString()) {
+      if (selectedProgram === programId) {
         setSelectedProgram(null);
       }
       
@@ -470,7 +473,8 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
       console.error('Error closing program:', error);
       toast.error('Failed to close program');
     } finally {
-      setDeletingIndex(null);
+      console.log('Resetting deletingProgramId');
+      setDeletingProgramId(null);
     }
   };
 
@@ -559,12 +563,22 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
                         <ProgramControlButtons
                           tokenAddress={program.tokenAddress}
                           isToggling={isToggling && toggledProgram === program.tokenAddress}
-                          isDeleting={deletingIndex === index}
+                          isDeleting={deletingProgramId === program.id}
                           onPause={() => handleToggleProgram(program, true)}
                           onActivate={() => handleToggleProgram(program, false)}
-                          onDelete={() => setDeletingIndex(index)}
+                          onDelete={() => {}} 
                         />
-                        <AlertDialog open={deletingIndex === index} onOpenChange={(open) => !open && setDeletingIndex(null)}>
+                        <AlertDialog open={deletingProgramId === program.id} onOpenChange={(open) => !open && setDeletingProgramId(null)}>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              disabled={deletingProgramId === program.id}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>Close Loyalty Program?</AlertDialogTitle>
@@ -590,24 +604,24 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
                             <AlertDialogFooter className="flex-col sm:flex-row gap-2">
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
                               <AlertDialogAction
-                                onClick={(e) => handleDeleteProgram(index, e, false)}
+                                onClick={() => program.id && handleDeleteProgram(program.id, false)}
                                 className="bg-amber-600 text-white hover:bg-amber-700"
-                                disabled={deletingIndex === index}
+                                disabled={deletingProgramId === program.id}
                               >
-                                {deletingIndex === index && !isBurning ? (
+                                {deletingProgramId === program.id && !isBurning ? (
                                   <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Closing...</>
                                 ) : (
                                   'Close (Keep Tokens)'
                                 )}
                               </AlertDialogAction>
                               <AlertDialogAction
-                                onClick={(e) => handleDeleteProgram(index, e, true)}
+                                onClick={() => program.id && handleDeleteProgram(program.id, true)}
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                disabled={deletingIndex === index}
+                                disabled={deletingProgramId === program.id}
                               >
                                 {isBurning ? (
                                   <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Burning {progress.current}/{progress.total}...</>
-                                ) : deletingIndex === index ? (
+                                ) : deletingProgramId === program.id ? (
                                   <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</>
                                 ) : (
                                   'Close & Burn Tokens'
