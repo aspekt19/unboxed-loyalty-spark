@@ -72,8 +72,9 @@ export function MerchantPanel() {
       toast.success('Tokens minted successfully!');
       setRecipientAddress('');
       setAmount('');
-      // Trigger event to refresh token lists on customer side
+      // Trigger events to refresh token lists and balances on customer side
       window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
+      window.dispatchEvent(new Event('tokenBalancesUpdated'));
       // Reset the transaction state after a brief delay
       setTimeout(() => {
         reset();

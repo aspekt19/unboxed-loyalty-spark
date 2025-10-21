@@ -76,6 +76,23 @@ export function CustomerFiltersPanel() {
     return () => window.removeEventListener('tokenBalancesUpdated', handleBalanceUpdate);
   }, [refetch]);
 
+  // Auto-refresh balances every 5 seconds for real-time updates
+  useEffect(() => {
+    if (!address || programs.length === 0) {
+      return;
+    }
+
+    console.log('Starting auto-refresh for customer filters balances...');
+    const interval = setInterval(() => {
+      refetch(true); // Silent refetch
+    }, 5000);
+
+    return () => {
+      console.log('Stopping auto-refresh for customer filters balances');
+      clearInterval(interval);
+    };
+  }, [address, programs.length, refetch]);
+
   const loadActivePrograms = async () => {
     setIsLoading(true);
     try {
