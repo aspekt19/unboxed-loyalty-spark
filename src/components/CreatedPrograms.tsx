@@ -53,7 +53,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
   const publicClient = usePublicClient();
   const { address } = useAccount();
   const { burnAllTokens, isBurning, progress } = useBurnAllTokens();
-  const { pauseProgram, unpauseProgram, isPending: isToggling, isSuccess: toggleSuccess } = useToggleProgramStatus();
+  const { pauseProgram, unpauseProgram, enableMinting, isPending: isToggling, isSuccess: toggleSuccess } = useToggleProgramStatus();
 
   // Очищаем программы при отключении кошелька
   useEffect(() => {
@@ -320,11 +320,27 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         toast.success('Program paused successfully');
       } else {
         await unpauseProgram(program.tokenAddress as `0x${string}`);
-        toast.success('Program activated successfully');
+        toast.success('Program utility activated! If minting is disabled, enable it separately.');
       }
     } catch (error) {
       console.error('Error toggling program:', error);
       toast.error('Failed to change program status');
+    } finally {
+      setToggledProgram(null);
+    }
+  };
+
+  const handleEnableMinting = async (program: LoyaltyProgram) => {
+    if (!program.tokenAddress) return;
+    
+    setToggledProgram(program.tokenAddress);
+    
+    try {
+      await enableMinting(program.tokenAddress as `0x${string}`);
+      toast.success('Minting enabled successfully!');
+    } catch (error) {
+      console.error('Error enabling minting:', error);
+      toast.error('Failed to enable minting');
     } finally {
       setToggledProgram(null);
     }
