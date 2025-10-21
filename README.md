@@ -55,7 +55,8 @@ Loyal Spark revolutionizes traditional loyalty programs by bringing them on-chai
 
 ### Contract Details
 - **Network**: Base Mainnet (Chain ID: 8453)
-- **Factory Contract**: `0x61b154cAE13F2312D33397419195753D3849F858`
+- **Factory Contract**: `0x5F3DdBa12580CFdc6016258774cCc19C4250dA80`
+- **LoyalSparkERC20 (Implementation)**: `0xe6BA426C9c51281B929a17444De02c65815E27C3`
 - **Token Standard**: ERC-20 (Standard Token)
 - **Deployed via**: Factory pattern for gas-efficient token creation
 
@@ -114,7 +115,7 @@ The smart contract configuration is located in `src/config/contracts.ts` and Wag
 
 ```typescript
 // Factory contract for deploying loyalty tokens
-export const FACTORY_ADDRESS = "0x61b154cAE13F2312D33397419195753D3849F858";
+export const FACTORY_ADDRESS = "0x5F3DdBa12580CFdc6016258774cCc19C4250dA80";
 export const BASE_CHAIN_ID = 8453;
 ```
 
