@@ -46,7 +46,8 @@ export function VouchersManagement() {
     loadMerchantVouchers();
     
     const handleUpdate = () => {
-      setTimeout(() => loadMerchantVouchers(), 500);
+      // Немедленная загрузка при событии
+      loadMerchantVouchers();
     };
     
     window.addEventListener('vouchersUpdated', handleUpdate);
@@ -64,35 +65,19 @@ export function VouchersManagement() {
           table: 'vouchers',
           filter: `merchant_address=eq.${address.toLowerCase()}`,
         },
-        () => {
-          console.log('Voucher changed, reloading...');
+        (payload) => {
+          console.log('Voucher changed via realtime:', payload);
           loadMerchantVouchers();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Vouchers realtime subscription status:', status);
+      });
     
     return () => {
       window.removeEventListener('vouchersUpdated', handleUpdate);
       window.removeEventListener('profileMigrated', handleUpdate);
-      channel.unsubscribe();
-    };
-  }, [address]);
-
-  // Auto-refresh vouchers every 5 seconds for real-time updates
-  useEffect(() => {
-    if (!address) {
-      return;
-    }
-
-    console.log('Starting auto-refresh for merchant vouchers...');
-    const interval = setInterval(() => {
-      console.log('Auto-refreshing merchant vouchers...');
-      loadMerchantVouchers();
-    }, 5000); // Refresh every 5 seconds
-
-    return () => {
-      console.log('Stopping auto-refresh for merchant vouchers');
-      clearInterval(interval);
+      supabase.removeChannel(channel);
     };
   }, [address]);
 

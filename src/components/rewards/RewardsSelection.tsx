@@ -221,11 +221,10 @@ export function RewardsSelection() {
           if (voucher) {
             toast.success(`Voucher activated! Code: ${voucherCode}`);
             setSelectedRewardId('');
-            setTimeout(() => {
-              refetch();
-              window.dispatchEvent(new Event('vouchersUpdated'));
-              window.dispatchEvent(new Event('tokenBalancesUpdated'));
-            }, 500);
+            // Немедленно обновляем данные и диспетчим события
+            refetch();
+            window.dispatchEvent(new Event('vouchersUpdated'));
+            window.dispatchEvent(new Event('tokenBalancesUpdated'));
           } else {
             toast.error('Failed to create voucher');
           }
