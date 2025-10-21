@@ -6,6 +6,7 @@ import { useAccount } from 'wagmi';
 import { Sparkles, Loader2, AlertCircle, Coins, Clock } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useMultiTokenBalance } from '@/hooks/useMultiTokenBalance';
+import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 
@@ -120,7 +121,7 @@ export function CustomerFiltersPanel() {
       <CardHeader className="flex-shrink-0">
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-primary" />
-          Active Programs
+          Loyalty Programs
         </CardTitle>
         <CardDescription>Your loyalty programs overview</CardDescription>
       </CardHeader>
@@ -145,37 +146,12 @@ export function CustomerFiltersPanel() {
                 const isExpiringSoon = program.status === 'expiring_soon';
                 
                 return (
-                  <div
+                  <ProgramCard
                     key={program.address}
-                    className="p-4 rounded-lg border bg-gradient-to-br from-card to-muted/30 space-y-3"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold">{program.name}</h3>
-                          {isExpiringSoon && (
-                            <Badge variant="destructive" className="text-xs">
-                              Expiring Soon
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">{program.symbol}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold">
-                          {parseFloat(balance?.balance || '0').toFixed(0)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">{program.symbol}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      <span>
-                        Expires: {format(new Date(program.expirationDate), 'MMM dd, yyyy')}
-                      </span>
-                    </div>
-                  </div>
+                    program={program}
+                    balance={balance?.balance || '0'}
+                    isExpiringSoon={isExpiringSoon}
+                  />
                 );
               })}
             </div>
@@ -183,5 +159,53 @@ export function CustomerFiltersPanel() {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function ProgramCard({ program, balance, isExpiringSoon }: { 
+  program: TokenInfo; 
+  balance: string; 
+  isExpiringSoon: boolean;
+}) {
+  const { isPaused } = useCheckProgramStatus(program.address as `0x${string}`);
+  
+  return (
+    <div className="p-4 rounded-lg border bg-gradient-to-br from-card to-muted/30 space-y-3">
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="font-semibold">{program.name}</h3>
+            {isPaused ? (
+              <Badge variant="secondary" className="bg-gray-500 text-white text-xs">
+                Inactive
+              </Badge>
+            ) : (
+              <Badge variant="default" className="bg-green-600 text-xs">
+                Active
+              </Badge>
+            )}
+            {isExpiringSoon && (
+              <Badge variant="destructive" className="text-xs">
+                Expiring Soon
+              </Badge>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground">{program.symbol}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-2xl font-bold">
+            {parseFloat(balance).toFixed(0)}
+          </p>
+          <p className="text-xs text-muted-foreground">{program.symbol}</p>
+        </div>
+      </div>
+      
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <Clock className="h-3 w-3" />
+        <span>
+          Expires: {format(new Date(program.expirationDate), 'MMM dd, yyyy')}
+        </span>
+      </div>
+    </div>
   );
 }
