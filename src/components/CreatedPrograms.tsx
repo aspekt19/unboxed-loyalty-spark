@@ -384,12 +384,9 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     const program = programs[index];
     setDeletingIndex(index);
     
-    // Если есть tokenAddress, деактивируем все связанные данные в БД
-    if (program.tokenAddress) {
-      try {
-        // Импортируем supabase
-        const { supabase } = await import('@/integrations/supabase/client');
-        
+    try {
+      // Если есть tokenAddress, деактивируем все связанные данные в БД
+      if (program.tokenAddress) {
         // 1. Если выбрано сжигание токенов, сжигаем их у всех пользователей
         if (burnTokens) {
           toast.info('Burning tokens from all users...');
@@ -423,26 +420,39 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         // Отправляем события обновления
         window.dispatchEvent(new Event('rewardsUpdated'));
         window.dispatchEvent(new Event('vouchersUpdated'));
-      } catch (error) {
-        console.error('Error closing program:', error);
-        toast.error('Failed to close program completely');
-        setDeletingIndex(null);
-        return;
       }
+      
+      // 4. Удаляем программу из БД (если есть id)
+      if (program.id) {
+        const { error: deleteError } = await supabase
+          .from('loyalty_programs')
+          .delete()
+          .eq('id', program.id);
+        
+        if (deleteError) {
+          console.error('Error deleting program from DB:', deleteError);
+          toast.error('Failed to delete program from database');
+          setDeletingIndex(null);
+          return;
+        }
+      }
+      
+      // 5. Удаляем программу из localStorage
+      const updatedPrograms = programs.filter((_, i) => i !== index);
+      localStorage.setItem('loyaltyPrograms', JSON.stringify(updatedPrograms));
+      
+      // Очищаем выбор, если удалили выбранную программу
+      if (selectedProgram === index.toString()) {
+        setSelectedProgram(null);
+      }
+      
+      toast.success('Program closed successfully');
+    } catch (error) {
+      console.error('Error closing program:', error);
+      toast.error('Failed to close program');
+    } finally {
+      setDeletingIndex(null);
     }
-    
-    // 4. Удаляем программу из localStorage
-    const updatedPrograms = programs.filter((_, i) => i !== index);
-    setPrograms(updatedPrograms);
-    localStorage.setItem('loyaltyPrograms', JSON.stringify(updatedPrograms));
-    
-    // Очищаем выбор, если удалили выбранную программу
-    if (selectedProgram === index.toString()) {
-      setSelectedProgram(null);
-    }
-    
-    setDeletingIndex(null);
-    toast.success('Program closed successfully');
   };
 
   if (programs.length === 0) {
