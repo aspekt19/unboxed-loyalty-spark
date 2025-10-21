@@ -550,6 +550,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
                     <ProgramStatusBadge 
                       tokenAddress={program.tokenAddress}
                       fallbackStatus={program.status || (program.tokenAddress ? 'active' : 'pending')}
+                      expirationDate={program.expirationDate}
                     />
                     {program.tokenAddress && (
                       <>
