@@ -53,7 +53,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
   const publicClient = usePublicClient();
   const { address } = useAccount();
   const { burnAllTokens, isBurning, progress } = useBurnAllTokens();
-  const { deactivateProgram, activateProgram, isPending: isToggling, isSuccess: toggleSuccess } = useToggleProgramStatus();
+  const { pauseProgram, unpauseProgram, isPending: isToggling, isSuccess: toggleSuccess } = useToggleProgramStatus();
 
   // Очищаем программы при отключении кошелька
   useEffect(() => {
@@ -309,20 +309,18 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     toast.success(`Selected ${program.name}`);
   };
 
-  const handleToggleProgram = async (program: LoyaltyProgram, isPaused: boolean, e: React.MouseEvent) => {
-    e.stopPropagation();
-    
+  const handleToggleProgram = async (program: LoyaltyProgram, shouldPause: boolean) => {
     if (!program.tokenAddress) return;
     
     setToggledProgram(program.tokenAddress);
     
     try {
-      if (isPaused) {
-        await activateProgram(program.tokenAddress as `0x${string}`);
-        toast.success('Program activated successfully');
+      if (shouldPause) {
+        await pauseProgram(program.tokenAddress as `0x${string}`);
+        toast.success('Program paused successfully');
       } else {
-        await deactivateProgram(program.tokenAddress as `0x${string}`);
-        toast.success('Program deactivated successfully');
+        await unpauseProgram(program.tokenAddress as `0x${string}`);
+        toast.success('Program activated successfully');
       }
     } catch (error) {
       console.error('Error toggling program:', error);
@@ -483,70 +481,63 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
                         <ProgramControlButtons
                           tokenAddress={program.tokenAddress}
                           isToggling={isToggling && toggledProgram === program.tokenAddress}
-                          onToggle={(isPaused) => handleToggleProgram(program, isPaused, {} as React.MouseEvent)}
+                          isDeleting={deletingIndex === index}
+                          onPause={() => handleToggleProgram(program, true)}
+                          onActivate={() => handleToggleProgram(program, false)}
+                          onDelete={() => setDeletingIndex(index)}
                         />
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Close Loyalty Program?</AlertDialogTitle>
-                          <AlertDialogDescription className="space-y-3">
-                            <p>
-                              Choose how to close "{program.name}":
-                            </p>
-                            <div className="space-y-2 text-sm">
-                              <p className="font-medium">This action will:</p>
-                              <ul className="list-disc pl-5 space-y-1">
-                                <li>Deactivate all rewards for this program</li>
-                                <li>Mark all active vouchers as expired</li>
-                                <li>Remove the program from your console</li>
-                              </ul>
-                            </div>
-                            <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded p-3">
-                              <p className="text-sm text-blue-900 dark:text-blue-100">
-                                💡 <strong>Burn tokens option:</strong> Will attempt to burn tokens from all users who have approved your address. Users who haven't approved will keep their tokens.
-                              </p>
-                            </div>
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={(e) => handleDeleteProgram(index, e, false)}
-                            className="bg-amber-600 text-white hover:bg-amber-700"
-                            disabled={deletingIndex === index}
-                          >
-                            {deletingIndex === index && !isBurning ? (
-                              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Closing...</>
-                            ) : (
-                              'Close (Keep Tokens)'
-                            )}
-                          </AlertDialogAction>
-                          <AlertDialogAction
-                            onClick={(e) => handleDeleteProgram(index, e, true)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            disabled={deletingIndex === index}
-                          >
-                            {isBurning ? (
-                              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Burning {progress.current}/{progress.total}...</>
-                            ) : deletingIndex === index ? (
-                              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</>
-                            ) : (
-                              'Close & Burn Tokens'
-                            )}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                        <AlertDialog open={deletingIndex === index} onOpenChange={(open) => !open && setDeletingIndex(null)}>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Close Loyalty Program?</AlertDialogTitle>
+                              <AlertDialogDescription className="space-y-3">
+                                <p>
+                                  Choose how to close "{program.name}":
+                                </p>
+                                <div className="space-y-2 text-sm">
+                                  <p className="font-medium">This action will:</p>
+                                  <ul className="list-disc pl-5 space-y-1">
+                                    <li>Deactivate all rewards for this program</li>
+                                    <li>Mark all active vouchers as expired</li>
+                                    <li>Remove the program from your console</li>
+                                  </ul>
+                                </div>
+                                <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded p-3">
+                                  <p className="text-sm text-blue-900 dark:text-blue-100">
+                                    💡 <strong>Burn tokens option:</strong> Will attempt to burn tokens from all users who have approved your address. Users who haven't approved will keep their tokens.
+                                  </p>
+                                </div>
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={(e) => handleDeleteProgram(index, e, false)}
+                                className="bg-amber-600 text-white hover:bg-amber-700"
+                                disabled={deletingIndex === index}
+                              >
+                                {deletingIndex === index && !isBurning ? (
+                                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Closing...</>
+                                ) : (
+                                  'Close (Keep Tokens)'
+                                )}
+                              </AlertDialogAction>
+                              <AlertDialogAction
+                                onClick={(e) => handleDeleteProgram(index, e, true)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                disabled={deletingIndex === index}
+                              >
+                                {isBurning ? (
+                                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Burning {progress.current}/{progress.total}...</>
+                                ) : deletingIndex === index ? (
+                                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</>
+                                ) : (
+                                  'Close & Burn Tokens'
+                                )}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </>
                     )}
                   </div>

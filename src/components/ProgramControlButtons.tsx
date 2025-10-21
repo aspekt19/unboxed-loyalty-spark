@@ -11,19 +11,26 @@ import {
 interface ProgramControlButtonsProps {
   tokenAddress: string;
   isToggling: boolean;
-  onToggle: (isPaused: boolean) => void;
+  isDeleting: boolean;
+  onPause: () => void;
+  onActivate: () => void;
+  onDelete: () => void;
 }
 
 export function ProgramControlButtons({ 
   tokenAddress, 
-  isToggling, 
-  onToggle
+  isToggling,
+  isDeleting,
+  onPause,
+  onActivate,
+  onDelete
 }: ProgramControlButtonsProps) {
   const { isPaused } = useCheckProgramStatus(tokenAddress as `0x${string}`);
 
   return (
     <div className="flex items-center gap-1">
       <TooltipProvider>
+        {/* Pause Button */}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -32,22 +39,64 @@ export function ProgramControlButtons({
               className="h-8 w-8 p-0"
               onClick={(e) => {
                 e.stopPropagation();
-                onToggle(isPaused);
+                onPause();
               }}
-              disabled={isToggling}
+              disabled={isToggling || isPaused}
             >
-              {isToggling ? (
+              {isToggling && !isPaused ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
-              ) : isPaused ? (
-                <Play className="h-4 w-4 text-green-600" />
               ) : (
                 <Pause className="h-4 w-4 text-amber-600" />
               )}
             </Button>
           </TooltipTrigger>
-          <TooltipContent>
-            {isPaused ? 'Activate Program' : 'Deactivate Program'}
-          </TooltipContent>
+          <TooltipContent>Pause Program</TooltipContent>
+        </Tooltip>
+
+        {/* Activate Button */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                onActivate();
+              }}
+              disabled={isToggling || !isPaused}
+            >
+              {isToggling && isPaused ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Play className="h-4 w-4 text-green-600" />
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Activate Program</TooltipContent>
+        </Tooltip>
+
+        {/* Delete Button */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4 text-destructive" />
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Delete Program</TooltipContent>
         </Tooltip>
       </TooltipProvider>
     </div>

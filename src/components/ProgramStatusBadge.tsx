@@ -19,7 +19,7 @@ export function ProgramStatusBadge({ tokenAddress, fallbackStatus }: ProgramStat
   if (isPaused) {
     return (
       <Badge variant="secondary" className="bg-gray-500 text-white">
-        Deactivated
+        Inactive
       </Badge>
     );
   }

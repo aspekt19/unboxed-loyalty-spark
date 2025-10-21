@@ -8,7 +8,7 @@ export function useToggleProgramStatus() {
     hash,
   });
 
-  const deactivateProgram = async (tokenAddress: `0x${string}`) => {
+  const pauseProgram = async (tokenAddress: `0x${string}`) => {
     try {
       await writeContract({
         address: tokenAddress,
@@ -24,12 +24,12 @@ export function useToggleProgramStatus() {
         functionName: 'pauseUtility',
       } as any);
     } catch (err) {
-      console.error('Error deactivating program:', err);
-      toast.error('Failed to deactivate program');
+      console.error('Error pausing program:', err);
+      toast.error('Failed to pause program');
     }
   };
 
-  const activateProgram = async (tokenAddress: `0x${string}`) => {
+  const unpauseProgram = async (tokenAddress: `0x${string}`) => {
     try {
       await writeContract({
         address: tokenAddress,
@@ -51,8 +51,8 @@ export function useToggleProgramStatus() {
   };
 
   return {
-    deactivateProgram,
-    activateProgram,
+    pauseProgram,
+    unpauseProgram,
     isPending,
     isConfirming,
     isSuccess,
