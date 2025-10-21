@@ -319,15 +319,17 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         // Ставим программу на паузу в смарт-контракте
         await pauseProgram(program.tokenAddress as `0x${string}`);
         
-        // Обновляем статус программы в БД на 'expired'
-        // Используем token_address и merchant_address для совместимости с RLS
-        const { error: programError } = await supabase
-          .from('loyalty_programs')
-          .update({ status: 'expired' })
-          .eq('token_address', program.tokenAddress.toLowerCase())
-          .eq('merchant_address', address?.toLowerCase());
+        // Обновляем статус программы в БД через security definer функцию
+        const { data: updateSuccess, error: programError } = await supabase.rpc(
+          'update_program_status',
+          {
+            p_token_address: program.tokenAddress,
+            p_merchant_address: address!,
+            p_new_status: 'expired'
+          }
+        );
         
-        if (programError) {
+        if (programError || !updateSuccess) {
           console.error('Error updating program status in DB:', programError);
           // Не прерываем выполнение, т.к. основная операция (pause) уже выполнена
         }
@@ -354,15 +356,17 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         // Активируем программу в смарт-контракте
         await unpauseProgram(program.tokenAddress as `0x${string}`);
         
-        // Обновляем статус программы в БД на 'active'
-        // Используем token_address и merchant_address для совместимости с RLS
-        const { error: programError } = await supabase
-          .from('loyalty_programs')
-          .update({ status: 'active' })
-          .eq('token_address', program.tokenAddress.toLowerCase())
-          .eq('merchant_address', address?.toLowerCase());
+        // Обновляем статус программы в БД через security definer функцию
+        const { data: updateSuccess, error: programError } = await supabase.rpc(
+          'update_program_status',
+          {
+            p_token_address: program.tokenAddress,
+            p_merchant_address: address!,
+            p_new_status: 'active'
+          }
+        );
         
-        if (programError) {
+        if (programError || !updateSuccess) {
           console.error('Error updating program status in DB:', programError);
           // Не прерываем выполнение, т.к. основная операция (unpause) уже выполнена
         }

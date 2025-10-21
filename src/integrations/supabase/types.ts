@@ -182,6 +182,14 @@ export type Database = {
         Args: { p_new_user_id: string; p_wallet_address: string }
         Returns: undefined
       }
+      update_program_status: {
+        Args: {
+          p_merchant_address: string
+          p_new_status: string
+          p_token_address: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
