@@ -320,15 +320,16 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         await pauseProgram(program.tokenAddress as `0x${string}`);
         
         // Обновляем статус программы в БД на 'expired'
+        // Используем token_address и merchant_address для совместимости с RLS
         const { error: programError } = await supabase
           .from('loyalty_programs')
           .update({ status: 'expired' })
-          .eq('id', program.id);
+          .eq('token_address', program.tokenAddress.toLowerCase())
+          .eq('merchant_address', address?.toLowerCase());
         
         if (programError) {
           console.error('Error updating program status in DB:', programError);
-          toast.error('Failed to pause program');
-          return;
+          // Не прерываем выполнение, т.к. основная операция (pause) уже выполнена
         }
         
         // Деактивируем все активные ваучеры этой программы
@@ -354,15 +355,16 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         await unpauseProgram(program.tokenAddress as `0x${string}`);
         
         // Обновляем статус программы в БД на 'active'
+        // Используем token_address и merchant_address для совместимости с RLS
         const { error: programError } = await supabase
           .from('loyalty_programs')
           .update({ status: 'active' })
-          .eq('id', program.id);
+          .eq('token_address', program.tokenAddress.toLowerCase())
+          .eq('merchant_address', address?.toLowerCase());
         
         if (programError) {
           console.error('Error updating program status in DB:', programError);
-          toast.error('Failed to activate program');
-          return;
+          // Не прерываем выполнение, т.к. основная операция (unpause) уже выполнена
         }
         
         // Отправляем события обновления
