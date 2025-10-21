@@ -25,6 +25,15 @@ export function ProgramStatusBadge({ tokenAddress, fallbackStatus }: ProgramStat
     );
   }
 
+  // Показываем статус "Expired" для истекших программ
+  if (fallbackStatus === 'expired') {
+    return (
+      <Badge variant="secondary" className="bg-red-600 text-white">
+        Expired
+      </Badge>
+    );
+  }
+
   if (isPaused) {
     return (
       <Badge variant="secondary" className="bg-gray-500 text-white">

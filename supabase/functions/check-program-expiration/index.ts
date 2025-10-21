@@ -19,6 +19,8 @@ Deno.serve(async (req) => {
     console.log('Checking program expirations...');
 
     // Вызываем функцию для обновления статусов программ
+    // Программы, истекающие в течение 24 часов, помечаются как 'expiring_soon'
+    // Программы, которые истекли, помечаются как 'expired'
     const { error: updateError } = await supabase.rpc('check_program_expiration');
     
     if (updateError) {
@@ -26,45 +28,52 @@ Deno.serve(async (req) => {
       throw updateError;
     }
 
-    // Получаем программы, которые истекли более 24 часов назад
-    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    
+    // Получаем все истекшие программы для обработки
     const { data: expiredPrograms, error: fetchError } = await supabase
       .from('loyalty_programs')
       .select('*')
-      .eq('status', 'expired')
-      .lt('expiration_date', oneDayAgo);
+      .eq('status', 'expired');
 
     if (fetchError) {
       console.error('Error fetching expired programs:', fetchError);
       throw fetchError;
     }
 
-    console.log(`Found ${expiredPrograms?.length || 0} programs to delete`);
+    console.log(`Found ${expiredPrograms?.length || 0} expired programs to process`);
 
-    // Удаляем программы, которые истекли более 24 часов назад
+    // Обрабатываем истекшие программы - деактивируем награды и ваучеры
+    // НЕ удаляем программу, она остается в статусе expired и может быть реактивирована
     if (expiredPrograms && expiredPrograms.length > 0) {
       for (const program of expiredPrograms) {
-        console.log(`Deleting program: ${program.name} (${program.token_address})`);
+        console.log(`Processing expired program: ${program.name} (${program.token_address})`);
 
-        // Деактивируем все награды
-        await supabase
+        // Деактивируем все награды для этой программы (безопасная идемпотентная операция)
+        const { error: rewardsError } = await supabase
           .from('rewards')
           .update({ is_active: false })
-          .eq('token_address', program.token_address.toLowerCase());
+          .eq('token_address', program.token_address.toLowerCase())
+          .eq('is_active', true); // Обновляем только активные
 
-        // Закрываем все активные ваучеры
-        await supabase
+        if (rewardsError) {
+          console.error(`Error deactivating rewards for ${program.token_address}:`, rewardsError);
+        } else {
+          console.log(`Rewards deactivated for ${program.name}`);
+        }
+
+        // Закрываем все активные ваучеры (безопасная идемпотентная операция)
+        const { error: vouchersError } = await supabase
           .from('vouchers')
           .update({ status: 'expired' })
           .eq('token_address', program.token_address.toLowerCase())
-          .eq('status', 'active');
+          .eq('status', 'active'); // Обновляем только активные
 
-        // Удаляем программу
-        await supabase
-          .from('loyalty_programs')
-          .delete()
-          .eq('id', program.id);
+        if (vouchersError) {
+          console.error(`Error expiring vouchers for ${program.token_address}:`, vouchersError);
+        } else {
+          console.log(`Vouchers expired for ${program.name}`);
+        }
+
+        console.log(`Expired program ${program.name} processed. Program remains in database.`);
       }
     }
 
@@ -95,7 +104,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        deletedCount: expiredPrograms?.length || 0,
+        processedCount: expiredPrograms?.length || 0,
         warningsCount: expiringPrograms?.length || 0,
       }),
       {
