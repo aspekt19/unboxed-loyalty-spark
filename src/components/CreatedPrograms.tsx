@@ -46,6 +46,7 @@ interface TokenStats {
 export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program: LoyaltyProgram & { tokenAddress: string }) => void }) {
   const [programs, setPrograms] = useState<LoyaltyProgram[]>([]);
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<string | null>(null);
   const [deletingProgramId, setDeletingProgramId] = useState<string | null>(null);
   const [tokenStats, setTokenStats] = useState<TokenStats>({});
   const [isLoadingStats, setIsLoadingStats] = useState(false);
@@ -566,9 +567,9 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
                           isDeleting={deletingProgramId === program.id}
                           onPause={() => handleToggleProgram(program, true)}
                           onActivate={() => handleToggleProgram(program, false)}
-                          onDelete={() => program.id && setDeletingProgramId(program.id)}
+                          onDelete={() => program.id && setDeleteDialogOpen(program.id)}
                         />
-                        <AlertDialog open={deletingProgramId === program.id} onOpenChange={(open) => !open && setDeletingProgramId(null)}>
+                        <AlertDialog open={deleteDialogOpen === program.id} onOpenChange={(open) => !open && setDeleteDialogOpen(null)}>
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>Close Loyalty Program?</AlertDialogTitle>
