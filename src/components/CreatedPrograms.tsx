@@ -449,13 +449,15 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         if (deleteError) {
           console.error('Error deleting program from DB:', deleteError);
           toast.error('Failed to delete program from database');
-          setDeletingIndex(null);
           return;
         }
       }
       
-      // 4. Удаляем программу из localStorage
+      // 4. Сразу обновляем локальное состояние без ожидания realtime
       const updatedPrograms = programs.filter((_, i) => i !== index);
+      setPrograms(updatedPrograms);
+      
+      // 5. Удаляем программу из localStorage
       localStorage.setItem('loyaltyPrograms', JSON.stringify(updatedPrograms));
       
       // Очищаем выбор, если удалили выбранную программу
