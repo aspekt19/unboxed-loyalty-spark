@@ -32,6 +32,7 @@ export async function createReward(reward: Omit<Reward, 'id' | 'createdAt'>): Pr
     .single();
 
   if (error) {
+    console.error('Failed to create reward:', error);
     return null;
   }
 

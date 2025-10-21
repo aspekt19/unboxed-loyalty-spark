@@ -94,21 +94,26 @@ export function CreateReward() {
       return;
     }
 
-    const result = await createReward({
-      tokenAddress: formData.tokenAddress,
-      merchantAddress: address,
-      name: formData.name,
-      description: formData.description,
-      cost,
-      isActive: true,
-    });
+    try {
+      const result = await createReward({
+        tokenAddress: formData.tokenAddress,
+        merchantAddress: address,
+        name: formData.name,
+        description: formData.description,
+        cost,
+        isActive: true,
+      });
 
-    if (result) {
-      toast.success('Reward created successfully!');
-      setFormData({ tokenAddress: '', name: '', description: '', cost: '' });
-      window.dispatchEvent(new Event('rewardsUpdated'));
-    } else {
-      toast.error('Failed to create reward');
+      if (result) {
+        toast.success('Reward created successfully!');
+        setFormData({ tokenAddress: '', name: '', description: '', cost: '' });
+        window.dispatchEvent(new Event('rewardsUpdated'));
+      } else {
+        toast.error('Failed to create reward. Check console for details.');
+      }
+    } catch (error) {
+      console.error('Error creating reward:', error);
+      toast.error('Failed to create reward. Check console for details.');
     }
   };
 
