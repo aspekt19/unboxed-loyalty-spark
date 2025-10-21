@@ -627,10 +627,12 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
                       </>
                     )}
                   </div>
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Calendar className="h-3 w-3" />
-                    {new Date(program.timestamp).toLocaleDateString()}
-                  </div>
+                  {program.expirationDate && (
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Calendar className="h-3 w-3" />
+                      {format(new Date(program.expirationDate), 'dd.MM.yyyy')}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
