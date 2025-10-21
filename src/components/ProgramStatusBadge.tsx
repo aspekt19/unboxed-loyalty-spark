@@ -16,40 +16,7 @@ export function ProgramStatusBadge({ tokenAddress, fallbackStatus }: ProgramStat
     return <Badge variant="secondary">{fallbackStatus || 'Pending'}</Badge>;
   }
 
-  // Для старых контрактов (где есть ошибки при проверке) используем fallbackStatus из БД
-  if (hasStatusErrors) {
-    if (fallbackStatus === 'expired') {
-      return (
-        <Badge variant="secondary" className="bg-red-600 text-white">
-          Expired
-        </Badge>
-      );
-    }
-    if (fallbackStatus === 'expiring_soon') {
-      return (
-        <Badge variant="destructive" className="bg-amber-600">
-          Expiring Soon
-        </Badge>
-      );
-    }
-    // Для старых контрактов показываем их как активные, если нет другого статуса
-    return (
-      <Badge variant="default">
-        Active (Legacy)
-      </Badge>
-    );
-  }
-
-  // Для новых контрактов проверяем isPaused из контракта
-  if (isPaused) {
-    return (
-      <Badge variant="secondary" className="bg-gray-500 text-white">
-        Inactive
-      </Badge>
-    );
-  }
-
-  // Показываем статус "Expired" для истекших программ
+  // Приоритет: сначала проверяем fallbackStatus из БД для критичных статусов
   if (fallbackStatus === 'expired') {
     return (
       <Badge variant="secondary" className="bg-red-600 text-white">
@@ -66,6 +33,23 @@ export function ProgramStatusBadge({ tokenAddress, fallbackStatus }: ProgramStat
     );
   }
 
+  // Если контракт новый и отвечает на проверки статуса
+  if (!hasStatusErrors) {
+    if (isPaused) {
+      return (
+        <Badge variant="secondary" className="bg-gray-500 text-white">
+          Inactive
+        </Badge>
+      );
+    }
+    return (
+      <Badge variant="default">
+        Active
+      </Badge>
+    );
+  }
+
+  // Для старых контрактов (hasStatusErrors = true) показываем как активные
   return (
     <Badge variant="default">
       Active
