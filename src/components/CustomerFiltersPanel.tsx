@@ -82,7 +82,7 @@ export function CustomerFiltersPanel() {
       const { data, error } = await supabase
         .from('loyalty_programs')
         .select('*')
-        .in('status', ['active', 'expiring_soon'])
+        .in('status', ['active', 'expiring_soon', 'paused'])
         .order('created_at', { ascending: false });
 
       if (error) {

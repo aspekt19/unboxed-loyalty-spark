@@ -216,7 +216,7 @@ export function TokenList() {
       const { data, error } = await supabase
         .from('loyalty_programs')
         .select('token_address')
-        .in('status', ['active', 'expiring_soon']);
+        .in('status', ['active', 'expiring_soon', 'paused']);
 
       if (error) {
         console.error('Error loading active programs:', error);
