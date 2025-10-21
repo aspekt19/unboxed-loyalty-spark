@@ -18,6 +18,7 @@ export function useCheckProgramStatus(tokenAddress: `0x${string}` | undefined) {
       refetchInterval: 10000,
       refetchOnMount: false,
       refetchOnWindowFocus: false,
+      retry: 1, // Уменьшаем количество попыток для старых контрактов
     },
   });
 
@@ -38,6 +39,7 @@ export function useCheckProgramStatus(tokenAddress: `0x${string}` | undefined) {
       refetchInterval: 10000,
       refetchOnMount: false,
       refetchOnWindowFocus: false,
+      retry: 1, // Уменьшаем количество попыток для старых контрактов
     },
   });
 

@@ -319,20 +319,8 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         // Ставим программу на паузу в смарт-контракте
         await pauseProgram(program.tokenAddress as `0x${string}`);
         
-        // Обновляем статус программы в БД через security definer функцию
-        const { data: updateSuccess, error: programError } = await supabase.rpc(
-          'update_program_status',
-          {
-            p_token_address: program.tokenAddress,
-            p_merchant_address: address!,
-            p_new_status: 'expired'
-          }
-        );
-        
-        if (programError || !updateSuccess) {
-          console.error('Error updating program status in DB:', programError);
-          // Не прерываем выполнение, т.к. основная операция (pause) уже выполнена
-        }
+        // НЕ обновляем статус в БД - статус определяется по контракту
+        // Только expired программы имеют статус в БД
         
         // Деактивируем все активные ваучеры этой программы
         const { error: vouchersError } = await supabase
@@ -357,19 +345,20 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         // Активируем программу в смарт-контракте
         await unpauseProgram(program.tokenAddress as `0x${string}`);
         
-        // Обновляем статус программы в БД через security definer функцию
-        const { data: updateSuccess, error: programError } = await supabase.rpc(
-          'update_program_status',
-          {
-            p_token_address: program.tokenAddress,
-            p_merchant_address: address!,
-            p_new_status: 'active'
+        // Если программа была expired, обновляем статус на active
+        if (program.status === 'expired') {
+          const { data: updateSuccess, error: programError } = await supabase.rpc(
+            'update_program_status',
+            {
+              p_token_address: program.tokenAddress,
+              p_merchant_address: address!,
+              p_new_status: 'active'
+            }
+          );
+          
+          if (programError || !updateSuccess) {
+            console.error('Error updating program status in DB:', programError);
           }
-        );
-        
-        if (programError || !updateSuccess) {
-          console.error('Error updating program status in DB:', programError);
-          // Не прерываем выполнение, т.к. основная операция (unpause) уже выполнена
         }
         
         // Активируем обратно все истекшие ваучеры этой программы
@@ -628,9 +617,14 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
                     )}
                   </div>
                   {program.expirationDate && (
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Calendar className="h-3 w-3" />
-                      {format(new Date(program.expirationDate), 'dd.MM.yyyy')}
+                    <div className="flex flex-col items-end gap-0.5">
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        <span>Expires: {format(new Date(program.expirationDate), 'dd.MM.yyyy')}</span>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground/70">
+                        Program becomes inactive on this date
+                      </span>
                     </div>
                   )}
                 </div>

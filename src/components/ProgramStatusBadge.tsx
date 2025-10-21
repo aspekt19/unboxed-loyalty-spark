@@ -33,23 +33,16 @@ export function ProgramStatusBadge({ tokenAddress, fallbackStatus }: ProgramStat
     );
   }
 
-  // Если контракт новый и отвечает на проверки статуса
-  if (!hasStatusErrors) {
-    if (isPaused) {
-      return (
-        <Badge variant="secondary" className="bg-gray-500 text-white">
-          Inactive
-        </Badge>
-      );
-    }
+  // Если контракт новый (отвечает на проверки статуса), проверяем isPaused
+  if (!hasStatusErrors && isPaused) {
     return (
-      <Badge variant="default">
-        Active
+      <Badge variant="secondary" className="bg-gray-500 text-white">
+        Inactive
       </Badge>
     );
   }
 
-  // Для старых контрактов (hasStatusErrors = true) показываем как активные
+  // Для всех остальных случаев (активные новые и старые контракты) - Active
   return (
     <Badge variant="default">
       Active
