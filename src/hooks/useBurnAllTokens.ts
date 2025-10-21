@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { usePublicClient, useAccount } from 'wagmi';
+import { usePublicClient, useAccount, useWalletClient } from 'wagmi';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { CONTRACTS } from '@/config/contracts';
@@ -13,10 +13,11 @@ export function useBurnAllTokens() {
   const [isBurning, setIsBurning] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const publicClient = usePublicClient();
+  const { data: walletClient } = useWalletClient();
   const { address: merchantAddress } = useAccount();
 
-  const burnAllTokens = async (tokenAddress: string): Promise<boolean> => {
-    if (!publicClient || !merchantAddress) {
+  const burnAllTokens = async (tokenAddress: string, tokenAbi: any): Promise<boolean> => {
+    if (!publicClient || !walletClient || !merchantAddress) {
       toast.error('Wallet not connected');
       return false;
     }
@@ -50,103 +51,74 @@ export function useBurnAllTokens() {
 
       setProgress({ current: 0, total: holders.length });
 
-      // 2. Проверяем allowance для каждого держателя
-      const erc20Abi = [
-        {
-          inputs: [
-            { name: 'owner', type: 'address' },
-            { name: 'spender', type: 'address' },
-          ],
-          name: 'allowance',
-          outputs: [{ name: '', type: 'uint256' }],
-          stateMutability: 'view',
-          type: 'function',
-        },
-        {
-          inputs: [
-            { name: 'from', type: 'address' },
-            { name: 'to', type: 'address' },
-            { name: 'amount', type: 'uint256' },
-          ],
-          name: 'transferFrom',
-          outputs: [{ name: '', type: 'bool' }],
-          stateMutability: 'nonpayable',
-          type: 'function',
-        },
-      ] as const;
+      // 2. Фильтруем держателей с ненулевым балансом
+      const holdersWithBalance = holders.filter(h => BigInt(h.balance) > 0n);
+      
+      console.log(`${holdersWithBalance.length} holders with non-zero balance`);
 
-      const holdersWithAllowance: TokenHolder[] = [];
-
-      for (const holder of holders) {
-        try {
-          const allowance = await publicClient.readContract({
-            address: tokenAddress as `0x${string}`,
-            abi: erc20Abi,
-            functionName: 'allowance',
-            args: [holder.address as `0x${string}`, merchantAddress],
-          } as any) as bigint;
-
-          const balance = BigInt(holder.balance);
-
-          // Если allowance >= balance, можем сжечь токены
-          if (allowance >= balance && balance > 0n) {
-            holdersWithAllowance.push(holder);
-          }
-        } catch (error) {
-          console.error(`Error checking allowance for ${holder.address}:`, error);
-        }
-      }
-
-      console.log(`${holdersWithAllowance.length} holders have given approval`);
-
-      if (holdersWithAllowance.length === 0) {
-        toast.warning('No users have approved token spending');
+      if (holdersWithBalance.length === 0) {
+        toast.info('No tokens to burn');
         setIsBurning(false);
         return true;
       }
 
-      // 3. Сжигаем токены у всех, кто дал approve
-      // ВАЖНО: В реальном MVP мерчант должен подписывать каждую транзакцию
-      // Это временное решение для демонстрации концепции
-      
-      toast.info(`Burning tokens from ${holdersWithAllowance.length} users...`);
+      // 3. Сжигаем токены у всех держателей батчем
+      toast.info(`Burning tokens from ${holdersWithBalance.length} users...`);
       
       let successCount = 0;
-      for (let i = 0; i < holdersWithAllowance.length; i++) {
-        const holder = holdersWithAllowance[i];
-        setProgress({ current: i + 1, total: holdersWithAllowance.length });
+      const totalHolders = holdersWithBalance.length;
 
-        try {
-          // ПРИМЕЧАНИЕ: Здесь нужна реальная подпись транзакции мерчантом
-          // Для MVP это будет требовать от мерчанта подтверждения каждой транзакции в кошельке
-          console.log(`Would burn ${holder.balance} tokens from ${holder.address}`);
-          
-          // TODO: Реализовать batch транзакции или multicall для оптимизации
-          // const hash = await walletClient.writeContract({
-          //   address: tokenAddress as `0x${string}`,
-          //   abi: tokenAbi,
-          //   functionName: 'transferFrom',
-          //   args: [
-          //     holder.address as `0x${string}`,
-          //     '0x0000000000000000000000000000000000000000' as `0x${string}`,
-          //     BigInt(holder.balance),
-          //   ],
-          // });
-          
-          successCount++;
-        } catch (error) {
-          console.error(`Failed to burn tokens for ${holder.address}:`, error);
-        }
+      // Обрабатываем по 5 транзакций за раз для оптимизации
+      const batchSize = 5;
+      for (let i = 0; i < totalHolders; i += batchSize) {
+        const batch = holdersWithBalance.slice(i, Math.min(i + batchSize, totalHolders));
+        
+        const burnPromises = batch.map(async (holder) => {
+          try {
+            console.log(`Burning ${holder.balance} tokens from ${holder.address}`);
+            
+            const hash = await walletClient.writeContract({
+              address: tokenAddress as `0x${string}`,
+              abi: tokenAbi,
+              functionName: 'burn',
+              args: [
+                holder.address as `0x${string}`,
+                BigInt(holder.balance),
+              ],
+            } as any);
+
+            // Ждем подтверждения транзакции
+            await publicClient.waitForTransactionReceipt({ hash });
+            
+            return { success: true, address: holder.address };
+          } catch (error) {
+            console.error(`Failed to burn tokens for ${holder.address}:`, error);
+            return { success: false, address: holder.address };
+          }
+        });
+
+        const results = await Promise.allSettled(burnPromises);
+        
+        results.forEach((result) => {
+          if (result.status === 'fulfilled' && result.value.success) {
+            successCount++;
+          }
+        });
+
+        setProgress({ current: Math.min(i + batchSize, totalHolders), total: totalHolders });
       }
 
       setIsBurning(false);
       setProgress({ current: 0, total: 0 });
 
-      if (successCount > 0) {
-        toast.success(`Successfully processed ${successCount} token burns`);
+      if (successCount === holdersWithBalance.length) {
+        toast.success(`Successfully burned all tokens from ${successCount} holders`);
+        return true;
+      } else if (successCount > 0) {
+        toast.warning(`Burned tokens from ${successCount}/${holdersWithBalance.length} holders`);
         return true;
       } else {
-        toast.error('No tokens were burned');
+        toast.error('Failed to burn tokens');
         return false;
       }
 

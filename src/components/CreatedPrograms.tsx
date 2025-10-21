@@ -360,8 +360,8 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         
         // 1. Если выбрано сжигание токенов, сжигаем их у всех пользователей
         if (burnTokens) {
-          toast.info('Burning tokens from all users who approved...');
-          const burnSuccess = await burnAllTokens(program.tokenAddress);
+          toast.info('Burning tokens from all users...');
+          const burnSuccess = await burnAllTokens(program.tokenAddress, CONTRACTS.LOYAL_SPARK_ERC20.abi);
           if (!burnSuccess) {
             toast.warning('Some tokens could not be burned, but continuing with program closure');
           }
