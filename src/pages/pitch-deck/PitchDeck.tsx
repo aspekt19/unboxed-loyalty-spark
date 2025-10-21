@@ -1,7 +1,7 @@
 import { WalletConnectButton } from '@/components/WalletConnectButton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Sparkles, TrendingUp, Users, DollarSign, Target, Zap, Shield, Globe, ArrowRight, Wallet, Store, ShoppingBag, LineChart, Lock, Coins, BarChart3, Flame } from 'lucide-react';
+import { Sparkles, TrendingUp, Users, DollarSign, Target, Zap, Shield, Globe, ArrowRight, Wallet, Store, ShoppingBag, LineChart, Lock, Coins, BarChart3, Flame, UserPlus, Heart, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PageTransition from '@/components/PageTransition';
 
@@ -211,6 +211,98 @@ const PitchDeck = () => {
       description: 'Our team combines deep expertise in blockchain technology, DeFi tokenomics, loyalty program design, and small business solutions. We have experience building and scaling platforms that serve thousands of merchants and millions of end users.',
     },
     {
+      id: 'team-structure',
+      title: 'Team Structure & Hiring Plan',
+      subtitle: 'Building a strong team for SMB market success',
+      teamStructure: [
+        {
+          department: 'Product & Design',
+          count: 2,
+          roles: ['Product Manager', 'Product Designer'],
+          focus: 'SMB-focused UX, merchant onboarding, feature roadmap',
+          cost: '$450K (18 months)'
+        },
+        {
+          department: 'Engineering',
+          count: 4,
+          roles: ['2 Backend/Smart Contract Engineers', '2 Frontend Engineers'],
+          focus: 'Platform development, smart contracts, DEX integration',
+          cost: '$840K (18 months)'
+        },
+        {
+          department: 'Marketing & Community',
+          count: 3,
+          roles: ['Head of Marketing', 'Community Manager', 'Content Creator'],
+          focus: 'Brand building, community engagement, content strategy',
+          cost: '$540K (18 months)'
+        },
+        {
+          department: 'Sales & Business Development',
+          count: 3,
+          roles: ['Head of Sales', '2 Business Development Reps'],
+          focus: 'SMB merchant acquisition, partnerships, onboarding',
+          cost: '$585K (18 months)'
+        },
+        {
+          department: 'Operations & Support',
+          count: 2,
+          roles: ['Head of Operations', 'Customer Support Specialist'],
+          focus: 'Infrastructure, merchant support, quality assurance',
+          cost: '$330K (18 months)'
+        },
+      ],
+      totalTeam: '14 people',
+      totalCost: '$2.75M over 18 months',
+    },
+    {
+      id: 'community',
+      title: 'Community Building Strategy',
+      subtitle: 'Creating a loyal merchant and user ecosystem',
+      communityPillars: [
+        {
+          pillar: 'Merchant Community',
+          initiatives: [
+            'Early adopter program with bonus LOYAL rewards',
+            'Merchant success stories and case studies',
+            'Monthly webinars and training sessions',
+            'Dedicated Discord/Telegram channels for support'
+          ],
+          budget: '$100K'
+        },
+        {
+          pillar: 'Developer Ecosystem',
+          initiatives: [
+            'Open-source SDK and API documentation',
+            'Hackathons and bounty programs',
+            'Integration grants for third-party tools',
+            'Developer ambassador program'
+          ],
+          budget: '$80K'
+        },
+        {
+          pillar: 'Token Holder Community',
+          initiatives: [
+            'DAO governance participation rewards',
+            'Educational content about tokenomics',
+            'Community-driven feature voting',
+            'Loyalty rewards for long-term stakers'
+          ],
+          budget: '$70K'
+        },
+        {
+          pillar: 'Content & Social',
+          initiatives: [
+            'Regular blog posts and tutorials',
+            'Social media engagement campaigns',
+            'Influencer partnerships in SMB space',
+            'Community-generated content rewards'
+          ],
+          budget: '$50K'
+        },
+      ],
+      totalBudget: '$300K for community building',
+    },
+    {
       id: 'financials',
       title: 'Financial Projections',
       subtitle: '3-year growth trajectory for SMB market',
@@ -244,17 +336,49 @@ const PitchDeck = () => {
     {
       id: 'ask',
       title: 'The Ask',
-      subtitle: 'Seed Round: $500K - $1M',
+      subtitle: 'Seed Round: $3.5M - $4M',
       ask: {
-        amount: '$500K - $1M',
+        amount: '$3.5M - $4M',
         use: [
-          { category: 'Product Development', percentage: '35%', detail: 'Engineering team, smart contract audits, features' },
-          { category: 'SMB Merchant Acquisition', percentage: '35%', detail: 'Sales team, marketing, partnerships' },
-          { category: 'Operations & Infrastructure', percentage: '20%', detail: 'Backend, support, security' },
-          { category: 'Legal & Compliance', percentage: '10%', detail: 'Token regulatory, smart contract audits' },
+          { 
+            category: 'Team & Talent', 
+            percentage: '70%', 
+            amount: '$2.75M',
+            detail: '14 person team: Product (2), Engineering (4), Marketing/Community (3), Sales/BD (3), Operations (2)'
+          },
+          { 
+            category: 'Community Building & Marketing', 
+            percentage: '8%', 
+            amount: '$300K',
+            detail: 'Merchant community, developer ecosystem, content creation, engagement programs'
+          },
+          { 
+            category: 'Infrastructure & Operations', 
+            percentage: '10%', 
+            amount: '$400K',
+            detail: 'Cloud infrastructure, development tools, office, software licenses'
+          },
+          { 
+            category: 'Legal, Compliance & Audits', 
+            percentage: '7%', 
+            amount: '$250K',
+            detail: 'Token legal structure, smart contract audits, regulatory compliance'
+          },
+          { 
+            category: 'Reserve & Contingency', 
+            percentage: '5%', 
+            amount: '$200K',
+            detail: 'Buffer for unforeseen expenses and opportunities'
+          },
         ],
         runway: '18 months to product-market fit & Series A',
-        valuation: 'Pre-money: $4M-5M',
+        valuation: 'Pre-money: $12M-15M',
+        milestones: [
+          '1,000+ SMB merchants onboarded',
+          '$2M+ in Total Value Locked',
+          'Product-market fit validated',
+          'Clear path to profitability'
+        ]
       },
     },
   ];
@@ -683,6 +807,94 @@ const PitchDeck = () => {
                     </div>
                   )}
 
+                  {/* Team Structure Slide */}
+                  {slide.id === 'team-structure' && (
+                    <div className="space-y-8">
+                      <div>
+                        <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                          Slide {index + 1}
+                        </div>
+                        <h2 className="text-4xl font-bold text-foreground mb-2">{slide.title}</h2>
+                        <p className="text-xl text-muted-foreground">{slide.subtitle}</p>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        {slide.teamStructure?.map((dept, i) => (
+                          <div key={i} className="p-6 rounded-xl border border-border bg-card">
+                            <div className="flex items-start justify-between mb-4">
+                              <div className="flex items-center gap-3">
+                                <div className="h-12 w-12 rounded-lg bg-foreground flex items-center justify-center">
+                                  <UserPlus className="h-6 w-6 text-background" />
+                                </div>
+                                <div>
+                                  <h3 className="text-xl font-bold text-foreground">{dept.department}</h3>
+                                  <p className="text-sm text-muted-foreground">{dept.count} people</p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-lg font-bold text-foreground">{dept.cost}</div>
+                              </div>
+                            </div>
+                            <div className="space-y-2 pl-15">
+                              <p className="text-sm font-medium text-foreground">
+                                Roles: {dept.roles.join(', ')}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {dept.focus}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="flex items-center justify-between p-6 rounded-xl bg-foreground text-background">
+                        <div className="text-2xl font-bold">Total Team: {slide.totalTeam}</div>
+                        <div className="text-2xl font-bold">{slide.totalCost}</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Community Building Slide */}
+                  {slide.id === 'community' && (
+                    <div className="space-y-8">
+                      <div>
+                        <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                          Slide {index + 1}
+                        </div>
+                        <h2 className="text-4xl font-bold text-foreground mb-2">{slide.title}</h2>
+                        <p className="text-xl text-muted-foreground">{slide.subtitle}</p>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-6">
+                        {slide.communityPillars?.map((pillar, i) => (
+                          <div key={i} className="p-6 rounded-xl border border-border bg-card">
+                            <div className="flex items-center justify-between mb-4">
+                              <div className="flex items-center gap-3">
+                                <Heart className="h-8 w-8 text-foreground" />
+                                <h3 className="text-lg font-bold text-foreground">{pillar.pillar}</h3>
+                              </div>
+                              <div className="text-sm font-bold text-foreground px-3 py-1 rounded-full bg-secondary">
+                                {pillar.budget}
+                              </div>
+                            </div>
+                            <ul className="space-y-2">
+                              {pillar.initiatives.map((initiative, j) => (
+                                <li key={j} className="flex items-start gap-2">
+                                  <CheckCircle2 className="h-4 w-4 text-foreground flex-shrink-0 mt-0.5" />
+                                  <span className="text-sm text-muted-foreground">{initiative}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="p-6 rounded-xl bg-foreground text-background text-center">
+                        <div className="text-2xl font-bold">{slide.totalBudget}</div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Financials Slide */}
                   {slide.id === 'financials' && (
                     <div className="space-y-8">
@@ -749,12 +961,17 @@ const PitchDeck = () => {
                         <h3 className="text-2xl font-bold text-foreground mb-4">Use of Funds</h3>
                         <div className="space-y-3">
                           {slide.ask?.use.map((item, i) => (
-                            <div key={i} className="flex items-center gap-4 p-4 rounded-xl border border-border bg-card">
-                              <div className="flex-shrink-0 text-2xl font-bold text-foreground w-16">
-                                {item.percentage}
+                            <div key={i} className="flex items-center gap-4 p-5 rounded-xl border border-border bg-card">
+                              <div className="flex-shrink-0 text-center w-20">
+                                <div className="text-2xl font-bold text-foreground">
+                                  {item.percentage}
+                                </div>
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  {item.amount}
+                                </div>
                               </div>
-                              <div className="flex-1">
-                                <div className="text-lg font-semibold text-foreground">
+                              <div className="flex-1 border-l border-border pl-4">
+                                <div className="text-lg font-semibold text-foreground mb-1">
                                   {item.category}
                                 </div>
                                 <div className="text-sm text-muted-foreground">
@@ -766,9 +983,22 @@ const PitchDeck = () => {
                         </div>
                       </div>
 
-                      <div className="p-6 rounded-xl bg-secondary/30 border border-border text-center">
-                        <div className="text-lg font-semibold text-foreground">
-                          Runway: {slide.ask?.runway}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-6 rounded-xl bg-secondary/30 border border-border text-center">
+                          <div className="text-lg font-semibold text-foreground">
+                            {slide.ask?.runway}
+                          </div>
+                        </div>
+                        <div className="p-6 rounded-xl bg-secondary/30 border border-border">
+                          <div className="text-sm font-semibold text-foreground mb-3">Key Milestones:</div>
+                          <ul className="space-y-1">
+                            {slide.ask?.milestones?.map((milestone, i) => (
+                              <li key={i} className="flex items-start gap-2">
+                                <CheckCircle2 className="h-4 w-4 text-foreground flex-shrink-0 mt-0.5" />
+                                <span className="text-sm text-muted-foreground">{milestone}</span>
+                              </li>
+                            ))}
+                          </ul>
                         </div>
                       </div>
                     </div>
