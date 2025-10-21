@@ -320,8 +320,19 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         // Ставим программу на паузу в смарт-контракте
         await pauseProgram(program.tokenAddress as `0x${string}`);
         
-        // НЕ обновляем статус в БД - статус определяется по контракту
-        // Только expired программы имеют статус в БД
+        // Обновляем статус в БД на 'paused'
+        const { data: updateSuccess, error: programError } = await supabase.rpc(
+          'update_program_status',
+          {
+            p_token_address: program.tokenAddress,
+            p_merchant_address: address!,
+            p_new_status: 'paused'
+          }
+        );
+        
+        if (programError || !updateSuccess) {
+          console.error('Error updating program status to paused in DB:', programError);
+        }
         
         // Деактивируем все активные ваучеры этой программы
         const { error: vouchersError } = await supabase
@@ -346,20 +357,18 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         // Активируем программу в смарт-контракте
         await unpauseProgram(program.tokenAddress as `0x${string}`);
         
-        // Если программа была expired, обновляем статус на active
-        if (program.status === 'expired') {
-          const { data: updateSuccess, error: programError } = await supabase.rpc(
-            'update_program_status',
-            {
-              p_token_address: program.tokenAddress,
-              p_merchant_address: address!,
-              p_new_status: 'active'
-            }
-          );
-          
-          if (programError || !updateSuccess) {
-            console.error('Error updating program status in DB:', programError);
+        // Обновляем статус в БД на 'active'
+        const { data: updateSuccess, error: programError } = await supabase.rpc(
+          'update_program_status',
+          {
+            p_token_address: program.tokenAddress,
+            p_merchant_address: address!,
+            p_new_status: 'active'
           }
+        );
+        
+        if (programError || !updateSuccess) {
+          console.error('Error updating program status to active in DB:', programError);
         }
         
         // Активируем обратно все истекшие ваучеры этой программы
