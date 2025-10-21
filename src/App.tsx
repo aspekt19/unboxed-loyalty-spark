@@ -10,7 +10,7 @@ import "@rainbow-me/rainbowkit/styles.css";
 import Index from "./pages/Index";
 import CustomerPage from "./pages/CustomerPage";
 import MerchantPage from "./pages/MerchantPage";
-import PitchDeck from "./pages/PitchDeck";
+import PitchDeck from "./pages/pitch-deck/PitchDeck";
 import NotFound from "./pages/NotFound";
 import { AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
