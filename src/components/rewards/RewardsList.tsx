@@ -5,16 +5,18 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Gift, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useAccount } from 'wagmi';
+import { useAuth } from '@/contexts/AuthContext';
 import { Reward } from '@/types/rewards';
 import { getMerchantRewards, updateReward, deleteReward } from '@/lib/vouchers';
 
 export function RewardsList() {
   const { address } = useAccount();
+  const { user } = useAuth();
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [tokens, setTokens] = useState<Map<string, { name: string; symbol: string }>>(new Map());
 
   const loadData = async () => {
-    if (!address) return;
+    if (!address || !user) return;
 
     const merchantRewards = await getMerchantRewards(address);
     setRewards(merchantRewards);
@@ -45,7 +47,7 @@ export function RewardsList() {
     loadData();
     window.addEventListener('rewardsUpdated', loadData);
     return () => window.removeEventListener('rewardsUpdated', loadData);
-  }, [address]);
+  }, [address, user]);
 
   const handleToggleActive = async (rewardId: string) => {
     const reward = rewards.find(r => r.id === rewardId);
