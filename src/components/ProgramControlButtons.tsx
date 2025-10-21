@@ -33,22 +33,24 @@ export function ProgramControlButtons({
         {/* Pause Button */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={(e) => {
-                e.stopPropagation();
-                onPause();
-              }}
-              disabled={isToggling || isPaused}
-            >
-              {isToggling && !isPaused ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Pause className="h-4 w-4 text-amber-600" />
-              )}
-            </Button>
+            <span className="inline-block">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPause();
+                }}
+                disabled={isToggling || isPaused}
+              >
+                {isToggling && !isPaused ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Pause className="h-4 w-4 text-amber-600" />
+                )}
+              </Button>
+            </span>
           </TooltipTrigger>
           <TooltipContent>Pause Program</TooltipContent>
         </Tooltip>
@@ -56,22 +58,24 @@ export function ProgramControlButtons({
         {/* Activate Button */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={(e) => {
-                e.stopPropagation();
-                onActivate();
-              }}
-              disabled={isToggling || !isPaused}
-            >
-              {isToggling && isPaused ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Play className="h-4 w-4 text-green-600" />
-              )}
-            </Button>
+            <span className="inline-block">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onActivate();
+                }}
+                disabled={isToggling || !isPaused}
+              >
+                {isToggling && isPaused ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Play className="h-4 w-4 text-green-600" />
+                )}
+              </Button>
+            </span>
           </TooltipTrigger>
           <TooltipContent>Activate Program</TooltipContent>
         </Tooltip>
@@ -79,22 +83,24 @@ export function ProgramControlButtons({
         {/* Delete Button */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }}
-              disabled={isDeleting}
-            >
-              {isDeleting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Trash2 className="h-4 w-4 text-destructive" />
-              )}
-            </Button>
+            <span className="inline-block">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                )}
+              </Button>
+            </span>
           </TooltipTrigger>
           <TooltipContent>Delete Program</TooltipContent>
         </Tooltip>
