@@ -17,6 +17,7 @@ import { getRewardsByToken, createVoucher, generateVoucherCode } from '@/lib/vou
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { ProgramExpirationInfo } from '@/components/ProgramExpirationInfo';
+import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
 
 interface TokenInfo {
   address: string;
@@ -37,6 +38,11 @@ export function RewardsSelection() {
   const { balances, isLoading: balancesLoading, refetch } = useMultiTokenBalance(tokens);
   const { burnTokens, isPending, isSuccess } = useBurnTokens();
   const { approveTokens, isPending: isApproving, isSuccess: isApproved } = useApproveTokens();
+  
+  // Check if selected program is paused
+  const { isPaused: isProgramPaused } = useCheckProgramStatus(
+    selectedTokenAddress as `0x${string}` | undefined
+  );
   
   // Получаем адрес мерчанта из выбранной награды
   // Покупатели дают approve адресу мерчанта, чтобы он мог сжигать токены
@@ -244,6 +250,12 @@ export function RewardsSelection() {
       return;
     }
 
+    // Check if program is paused
+    if (isProgramPaused) {
+      toast.error('This loyalty program is currently inactive. Tokens cannot be used.');
+      return;
+    }
+
     // Проверяем авторизацию и ждем завершения
     if (!session) {
       toast.info('Authenticating your wallet...');
@@ -388,6 +400,14 @@ export function RewardsSelection() {
                     tokenSymbol={selectedToken.symbol}
                   />
                 )}
+                {isProgramPaused && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      This loyalty program is currently inactive. You cannot use these tokens until the merchant reactivates the program.
+                    </AlertDescription>
+                  </Alert>
+                )}
               </>
             )}
 
@@ -437,11 +457,11 @@ export function RewardsSelection() {
                   e.preventDefault();
                   handleActivate();
                 }}
-                disabled={!selectedRewardId || isPending || balancesLoading}
+                disabled={!selectedRewardId || isPending || balancesLoading || isProgramPaused}
                 className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
               >
                 {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Activate Voucher
+                {isProgramPaused ? 'Program Inactive' : 'Activate Voucher'}
               </Button>
             )}
           </div>
