@@ -21,8 +21,8 @@ export function VouchersManagement() {
   const [searchCode, setSearchCode] = useState('');
 
   const loadMerchantVouchers = async () => {
-    if (!address || !session) {
-      console.log('Cannot load vouchers: address=', address, 'session=', !!session);
+    if (!address) {
+      console.log('Cannot load vouchers: no address');
       return;
     }
     console.log('Loading merchant vouchers for address:', address);
@@ -40,8 +40,8 @@ export function VouchersManagement() {
   }, [address]);
 
   useEffect(() => {
-    // Загружаем ваучеры только если есть адрес и пользователь авторизован
-    if (!address || !session) return;
+    // Загружаем ваучеры только если есть адрес
+    if (!address) return;
     
     loadMerchantVouchers();
     
@@ -76,11 +76,11 @@ export function VouchersManagement() {
       window.removeEventListener('profileMigrated', handleUpdate);
       channel.unsubscribe();
     };
-  }, [address, session]);
+  }, [address]);
 
   // Auto-refresh vouchers every 5 seconds for real-time updates
   useEffect(() => {
-    if (!address || !session) {
+    if (!address) {
       return;
     }
 
@@ -94,7 +94,7 @@ export function VouchersManagement() {
       console.log('Stopping auto-refresh for merchant vouchers');
       clearInterval(interval);
     };
-  }, [address, session]);
+  }, [address]);
 
   const handleMarkAsUsed = async (voucherId: string, code: string) => {
     const success = await updateVoucherStatus(voucherId, 'used');
