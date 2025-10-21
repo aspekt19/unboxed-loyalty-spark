@@ -98,14 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [address, isConnected]);
 
-  useEffect(() => {
-    // Автоматический вход при подключении кошелька
-    if (isConnected && address && !user) {
-      signInWithWallet();
-    }
-  }, [isConnected, address, user, signInWithWallet]);
-
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
@@ -113,7 +106,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       toast.error('Failed to sign out');
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // Автоматический вход при подключении кошелька
+    if (isConnected && address && !user) {
+      signInWithWallet();
+    }
+    
+    // Автоматический выход при отключении кошелька
+    if (!isConnected && user) {
+      console.log('Wallet disconnected, signing out...');
+      signOut();
+    }
+  }, [isConnected, address, user, signInWithWallet, signOut]);
 
   return (
     <AuthContext.Provider value={{ user, session, isLoading, signInWithWallet, signOut }}>
