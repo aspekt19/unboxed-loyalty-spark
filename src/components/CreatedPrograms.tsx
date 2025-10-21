@@ -51,6 +51,10 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
   const [tokenStats, setTokenStats] = useState<TokenStats>({});
   const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [toggledProgram, setToggledProgram] = useState<string | null>(null);
+  const [pendingOperation, setPendingOperation] = useState<{
+    program: LoyaltyProgram;
+    operation: 'pause' | 'unpause';
+  } | null>(null);
   const publicClient = usePublicClient();
   const { address } = useAccount();
   const { burnAllTokens, isBurning, progress } = useBurnAllTokens();
@@ -314,124 +318,100 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     if (!program.tokenAddress || !program.id) return;
     
     setToggledProgram(program.tokenAddress);
+    setPendingOperation({ program, operation: shouldPause ? 'pause' : 'unpause' });
     
     try {
       if (shouldPause) {
-        // Ставим программу на паузу в смарт-контракте
         await pauseProgram(program.tokenAddress as `0x${string}`);
-        
-        // Обновляем статус в БД на 'paused'
-        const { data: updateSuccess, error: programError } = await supabase.rpc(
-          'update_program_status',
-          {
-            p_token_address: program.tokenAddress,
-            p_merchant_address: address!,
-            p_new_status: 'paused'
-          }
-        );
-        
-        if (programError) {
-          console.error('Error updating program status to paused in DB:', programError);
-          toast.error('Failed to update program status in database');
-          return;
-        }
-        
-        if (!updateSuccess) {
-          console.error('Failed to update program - user may not own this program');
-          toast.error('Failed to update program status');
-          return;
-        }
-        
-        // Деактивируем все награды этой программы
-        const { error: rewardsError } = await supabase
-          .from('rewards')
-          .update({ is_active: false })
-          .eq('token_address', program.tokenAddress.toLowerCase())
-          .eq('merchant_address', address!.toLowerCase());
-        
-        if (rewardsError) {
-          console.error('Error deactivating rewards:', rewardsError);
-        }
-        
-        // Деактивируем все активные ваучеры этой программы
-        const { error: vouchersError } = await supabase
-          .from('vouchers')
-          .update({ status: 'expired' })
-          .eq('token_address', program.tokenAddress.toLowerCase())
-          .eq('status', 'active');
-        
-        if (vouchersError) {
-          console.error('Error deactivating vouchers:', vouchersError);
-        }
-        
-        // Отправляем события обновления
-        window.dispatchEvent(new Event('rewardsUpdated'));
-        window.dispatchEvent(new Event('vouchersUpdated'));
-        window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
-        
-        toast.success('Program paused. Rewards and vouchers are now inactive.');
       } else {
-        // Активируем программу в смарт-контракте
         await unpauseProgram(program.tokenAddress as `0x${string}`);
-        
-        // Обновляем статус в БД на 'active'
-        const { data: updateSuccess, error: programError } = await supabase.rpc(
-          'update_program_status',
-          {
-            p_token_address: program.tokenAddress,
-            p_merchant_address: address!,
-            p_new_status: 'active'
-          }
-        );
-        
-        if (programError) {
-          console.error('Error updating program status to active in DB:', programError);
-          toast.error('Failed to update program status in database');
-          return;
-        }
-        
-        if (!updateSuccess) {
-          console.error('Failed to update program - user may not own this program');
-          toast.error('Failed to update program status');
-          return;
-        }
-        
-        // Активируем все награды этой программы
-        const { error: rewardsError } = await supabase
-          .from('rewards')
-          .update({ is_active: true })
-          .eq('token_address', program.tokenAddress.toLowerCase())
-          .eq('merchant_address', address!.toLowerCase());
-        
-        if (rewardsError) {
-          console.error('Error activating rewards:', rewardsError);
-        }
-        
-        // Активируем обратно все истекшие ваучеры этой программы
-        const { error: vouchersError } = await supabase
-          .from('vouchers')
-          .update({ status: 'active' })
-          .eq('token_address', program.tokenAddress.toLowerCase())
-          .eq('status', 'expired');
-        
-        if (vouchersError) {
-          console.error('Error reactivating vouchers:', vouchersError);
-        }
-        
-        // Отправляем события обновления
-        window.dispatchEvent(new Event('rewardsUpdated'));
-        window.dispatchEvent(new Event('vouchersUpdated'));
-        window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
-        
-        toast.success('Program activated. Rewards and vouchers are now active again.');
       }
     } catch (error) {
       console.error('Error toggling program:', error);
       toast.error('Failed to change program status');
-    } finally {
       setToggledProgram(null);
+      setPendingOperation(null);
     }
   };
+
+  // Обрабатываем успешное завершение транзакции паузы/активации
+  useEffect(() => {
+    const handleSuccess = async () => {
+      if (!toggleSuccess || !pendingOperation || !address) return;
+      
+      const { program, operation } = pendingOperation;
+      const isPause = operation === 'pause';
+      
+      console.log(`Transaction successful, updating DB status to ${isPause ? 'paused' : 'active'}`);
+      
+      try {
+        // Обновляем статус в БД
+        const { data: updateSuccess, error: programError } = await supabase.rpc(
+          'update_program_status',
+          {
+            p_token_address: program.tokenAddress!,
+            p_merchant_address: address,
+            p_new_status: isPause ? 'paused' : 'active'
+          }
+        );
+        
+        console.log('Update program status result:', { updateSuccess, programError });
+        
+        if (programError) {
+          console.error(`Error updating program status to ${isPause ? 'paused' : 'active'} in DB:`, programError);
+          toast.error('Failed to update program status in database');
+          return;
+        }
+        
+        if (!updateSuccess) {
+          console.error('Failed to update program - user may not own this program');
+          toast.error('Failed to update program status');
+          return;
+        }
+        
+        // Обновляем награды
+        const { error: rewardsError } = await supabase
+          .from('rewards')
+          .update({ is_active: !isPause })
+          .eq('token_address', program.tokenAddress!.toLowerCase())
+          .eq('merchant_address', address.toLowerCase());
+        
+        if (rewardsError) {
+          console.error(`Error ${isPause ? 'deactivating' : 'activating'} rewards:`, rewardsError);
+        }
+        
+        // Обновляем ваучеры
+        const { error: vouchersError } = await supabase
+          .from('vouchers')
+          .update({ status: isPause ? 'expired' : 'active' })
+          .eq('token_address', program.tokenAddress!.toLowerCase())
+          .eq('status', isPause ? 'active' : 'expired');
+        
+        if (vouchersError) {
+          console.error(`Error ${isPause ? 'deactivating' : 'reactivating'} vouchers:`, vouchersError);
+        }
+        
+        // Отправляем события обновления
+        window.dispatchEvent(new Event('rewardsUpdated'));
+        window.dispatchEvent(new Event('vouchersUpdated'));
+        window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
+        
+        toast.success(
+          isPause 
+            ? 'Program paused. Rewards and vouchers are now inactive.' 
+            : 'Program activated. Rewards and vouchers are now active again.'
+        );
+      } catch (error) {
+        console.error('Error updating database:', error);
+        toast.error('Failed to update program status');
+      } finally {
+        setToggledProgram(null);
+        setPendingOperation(null);
+      }
+    };
+    
+    handleSuccess();
+  }, [toggleSuccess, pendingOperation, address]);
 
   const handleEnableMinting = async (program: LoyaltyProgram) => {
     if (!program.tokenAddress) return;
