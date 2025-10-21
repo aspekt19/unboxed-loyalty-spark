@@ -89,6 +89,8 @@ export async function getMerchantRewards(merchantAddress: string): Promise<Rewar
     return [];
   }
   
+  console.log('getMerchantRewards: Found', allRewards?.length || 0, 'total rewards');
+  
   if (!allRewards || allRewards.length === 0) {
     return [];
   }
@@ -96,11 +98,17 @@ export async function getMerchantRewards(merchantAddress: string): Promise<Rewar
   // Проверяем статус программы для каждой награды
   const rewardsWithStatus = await Promise.all(
     allRewards.map(async (reward) => {
-      const { data: program } = await supabase
+      const { data: program, error: programError } = await supabase
         .from('loyalty_programs')
         .select('status')
         .eq('token_address', reward.token_address.toLowerCase())
-        .single();
+        .maybeSingle();
+      
+      if (programError) {
+        console.error('Error fetching program for reward:', programError);
+      }
+      
+      console.log(`Reward "${reward.name}" program status:`, program?.status || 'not found');
       
       return {
         ...reward,
@@ -113,6 +121,8 @@ export async function getMerchantRewards(merchantAddress: string): Promise<Rewar
   const activeRewards = rewardsWithStatus.filter(r => 
     r.programStatus === 'active' || r.programStatus === 'expiring_soon'
   );
+  
+  console.log('getMerchantRewards: Filtered to', activeRewards.length, 'active rewards');
   
   return activeRewards.map(r => ({
     id: r.id,
@@ -133,7 +143,7 @@ export async function getRewardsByToken(tokenAddress: string): Promise<Reward[]>
     .from('loyalty_programs')
     .select('status')
     .eq('token_address', tokenAddress.toLowerCase())
-    .single();
+    .maybeSingle();
   
   if (programError) {
     console.error('Error fetching program status:', programError);
@@ -265,11 +275,15 @@ export async function getCustomerVouchers(customerAddress: string): Promise<Vouc
   // Проверяем статус программы для каждого ваучера
   const vouchersWithStatus = await Promise.all(
     allVouchers.map(async (voucher) => {
-      const { data: program } = await supabase
+      const { data: program, error: programError } = await supabase
         .from('loyalty_programs')
         .select('status')
         .eq('token_address', voucher.token_address.toLowerCase())
-        .single();
+        .maybeSingle();
+      
+      if (programError) {
+        console.error('Error fetching program for customer voucher:', programError);
+      }
       
       return {
         ...voucher,
@@ -325,11 +339,17 @@ export async function getMerchantVouchers(merchantAddress: string): Promise<Vouc
     // Проверяем статус программы для каждого ваучера
     const vouchersWithStatus = await Promise.all(
       allVouchers.map(async (voucher) => {
-        const { data: program } = await supabase
+        const { data: program, error: programError } = await supabase
           .from('loyalty_programs')
           .select('status')
           .eq('token_address', voucher.token_address.toLowerCase())
-          .single();
+          .maybeSingle();
+        
+        if (programError) {
+          console.error('Error fetching program for voucher:', programError);
+        }
+        
+        console.log(`Voucher ${voucher.code} program status:`, program?.status || 'not found');
         
         return {
           ...voucher,
