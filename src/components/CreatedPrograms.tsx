@@ -566,19 +566,9 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
                           isDeleting={deletingProgramId === program.id}
                           onPause={() => handleToggleProgram(program, true)}
                           onActivate={() => handleToggleProgram(program, false)}
-                          onDelete={() => {}} 
+                          onDelete={() => program.id && setDeletingProgramId(program.id)}
                         />
                         <AlertDialog open={deletingProgramId === program.id} onOpenChange={(open) => !open && setDeletingProgramId(null)}>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                              disabled={deletingProgramId === program.id}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>Close Loyalty Program?</AlertDialogTitle>
