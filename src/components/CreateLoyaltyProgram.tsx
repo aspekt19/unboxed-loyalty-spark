@@ -53,6 +53,34 @@ export function CreateLoyaltyProgram() {
       return;
     }
 
+    // Verify that user profile exists and matches wallet address
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user) {
+        toast.error('Please sign in with your wallet first');
+        return;
+      }
+
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('user_id, wallet_address')
+        .eq('wallet_address', address.toLowerCase())
+        .eq('user_id', session.session.user.id)
+        .single();
+
+      if (profileError || !profile) {
+        console.error('Profile verification failed:', profileError);
+        toast.error('Profile not found. Please reconnect your wallet.');
+        return;
+      }
+
+      console.log('Profile verified for program creation:', profile);
+    } catch (error) {
+      console.error('Profile check error:', error);
+      toast.error('Failed to verify profile. Please try again.');
+      return;
+    }
+
     savedRef.current = false;
     deployToken(programName, tokenSymbol);
   };
@@ -62,20 +90,23 @@ export function CreateLoyaltyProgram() {
     if (isSuccess && programName && tokenSymbol && deployedTokenAddress && expirationDate && !savedRef.current) {
       // Сохраняем в БД
       const saveToDatabase = async () => {
-        const { error } = await supabase
-          .from('loyalty_programs')
-          .insert({
-            token_address: deployedTokenAddress.toLowerCase(),
-            merchant_address: address!.toLowerCase(),
-            name: programName,
-            symbol: tokenSymbol,
-            expiration_date: expirationDate.toISOString(),
-          });
+        try {
+          const { error } = await supabase
+            .from('loyalty_programs')
+            .insert({
+              token_address: deployedTokenAddress.toLowerCase(),
+              merchant_address: address!.toLowerCase(),
+              name: programName,
+              symbol: tokenSymbol,
+              expiration_date: expirationDate.toISOString(),
+            });
 
-        if (error) {
-          console.error('Error saving program to DB:', error);
-          toast.error('Program deployed but failed to save to database');
-        } else {
+          if (error) {
+            console.error('Error saving program to DB:', error);
+            toast.error('Program deployed but failed to save to database. Please contact support.');
+            return;
+          }
+
           toast.success(`Loyalty program "${programName}" created!`);
           
           // Save to localStorage для обратной совместимости
@@ -98,6 +129,9 @@ export function CreateLoyaltyProgram() {
           
           // Trigger a custom event to notify other components
           window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
+        } catch (err) {
+          console.error('Unexpected error saving program:', err);
+          toast.error('An unexpected error occurred. Please try again.');
         }
       };
 
