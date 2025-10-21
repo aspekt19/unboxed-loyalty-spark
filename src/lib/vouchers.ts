@@ -76,19 +76,45 @@ export async function loadRewards(): Promise<Reward[]> {
   }));
 }
 
-// Загрузка наград мерчанта
+// Загрузка наград мерчанта (с фильтрацией по статусу программы)
 export async function getMerchantRewards(merchantAddress: string): Promise<Reward[]> {
-  const { data, error } = await supabase
+  const { data: allRewards, error } = await supabase
     .from('rewards')
     .select('*')
     .eq('merchant_address', merchantAddress.toLowerCase())
     .order('created_at', { ascending: false });
 
   if (error) {
+    console.error('Error fetching merchant rewards:', error);
     return [];
   }
-
-  return data.map(r => ({
+  
+  if (!allRewards || allRewards.length === 0) {
+    return [];
+  }
+  
+  // Проверяем статус программы для каждой награды
+  const rewardsWithStatus = await Promise.all(
+    allRewards.map(async (reward) => {
+      const { data: program } = await supabase
+        .from('loyalty_programs')
+        .select('status')
+        .eq('token_address', reward.token_address.toLowerCase())
+        .single();
+      
+      return {
+        ...reward,
+        programStatus: program?.status
+      };
+    })
+  );
+  
+  // Возвращаем только награды активных или истекающих программ
+  const activeRewards = rewardsWithStatus.filter(r => 
+    r.programStatus === 'active' || r.programStatus === 'expiring_soon'
+  );
+  
+  return activeRewards.map(r => ({
     id: r.id,
     tokenAddress: r.token_address,
     merchantAddress: r.merchant_address,
@@ -274,12 +300,12 @@ export async function getCustomerVouchers(customerAddress: string): Promise<Vouc
   }));
 }
 
-// Загрузка ваучеров мерчанта
+// Загрузка ваучеров мерчанта (с фильтрацией по статусу программы)
 export async function getMerchantVouchers(merchantAddress: string): Promise<Voucher[]> {
   try {
     console.log('getMerchantVouchers called for:', merchantAddress);
     
-    const { data, error } = await supabase
+    const { data: allVouchers, error } = await supabase
       .from('vouchers')
       .select('*')
       .eq('merchant_address', merchantAddress.toLowerCase())
@@ -290,9 +316,36 @@ export async function getMerchantVouchers(merchantAddress: string): Promise<Vouc
       throw error;
     }
     
-    console.log('Merchant vouchers data:', data?.length || 0, 'rows');
+    console.log('Merchant vouchers data:', allVouchers?.length || 0, 'rows');
     
-    return (data || []).map(v => ({
+    if (!allVouchers || allVouchers.length === 0) {
+      return [];
+    }
+    
+    // Проверяем статус программы для каждого ваучера
+    const vouchersWithStatus = await Promise.all(
+      allVouchers.map(async (voucher) => {
+        const { data: program } = await supabase
+          .from('loyalty_programs')
+          .select('status')
+          .eq('token_address', voucher.token_address.toLowerCase())
+          .single();
+        
+        return {
+          ...voucher,
+          programStatus: program?.status
+        };
+      })
+    );
+    
+    // Возвращаем только ваучеры активных или истекающих программ
+    const activeVouchers = vouchersWithStatus.filter(v => 
+      v.programStatus === 'active' || v.programStatus === 'expiring_soon'
+    );
+    
+    console.log('Filtered merchant vouchers:', activeVouchers.length, 'active vouchers');
+    
+    return activeVouchers.map(v => ({
       id: v.id,
       code: v.code,
       rewardId: v.reward_id,
