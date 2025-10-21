@@ -3,13 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
+import { TokenListItem } from './TokenListItem';
 import { useMultiTokenBalance, type TokenInfo } from '@/hooks/useMultiTokenBalance';
 import { useTransferTokens } from '@/hooks/useTransferTokens';
-import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
 import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
-import { Loader2, Send, Coins } from 'lucide-react';
+import { Loader2, Coins } from 'lucide-react';
 import { usePublicClient, useAccount } from 'wagmi';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -18,7 +17,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 
 export function TokenList() {
@@ -345,64 +343,19 @@ export function TokenList() {
           </div>
         )}
         
-        {tokensWithBalance.map((token) => {
-          const { isPaused } = useCheckProgramStatus(token.address as `0x${string}`);
-          
-          return (
-            <div
-              key={token.address}
-              className="flex items-center justify-between p-4 rounded-lg bg-gradient-to-r from-primary/5 to-secondary/5 border-2 border-primary/10 hover:border-primary/30 transition-all"
-            >
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                  <Coins className="h-5 w-5 text-primary-foreground" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold">{token.name}</p>
-                    {isPaused ? (
-                      <Badge variant="secondary" className="bg-gray-500 text-white text-xs">
-                        Inactive
-                      </Badge>
-                    ) : (
-                      <Badge variant="default" className="bg-green-600 text-xs">
-                        Active
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground">{token.symbol}</p>
-                  {isPaused && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Program paused - Cannot transfer or use tokens
-                    </p>
-                  )}
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-4">
-                <div className="text-right">
-                  <p className="text-2xl font-bold">
-                    {parseFloat(token.balance).toFixed(2)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{token.symbol}</p>
-                </div>
-
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    setSelectedToken(token);
-                    setDialogOpen(true);
-                  }}
-                  disabled={isPaused}
-                  className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 disabled:opacity-50"
-                >
-                  <Send className="h-4 w-4 mr-1" />
-                  Send
-                </Button>
-              </div>
-            </div>
-          );
-        })}
+        {tokensWithBalance.map((token) => (
+          <TokenListItem
+            key={token.address}
+            address={token.address}
+            name={token.name}
+            symbol={token.symbol}
+            balance={token.balance}
+            onSendClick={() => {
+              setSelectedToken(token);
+              setDialogOpen(true);
+            }}
+          />
+        ))}
 
         {/* Transfer Dialog - Outside the map to use selectedToken state */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
