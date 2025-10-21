@@ -41,12 +41,23 @@ export function ProgramStatusBadge({ tokenAddress, fallbackStatus, expirationDat
     );
   }
 
-  // Приоритет 2: Проверяем fallbackStatus из БД
-  if (fallbackStatus === 'expired') {
-    console.log(`[StatusBadge] Showing Expired for ${tokenAddress?.slice(0, 8)}... (DB status)`);
+  // Приоритет 2: Если контракт новый (отвечает на проверки статуса), проверяем isPaused
+  if (!hasStatusErrors && isPaused) {
+    console.log(`[StatusBadge] Showing Inactive for ${tokenAddress?.slice(0, 8)}... (contract paused)`);
     return (
-      <Badge variant="secondary" className="bg-red-600 text-white">
-        Expired
+      <Badge variant="secondary" className="bg-gray-500 text-white">
+        Inactive
+      </Badge>
+    );
+  }
+
+  // Приоритет 3: Проверяем fallbackStatus из БД (только для старых контрактов или если не истекла дата)
+  if (fallbackStatus === 'expired' && !isExpired) {
+    // Если в БД expired но дата не истекла - это manual pause, показываем Inactive
+    console.log(`[StatusBadge] Showing Inactive for ${tokenAddress?.slice(0, 8)}... (DB expired but date valid)`);
+    return (
+      <Badge variant="secondary" className="bg-gray-500 text-white">
+        Inactive
       </Badge>
     );
   }
@@ -56,16 +67,6 @@ export function ProgramStatusBadge({ tokenAddress, fallbackStatus, expirationDat
     return (
       <Badge variant="destructive" className="bg-amber-600">
         Expiring Soon
-      </Badge>
-    );
-  }
-
-  // Приоритет 3: Если контракт новый (отвечает на проверки статуса), проверяем isPaused
-  if (!hasStatusErrors && isPaused) {
-    console.log(`[StatusBadge] Showing Inactive for ${tokenAddress?.slice(0, 8)}... (contract paused)`);
-    return (
-      <Badge variant="secondary" className="bg-gray-500 text-white">
-        Inactive
       </Badge>
     );
   }
