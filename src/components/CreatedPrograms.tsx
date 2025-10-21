@@ -319,7 +319,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         // Ставим программу на паузу в смарт-контракте
         await pauseProgram(program.tokenAddress as `0x${string}`);
         
-        // Обновляем статус программы в БД
+        // Обновляем статус программы в БД на 'expired'
         const { error: programError } = await supabase
           .from('loyalty_programs')
           .update({ status: 'expired' })
@@ -327,23 +327,8 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         
         if (programError) {
           console.error('Error updating program status in DB:', programError);
-          toast.warning('Program paused in blockchain, but DB status could not be updated');
-        }
-        
-        // Деактивируем все награды этой программы
-        const { error: rewardsError } = await supabase
-          .from('rewards')
-          .update({ is_active: false })
-          .eq('token_address', program.tokenAddress.toLowerCase())
-          .eq('merchant_address', address?.toLowerCase());
-        
-        if (rewardsError) {
-          console.error('Error deactivating rewards:', rewardsError);
-          toast.warning('Program paused, but some rewards could not be deactivated');
-        } else {
-          console.log('Rewards deactivated successfully for paused program');
-          // Отправляем событие обновления наград
-          window.dispatchEvent(new Event('rewardsUpdated'));
+          toast.error('Failed to pause program');
+          return;
         }
         
         // Деактивируем все активные ваучеры этой программы
@@ -355,19 +340,20 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         
         if (vouchersError) {
           console.error('Error deactivating vouchers:', vouchersError);
-          toast.warning('Program paused, but some vouchers could not be deactivated');
         } else {
           console.log('Vouchers deactivated successfully for paused program');
-          // Отправляем событие обновления ваучеров
-          window.dispatchEvent(new Event('vouchersUpdated'));
         }
         
-        toast.success('Program, rewards, and vouchers paused successfully');
+        // Отправляем события обновления
+        window.dispatchEvent(new Event('rewardsUpdated'));
+        window.dispatchEvent(new Event('vouchersUpdated'));
+        
+        toast.success('Program paused successfully. Rewards and vouchers are now hidden.');
       } else {
         // Активируем программу в смарт-контракте
         await unpauseProgram(program.tokenAddress as `0x${string}`);
         
-        // Обновляем статус программы в БД
+        // Обновляем статус программы в БД на 'active'
         const { error: programError } = await supabase
           .from('loyalty_programs')
           .update({ status: 'active' })
@@ -375,26 +361,15 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         
         if (programError) {
           console.error('Error updating program status in DB:', programError);
-          toast.warning('Program activated in blockchain, but DB status could not be updated');
+          toast.error('Failed to activate program');
+          return;
         }
         
-        // Активируем все награды этой программы обратно
-        const { error: rewardsError } = await supabase
-          .from('rewards')
-          .update({ is_active: true })
-          .eq('token_address', program.tokenAddress.toLowerCase())
-          .eq('merchant_address', address?.toLowerCase());
+        // Отправляем события обновления
+        window.dispatchEvent(new Event('rewardsUpdated'));
+        window.dispatchEvent(new Event('vouchersUpdated'));
         
-        if (rewardsError) {
-          console.error('Error reactivating rewards:', rewardsError);
-          toast.warning('Program activated, but some rewards could not be reactivated');
-        } else {
-          console.log('Rewards reactivated successfully');
-          // Отправляем событие обновления наград
-          window.dispatchEvent(new Event('rewardsUpdated'));
-        }
-        
-        toast.success('Program and rewards activated! If minting is disabled, enable it separately.');
+        toast.success('Program activated! Rewards and vouchers are now visible. If minting is disabled, enable it separately.');
       }
     } catch (error) {
       console.error('Error toggling program:', error);
@@ -438,23 +413,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
           }
         }
         
-        // 2. Деактивируем все награды этой программы
-        const { error: rewardsError } = await supabase
-          .from('rewards')
-          .update({ is_active: false })
-          .eq('token_address', program.tokenAddress.toLowerCase())
-          .eq('merchant_address', address?.toLowerCase());
-        
-        if (rewardsError) {
-          console.error('Error deactivating rewards:', rewardsError);
-          toast.error('Failed to deactivate rewards');
-        } else {
-          console.log('Rewards deactivated successfully');
-          // Уведомляем об обновлении наград
-          window.dispatchEvent(new Event('rewardsUpdated'));
-        }
-        
-        // 3. Закрываем все активные ваучеры этой программы
+        // 2. Закрываем все активные ваучеры этой программы
         const { error: vouchersError } = await supabase
           .from('vouchers')
           .update({ status: 'expired' })
@@ -470,7 +429,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         window.dispatchEvent(new Event('vouchersUpdated'));
       }
       
-      // 4. Удаляем программу из БД (если есть id)
+      // 3. Удаляем программу из БД (если есть id)
       if (program.id) {
         const { error: deleteError } = await supabase
           .from('loyalty_programs')
@@ -485,7 +444,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         }
       }
       
-      // 5. Удаляем программу из localStorage
+      // 4. Удаляем программу из localStorage
       const updatedPrograms = programs.filter((_, i) => i !== index);
       localStorage.setItem('loyaltyPrograms', JSON.stringify(updatedPrograms));
       
@@ -494,7 +453,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         setSelectedProgram(null);
       }
       
-      toast.success('Program closed successfully');
+      toast.success('Program closed successfully. Rewards and vouchers are now hidden.');
     } catch (error) {
       console.error('Error closing program:', error);
       toast.error('Failed to close program');
