@@ -102,6 +102,18 @@ export async function getMerchantRewards(merchantAddress: string): Promise<Rewar
 
 // Получение наград для конкретного токена
 export async function getRewardsByToken(tokenAddress: string): Promise<Reward[]> {
+  // Сначала проверяем статус программы лояльности
+  const { data: program } = await supabase
+    .from('loyalty_programs')
+    .select('status')
+    .eq('token_address', tokenAddress.toLowerCase())
+    .single();
+  
+  // Если программа неактивна (expired, paused и т.д.), не показываем награды
+  if (program && !['active', 'expiring_soon'].includes(program.status)) {
+    return [];
+  }
+
   const { data, error } = await supabase
     .from('rewards')
     .select('*')

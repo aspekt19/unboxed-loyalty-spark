@@ -323,12 +323,14 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         const { error: rewardsError } = await supabase
           .from('rewards')
           .update({ is_active: false })
-          .eq('token_address', program.tokenAddress.toLowerCase());
+          .eq('token_address', program.tokenAddress.toLowerCase())
+          .eq('merchant_address', address?.toLowerCase());
         
         if (rewardsError) {
           console.error('Error deactivating rewards:', rewardsError);
           toast.warning('Program paused, but some rewards could not be deactivated');
         } else {
+          console.log('Rewards deactivated successfully for paused program');
           // Отправляем событие обновления наград
           window.dispatchEvent(new Event('rewardsUpdated'));
         }
@@ -342,12 +344,14 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         const { error: rewardsError } = await supabase
           .from('rewards')
           .update({ is_active: true })
-          .eq('token_address', program.tokenAddress.toLowerCase());
+          .eq('token_address', program.tokenAddress.toLowerCase())
+          .eq('merchant_address', address?.toLowerCase());
         
         if (rewardsError) {
           console.error('Error reactivating rewards:', rewardsError);
           toast.warning('Program activated, but some rewards could not be reactivated');
         } else {
+          console.log('Rewards reactivated successfully');
           // Отправляем событие обновления наград
           window.dispatchEvent(new Event('rewardsUpdated'));
         }
