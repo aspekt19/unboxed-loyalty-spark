@@ -277,13 +277,20 @@ export async function getCustomerVouchers(customerAddress: string): Promise<Vouc
 // Загрузка ваучеров мерчанта
 export async function getMerchantVouchers(merchantAddress: string): Promise<Voucher[]> {
   try {
+    console.log('getMerchantVouchers called for:', merchantAddress);
+    
     const { data, error } = await supabase
       .from('vouchers')
       .select('*')
       .eq('merchant_address', merchantAddress.toLowerCase())
       .order('activated_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error loading merchant vouchers:', error);
+      throw error;
+    }
+    
+    console.log('Merchant vouchers data:', data?.length || 0, 'rows');
     
     return (data || []).map(v => ({
       id: v.id,

@@ -21,8 +21,13 @@ export function VouchersManagement() {
   const [searchCode, setSearchCode] = useState('');
 
   const loadMerchantVouchers = async () => {
-    if (!address || !session) return;
+    if (!address || !session) {
+      console.log('Cannot load vouchers: address=', address, 'session=', !!session);
+      return;
+    }
+    console.log('Loading merchant vouchers for address:', address);
     const merchantVouchers = await getMerchantVouchers(address);
+    console.log('Loaded merchant vouchers:', merchantVouchers.length, 'vouchers');
     setVouchers(merchantVouchers);
   };
 
