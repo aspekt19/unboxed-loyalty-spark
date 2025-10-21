@@ -68,7 +68,16 @@ export function CreateReward() {
 
     // Listen for updates when programs status changes
     window.addEventListener('loyaltyProgramsUpdated', loadPrograms);
-    return () => window.removeEventListener('loyaltyProgramsUpdated', loadPrograms);
+    
+    // Auto-refresh programs every 5 seconds for real-time updates
+    const interval = setInterval(() => {
+      loadPrograms();
+    }, 5000);
+    
+    return () => {
+      window.removeEventListener('loyaltyProgramsUpdated', loadPrograms);
+      clearInterval(interval);
+    };
   }, [address]);
 
   const handleSubmit = async (e: React.FormEvent) => {
