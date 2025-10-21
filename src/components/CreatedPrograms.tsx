@@ -2,11 +2,15 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Coins, Calendar, Check, Trash2, Loader2, Clock, AlertTriangle } from 'lucide-react';
+import { Coins, Calendar, Check, Trash2, Loader2, Clock, AlertTriangle, Play, Pause } from 'lucide-react';
 import { usePublicClient, useAccount } from 'wagmi';
 import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
 import { useBurnAllTokens } from '@/hooks/useBurnAllTokens';
+import { useToggleProgramStatus } from '@/hooks/useToggleProgramStatus';
+import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
+import { ProgramStatusBadge } from './ProgramStatusBadge';
+import { ProgramControlButtons } from './ProgramControlButtons';
 import { supabase } from '@/integrations/supabase/client';
 import { format, formatDistanceToNow } from 'date-fns';
 import {
@@ -45,9 +49,11 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
   const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
   const [tokenStats, setTokenStats] = useState<TokenStats>({});
   const [isLoadingStats, setIsLoadingStats] = useState(false);
+  const [toggledProgram, setToggledProgram] = useState<string | null>(null);
   const publicClient = usePublicClient();
   const { address } = useAccount();
   const { burnAllTokens, isBurning, progress } = useBurnAllTokens();
+  const { pauseProgram, unpauseProgram, isPending: isToggling, isSuccess: toggleSuccess } = useToggleProgramStatus();
 
   // Очищаем программы при отключении кошелька
   useEffect(() => {
@@ -303,6 +309,29 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     toast.success(`Selected ${program.name}`);
   };
 
+  const handleToggleProgram = async (program: LoyaltyProgram, isPaused: boolean, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!program.tokenAddress) return;
+    
+    setToggledProgram(program.tokenAddress);
+    
+    try {
+      if (isPaused) {
+        await unpauseProgram(program.tokenAddress as `0x${string}`);
+        toast.success('Program reactivated successfully');
+      } else {
+        await pauseProgram(program.tokenAddress as `0x${string}`);
+        toast.success('Program paused successfully');
+      }
+    } catch (error) {
+      console.error('Error toggling program:', error);
+      toast.error('Failed to toggle program status');
+    } finally {
+      setToggledProgram(null);
+    }
+  };
+
   const handleDeleteProgram = async (index: number, e: React.MouseEvent, burnTokens: boolean) => {
     e.stopPropagation();
     
@@ -445,21 +474,24 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <div className="flex items-center gap-2">
-                    {program.status === 'expiring_soon' ? (
-                      <Badge variant="destructive" className="bg-amber-600">
-                        Expiring Soon
-                      </Badge>
-                    ) : (
-                      <Badge variant={program.tokenAddress ? "default" : "secondary"}>
-                        {program.tokenAddress ? "Active" : "Pending"}
-                      </Badge>
+                    <ProgramStatusBadge 
+                      tokenAddress={program.tokenAddress}
+                      fallbackStatus={program.status || (program.tokenAddress ? 'active' : 'pending')}
+                    />
+                    {program.tokenAddress && (
+                      <ProgramControlButtons
+                        tokenAddress={program.tokenAddress}
+                        isToggling={isToggling && toggledProgram === program.tokenAddress}
+                        onToggle={(isPaused) => handleToggleProgram(program, isPaused, {} as React.MouseEvent)}
+                        onDelete={() => {}}
+                      />
                     )}
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          className="hidden"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <Trash2 className="h-4 w-4" />

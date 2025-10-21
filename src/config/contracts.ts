@@ -1,17 +1,14 @@
 export const CONTRACTS = {
   LOYALTY_TOKEN_FACTORY: {
-    address: '0x61b154cAE13F2312D33397419195753D3849F858' as `0x${string}`,
+    address: '0x5F3DdBa12580CFdc6016258774cCc19C4250dA80' as `0x${string}`,
     abi: [
       {
         inputs: [
-          { name: '_name', type: 'string' },
-          { name: '_symbol', type: 'string' },
-          { name: '_merchantAddress', type: 'address' },
+          { name: '_tokenImplementation', type: 'address' },
+          { name: '_admin', type: 'address' },
         ],
-        name: 'createLoyaltyToken',
-        outputs: [{ name: 'tokenProxy', type: 'address' }],
         stateMutability: 'nonpayable',
-        type: 'function',
+        type: 'constructor',
       },
       {
         anonymous: false,
@@ -25,6 +22,41 @@ export const CONTRACTS = {
         type: 'event',
       },
       {
+        anonymous: false,
+        inputs: [
+          { indexed: true, name: 'tokenAddress', type: 'address' },
+          { indexed: true, name: 'activatedBy', type: 'address' },
+          { indexed: false, name: 'message', type: 'string' },
+        ],
+        name: 'LoyaltyTokenReactivated',
+        type: 'event',
+      },
+      {
+        inputs: [
+          { name: '_name', type: 'string' },
+          { name: '_symbol', type: 'string' },
+          { name: '_merchantAddress', type: 'address' },
+        ],
+        name: 'createLoyaltyToken',
+        outputs: [{ name: 'tokenProxy', type: 'address' }],
+        stateMutability: 'nonpayable',
+        type: 'function',
+      },
+      {
+        inputs: [],
+        name: 'factoryAdmin',
+        outputs: [{ name: '', type: 'address' }],
+        stateMutability: 'view',
+        type: 'function',
+      },
+      {
+        inputs: [{ name: '_tokenProxyAddress', type: 'address' }],
+        name: 'reactivateExistingToken',
+        outputs: [],
+        stateMutability: 'nonpayable',
+        type: 'function',
+      },
+      {
         inputs: [],
         name: 'tokenImplementation',
         outputs: [{ name: '', type: 'address' }],
@@ -34,7 +66,7 @@ export const CONTRACTS = {
     ] as const,
   },
   LOYAL_SPARK_ERC20: {
-    address: '0xc46481b25a0E6161d87F84C0dd2B0721B891cB4e' as `0x${string}`,
+    address: '0xe6BA426C9c51281B929a17444De02c65815E27C3' as `0x${string}`,
     abi: [
       {
         inputs: [{ name: 'account', type: 'address' }],
@@ -75,7 +107,7 @@ export const CONTRACTS = {
       },
       {
         inputs: [
-          { name: 'to', type: 'address' },
+          { name: 'account', type: 'address' },
           { name: 'amount', type: 'uint256' },
         ],
         name: 'mint',
@@ -84,7 +116,10 @@ export const CONTRACTS = {
         type: 'function',
       },
       {
-        inputs: [{ name: 'amount', type: 'uint256' }],
+        inputs: [
+          { name: 'account', type: 'address' },
+          { name: 'amount', type: 'uint256' },
+        ],
         name: 'burn',
         outputs: [],
         stateMutability: 'nonpayable',
@@ -115,6 +150,73 @@ export const CONTRACTS = {
         inputs: [],
         name: 'totalSupply',
         outputs: [{ name: '', type: 'uint256' }],
+        stateMutability: 'view',
+        type: 'function',
+      },
+      {
+        inputs: [
+          { name: 'from', type: 'address' },
+          { name: 'to', type: 'address' },
+          { name: 'amount', type: 'uint256' },
+        ],
+        name: 'transferFrom',
+        outputs: [{ name: '', type: 'bool' }],
+        stateMutability: 'nonpayable',
+        type: 'function',
+      },
+      {
+        inputs: [],
+        name: 'enableMinting',
+        outputs: [],
+        stateMutability: 'nonpayable',
+        type: 'function',
+      },
+      {
+        inputs: [],
+        name: 'disableMinting',
+        outputs: [],
+        stateMutability: 'nonpayable',
+        type: 'function',
+      },
+      {
+        inputs: [],
+        name: 'unpauseUtility',
+        outputs: [],
+        stateMutability: 'nonpayable',
+        type: 'function',
+      },
+      {
+        inputs: [],
+        name: 'pauseUtility',
+        outputs: [],
+        stateMutability: 'nonpayable',
+        type: 'function',
+      },
+      {
+        inputs: [],
+        name: 'isMintingActive',
+        outputs: [{ name: '', type: 'bool' }],
+        stateMutability: 'view',
+        type: 'function',
+      },
+      {
+        inputs: [],
+        name: 'isUtilityActive',
+        outputs: [{ name: '', type: 'bool' }],
+        stateMutability: 'view',
+        type: 'function',
+      },
+      {
+        inputs: [],
+        name: 'getMerchantAddress',
+        outputs: [{ name: '', type: 'address' }],
+        stateMutability: 'view',
+        type: 'function',
+      },
+      {
+        inputs: [],
+        name: 'owner',
+        outputs: [{ name: '', type: 'address' }],
         stateMutability: 'view',
         type: 'function',
       },
