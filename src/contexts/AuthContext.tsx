@@ -58,36 +58,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         p_new_user_id: authData.user.id,
       });
 
-      if (migrationError) throw migrationError;
-
-      // Wait and verify profile was created/updated correctly
-      let retries = 0;
-      const maxRetries = 5;
-      let profileVerified = false;
-
-      while (retries < maxRetries && !profileVerified) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('user_id, wallet_address')
-          .eq('wallet_address', address.toLowerCase())
-          .eq('user_id', authData.user.id)
-          .maybeSingle();
-
-        if (!profileError && profile) {
-          profileVerified = true;
-          console.log('Profile verified:', profile);
-        } else {
-          retries++;
-          console.log(`Profile verification attempt ${retries}/${maxRetries}`, profileError);
-        }
+      if (migrationError) {
+        console.error('Migration error:', migrationError);
+        throw migrationError;
       }
 
-      if (!profileVerified) {
-        console.error('Failed to verify profile creation after', maxRetries, 'attempts');
-        throw new Error('Failed to verify profile creation');
-      }
+      console.log('Profile migrated successfully for wallet:', address.toLowerCase());
 
       window.dispatchEvent(new Event('profileMigrated'));
       toast.success('Successfully signed in with wallet');
