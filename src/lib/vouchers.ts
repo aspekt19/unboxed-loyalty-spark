@@ -76,7 +76,7 @@ export async function loadRewards(): Promise<Reward[]> {
   }));
 }
 
-// Загрузка наград мерчанта (с фильтрацией по статусу программы)
+// Загрузка наград мерчанта (БЕЗ фильтрации по статусу программы - мерчанты видят все свои награды)
 export async function getMerchantRewards(merchantAddress: string): Promise<Reward[]> {
   const { data: allRewards, error } = await supabase
     .from('rewards')
@@ -95,36 +95,8 @@ export async function getMerchantRewards(merchantAddress: string): Promise<Rewar
     return [];
   }
   
-  // Проверяем статус программы для каждой награды
-  const rewardsWithStatus = await Promise.all(
-    allRewards.map(async (reward) => {
-      const { data: program, error: programError } = await supabase
-        .from('loyalty_programs')
-        .select('status')
-        .eq('token_address', reward.token_address.toLowerCase())
-        .maybeSingle();
-      
-      if (programError) {
-        console.error('Error fetching program for reward:', programError);
-      }
-      
-      console.log(`Reward "${reward.name}" program status:`, program?.status || 'not found');
-      
-      return {
-        ...reward,
-        programStatus: program?.status
-      };
-    })
-  );
-  
-  // Возвращаем только награды активных или истекающих программ
-  const activeRewards = rewardsWithStatus.filter(r => 
-    r.programStatus === 'active' || r.programStatus === 'expiring_soon'
-  );
-  
-  console.log('getMerchantRewards: Filtered to', activeRewards.length, 'active rewards');
-  
-  return activeRewards.map(r => ({
+  // Мерчанты видят все свои награды независимо от статуса программы
+  return allRewards.map(r => ({
     id: r.id,
     tokenAddress: r.token_address,
     merchantAddress: r.merchant_address,
@@ -314,7 +286,7 @@ export async function getCustomerVouchers(customerAddress: string): Promise<Vouc
   }));
 }
 
-// Загрузка ваучеров мерчанта (с фильтрацией по статусу программы)
+// Загрузка ваучеров мерчанта (БЕЗ фильтрации по статусу программы - мерчанты видят все свои ваучеры)
 export async function getMerchantVouchers(merchantAddress: string): Promise<Voucher[]> {
   try {
     console.log('getMerchantVouchers called for:', merchantAddress);
@@ -336,36 +308,8 @@ export async function getMerchantVouchers(merchantAddress: string): Promise<Vouc
       return [];
     }
     
-    // Проверяем статус программы для каждого ваучера
-    const vouchersWithStatus = await Promise.all(
-      allVouchers.map(async (voucher) => {
-        const { data: program, error: programError } = await supabase
-          .from('loyalty_programs')
-          .select('status')
-          .eq('token_address', voucher.token_address.toLowerCase())
-          .maybeSingle();
-        
-        if (programError) {
-          console.error('Error fetching program for voucher:', programError);
-        }
-        
-        console.log(`Voucher ${voucher.code} program status:`, program?.status || 'not found');
-        
-        return {
-          ...voucher,
-          programStatus: program?.status
-        };
-      })
-    );
-    
-    // Возвращаем только ваучеры активных или истекающих программ
-    const activeVouchers = vouchersWithStatus.filter(v => 
-      v.programStatus === 'active' || v.programStatus === 'expiring_soon'
-    );
-    
-    console.log('Filtered merchant vouchers:', activeVouchers.length, 'active vouchers');
-    
-    return activeVouchers.map(v => ({
+    // Мерчанты видят все свои ваучеры независимо от статуса программы
+    return allVouchers.map(v => ({
       id: v.id,
       code: v.code,
       rewardId: v.reward_id,
