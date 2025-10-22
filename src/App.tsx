@@ -17,11 +17,19 @@ import { AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
 import { migrateAllData } from "./lib/migrateLocalStorageData";
 import { AuthProvider } from "./contexts/AuthContext";
+import { sdk } from "@farcaster/miniapp-sdk";
 
 const queryClient = new QueryClient();
 
 function AnimatedRoutes() {
   const location = useLocation();
+
+  // Initialize Farcaster Mini App SDK
+  useEffect(() => {
+    sdk.actions.ready().catch((error) => {
+      console.error('Failed to initialize Farcaster SDK:', error);
+    });
+  }, []);
 
   // Автоматическая миграция данных из localStorage в БД при каждой загрузке
   // (если есть данные для миграции)
