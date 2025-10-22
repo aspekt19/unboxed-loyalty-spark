@@ -144,12 +144,12 @@ export function VouchersManagement() {
                     {activeVouchers.map((voucher) => (
                       <div
                         key={voucher.id}
-                        className={`flex items-center justify-between p-4 border rounded-lg ${voucher.status === 'active' ? 'bg-primary/5' : 'bg-muted/50 opacity-70'}`}
+                        className={`flex flex-col gap-3 p-3 border rounded-lg ${voucher.status === 'active' ? 'bg-primary/5' : 'bg-muted/50 opacity-70'}`}
                       >
-                        <div className="flex-1 space-y-1">
-                          <div className="flex items-center gap-2">
-                            <code className="font-bold">{voucher.code}</code>
-                            <Badge variant={voucher.status === 'active' ? 'default' : 'secondary'}>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <code className="font-bold text-sm">{voucher.code}</code>
+                            <Badge variant={voucher.status === 'active' ? 'default' : 'secondary'} className="text-[10px] px-1.5 py-0 h-4">
                               {voucher.status === 'active' ? 'Active' : 'Inactive'}
                             </Badge>
                           </div>
@@ -169,11 +169,11 @@ export function VouchersManagement() {
                         <Button
                           size="sm"
                           onClick={() => handleMarkAsUsed(voucher.id, voucher.code)}
-                          className="gap-2"
+                          className="gap-1.5 h-8 w-full"
                           disabled={voucher.status !== 'active'}
                         >
-                          <CheckCircle2 className="h-4 w-4" />
-                          Mark as Used
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          <span className="text-xs">Mark as Used</span>
                         </Button>
                       </div>
                     ))}
@@ -192,12 +192,12 @@ export function VouchersManagement() {
                     {usedVouchers.map((voucher) => (
                       <div
                         key={voucher.id}
-                        className="flex items-center justify-between p-4 border rounded-lg opacity-60"
+                        className="flex flex-col gap-2 p-3 border rounded-lg opacity-60"
                       >
-                        <div className="flex-1 space-y-1">
-                          <div className="flex items-center gap-2">
-                            <code className="font-bold">{voucher.code}</code>
-                            <Badge variant="secondary">Used</Badge>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <code className="font-bold text-sm">{voucher.code}</code>
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">Used</Badge>
                           </div>
                           <div className="text-sm font-medium">{voucher.rewardName}</div>
                           <div className="text-xs text-muted-foreground">

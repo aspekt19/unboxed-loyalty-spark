@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Gift, Trash2, ToggleLeft, ToggleRight, Pencil } from 'lucide-react';
@@ -150,25 +151,26 @@ export function RewardsList() {
               No rewards created yet. Create your first reward above!
             </p>
           ) : (
-            <div className="space-y-4">
+            <ScrollArea className="h-full pr-4">
+              <div className="space-y-4">
               {rewards.map((reward) => {
                 const tokenInfo = tokens.get(reward.tokenAddress.toLowerCase());
                 return (
                   <div
                     key={reward.id}
-                    className="flex items-start justify-between p-4 border rounded-lg bg-muted/30"
+                    className="flex flex-col gap-2 p-3 border rounded-lg bg-muted/30"
                   >
-                  <div className="flex-1 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className={`font-semibold ${!reward.isActive ? 'text-muted-foreground' : ''}`}>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h4 className={`font-semibold text-sm ${!reward.isActive ? 'text-muted-foreground' : ''}`}>
                           {reward.name}
                         </h4>
-                        <Badge variant={reward.isActive ? 'default' : 'secondary'}>
+                        <Badge variant={reward.isActive ? 'default' : 'secondary'} className="text-[10px] px-1.5 py-0 h-4">
                           {reward.isActive ? 'Active' : 'Inactive'}
                         </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground">{reward.description}</p>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground">{reward.description}</p>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
                         <span className="font-medium text-primary">{reward.cost} tokens</span>
                         {tokenInfo && (
                           <span>
@@ -182,42 +184,46 @@ export function RewardsList() {
                         </p>
                       )}
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-1 justify-end">
                       <Button
                         size="icon"
                         variant="ghost"
+                        className="h-7 w-7"
                         onClick={() => handleEditClick(reward)}
                         title="Edit"
                         disabled={!reward.isActive}
                       >
-                        <Pencil className="h-4 w-4" />
+                        <Pencil className="h-3.5 w-3.5" />
                       </Button>
                       <Button
                         size="icon"
                         variant="ghost"
+                        className="h-7 w-7"
                         onClick={() => handleToggleActive(reward.id)}
                         title={reward.isActive ? 'Deactivate' : 'Activate'}
                         disabled={!reward.isActive}
                       >
                         {reward.isActive ? (
-                          <ToggleRight className="h-4 w-4" />
+                          <ToggleRight className="h-3.5 w-3.5" />
                         ) : (
-                          <ToggleLeft className="h-4 w-4" />
+                          <ToggleLeft className="h-3.5 w-3.5" />
                         )}
                       </Button>
                       <Button
                         size="icon"
                         variant="ghost"
+                        className="h-7 w-7"
                         onClick={() => handleDelete(reward.id)}
                         title="Delete"
                       >
-                        <Trash2 className="h-4 w-4 text-destructive" />
+                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
                       </Button>
                     </div>
                   </div>
                 );
               })}
-            </div>
+              </div>
+            </ScrollArea>
           )}
         </CardContent>
       </Card>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Coins, Calendar, Check, Trash2, Loader2, Clock, AlertTriangle, Play, Pause } from 'lucide-react';
 import { usePublicClient, useAccount } from 'wagmi';
 import { CONTRACTS } from '@/config/contracts';
@@ -516,8 +517,9 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         <CardDescription>Select a program to issue rewards</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden">
-        <div className="space-y-3">
-          {programs.map((program, index) => (
+        <ScrollArea className="h-full pr-4">
+          <div className="space-y-3">
+            {programs.map((program, index) => (
             <div
               key={index}
               onClick={() => handleSelectProgram(program, index)}
@@ -662,7 +664,8 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
               </div>
             </div>
           ))}
-        </div>
+          </div>
+        </ScrollArea>
       </CardContent>
     </Card>
   );
