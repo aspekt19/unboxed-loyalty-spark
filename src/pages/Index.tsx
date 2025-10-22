@@ -1,5 +1,6 @@
-import { RoleSelector } from '@/components/RoleSelector';
+import { LandingPage } from '@/components/LandingPage';
 import { FarcasterSplash } from '@/components/FarcasterSplash';
+import { RoleSelector } from '@/components/RoleSelector';
 import { useNavigate } from 'react-router-dom';
 import PageTransition from '@/components/PageTransition';
 import { useState, useEffect } from 'react';
@@ -20,7 +21,7 @@ const Index = () => {
           setShowSplash(true);
         }
       } catch (error) {
-        // Not in Farcaster context, show normal flow
+        // Not in Farcaster context, show landing page
         setIsFarcaster(false);
       }
     };
@@ -40,20 +41,28 @@ const Index = () => {
     }
   };
 
-  // Show splash only in Farcaster and only initially
-  if (isFarcaster && showSplash) {
+  // In Farcaster: show splash -> role selector
+  if (isFarcaster) {
+    if (showSplash) {
+      return (
+        <PageTransition>
+          <FarcasterSplash onLaunch={handleLaunch} />
+        </PageTransition>
+      );
+    }
     return (
       <PageTransition>
-        <FarcasterSplash onLaunch={handleLaunch} />
+        <div className="min-h-screen bg-white">
+          <RoleSelector onRoleSelect={handleRoleSelect} />
+        </div>
       </PageTransition>
     );
   }
 
+  // In web: show landing page
   return (
     <PageTransition>
-      <div className="min-h-screen bg-white">
-        <RoleSelector onRoleSelect={handleRoleSelect} />
-      </div>
+      <LandingPage />
     </PageTransition>
   );
 };

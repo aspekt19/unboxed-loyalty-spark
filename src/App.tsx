@@ -8,6 +8,7 @@ import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { config, rainbowKitLocale } from "./config/wagmi";
 import "@rainbow-me/rainbowkit/styles.css";
 import Index from "./pages/Index";
+import AppLaunch from "./pages/AppLaunch";
 import CustomerPage from "./pages/CustomerPage";
 import MerchantPage from "./pages/MerchantPage";
 import PitchDeck from "./pages/pitch-deck/PitchDeck";
@@ -58,6 +59,7 @@ function AnimatedRoutes() {
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<Index />} />
+        <Route path="/app" element={<AppLaunch />} />
         <Route path="/customer" element={<CustomerPage />} />
         <Route path="/merchant" element={<MerchantPage />} />
         <Route path="/pitch" element={<PitchDeck />} />
