@@ -32,9 +32,16 @@ $100B in loyalty points expire unused every year
 
 **A blockchain platform that guarantees authenticity and transferability:**
 
-| AUTHENTICITY | TRANSFERABILITY | LIQUIDITY |
+| AUTHENTICITY | TRANSFERABILITY | NO SUBSCRIPTIONS |
 |------------|--------------|-------------------|
-| Blockchain verification<br/>Fraud-proof rewards<br/>Transparent supply | True ownership<br/>Trade P2P anytime<br/>Gift or sell freely | Optional buyback by merchants<br/>80% refundable stake<br/>Universal LOYAL hub |
+| Blockchain verification<br/>Fraud-proof rewards<br/>Transparent supply | True ownership<br/>Trade P2P anytime<br/>Gift or sell freely | **Deposit, don't pay monthly**<br/>80% refund guaranteed<br/>Reserve Fund protection |
+
+### Key Advantage: Refundable Deposit Model
+
+**Merchants don't pay monthly fees** — they deposit $1K-15K LOYAL as collateral  
+**80% guaranteed return** when exiting the platform  
+**Reserve Fund** in stablecoins & major currencies ensures refund security  
+Fund continuously replenished from platform revenue
 
 ---
 
@@ -117,15 +124,21 @@ Optional liquidity via LOYAL hub
 
 ## Slide 9: Competitive Advantage
 
-**Key Differentiator: Guaranteed Authenticity on Blockchain**
+**Key Differentiator: Deposit Model vs. Subscription Fees**
 
 | Traditional Loyalty | Loyal Spark |
 |-----------------|-------------|
+| **Monthly subscription fees** | **Refundable deposit (80% guaranteed)** |
 | Points can be devalued | Immutable blockchain records |
 | Vulnerable to fraud | Cryptographically verified |
 | No transferability | Fully transferable & tradeable |
-| Vendor lock-in | 80% refundable merchant stake |
+| Vendor lock-in | Exit anytime with guaranteed refund |
 | Opaque terms | Transparent on BASE |
+
+**Reserve Fund Protection:**  
+Dedicated fund in stablecoins (USDC/USDT) + major cryptocurrencies  
+Continuously replenished from platform revenue  
+Ensures 80% refund guarantee for all merchants
 
 ---
 
