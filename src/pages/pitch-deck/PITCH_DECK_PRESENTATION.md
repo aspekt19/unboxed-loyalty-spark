@@ -1,257 +1,199 @@
-# Loyal Spark - Investor Pitch Deck
-## Blockchain Loyalty Rewards Platform for SMBs
+# Loyal Spark
+## Book loyalty rewards with merchants, not expensive platforms
 
-Total Slides: 14
+Total Slides: 12
 
 ---
 
-## Slide 1: Cover
+## Slide 1: Welcome
 
 # Loyal Spark
 
-**Blockchain Loyalty Rewards**  
-**Built for Small Business**
+**Book loyalty rewards with merchants, not expensive platforms**
 
 🌐 https://loyalspark.online/  
-🔗 BASE Network | 🪙 LOYAL Token
+🔗 Built on BASE Network
 
 ---
 
-## Slide 2: The Problem
+## Slide 2: Problem
 
-### Traditional loyalty programs don't work for small businesses
+**Traditional loyalty platforms are expensive and inflexible**
 
-**$100B in rewards go unredeemed every year**
+Small businesses pay $99-499/month in subscription fees
 
-**Small businesses pay 15-30% in fees**
+Customers don't truly own their rewards
 
-**Customers can't trade or own their points**
+$100B in loyalty points expire unused every year
 
 ---
 
-## Slide 3: The Solution
+## Slide 3: Solution
 
-### One platform. Three benefits.
+**A blockchain platform where merchants can launch their own loyalty tokens to:**
 
-#### 💰 SAVE MONEY
-No monthly fees  
-Pay once, use forever  
-80% refund guarantee
-
-#### 📈 EARN REVENUE
-Keep unredeemed rewards  
-Earn from token trades  
-Stake appreciates over time
-
-#### ⚡ EMPOWER CUSTOMERS
-True ownership  
-Trade anytime  
-Works everywhere
+| SAVE MONEY | EARN REVENUE | EMPOWER CUSTOMERS |
+|------------|--------------|-------------------|
+| No monthly fees<br/>Pay once via staking<br/>80% refundable | Keep unredeemed rewards<br/>Earn from token trades<br/>Stake appreciates | True ownership<br/>Trade anytime<br/>Universal liquidity |
 
 ---
 
 ## Slide 4: Market Validation
 
-### The loyalty market is massive and growing
+**4.5 billion** people are in loyalty programs worldwide
 
-**4.5 billion people** are in loyalty programs today
+**$48 billion** in points issued but never redeemed annually
 
-**90% of consumers** actively use loyalty rewards
+**90%** of consumers actively use loyalty programs
 
-**$48 billion** in points issued annually but never used
-
-**Small businesses** represent 50M+ potential merchants worldwide
+**50M+** small businesses need affordable solutions
 
 ---
 
 ## Slide 5: Market Size
 
-### $200B Global Loyalty Market
+### $200B Global Loyalty Industry
 
-**Total Addressable Market**  
-50M+ small business merchants worldwide
-
-**Serviceable Market**  
-10M merchants in English-speaking countries
-
-**Target Market**  
-100K merchants in Year 1-3
-
-**Growing 15% annually** with shift to digital
+| Market Segment | Size | Our Focus |
+|----------------|------|-----------|
+| **Total Addressable Market** | 50M+ merchants worldwide | Growing 15% annually |
+| **Serviceable Market** | 10M English-speaking merchants | Digital-first businesses |
+| **Target Market (Year 1-3)** | 100K merchants | SMBs on BASE |
 
 ---
 
-## Slide 6: How It Works
+## Slide 6: Product
 
-### Simple for merchants. Powerful for customers.
+**Simple for merchants. Powerful for customers.**
 
-#### 1️⃣ DEPLOY
-Merchant creates custom loyalty token  
-Stake $1K-15K in LOYAL (refundable)
+### 1️⃣ DEPLOY TOKEN
+Create custom loyalty token  
+Stake LOYAL as collateral  
+Launch in minutes
 
-#### 2️⃣ ISSUE
-Reward customers with branded tokens  
-Track all holders in real-time
+### 2️⃣ ISSUE REWARDS
+Reward customers instantly  
+Track all transactions  
+Real-time analytics
 
-#### 3️⃣ TRADE
-Customers trade tokens via LOYAL hub  
-Any merchant token ↔ any other token
+### 3️⃣ TRADE ANYWHERE
+Universal liquidity via LOYAL  
+Trade between any merchant tokens  
+True ownership + transparency
 
 ---
 
 ## Slide 7: Business Model
 
-### Three revenue streams
+**Merchant Staking Tiers**
 
-**Merchant Staking**  
-$1K Base | $5K Pro | $15K Enterprise  
-80% refundable after 12 months
+| Tier | Stake | Refund | Features |
+|------|-------|--------|----------|
+| Base | $1,000 | 80% after 12mo | Basic loyalty |
+| Pro | $5,000 | 80% after 12mo | Advanced analytics |
+| Enterprise | $15,000 | 80% after 12mo | White label + API |
 
-**Transaction Fees**  
-8% burn on merchant token → LOYAL  
-0.5% revenue on LOYAL → merchant token
-
-**Premium Features**  
-Advanced analytics, API access, white label
+**Transaction Revenue**
+- 8% burn fee (M-token → LOYAL)
+- 0.5% platform fee (LOYAL → M-token)
 
 ---
 
 ## Slide 8: Token Economics
 
-### 10B LOYAL tokens with deflationary mechanics
+### 10 Billion LOYAL Tokens (Deflationary)
 
-| **Category** | **%** | **Amount** | **Vesting** |
-|--------------|-------|------------|-------------|
-| Ecosystem (DAO) | 38% | 3.8B | 5-year linear |
-| Token Sales | 30% | 3B | 12-18 months |
-| Team & Advisors | 20% | 2B | 1yr + 3yr vest |
-| Marketing | 7% | 700M | Fast unlock |
+| Allocation | % | Amount | Vesting |
+|------------|---|--------|---------|
+| Ecosystem Fund (DAO) | 38% | 3.8B | 5-year linear |
+| Token Sales | 30% | 3.0B | 12-18 months |
+| Team & Advisors | 20% | 2.0B | 1yr cliff + 3yr vest |
+| Marketing & Growth | 7% | 700M | Performance-based |
 | Initial Liquidity | 5% | 500M | TGE unlock |
 
-**Deflationary:** 8% burned on every merchant token swap
+**Deflationary Mechanism:** 8% burned on every merchant token swap
 
 ---
 
-## Slide 9: Competitive Advantages
+## Slide 9: Competitive Advantage
 
-### Why we win
+**We built on BASE with MVP already live**
 
-**No monthly fees** → Traditional platforms charge $99-499/month
-
-**Staking model** → Customers own their rewards, not us
-
-**Universal liquidity** → Trade any loyalty token for any other
-
-**SMB-focused** → Built specifically for small business needs
-
-**BASE Network** → Fast, cheap, secure blockchain infrastructure
+| Traditional SaaS | Loyal Spark |
+|-----------------|-------------|
+| $99-499/month | One-time stake (80% refundable) |
+| Vendor lock-in | Full data control |
+| Points expire worthless | Trade anytime for value |
+| 6-12 month setup | Deploy in minutes |
+| Opaque "black box" | Transparent on BASE |
 
 ---
 
-## Slide 10: Traction
+## Slide 10: Traction & Roadmap
 
-### Live and ready to scale
+**Current Status (Q4 2025)**
+✅ MVP live on BASE Network  
+✅ Smart contracts audited  
+✅ Full merchant + customer features
 
-✅ **Platform live** on BASE Network
+**2026 Milestones**
+- Q1-Q2: 100 merchants, token TGE
+- Q3: 1,000 merchants, DEX integration
+- Q4: 5,000 merchants, hub liquidity live
 
-✅ **Smart contracts deployed** and tested
-
-✅ **MVP complete** with full merchant + customer features
-
-🎯 **Target:** 100 merchants by Q2 2026
-
----
-
-## Slide 11: Roadmap
-
-### 18-month plan to 10,000 merchants
-
-**Q1-Q2 2026**  
-Beta launch with 100 merchants  
-LOYAL token TGE & DEX listing
-
-**Q3 2026**  
-1,000 active merchants  
-DEX aggregator integration
-
-**Q4 2026**  
-5,000 merchants  
-Hub-and-spoke liquidity live
-
-**Q1-Q2 2027**  
-10,000+ merchants  
-Multi-chain expansion  
-Series A preparation
+**2027 Goals**
+- 10,000+ active merchants
+- Multi-chain expansion
+- Series A preparation
 
 ---
 
-## Slide 12: Team & Hiring Plan
+## Slide 11: Team & Development
 
-### Building the right team for SMB success
+**MVP-to-Enterprise Development Plan**
 
-**14-person team | $2.75M budget over 18 months**
+| Phase | Duration | Budget | Focus |
+|-------|----------|--------|-------|
+| Discovery & Audit | 5-7 weeks | $25K-40K | Architecture review |
+| BASE Smart Contracts | 10-12 weeks | $55K-120K | Advanced tokenomics |
+| Mobile Development | 12-14 weeks | $70K-140K | iOS & Android apps |
+| QA & Security Audit | 6-8 weeks | $30K-50K | Testing & certification |
+| **TOTAL** | **33-41 weeks** | **$200K-380K** | **Full Enterprise Platform** |
 
-**Engineering (4)** - $840K  
-Smart contracts, frontend, infrastructure
-
-**Sales & BD (3)** - $585K  
-Merchant onboarding and partnerships
-
-**Marketing (3)** - $540K  
-Community, content, growth
-
-**Product & Design (2)** - $450K  
-User experience and features
-
-**Operations (2)** - $330K  
-Support and infrastructure
+**Core Team:** Solutions Architect, 2 BASE Developers, 2 Mobile Developers, QA Engineer, PM
 
 ---
 
-## Slide 13: Projections
+## Slide 12: The Ask
 
-### Path to $12M annual revenue
+# Raising $200K - $380K Development Round
 
-| **Year** | **Merchants** | **Value Locked** | **Revenue** |
-|----------|---------------|------------------|-------------|
-| 2026 | 1,000 | $2M | $50K |
-| 2027 | 10,000 | $25M | $1.5M |
-| 2028 | 50,000 | $150M | $12M |
-
-**Assumptions:** 5% monthly merchant growth, $2K average stake, $1K monthly transaction volume per merchant
-
----
-
-## Slide 14: The Ask
-
-# Raising $3.5M - $4M Seed Round
-
-**Pre-money valuation:** $12M-15M  
-**18-month runway** to product-market fit & Series A
+**Milestone-based funding to scale MVP → Enterprise**
 
 ### Use of Funds
 
-**Team (70%)** - $2.75M  
-Engineering, sales, marketing, operations
+**BASE Smart Contracts (30%)** - $55K-120K  
+Advanced loyalty mechanics, coalitions, gamification
 
-**Community (8%)** - $300K  
-Merchant programs, developer ecosystem
+**Mobile Development (38%)** - $70K-140K  
+Native iOS/Android with premium UX/UI
 
-**Infrastructure (10%)** - $400K  
-Cloud, tools, security
+**QA & Security (15%)** - $30K-50K  
+Smart contract audits, load testing
 
-**Legal & Audits (7%)** - $250K  
-Token structure, smart contract audits
+**Discovery & PM (12%)** - $25K-40K  
+Architecture, integration design
 
-**Reserve (5%)** - $200K  
-Buffer for opportunities
+**Reserve (5%)** - $10K-20K  
+Contingency buffer
 
-### Milestones
+### Expected Outcomes
 
-✅ 1,000+ merchants onboarded  
-✅ $2M+ Total Value Locked  
-✅ Product-market fit validated  
-✅ Series A ready
+✅ Native mobile apps (iOS & Android)  
+✅ Enterprise-grade smart contracts  
+✅ 1,000+ merchant capacity  
+✅ Full API for ERP/POS integration  
+✅ 7.5-9.5 month delivery
 
 ---
 
@@ -259,10 +201,10 @@ Buffer for opportunities
 
 # Let's Revolutionize Loyalty for Small Business
 
-🌐 https://loyalspark.online/  
-🔗 Built on BASE Network
+🌐 **https://loyalspark.online/**  
+🔗 **Built on BASE Network**
 
-**Join us in transforming how 50 million small businesses reward their customers**
+**Join us in transforming how 50 million merchants reward customers**
 
 ---
 
