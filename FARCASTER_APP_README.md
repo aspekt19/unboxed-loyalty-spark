@@ -249,9 +249,10 @@ MIT License - see LICENSE file for details
 
 ## Support
 
-- Documentation: See README files in `/public/media-kit/`
-- Smart Contracts: See `README_LOYALTY_TOKEN_FACTORY.md` and `README_LOYAL_SPARK_ERC20.md`
-- Tokenomics: See `src/pages/pitch-deck/TOKENOMICS.md`
+- **Email**: info@loyalspark.online
+- **Documentation**: See README files in `/public/media-kit/`
+- **Smart Contracts**: See `README_LOYALTY_TOKEN_FACTORY.md` and `README_LOYAL_SPARK_ERC20.md`
+- **Tokenomics**: See `src/pages/pitch-deck/TOKENOMICS.md`
 
 ## Roadmap
 

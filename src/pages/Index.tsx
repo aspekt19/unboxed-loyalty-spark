@@ -172,8 +172,27 @@ const Index = () => {
 
         {/* Footer */}
         <footer className="border-t border-border py-8 mt-16">
-          <div className="container mx-auto px-6 text-center text-sm text-muted-foreground">
-            <p>© 2025 Loyal Spark. Built on BASE Network.</p>
+          <div className="container mx-auto px-6">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
+              <p>© 2025 Loyal Spark. Built on BASE Network.</p>
+              <div className="flex items-center gap-4">
+                <a 
+                  href="mailto:info@loyalspark.online" 
+                  className="hover:text-foreground transition-colors duration-200"
+                >
+                  info@loyalspark.online
+                </a>
+                <span>|</span>
+                <a 
+                  href="https://x.com/Loyal_Spark" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="hover:text-foreground transition-colors duration-200"
+                >
+                  Twitter/X
+                </a>
+              </div>
+            </div>
           </div>
         </footer>
       </div>
