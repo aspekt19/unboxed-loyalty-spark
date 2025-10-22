@@ -14,7 +14,7 @@ serve(async (req) => {
   try {
     const url = new URL(req.url);
     const frameUrl = `${url.origin}/frame`;
-    const appUrl = "https://loyalty-spark.lovable.app";
+    const appUrl = "https://loyalspark.online";
     const imageUrl = `${appUrl}/media-kit/new-favicon.png`;
 
     // Handle POST request (when user clicks button in frame)
