@@ -56,7 +56,7 @@ serve(async (req) => {
         <meta property="fc:frame" content="vNext" />
         <meta property="fc:frame:image" content="${imageUrl}" />
         <meta property="fc:frame:image:aspect_ratio" content="1.91:1" />
-        <meta property="fc:frame:button:1" content="🚀 Launch Loyal Spark" />
+        <meta property="fc:frame:button:1" content="Launch Loyal Spark" />
         <meta property="fc:frame:button:1:action" content="post_redirect" />
         <meta property="fc:frame:post_url" content="${appUrl}" />
         
@@ -105,7 +105,7 @@ serve(async (req) => {
             color: #667eea;
             text-decoration: none;
             border-radius: 10px;
-            font-weight: bold;
+            font-weight: 800;
             font-size: 1.1rem;
             transition: transform 0.2s;
           }
