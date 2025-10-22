@@ -11,7 +11,8 @@ export default defineConfig(({ mode }) => ({
     allowedHosts: [
       'nonoperating-innocuously-magaly.ngrok-free.dev',
       'loyalty-spark.lovable.app',
-      'bzxmejzssxjazswgwqqs.supabase.co'
+      'bzxmejzssxjazswgwqqs.supabase.co',
+      'loyalspark.online'
     ],
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
