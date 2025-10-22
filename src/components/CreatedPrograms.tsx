@@ -523,7 +523,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
             <div
               key={index}
               onClick={() => handleSelectProgram(program, index)}
-              className={`p-4 rounded-lg border-2 transition-all ${
+              className={`p-3 rounded-lg border-2 transition-all ${
                 program.tokenAddress ? 'cursor-pointer hover:border-primary/50 hover:shadow-md' : 'cursor-not-allowed opacity-50'
               } ${
                 selectedProgram === index.toString()
@@ -531,137 +531,137 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
                   : 'border-border'
               }`}
             >
-              <div className="flex justify-between items-start gap-3">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-lg">{program.name}</h3>
-                    {selectedProgram === index.toString() && (
-                      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground">
-                        <Check className="h-3 w-3" />
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground">Symbol: {program.symbol}</p>
-                  {program.tokenAddress && (
-                    <>
-                      <p className="text-xs text-muted-foreground mt-1 font-mono">
+              <div className="space-y-2">
+                <div className="flex justify-between items-start gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <h3 className="font-semibold text-base truncate">{program.name}</h3>
+                      {selectedProgram === index.toString() && (
+                        <div className="flex items-center justify-center w-4 h-4 rounded-full bg-primary text-primary-foreground flex-shrink-0">
+                          <Check className="h-2.5 w-2.5" />
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">Symbol: {program.symbol}</p>
+                    {program.tokenAddress && (
+                      <p className="text-[10px] text-muted-foreground mt-0.5 font-mono">
                         {program.tokenAddress.slice(0, 6)}...{program.tokenAddress.slice(-4)}
                       </p>
-                      {isLoadingStats ? (
-                        <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                          <span>Loading balances...</span>
-                        </div>
-                      ) : tokenStats[program.tokenAddress] ? (
-                        <div className="mt-2 space-y-1 text-sm">
-                          <div>
-                            <span className="text-muted-foreground">Total Issued: </span>
-                            <span className="font-semibold text-primary">
-                              {tokenStats[program.tokenAddress].totalIssued.toFixed(2)} {program.symbol}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Your Balance: </span>
-                            <span className="font-semibold">
-                              {tokenStats[program.tokenAddress].merchantBalance.toFixed(2)} {program.symbol}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Users Balance: </span>
-                            <span className="font-semibold">
-                              {tokenStats[program.tokenAddress].holdersBalance.toFixed(2)} {program.symbol}
-                            </span>
-                          </div>
-                        </div>
-                      ) : null}
-                    </>
-                  )}
-                </div>
-                <div className="flex flex-col items-end gap-2">
-                  <div className="flex items-center gap-2">
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
                     <ProgramStatusBadge 
                       tokenAddress={program.tokenAddress}
                       fallbackStatus={program.status || (program.tokenAddress ? 'active' : 'pending')}
                       expirationDate={program.expirationDate}
                     />
                     {program.tokenAddress && (
-                      <>
-                        <ProgramControlButtons
-                          tokenAddress={program.tokenAddress}
-                          isToggling={isToggling && toggledProgram === program.tokenAddress}
-                          isDeleting={deletingProgramId === program.id}
-                          onPause={() => handleToggleProgram(program, true)}
-                          onActivate={() => handleToggleProgram(program, false)}
-                          onDelete={() => program.id && setDeleteDialogOpen(program.id)}
-                        />
-                        <AlertDialog open={deleteDialogOpen === program.id} onOpenChange={(open) => !open && setDeleteDialogOpen(null)}>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Close Loyalty Program?</AlertDialogTitle>
-                              <AlertDialogDescription className="space-y-3">
-                                <p>
-                                  Choose how to close "{program.name}":
-                                </p>
-                                <div className="space-y-2 text-sm">
-                                  <p className="font-medium">This action will:</p>
-                                  <ul className="list-disc pl-5 space-y-1">
-                                    <li>Deactivate all rewards for this program</li>
-                                    <li>Mark all active vouchers as expired</li>
-                                    <li>Remove the program from your console</li>
-                                  </ul>
-                                </div>
-                                <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded p-3">
-                                  <p className="text-sm text-blue-900 dark:text-blue-100">
-                                    💡 <strong>Burn tokens option:</strong> Will attempt to burn tokens from all users who have approved your address. Users who haven't approved will keep their tokens.
-                                  </p>
-                                </div>
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => program.id && handleDeleteProgram(program.id, false)}
-                                className="bg-amber-600 text-white hover:bg-amber-700"
-                                disabled={deletingProgramId === program.id}
-                              >
-                                {deletingProgramId === program.id && !isBurning ? (
-                                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Closing...</>
-                                ) : (
-                                  'Close (Keep Tokens)'
-                                )}
-                              </AlertDialogAction>
-                              <AlertDialogAction
-                                onClick={() => program.id && handleDeleteProgram(program.id, true)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                disabled={deletingProgramId === program.id}
-                              >
-                                {isBurning ? (
-                                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Burning {progress.current}/{progress.total}...</>
-                                ) : deletingProgramId === program.id ? (
-                                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</>
-                                ) : (
-                                  'Close & Burn Tokens'
-                                )}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </>
+                      <ProgramControlButtons
+                        tokenAddress={program.tokenAddress}
+                        isToggling={isToggling && toggledProgram === program.tokenAddress}
+                        isDeleting={deletingProgramId === program.id}
+                        onPause={() => handleToggleProgram(program, true)}
+                        onActivate={() => handleToggleProgram(program, false)}
+                        onDelete={() => program.id && setDeleteDialogOpen(program.id)}
+                      />
                     )}
                   </div>
-                  {program.expirationDate && (
-                    <div className="flex flex-col items-end gap-0.5">
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        <span>Expires: {format(new Date(program.expirationDate), 'dd.MM.yyyy')}</span>
-                      </div>
-                      <span className="text-[10px] text-muted-foreground/70">
-                        Program becomes inactive on this date
-                      </span>
-                    </div>
-                  )}
                 </div>
+                
+                {program.tokenAddress && (
+                  <>
+                    {isLoadingStats ? (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        <span>Loading balances...</span>
+                      </div>
+                    ) : tokenStats[program.tokenAddress] ? (
+                      <div className="space-y-0.5 text-xs">
+                        <div>
+                          <span className="text-muted-foreground">Total Issued: </span>
+                          <span className="font-semibold text-primary">
+                            {tokenStats[program.tokenAddress].totalIssued.toFixed(2)} {program.symbol}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Your Balance: </span>
+                          <span className="font-semibold">
+                            {tokenStats[program.tokenAddress].merchantBalance.toFixed(2)} {program.symbol}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Users Balance: </span>
+                          <span className="font-semibold">
+                            {tokenStats[program.tokenAddress].holdersBalance.toFixed(2)} {program.symbol}
+                          </span>
+                        </div>
+                      </div>
+                    ) : null}
+                  </>
+                )}
+                
+                {program.expirationDate && (
+                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                    <Clock className="h-3 w-3" />
+                    <span>Expires: {format(new Date(program.expirationDate), 'dd.MM.yyyy')} - Program becomes inactive on this date</span>
+                  </div>
+                )}
               </div>
+              
+              {program.tokenAddress && (
+                <AlertDialog open={deleteDialogOpen === program.id} onOpenChange={(open) => !open && setDeleteDialogOpen(null)}>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Close Loyalty Program?</AlertDialogTitle>
+                      <AlertDialogDescription className="space-y-3">
+                        <p>
+                          Choose how to close "{program.name}":
+                        </p>
+                        <div className="space-y-2 text-sm">
+                          <p className="font-medium">This action will:</p>
+                          <ul className="list-disc pl-5 space-y-1">
+                            <li>Deactivate all rewards for this program</li>
+                            <li>Mark all active vouchers as expired</li>
+                            <li>Remove the program from your console</li>
+                          </ul>
+                        </div>
+                        <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded p-3">
+                          <p className="text-sm text-blue-900 dark:text-blue-100">
+                            💡 <strong>Burn tokens option:</strong> Will attempt to burn tokens from all users who have approved your address. Users who haven't approved will keep their tokens.
+                          </p>
+                        </div>
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => program.id && handleDeleteProgram(program.id, false)}
+                        className="bg-amber-600 text-white hover:bg-amber-700"
+                        disabled={deletingProgramId === program.id}
+                      >
+                        {deletingProgramId === program.id && !isBurning ? (
+                          <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Closing...</>
+                        ) : (
+                          'Close (Keep Tokens)'
+                        )}
+                      </AlertDialogAction>
+                      <AlertDialogAction
+                        onClick={() => program.id && handleDeleteProgram(program.id, true)}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        disabled={deletingProgramId === program.id}
+                      >
+                        {isBurning ? (
+                          <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Burning {progress.current}/{progress.total}...</>
+                        ) : deletingProgramId === program.id ? (
+                          <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</>
+                        ) : (
+                          'Close & Burn Tokens'
+                        )}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
             </div>
           ))}
           </div>

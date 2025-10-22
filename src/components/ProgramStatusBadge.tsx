@@ -17,13 +17,13 @@ export function ProgramStatusBadge({ tokenAddress, fallbackStatus, expirationDat
   const isExpired = expirationDate && new Date(expirationDate) < new Date();
 
   if (!tokenAddress) {
-    return <Badge variant="secondary">{fallbackStatus || 'Pending'}</Badge>;
+    return <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5">{fallbackStatus || 'Pending'}</Badge>;
   }
 
   // Приоритет 1: Проверяем реальную дату экспирации
   if (isExpired) {
     return (
-      <Badge variant="secondary" className="bg-red-600 text-white">
+      <Badge variant="secondary" className="bg-red-600 text-white text-[10px] px-1.5 py-0 h-5">
         Expired
       </Badge>
     );
@@ -32,7 +32,7 @@ export function ProgramStatusBadge({ tokenAddress, fallbackStatus, expirationDat
   // Приоритет 2: Если контракт новый (отвечает на проверки статуса), проверяем isPaused
   if (!hasStatusErrors && isPaused) {
     return (
-      <Badge variant="secondary" className="bg-gray-500 text-white">
+      <Badge variant="secondary" className="bg-gray-500 text-white text-[10px] px-1.5 py-0 h-5">
         Inactive
       </Badge>
     );
@@ -42,7 +42,7 @@ export function ProgramStatusBadge({ tokenAddress, fallbackStatus, expirationDat
   if (fallbackStatus === 'expired' && !isExpired) {
     // Если в БД expired но дата не истекла - это manual pause, показываем Inactive
     return (
-      <Badge variant="secondary" className="bg-gray-500 text-white">
+      <Badge variant="secondary" className="bg-gray-500 text-white text-[10px] px-1.5 py-0 h-5">
         Inactive
       </Badge>
     );
@@ -50,7 +50,7 @@ export function ProgramStatusBadge({ tokenAddress, fallbackStatus, expirationDat
 
   if (fallbackStatus === 'expiring_soon') {
     return (
-      <Badge variant="destructive" className="bg-amber-600">
+      <Badge variant="destructive" className="bg-amber-600 text-[10px] px-1.5 py-0 h-5">
         Expiring Soon
       </Badge>
     );
@@ -58,7 +58,7 @@ export function ProgramStatusBadge({ tokenAddress, fallbackStatus, expirationDat
 
   // Для всех остальных случаев (активные новые и старые контракты) - Active
   return (
-    <Badge variant="default">
+    <Badge variant="default" className="text-[10px] px-1.5 py-0 h-5">
       Active
     </Badge>
   );

@@ -144,24 +144,24 @@ export function VouchersManagement() {
                     {activeVouchers.map((voucher) => (
                       <div
                         key={voucher.id}
-                        className={`flex flex-col gap-3 p-3 border rounded-lg ${voucher.status === 'active' ? 'bg-primary/5' : 'bg-muted/50 opacity-70'}`}
+                        className={`flex flex-col gap-2 p-2.5 border rounded-lg ${voucher.status === 'active' ? 'bg-primary/5' : 'bg-muted/50 opacity-70'}`}
                       >
                         <div className="space-y-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <code className="font-bold text-sm">{voucher.code}</code>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <code className="font-bold text-xs">{voucher.code}</code>
                             <Badge variant={voucher.status === 'active' ? 'default' : 'secondary'} className="text-[10px] px-1.5 py-0 h-4">
                               {voucher.status === 'active' ? 'Active' : 'Inactive'}
                             </Badge>
                           </div>
-                          <div className="text-sm font-medium">{voucher.rewardName}</div>
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-xs font-medium truncate">{voucher.rewardName}</div>
+                          <div className="text-[10px] text-muted-foreground">
                             Activated: {new Date(voucher.activatedAt).toLocaleDateString()}
                           </div>
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-[10px] text-muted-foreground">
                             Customer: {voucher.customerAddress.slice(0, 6)}...{voucher.customerAddress.slice(-4)}
                           </div>
                           {voucher.status !== 'active' && (
-                            <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                            <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">
                               Program is paused - voucher cannot be used
                             </p>
                           )}
@@ -169,11 +169,11 @@ export function VouchersManagement() {
                         <Button
                           size="sm"
                           onClick={() => handleMarkAsUsed(voucher.id, voucher.code)}
-                          className="gap-1.5 h-8 w-full"
+                          className="gap-1.5 h-7 w-full text-xs"
                           disabled={voucher.status !== 'active'}
                         >
-                          <CheckCircle2 className="h-3.5 w-3.5" />
-                          <span className="text-xs">Mark as Used</span>
+                          <CheckCircle2 className="h-3 w-3" />
+                          <span>Mark as Used</span>
                         </Button>
                       </div>
                     ))}
@@ -192,15 +192,15 @@ export function VouchersManagement() {
                     {usedVouchers.map((voucher) => (
                       <div
                         key={voucher.id}
-                        className="flex flex-col gap-2 p-3 border rounded-lg opacity-60"
+                        className="flex flex-col gap-1.5 p-2.5 border rounded-lg opacity-60"
                       >
                         <div className="space-y-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <code className="font-bold text-sm">{voucher.code}</code>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <code className="font-bold text-xs">{voucher.code}</code>
                             <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">Used</Badge>
                           </div>
-                          <div className="text-sm font-medium">{voucher.rewardName}</div>
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-xs font-medium truncate">{voucher.rewardName}</div>
+                          <div className="text-[10px] text-muted-foreground">
                             Used: {voucher.usedAt && new Date(voucher.usedAt).toLocaleDateString()}
                           </div>
                         </div>

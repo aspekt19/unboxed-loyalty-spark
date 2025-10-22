@@ -88,14 +88,14 @@ export function MyVouchers() {
           </Alert>
         ) : (
           <Tabs defaultValue="active" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="active">
+            <TabsList className="grid w-full grid-cols-3 h-8">
+              <TabsTrigger value="active" className="text-xs">
                 Active ({activeVouchers.length})
               </TabsTrigger>
-              <TabsTrigger value="inactive">
+              <TabsTrigger value="inactive" className="text-xs">
                 Inactive ({inactiveVouchers.length})
               </TabsTrigger>
-              <TabsTrigger value="used">
+              <TabsTrigger value="used" className="text-xs">
                 Used ({usedVouchers.length})
               </TabsTrigger>
             </TabsList>
@@ -125,15 +125,8 @@ export function MyVouchers() {
                 <ScrollArea className="h-[400px] pr-4">
                   <div className="space-y-4">
                     {inactiveVouchers.map(voucher => (
-                      <div key={voucher.id} className="relative">
+                      <div key={voucher.id}>
                         <VoucherCard voucher={voucher} />
-                        <div className="absolute top-2 right-2">
-                          <Alert className="w-auto py-1 px-2 border-amber-200 bg-amber-50 dark:bg-amber-950 dark:border-amber-800">
-                            <AlertDescription className="text-xs text-amber-900 dark:text-amber-100">
-                              Program inactive - cannot be used
-                            </AlertDescription>
-                          </Alert>
-                        </div>
                       </div>
                     ))}
                   </div>
