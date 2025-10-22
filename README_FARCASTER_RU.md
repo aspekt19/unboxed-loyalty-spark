@@ -130,13 +130,15 @@ export const config = getDefaultConfig({
 
 ### Шаг 5: Настройка Адресов Смарт-Контрактов
 
-Откройте `src/config/contracts.ts` и укажите адреса ваших развернутых контрактов:
+Смарт-контракты **уже развернуты** на сети **BASE**:
 
-```typescript
-export const LOYALTY_TOKEN_FACTORY_ADDRESS = '0xВашАдресКонтрактаFactory';
+```
+LoyaltyTokenFactory: 0x5F3DdBa12580CFdc6016258774cCc19C4250dA80
+LoyalSparkERC20 (Implementation): 0xe6BA426C9c51281B929a17444De02c65815E27C3
+Сеть: BASE (Chain ID: 8453)
 ```
 
-Если вы еще не развернули контракты, см. раздел "Развертывание Смарт-Контрактов" ниже.
+Адреса уже настроены в файле `src/config/contracts.ts`.
 
 ### Шаг 6: Запуск Приложения
 
@@ -370,54 +372,43 @@ function pause() external onlyOwner
 function unpause() external onlyOwner
 ```
 
-### Развертывание Смарт-Контрактов
+### Информация о Развернутых Смарт-Контрактах
 
-#### Вариант 1: Использование Remix IDE (Простой)
+Смарт-контракты **уже развернуты** на сети BASE и готовы к использованию:
 
-1. **Откройте Remix IDE**: https://remix.ethereum.org/
-2. **Создайте файлы контрактов**:
-   - `LoyaltyTokenFactory.sol`
-   - `LoyalSparkERC20.sol`
-3. **Скомпилируйте контракты**:
-   - Выберите компилятор Solidity 0.8.x
-   - Включите оптимизацию
-4. **Подключите кошелек**:
-   - Выберите "Injected Provider - MetaMask"
-5. **Разверните контракты**:
-   - Сначала разверните `LoyalSparkERC20` (как шаблон)
-   - Затем разверните `LoyaltyTokenFactory`
-6. **Скопируйте адреса контрактов**
-7. **Обновите** `src/config/contracts.ts`
-
-#### Вариант 2: Использование Hardhat (Продвинутый)
-
-```bash
-# Установка Hardhat
-npm install --save-dev hardhat
-
-# Инициализация проекта
-npx hardhat
-
-# Развертывание
-npx hardhat run scripts/deploy.js --network sepolia
+**Адреса контрактов:**
+```
+LoyaltyTokenFactory: 0x5F3DdBa12580CFdc6016258774cCc19C4250dA80
+LoyalSparkERC20 (Implementation): 0xe6BA426C9c51281B929a17444De02c65815E27C3
 ```
 
-### Обновление Адресов Контрактов
+**Сеть:** BASE (Chain ID: 8453)
 
-После развертывания обновите `src/config/contracts.ts`:
+**Проверка контрактов:**
+- Вы можете просмотреть контракты на [BaseScan](https://basescan.org/)
+- LoyaltyTokenFactory: https://basescan.org/address/0x5F3DdBa12580CFdc6016258774cCc19C4250dA80
+- LoyalSparkERC20: https://basescan.org/address/0xe6BA426C9c51281B929a17444De02c65815E27C3
+
+**Настройка в коде:**
+
+Адреса уже настроены в `src/config/contracts.ts`:
 
 ```typescript
-export const LOYALTY_TOKEN_FACTORY_ADDRESS = '0xВашНовыйАдрес';
-
 export const CONTRACTS = {
-  [mainnet.id]: {
-    factory: '0xАдресНаMainnet',
+  LOYALTY_TOKEN_FACTORY: {
+    address: '0x5F3DdBa12580CFdc6016258774cCc19C4250dA80',
+    abi: [/* ABI контракта */]
   },
-  [polygon.id]: {
-    factory: '0xАдресНаPolygon',
-  },
+  LOYAL_SPARK_ERC20: {
+    address: '0xe6BA426C9c51281B929a17444De02c65815E27C3',
+    abi: [/* ABI контракта */]
+  }
 };
+
+export const BASE_CHAIN_ID = 8453;
 ```
+
+**Примечание:** Развертывание новых контрактов не требуется. Приложение готово к использованию с текущими адресами.
 
 ## 📱 Использование Приложения
 

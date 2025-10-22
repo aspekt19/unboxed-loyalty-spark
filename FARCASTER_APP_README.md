@@ -141,15 +141,13 @@ bun build
 
 ## Smart Contract Deployment
 
-The application uses pre-deployed smart contracts:
+The application uses pre-deployed smart contracts on **BASE Network**:
 
-- **LoyaltyTokenFactory**: `0xYourFactoryAddress`
-- Network: Ethereum Mainnet / Polygon / Base (configure in `src/config/contracts.ts`)
+- **LoyaltyTokenFactory**: `0x5F3DdBa12580CFdc6016258774cCc19C4250dA80`
+- **LoyalSparkERC20 (Implementation)**: `0xe6BA426C9c51281B929a17444De02c65815E27C3`
+- **Network**: BASE (Chain ID: 8453)
 
-To deploy new contracts:
-1. Use Remix IDE or Hardhat
-2. Deploy `LoyaltyTokenFactory.sol`
-3. Update contract address in `src/config/contracts.ts`
+Contract addresses are configured in `src/config/contracts.ts`.
 
 ## Usage Guide
 
