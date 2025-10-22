@@ -1,9 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Store, ShoppingBag } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
 
 interface RoleSelectorProps {
   onRoleSelect: (role: 'merchant' | 'customer') => void;
@@ -11,28 +8,8 @@ interface RoleSelectorProps {
 }
 
 export function RoleSelector({ onRoleSelect, currentRole }: RoleSelectorProps) {
-  const { user } = useAuth();
-
-  const handleRoleSelect = async (role: 'merchant' | 'customer') => {
-    if (!user) {
-      toast.error('Please authenticate first');
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ role: role })
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      onRoleSelect(role);
-      toast.success(`Switched to ${role} mode`);
-    } catch (error) {
-      console.error('Error setting role:', error);
-      toast.error('Failed to set role');
-    }
+  const handleRoleSelect = (role: 'merchant' | 'customer') => {
+    onRoleSelect(role);
   };
 
   return (

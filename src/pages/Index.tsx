@@ -1,4 +1,3 @@
-import { WalletConnectButton } from '@/components/WalletConnectButton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Sparkles, ShoppingBag, Store, ArrowRight, Shield, Zap, Globe, TrendingUp } from 'lucide-react';
@@ -11,7 +10,7 @@ const Index = () => {
       <div className="min-h-screen bg-white">
         {/* Header */}
         <header className="sticky top-0 z-50 border-b border-border bg-white/80 backdrop-blur-xl">
-          <div className="container mx-auto px-6 py-4 flex justify-between items-center">
+          <div className="container mx-auto px-6 py-4">
             <Link to="/" className="flex items-center gap-2.5 group">
               <img 
                 src="/new-favicon.png" 
@@ -20,7 +19,6 @@ const Index = () => {
               />
               <span className="text-xl font-bold text-foreground tracking-tight">Loyal Spark</span>
             </Link>
-            <WalletConnectButton />
           </div>
         </header>
 
