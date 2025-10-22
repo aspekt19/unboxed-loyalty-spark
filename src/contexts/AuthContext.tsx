@@ -96,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('Wallet disconnected, signing out...');
       signOut();
     }
-  }, [isConnected, address, user, signInWithWallet, signOut]);
+  }, [isConnected, address, user]);
 
   return (
     <AuthContext.Provider value={{ user, session, isLoading, signInWithWallet, signOut }}>
