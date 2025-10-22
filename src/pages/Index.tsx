@@ -43,15 +43,15 @@ const Index = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-              <Link to="/customer">
+              <Link to="/app">
                 <Button size="lg" className="h-11 px-6 text-sm font-semibold rounded-lg bg-foreground text-background hover:bg-foreground/90 transition-all duration-200">
-                  Get started
+                  Launch App
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
-              <Link to="/merchant">
+              <Link to="/pitch">
                 <Button size="lg" variant="outline" className="h-11 px-6 text-sm font-semibold rounded-lg border transition-all duration-200 hover:bg-secondary">
-                  For merchants
+                  Learn more
                 </Button>
               </Link>
             </div>
@@ -87,7 +87,7 @@ const Index = () => {
                 </CardHeader>
                 
                 <CardContent className="text-center relative pb-10">
-                  <Link to="/customer">
+                  <Link to="/app">
                     <Button size="lg" className="w-full h-11 text-sm font-semibold rounded-lg bg-foreground text-background hover:bg-foreground/90 transition-all duration-200">
                       Enter Portal
                       <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
@@ -111,7 +111,7 @@ const Index = () => {
                 </CardHeader>
                 
                 <CardContent className="text-center relative pb-10">
-                  <Link to="/merchant">
+                  <Link to="/app">
                     <Button size="lg" className="w-full h-11 text-sm font-semibold rounded-lg bg-foreground text-background hover:bg-foreground/90 transition-all duration-200">
                       Enter Portal
                       <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
@@ -160,7 +160,7 @@ const Index = () => {
               <p className="text-lg text-muted-foreground mb-8">
                 Join the future of loyalty rewards today.
               </p>
-              <Link to="/customer">
+              <Link to="/app">
                 <Button size="lg" className="h-12 px-8 text-base font-semibold rounded-lg bg-foreground text-background hover:bg-foreground/90 transition-all duration-200">
                   Launch App
                   <ArrowRight className="ml-2 h-5 w-5" />

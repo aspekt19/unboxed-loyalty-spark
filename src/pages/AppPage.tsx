@@ -7,7 +7,7 @@ import { MerchantPanel } from '@/components/MerchantPanel';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageTransition } from '@/components/PageTransition';
+import PageTransition from '@/components/PageTransition';
 
 export default function AppPage() {
   const { user } = useAuth();

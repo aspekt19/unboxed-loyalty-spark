@@ -22,12 +22,8 @@ export function RoleSelector({ onRoleSelect, currentRole }: RoleSelectorProps) {
     try {
       const { error } = await supabase
         .from('profiles')
-        .upsert({
-          id: user.id,
-          user_id: user.id,
-          role: role,
-          updated_at: new Date().toISOString()
-        });
+        .update({ role: role })
+        .eq('user_id', user.id);
 
       if (error) throw error;
 

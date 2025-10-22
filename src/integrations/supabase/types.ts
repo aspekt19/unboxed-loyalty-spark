@@ -57,6 +57,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          role: string | null
           updated_at: string
           user_id: string
           wallet_address: string
@@ -64,6 +65,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          role?: string | null
           updated_at?: string
           user_id: string
           wallet_address: string
@@ -71,6 +73,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          role?: string | null
           updated_at?: string
           user_id?: string
           wallet_address?: string
@@ -174,10 +177,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      check_program_expiration: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      check_program_expiration: { Args: never; Returns: undefined }
       migrate_wallet_profile: {
         Args: { p_new_user_id: string; p_wallet_address: string }
         Returns: undefined
