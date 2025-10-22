@@ -1,10 +1,36 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Sparkles, ShoppingBag, Store, ArrowRight, Shield, Zap, Globe, TrendingUp } from 'lucide-react';
+import { Shield, Zap, Globe, TrendingUp, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PageTransition from '@/components/PageTransition';
+import FarcasterSplash from '@/components/FarcasterSplash';
+import { useState, useEffect } from 'react';
+import { sdk } from '@farcaster/miniapp-sdk';
 
 const Index = () => {
+  const [isFarcaster, setIsFarcaster] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  useEffect(() => {
+    // Check if running in Farcaster miniapp
+    sdk.context.then((context) => {
+      if (context) {
+        setIsFarcaster(true);
+      }
+    }).catch(() => {
+      setIsFarcaster(false);
+    });
+  }, []);
+
+  if (isFarcaster && !showWelcome) {
+    return <FarcasterSplash onLaunch={() => setShowWelcome(true)} />;
+  }
+
+  if (isFarcaster && showWelcome) {
+    // Redirect to app page for role selection
+    window.location.href = '/app';
+    return null;
+  }
+
   return (
     <PageTransition>
       <div className="min-h-screen bg-white">
@@ -67,58 +93,6 @@ const Index = () => {
             </div>
           </section>
 
-          {/* Portal Cards */}
-          <section className="py-16 md:py-24">
-            <div className="grid md:grid-cols-2 gap-4 max-w-5xl mx-auto">
-              {/* Customer Card */}
-              <Card className="group relative overflow-hidden border transition-all duration-300 hover:shadow-large hover:-translate-y-1 bg-white">
-                <CardHeader className="text-center pb-4 relative pt-12">
-                  <div className="mx-auto h-14 w-14 rounded-xl bg-foreground flex items-center justify-center mb-6 transition-transform duration-300 group-hover:scale-105">
-                    <ShoppingBag className="h-7 w-7 text-background" strokeWidth={2} />
-                  </div>
-                  <CardTitle className="text-2xl font-bold text-foreground mb-2">
-                    For Customers
-                  </CardTitle>
-                  <CardDescription className="text-sm text-muted-foreground leading-relaxed">
-                    View your loyalty tokens, redeem rewards, and trade on decentralized exchanges.
-                  </CardDescription>
-                </CardHeader>
-                
-                <CardContent className="text-center relative pb-10">
-                  <Link to="/app">
-                    <Button size="lg" className="w-full h-11 text-sm font-semibold rounded-lg bg-foreground text-background hover:bg-foreground/90 transition-all duration-200">
-                      Enter Portal
-                      <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-
-              {/* Merchant Card */}
-              <Card className="group relative overflow-hidden border transition-all duration-300 hover:shadow-large hover:-translate-y-1 bg-white">
-                <CardHeader className="text-center pb-4 relative pt-12">
-                  <div className="mx-auto h-14 w-14 rounded-xl bg-foreground flex items-center justify-center mb-6 transition-transform duration-300 group-hover:scale-105">
-                    <Store className="h-7 w-7 text-background" strokeWidth={2} />
-                  </div>
-                  <CardTitle className="text-2xl font-bold text-foreground mb-2">
-                    For Merchants
-                  </CardTitle>
-                  <CardDescription className="text-sm text-muted-foreground leading-relaxed">
-                    Deploy your loyalty token, issue rewards, and build engaging programs.
-                  </CardDescription>
-                </CardHeader>
-                
-                <CardContent className="text-center relative pb-10">
-                  <Link to="/app">
-                    <Button size="lg" className="w-full h-11 text-sm font-semibold rounded-lg bg-foreground text-background hover:bg-foreground/90 transition-all duration-200">
-                      Enter Portal
-                      <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            </div>
-          </section>
 
           {/* Features */}
           <section className="py-16 md:py-24">
