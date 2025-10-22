@@ -79,42 +79,42 @@ const PitchDeck = () => {
     {
       id: 'tokenomics',
       title: 'LOYAL Token Economics',
-      subtitle: '10B total supply with deflationary mechanics',
+      subtitle: '10B total supply - ERC-20 Utility/Governance Token',
       tokenomics: [
-        { category: 'Ecosystem Fund (DAO)', percentage: '41%', amount: '4.1B', vesting: '5-year linear unlock' },
-        { category: 'Token Sales', percentage: '30%', amount: '3B', vesting: '12-18 month vesting' },
-        { category: 'Team & Advisors', percentage: '20%', amount: '2B', vesting: '1yr lock + 3yr vest' },
-        { category: 'Initial Liquidity', percentage: '5%', amount: '500M', vesting: 'TGE unlock' },
-        { category: 'Marketing & Airdrop', percentage: '4%', amount: '400M', vesting: 'Fast unlock' },
+        { category: 'Ecosystem Fund / Treasury', percentage: '38%', amount: '3.8B', vesting: 'Linear unlock over 5 years, DAO controlled' },
+        { category: 'Sale (Seed, Private, Public)', percentage: '30%', amount: '3B', vesting: '12-18 month vesting' },
+        { category: 'Team & Advisors', percentage: '20%', amount: '2B', vesting: '1-year lock-up, then 3-year linear vesting' },
+        { category: 'Marketing & Early Adopters', percentage: '7%', amount: '700M', vesting: 'Fast unlock to incentivize merchant adoption' },
+        { category: 'Initial Liquidity Reserve (IDL)', percentage: '5%', amount: '500M', vesting: 'Fully unlocked at TGE for LOYAL/USDC pool' },
       ],
     },
     {
       id: 'business-model',
       title: 'Revenue Model',
-      subtitle: 'Staking-based with transaction fees',
+      subtitle: 'Merchant staking + deflationary transaction fees',
       revenue: [
         { 
           source: 'Merchant Staking Deposits', 
-          detail: 'Basic $1K | Pro $5K | Enterprise $15K',
-          mechanism: 'Refundable collateral with minimum 1-month lock',
+          detail: 'Base $1K | Pro $5K | Enterprise $15K',
+          mechanism: 'Refundable collateral (80% guaranteed) split: 50% Core Stake + 50% Liquidity Pool Reserve. Demo accounts: $0 (illiquid tokens)',
           icon: Lock 
         },
         { 
-          source: 'Transaction Fees - Burn', 
-          detail: '8% on M-token → LOYAL swaps (deflationary)',
-          mechanism: 'Burns LOYAL, reducing supply and increasing scarcity',
+          source: 'Transaction Fees - Burn (Deflationary)', 
+          detail: '8% on M-token → LOYAL swaps',
+          mechanism: 'Primary deflation mechanism. Burns LOYAL tokens, reducing supply. DAO can adjust rate (0-8%)',
           icon: Flame 
         },
         { 
           source: 'Transaction Fees - Revenue', 
           detail: '0.5% on LOYAL → M-token swaps',
-          mechanism: 'Goes to Treasury/Liquidity Pool Reserve',
+          mechanism: 'Goes to Liquidity Pool Reserve / Treasury. Incentivizes LOYAL inflow',
           icon: DollarSign 
         },
         { 
-          source: 'Tier-Based Features', 
-          detail: 'Higher stakes unlock premium features',
-          mechanism: 'Analytics, API access, NFT rewards, White Label',
+          source: 'Tier-Based Premium Features', 
+          detail: 'Pro ($5K): API, Analytics, NFT rewards | Enterprise ($15K): White Label, dedicated management',
+          mechanism: 'Continuous LOYAL demand through staking for feature unlocks',
           icon: BarChart3 
         },
       ],
@@ -164,8 +164,8 @@ const PitchDeck = () => {
       metrics: [
         { label: 'Platform Status', value: 'Live on BASE Network', icon: Zap },
         { label: 'Smart Contracts', value: 'Deployed & Tested', icon: Shield },
-        { label: 'Target', value: 'First 100 SMBs in Q2 2025', icon: Target },
-        { label: 'MVP', value: 'Full functionality ready', icon: TrendingUp },
+        { label: 'Target', value: '100 SMBs by Q2 2026', icon: Target },
+        { label: 'MVP', value: 'Full functionality ready at loyalspark.online', icon: TrendingUp },
       ],
     },
     {
@@ -187,20 +187,20 @@ const PitchDeck = () => {
       subtitle: '18-month execution plan',
       quarters: [
         {
-          period: 'Q2 2025',
-          milestones: ['Beta launch with 100 SMB merchants', 'LOYAL token TGE & DEX listing', 'Mobile wallet integration'],
+          period: 'Q1-Q2 2026',
+          milestones: ['Complete smart contract audits', 'Beta launch with 10 pilot merchants', 'LOYAL Token TGE', 'Launch referral program'],
         },
         {
-          period: 'Q3 2025',
-          milestones: ['DEX aggregator integration', '1,000 active merchants', 'Pro tier features release'],
+          period: 'Q3 2026',
+          milestones: ['Scale to 100 active merchants', 'Launch mobile app (iOS/Android)', 'Introduce Pro tier features', 'DEX listing for LOYAL token'],
         },
         {
-          period: 'Q4 2025',
-          milestiles: ['Hub-and-spoke liquidity live', '5,000 merchants onboarded', 'Enterprise tier launch'],
+          period: 'Q4 2026',
+          milestones: ['Reach 500 merchants', 'Launch NFT rewards system', 'API marketplace launch', 'Advanced analytics dashboard'],
         },
         {
-          period: 'Q1 2026',
-          milestones: ['10,000+ merchants', 'Multi-chain expansion planning', 'Strategic partnerships', 'Series A preparation'],
+          period: 'Q1-Q2 2027',
+          milestones: ['1,000+ merchants onboarded', 'White label solutions', 'DAO governance activation', 'Series A preparation'],
         },
       ],
     },
@@ -308,15 +308,15 @@ const PitchDeck = () => {
       subtitle: '3-year growth trajectory for SMB market',
       projections: [
         { 
-          year: '2025', 
+          year: '2026', 
           merchants: '1,000', 
           tvl: '$2M',
           txVolume: '$500K',
           revenue: '$50K',
-          notes: 'Beta launch + initial traction'
+          notes: 'Beta launch + initial traction (Q1-Q2 start)'
         },
         { 
-          year: '2026', 
+          year: '2027', 
           merchants: '10,000', 
           tvl: '$25M',
           txVolume: '$10M',
@@ -324,7 +324,7 @@ const PitchDeck = () => {
           notes: 'Product-market fit + scaling'
         },
         { 
-          year: '2027', 
+          year: '2028', 
           merchants: '50,000',
           tvl: '$150M',
           txVolume: '$100M', 
@@ -435,6 +435,9 @@ const PitchDeck = () => {
                           <Coins className="h-4 w-4 text-foreground" />
                           <span className="text-sm font-medium text-foreground">LOYAL Token | 10B Supply</span>
                         </div>
+                        <a href="https://loyalspark.online/" target="_blank" rel="noopener noreferrer" className="text-base font-medium text-foreground hover:underline">
+                          loyalspark.online
+                        </a>
                       </div>
                     </div>
                   )}
@@ -1031,7 +1034,10 @@ const PitchDeck = () => {
         <footer className="border-t border-border py-8 mt-16">
           <div className="container mx-auto px-6 text-center text-muted-foreground">
             <p className="text-sm">
-              © 2025 Loyal Spark. Built on BASE Network. All rights reserved.
+              © 2025 Loyal Spark. Built on BASE Network. All rights reserved. |{' '}
+              <a href="https://loyalspark.online/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground underline">
+                loyalspark.online
+              </a>
             </p>
           </div>
         </footer>
