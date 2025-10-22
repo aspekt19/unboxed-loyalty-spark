@@ -1,7 +1,7 @@
 import { WalletConnectButton } from '@/components/WalletConnectButton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Sparkles, TrendingUp, Users, DollarSign, Target, Zap, Shield, Globe, ArrowRight, Wallet, Store, ShoppingBag, LineChart, Lock, Coins, BarChart3, Flame, UserPlus, Heart, CheckCircle2 } from 'lucide-react';
+import { Sparkles, TrendingUp, Users, DollarSign, Target, Zap, Shield, Globe, Wallet, Store, ShoppingBag, LineChart, Lock, Coins, BarChart3, Flame, UserPlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PageTransition from '@/components/PageTransition';
 
@@ -10,176 +10,148 @@ const PitchDeck = () => {
     {
       id: 'cover',
       title: 'Loyal Spark',
-      subtitle: 'Blockchain Loyalty Rewards Platform',
-      tagline: 'Transforming SMB customer engagement with Web3 technology',
+      subtitle: 'Blockchain Loyalty Rewards for SMBs',
+      tagline: 'Book loyalty rewards with merchants, not middlemen',
       icon: Sparkles,
     },
     {
       id: 'problem',
-      title: 'The Problem',
-      subtitle: 'Traditional loyalty programs are broken for SMBs',
+      title: 'Problem',
       items: [
-        { text: '$100B+ in unredeemed rewards annually', icon: DollarSign },
-        { text: 'High fees (15-30%) for merchants', icon: TrendingUp },
-        { text: 'No ownership or control for customers', icon: Users },
-        { text: 'Siloed programs with zero interoperability', icon: Target },
+        { text: 'High monthly fees ($99-499) or revenue cuts (15-30%)', icon: DollarSign },
+        { text: 'Customers have no ownership or control of rewards', icon: Users },
+        { text: 'Siloed programs - no way to exchange or trade', icon: Lock },
       ],
     },
     {
       id: 'solution',
-      title: 'Our Solution',
-      subtitle: 'Decentralized loyalty tokens with staking-based revenue model',
-      items: [
-        { text: 'Merchant staking instead of monthly fees', icon: Lock },
-        { text: 'True ownership for customers', icon: Wallet },
-        { text: 'Tradeable on any DEX', icon: LineChart },
-        { text: 'Deflationary tokenomics with 8% burn', icon: Flame },
+      title: 'Solution',
+      subtitle: 'A blockchain platform where merchants deploy loyalty tokens to:',
+      solutionColumns: [
+        {
+          title: 'SAVE',
+          subtitle: 'MONEY',
+          description: 'No monthly fees - just stake LOYAL tokens (refundable)',
+          icon: DollarSign,
+        },
+        {
+          title: 'EARN',
+          subtitle: 'REVENUE',
+          description: 'Unredeemed tokens stay valuable, no liability',
+          icon: TrendingUp,
+        },
+        {
+          title: 'EMPOWER',
+          subtitle: 'CUSTOMERS',
+          description: 'True ownership - customers can trade and transfer',
+          icon: Wallet,
+        },
       ],
     },
     {
-      id: 'market',
-      title: 'Market Opportunity',
-      subtitle: 'Targeting 50M+ SMB merchants worldwide',
+      id: 'validation',
+      title: 'Market Validation',
       stats: [
-        { value: '$200B+', label: 'Global loyalty market', trend: '+15% CAGR' },
-        { value: '50M+', label: 'SMB merchants worldwide', trend: 'Primary target' },
-        { value: '$48B', label: 'Unredeemed points value', trend: 'Growing annually' },
-        { value: '90%', label: 'Consumers in loyalty programs', trend: '4.5B members' },
+        { value: '630,000+', label: 'SMBs using loyalty programs in US alone' },
+        { value: '$100B', label: 'Unredeemed loyalty rewards annually' },
       ],
+    },
+    {
+      id: 'market-size',
+      title: 'Market Size',
+      subtitle: '$200B+ Global Loyalty Market',
+      marketData: {
+        tam: { value: '$200B+', label: 'Total Available Market', description: 'Global loyalty rewards market' },
+        sam: { value: '$60B', label: 'Serviceable Available Market', description: 'SMB segment (50M merchants)' },
+        share: { value: '$150M', label: 'Target Market Share (Year 1)', description: '1,000 merchants by Q4 2026' },
+      },
     },
     {
       id: 'product',
-      title: 'Product Features',
-      subtitle: 'Built for SMB merchants and customers',
-      features: [
-        {
-          title: 'For Merchants',
-          icon: Store,
-          items: [
-            'Deploy custom ERC-20 loyalty tokens',
-            'Stake LOYAL tokens for access (refundable)',
-            'Create redeemable vouchers',
-            'Track token holders in real-time',
-            'Earn from conversion fees',
-          ],
-        },
-        {
-          title: 'For Customers',
-          icon: ShoppingBag,
-          items: [
-            'View all loyalty tokens in one place',
-            'Redeem rewards instantly',
-            'Trade tokens on DEXs via LOYAL hub',
-            'True ownership of rewards',
-            'Transfer tokens between programs',
-          ],
-        },
+      title: 'Product',
+      subtitle: 'How it works',
+      productFlow: {
+        merchant: [
+          { step: 'Deploy Token', description: 'Create custom ERC-20 loyalty token', icon: Sparkles },
+          { step: 'Issue Rewards', description: 'Mint tokens to customers via vouchers', icon: UserPlus },
+          { step: 'Manage Program', description: 'Track holders, create offers, earn fees', icon: BarChart3 },
+        ],
+        customer: [
+          { step: 'Collect Rewards', description: 'Receive loyalty tokens from merchants', icon: ShoppingBag },
+          { step: 'Redeem or Trade', description: 'Use for vouchers or swap via LOYAL hub', icon: LineChart },
+          { step: 'Own Forever', description: 'True ownership - stored in your wallet', icon: Wallet },
+        ],
+      },
+    },
+    {
+      id: 'business-model',
+      title: 'Business Model',
+      revenue: [
+        { source: 'Merchant Staking', detail: '$1K - $15K refundable deposits', icon: Lock },
+        { source: 'Transaction Fees', detail: '0.5% - 8% on token swaps', icon: DollarSign },
+        { source: 'Premium Features', detail: 'API, Analytics, NFT rewards', icon: Zap },
       ],
     },
     {
       id: 'tokenomics',
       title: 'LOYAL Token Economics',
-      subtitle: '10B total supply - ERC-20 Utility/Governance Token',
+      subtitle: '10B total supply - ERC-20 Utility Token',
       tokenomics: [
-        { category: 'Ecosystem Fund / Treasury', percentage: '38%', amount: '3.8B', vesting: 'Linear unlock over 5 years, DAO controlled' },
-        { category: 'Sale (Seed, Private, Public)', percentage: '30%', amount: '3B', vesting: '12-18 month vesting' },
-        { category: 'Team & Advisors', percentage: '20%', amount: '2B', vesting: '1-year lock-up, then 3-year linear vesting' },
-        { category: 'Marketing & Early Adopters', percentage: '7%', amount: '700M', vesting: 'Fast unlock to incentivize merchant adoption' },
-        { category: 'Initial Liquidity Reserve (IDL)', percentage: '5%', amount: '500M', vesting: 'Fully unlocked at TGE for LOYAL/USDC pool' },
+        { category: 'Ecosystem Fund', percentage: '38%', amount: '3.8B' },
+        { category: 'Token Sales', percentage: '30%', amount: '3B' },
+        { category: 'Team & Advisors', percentage: '20%', amount: '2B' },
+        { category: 'Marketing', percentage: '7%', amount: '700M' },
+        { category: 'Initial Liquidity', percentage: '5%', amount: '500M' },
       ],
     },
     {
-      id: 'business-model',
-      title: 'Revenue Model',
-      subtitle: 'Merchant staking + deflationary transaction fees',
-      revenue: [
-        { 
-          source: 'Merchant Staking Deposits', 
-          detail: 'Base $1K | Pro $5K | Enterprise $15K',
-          mechanism: 'Refundable collateral (80% guaranteed) split: 50% Core Stake + 50% Liquidity Pool Reserve. Demo accounts: $0 (illiquid tokens)',
-          icon: Lock 
-        },
-        { 
-          source: 'Transaction Fees - Burn (Deflationary)', 
-          detail: '8% on M-token → LOYAL swaps',
-          mechanism: 'Primary deflation mechanism. Burns LOYAL tokens, reducing supply. DAO can adjust rate (0-8%)',
-          icon: Flame 
-        },
-        { 
-          source: 'Transaction Fees - Revenue', 
-          detail: '0.5% on LOYAL → M-token swaps',
-          mechanism: 'Goes to Liquidity Pool Reserve / Treasury. Incentivizes LOYAL inflow',
-          icon: DollarSign 
-        },
-        { 
-          source: 'Tier-Based Premium Features', 
-          detail: 'Pro ($5K): API, Analytics, NFT rewards | Enterprise ($15K): White Label, dedicated management',
-          mechanism: 'Continuous LOYAL demand through staking for feature unlocks',
-          icon: BarChart3 
-        },
-      ],
-    },
-    {
-      id: 'hub-spoke',
-      title: 'Hub-and-Spoke Liquidity Model',
-      subtitle: 'LOYAL as universal intermediary',
-      description: 'All merchant loyalty tokens (M-tokens) pair with LOYAL, creating a unified liquidity hub. Any M-token can be exchanged for any other via LOYAL bridge.',
-      hubSpoke: {
-        center: 'LOYAL Token',
-        spokes: ['Restaurant Points', 'Coffee Miles', 'Retail Rewards', 'Fitness Tokens', 'Spa Points'],
-        mechanism: 'M-Token A → LOYAL → M-Token B (atomic swap)',
-      },
-    },
-    {
-      id: 'merchant-economics',
-      title: 'Merchant Economics',
-      subtitle: 'How merchants save money and earn revenue',
-      economics: [
-        { 
-          benefit: 'Lower Loyalty Costs',
-          description: 'Conversion fees (5-15%) built into initial M-token pricing mean merchants buy back tokens cheaper than face value',
-          impact: '30-50% reduction vs traditional programs'
-        },
-        { 
-          benefit: 'No Monthly Fees',
-          description: 'One-time refundable stake replaces $99-499/month subscriptions',
-          impact: '$1,200-6,000 annual savings'
-        },
-        { 
-          benefit: 'Revenue from Unredeemed',
-          description: 'Unused loyalty tokens remain in circulation, no liability',
-          impact: '20-30% of issued points never redeemed'
-        },
-        { 
-          benefit: 'LOYAL Stake Appreciation',
-          description: 'Staked LOYAL may appreciate as platform grows',
-          impact: 'Potential upside on locked collateral'
-        },
-      ],
-    },
-    {
-      id: 'traction',
-      title: 'Traction & Status',
-      subtitle: 'Platform ready for launch',
-      metrics: [
-        { label: 'Platform Status', value: 'Live on BASE Network', icon: Zap },
-        { label: 'Smart Contracts', value: 'Deployed & Tested', icon: Shield },
-        { label: 'Target', value: '100 SMBs by Q2 2026', icon: Target },
-        { label: 'MVP', value: 'Full functionality ready at loyalspark.online', icon: TrendingUp },
+      id: 'adoption',
+      title: 'Adoption Strategy',
+      subtitle: 'Path to 1,000 merchants by Q4 2026',
+      adoption: [
+        { phase: 'Beta (Q1-Q2 2026)', target: '10 merchants', focus: 'Product testing & feedback' },
+        { phase: 'Launch (Q3 2026)', target: '100 merchants', focus: 'Local market penetration' },
+        { phase: 'Scale (Q4 2026)', target: '500 merchants', focus: 'Regional expansion' },
+        { phase: 'Growth (Q1-Q2 2027)', target: '1,000+ merchants', focus: 'National presence' },
       ],
     },
     {
       id: 'competition',
-      title: 'Competitive Advantage',
-      subtitle: 'Why Loyal Spark wins in SMB segment',
+      title: 'Competition',
+      subtitle: 'Traditional vs Blockchain Loyalty',
+      competitive: {
+        traditional: ['Square Loyalty: $99-499/mo', 'LoyaltyLion: 15-30% fees', 'Yotpo: Enterprise only', 'Siloed programs'],
+        loyalSpark: ['Refundable stake', 'Token economics', 'SMB-friendly ($1K)', 'Interoperable'],
+      },
+    },
+    {
+      id: 'advantages',
+      title: 'Competitive Advantages',
+      subtitle: 'Why we win',
       advantages: [
-        { point: 'Staking model vs 15-30% fees or $99-499/mo subscriptions', icon: DollarSign },
-        { point: 'Native Web3 vs Web2 adapters', icon: Globe },
-        { point: 'Hub-and-spoke liquidity vs siloed programs', icon: Zap },
-        { point: 'Deflationary tokenomics vs inflationary rewards', icon: Flame },
-        { point: 'SMB-focused ($1K entry) vs enterprise-only solutions', icon: Store },
-        { point: 'BASE Network scalability & low costs', icon: TrendingUp },
+        { point: 'Staking model - No recurring fees', icon: DollarSign },
+        { point: 'Hub-and-spoke - Trade any loyalty token', icon: Zap },
+        { point: 'Deflationary - 8% burn reduces supply', icon: Flame },
+        { point: 'BASE Network - Low cost, high speed', icon: Globe },
+        { point: 'SMB focused - $1K entry vs $10K+', icon: Store },
+        { point: 'True ownership - Customers control assets', icon: Wallet },
       ],
+    },
+    {
+      id: 'traction',
+      title: 'Current Status',
+      metrics: [
+        { label: 'Platform', value: 'Live on BASE', icon: Zap },
+        { label: 'Contracts', value: 'Deployed & Tested', icon: Shield },
+        { label: 'Website', value: 'loyalspark.online', icon: Globe },
+        { label: 'Target', value: '100 SMBs Q2 2026', icon: Target },
+      ],
+    },
+    {
+      id: 'team',
+      title: 'Team',
+      subtitle: 'Experienced builders in Web3, fintech & SMB solutions',
+      description: 'Our team combines expertise in blockchain, DeFi, loyalty programs, and small business solutions.',
     },
     {
       id: 'roadmap',
@@ -188,197 +160,52 @@ const PitchDeck = () => {
       quarters: [
         {
           period: 'Q1-Q2 2026',
-          milestones: ['Complete smart contract audits', 'Beta launch with 10 pilot merchants', 'LOYAL Token TGE', 'Launch referral program'],
+          milestones: ['Smart contract audits', '10 pilot merchants', 'LOYAL Token TGE', 'Referral program'],
         },
         {
           period: 'Q3 2026',
-          milestones: ['Scale to 100 active merchants', 'Launch mobile app (iOS/Android)', 'Introduce Pro tier features', 'DEX listing for LOYAL token'],
+          milestones: ['100 active merchants', 'Mobile app launch', 'Pro tier features', 'DEX listing'],
         },
         {
           period: 'Q4 2026',
-          milestones: ['Reach 500 merchants', 'Launch NFT rewards system', 'API marketplace launch', 'Advanced analytics dashboard'],
+          milestones: ['500 merchants', 'NFT rewards', 'API marketplace', 'Analytics dashboard'],
         },
         {
           period: 'Q1-Q2 2027',
-          milestones: ['1,000+ merchants onboarded', 'White label solutions', 'DAO governance activation', 'Series A preparation'],
+          milestones: ['1,000+ merchants', 'White label', 'DAO governance', 'Series A prep'],
         },
       ],
-    },
-    {
-      id: 'team',
-      title: 'Team',
-      subtitle: 'Experienced builders in Web3, fintech & SMB solutions',
-      description: 'Our team combines deep expertise in blockchain technology, DeFi tokenomics, loyalty program design, and small business solutions. We have experience building and scaling platforms that serve thousands of merchants and millions of end users.',
-    },
-    {
-      id: 'team-structure',
-      title: 'Team Structure & Hiring Plan',
-      subtitle: 'Building a strong team for SMB market success',
-      teamStructure: [
-        {
-          department: 'Product & Design',
-          count: 2,
-          roles: ['Product Manager', 'Product Designer'],
-          focus: 'SMB-focused UX, merchant onboarding, feature roadmap',
-          cost: '$450K (18 months)'
-        },
-        {
-          department: 'Engineering',
-          count: 4,
-          roles: ['2 Backend/Smart Contract Engineers', '2 Frontend Engineers'],
-          focus: 'Platform development, smart contracts, DEX integration',
-          cost: '$840K (18 months)'
-        },
-        {
-          department: 'Marketing & Community',
-          count: 3,
-          roles: ['Head of Marketing', 'Community Manager', 'Content Creator'],
-          focus: 'Brand building, community engagement, content strategy',
-          cost: '$540K (18 months)'
-        },
-        {
-          department: 'Sales & Business Development',
-          count: 3,
-          roles: ['Head of Sales', '2 Business Development Reps'],
-          focus: 'SMB merchant acquisition, partnerships, onboarding',
-          cost: '$585K (18 months)'
-        },
-        {
-          department: 'Operations & Support',
-          count: 2,
-          roles: ['Head of Operations', 'Customer Support Specialist'],
-          focus: 'Infrastructure, merchant support, quality assurance',
-          cost: '$330K (18 months)'
-        },
-      ],
-      totalTeam: '14 people',
-      totalCost: '$2.75M over 18 months',
-    },
-    {
-      id: 'community',
-      title: 'Community Building Strategy',
-      subtitle: 'Creating a loyal merchant and user ecosystem',
-      communityPillars: [
-        {
-          pillar: 'Merchant Community',
-          initiatives: [
-            'Early adopter program with bonus LOYAL rewards',
-            'Merchant success stories and case studies',
-            'Monthly webinars and training sessions',
-            'Dedicated Discord/Telegram channels for support'
-          ],
-          budget: '$100K'
-        },
-        {
-          pillar: 'Developer Ecosystem',
-          initiatives: [
-            'Open-source SDK and API documentation',
-            'Hackathons and bounty programs',
-            'Integration grants for third-party tools',
-            'Developer ambassador program'
-          ],
-          budget: '$80K'
-        },
-        {
-          pillar: 'Token Holder Community',
-          initiatives: [
-            'DAO governance participation rewards',
-            'Educational content about tokenomics',
-            'Community-driven feature voting',
-            'Loyalty rewards for long-term stakers'
-          ],
-          budget: '$70K'
-        },
-        {
-          pillar: 'Content & Social',
-          initiatives: [
-            'Regular blog posts and tutorials',
-            'Social media engagement campaigns',
-            'Influencer partnerships in SMB space',
-            'Community-generated content rewards'
-          ],
-          budget: '$50K'
-        },
-      ],
-      totalBudget: '$300K for community building',
     },
     {
       id: 'financials',
       title: 'Financial Projections',
-      subtitle: '3-year growth trajectory for SMB market',
+      subtitle: '3-year growth trajectory',
       projections: [
-        { 
-          year: '2026', 
-          merchants: '1,000', 
-          tvl: '$2M',
-          txVolume: '$500K',
-          revenue: '$50K',
-          notes: 'Beta launch + initial traction (Q1-Q2 start)'
-        },
-        { 
-          year: '2027', 
-          merchants: '10,000', 
-          tvl: '$25M',
-          txVolume: '$10M',
-          revenue: '$1.5M',
-          notes: 'Product-market fit + scaling'
-        },
-        { 
-          year: '2028', 
-          merchants: '50,000',
-          tvl: '$150M',
-          txVolume: '$100M', 
-          revenue: '$12M',
-          notes: 'Market leadership in SMB segment'
-        },
+        { year: '2026', merchants: '1,000', tvl: '$2M', revenue: '$50K' },
+        { year: '2027', merchants: '10,000', tvl: '$25M', revenue: '$1.5M' },
+        { year: '2028', merchants: '50,000', tvl: '$150M', revenue: '$12M' },
       ],
     },
     {
       id: 'ask',
       title: 'The Ask',
-      subtitle: 'Seed Round: $3.5M - $4M',
+      subtitle: 'Seed Round',
       ask: {
         amount: '$3.5M - $4M',
-        use: [
-          { 
-            category: 'Team & Talent', 
-            percentage: '70%', 
-            amount: '$2.75M',
-            detail: '14 person team: Product (2), Engineering (4), Marketing/Community (3), Sales/BD (3), Operations (2)'
-          },
-          { 
-            category: 'Community Building & Marketing', 
-            percentage: '8%', 
-            amount: '$300K',
-            detail: 'Merchant community, developer ecosystem, content creation, engagement programs'
-          },
-          { 
-            category: 'Infrastructure & Operations', 
-            percentage: '10%', 
-            amount: '$400K',
-            detail: 'Cloud infrastructure, development tools, office, software licenses'
-          },
-          { 
-            category: 'Legal, Compliance & Audits', 
-            percentage: '7%', 
-            amount: '$250K',
-            detail: 'Token legal structure, smart contract audits, regulatory compliance'
-          },
-          { 
-            category: 'Reserve & Contingency', 
-            percentage: '5%', 
-            amount: '$200K',
-            detail: 'Buffer for unforeseen expenses and opportunities'
-          },
-        ],
-        runway: '18 months to product-market fit & Series A',
         valuation: 'Pre-money: $12M-15M',
+        use: [
+          { category: 'Team (14 people)', percentage: '70%', amount: '$2.75M' },
+          { category: 'Marketing & Community', percentage: '8%', amount: '$300K' },
+          { category: 'Infrastructure', percentage: '10%', amount: '$400K' },
+          { category: 'Legal & Audits', percentage: '7%', amount: '$250K' },
+          { category: 'Reserve', percentage: '5%', amount: '$200K' },
+        ],
         milestones: [
-          '1,000+ SMB merchants onboarded',
-          '$2M+ in Total Value Locked',
+          '1,000+ merchants onboarded',
+          '$2M+ Total Value Locked',
           'Product-market fit validated',
-          'Clear path to profitability'
-        ]
+          'Path to profitability',
+        ],
       },
     },
   ];
@@ -423,7 +250,7 @@ const PitchDeck = () => {
                       <p className="text-2xl text-muted-foreground font-medium">
                         {slide.subtitle}
                       </p>
-                      <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                      <p className="text-lg text-muted-foreground max-w-2xl mx-auto italic">
                         {slide.tagline}
                       </p>
                       <div className="pt-8 flex flex-col items-center gap-4">
@@ -449,16 +276,15 @@ const PitchDeck = () => {
                         <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                           Slide {index + 1}
                         </div>
-                        <h2 className="text-4xl font-bold text-foreground mb-2">{slide.title}</h2>
-                        <p className="text-xl text-muted-foreground">{slide.subtitle}</p>
+                        <h2 className="text-5xl font-bold text-foreground">{slide.title}</h2>
                       </div>
-                      <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-4">
                         {slide.items?.map((item, i) => (
                           <div key={i} className="flex items-start gap-4 p-6 rounded-xl bg-secondary/50 border border-border">
                             <div className="h-12 w-12 rounded-lg bg-foreground/10 flex items-center justify-center flex-shrink-0">
                               <item.icon className="h-6 w-6 text-foreground" />
                             </div>
-                            <p className="text-base font-medium text-foreground leading-relaxed pt-2">
+                            <p className="text-lg font-medium text-foreground leading-relaxed pt-2">
                               {item.text}
                             </p>
                           </div>
@@ -474,45 +300,73 @@ const PitchDeck = () => {
                         <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                           Slide {index + 1}
                         </div>
-                        <h2 className="text-4xl font-bold text-foreground mb-2">{slide.title}</h2>
+                        <h2 className="text-5xl font-bold text-foreground mb-4">{slide.title}</h2>
                         <p className="text-xl text-muted-foreground">{slide.subtitle}</p>
                       </div>
-                      <div className="grid grid-cols-2 gap-6">
-                        {slide.items?.map((item, i) => (
-                          <div key={i} className="flex items-start gap-4 p-6 rounded-xl bg-foreground text-background">
-                            <div className="h-12 w-12 rounded-lg bg-background/10 flex items-center justify-center flex-shrink-0">
-                              <item.icon className="h-6 w-6 text-background" />
+                      <div className="grid grid-cols-3 gap-6">
+                        {slide.solutionColumns?.map((col, i) => (
+                          <div key={i} className="text-center p-8 rounded-xl bg-foreground text-background">
+                            <div className="mx-auto h-16 w-16 rounded-full bg-background/10 flex items-center justify-center mb-6">
+                              <col.icon className="h-8 w-8 text-background" />
                             </div>
-                            <p className="text-base font-medium leading-relaxed pt-2">
-                              {item.text}
-                            </p>
+                            <div className="text-2xl font-bold mb-1">{col.title}</div>
+                            <div className="text-xl font-semibold mb-4">{col.subtitle}</div>
+                            <p className="text-sm leading-relaxed">{col.description}</p>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  {/* Market Slide */}
-                  {slide.id === 'market' && (
+                  {/* Market Validation Slide */}
+                  {slide.id === 'validation' && (
                     <div className="space-y-8">
                       <div>
                         <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                           Slide {index + 1}
                         </div>
-                        <h2 className="text-4xl font-bold text-foreground mb-2">{slide.title}</h2>
-                        <p className="text-xl text-muted-foreground">{slide.subtitle}</p>
+                        <h2 className="text-5xl font-bold text-foreground">{slide.title}</h2>
                       </div>
-                      <div className="grid grid-cols-2 gap-6">
+                      <div className="grid grid-cols-2 gap-8">
                         {slide.stats?.map((stat, i) => (
-                          <div key={i} className="p-8 rounded-xl border border-border bg-secondary/30 text-center">
-                            <div className="text-5xl font-bold text-foreground mb-2">
+                          <div key={i} className="text-center p-12 rounded-xl border-2 border-border bg-secondary/30">
+                            <div className="text-6xl font-bold text-foreground mb-4">
                               {stat.value}
                             </div>
-                            <div className="text-base font-medium text-foreground mb-2">
+                            <div className="text-lg font-medium text-muted-foreground">
                               {stat.label}
                             </div>
-                            <div className="text-sm text-muted-foreground">
-                              {stat.trend}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Market Size Slide */}
+                  {slide.id === 'market-size' && (
+                    <div className="space-y-8">
+                      <div>
+                        <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                          Slide {index + 1}
+                        </div>
+                        <h2 className="text-5xl font-bold text-foreground mb-2">{slide.title}</h2>
+                        <p className="text-xl text-muted-foreground">{slide.subtitle}</p>
+                      </div>
+                      <div className="space-y-6">
+                        {slide.marketData && Object.entries(slide.marketData).map(([key, data]) => (
+                          <div key={key} className="p-8 rounded-xl border border-border bg-secondary/30">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="text-lg font-semibold text-muted-foreground mb-2">
+                                  {data.label}
+                                </div>
+                                <div className="text-sm text-muted-foreground">
+                                  {data.description}
+                                </div>
+                              </div>
+                              <div className="text-5xl font-bold text-foreground">
+                                {data.value}
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -527,26 +381,69 @@ const PitchDeck = () => {
                         <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                           Slide {index + 1}
                         </div>
-                        <h2 className="text-4xl font-bold text-foreground mb-2">{slide.title}</h2>
+                        <h2 className="text-5xl font-bold text-foreground mb-2">{slide.title}</h2>
                         <p className="text-xl text-muted-foreground">{slide.subtitle}</p>
                       </div>
                       <div className="grid md:grid-cols-2 gap-8">
-                        {slide.features?.map((feature, i) => (
-                          <div key={i} className="p-8 rounded-xl border border-border bg-card">
-                            <div className="flex items-center gap-3 mb-6">
-                              <div className="h-12 w-12 rounded-lg bg-foreground flex items-center justify-center">
-                                <feature.icon className="h-6 w-6 text-background" />
+                        <div className="p-8 rounded-xl border border-border bg-card">
+                          <h3 className="text-2xl font-bold text-foreground mb-6">For Merchants</h3>
+                          <div className="space-y-4">
+                            {slide.productFlow?.merchant.map((step, i) => (
+                              <div key={i} className="flex items-start gap-4">
+                                <div className="h-10 w-10 rounded-lg bg-foreground flex items-center justify-center flex-shrink-0">
+                                  <step.icon className="h-5 w-5 text-background" />
+                                </div>
+                                <div>
+                                  <div className="font-bold text-foreground mb-1">{step.step}</div>
+                                  <div className="text-sm text-muted-foreground">{step.description}</div>
+                                </div>
                               </div>
-                              <h3 className="text-2xl font-bold text-foreground">{feature.title}</h3>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="p-8 rounded-xl border border-border bg-card">
+                          <h3 className="text-2xl font-bold text-foreground mb-6">For Customers</h3>
+                          <div className="space-y-4">
+                            {slide.productFlow?.customer.map((step, i) => (
+                              <div key={i} className="flex items-start gap-4">
+                                <div className="h-10 w-10 rounded-lg bg-foreground flex items-center justify-center flex-shrink-0">
+                                  <step.icon className="h-5 w-5 text-background" />
+                                </div>
+                                <div>
+                                  <div className="font-bold text-foreground mb-1">{step.step}</div>
+                                  <div className="text-sm text-muted-foreground">{step.description}</div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Business Model Slide */}
+                  {slide.id === 'business-model' && (
+                    <div className="space-y-8">
+                      <div>
+                        <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                          Slide {index + 1}
+                        </div>
+                        <h2 className="text-5xl font-bold text-foreground">{slide.title}</h2>
+                      </div>
+                      <div className="space-y-4">
+                        {slide.revenue?.map((item, i) => (
+                          <div key={i} className="flex items-start gap-6 p-8 rounded-xl border border-border bg-secondary/30">
+                            <div className="h-14 w-14 rounded-lg bg-foreground flex items-center justify-center flex-shrink-0">
+                              <item.icon className="h-7 w-7 text-background" />
                             </div>
-                            <ul className="space-y-3">
-                              {feature.items.map((item, j) => (
-                                <li key={j} className="flex items-start gap-2">
-                                  <div className="h-1.5 w-1.5 rounded-full bg-foreground mt-2 flex-shrink-0" />
-                                  <span className="text-base text-foreground">{item}</span>
-                                </li>
-                              ))}
-                            </ul>
+                            <div className="flex-1">
+                              <div className="text-2xl font-bold text-foreground mb-2">
+                                {item.source}
+                              </div>
+                              <div className="text-base text-muted-foreground">
+                                {item.detail}
+                              </div>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -563,10 +460,10 @@ const PitchDeck = () => {
                         <h2 className="text-4xl font-bold text-foreground mb-2">{slide.title}</h2>
                         <p className="text-xl text-muted-foreground">{slide.subtitle}</p>
                       </div>
-                      <div className="space-y-4">
+                      <div className="space-y-3">
                         {slide.tokenomics?.map((item, i) => (
                           <div key={i} className="flex items-center gap-6 p-6 rounded-xl border border-border bg-secondary/30">
-                            <div className="flex-shrink-0">
+                            <div className="flex-shrink-0 text-center min-w-[100px]">
                               <div className="text-3xl font-bold text-foreground">
                                 {item.percentage}
                               </div>
@@ -575,11 +472,8 @@ const PitchDeck = () => {
                               </div>
                             </div>
                             <div className="flex-1">
-                              <div className="text-lg font-semibold text-foreground mb-1">
+                              <div className="text-lg font-semibold text-foreground">
                                 {item.category}
-                              </div>
-                              <div className="text-sm text-muted-foreground">
-                                {item.vesting}
                               </div>
                             </div>
                           </div>
@@ -588,8 +482,8 @@ const PitchDeck = () => {
                     </div>
                   )}
 
-                  {/* Business Model Slide */}
-                  {slide.id === 'business-model' && (
+                  {/* Adoption Strategy Slide */}
+                  {slide.id === 'adoption' && (
                     <div className="space-y-8">
                       <div>
                         <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
@@ -599,23 +493,15 @@ const PitchDeck = () => {
                         <p className="text-xl text-muted-foreground">{slide.subtitle}</p>
                       </div>
                       <div className="space-y-4">
-                        {slide.revenue?.map((item, i) => (
-                          <div key={i} className="p-6 rounded-xl border border-border bg-card">
-                            <div className="flex items-start gap-4 mb-4">
-                              <div className="h-12 w-12 rounded-lg bg-foreground flex items-center justify-center flex-shrink-0">
-                                <item.icon className="h-6 w-6 text-background" />
+                        {slide.adoption?.map((item, i) => (
+                          <div key={i} className="flex items-center gap-6 p-6 rounded-xl border border-border bg-card">
+                            <div className="flex-1">
+                              <div className="text-xl font-bold text-foreground mb-2">
+                                {item.phase}
                               </div>
-                              <div className="flex-1">
-                                <div className="text-xl font-bold text-foreground mb-1">
-                                  {item.source}
-                                </div>
-                                <div className="text-base text-muted-foreground mb-2">
-                                  {item.detail}
-                                </div>
+                              <div className="text-base text-muted-foreground">
+                                Target: <span className="font-semibold text-foreground">{item.target}</span> | {item.focus}
                               </div>
-                            </div>
-                            <div className="pl-16 text-sm text-muted-foreground">
-                              {item.mechanism}
                             </div>
                           </div>
                         ))}
@@ -623,87 +509,76 @@ const PitchDeck = () => {
                     </div>
                   )}
 
-                  {/* Hub and Spoke Slide */}
-                  {slide.id === 'hub-spoke' && (
+                  {/* Competition Slide */}
+                  {slide.id === 'competition' && (
                     <div className="space-y-8">
                       <div>
                         <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                           Slide {index + 1}
                         </div>
-                        <h2 className="text-4xl font-bold text-foreground mb-2">{slide.title}</h2>
-                        <p className="text-xl text-muted-foreground mb-4">{slide.subtitle}</p>
-                        <p className="text-base text-muted-foreground">{slide.description}</p>
+                        <h2 className="text-5xl font-bold text-foreground mb-2">{slide.title}</h2>
+                        <p className="text-xl text-muted-foreground">{slide.subtitle}</p>
                       </div>
-                      <div className="relative py-12">
-                        {/* Center Hub */}
-                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
-                          <div className="h-32 w-32 rounded-full bg-foreground flex items-center justify-center shadow-lg">
-                            <div className="text-center">
-                              <Coins className="h-8 w-8 text-background mx-auto mb-1" />
-                              <div className="text-sm font-bold text-background">{slide.hubSpoke?.center}</div>
-                            </div>
-                          </div>
+                      <div className="grid grid-cols-2 gap-8">
+                        <div className="p-8 rounded-xl border border-border bg-secondary/30">
+                          <h3 className="text-2xl font-bold text-foreground mb-6">Traditional Solutions</h3>
+                          <ul className="space-y-3">
+                            {slide.competitive?.traditional.map((item, i) => (
+                              <li key={i} className="flex items-start gap-2">
+                                <div className="h-1.5 w-1.5 rounded-full bg-foreground mt-2 flex-shrink-0" />
+                                <span className="text-base text-foreground">{item}</span>
+                              </li>
+                            ))}
+                          </ul>
                         </div>
-                        
-                        {/* Spokes */}
-                        <div className="grid grid-cols-3 gap-8 relative">
-                          {slide.hubSpoke?.spokes.map((spoke, i) => (
-                            <div key={i} className="flex justify-center">
-                              <div className="p-4 rounded-xl border-2 border-border bg-secondary/50 text-center min-w-[140px]">
-                                <Store className="h-6 w-6 text-foreground mx-auto mb-2" />
-                                <div className="text-sm font-medium text-foreground">{spoke}</div>
-                              </div>
-                            </div>
-                          ))}
+                        <div className="p-8 rounded-xl bg-foreground text-background">
+                          <h3 className="text-2xl font-bold mb-6">Loyal Spark</h3>
+                          <ul className="space-y-3">
+                            {slide.competitive?.loyalSpark.map((item, i) => (
+                              <li key={i} className="flex items-start gap-2">
+                                <div className="h-1.5 w-1.5 rounded-full bg-background mt-2 flex-shrink-0" />
+                                <span className="text-base">{item}</span>
+                              </li>
+                            ))}
+                          </ul>
                         </div>
-                      </div>
-                      <div className="text-center p-6 rounded-xl bg-foreground/5 border border-border">
-                        <p className="text-base font-medium text-foreground">
-                          {slide.hubSpoke?.mechanism}
-                        </p>
                       </div>
                     </div>
                   )}
 
-                  {/* Merchant Economics Slide */}
-                  {slide.id === 'merchant-economics' && (
+                  {/* Competitive Advantages Slide */}
+                  {slide.id === 'advantages' && (
                     <div className="space-y-8">
                       <div>
                         <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                           Slide {index + 1}
                         </div>
-                        <h2 className="text-4xl font-bold text-foreground mb-2">{slide.title}</h2>
+                        <h2 className="text-5xl font-bold text-foreground mb-2">{slide.title}</h2>
                         <p className="text-xl text-muted-foreground">{slide.subtitle}</p>
                       </div>
                       <div className="grid grid-cols-2 gap-6">
-                        {slide.economics?.map((item, i) => (
-                          <div key={i} className="p-6 rounded-xl border border-border bg-card">
-                            <div className="text-lg font-bold text-foreground mb-3">
-                              {item.benefit}
+                        {slide.advantages?.map((adv, i) => (
+                          <div key={i} className="flex items-start gap-4 p-6 rounded-xl bg-foreground text-background">
+                            <div className="h-10 w-10 rounded-lg bg-background/10 flex items-center justify-center flex-shrink-0">
+                              <adv.icon className="h-5 w-5 text-background" />
                             </div>
-                            <p className="text-sm text-muted-foreground mb-3">
-                              {item.description}
+                            <p className="text-base font-medium leading-relaxed pt-1">
+                              {adv.point}
                             </p>
-                            <div className="pt-3 border-t border-border">
-                              <div className="text-base font-semibold text-foreground">
-                                {item.impact}
-                              </div>
-                            </div>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  {/* Traction Slide */}
+                  {/* Current Status Slide */}
                   {slide.id === 'traction' && (
                     <div className="space-y-8">
                       <div>
                         <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                           Slide {index + 1}
                         </div>
-                        <h2 className="text-4xl font-bold text-foreground mb-2">{slide.title}</h2>
-                        <p className="text-xl text-muted-foreground">{slide.subtitle}</p>
+                        <h2 className="text-5xl font-bold text-foreground">{slide.title}</h2>
                       </div>
                       <div className="grid grid-cols-2 gap-6">
                         {slide.metrics?.map((metric, i) => (
@@ -723,27 +598,16 @@ const PitchDeck = () => {
                     </div>
                   )}
 
-                  {/* Competition Slide */}
-                  {slide.id === 'competition' && (
+                  {/* Team Slide */}
+                  {slide.id === 'team' && (
                     <div className="space-y-8">
                       <div>
                         <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                           Slide {index + 1}
                         </div>
-                        <h2 className="text-4xl font-bold text-foreground mb-2">{slide.title}</h2>
-                        <p className="text-xl text-muted-foreground">{slide.subtitle}</p>
-                      </div>
-                      <div className="grid grid-cols-2 gap-6">
-                        {slide.advantages?.map((adv, i) => (
-                          <div key={i} className="flex items-start gap-4 p-6 rounded-xl bg-foreground text-background">
-                            <div className="h-10 w-10 rounded-lg bg-background/10 flex items-center justify-center flex-shrink-0">
-                              <adv.icon className="h-5 w-5 text-background" />
-                            </div>
-                            <p className="text-base font-medium leading-relaxed pt-1">
-                              {adv.point}
-                            </p>
-                          </div>
-                        ))}
+                        <h2 className="text-5xl font-bold text-foreground mb-4">{slide.title}</h2>
+                        <p className="text-xl text-muted-foreground mb-6">{slide.subtitle}</p>
+                        <p className="text-lg text-foreground">{slide.description}</p>
                       </div>
                     </div>
                   )}
@@ -767,8 +631,8 @@ const PitchDeck = () => {
                             <ul className="space-y-2">
                               {quarter.milestones.map((milestone, j) => (
                                 <li key={j} className="flex items-start gap-2">
-                                  <ArrowRight className="h-5 w-5 text-foreground flex-shrink-0 mt-0.5" />
-                                  <span className="text-base text-foreground">{milestone}</span>
+                                  <div className="h-1.5 w-1.5 rounded-full bg-foreground mt-2 flex-shrink-0" />
+                                  <span className="text-sm text-foreground">{milestone}</span>
                                 </li>
                               ))}
                             </ul>
@@ -778,127 +642,7 @@ const PitchDeck = () => {
                     </div>
                   )}
 
-                  {/* Team Slide */}
-                  {slide.id === 'team' && (
-                    <div className="space-y-8">
-                      <div>
-                        <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                          Slide {index + 1}
-                        </div>
-                        <h2 className="text-4xl font-bold text-foreground mb-2">{slide.title}</h2>
-                        <p className="text-xl text-muted-foreground mb-6">{slide.subtitle}</p>
-                      </div>
-                      <div className="p-8 rounded-xl border border-border bg-secondary/30">
-                        <p className="text-lg text-foreground leading-relaxed">
-                          {slide.description}
-                        </p>
-                      </div>
-                      <div className="grid grid-cols-3 gap-6">
-                        <div className="p-6 rounded-xl border border-border bg-card text-center">
-                          <Users className="h-10 w-10 text-foreground mx-auto mb-3" />
-                          <div className="text-base font-semibold text-foreground">Web3 & DeFi</div>
-                        </div>
-                        <div className="p-6 rounded-xl border border-border bg-card text-center">
-                          <Store className="h-10 w-10 text-foreground mx-auto mb-3" />
-                          <div className="text-base font-semibold text-foreground">SMB Solutions</div>
-                        </div>
-                        <div className="p-6 rounded-xl border border-border bg-card text-center">
-                          <BarChart3 className="h-10 w-10 text-foreground mx-auto mb-3" />
-                          <div className="text-base font-semibold text-foreground">Loyalty Programs</div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Team Structure Slide */}
-                  {slide.id === 'team-structure' && (
-                    <div className="space-y-8">
-                      <div>
-                        <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                          Slide {index + 1}
-                        </div>
-                        <h2 className="text-4xl font-bold text-foreground mb-2">{slide.title}</h2>
-                        <p className="text-xl text-muted-foreground">{slide.subtitle}</p>
-                      </div>
-                      
-                      <div className="space-y-4">
-                        {slide.teamStructure?.map((dept, i) => (
-                          <div key={i} className="p-6 rounded-xl border border-border bg-card">
-                            <div className="flex items-start justify-between mb-4">
-                              <div className="flex items-center gap-3">
-                                <div className="h-12 w-12 rounded-lg bg-foreground flex items-center justify-center">
-                                  <UserPlus className="h-6 w-6 text-background" />
-                                </div>
-                                <div>
-                                  <h3 className="text-xl font-bold text-foreground">{dept.department}</h3>
-                                  <p className="text-sm text-muted-foreground">{dept.count} people</p>
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <div className="text-lg font-bold text-foreground">{dept.cost}</div>
-                              </div>
-                            </div>
-                            <div className="space-y-2 pl-15">
-                              <p className="text-sm font-medium text-foreground">
-                                Roles: {dept.roles.join(', ')}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                {dept.focus}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="flex items-center justify-between p-6 rounded-xl bg-foreground text-background">
-                        <div className="text-2xl font-bold">Total Team: {slide.totalTeam}</div>
-                        <div className="text-2xl font-bold">{slide.totalCost}</div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Community Building Slide */}
-                  {slide.id === 'community' && (
-                    <div className="space-y-8">
-                      <div>
-                        <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                          Slide {index + 1}
-                        </div>
-                        <h2 className="text-4xl font-bold text-foreground mb-2">{slide.title}</h2>
-                        <p className="text-xl text-muted-foreground">{slide.subtitle}</p>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-6">
-                        {slide.communityPillars?.map((pillar, i) => (
-                          <div key={i} className="p-6 rounded-xl border border-border bg-card">
-                            <div className="flex items-center justify-between mb-4">
-                              <div className="flex items-center gap-3">
-                                <Heart className="h-8 w-8 text-foreground" />
-                                <h3 className="text-lg font-bold text-foreground">{pillar.pillar}</h3>
-                              </div>
-                              <div className="text-sm font-bold text-foreground px-3 py-1 rounded-full bg-secondary">
-                                {pillar.budget}
-                              </div>
-                            </div>
-                            <ul className="space-y-2">
-                              {pillar.initiatives.map((initiative, j) => (
-                                <li key={j} className="flex items-start gap-2">
-                                  <CheckCircle2 className="h-4 w-4 text-foreground flex-shrink-0 mt-0.5" />
-                                  <span className="text-sm text-muted-foreground">{initiative}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="p-6 rounded-xl bg-foreground text-background text-center">
-                        <div className="text-2xl font-bold">{slide.totalBudget}</div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Financials Slide */}
+                  {/* Financial Projections Slide */}
                   {slide.id === 'financials' && (
                     <div className="space-y-8">
                       <div>
@@ -909,37 +653,26 @@ const PitchDeck = () => {
                         <p className="text-xl text-muted-foreground">{slide.subtitle}</p>
                       </div>
                       <div className="overflow-x-auto">
-                        <table className="w-full border-collapse">
+                        <table className="w-full">
                           <thead>
                             <tr className="border-b-2 border-border">
-                              <th className="text-left p-4 text-base font-semibold text-foreground">Year</th>
-                              <th className="text-left p-4 text-base font-semibold text-foreground">Merchants</th>
-                              <th className="text-left p-4 text-base font-semibold text-foreground">Total Value Locked</th>
-                              <th className="text-left p-4 text-base font-semibold text-foreground">Tx Volume</th>
-                              <th className="text-left p-4 text-base font-semibold text-foreground">Revenue</th>
+                              <th className="text-left py-4 px-6 text-lg font-bold text-foreground">Year</th>
+                              <th className="text-left py-4 px-6 text-lg font-bold text-foreground">Merchants</th>
+                              <th className="text-left py-4 px-6 text-lg font-bold text-foreground">TVL</th>
+                              <th className="text-left py-4 px-6 text-lg font-bold text-foreground">Revenue</th>
                             </tr>
                           </thead>
                           <tbody>
                             {slide.projections?.map((proj, i) => (
-                              <tr key={i} className="border-b border-border hover:bg-secondary/20">
-                                <td className="p-4 text-lg font-bold text-foreground">{proj.year}</td>
-                                <td className="p-4 text-base text-foreground">{proj.merchants}</td>
-                                <td className="p-4 text-base text-foreground">{proj.tvl}</td>
-                                <td className="p-4 text-base text-foreground">{proj.txVolume}</td>
-                                <td className="p-4 text-base font-semibold text-foreground">{proj.revenue}</td>
+                              <tr key={i} className="border-b border-border">
+                                <td className="py-4 px-6 text-lg font-semibold text-foreground">{proj.year}</td>
+                                <td className="py-4 px-6 text-base text-foreground">{proj.merchants}</td>
+                                <td className="py-4 px-6 text-base text-foreground">{proj.tvl}</td>
+                                <td className="py-4 px-6 text-base text-foreground">{proj.revenue}</td>
                               </tr>
                             ))}
                           </tbody>
                         </table>
-                      </div>
-                      <div className="mt-6 space-y-3">
-                        {slide.projections?.map((proj, i) => (
-                          <div key={i} className="p-4 rounded-lg bg-secondary/30 border border-border">
-                            <div className="text-sm text-muted-foreground">
-                              <span className="font-semibold text-foreground">{proj.year}:</span> {proj.notes}
-                            </div>
-                          </div>
-                        ))}
                       </div>
                     </div>
                   )}
@@ -951,54 +684,41 @@ const PitchDeck = () => {
                         <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                           Slide {index + 1}
                         </div>
-                        <h2 className="text-4xl font-bold text-foreground mb-2">{slide.title}</h2>
-                        <p className="text-2xl text-muted-foreground">{slide.subtitle}</p>
+                        <h2 className="text-5xl font-bold text-foreground mb-4">{slide.title}</h2>
+                        <p className="text-xl text-muted-foreground mb-2">{slide.subtitle}</p>
                       </div>
-                      
-                      <div className="p-8 rounded-xl bg-foreground text-background text-center">
-                        <div className="text-5xl font-bold mb-4">{slide.ask?.amount}</div>
-                        <div className="text-xl">{slide.ask?.valuation}</div>
-                      </div>
-
-                      <div>
-                        <h3 className="text-2xl font-bold text-foreground mb-4">Use of Funds</h3>
-                        <div className="space-y-3">
-                          {slide.ask?.use.map((item, i) => (
-                            <div key={i} className="flex items-center gap-4 p-5 rounded-xl border border-border bg-card">
-                              <div className="flex-shrink-0 text-center w-20">
-                                <div className="text-2xl font-bold text-foreground">
-                                  {item.percentage}
-                                </div>
-                                <div className="text-xs text-muted-foreground mt-1">
-                                  {item.amount}
-                                </div>
-                              </div>
-                              <div className="flex-1 border-l border-border pl-4">
-                                <div className="text-lg font-semibold text-foreground mb-1">
-                                  {item.category}
-                                </div>
-                                <div className="text-sm text-muted-foreground">
-                                  {item.detail}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
+                      <div className="space-y-6">
+                        <div className="p-8 rounded-xl bg-foreground text-background text-center">
+                          <div className="text-5xl font-bold mb-2">{slide.ask?.amount}</div>
+                          <div className="text-lg">{slide.ask?.valuation}</div>
                         </div>
-                      </div>
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="p-6 rounded-xl bg-secondary/30 border border-border text-center">
-                          <div className="text-lg font-semibold text-foreground">
-                            {slide.ask?.runway}
+                        <div>
+                          <h3 className="text-2xl font-bold text-foreground mb-4">Use of Funds</h3>
+                          <div className="space-y-3">
+                            {slide.ask?.use.map((item, i) => (
+                              <div key={i} className="flex items-center gap-4 p-4 rounded-lg border border-border bg-secondary/30">
+                                <div className="flex-shrink-0 w-16 text-center">
+                                  <div className="text-xl font-bold text-foreground">{item.percentage}</div>
+                                </div>
+                                <div className="flex-1">
+                                  <div className="font-semibold text-foreground">{item.category}</div>
+                                </div>
+                                <div className="flex-shrink-0 text-right">
+                                  <div className="text-lg font-bold text-foreground">{item.amount}</div>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </div>
-                        <div className="p-6 rounded-xl bg-secondary/30 border border-border">
-                          <div className="text-sm font-semibold text-foreground mb-3">Key Milestones:</div>
-                          <ul className="space-y-1">
-                            {slide.ask?.milestones?.map((milestone, i) => (
+
+                        <div>
+                          <h3 className="text-2xl font-bold text-foreground mb-4">Key Milestones</h3>
+                          <ul className="space-y-2">
+                            {slide.ask?.milestones.map((milestone, i) => (
                               <li key={i} className="flex items-start gap-2">
-                                <CheckCircle2 className="h-4 w-4 text-foreground flex-shrink-0 mt-0.5" />
-                                <span className="text-sm text-muted-foreground">{milestone}</span>
+                                <div className="h-1.5 w-1.5 rounded-full bg-foreground mt-2 flex-shrink-0" />
+                                <span className="text-base text-foreground">{milestone}</span>
                               </li>
                             ))}
                           </ul>
@@ -1010,37 +730,27 @@ const PitchDeck = () => {
               </Card>
             ))}
 
-            {/* Final CTA Card */}
-            <Card className="border-2 bg-foreground text-background overflow-hidden">
-              <CardContent className="p-12 text-center space-y-6">
-                <h2 className="text-4xl font-bold">Let's Build the Future of Loyalty</h2>
-                <p className="text-xl opacity-90 max-w-2xl mx-auto">
-                  Join us in revolutionizing how SMB merchants reward their customers with blockchain technology
+            {/* Footer */}
+            <Card className="border bg-card">
+              <CardContent className="p-12 text-center space-y-4">
+                <h2 className="text-4xl font-bold text-foreground">Thank You</h2>
+                <p className="text-xl text-muted-foreground">
+                  Let's build the future of loyalty rewards together
                 </p>
-                <div className="flex gap-4 justify-center pt-4">
-                  <Button size="lg" variant="secondary" className="text-lg px-8">
-                    Schedule Meeting
-                  </Button>
-                  <Button size="lg" variant="outline" className="text-lg px-8 border-background/20 hover:bg-background/10">
-                    Download Deck
-                  </Button>
+                <div className="pt-4">
+                  <a 
+                    href="https://loyalspark.online/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-lg font-medium text-foreground hover:underline"
+                  >
+                    loyalspark.online
+                  </a>
                 </div>
               </CardContent>
             </Card>
           </div>
         </main>
-
-        {/* Footer */}
-        <footer className="border-t border-border py-8 mt-16">
-          <div className="container mx-auto px-6 text-center text-muted-foreground">
-            <p className="text-sm">
-              © 2025 Loyal Spark. Built on BASE Network. All rights reserved. |{' '}
-              <a href="https://loyalspark.online/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground underline">
-                loyalspark.online
-              </a>
-            </p>
-          </div>
-        </footer>
       </div>
     </PageTransition>
   );
