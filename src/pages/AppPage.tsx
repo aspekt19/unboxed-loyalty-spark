@@ -2,7 +2,7 @@ import { RoleSelector } from '@/components/RoleSelector';
 import { useNavigate } from 'react-router-dom';
 import PageTransition from '@/components/PageTransition';
 
-const AppLaunch = () => {
+export default function AppPage() {
   const navigate = useNavigate();
 
   const handleRoleSelect = (role: 'merchant' | 'customer') => {
@@ -20,6 +20,4 @@ const AppLaunch = () => {
       </div>
     </PageTransition>
   );
-};
-
-export default AppLaunch;
+}
