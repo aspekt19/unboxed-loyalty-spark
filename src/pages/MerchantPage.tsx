@@ -12,26 +12,28 @@ const MerchantPage = () => {
     <PageTransition>
       <div className="min-h-screen bg-white">
         <header className="sticky top-0 z-50 border-b border-border bg-white/80 backdrop-blur-xl">
-          <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-            <div className="flex items-center gap-3">
+          <div className="container mx-auto px-3 py-2 flex justify-between items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0 flex-shrink">
               <Link to="/">
-                <Button variant="ghost" size="icon" className="hover:bg-secondary">
-                  <ArrowLeft className="h-5 w-5" />
+                <Button variant="ghost" size="icon" className="hover:bg-secondary h-8 w-8">
+                  <ArrowLeft className="h-4 w-4" />
                 </Button>
               </Link>
               <img 
                 src="/new-favicon.png" 
                 alt="Loyal Spark" 
-                className="h-9 w-9 rounded-lg" 
+                className="h-7 w-7 rounded-lg flex-shrink-0" 
               />
-              <div>
-                <h1 className="text-xl font-bold text-foreground tracking-tight">
+              <div className="min-w-0">
+                <h1 className="text-sm font-bold text-foreground tracking-tight truncate">
                   Loyal Spark
                 </h1>
-                <p className="text-xs text-muted-foreground">Merchant Portal</p>
+                <p className="text-[10px] text-muted-foreground truncate">Merchant Portal</p>
               </div>
             </div>
-            <WalletConnectButton />
+            <div className="flex-shrink-0">
+              <WalletConnectButton />
+            </div>
           </div>
         </header>
 

@@ -28,7 +28,7 @@ export function ProgramControlButtons({
   const { isPaused, hasStatusErrors } = useCheckProgramStatus(tokenAddress as `0x${string}`);
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-0.5">
       <TooltipProvider>
         {/* Pause Button */}
         <Tooltip>
@@ -37,7 +37,7 @@ export function ProgramControlButtons({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 w-8 p-0"
+                className="h-7 w-7 p-0"
                 onClick={(e) => {
                   e.stopPropagation();
                   onPause();
@@ -45,9 +45,9 @@ export function ProgramControlButtons({
                 disabled={isToggling || isPaused || hasStatusErrors}
               >
                 {isToggling && !isPaused ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <Pause className="h-4 w-4 text-amber-600" />
+                  <Pause className="h-3.5 w-3.5 text-amber-600" />
                 )}
               </Button>
             </span>
@@ -64,7 +64,7 @@ export function ProgramControlButtons({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 w-8 p-0"
+                className="h-7 w-7 p-0"
                 onClick={(e) => {
                   e.stopPropagation();
                   onActivate();
@@ -72,9 +72,9 @@ export function ProgramControlButtons({
                 disabled={isToggling || !isPaused || hasStatusErrors}
               >
                 {isToggling && isPaused ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <Play className="h-4 w-4 text-green-600" />
+                  <Play className="h-3.5 w-3.5 text-green-600" />
                 )}
               </Button>
             </span>
@@ -91,7 +91,7 @@ export function ProgramControlButtons({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 w-8 p-0"
+                className="h-7 w-7 p-0"
                 onClick={(e) => {
                   e.stopPropagation();
                   onDelete();
@@ -99,9 +99,9 @@ export function ProgramControlButtons({
                 disabled={isDeleting}
               >
                 {isDeleting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <Trash2 className="h-4 w-4 text-destructive" />
+                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
                 )}
               </Button>
             </span>

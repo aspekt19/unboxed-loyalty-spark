@@ -1,5 +1,5 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { Wallet, LogOut } from 'lucide-react';
+import { Wallet } from 'lucide-react';
 import { useDisconnect } from 'wagmi';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -68,24 +68,24 @@ export function WalletConnectButton() {
               }
 
               return (
-                <div className="flex gap-2">
+                <div className="flex gap-1.5">
                   <button
                     onClick={openChainModal}
                     type="button"
-                    className="px-3 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 border border-border hover:bg-secondary"
+                    className="px-2 py-1.5 rounded-lg font-medium transition-all duration-200 flex items-center gap-1.5 border border-border hover:bg-secondary"
                   >
                     {chain.hasIcon && (
-                      <div className="w-4 h-4 rounded-full overflow-hidden">
+                      <div className="w-3.5 h-3.5 rounded-full overflow-hidden">
                         {chain.iconUrl && (
                           <img
                             alt={chain.name ?? 'Chain icon'}
                             src={chain.iconUrl}
-                            className="w-4 h-4"
+                            className="w-3.5 h-3.5"
                           />
                         )}
                       </div>
                     )}
-                    <span className="text-foreground text-sm font-semibold">
+                    <span className="text-foreground text-xs font-semibold">
                       {chain.name}
                     </span>
                   </button>
@@ -93,18 +93,9 @@ export function WalletConnectButton() {
                   <button
                     onClick={openAccountModal}
                     type="button"
-                    className="px-4 py-2.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200"
+                    className="px-3 py-1.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200"
                   >
-                    <span className="text-sm">{account.displayName}</span>
-                  </button>
-
-                  <button
-                    onClick={handleDisconnect}
-                    type="button"
-                    className="px-3 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 border border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                    title="Disconnect wallet"
-                  >
-                    <LogOut className="h-4 w-4" />
+                    <span className="text-xs">{account.displayName}</span>
                   </button>
                 </div>
               );
