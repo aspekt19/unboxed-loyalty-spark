@@ -1,5 +1,5 @@
 # Loyal Spark
-## Book loyalty rewards with merchants, not expensive platforms
+## Authentic blockchain loyalty rewards with guaranteed merchant buyback
 
 Total Slides: 12
 
@@ -9,7 +9,7 @@ Total Slides: 12
 
 # Loyal Spark
 
-**Book loyalty rewards with merchants, not expensive platforms**
+**Authentic blockchain loyalty rewards with guaranteed merchant buyback**
 
 🌐 https://loyalspark.online/  
 🔗 Built on BASE Network
@@ -18,11 +18,11 @@ Total Slides: 12
 
 ## Slide 2: Problem
 
-**Traditional loyalty platforms are expensive and inflexible**
+**Traditional loyalty programs have trust and value issues**
 
-Small businesses pay $99-499/month in subscription fees
+Points can be devalued or canceled by companies at any time
 
-Customers don't truly own their rewards
+No proof of authenticity — vulnerable to fraud and manipulation
 
 $100B in loyalty points expire unused every year
 
@@ -30,11 +30,11 @@ $100B in loyalty points expire unused every year
 
 ## Slide 3: Solution
 
-**A blockchain platform where merchants can launch their own loyalty tokens to:**
+**A blockchain platform that guarantees authenticity and transferability:**
 
-| SAVE MONEY | EARN REVENUE | EMPOWER CUSTOMERS |
+| AUTHENTICITY | TRANSFERABILITY | LIQUIDITY |
 |------------|--------------|-------------------|
-| No monthly fees<br/>Pay once via staking<br/>80% refundable | Keep unredeemed rewards<br/>Earn from token trades<br/>Stake appreciates | True ownership<br/>Trade anytime<br/>Universal liquidity |
+| Blockchain verification<br/>Fraud-proof rewards<br/>Transparent supply | True ownership<br/>Trade P2P anytime<br/>Gift or sell freely | Optional buyback by merchants<br/>80% refundable stake<br/>Universal LOYAL hub |
 
 ---
 
@@ -46,7 +46,7 @@ $100B in loyalty points expire unused every year
 
 **90%** of consumers actively use loyalty programs
 
-**50M+** small businesses need affordable solutions
+**50M+** businesses need transparent solutions
 
 ---
 
@@ -57,29 +57,29 @@ $100B in loyalty points expire unused every year
 | Market Segment | Size | Our Focus |
 |----------------|------|-----------|
 | **Total Addressable Market** | 50M+ merchants worldwide | Growing 15% annually |
-| **Serviceable Market** | 10M English-speaking merchants | Digital-first businesses |
-| **Target Market (Year 1-3)** | 100K merchants | SMBs on BASE |
+| **Serviceable Market** | 10M digital-first businesses | Enterprise & mid-market |
+| **Target Market (Year 1)** | 100+ merchants | BASE ecosystem |
 
 ---
 
 ## Slide 6: Product
 
-**Simple for merchants. Powerful for customers.**
+**Authentic. Transferable. Liquid.**
 
 ### 1️⃣ DEPLOY TOKEN
-Create custom loyalty token  
-Stake LOYAL as collateral  
-Launch in minutes
+Create custom ERC-20 loyalty token  
+Stake $1K-15K LOYAL as collateral  
+Launch in minutes on BASE
 
-### 2️⃣ ISSUE REWARDS
-Reward customers instantly  
-Track all transactions  
-Real-time analytics
+### 2️⃣ ISSUE & VERIFY
+Reward customers with blockchain proof  
+Fully transferable between wallets  
+P2P trading enabled
 
-### 3️⃣ TRADE ANYWHERE
-Universal liquidity via LOYAL  
-Trade between any merchant tokens  
-True ownership + transparency
+### 3️⃣ BUYBACK MECHANISM
+Merchants set buyback price  
+20% penalty incentivizes in-store redemption  
+Optional liquidity via LOYAL hub
 
 ---
 
@@ -89,13 +89,13 @@ True ownership + transparency
 
 | Tier | Stake | Refund | Features |
 |------|-------|--------|----------|
-| Base | $1,000 | 80% after 12mo | Basic loyalty |
-| Pro | $5,000 | 80% after 12mo | Advanced analytics |
-| Enterprise | $15,000 | 80% after 12mo | White label + API |
+| Basic | $1,000 LOYAL | 80% guaranteed | Core loyalty + DAO voting |
+| Pro | $5,000 LOYAL | 80% guaranteed | Analytics + API + NFT rewards |
+| Enterprise | $15,000 LOYAL | 80% guaranteed | White label + dedicated support |
 
 **Transaction Revenue**
-- 8% burn fee (M-token → LOYAL)
-- 0.5% platform fee (LOYAL → M-token)
+- 20% penalty on customer token sales (revenue share with platform)
+- 0.5% platform fee on LOYAL conversions
 
 ---
 
@@ -106,94 +106,101 @@ True ownership + transparency
 | Allocation | % | Amount | Vesting |
 |------------|---|--------|---------|
 | Ecosystem Fund (DAO) | 38% | 3.8B | 5-year linear |
-| Token Sales | 30% | 3.0B | 12-18 months |
+| Token Sales (Seed/Private/Public) | 30% | 3.0B | 12-18 months |
 | Team & Advisors | 20% | 2.0B | 1yr cliff + 3yr vest |
-| Marketing & Growth | 7% | 700M | Performance-based |
-| Initial Liquidity | 5% | 500M | TGE unlock |
+| Marketing & Early Users | 7% | 700M | Performance-based |
+| DEX Liquidity Reserve | 5% | 500M | TGE unlock |
 
-**Deflationary Mechanism:** 8% burned on every merchant token swap
+**Deflationary Mechanism:** Revenue share burns contribute to token scarcity
 
 ---
 
 ## Slide 9: Competitive Advantage
 
-**We built on BASE with MVP already live**
+**Key Differentiator: Guaranteed Authenticity on Blockchain**
 
-| Traditional SaaS | Loyal Spark |
+| Traditional Loyalty | Loyal Spark |
 |-----------------|-------------|
-| $99-499/month | One-time stake (80% refundable) |
-| Vendor lock-in | Full data control |
-| Points expire worthless | Trade anytime for value |
-| 6-12 month setup | Deploy in minutes |
-| Opaque "black box" | Transparent on BASE |
+| Points can be devalued | Immutable blockchain records |
+| Vulnerable to fraud | Cryptographically verified |
+| No transferability | Fully transferable & tradeable |
+| Vendor lock-in | 80% refundable merchant stake |
+| Opaque terms | Transparent on BASE |
 
 ---
 
-## Slide 10: Traction & Roadmap
+## Slide 10: Roadmap
 
-**Current Status (Q4 2025)**
+**Q1 2026**
 ✅ MVP live on BASE Network  
-✅ Smart contracts audited  
-✅ Full merchant + customer features
+✅ Smart contract audits completed  
+🎯 Onboard first 5-10 enterprise merchants
 
-**2026 Milestones**
-- Q1-Q2: 100 merchants, token TGE
-- Q3: 1,000 merchants, DEX integration
-- Q4: 5,000 merchants, hub liquidity live
+**Q2-Q3 2026**
+🎯 Launch LOYAL token TGE  
+🎯 Reach 100 active merchants  
+🎯 Integrate DEX liquidity pools
 
-**2027 Goals**
-- 10,000+ active merchants
-- Multi-chain expansion
-- Series A preparation
+**Q4 2026 - Q1 2027**
+🎯 Scale to 1,000+ merchants  
+🎯 Multi-chain expansion (Ethereum, Polygon)  
+🎯 Prepare for Series A
 
 ---
 
-## Slide 11: Team & Development
+## Slide 11: Team & Funding
 
-**MVP-to-Enterprise Development Plan**
+**Core Team (6 Key Roles)**
 
-| Phase | Duration | Budget | Focus |
-|-------|----------|--------|-------|
-| Discovery & Audit | 5-7 weeks | $25K-40K | Architecture review |
-| BASE Smart Contracts | 10-12 weeks | $55K-120K | Advanced tokenomics |
-| Mobile Development | 12-14 weeks | $70K-140K | iOS & Android apps |
-| QA & Security Audit | 6-8 weeks | $30K-50K | Testing & certification |
-| **TOTAL** | **33-41 weeks** | **$200K-380K** | **Full Enterprise Platform** |
+| Role | Monthly | Focus |
+|------|---------|-------|
+| CEO / Product Lead | $18K | Vision, fundraising, partnerships |
+| CTO / Lead Architect | $16K | Smart contracts, oracles, security |
+| Sr. Smart Contract Dev | $14K | Solidity development & testing |
+| Full-Stack Developer | $12K | Web UI, merchant dashboard, API |
+| Marketing & Community | $8K | Token marketing, DAO community |
+| Operations & Legal | $7K | Compliance, financial reporting |
 
-**Core Team:** Solutions Architect, 2 BASE Developers, 2 Mobile Developers, QA Engineer, PM
+**Annual Personnel:** $900K | **Operations:** $525K | **Total:** $1.425M
 
 ---
 
 ## Slide 12: The Ask
 
-# Raising $200K - $380K Development Round
+# Raising $1.425M Seed Round
 
-**Milestone-based funding to scale MVP → Enterprise**
+**12-month runway to launch and scale**
 
 ### Use of Funds
 
-**BASE Smart Contracts (30%)** - $55K-120K  
-Advanced loyalty mechanics, coalitions, gamification
+**Personnel (63%)** - $900K  
+6-person core team for development and operations
 
-**Mobile Development (38%)** - $70K-140K  
-Native iOS/Android with premium UX/UI
+**Smart Contract Audits (4%)** - $60K  
+Security audits for LOYAL, Staking Vault, Factory
 
-**QA & Security (15%)** - $30K-50K  
-Smart contract audits, load testing
+**Initial Liquidity (7%)** - $100K  
+LOYAL/USDC pool for price stability
 
-**Discovery & PM (12%)** - $25K-40K  
-Architecture, integration design
+**Marketing & Partnerships (11%)** - $150K  
+Onboard first 5-10 enterprise merchants
 
-**Reserve (5%)** - $10K-20K  
-Contingency buffer
+**Legal & Compliance (4%)** - $50K  
+DAO formation, token sale compliance
+
+**Cloud & Tools (2%)** - $30K  
+Hosting, nodes, SaaS subscriptions
+
+**Reserve Fund (9%)** - $135K  
+Risk buffer for 80% refund guarantee
 
 ### Expected Outcomes
 
-✅ Native mobile apps (iOS & Android)  
-✅ Enterprise-grade smart contracts  
-✅ 1,000+ merchant capacity  
-✅ Full API for ERP/POS integration  
-✅ 7.5-9.5 month delivery
+✅ 100+ merchants onboarded in Year 1  
+✅ $100K+ in staking deposits  
+✅ LOYAL token TGE and DEX listing  
+✅ Enterprise-ready platform with API  
+✅ Path to profitability via transaction fees
 
 ---
 
