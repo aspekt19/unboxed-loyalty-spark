@@ -8,7 +8,11 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    allowedHosts: ['nonoperating-innocuously-magaly.ngrok-free.dev'],
+    allowedHosts: [
+      'nonoperating-innocuously-magaly.ngrok-free.dev',
+      'loyalty-spark.lovable.app',
+      'bzxmejzssxjazswgwqqs.supabase.co'
+    ],
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
