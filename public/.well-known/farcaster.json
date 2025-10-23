@@ -1,4 +1,9 @@
 {
+  "accountAssociation": {
+    "header": "eyJmaWQiOjEzODUxNjUsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHg3MkIwYWMyMkI3QTMyNTQyZWI4QjY4MDRhNjI0M2JhMTkwNDU2MjU0In0",
+    "payload": "eyJkb21haW4iOiJsb3lhbHNwYXJrLm9ubGluZSJ9",
+    "signature": "eaBpLNEYinUIdoXzXdOPCKxE4PV0dTzf9B0dKvPfuG8bwyTendNIyrbkUZMp2jEBs2T49lFxKgvyK2eQ8h2urBs="
+  },
   "miniapp": {
     "version": "1",
     "name": "Loyal Spark",
@@ -27,11 +32,6 @@
     "requiredCapabilities": [
       "actions.signIn",
       "wallet.getEthereumProvider"
-    ],
-    "accountAssociation": {
-      "header": "eyJmaWQiOjEzODUxNjUsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHg3MkIwYWMyMkI3QTMyNTQyZWI4QjY4MDRhNjI0M2JhMTkwNDU2MjU0In0",
-      "payload": "eyJkb21haW4iOiJsb3lhbHNwYXJrLm9ubGluZSJ9",
-      "signature": "eaBpLNEYinUIdoXzXdOPCKxE4PV0dTzf9B0dKvPfuG8bwyTendNIyrbkUZMp2jEBs2T49lFxKgvyK2eQ8h2urBs="
-    }
+    ]
   }
 }
