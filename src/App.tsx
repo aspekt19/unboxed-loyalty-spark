@@ -8,9 +8,15 @@ import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { config, rainbowKitLocale } from "./config/wagmi";
 import "@rainbow-me/rainbowkit/styles.css";
 import Index from "./pages/Index";
+import AppPage from "./pages/AppPage";
+import CustomerPage from "./pages/CustomerPage";
+import MerchantPage from "./pages/MerchantPage";
+import PitchDeck from "./pages/pitch-deck/PitchDeck";
 import NotFound from "./pages/NotFound";
 import { AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
+import { migrateAllData } from "./lib/migrateLocalStorageData";
+import { AuthProvider } from "./contexts/AuthContext";
 import { sdk } from "@farcaster/miniapp-sdk";
 
 const queryClient = new QueryClient();
@@ -25,10 +31,38 @@ function AnimatedRoutes() {
     });
   }, []);
 
+  // Автоматическая миграция данных из localStorage в БД при каждой загрузке
+  // (если есть данные для миграции)
+  useEffect(() => {
+    const migrationKey = 'data_migrated_to_cloud';
+    const lastMigrationTime = localStorage.getItem(migrationKey);
+    const now = Date.now();
+    
+    // Проверяем, есть ли данные в localStorage для миграции
+    const hasRewards = localStorage.getItem('merchantRewards');
+    const hasVouchers = localStorage.getItem('customerVouchers');
+    
+    // Мигрируем если:
+    // 1. Никогда не мигрировали ИЛИ
+    // 2. Прошло более 1 часа с последней миграции И есть данные для миграции
+    const shouldMigrate = !lastMigrationTime || 
+      ((now - parseInt(lastMigrationTime)) > 3600000 && (hasRewards || hasVouchers));
+    
+    if (shouldMigrate) {
+      migrateAllData().then(() => {
+        localStorage.setItem(migrationKey, now.toString());
+      });
+    }
+  }, []);
+
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<Index />} />
+        <Route path="/app" element={<AppPage />} />
+        <Route path="/customer" element={<CustomerPage />} />
+        <Route path="/merchant" element={<MerchantPage />} />
+        <Route path="/pitch" element={<PitchDeck />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
@@ -40,13 +74,15 @@ const App = () => (
   <WagmiProvider config={config}>
     <QueryClientProvider client={queryClient}>
       <RainbowKitProvider locale={rainbowKitLocale}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AnimatedRoutes />
-          </BrowserRouter>
-        </TooltipProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <AnimatedRoutes />
+            </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
       </RainbowKitProvider>
     </QueryClientProvider>
   </WagmiProvider>
