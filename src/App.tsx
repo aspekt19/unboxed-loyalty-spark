@@ -32,19 +32,14 @@ function AnimatedRoutes() {
   }, []);
 
   // Автоматическая миграция данных из localStorage в БД при каждой загрузке
-  // (если есть данные для миграции)
   useEffect(() => {
     const migrationKey = 'data_migrated_to_cloud';
     const lastMigrationTime = localStorage.getItem(migrationKey);
     const now = Date.now();
     
-    // Проверяем, есть ли данные в localStorage для миграции
     const hasRewards = localStorage.getItem('merchantRewards');
     const hasVouchers = localStorage.getItem('customerVouchers');
     
-    // Мигрируем если:
-    // 1. Никогда не мигрировали ИЛИ
-    // 2. Прошло более 1 часа с последней миграции И есть данные для миграции
     const shouldMigrate = !lastMigrationTime || 
       ((now - parseInt(lastMigrationTime)) > 3600000 && (hasRewards || hasVouchers));
     
