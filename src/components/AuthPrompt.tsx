@@ -2,12 +2,23 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Shield, Wallet } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAccount } from 'wagmi';
+import { useAccount, useConnect } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import sdk from '@farcaster/frame-sdk';
+
+// Detect if running inside Farcaster
+const isFarcasterContext = () => {
+  try {
+    return sdk.context !== null && typeof window !== 'undefined';
+  } catch {
+    return false;
+  }
+};
 
 export function AuthPrompt() {
   const { user, signInWithWallet, isLoading } = useAuth();
   const { isConnected } = useAccount();
+  const { connect, connectors } = useConnect();
 
   if (user) return null;
 
@@ -22,7 +33,17 @@ export function AuthPrompt() {
         </p>
         <div className="flex gap-2">
           {!isConnected ? (
-            <ConnectButton />
+            isFarcasterContext() ? (
+              <Button 
+                onClick={() => connect({ connector: connectors[0] })}
+                className="gap-2"
+              >
+                <Wallet className="h-4 w-4" />
+                Connect Wallet
+              </Button>
+            ) : (
+              <ConnectButton />
+            )
           ) : (
             <Button 
               onClick={signInWithWallet} 
