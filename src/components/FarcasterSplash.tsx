@@ -7,10 +7,10 @@ interface FarcasterSplashProps {
 
 const FarcasterSplash = ({ onLaunch }: FarcasterSplashProps) => {
   return (
-    <div className="min-h-screen bg-black flex flex-col items-center justify-center px-6">
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
       {/* Logo */}
       <div className="mb-16">
-        <h1 className="text-[120px] font-bold text-white tracking-tight leading-none">
+        <h1 className="text-[120px] font-bold text-foreground tracking-tight leading-none">
           LS
         </h1>
       </div>
@@ -19,7 +19,7 @@ const FarcasterSplash = ({ onLaunch }: FarcasterSplashProps) => {
       <Button
         onClick={onLaunch}
         size="lg"
-        className="w-full max-w-md h-14 text-base font-medium rounded-xl bg-white text-black hover:bg-white/90 transition-all duration-200"
+        className="w-full max-w-md h-14 text-base font-medium rounded-xl bg-foreground text-background hover:bg-foreground/90 transition-all duration-200"
       >
         Launch Loyal Spark
         <ArrowUpRight className="ml-2 h-5 w-5" />
@@ -27,7 +27,7 @@ const FarcasterSplash = ({ onLaunch }: FarcasterSplashProps) => {
 
       {/* URL */}
       <div className="mt-8">
-        <p className="text-sm text-white/60">https://loyalspark.online/</p>
+        <p className="text-sm text-muted-foreground">https://loyalspark.online/</p>
       </div>
     </div>
   );
