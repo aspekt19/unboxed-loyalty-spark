@@ -1,15 +1,18 @@
 import { http } from 'viem';
 import { base } from 'wagmi/chains';
 import { getDefaultConfig } from '@rainbow-me/rainbowkit';
-import { 
+import {
   injectedWallet,
   coinbaseWallet,
   metaMaskWallet,
-  walletConnectWallet 
+  walletConnectWallet,
 } from '@rainbow-me/rainbowkit/wallets';
 
 const appName = 'Loyal Spark';
 const projectId = '2bf3fb72e7f66e63215bb32b7127f1bc';
+
+const isWarpcast =
+  typeof window !== 'undefined' && /Warpcast|Farcaster/i.test(navigator.userAgent);
 
 export const config = getDefaultConfig({
   appName,
@@ -22,17 +25,19 @@ export const config = getDefaultConfig({
       retryDelay: 1000,
     }),
   },
-  wallets: [
-    {
-      groupName: 'Recommended',
-      wallets: [
-        injectedWallet,      // ПРИОРИТЕТ: Farcaster встроенный кошелек в Warpcast / MetaMask extension на веб
-        coinbaseWallet,      // Base Wallet / Coinbase Wallet
-        metaMaskWallet,      // MetaMask (с deep links на мобильных)
-        walletConnectWallet, // WalletConnect (другие кошельки)
+  wallets: isWarpcast
+    ? [
+        {
+          groupName: 'Recommended',
+          wallets: [injectedWallet, coinbaseWallet],
+        },
+      ]
+    : [
+        {
+          groupName: 'Recommended',
+          wallets: [injectedWallet, coinbaseWallet, metaMaskWallet, walletConnectWallet],
+        },
       ],
-    },
-  ],
   ssr: false,
 });
 
