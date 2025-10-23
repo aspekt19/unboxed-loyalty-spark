@@ -19,8 +19,8 @@
     "tagline": "On-chain loyalty rewards",
     "ogTitle": "Loyal Spark - Loyalty Rewards",
     "ogDescription": "Create, manage & trade loyalty tokens on-chain. Zero middlemen. Total transparency.",
-    "ogImageUrl": "https://loyalspark.online/media-kit/social-banner-hero.png",
-    "heroImageUrl": "https://loyalspark.online/media-kit/social-banner-hero.png",
+    "ogImageUrl": "https://loyalspark.online/media-kit/logo-horizontal.png",
+    "heroImageUrl": "https://loyalspark.online/media-kit/logo-horizontal.png",
     "requiredChains": [
       "eip155:8453"
     ],
