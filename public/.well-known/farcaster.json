@@ -12,7 +12,7 @@
     "splashImageUrl": "https://loyalspark.online/new-favicon.png",
     "splashBackgroundColor": "#000000",
     "subtitle": "Decentralized Loyalty Rewards",
-    "description": "Create, manage & trade loyalty tokens on-chain. Zero middlemen. Total transparency. Built on BASE Network with smart contracts.",
+    "description": "Create, manage and trade loyalty tokens on-chain. Zero middlemen. Total transparency. Built on BASE Network with smart contracts.",
     "primaryCategory": "finance",
     "tags": [
       "loyalty",
@@ -23,7 +23,7 @@
     ],
     "tagline": "On-chain loyalty rewards",
     "ogTitle": "Loyal Spark - Loyalty Rewards",
-    "ogDescription": "Create, manage & trade loyalty tokens on-chain. Zero middlemen. Total transparency.",
+    "ogDescription": "Create, manage and trade loyalty tokens on-chain. Zero middlemen. Total transparency.",
     "ogImageUrl": "https://loyalspark.online/media-kit/logo-horizontal.png",
     "heroImageUrl": "https://loyalspark.online/media-kit/logo-horizontal.png",
     "requiredChains": [
