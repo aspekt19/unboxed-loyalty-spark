@@ -1,0 +1,32 @@
+{
+  "miniapp": {
+    "version": "1",
+    "name": "Loyal Spark",
+    "iconUrl": "https://loyalspark.online/new-favicon.png",
+    "homeUrl": "https://loyalspark.online",
+    "splashImageUrl": "https://loyalspark.online/new-favicon.png",
+    "splashBackgroundColor": "#000000",
+    "subtitle": "Decentralized Loyalty Rewards",
+    "description": "Create, manage & trade loyalty tokens on-chain. Zero middlemen. Total transparency. Built on BASE Network with smart contracts.",
+    "primaryCategory": "finance",
+    "tags": [
+      "loyalty",
+      "rewards",
+      "blockchain",
+      "tokens",
+      "base"
+    ],
+    "tagline": "On-chain loyalty rewards",
+    "ogTitle": "Loyal Spark - Loyalty Rewards",
+    "ogDescription": "Create, manage & trade loyalty tokens on-chain. Zero middlemen. Total transparency.",
+    "ogImageUrl": "https://loyalspark.online/media-kit/social-banner-hero.png",
+    "heroImageUrl": "https://loyalspark.online/media-kit/social-banner-hero.png",
+    "requiredChains": [
+      "eip155:8453"
+    ],
+    "requiredCapabilities": [
+      "actions.signIn",
+      "wallet.getEthereumProvider"
+    ]
+  }
+}

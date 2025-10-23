@@ -15,6 +15,20 @@ export default defineConfig(({ mode }) => ({
       'loyalspark.online'
     ],
   },
+  publicDir: 'public',
+  build: {
+    rollupOptions: {
+      output: {
+        assetFileNames: (assetInfo) => {
+          // Preserve .well-known directory structure
+          if (assetInfo.name?.includes('.well-known')) {
+            return assetInfo.name;
+          }
+          return 'assets/[name]-[hash][extname]';
+        }
+      }
+    }
+  },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
     alias: {
