@@ -1,52 +1,32 @@
-import { getDefaultConfig, connectorsForWallets, type Wallet, getWalletConnectConnector } from '@rainbow-me/rainbowkit';
+import { http, createConfig } from 'wagmi';
 import { base } from 'wagmi/chains';
-import { http } from 'viem';
+import { connectorsForWallets } from '@rainbow-me/rainbowkit';
 import { 
-  injectedWallet, 
   coinbaseWallet,
+  metaMaskWallet,
   walletConnectWallet 
 } from '@rainbow-me/rainbowkit/wallets';
+import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
 
 const appName = 'Loyal Spark';
 const projectId = '2bf3fb72e7f66e63215bb32b7127f1bc';
 
-// Кастомный MetaMask с deep link для мобильных устройств
-const metaMaskMobile = (): Wallet => ({
-  id: 'metamask',
-  name: 'MetaMask',
-  iconUrl: 'https://assets.metamask.io/images/mm-logo.svg',
-  iconBackground: '#fff',
-  downloadUrls: {
-    android: 'https://play.google.com/store/apps/details?id=io.metamask',
-    ios: 'https://apps.apple.com/app/metamask/id1438144202',
-  },
-  mobile: {
-    getUri: (uri: string) => `https://metamask.app.link/wc?uri=${encodeURIComponent(uri)}`,
-  },
-  qrCode: {
-    getUri: (uri: string) => uri,
-  },
-  createConnector: getWalletConnectConnector({ projectId }),
-});
-
-const connectors = connectorsForWallets(
+// RainbowKit коннекторы для веб-версии (MetaMask, Coinbase, WalletConnect)
+const rainbowKitConnectors = connectorsForWallets(
   [
     {
       groupName: 'Recommended',
       wallets: [
-        injectedWallet,    // Приоритет: Farcaster Browser Wallet / MetaMask extension на десктопе
-        coinbaseWallet,    // Base Wallet / Coinbase Wallet
-        metaMaskMobile,    // MetaMask с deep link (без QR)
-        walletConnectWallet, // Другие кошельки
+        coinbaseWallet,      // Coinbase Wallet / Base Wallet
+        metaMaskWallet,      // MetaMask
+        walletConnectWallet, // WalletConnect (другие кошельки)
       ],
     },
   ],
   { appName, projectId }
 );
 
-export const config = getDefaultConfig({
-  appName,
-  projectId,
+export const config = createConfig({
   chains: [base],
   transports: {
     [base.id]: http('https://base-rpc.publicnode.com', {
@@ -55,8 +35,10 @@ export const config = getDefaultConfig({
       retryDelay: 1000,
     }),
   },
-  connectors,
-  ssr: false,
+  // Гибридная конфигурация:
+  // 1. Farcaster коннектор ПЕРВЫМ (автоподключение в Warpcast БЕЗ QR)
+  // 2. RainbowKit коннекторы (для веб-версии с MetaMask, Coinbase, WalletConnect)
+  connectors: [farcasterMiniApp(), ...rainbowKitConnectors],
 });
 
 export const rainbowKitLocale = 'en';
