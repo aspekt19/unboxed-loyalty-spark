@@ -20,7 +20,10 @@ export function RoleSelector({ onRoleSelect, currentRole }: RoleSelectorProps) {
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        <Card className={`cursor-pointer transition-all hover:shadow-lg ${currentRole === 'customer' ? 'ring-2 ring-primary' : ''}`}>
+        <Card 
+          className={`cursor-pointer transition-all hover:shadow-lg ${currentRole === 'customer' ? 'ring-2 ring-primary' : ''}`}
+          onClick={() => handleRoleSelect('customer')}
+        >
           <CardHeader>
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <ShoppingBag className="w-6 h-6 text-primary" />
@@ -32,8 +35,7 @@ export function RoleSelector({ onRoleSelect, currentRole }: RoleSelectorProps) {
           </CardHeader>
           <CardContent>
             <Button 
-              onClick={() => handleRoleSelect('customer')}
-              className="w-full"
+              className="w-full pointer-events-none"
               variant={currentRole === 'customer' ? 'default' : 'outline'}
             >
               {currentRole === 'customer' ? 'Current Role' : 'Enter as Customer'}
@@ -41,7 +43,10 @@ export function RoleSelector({ onRoleSelect, currentRole }: RoleSelectorProps) {
           </CardContent>
         </Card>
 
-        <Card className={`cursor-pointer transition-all hover:shadow-lg ${currentRole === 'merchant' ? 'ring-2 ring-primary' : ''}`}>
+        <Card 
+          className={`cursor-pointer transition-all hover:shadow-lg ${currentRole === 'merchant' ? 'ring-2 ring-primary' : ''}`}
+          onClick={() => handleRoleSelect('merchant')}
+        >
           <CardHeader>
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <Store className="w-6 h-6 text-primary" />
@@ -53,8 +58,7 @@ export function RoleSelector({ onRoleSelect, currentRole }: RoleSelectorProps) {
           </CardHeader>
           <CardContent>
             <Button 
-              onClick={() => handleRoleSelect('merchant')}
-              className="w-full"
+              className="w-full pointer-events-none"
               variant={currentRole === 'merchant' ? 'default' : 'outline'}
             >
               {currentRole === 'merchant' ? 'Current Role' : 'Enter as Merchant'}

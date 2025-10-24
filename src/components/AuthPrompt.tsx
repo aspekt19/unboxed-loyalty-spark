@@ -6,10 +6,12 @@ import { useAccount, useConnect } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import sdk from '@farcaster/frame-sdk';
 
-// Detect if running inside Farcaster
+// Detect if running inside Farcaster - check if in iframe context
 const isFarcasterContext = () => {
+  if (typeof window === 'undefined') return false;
   try {
-    return sdk.context !== null && typeof window !== 'undefined';
+    // Check if we're in an iframe (Farcaster runs apps in iframes)
+    return window.self !== window.top;
   } catch {
     return false;
   }

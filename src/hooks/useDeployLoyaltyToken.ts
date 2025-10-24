@@ -8,16 +8,15 @@ export function useDeployLoyaltyToken() {
   const publicClient = usePublicClient();
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const [deployedTokenAddress, setDeployedTokenAddress] = useState<string | null>(null);
-  const [isActivating, setIsActivating] = useState(false);
 
   const { isLoading: isConfirming, isSuccess, data: receipt } = useWaitForTransactionReceipt({
     hash,
   });
 
-  // Extract token address and auto-activate
+  // Extract token address from transaction receipt
   useEffect(() => {
-    if (isSuccess && receipt && publicClient && address && !deployedTokenAddress && !isActivating) {
-      const extractAndActivate = async () => {
+    if (isSuccess && receipt && publicClient && address && !deployedTokenAddress) {
+      const extractTokenAddress = async () => {
         try {
           const logs = receipt.logs;
           const eventLog = logs.find((log) => {
@@ -32,39 +31,17 @@ export function useDeployLoyaltyToken() {
             const tokenAddress = '0x' + eventLog.topics[1].slice(-40);
             console.log('Token created:', tokenAddress);
             setDeployedTokenAddress(tokenAddress);
-            setIsActivating(true);
-            
-            toast.info('Activating your loyalty program...');
-            
-            // Enable minting
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            await writeContract({
-              address: tokenAddress as `0x${string}`,
-              abi: CONTRACTS.LOYAL_SPARK_ERC20.abi,
-              functionName: 'enableMinting',
-            } as any);
-            
-            // Enable utility
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            await writeContract({
-              address: tokenAddress as `0x${string}`,
-              abi: CONTRACTS.LOYAL_SPARK_ERC20.abi,
-              functionName: 'unpauseUtility',
-            } as any);
-            
-            toast.success('Loyalty program fully activated!');
-            setIsActivating(false);
+            toast.success('Loyalty program deployed successfully!');
           }
         } catch (error) {
-          console.error('Error during activation:', error);
-          toast.warning('Program created but auto-activation failed. Please activate manually.');
-          setIsActivating(false);
+          console.error('Error extracting token address:', error);
+          toast.error('Failed to extract token address');
         }
       };
 
-      extractAndActivate();
+      extractTokenAddress();
     }
-  }, [isSuccess, receipt, publicClient, address, deployedTokenAddress, writeContract, isActivating]);
+  }, [isSuccess, receipt, publicClient, address, deployedTokenAddress]);
 
   const deployToken = useCallback((name: string, symbol: string) => {
     if (!address) {
@@ -74,7 +51,6 @@ export function useDeployLoyaltyToken() {
 
     // Reset state on new deployment
     setDeployedTokenAddress(null);
-    setIsActivating(false);
 
     try {
       writeContract({
@@ -91,8 +67,8 @@ export function useDeployLoyaltyToken() {
 
   return {
     deployToken,
-    isPending: isPending || isConfirming || isActivating,
-    isSuccess: isSuccess && !isActivating,
+    isPending: isPending || isConfirming,
+    isSuccess,
     hash,
     error,
     deployedTokenAddress,

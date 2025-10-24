@@ -25,9 +25,17 @@ const FarcasterSplash = ({ onLaunch }: FarcasterSplashProps) => {
         <ArrowUpRight className="ml-2 h-5 w-5" />
       </Button>
 
-      {/* URL */}
-      <div className="mt-8">
+      {/* Links */}
+      <div className="mt-8 flex flex-col items-center gap-2">
         <p className="text-sm text-muted-foreground">https://loyalspark.online/</p>
+        <a 
+          href="https://x.com/Loyal_Spark" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-sm text-primary hover:underline"
+        >
+          @Loyal_Spark
+        </a>
       </div>
     </div>
   );

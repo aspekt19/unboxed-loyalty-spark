@@ -4,21 +4,20 @@ import { Link } from 'react-router-dom';
 import PageTransition from '@/components/PageTransition';
 import FarcasterSplash from '@/components/FarcasterSplash';
 import { useState, useEffect } from 'react';
-import { sdk } from '@farcaster/miniapp-sdk';
 
 const Index = () => {
   const [isFarcaster, setIsFarcaster] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
-    // Check if running in Farcaster miniapp
-    sdk.context.then((context) => {
-      if (context) {
-        setIsFarcaster(true);
+    // Check if running in Farcaster miniapp (iframe context)
+    if (typeof window !== 'undefined') {
+      try {
+        setIsFarcaster(window.self !== window.top);
+      } catch {
+        setIsFarcaster(false);
       }
-    }).catch(() => {
-      setIsFarcaster(false);
-    });
+    }
   }, []);
 
   if (isFarcaster && !showWelcome) {
