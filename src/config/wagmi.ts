@@ -5,12 +5,13 @@ import { http } from 'viem';
 import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
 import sdk from '@farcaster/frame-sdk';
 
-// Detect if running inside Farcaster - check if in iframe context
+// Detect if running inside Farcaster by checking for Farcaster parent domain
 const isFarcasterContext = () => {
   if (typeof window === 'undefined') return false;
   try {
-    // Check if we're in an iframe (Farcaster runs apps in iframes)
-    return window.self !== window.top;
+    // Check if parent URL contains Farcaster domain
+    const parentUrl = document.referrer;
+    return parentUrl.includes('warpcast.com') || parentUrl.includes('farcaster.xyz');
   } catch {
     return false;
   }
