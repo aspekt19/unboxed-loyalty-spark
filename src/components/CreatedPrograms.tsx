@@ -325,6 +325,14 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
       if (shouldPause) {
         await pauseProgram(program.tokenAddress as `0x${string}`);
       } else {
+        // При активации нужно вызвать обе функции
+        toast.info('Activating program: enabling minting...');
+        await enableMinting(program.tokenAddress as `0x${string}`);
+        
+        // Небольшая задержка между транзакциями
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        toast.info('Activating program: unpausing utility...');
         await unpauseProgram(program.tokenAddress as `0x${string}`);
       }
     } catch (error) {
