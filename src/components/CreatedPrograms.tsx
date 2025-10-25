@@ -55,6 +55,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
   const [pendingOperation, setPendingOperation] = useState<{
     program: LoyaltyProgram;
     operation: 'pause' | 'unpause';
+    step: 'minting' | 'utility' | 'complete';
   } | null>(null);
   const publicClient = usePublicClient();
   const { address } = useAccount();
@@ -319,21 +320,16 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     if (!program.tokenAddress || !program.id) return;
     
     setToggledProgram(program.tokenAddress);
-    setPendingOperation({ program, operation: shouldPause ? 'pause' : 'unpause' });
     
     try {
       if (shouldPause) {
+        setPendingOperation({ program, operation: 'pause', step: 'complete' });
         await pauseProgram(program.tokenAddress as `0x${string}`);
       } else {
-        // При активации нужно вызвать обе функции
-        toast.info('Activating program: enabling minting...');
+        // При активации сначала вызываем enableMinting
+        setPendingOperation({ program, operation: 'unpause', step: 'minting' });
+        toast.info('Step 1: Enabling minting...');
         await enableMinting(program.tokenAddress as `0x${string}`);
-        
-        // Небольшая задержка между транзакциями
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        toast.info('Activating program: unpausing utility...');
-        await unpauseProgram(program.tokenAddress as `0x${string}`);
       }
     } catch (error) {
       console.error('Error toggling program:', error);
@@ -348,9 +344,27 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     const handleSuccess = async () => {
       if (!toggleSuccess || !pendingOperation || !address) return;
       
-      const { program, operation } = pendingOperation;
-      const isPause = operation === 'pause';
+      const { program, operation, step } = pendingOperation;
       
+      // Если это шаг активации минтинга, переходим к следующему шагу
+      if (operation === 'unpause' && step === 'minting') {
+        console.log('Minting enabled successfully, now unpausing utility...');
+        setPendingOperation({ program, operation: 'unpause', step: 'utility' });
+        toast.info('Step 2: Unpausing utility...');
+        
+        try {
+          await unpauseProgram(program.tokenAddress as `0x${string}`);
+        } catch (error) {
+          console.error('Error unpausing program:', error);
+          toast.error('Failed to unpause program');
+          setToggledProgram(null);
+          setPendingOperation(null);
+        }
+        return;
+      }
+      
+      // Финальный шаг - обновление БД
+      const isPause = operation === 'pause';
       console.log(`Transaction successful, updating DB status to ${isPause ? 'paused' : 'active'}`);
       
       try {
@@ -408,7 +422,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         toast.success(
           isPause 
             ? 'Program paused. Rewards and vouchers are now inactive.' 
-            : 'Program activated. Rewards and vouchers are now active again.'
+            : 'Program activated successfully! Rewards and vouchers are now active.'
         );
       } catch (error) {
         console.error('Error updating database:', error);
@@ -420,7 +434,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     };
     
     handleSuccess();
-  }, [toggleSuccess, pendingOperation, address]);
+  }, [toggleSuccess, pendingOperation, address, unpauseProgram]);
 
   const handleEnableMinting = async (program: LoyaltyProgram) => {
     if (!program.tokenAddress) return;
@@ -516,17 +530,17 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
   }
 
   return (
-    <Card className="border-2 bg-gradient-to-br from-card to-muted/30 flex flex-col max-h-[calc(100vh-2rem)]">
-      <CardHeader className="flex-shrink-0">
+    <Card className="border-2 bg-gradient-to-br from-card to-muted/30">
+      <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Coins className="h-5 w-5 text-primary" />
           Your Loyalty Programs
         </CardTitle>
         <CardDescription>Select a program to issue rewards</CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 overflow-hidden">
-        <ScrollArea className="h-full pr-4">
-          <div className="space-y-3">
+      <CardContent>
+        <ScrollArea className="h-[500px] pr-4">
+          <div className="space-y-3 pb-4">
             {programs.map((program, index) => (
             <div
               key={index}

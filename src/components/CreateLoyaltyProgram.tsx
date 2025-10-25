@@ -204,8 +204,12 @@ export function CreateLoyaltyProgram() {
               After this date, you'll have 24 hours to extend or close the program
             </p>
           </div>
-          <Button type="submit" disabled={isPending} className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90">
-            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          <Button 
+            type="submit" 
+            disabled={isPending} 
+            className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 h-12 text-base font-semibold touch-manipulation"
+          >
+            {isPending && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
             Deploy Program
           </Button>
         </form>
