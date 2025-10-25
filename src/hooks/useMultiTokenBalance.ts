@@ -6,6 +6,7 @@ export interface TokenInfo {
   address: string;
   name: string;
   symbol: string;
+  merchantAddress?: string;
 }
 
 const ERC20_ABI = [

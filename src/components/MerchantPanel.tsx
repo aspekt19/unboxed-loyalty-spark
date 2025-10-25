@@ -3,25 +3,27 @@ import { CreatedPrograms } from './CreatedPrograms';
 import { CreateReward } from './rewards/CreateReward';
 import { RewardsList } from './rewards/RewardsList';
 import { VouchersManagement } from './rewards/VouchersManagement';
+import { MintTokensDialog } from './MintTokensDialog';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useMintTokens } from '@/hooks/useMintTokens';
 import { useAccount } from 'wagmi';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { Loader2, Sparkles, AlertCircle, Wallet, AlertTriangle } from 'lucide-react';
+import { Sparkles, AlertCircle, Wallet, AlertTriangle } from 'lucide-react';
 import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
 
 export function MerchantPanel() {
   const { address } = useAccount();
   const { session, signInWithWallet, isLoading: authLoading } = useAuth();
-  const [recipientAddress, setRecipientAddress] = useState('');
-  const [amount, setAmount] = useState('');
   const [selectedProgram, setSelectedProgram] = useState<{ name: string; symbol: string; tokenAddress: string } | null>(null);
+  const [mintDialogOpen, setMintDialogOpen] = useState(false);
+  
+  // Check if we're in Farcaster environment
+  const isFarcaster = typeof document !== 'undefined' && 
+    (document.referrer.includes('warpcast.com') || document.referrer.includes('farcaster.xyz'));
   
   // Always call hooks in the same order, regardless of conditions
   const { mintTokens, isPending, isSuccess, reset } = useMintTokens();
@@ -41,14 +43,11 @@ export function MerchantPanel() {
   useEffect(() => {
     if (!address) {
       setSelectedProgram(null);
-      setRecipientAddress('');
-      setAmount('');
+      setMintDialogOpen(false);
     }
   }, [address]);
 
-  const handleMint = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleMintSubmit = async (recipientAddress: string, amount: string) => {
     if (!selectedProgram) {
       toast.error('Please select a loyalty program first');
       return;
@@ -70,8 +69,7 @@ export function MerchantPanel() {
   useEffect(() => {
     if (isSuccess) {
       toast.success('Tokens minted successfully!');
-      setRecipientAddress('');
-      setAmount('');
+      setMintDialogOpen(false);
       // Trigger events to refresh token lists and balances on customer side
       window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
       window.dispatchEvent(new Event('tokenBalancesUpdated'));
@@ -124,39 +122,23 @@ export function MerchantPanel() {
                 </Alert>
               )}
               
-              <form onSubmit={handleMint} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="recipient">Customer Wallet Address</Label>
-                  <Input
-                    id="recipient"
-                    placeholder="0x..."
-                    value={recipientAddress}
-                    onChange={(e) => setRecipientAddress(e.target.value)}
-                    disabled={isPending}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="amount">Token Amount</Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    placeholder="100"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    disabled={isPending}
-                  />
-                </div>
-                <Button 
-                  type="submit" 
-                  disabled={isPending || !selectedProgram || isPaused || !isMintingActive} 
-                  className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
-                >
-                  {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {selectedProgram ? `Issue ${selectedProgram.symbol}` : 'Issue Tokens'}
-                </Button>
-              </form>
+              <Button 
+                onClick={() => setMintDialogOpen(true)}
+                disabled={!selectedProgram || isPaused || !isMintingActive} 
+                className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+              >
+                {selectedProgram ? `Issue ${selectedProgram.symbol}` : 'Issue Tokens'}
+              </Button>
             </CardContent>
           </Card>
+
+          <MintTokensDialog
+            isOpen={mintDialogOpen}
+            onClose={() => setMintDialogOpen(false)}
+            onSubmit={handleMintSubmit}
+            isPending={isPending}
+            isFarcaster={isFarcaster}
+          />
 
           <CreateReward />
           

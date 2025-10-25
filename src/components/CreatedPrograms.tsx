@@ -326,10 +326,9 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         setPendingOperation({ program, operation: 'pause', step: 'complete' });
         await pauseProgram(program.tokenAddress as `0x${string}`);
       } else {
-        // При активации сначала вызываем enableMinting
-        setPendingOperation({ program, operation: 'unpause', step: 'minting' });
-        toast.info('Step 1: Enabling minting...');
-        await enableMinting(program.tokenAddress as `0x${string}`);
+        // При активации вызываем только unpause
+        setPendingOperation({ program, operation: 'unpause', step: 'complete' });
+        await unpauseProgram(program.tokenAddress as `0x${string}`);
       }
     } catch (error) {
       console.error('Error toggling program:', error);
@@ -344,26 +343,9 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     const handleSuccess = async () => {
       if (!toggleSuccess || !pendingOperation || !address) return;
       
-      const { program, operation, step } = pendingOperation;
+      const { program, operation } = pendingOperation;
       
-      // Если это шаг активации минтинга, переходим к следующему шагу
-      if (operation === 'unpause' && step === 'minting') {
-        console.log('Minting enabled successfully, now unpausing utility...');
-        setPendingOperation({ program, operation: 'unpause', step: 'utility' });
-        toast.info('Step 2: Unpausing utility...');
-        
-        try {
-          await unpauseProgram(program.tokenAddress as `0x${string}`);
-        } catch (error) {
-          console.error('Error unpausing program:', error);
-          toast.error('Failed to unpause program');
-          setToggledProgram(null);
-          setPendingOperation(null);
-        }
-        return;
-      }
-      
-      // Финальный шаг - обновление БД
+      // Обновление БД
       const isPause = operation === 'pause';
       console.log(`Transaction successful, updating DB status to ${isPause ? 'paused' : 'active'}`);
       
@@ -434,7 +416,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     };
     
     handleSuccess();
-  }, [toggleSuccess, pendingOperation, address, unpauseProgram]);
+  }, [toggleSuccess, pendingOperation, address]);
 
   const handleEnableMinting = async (program: LoyaltyProgram) => {
     if (!program.tokenAddress) return;

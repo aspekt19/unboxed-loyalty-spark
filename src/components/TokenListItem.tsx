@@ -8,10 +8,11 @@ interface TokenListItemProps {
   name: string;
   symbol: string;
   balance: string;
+  merchantAddress?: string;
   onSendClick: () => void;
 }
 
-export function TokenListItem({ address, name, symbol, balance, onSendClick }: TokenListItemProps) {
+export function TokenListItem({ address, name, symbol, balance, merchantAddress, onSendClick }: TokenListItemProps) {
   const { isPaused } = useCheckProgramStatus(address as `0x${string}`);
   
   return (
@@ -35,6 +36,11 @@ export function TokenListItem({ address, name, symbol, balance, onSendClick }: T
               )}
             </div>
             <p className="text-xs text-muted-foreground">{symbol}</p>
+            {merchantAddress && (
+              <p className="text-[10px] text-muted-foreground truncate">
+                Merchant: {merchantAddress.slice(0, 6)}...{merchantAddress.slice(-4)}
+              </p>
+            )}
           </div>
         </div>
         

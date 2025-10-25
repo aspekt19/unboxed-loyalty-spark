@@ -195,12 +195,27 @@ export function TokenList() {
         symbol: log.args.symbol,
       }));
 
-      console.log('TokenList: Parsed tokens:', tokens);
-      setAllTokens(tokens);
+      // Load merchant addresses from database
+      const { data: programs } = await supabase
+        .from('loyalty_programs')
+        .select('token_address, merchant_address')
+        .in('token_address', tokens.map(t => t.address));
+
+      const merchantMap = new Map(
+        programs?.map(p => [p.token_address.toLowerCase(), p.merchant_address]) || []
+      );
+
+      const tokensWithMerchant = tokens.map(token => ({
+        ...token,
+        merchantAddress: merchantMap.get(token.address.toLowerCase()),
+      }));
+
+      console.log('TokenList: Parsed tokens:', tokensWithMerchant);
+      setAllTokens(tokensWithMerchant);
       
       // Save to localStorage for future use
-      if (tokens.length > 0) {
-        localStorage.setItem('customerTokens', JSON.stringify(tokens));
+      if (tokensWithMerchant.length > 0) {
+        localStorage.setItem('customerTokens', JSON.stringify(tokensWithMerchant));
       }
     } catch (error) {
       console.error('TokenList: Failed to load tokens from blockchain:', error);
@@ -350,6 +365,7 @@ export function TokenList() {
             name={token.name}
             symbol={token.symbol}
             balance={token.balance}
+            merchantAddress={token.merchantAddress}
             onSendClick={() => {
               setSelectedToken(token);
               setDialogOpen(true);
