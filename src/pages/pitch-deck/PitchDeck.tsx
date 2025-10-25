@@ -187,30 +187,7 @@ const PitchDeck = () => {
       ],
     },
     {
-      id: 'ask',
-      title: 'The Ask',
-      subtitle: 'Seed Round',
-      ask: {
-        amount: '$3.5M - $4M',
-        valuation: 'Pre-money: $12M-15M',
-        use: [
-          { category: 'Team (14 people)', percentage: '70%', amount: '$2.75M' },
-          { category: 'Marketing & Community', percentage: '8%', amount: '$300K' },
-          { category: 'Infrastructure', percentage: '10%', amount: '$400K' },
-          { category: 'Legal & Audits', percentage: '7%', amount: '$250K' },
-          { category: 'Reserve', percentage: '5%', amount: '$200K' },
-        ],
-        milestones: [
-          '1,000+ merchants onboarded',
-          '$2M+ Total Value Locked',
-          'Product-market fit validated',
-          'Path to profitability',
-        ],
-      },
-    },
-  ];
-
-  return (
+      return (
     <PageTransition>
       <div className="min-h-screen bg-background">
         {/* Header */}
