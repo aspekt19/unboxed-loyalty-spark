@@ -186,9 +186,10 @@ const PitchDeck = () => {
         { year: '2028', merchants: '50,000', tvl: '$150M', revenue: '$12M' },
       ],
     },
-    {
-      return (
-    <PageTransition>
+  },
+},
+return (
+      <PageTransition>
       <div className="min-h-screen bg-background">
         {/* Header */}
         <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
