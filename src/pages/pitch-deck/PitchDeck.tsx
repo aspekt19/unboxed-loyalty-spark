@@ -156,10 +156,11 @@ const PitchDeck = () => {
         <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
           <div className="container mx-auto px-6 py-4 flex justify-between items-center">
             <Link to="/" className="flex items-center gap-2.5 group">
-              <div className="relative h-9 w-9 rounded-lg bg-foreground flex items-center justify-center transition-transform duration-300 group-hover:scale-105 overflow-hidden">
-                <img src="/new-favicon.png" alt="Loyal Spark" className="h-6 w-6 object-contain" />
-              </div>
-              <span className="text-xl font-bold text-foreground tracking-tight">Loyal Spark</span>
+              <img 
+                src="/media-kit/logo-horizontal.png" 
+                alt="Loyal Spark" 
+                className="h-9 object-contain transition-transform duration-300 group-hover:scale-105" 
+              />
             </Link>
             <div className="flex items-center gap-4">
               <Link to="/">
@@ -180,9 +181,11 @@ const PitchDeck = () => {
                   {/* Cover Slide */}
                   {slide.id === 'cover' && (
                     <div className="text-center space-y-6 py-16">
-                      <div className="mx-auto h-24 w-24 rounded-2xl bg-foreground flex items-center justify-center mb-8 overflow-hidden">
-                        <img src="/new-favicon.png" alt="Loyal Spark" className="h-16 w-16 object-contain" />
-                      </div>
+                      <img 
+                        src="/media-kit/logo-square.png" 
+                        alt="Loyal Spark" 
+                        className="mx-auto h-32 w-32 object-contain mb-8" 
+                      />
                       <h1 className="text-6xl font-bold text-foreground tracking-tight">
                         {slide.title}
                       </h1>
