@@ -147,56 +147,17 @@ const PitchDeck = () => {
         { label: 'Target', value: '100 SMBs Q2 2026', icon: Target },
       ],
     },
-    {
-      id: 'team',
-      title: 'Team',
-      subtitle: 'Experienced builders in Web3, fintech & SMB solutions',
-      description: 'Our team combines expertise in blockchain, DeFi, loyalty programs, and small business solutions.',
-    },
-    {
-      id: 'roadmap',
-      title: 'Roadmap',
-      subtitle: '18-month execution plan',
-      quarters: [
-        {
-          period: 'Q1-Q2 2026',
-          milestones: ['Smart contract audits', '10 pilot merchants', 'LOYAL Token TGE', 'Referral program'],
-        },
-        {
-          period: 'Q3 2026',
-          milestones: ['100 active merchants', 'Mobile app launch', 'Pro tier features', 'DEX listing'],
-        },
-        {
-          period: 'Q4 2026',
-          milestones: ['500 merchants', 'NFT rewards', 'API marketplace', 'Analytics dashboard'],
-        },
-        {
-          period: 'Q1-Q2 2027',
-          milestones: ['1,000+ merchants', 'White label', 'DAO governance', 'Series A prep'],
-        },
-      ],
-    },
-    {
-      id: 'financials',
-      title: 'Financial Projections',
-      subtitle: '3-year growth trajectory',
-      projections: [
-        { year: '2026', merchants: '1,000', tvl: '$2M', revenue: '$50K' },
-        { year: '2027', merchants: '10,000', tvl: '$25M', revenue: '$1.5M' },
-        { year: '2028', merchants: '50,000', tvl: '$150M', revenue: '$12M' },
-      ],
-    },
-  },
-},
-return (
+  ];
+
+  return (
       <PageTransition>
       <div className="min-h-screen bg-background">
         {/* Header */}
         <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
           <div className="container mx-auto px-6 py-4 flex justify-between items-center">
             <Link to="/" className="flex items-center gap-2.5 group">
-              <div className="relative h-9 w-9 rounded-lg bg-foreground flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
-                <Sparkles className="h-5 w-5 text-background" />
+              <div className="relative h-9 w-9 rounded-lg bg-foreground flex items-center justify-center transition-transform duration-300 group-hover:scale-105 overflow-hidden">
+                <img src="/new-favicon.png" alt="Loyal Spark" className="h-6 w-6 object-contain" />
               </div>
               <span className="text-xl font-bold text-foreground tracking-tight">Loyal Spark</span>
             </Link>
@@ -219,8 +180,8 @@ return (
                   {/* Cover Slide */}
                   {slide.id === 'cover' && (
                     <div className="text-center space-y-6 py-16">
-                      <div className="mx-auto h-24 w-24 rounded-2xl bg-foreground flex items-center justify-center mb-8">
-                        <slide.icon className="h-12 w-12 text-background" />
+                      <div className="mx-auto h-24 w-24 rounded-2xl bg-foreground flex items-center justify-center mb-8 overflow-hidden">
+                        <img src="/new-favicon.png" alt="Loyal Spark" className="h-16 w-16 object-contain" />
                       </div>
                       <h1 className="text-6xl font-bold text-foreground tracking-tight">
                         {slide.title}
@@ -576,134 +537,6 @@ return (
                     </div>
                   )}
 
-                  {/* Team Slide */}
-                  {slide.id === 'team' && (
-                    <div className="space-y-8">
-                      <div>
-                        <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                          Slide {index + 1}
-                        </div>
-                        <h2 className="text-5xl font-bold text-foreground mb-4">{slide.title}</h2>
-                        <p className="text-xl text-muted-foreground mb-6">{slide.subtitle}</p>
-                        <p className="text-lg text-foreground">{slide.description}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Roadmap Slide */}
-                  {slide.id === 'roadmap' && (
-                    <div className="space-y-8">
-                      <div>
-                        <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                          Slide {index + 1}
-                        </div>
-                        <h2 className="text-4xl font-bold text-foreground mb-2">{slide.title}</h2>
-                        <p className="text-xl text-muted-foreground">{slide.subtitle}</p>
-                      </div>
-                      <div className="grid grid-cols-2 gap-6">
-                        {slide.quarters?.map((quarter, i) => (
-                          <div key={i} className="p-6 rounded-xl border border-border bg-card">
-                            <div className="text-2xl font-bold text-foreground mb-4">
-                              {quarter.period}
-                            </div>
-                            <ul className="space-y-2">
-                              {quarter.milestones.map((milestone, j) => (
-                                <li key={j} className="flex items-start gap-2">
-                                  <div className="h-1.5 w-1.5 rounded-full bg-foreground mt-2 flex-shrink-0" />
-                                  <span className="text-sm text-foreground">{milestone}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Financial Projections Slide */}
-                  {slide.id === 'financials' && (
-                    <div className="space-y-8">
-                      <div>
-                        <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                          Slide {index + 1}
-                        </div>
-                        <h2 className="text-4xl font-bold text-foreground mb-2">{slide.title}</h2>
-                        <p className="text-xl text-muted-foreground">{slide.subtitle}</p>
-                      </div>
-                      <div className="overflow-x-auto">
-                        <table className="w-full">
-                          <thead>
-                            <tr className="border-b-2 border-border">
-                              <th className="text-left py-4 px-6 text-lg font-bold text-foreground">Year</th>
-                              <th className="text-left py-4 px-6 text-lg font-bold text-foreground">Merchants</th>
-                              <th className="text-left py-4 px-6 text-lg font-bold text-foreground">TVL</th>
-                              <th className="text-left py-4 px-6 text-lg font-bold text-foreground">Revenue</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {slide.projections?.map((proj, i) => (
-                              <tr key={i} className="border-b border-border">
-                                <td className="py-4 px-6 text-lg font-semibold text-foreground">{proj.year}</td>
-                                <td className="py-4 px-6 text-base text-foreground">{proj.merchants}</td>
-                                <td className="py-4 px-6 text-base text-foreground">{proj.tvl}</td>
-                                <td className="py-4 px-6 text-base text-foreground">{proj.revenue}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* The Ask Slide */}
-                  {slide.id === 'ask' && (
-                    <div className="space-y-8">
-                      <div>
-                        <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                          Slide {index + 1}
-                        </div>
-                        <h2 className="text-5xl font-bold text-foreground mb-4">{slide.title}</h2>
-                        <p className="text-xl text-muted-foreground mb-2">{slide.subtitle}</p>
-                      </div>
-                      <div className="space-y-6">
-                        <div className="p-8 rounded-xl bg-foreground text-background text-center">
-                          <div className="text-5xl font-bold mb-2">{slide.ask?.amount}</div>
-                          <div className="text-lg">{slide.ask?.valuation}</div>
-                        </div>
-
-                        <div>
-                          <h3 className="text-2xl font-bold text-foreground mb-4">Use of Funds</h3>
-                          <div className="space-y-3">
-                            {slide.ask?.use.map((item, i) => (
-                              <div key={i} className="flex items-center gap-4 p-4 rounded-lg border border-border bg-secondary/30">
-                                <div className="flex-shrink-0 w-16 text-center">
-                                  <div className="text-xl font-bold text-foreground">{item.percentage}</div>
-                                </div>
-                                <div className="flex-1">
-                                  <div className="font-semibold text-foreground">{item.category}</div>
-                                </div>
-                                <div className="flex-shrink-0 text-right">
-                                  <div className="text-lg font-bold text-foreground">{item.amount}</div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div>
-                          <h3 className="text-2xl font-bold text-foreground mb-4">Key Milestones</h3>
-                          <ul className="space-y-2">
-                            {slide.ask?.milestones.map((milestone, i) => (
-                              <li key={i} className="flex items-start gap-2">
-                                <div className="h-1.5 w-1.5 rounded-full bg-foreground mt-2 flex-shrink-0" />
-                                <span className="text-base text-foreground">{milestone}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             ))}

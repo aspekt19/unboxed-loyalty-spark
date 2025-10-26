@@ -326,8 +326,14 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         setPendingOperation({ program, operation: 'pause', step: 'complete' });
         await pauseProgram(program.tokenAddress as `0x${string}`);
       } else {
-        // При активации вызываем только unpause
-        setPendingOperation({ program, operation: 'unpause', step: 'complete' });
+        // При активации вызываем enableMinting, затем unpause
+        setPendingOperation({ program, operation: 'unpause', step: 'minting' });
+        await enableMinting(program.tokenAddress as `0x${string}`);
+        
+        // Даем время на подтверждение первой транзакции
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        setPendingOperation({ program, operation: 'unpause', step: 'utility' });
         await unpauseProgram(program.tokenAddress as `0x${string}`);
       }
     } catch (error) {
@@ -521,7 +527,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         <CardDescription>Select a program to issue rewards</CardDescription>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[500px] pr-4">
+        <ScrollArea className="h-[350px] pr-4">
           <div className="space-y-3 pb-4">
             {programs.map((program, index) => (
             <div

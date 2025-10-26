@@ -105,7 +105,7 @@ export function MyVouchers() {
                   No active vouchers
                 </p>
               ) : (
-                <ScrollArea className="h-[400px] pr-4">
+                <ScrollArea className="h-[300px] pr-4">
                   <div className="space-y-4">
                     {activeVouchers.map(voucher => (
                       <VoucherCard key={voucher.id} voucher={voucher} />
@@ -121,7 +121,7 @@ export function MyVouchers() {
                   No inactive vouchers
                 </p>
               ) : (
-                <ScrollArea className="h-[400px] pr-4">
+                <ScrollArea className="h-[300px] pr-4">
                   <div className="space-y-4">
                     {inactiveVouchers.map(voucher => (
                       <div key={voucher.id}>
@@ -139,7 +139,7 @@ export function MyVouchers() {
                   No used vouchers
                 </p>
               ) : (
-                <ScrollArea className="h-[400px] pr-4">
+                <ScrollArea className="h-[300px] pr-4">
                   <div className="space-y-4">
                     {usedVouchers.map(voucher => (
                       <VoucherCard key={voucher.id} voucher={voucher} />

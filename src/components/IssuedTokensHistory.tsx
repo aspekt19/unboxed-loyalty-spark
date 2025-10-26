@@ -265,7 +265,7 @@ export function IssuedTokensHistory() {
               </p>
             </div>
             
-            <ScrollArea className="flex-1 pr-4">
+            <ScrollArea className="h-[300px] pr-4">
               <div className="space-y-3 pb-4">
                  {filteredHistory.map((item, index) => (
                   <div
