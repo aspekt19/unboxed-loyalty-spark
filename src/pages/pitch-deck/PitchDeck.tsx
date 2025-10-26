@@ -157,10 +157,11 @@ const PitchDeck = () => {
           <div className="container mx-auto px-6 py-4 flex justify-between items-center">
             <Link to="/" className="flex items-center gap-2.5 group">
               <img 
-                src="/media-kit/logo-horizontal.png" 
+                src="/new-favicon.png" 
                 alt="Loyal Spark" 
-                className="h-9 object-contain transition-transform duration-300 group-hover:scale-105" 
+                className="h-9 w-9 rounded-lg transition-transform duration-300 group-hover:scale-105" 
               />
+              <span className="text-xl font-bold text-foreground tracking-tight">Loyal Spark</span>
             </Link>
             <div className="flex items-center gap-4">
               <Link to="/">
@@ -182,9 +183,9 @@ const PitchDeck = () => {
                   {slide.id === 'cover' && (
                     <div className="text-center space-y-6 py-16">
                       <img 
-                        src="/media-kit/logo-square.png" 
+                        src="/new-favicon.png" 
                         alt="Loyal Spark" 
-                        className="mx-auto h-32 w-32 object-contain mb-8" 
+                        className="mx-auto h-24 w-24 rounded-2xl mb-8" 
                       />
                       <h1 className="text-6xl font-bold text-foreground tracking-tight">
                         {slide.title}
