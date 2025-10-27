@@ -326,13 +326,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         setPendingOperation({ program, operation: 'pause', step: 'complete' });
         await pauseProgram(program.tokenAddress as `0x${string}`);
       } else {
-        // При активации вызываем enableMinting, затем unpause
-        setPendingOperation({ program, operation: 'unpause', step: 'minting' });
-        await enableMinting(program.tokenAddress as `0x${string}`);
-        
-        // Даем время на подтверждение первой транзакции
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
+        // При активации просто вызываем unpause (enableMinting уже не нужен для новых контрактов)
         setPendingOperation({ program, operation: 'unpause', step: 'utility' });
         await unpauseProgram(program.tokenAddress as `0x${string}`);
       }
