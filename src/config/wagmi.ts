@@ -1,23 +1,19 @@
-import { getDefaultConfig } from '@rainbow-me/rainbowkit';
+import { createConfig, http } from 'wagmi';
 import { base } from 'wagmi/chains';
-import { http } from 'viem';
+import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
 
-const transport = http('https://base-rpc.publicnode.com', {
-  batch: false,
-  retryCount: 5,
-  retryDelay: 1000,
-});
-
-// Use RainbowKit config for both web and Farcaster contexts
-// This enables external wallets (MetaMask, Coinbase, etc.) in Farcaster
-export const config = getDefaultConfig({
-  appName: 'Loyal Spark',
-  projectId: '2bf3fb72e7f66e63215bb32b7127f1bc',
+// For Farcaster Mini Apps, use the special miniapp connector
+// This enables native wallet integration including external wallets like MetaMask
+export const config = createConfig({
   chains: [base],
   transports: {
-    [base.id]: transport,
+    [base.id]: http('https://base-rpc.publicnode.com', {
+      batch: false,
+      retryCount: 5,
+      retryDelay: 1000,
+    }),
   },
-  ssr: false,
+  connectors: [
+    farcasterMiniApp()
+  ],
 });
-
-export const rainbowKitLocale = 'en';

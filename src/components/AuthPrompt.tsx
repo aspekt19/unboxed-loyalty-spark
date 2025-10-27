@@ -2,14 +2,20 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Shield, Wallet } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAccount } from 'wagmi';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useAccount, useConnect } from 'wagmi';
 
 export function AuthPrompt() {
   const { user, signInWithWallet, isLoading } = useAuth();
   const { isConnected } = useAccount();
+  const { connect, connectors } = useConnect();
 
   if (user) return null;
+
+  const handleConnect = () => {
+    if (connectors[0]) {
+      connect({ connector: connectors[0] });
+    }
+  };
 
   return (
     <Alert className="mb-6 border-2 border-primary/20 bg-primary/5">
@@ -22,7 +28,10 @@ export function AuthPrompt() {
         </p>
         <div className="flex gap-2">
           {!isConnected ? (
-            <ConnectButton />
+            <Button onClick={handleConnect} className="gap-2">
+              <Wallet className="h-4 w-4" />
+              Connect Wallet
+            </Button>
           ) : (
             <Button 
               onClick={signInWithWallet} 
