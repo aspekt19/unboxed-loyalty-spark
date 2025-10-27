@@ -4,7 +4,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { WagmiProvider } from "wagmi";
-import { config } from "./config/wagmi";
+import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
+import { config, rainbowKitLocale } from "./config/wagmi";
+import "@rainbow-me/rainbowkit/styles.css";
 import Index from "./pages/Index";
 import AppPage from "./pages/AppPage";
 import CustomerPage from "./pages/CustomerPage";
@@ -71,15 +73,17 @@ function AnimatedRoutes() {
 const App = () => (
   <WagmiProvider config={config}>
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AnimatedRoutes />
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
+      <RainbowKitProvider locale={rainbowKitLocale}>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <AnimatedRoutes />
+            </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
+      </RainbowKitProvider>
     </QueryClientProvider>
   </WagmiProvider>
 );
