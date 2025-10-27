@@ -1,25 +1,10 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Wallet } from 'lucide-react';
-import { useDisconnect, useConnect, useAccount } from 'wagmi';
+import { useDisconnect } from 'wagmi';
 import { useAuth } from '@/contexts/AuthContext';
-import sdk from '@farcaster/frame-sdk';
-
-// Detect if running inside Farcaster by checking for Farcaster parent domain
-const isFarcasterContext = () => {
-  if (typeof window === 'undefined') return false;
-  try {
-    // Check if parent URL contains Farcaster domain
-    const parentUrl = document.referrer;
-    return parentUrl.includes('warpcast.com') || parentUrl.includes('farcaster.xyz');
-  } catch {
-    return false;
-  }
-};
 
 export function WalletConnectButton() {
   const { disconnect } = useDisconnect();
-  const { connect, connectors } = useConnect();
-  const { address, isConnected, chain } = useAccount();
   const { signOut } = useAuth();
   
   const handleDisconnect = async () => {
@@ -32,33 +17,8 @@ export function WalletConnectButton() {
     }
   };
 
-  // Use simplified UI for Farcaster context
-  if (isFarcasterContext()) {
-    if (!isConnected) {
-      return (
-        <button
-          onClick={() => connect({ connector: connectors[0] })}
-          type="button"
-          className="px-5 py-2.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center gap-2"
-        >
-          <Wallet className="h-4 w-4" />
-          <span>Connect Wallet</span>
-        </button>
-      );
-    }
-
-    return (
-      <button
-        onClick={handleDisconnect}
-        type="button"
-        className="px-3 py-1.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200"
-      >
-        <span className="text-xs">{address?.slice(0, 6)}...{address?.slice(-4)}</span>
-      </button>
-    );
-  }
-  
-  // Use RainbowKit UI for web
+  // Use RainbowKit UI for all contexts (web and Farcaster)
+  // This enables external wallets with mobile deep linking
   return (
     <ConnectButton.Custom>
       {({

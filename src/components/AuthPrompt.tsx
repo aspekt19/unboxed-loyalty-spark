@@ -2,26 +2,12 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Shield, Wallet } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAccount, useConnect } from 'wagmi';
+import { useAccount } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import sdk from '@farcaster/frame-sdk';
-
-// Detect if running inside Farcaster by checking for Farcaster parent domain
-const isFarcasterContext = () => {
-  if (typeof window === 'undefined') return false;
-  try {
-    // Check if parent URL contains Farcaster domain
-    const parentUrl = document.referrer;
-    return parentUrl.includes('warpcast.com') || parentUrl.includes('farcaster.xyz');
-  } catch {
-    return false;
-  }
-};
 
 export function AuthPrompt() {
   const { user, signInWithWallet, isLoading } = useAuth();
   const { isConnected } = useAccount();
-  const { connect, connectors } = useConnect();
 
   if (user) return null;
 
@@ -36,17 +22,7 @@ export function AuthPrompt() {
         </p>
         <div className="flex gap-2">
           {!isConnected ? (
-            isFarcasterContext() ? (
-              <Button 
-                onClick={() => connect({ connector: connectors[0] })}
-                className="gap-2"
-              >
-                <Wallet className="h-4 w-4" />
-                Connect Wallet
-              </Button>
-            ) : (
-              <ConnectButton />
-            )
+            <ConnectButton />
           ) : (
             <Button 
               onClick={signInWithWallet} 
