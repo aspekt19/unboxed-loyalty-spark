@@ -8,11 +8,16 @@
     "version": "1",
     "name": "Loyal Spark",
     "iconUrl": "https://loyalspark.online/new-favicon.png",
+    "imageUrl": "https://loyalspark.online/media-kit/logo-horizontal.png",
     "homeUrl": "https://loyalspark.online",
+    "webhookUrl": "https://loyalspark.online",
     "splashImageUrl": "https://loyalspark.online/new-favicon.png",
     "splashBackgroundColor": "#000000",
     "subtitle": "Decentralized Loyalty Rewards",
     "description": "Create, manage and trade loyalty tokens on-chain. Zero middlemen. Total transparency. Built on BASE Network with smart contracts.",
+    "screenshotUrls": [
+      "https://loyalspark.online/media-kit/logo-horizontal.png"
+    ],
     "primaryCategory": "finance",
     "tags": [
       "loyalty",
