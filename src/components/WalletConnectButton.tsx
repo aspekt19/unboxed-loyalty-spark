@@ -1,80 +1,43 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Wallet } from 'lucide-react';
-import { useConnect, useAccount, useDisconnect } from 'wagmi';
+import { useDisconnect, useConnect, useAccount } from 'wagmi';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
-import { useEffect, useRef } from 'react';
+import sdk from '@farcaster/frame-sdk';
+
+// Detect if running inside Farcaster using SDK context
+const isFarcasterContext = () => {
+  if (typeof window === 'undefined') return false;
+  try {
+    // Check if SDK is initialized and has context
+    const hasContext = sdk?.context && typeof sdk.context === 'object';
+    return hasContext;
+  } catch {
+    return false;
+  }
+};
 
 export function WalletConnectButton() {
-  const { disconnect: wagmiDisconnect } = useDisconnect();
+  const { disconnect } = useDisconnect();
   const { connect, connectors } = useConnect();
-  const { address, isConnected } = useAccount();
-  const { signOut, isFarcaster } = useAuth();
-  const wasConnected = useRef(isConnected);
-  const isDisconnecting = useRef(false);
-  
-  // Override wagmi disconnect to add signOut
-  const disconnect = () => {
-    if (isDisconnecting.current) return;
-    
-    isDisconnecting.current = true;
-    console.log('Custom disconnect called');
-    
-    signOut()
-      .catch((err) => console.error('SignOut error:', err))
-      .finally(() => {
-        wagmiDisconnect();
-        setTimeout(() => {
-          isDisconnecting.current = false;
-        }, 1000);
-      });
-  };
-  
-  // Track disconnection
-  useEffect(() => {
-    const justDisconnected = wasConnected.current === true && isConnected === false;
-    
-    if (justDisconnected && !isFarcaster && !isDisconnecting.current) {
-      console.log('Wallet disconnected - cleaning up auth');
-      signOut().catch((err) => console.error('SignOut error:', err));
-    }
-    
-    wasConnected.current = isConnected;
-  }, [isConnected, isFarcaster, signOut]);
+  const { address, isConnected, chain } = useAccount();
+  const { signOut } = useAuth();
   
   const handleDisconnect = async () => {
-    disconnect();
-  };
-
-  const handleFarcasterConnect = async () => {
     try {
-      console.log('Available connectors:', connectors.map(c => ({ id: c.id, name: c.name })));
-      console.log('isFarcaster:', isFarcaster);
-      
-      toast.info('Connecting wallet...');
-      
-      const farcasterConnector = connectors.find(c => c.id === 'farcaster');
-      
-      if (farcasterConnector) {
-        console.log('Found Farcaster connector, connecting...');
-        await connect({ connector: farcasterConnector });
-        toast.success('Wallet connected!');
-      } else {
-        console.error('Farcaster connector not found. Available:', connectors.map(c => c.id));
-        toast.error('Farcaster wallet not found. Please try again.');
-      }
-    } catch (error: any) {
-      console.error('Farcaster connect error:', error);
-      toast.error(`Connection failed: ${error.message || 'Unknown error'}`);
+      await signOut();
+      disconnect();
+    } catch (error) {
+      console.error('Disconnect error:', error);
+      disconnect();
     }
   };
 
   // Use simplified UI for Farcaster context
-  if (isFarcaster) {
+  if (isFarcasterContext()) {
     if (!isConnected) {
       return (
         <button
-          onClick={handleFarcasterConnect}
+          onClick={() => connect({ connector: connectors[0] })}
           type="button"
           className="px-5 py-2.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center gap-2"
         >
@@ -95,7 +58,7 @@ export function WalletConnectButton() {
     );
   }
   
-  // Use ConnectButton.Custom for web to intercept disconnect
+  // Use RainbowKit UI for web
   return (
     <ConnectButton.Custom>
       {({
@@ -170,10 +133,7 @@ export function WalletConnectButton() {
                   </button>
 
                   <button
-                    onClick={() => {
-                      console.log('Account button clicked - opening modal');
-                      openAccountModal();
-                    }}
+                    onClick={openAccountModal}
                     type="button"
                     className="px-3 py-1.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200"
                   >

@@ -15,33 +15,10 @@ import PitchDeck from "./pages/pitch-deck/PitchDeck";
 import GuidePage from "./pages/GuidePage";
 import NotFound from "./pages/NotFound";
 import { AnimatePresence } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { migrateAllData } from "./lib/migrateLocalStorageData";
 import { AuthProvider } from "./contexts/AuthContext";
 import { sdk } from "@farcaster/miniapp-sdk";
-import frameSdk from '@farcaster/frame-sdk';
-
-// Initial sync check - only URL based to avoid false positives
-const isFarcasterContext = () => {
-  if (typeof window === 'undefined') return false;
-  
-  try {
-    const url = window.location.href;
-    // Only check URL patterns that are definitive
-    if (url.includes('warpcast.com') || url.includes('farcaster://')) {
-      return true;
-    }
-    
-    // Check user agent as fallback
-    if (navigator.userAgent.includes('Farcaster')) {
-      return true;
-    }
-    
-    return false;
-  } catch (error) {
-    return false;
-  }
-};
 
 const queryClient = new QueryClient();
 
@@ -95,58 +72,22 @@ function AnimatedRoutes() {
   );
 }
 
-const App = () => {
-  const [isFarcaster, setIsFarcaster] = useState(isFarcasterContext());
-  
-  // Check with async SDK method after initialization
-  useEffect(() => {
-    const checkContext = async () => {
-      try {
-        // Use the official async check
-        const isInMiniApp = await sdk.isInMiniApp();
-        if (isInMiniApp !== isFarcaster) {
-          setIsFarcaster(isInMiniApp);
-        }
-      } catch (error) {
-        // Fallback to URL-based check
-        const inFarcaster = isFarcasterContext();
-        if (inFarcaster !== isFarcaster) {
-          setIsFarcaster(inFarcaster);
-        }
-      }
-    };
-    
-    checkContext();
-  }, []);
-
-  const content = (
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AnimatedRoutes />
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  );
-
-  return (
-    <WagmiProvider config={config}>
-      <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider 
-          locale={rainbowKitLocale}
-          modalSize="compact"
-          appInfo={{
-            appName: 'Loyal Spark',
-            learnMoreUrl: 'https://loyalspark.online',
-          }}
-        >
-          {content}
-        </RainbowKitProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
-  );
-};
+const App = () => (
+  <WagmiProvider config={config}>
+    <QueryClientProvider client={queryClient}>
+      <RainbowKitProvider locale={rainbowKitLocale}>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <AnimatedRoutes />
+            </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
+      </RainbowKitProvider>
+    </QueryClientProvider>
+  </WagmiProvider>
+);
 
 export default App;

@@ -3,13 +3,11 @@ import { useAccount } from 'wagmi';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
-import { sdk } from '@farcaster/miniapp-sdk';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
-  isFarcaster: boolean;
   signInWithWallet: () => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -20,22 +18,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isFarcaster, setIsFarcaster] = useState(false);
   const { address, isConnected } = useAccount();
-
-  // Check if in Farcaster context
-  useEffect(() => {
-    const checkFarcaster = async () => {
-      try {
-        const isInMiniApp = await sdk.isInMiniApp();
-        setIsFarcaster(isInMiniApp);
-      } catch (error) {
-        setIsFarcaster(false);
-      }
-    };
-    
-    checkFarcaster();
-  }, []);
 
   useEffect(() => {
     // Set up auth state listener
@@ -116,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [isConnected, address, user]);
 
   return (
-    <AuthContext.Provider value={{ user, session, isLoading, isFarcaster, signInWithWallet, signOut }}>
+    <AuthContext.Provider value={{ user, session, isLoading, signInWithWallet, signOut }}>
       {children}
     </AuthContext.Provider>
   );
