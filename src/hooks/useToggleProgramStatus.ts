@@ -8,6 +8,14 @@ export function useToggleProgramStatus() {
     hash,
   });
 
+  console.log('[DEBUG useToggleProgramStatus]', { 
+    hash, 
+    isPending, 
+    isConfirming, 
+    isSuccess,
+    error: error?.message 
+  });
+
   const pauseProgram = async (tokenAddress: `0x${string}`) => {
     try {
       await writeContract({

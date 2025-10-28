@@ -319,19 +319,28 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
   const handleToggleProgram = async (program: LoyaltyProgram, shouldPause: boolean) => {
     if (!program.tokenAddress || !program.id) return;
     
+    console.log('[DEBUG] Toggle program called:', { 
+      program: program.name, 
+      tokenAddress: program.tokenAddress,
+      shouldPause 
+    });
+    
     setToggledProgram(program.tokenAddress);
     
     try {
       if (shouldPause) {
+        console.log('[DEBUG] Pausing program...');
         setPendingOperation({ program, operation: 'pause', step: 'complete' });
         await pauseProgram(program.tokenAddress as `0x${string}`);
       } else {
+        console.log('[DEBUG] Activating program (unpausing)...');
         // При активации просто вызываем unpause (enableMinting уже не нужен для новых контрактов)
         setPendingOperation({ program, operation: 'unpause', step: 'utility' });
         await unpauseProgram(program.tokenAddress as `0x${string}`);
       }
+      console.log('[DEBUG] Transaction initiated successfully');
     } catch (error) {
-      console.error('Error toggling program:', error);
+      console.error('[ERROR] Error toggling program:', error);
       toast.error('Failed to change program status');
       setToggledProgram(null);
       setPendingOperation(null);
@@ -341,13 +350,22 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
   // Обрабатываем успешное завершение транзакции паузы/активации
   useEffect(() => {
     const handleSuccess = async () => {
-      if (!toggleSuccess || !pendingOperation || !address) return;
+      console.log('[DEBUG] useEffect triggered:', { toggleSuccess, pendingOperation: !!pendingOperation, address: !!address });
+      
+      if (!toggleSuccess || !pendingOperation || !address) {
+        console.log('[DEBUG] Skipping - missing required data');
+        return;
+      }
       
       const { program, operation } = pendingOperation;
       
       // Обновление БД
       const isPause = operation === 'pause';
-      console.log(`Transaction successful, updating DB status to ${isPause ? 'paused' : 'active'}`);
+      console.log(`[DEBUG] Transaction successful, updating DB status to ${isPause ? 'paused' : 'active'}`, {
+        tokenAddress: program.tokenAddress,
+        merchantAddress: address,
+        operation
+      });
       
       try {
         // Обновляем статус в БД
@@ -360,19 +378,21 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
           }
         );
         
-        console.log('Update program status result:', { updateSuccess, programError });
+        console.log('[DEBUG] Update program status result:', { updateSuccess, programError });
         
         if (programError) {
-          console.error(`Error updating program status to ${isPause ? 'paused' : 'active'} in DB:`, programError);
+          console.error(`[ERROR] Error updating program status to ${isPause ? 'paused' : 'active'} in DB:`, programError);
           toast.error('Failed to update program status in database');
           return;
         }
         
         if (!updateSuccess) {
-          console.error('Failed to update program - user may not own this program');
+          console.error('[ERROR] Failed to update program - user may not own this program');
           toast.error('Failed to update program status');
           return;
         }
+        
+        console.log('[DEBUG] Program status updated successfully in DB');
         
         // Обновляем награды
         const { error: rewardsError } = await supabase
@@ -382,7 +402,9 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
           .eq('merchant_address', address.toLowerCase());
         
         if (rewardsError) {
-          console.error(`Error ${isPause ? 'deactivating' : 'activating'} rewards:`, rewardsError);
+          console.error(`[ERROR] Error ${isPause ? 'deactivating' : 'activating'} rewards:`, rewardsError);
+        } else {
+          console.log('[DEBUG] Rewards updated successfully');
         }
         
         // Обновляем ваучеры
@@ -393,10 +415,13 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
           .eq('status', isPause ? 'active' : 'expired');
         
         if (vouchersError) {
-          console.error(`Error ${isPause ? 'deactivating' : 'reactivating'} vouchers:`, vouchersError);
+          console.error(`[ERROR] Error ${isPause ? 'deactivating' : 'reactivating'} vouchers:`, vouchersError);
+        } else {
+          console.log('[DEBUG] Vouchers updated successfully');
         }
         
         // Отправляем события обновления
+        console.log('[DEBUG] Dispatching update events');
         window.dispatchEvent(new Event('rewardsUpdated'));
         window.dispatchEvent(new Event('vouchersUpdated'));
         window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
@@ -406,10 +431,13 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
             ? 'Program paused. Rewards and vouchers are now inactive.' 
             : 'Program activated successfully! Rewards and vouchers are now active.'
         );
+        
+        console.log('[DEBUG] Success handler completed');
       } catch (error) {
-        console.error('Error updating database:', error);
+        console.error('[ERROR] Error updating database:', error);
         toast.error('Failed to update program status');
       } finally {
+        console.log('[DEBUG] Cleaning up pending operation state');
         setToggledProgram(null);
         setPendingOperation(null);
       }
