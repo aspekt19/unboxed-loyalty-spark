@@ -82,7 +82,7 @@ The platform aims to:
 
 #### Availability
 
-Loyal Spark is now live and available for merchants and customers to use. The platform is accessible at [website URL] and supports all BASE Network compatible wallets.
+Loyal Spark is now live and available for merchants and customers to use. The platform is accessible at https://loyalspark.online and supports all BASE Network compatible wallets.
 
 #### About Loyal Spark
 
