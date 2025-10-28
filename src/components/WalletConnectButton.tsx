@@ -3,20 +3,22 @@ import { Wallet } from 'lucide-react';
 import { useDisconnect, useConnect, useAccount } from 'wagmi';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 export function WalletConnectButton() {
   const { disconnect } = useDisconnect();
   const { connect, connectors } = useConnect();
   const { address, isConnected } = useAccount();
   const { signOut, isFarcaster } = useAuth();
+  const wasConnected = useRef(isConnected);
   
-  // Track disconnection and call signOut
+  // Track disconnection and call signOut for web only
   useEffect(() => {
-    if (!isConnected && !isFarcaster) {
-      // Wallet disconnected - clean up auth
-      signOut().catch(() => {});
+    if (wasConnected.current && !isConnected && !isFarcaster) {
+      console.log('Wallet disconnected - cleaning up auth');
+      signOut().catch((err) => console.error('SignOut error:', err));
     }
+    wasConnected.current = isConnected;
   }, [isConnected, isFarcaster, signOut]);
   
   const handleDisconnect = async () => {
