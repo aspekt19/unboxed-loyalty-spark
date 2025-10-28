@@ -2,6 +2,8 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Wallet } from 'lucide-react';
 import { useDisconnect, useConnect, useAccount } from 'wagmi';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffect } from 'react';
+import { sdk } from '@farcaster/miniapp-sdk';
 
 export function WalletConnectButton() {
   const { disconnect } = useDisconnect();
@@ -19,13 +21,29 @@ export function WalletConnectButton() {
     }
   };
 
+  const handleFarcasterConnect = async () => {
+    try {
+      console.log('Farcaster connect initiated');
+      const farcasterConnector = connectors.find(c => c.id === 'farcaster');
+      
+      if (farcasterConnector) {
+        console.log('Found Farcaster connector:', farcasterConnector);
+        await connect({ connector: farcasterConnector });
+      } else {
+        console.log('No Farcaster connector, using first available:', connectors[0]);
+        await connect({ connector: connectors[0] });
+      }
+    } catch (error) {
+      console.error('Farcaster connect error:', error);
+    }
+  };
+
   // Use simplified UI for Farcaster context
   if (isFarcaster) {
     if (!isConnected) {
-      const farcasterConnector = connectors.find(c => c.id === 'farcaster');
       return (
         <button
-          onClick={() => connect({ connector: farcasterConnector || connectors[0] })}
+          onClick={handleFarcasterConnect}
           type="button"
           className="px-5 py-2.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center gap-2"
         >
