@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Coins, Calendar, Check, Trash2, Loader2, Clock, AlertTriangle, Play, Pause } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Coins, Calendar, Check, Trash2, Loader2, Clock, AlertTriangle, Play, Pause, Info } from 'lucide-react';
 import { usePublicClient, useAccount } from 'wagmi';
 import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
@@ -629,6 +630,15 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
                     )}
                   </div>
                 </div>
+                
+                {program.tokenAddress && program.status === 'paused' && (
+                  <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+                    <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <AlertDescription className="text-xs text-blue-900 dark:text-blue-100">
+                      Program activation requires 2 transactions: unpause utility and enable minting. You'll need to confirm both transactions in your wallet.
+                    </AlertDescription>
+                  </Alert>
+                )}
                 
                 {program.tokenAddress && (
                   <>
