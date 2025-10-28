@@ -21,12 +21,27 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { sdk } from "@farcaster/miniapp-sdk";
 import frameSdk from '@farcaster/frame-sdk';
 
-// Detect if running inside Farcaster using SDK context
+// Detect if running inside Farcaster using multiple methods
 const isFarcasterContext = () => {
   if (typeof window === 'undefined') return false;
+  
   try {
+    // Check 1: URL contains farcaster
+    const url = window.location.href;
+    if (url.includes('warpcast.com') || url.includes('farcaster://')) {
+      return true;
+    }
+    
+    // Check 2: SDK context exists
     const hasContext = frameSdk?.context && typeof frameSdk.context === 'object';
-    return hasContext;
+    if (hasContext) return true;
+    
+    // Check 3: User agent contains Farcaster
+    if (navigator.userAgent.includes('Farcaster')) {
+      return true;
+    }
+    
+    return false;
   } catch {
     return false;
   }
@@ -85,7 +100,22 @@ function AnimatedRoutes() {
 }
 
 const App = () => {
-  const [isFarcaster] = useState(isFarcasterContext());
+  const [isFarcaster, setIsFarcaster] = useState(isFarcasterContext());
+  
+  // Recheck after SDK initialization
+  useEffect(() => {
+    const checkContext = () => {
+      const inFarcaster = isFarcasterContext();
+      if (inFarcaster !== isFarcaster) {
+        setIsFarcaster(inFarcaster);
+      }
+    };
+    
+    // Check immediately and after a short delay for SDK initialization
+    checkContext();
+    const timer = setTimeout(checkContext, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const content = (
     <AuthProvider>
