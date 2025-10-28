@@ -86,26 +86,14 @@ Loyal Spark is now live and available for merchants and customers to use. The pl
 
 #### About Loyal Spark
 
-Loyal Spark is a decentralized loyalty rewards platform built on the BASE Network, enabling merchants to create blockchain-based loyalty programs while giving customers true ownership of their rewards. Founded in [Year], the company is committed to bringing Web3 innovation to mainstream customer engagement.
-
----
-
-### Media Assets
-
-**Visual Assets Available:**
-- Logo files (square and horizontal formats)
-- Platform screenshots
-- Social media banners
-- Brand guidelines
-
-**Access Media Kit:** [Media Kit URL]
+Loyal Spark is a decentralized loyalty rewards platform built on the BASE Network, enabling merchants to create blockchain-based loyalty programs while giving customers true ownership of their rewards. Founded in 2025, the company is committed to bringing Web3 innovation to mainstream customer engagement.
 
 ---
 
 ### Contact Information
 
 **Media Inquiries:**
-Email: info@loyalspark.online
+Email: admin@loyalspark.online
 Website: https://loyalspark.online
 
 
