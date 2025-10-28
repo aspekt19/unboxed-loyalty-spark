@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -61,7 +61,8 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
   const publicClient = usePublicClient();
   const { address } = useAccount();
   const { burnAllTokens, isBurning, progress } = useBurnAllTokens();
-  const { pauseProgram, unpauseUtility, enableMinting, isPending: isToggling, isSuccess: toggleSuccess } = useToggleProgramStatus();
+  const { pauseProgram, unpauseUtility, enableMinting, isPending: isToggling, isSuccess: toggleSuccess, hash } = useToggleProgramStatus();
+  const lastProcessedHash = useRef<string | null>(null);
 
   // Очищаем программы при отключении кошелька
   useEffect(() => {
@@ -354,13 +355,24 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         toggleSuccess, 
         pendingOperation: !!pendingOperation, 
         address: !!address,
-        step: pendingOperation?.step
+        step: pendingOperation?.step,
+        hash,
+        lastProcessedHash: lastProcessedHash.current
       });
       
-      if (!toggleSuccess || !pendingOperation || !address) {
+      if (!toggleSuccess || !pendingOperation || !address || !hash) {
         console.log('[DEBUG] Skipping - missing required data');
         return;
       }
+      
+      // Проверяем, не обработали ли мы уже эту транзакцию
+      if (lastProcessedHash.current === hash) {
+        console.log('[DEBUG] Skipping - transaction already processed');
+        return;
+      }
+      
+      // Запоминаем хэш текущей транзакции
+      lastProcessedHash.current = hash;
       
       const { program, operation, step } = pendingOperation;
       
@@ -491,7 +503,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     };
     
     handleSuccess();
-  }, [toggleSuccess, pendingOperation, address, enableMinting]);
+  }, [toggleSuccess, pendingOperation, address, enableMinting, hash]);
 
   const handleDeleteProgram = async (programId: string, burnTokens: boolean) => {
     const program = programs.find(p => p.id === programId);
