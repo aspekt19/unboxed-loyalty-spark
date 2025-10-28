@@ -41,13 +41,19 @@ export function IssuedTokensHistory() {
 
     loadIssuedTokens();
 
-    // Обновляем историю когда выдаются новые токены
+    // Обновляем историю когда выдаются новые токены или меняются программы
     const handleUpdate = () => {
+      console.log('IssuedTokensHistory: Reloading history after update event');
       loadIssuedTokens();
     };
 
     window.addEventListener('loyaltyProgramsUpdated', handleUpdate);
-    return () => window.removeEventListener('loyaltyProgramsUpdated', handleUpdate);
+    window.addEventListener('tokensIssued', handleUpdate);
+    
+    return () => {
+      window.removeEventListener('loyaltyProgramsUpdated', handleUpdate);
+      window.removeEventListener('tokensIssued', handleUpdate);
+    };
   }, [address, session, publicClient]);
 
   const loadIssuedTokens = async () => {

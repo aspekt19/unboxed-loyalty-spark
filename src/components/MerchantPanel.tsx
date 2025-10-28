@@ -73,6 +73,7 @@ export function MerchantPanel() {
       // Trigger events to refresh token lists and balances on customer side
       window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
       window.dispatchEvent(new Event('tokenBalancesUpdated'));
+      window.dispatchEvent(new Event('tokensIssued')); // Добавляем событие для обновления истории
       // Reset the transaction state after a brief delay
       setTimeout(() => {
         reset();
