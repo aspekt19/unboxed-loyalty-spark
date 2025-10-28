@@ -1,7 +1,11 @@
 import { useReadContract } from 'wagmi';
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 
 export function useCheckProgramStatus(tokenAddress: `0x${string}` | undefined) {
-  const { data: isMintingActive, isError: mintingError } = useReadContract({
+  const queryClient = useQueryClient();
+
+  const { data: isMintingActive, isError: mintingError, queryKey: mintingQueryKey } = useReadContract({
     address: tokenAddress,
     abi: [
       {
@@ -15,14 +19,14 @@ export function useCheckProgramStatus(tokenAddress: `0x${string}` | undefined) {
     functionName: 'isMintingActive',
     query: {
       enabled: !!tokenAddress,
-      refetchInterval: 10000,
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
-      retry: 1, // Уменьшаем количество попыток для старых контрактов
+      refetchInterval: 5000, // Уменьшили до 5 секунд для быстрого обновления
+      refetchOnMount: true, // Включаем обновление при монтировании
+      refetchOnWindowFocus: true, // Включаем обновление при фокусе
+      retry: 1,
     },
   });
 
-  const { data: isUtilityActive, isError: utilityError } = useReadContract({
+  const { data: isUtilityActive, isError: utilityError, queryKey: utilityQueryKey } = useReadContract({
     address: tokenAddress,
     abi: [
       {
@@ -36,12 +40,26 @@ export function useCheckProgramStatus(tokenAddress: `0x${string}` | undefined) {
     functionName: 'isUtilityActive',
     query: {
       enabled: !!tokenAddress,
-      refetchInterval: 10000,
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
-      retry: 1, // Уменьшаем количество попыток для старых контрактов
+      refetchInterval: 5000, // Уменьшили до 5 секунд для быстрого обновления
+      refetchOnMount: true, // Включаем обновление при монтировании
+      refetchOnWindowFocus: true, // Включаем обновление при фокусе
+      retry: 1,
     },
   });
+
+  // Слушаем события обновления программ для принудительного обновления кеша
+  useEffect(() => {
+    const handleProgramUpdate = () => {
+      if (tokenAddress) {
+        console.log('[DEBUG] Invalidating contract status cache for', tokenAddress);
+        queryClient.invalidateQueries({ queryKey: mintingQueryKey });
+        queryClient.invalidateQueries({ queryKey: utilityQueryKey });
+      }
+    };
+
+    window.addEventListener('loyaltyProgramsUpdated', handleProgramUpdate);
+    return () => window.removeEventListener('loyaltyProgramsUpdated', handleProgramUpdate);
+  }, [tokenAddress, queryClient, mintingQueryKey, utilityQueryKey]);
 
   // Если есть ошибки при чтении статуса, это может быть старый контракт
   const hasErrors = mintingError || utilityError;
