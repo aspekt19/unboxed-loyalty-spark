@@ -97,7 +97,6 @@ function AnimatedRoutes() {
 
 const App = () => {
   const [isFarcaster, setIsFarcaster] = useState(isFarcasterContext());
-  const [showDebug, setShowDebug] = useState(true);
   
   // Check with async SDK method after initialization
   useEffect(() => {
@@ -118,13 +117,6 @@ const App = () => {
     };
     
     checkContext();
-    
-    // Hide debug after 5 seconds
-    const hideTimer = setTimeout(() => setShowDebug(false), 5000);
-    
-    return () => {
-      clearTimeout(hideTimer);
-    };
   }, []);
 
   const content = (
@@ -132,14 +124,6 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        {showDebug && (
-          <div className="fixed top-0 left-0 right-0 bg-primary text-primary-foreground p-2 text-xs text-center z-[9999]">
-            Farcaster: {isFarcaster ? '✅ Detected' : '❌ Not detected'} | 
-            Iframe: {typeof window !== 'undefined' && window.self !== window.top ? '✅' : '❌'} |
-            SDK: {frameSdk?.context ? '✅' : '❌'} |
-            SDK2: {sdk?.context ? '✅' : '❌'}
-          </div>
-        )}
         <BrowserRouter>
           <AnimatedRoutes />
         </BrowserRouter>
