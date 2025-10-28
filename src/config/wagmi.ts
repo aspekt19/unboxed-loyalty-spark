@@ -11,18 +11,13 @@ const isFarcasterContext = () => {
   if (typeof window === 'undefined') return false;
   
   try {
-    // Check 1: SDK is loaded (most reliable for Farcaster)
-    if (typeof sdk !== 'undefined' && sdk) {
-      return true;
-    }
-    
-    // Check 2: URL contains farcaster
+    // Check 1: URL contains farcaster
     const url = window.location.href;
     if (url.includes('warpcast.com') || url.includes('farcaster://')) {
       return true;
     }
     
-    // Check 3: User agent contains Farcaster
+    // Check 2: User agent contains Farcaster
     if (navigator.userAgent.includes('Farcaster')) {
       return true;
     }
