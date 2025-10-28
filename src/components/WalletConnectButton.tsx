@@ -3,12 +3,21 @@ import { Wallet } from 'lucide-react';
 import { useDisconnect, useConnect, useAccount } from 'wagmi';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { useEffect } from 'react';
 
 export function WalletConnectButton() {
   const { disconnect } = useDisconnect();
   const { connect, connectors } = useConnect();
-  const { address, isConnected, chain } = useAccount();
+  const { address, isConnected } = useAccount();
   const { signOut, isFarcaster } = useAuth();
+  
+  // Track disconnection and call signOut
+  useEffect(() => {
+    if (!isConnected && !isFarcaster) {
+      // Wallet disconnected - clean up auth
+      signOut().catch(() => {});
+    }
+  }, [isConnected, isFarcaster, signOut]);
   
   const handleDisconnect = async () => {
     try {
@@ -69,93 +78,6 @@ export function WalletConnectButton() {
     );
   }
   
-  // Use RainbowKit UI for web
-  return (
-    <ConnectButton.Custom>
-      {({
-        account,
-        chain,
-        openAccountModal,
-        openChainModal,
-        openConnectModal,
-        mounted,
-      }) => {
-        const ready = mounted;
-        const connected = ready && account && chain;
-
-        return (
-          <div
-            {...(!ready && {
-              'aria-hidden': true,
-              style: {
-                opacity: 0,
-                pointerEvents: 'none',
-                userSelect: 'none',
-              },
-            })}
-          >
-            {(() => {
-              if (!connected) {
-                return (
-                  <button
-                    onClick={openConnectModal}
-                    type="button"
-                    className="px-5 py-2.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center gap-2"
-                  >
-                    <Wallet className="h-4 w-4" />
-                    <span>Connect Wallet</span>
-                  </button>
-                );
-              }
-
-              if (chain.unsupported) {
-                return (
-                  <button
-                    onClick={openChainModal}
-                    type="button"
-                    className="px-5 py-2.5 rounded-lg font-semibold text-background bg-destructive hover:bg-destructive/90 transition-all duration-200"
-                  >
-                    Wrong network
-                  </button>
-                );
-              }
-
-              return (
-                <div className="flex gap-1.5">
-                  <button
-                    onClick={openChainModal}
-                    type="button"
-                    className="px-2 py-1.5 rounded-lg font-medium transition-all duration-200 flex items-center gap-1.5 border border-border hover:bg-secondary"
-                  >
-                    {chain.hasIcon && (
-                      <div className="w-3.5 h-3.5 rounded-full overflow-hidden">
-                        {chain.iconUrl && (
-                          <img
-                            alt={chain.name ?? 'Chain icon'}
-                            src={chain.iconUrl}
-                            className="w-3.5 h-3.5"
-                          />
-                        )}
-                      </div>
-                    )}
-                    <span className="text-foreground text-xs font-semibold">
-                      {chain.name}
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={openAccountModal}
-                    type="button"
-                    className="px-3 py-1.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200"
-                  >
-                    <span className="text-xs">{account.displayName}</span>
-                  </button>
-                </div>
-              );
-            })()}
-          </div>
-        );
-      }}
-    </ConnectButton.Custom>
-  );
+  // Use standard RainbowKit button for web - handles disconnect automatically
+  return <ConnectButton />;
 }
