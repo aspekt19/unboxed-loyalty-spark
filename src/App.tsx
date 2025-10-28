@@ -26,19 +26,19 @@ const isFarcasterContext = () => {
   if (typeof window === 'undefined') return false;
   
   try {
-    // Check 1: SDK context exists (most reliable)
-    if (frameSdk?.context || sdk?.context) {
-      return true;
-    }
-    
-    // Check 2: URL contains farcaster
+    // Check 1: URL contains farcaster
     const url = window.location.href;
     if (url.includes('warpcast.com') || url.includes('farcaster://')) {
       return true;
     }
     
-    // Check 3: User agent contains Farcaster
+    // Check 2: User agent contains Farcaster
     if (navigator.userAgent.includes('Farcaster')) {
+      return true;
+    }
+    
+    // Check 3: Running in iframe (miniapps run in iframe)
+    if (window.self !== window.top && (url.includes('frame') || url.includes('miniapp'))) {
       return true;
     }
     
