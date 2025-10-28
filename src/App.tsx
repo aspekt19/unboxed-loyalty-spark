@@ -150,20 +150,16 @@ const App = () => {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        {isFarcaster ? (
-          content
-        ) : (
-          <RainbowKitProvider 
-            locale={rainbowKitLocale}
-            modalSize="compact"
-            appInfo={{
-              appName: 'Loyal Spark',
-              learnMoreUrl: 'https://loyalspark.online',
-            }}
-          >
-            {content}
-          </RainbowKitProvider>
-        )}
+        <RainbowKitProvider 
+          locale={rainbowKitLocale}
+          modalSize="compact"
+          appInfo={{
+            appName: 'Loyal Spark',
+            learnMoreUrl: 'https://loyalspark.online',
+          }}
+        >
+          {content}
+        </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
   );

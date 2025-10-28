@@ -2,35 +2,12 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Wallet } from 'lucide-react';
 import { useDisconnect, useConnect, useAccount } from 'wagmi';
 import { useAuth } from '@/contexts/AuthContext';
-import sdk from '@farcaster/frame-sdk';
-
-// Detect if running inside Farcaster - conservative check
-const isFarcasterContext = () => {
-  if (typeof window === 'undefined') return false;
-  
-  try {
-    const url = window.location.href;
-    // Only definitive patterns
-    if (url.includes('warpcast.com') || url.includes('farcaster://')) {
-      return true;
-    }
-    
-    // Check user agent
-    if (navigator.userAgent.includes('Farcaster')) {
-      return true;
-    }
-    
-    return false;
-  } catch {
-    return false;
-  }
-};
 
 export function WalletConnectButton() {
   const { disconnect } = useDisconnect();
   const { connect, connectors } = useConnect();
   const { address, isConnected, chain } = useAccount();
-  const { signOut } = useAuth();
+  const { signOut, isFarcaster } = useAuth();
   
   const handleDisconnect = async () => {
     try {
@@ -43,7 +20,7 @@ export function WalletConnectButton() {
   };
 
   // Use simplified UI for Farcaster context
-  if (isFarcasterContext()) {
+  if (isFarcaster) {
     if (!isConnected) {
       const farcasterConnector = connectors.find(c => c.id === 'farcaster');
       return (
