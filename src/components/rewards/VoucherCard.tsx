@@ -1,7 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Voucher } from '@/types/rewards';
-import { Ticket, Calendar, Copy, CheckCircle2 } from 'lucide-react';
+import { Ticket, Calendar, Copy, CheckCircle2, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useState } from 'react';
@@ -99,6 +99,15 @@ export function VoucherCard({ voucher }: VoucherCardProps) {
           <div className="space-y-0.5">
             <div className="text-muted-foreground">Program</div>
             <div className="font-medium truncate">{voucher.tokenSymbol}</div>
+          </div>
+          <div className="col-span-2 space-y-0.5">
+            <div className="text-muted-foreground flex items-center gap-1">
+              <Store className="h-3 w-3" />
+              Merchant
+            </div>
+            <div className="font-mono text-[11px]">
+              {voucher.merchantAddress.slice(0, 6)}...{voucher.merchantAddress.slice(-4)}
+            </div>
           </div>
           {voucher.status === 'used' && voucher.usedAt && (
             <div className="col-span-2 space-y-0.5">
