@@ -6,13 +6,12 @@ import { useAccount, useConnect } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import sdk from '@farcaster/frame-sdk';
 
-// Detect if running inside Farcaster by checking for Farcaster parent domain
+// Detect if running inside Farcaster using SDK context
 const isFarcasterContext = () => {
   if (typeof window === 'undefined') return false;
   try {
-    // Check if parent URL contains Farcaster domain
-    const parentUrl = document.referrer;
-    return parentUrl.includes('warpcast.com') || parentUrl.includes('farcaster.xyz');
+    // Check if Farcaster SDK context is available
+    return sdk.context !== null && sdk.context !== undefined;
   } catch {
     return false;
   }
