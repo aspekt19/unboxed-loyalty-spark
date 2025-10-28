@@ -135,7 +135,8 @@ const App = () => {
           <div className="fixed top-0 left-0 right-0 bg-primary text-primary-foreground p-2 text-xs text-center z-[9999]">
             Farcaster: {isFarcaster ? '✅ Detected' : '❌ Not detected'} | 
             Iframe: {typeof window !== 'undefined' && window.self !== window.top ? '✅' : '❌'} |
-            SDK: {frameSdk?.context ? '✅' : '❌'}
+            SDK: {frameSdk?.context ? '✅' : '❌'} |
+            SDK2: {sdk?.context ? '✅' : '❌'}
           </div>
         )}
         <BrowserRouter>
