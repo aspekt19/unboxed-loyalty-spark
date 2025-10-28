@@ -75,7 +75,14 @@ function AnimatedRoutes() {
 const App = () => (
   <WagmiProvider config={config}>
     <QueryClientProvider client={queryClient}>
-      <RainbowKitProvider locale={rainbowKitLocale}>
+      <RainbowKitProvider 
+        locale={rainbowKitLocale}
+        modalSize="compact"
+        appInfo={{
+          appName: 'Loyal Spark',
+          learnMoreUrl: 'https://loyalspark.online',
+        }}
+      >
         <AuthProvider>
           <TooltipProvider>
             <Toaster />
