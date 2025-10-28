@@ -72,7 +72,7 @@ Loyal Spark smart contracts are built with security and efficiency in mind:
 
 #### Vision for the Future
 
-"Loyalty programs haven't evolved in decades," says [Founder Name]. "We're not just digitizing points – we're fundamentally reimagining what customer loyalty means in a Web3 world. With Loyal Spark, rewards become real assets that customers truly own and control."
+Loyalty programs haven't evolved in decades. We're not just digitizing points – we're fundamentally reimagining what customer loyalty means in a Web3 world. With Loyal Spark, rewards become real assets that customers truly own and control.
 
 The platform aims to:
 - Build a network effect where loyalty tokens gain interoperability
