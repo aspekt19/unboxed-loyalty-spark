@@ -8,8 +8,9 @@ import sdk from '@farcaster/frame-sdk';
 const isFarcasterContext = () => {
   if (typeof window === 'undefined') return false;
   try {
-    // Check if Farcaster SDK context is available
-    return sdk.context !== null && sdk.context !== undefined;
+    // Check if SDK is initialized and has context
+    const hasContext = sdk?.context && typeof sdk.context === 'object';
+    return hasContext;
   } catch {
     return false;
   }
