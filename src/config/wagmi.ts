@@ -2,6 +2,7 @@ import { getDefaultConfig } from '@rainbow-me/rainbowkit';
 import { createConfig } from 'wagmi';
 import { base } from 'wagmi/chains';
 import { http } from 'viem';
+import { walletConnect } from 'wagmi/connectors';
 import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
 import sdk from '@farcaster/frame-sdk';
 
@@ -31,6 +32,16 @@ export const config = isFarcasterContext()
       },
       connectors: [
         farcasterMiniApp(),
+        walletConnect({
+          projectId: '2bf3fb72e7f66e63215bb32b7127f1bc',
+          showQrModal: false,
+          metadata: {
+            name: 'Loyal Spark',
+            description: 'Decentralized Loyalty Rewards',
+            url: 'https://loyalspark.online',
+            icons: ['https://loyalspark.online/new-favicon.png'],
+          },
+        }),
       ],
       ssr: false,
     })
