@@ -9,11 +9,8 @@ const isFarcasterContext = () => {
   if (typeof window === 'undefined') return false;
   
   try {
-    // Check if running in iframe (Farcaster miniapps run in iframe)
-    const inIframe = window.self !== window.top;
-    
-    // Check 1: Running in iframe with Farcaster SDK
-    if (inIframe && sdk?.context) {
+    // Check 1: SDK context exists (most reliable)
+    if (sdk?.context) {
       return true;
     }
     
