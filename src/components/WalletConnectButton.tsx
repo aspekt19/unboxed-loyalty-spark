@@ -12,17 +12,21 @@ export function WalletConnectButton() {
   const { signOut, isFarcaster } = useAuth();
   const wasConnected = useRef(isConnected);
   
-  // Track disconnection and call signOut for web only
+  // Track disconnection and call signOut
   useEffect(() => {
-    if (wasConnected.current && !isConnected && !isFarcaster) {
+    const justDisconnected = wasConnected.current === true && isConnected === false;
+    
+    if (justDisconnected && !isFarcaster) {
       console.log('Wallet disconnected - cleaning up auth');
       signOut().catch((err) => console.error('SignOut error:', err));
     }
+    
     wasConnected.current = isConnected;
   }, [isConnected, isFarcaster, signOut]);
   
   const handleDisconnect = async () => {
     try {
+      console.log('handleDisconnect called');
       await signOut();
       disconnect();
     } catch (error) {
