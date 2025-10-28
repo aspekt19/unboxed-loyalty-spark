@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Store, ShoppingBag } from 'lucide-react';
+import { Store, ShoppingBag, BookOpen } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface RoleSelectorProps {
   onRoleSelect: (role: 'merchant' | 'customer') => void;
@@ -16,7 +17,13 @@ export function RoleSelector({ onRoleSelect, currentRole }: RoleSelectorProps) {
     <div className="container max-w-4xl mx-auto py-8 px-4">
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold mb-4">Welcome to Loyal Spark</h1>
-        <p className="text-muted-foreground">Choose your role to get started</p>
+        <p className="text-muted-foreground mb-4">Choose your role to get started</p>
+        <Link to="/guide">
+          <Button variant="outline" size="sm" className="gap-2">
+            <BookOpen className="w-4 h-4" />
+            How to Use Guide
+          </Button>
+        </Link>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
