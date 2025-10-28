@@ -6,23 +6,18 @@ import { walletConnect } from 'wagmi/connectors';
 import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
 import sdk from '@farcaster/frame-sdk';
 
-// Detect if running inside Farcaster using multiple methods
+// Initial sync check - conservative to avoid breaking web version
 const isFarcasterContext = () => {
   if (typeof window === 'undefined') return false;
   
   try {
-    // Check 1: SDK context is present (most reliable)
-    if (sdk?.context) {
-      return true;
-    }
-    
-    // Check 2: URL contains farcaster
     const url = window.location.href;
+    // Only definitive URL patterns
     if (url.includes('warpcast.com') || url.includes('farcaster://')) {
       return true;
     }
     
-    // Check 3: User agent contains Farcaster
+    // Check user agent
     if (navigator.userAgent.includes('Farcaster')) {
       return true;
     }

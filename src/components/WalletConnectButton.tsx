@@ -4,23 +4,18 @@ import { useDisconnect, useConnect, useAccount } from 'wagmi';
 import { useAuth } from '@/contexts/AuthContext';
 import sdk from '@farcaster/frame-sdk';
 
-// Detect if running inside Farcaster using multiple methods
+// Detect if running inside Farcaster - conservative check
 const isFarcasterContext = () => {
   if (typeof window === 'undefined') return false;
   
   try {
-    // Check 1: SDK context is present (most reliable)
-    if (sdk?.context) {
-      return true;
-    }
-    
-    // Check 2: URL contains farcaster
     const url = window.location.href;
+    // Only definitive patterns
     if (url.includes('warpcast.com') || url.includes('farcaster://')) {
       return true;
     }
     
-    // Check 3: User agent contains Farcaster
+    // Check user agent
     if (navigator.userAgent.includes('Farcaster')) {
       return true;
     }

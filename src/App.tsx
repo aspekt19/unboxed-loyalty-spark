@@ -21,23 +21,18 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { sdk } from "@farcaster/miniapp-sdk";
 import frameSdk from '@farcaster/frame-sdk';
 
-// Detect if running inside Farcaster using multiple methods
+// Initial sync check - only URL based to avoid false positives
 const isFarcasterContext = () => {
   if (typeof window === 'undefined') return false;
   
   try {
-    // Check 1: SDK context is present (most reliable)
-    if (frameSdk?.context || sdk?.context) {
-      return true;
-    }
-    
-    // Check 2: URL contains farcaster
     const url = window.location.href;
+    // Only check URL patterns that are definitive
     if (url.includes('warpcast.com') || url.includes('farcaster://')) {
       return true;
     }
     
-    // Check 3: User agent contains Farcaster
+    // Check user agent as fallback
     if (navigator.userAgent.includes('Farcaster')) {
       return true;
     }
@@ -104,24 +99,30 @@ const App = () => {
   const [isFarcaster, setIsFarcaster] = useState(isFarcasterContext());
   const [showDebug, setShowDebug] = useState(true);
   
-  // Recheck after SDK initialization
+  // Check with async SDK method after initialization
   useEffect(() => {
-    const checkContext = () => {
-      const inFarcaster = isFarcasterContext();
-      if (inFarcaster !== isFarcaster) {
-        setIsFarcaster(inFarcaster);
+    const checkContext = async () => {
+      try {
+        // Use the official async check
+        const isInMiniApp = await sdk.isInMiniApp();
+        if (isInMiniApp !== isFarcaster) {
+          setIsFarcaster(isInMiniApp);
+        }
+      } catch (error) {
+        // Fallback to URL-based check
+        const inFarcaster = isFarcasterContext();
+        if (inFarcaster !== isFarcaster) {
+          setIsFarcaster(inFarcaster);
+        }
       }
     };
     
-    // Check immediately and after a short delay for SDK initialization
     checkContext();
-    const timer = setTimeout(checkContext, 500);
     
     // Hide debug after 5 seconds
     const hideTimer = setTimeout(() => setShowDebug(false), 5000);
     
     return () => {
-      clearTimeout(timer);
       clearTimeout(hideTimer);
     };
   }, []);
