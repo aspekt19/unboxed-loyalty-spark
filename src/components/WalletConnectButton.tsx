@@ -36,21 +36,14 @@ export function WalletConnectButton() {
   if (isFarcasterContext()) {
     if (!isConnected) {
       return (
-        <div className="flex flex-col gap-2">
-          {connectors.map((connector) => (
-            <button
-              key={connector.id}
-              onClick={() => connect({ connector })}
-              type="button"
-              className="px-5 py-2.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center gap-2"
-            >
-              <Wallet className="h-4 w-4" />
-              <span>
-                {connector.name === 'Farcaster' ? 'Farcaster Wallet' : connector.name}
-              </span>
-            </button>
-          ))}
-        </div>
+        <button
+          onClick={() => connect({ connector: connectors[0] })}
+          type="button"
+          className="px-5 py-2.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center gap-2"
+        >
+          <Wallet className="h-4 w-4" />
+          <span>Connect Wallet</span>
+        </button>
       );
     }
 

@@ -2,7 +2,6 @@ import { getDefaultConfig } from '@rainbow-me/rainbowkit';
 import { createConfig } from 'wagmi';
 import { base } from 'wagmi/chains';
 import { http } from 'viem';
-import { injected } from 'wagmi/connectors';
 import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
 import sdk from '@farcaster/frame-sdk';
 
@@ -32,7 +31,6 @@ export const config = isFarcasterContext()
       },
       connectors: [
         farcasterMiniApp(),
-        injected({ target: 'metaMask' }),
       ],
       ssr: false,
     })
