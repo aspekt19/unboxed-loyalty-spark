@@ -15,10 +15,22 @@ import PitchDeck from "./pages/pitch-deck/PitchDeck";
 import GuidePage from "./pages/GuidePage";
 import NotFound from "./pages/NotFound";
 import { AnimatePresence } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { migrateAllData } from "./lib/migrateLocalStorageData";
 import { AuthProvider } from "./contexts/AuthContext";
 import { sdk } from "@farcaster/miniapp-sdk";
+import frameSdk from '@farcaster/frame-sdk';
+
+// Detect if running inside Farcaster using SDK context
+const isFarcasterContext = () => {
+  if (typeof window === 'undefined') return false;
+  try {
+    const hasContext = frameSdk?.context && typeof frameSdk.context === 'object';
+    return hasContext;
+  } catch {
+    return false;
+  }
+};
 
 const queryClient = new QueryClient();
 
@@ -72,29 +84,41 @@ function AnimatedRoutes() {
   );
 }
 
-const App = () => (
-  <WagmiProvider config={config}>
-    <QueryClientProvider client={queryClient}>
-      <RainbowKitProvider 
-        locale={rainbowKitLocale}
-        modalSize="compact"
-        appInfo={{
-          appName: 'Loyal Spark',
-          learnMoreUrl: 'https://loyalspark.online',
-        }}
-      >
-        <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <AnimatedRoutes />
-            </BrowserRouter>
-          </TooltipProvider>
-        </AuthProvider>
-      </RainbowKitProvider>
-    </QueryClientProvider>
-  </WagmiProvider>
-);
+const App = () => {
+  const [isFarcaster] = useState(isFarcasterContext());
+
+  const content = (
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AnimatedRoutes />
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
+  );
+
+  return (
+    <WagmiProvider config={config}>
+      <QueryClientProvider client={queryClient}>
+        {isFarcaster ? (
+          content
+        ) : (
+          <RainbowKitProvider 
+            locale={rainbowKitLocale}
+            modalSize="compact"
+            appInfo={{
+              appName: 'Loyal Spark',
+              learnMoreUrl: 'https://loyalspark.online',
+            }}
+          >
+            {content}
+          </RainbowKitProvider>
+        )}
+      </QueryClientProvider>
+    </WagmiProvider>
+  );
+};
 
 export default App;

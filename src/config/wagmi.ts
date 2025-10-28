@@ -35,6 +35,9 @@ export const config = isFarcasterContext()
         walletConnect({
           projectId: '2bf3fb72e7f66e63215bb32b7127f1bc',
           showQrModal: false,
+          qrModalOptions: {
+            enableExplorer: false,
+          },
           metadata: {
             name: 'Loyal Spark',
             description: 'Decentralized Loyalty Rewards',
