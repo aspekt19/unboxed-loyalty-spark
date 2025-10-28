@@ -54,13 +54,12 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
   const [toggledProgram, setToggledProgram] = useState<string | null>(null);
   const [pendingOperation, setPendingOperation] = useState<{
     program: LoyaltyProgram;
-    operation: 'pause' | 'unpause';
-    step: 'minting' | 'utility' | 'complete';
+    operation: 'pause' | 'activate';
   } | null>(null);
   const publicClient = usePublicClient();
   const { address } = useAccount();
   const { burnAllTokens, isBurning, progress } = useBurnAllTokens();
-  const { pauseProgram, unpauseProgram, enableMinting, isPending: isToggling, isSuccess: toggleSuccess } = useToggleProgramStatus();
+  const { pauseProgram, activateProgram, isPending: isToggling, isSuccess: toggleSuccess } = useToggleProgramStatus();
 
   // Очищаем программы при отключении кошелька
   useEffect(() => {
@@ -330,12 +329,12 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     try {
       if (shouldPause) {
         console.log('[DEBUG] Pausing program...');
-        setPendingOperation({ program, operation: 'pause', step: 'complete' });
+        setPendingOperation({ program, operation: 'pause' });
         await pauseProgram(program.tokenAddress as `0x${string}`);
       } else {
-        console.log('[DEBUG] Activating program - starting with unpause...');
-        setPendingOperation({ program, operation: 'unpause', step: 'utility' });
-        await unpauseProgram(program.tokenAddress as `0x${string}`);
+        console.log('[DEBUG] Activating program with single transaction...');
+        setPendingOperation({ program, operation: 'activate' });
+        await activateProgram(program.tokenAddress as `0x${string}`);
       }
       console.log('[DEBUG] Transaction initiated successfully');
     } catch (error) {
@@ -352,8 +351,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
       console.log('[DEBUG] useEffect triggered:', { 
         toggleSuccess, 
         pendingOperation: !!pendingOperation, 
-        address: !!address,
-        step: pendingOperation?.step 
+        address: !!address
       });
       
       if (!toggleSuccess || !pendingOperation || !address) {
@@ -361,35 +359,14 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         return;
       }
       
-      const { program, operation, step } = pendingOperation;
+      const { program, operation } = pendingOperation;
       
-      // Если это активация и мы только что завершили unpause, теперь нужно включить minting
-      if (operation === 'unpause' && step === 'utility') {
-        console.log('[DEBUG] First transaction (unpause) confirmed, now enabling minting...');
-        setPendingOperation({ program, operation: 'unpause', step: 'minting' });
-        
-        try {
-          await enableMinting(program.tokenAddress as `0x${string}`);
-          console.log('[DEBUG] Minting transaction sent successfully');
-          return; // Выходим и ждем следующего успеха для обновления БД
-        } catch (error) {
-          console.error('[ERROR] Failed to enable minting:', error);
-          toast.error('Failed to enable minting. Please try again.');
-          setToggledProgram(null);
-          setPendingOperation(null);
-          return;
-        }
-      }
-      
-      // Если это был последний шаг (пауза или включение minting), обновляем БД
-      
-      // Обновление БД только после завершения всех транзакций
+      // Обновление БД после успешной транзакции
       const isPause = operation === 'pause';
-      console.log(`[DEBUG] All transactions complete, updating DB status to ${isPause ? 'paused' : 'active'}`, {
+      console.log(`[DEBUG] Transaction complete, updating DB status to ${isPause ? 'paused' : 'active'}`, {
         tokenAddress: program.tokenAddress,
         merchantAddress: address,
-        operation,
-        step
+        operation
       });
       
       try {
@@ -494,22 +471,6 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     
     handleSuccess();
   }, [toggleSuccess, pendingOperation, address]);
-
-  const handleEnableMinting = async (program: LoyaltyProgram) => {
-    if (!program.tokenAddress) return;
-    
-    setToggledProgram(program.tokenAddress);
-    
-    try {
-      await enableMinting(program.tokenAddress as `0x${string}`);
-      toast.success('Minting enabled successfully!');
-    } catch (error) {
-      console.error('Error enabling minting:', error);
-      toast.error('Failed to enable minting');
-    } finally {
-      setToggledProgram(null);
-    }
-  };
 
   const handleDeleteProgram = async (programId: string, burnTokens: boolean) => {
     const program = programs.find(p => p.id === programId);
