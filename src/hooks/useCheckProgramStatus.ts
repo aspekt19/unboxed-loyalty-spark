@@ -65,11 +65,11 @@ export function useCheckProgramStatus(tokenAddress: `0x${string}` | undefined) {
   useEffect(() => {
     if (tokenAddress) {
       console.log('[DEBUG useCheckProgramStatus] Status for', tokenAddress, {
-        isMintingActive,
-        isUtilityActive,
+        isMintingActive: isMintingActive,
+        isUtilityActive: isUtilityActive,
         isPaused: !(isMintingActive && isUtilityActive),
-        mintingError,
-        utilityError,
+        mintingError: mintingError ? 'ERROR' : 'OK',
+        utilityError: utilityError ? 'ERROR' : 'OK',
       });
     }
   }, [tokenAddress, isMintingActive, isUtilityActive, mintingError, utilityError]);
