@@ -51,7 +51,7 @@ export function useCheckProgramStatus(tokenAddress: `0x${string}` | undefined) {
   useEffect(() => {
     const handleProgramUpdate = () => {
       if (tokenAddress) {
-        console.log('[DEBUG] Invalidating contract status cache for', tokenAddress);
+        console.log('[DEBUG useCheckProgramStatus] Invalidating contract status cache for', tokenAddress);
         queryClient.invalidateQueries({ queryKey: mintingQueryKey });
         queryClient.invalidateQueries({ queryKey: utilityQueryKey });
       }
@@ -60,6 +60,19 @@ export function useCheckProgramStatus(tokenAddress: `0x${string}` | undefined) {
     window.addEventListener('loyaltyProgramsUpdated', handleProgramUpdate);
     return () => window.removeEventListener('loyaltyProgramsUpdated', handleProgramUpdate);
   }, [tokenAddress, queryClient, mintingQueryKey, utilityQueryKey]);
+
+  // Логируем текущее состояние для отладки
+  useEffect(() => {
+    if (tokenAddress) {
+      console.log('[DEBUG useCheckProgramStatus] Status for', tokenAddress, {
+        isMintingActive,
+        isUtilityActive,
+        isPaused: !(isMintingActive && isUtilityActive),
+        mintingError,
+        utilityError,
+      });
+    }
+  }, [tokenAddress, isMintingActive, isUtilityActive, mintingError, utilityError]);
 
   // Если есть ошибки при чтении статуса, это может быть старый контракт
   const hasErrors = mintingError || utilityError;
