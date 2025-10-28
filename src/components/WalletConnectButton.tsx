@@ -22,14 +22,19 @@ export function WalletConnectButton() {
 
   const handleFarcasterConnect = async () => {
     try {
+      console.log('Available connectors:', connectors.map(c => ({ id: c.id, name: c.name })));
+      console.log('isFarcaster:', isFarcaster);
+      
       toast.info('Connecting wallet...');
       
       const farcasterConnector = connectors.find(c => c.id === 'farcaster');
       
       if (farcasterConnector) {
+        console.log('Found Farcaster connector, connecting...');
         await connect({ connector: farcasterConnector });
         toast.success('Wallet connected!');
       } else {
+        console.error('Farcaster connector not found. Available:', connectors.map(c => c.id));
         toast.error('Farcaster wallet not found. Please try again.');
       }
     } catch (error: any) {
