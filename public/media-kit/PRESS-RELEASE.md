@@ -82,7 +82,7 @@ The platform aims to:
 
 #### Availability
 
-Loyal Spark is now live and available for merchants and customers to use. The platform is accessible at https://loyalspark.online and supports all BASE Network compatible wallets.
+Loyal Spark is now live and available for merchants and customers to use. The platform is accessible at https://loyalspark.online and supports all BASE Network compatible wallets. Additionally, the platform is available as a Farcaster miniapp at https://farcaster.xyz/miniapps/ZYPERQSHz8gn/loyal-spark for seamless integration with the Farcaster ecosystem.
 
 #### About Loyal Spark
 
