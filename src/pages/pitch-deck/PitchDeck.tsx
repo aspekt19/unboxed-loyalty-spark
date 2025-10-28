@@ -93,18 +93,6 @@ const PitchDeck = () => {
       ],
     },
     {
-      id: 'tokenomics',
-      title: 'LOYAL Token Economics',
-      subtitle: '10B total supply - ERC-20 Utility Token',
-      tokenomics: [
-        { category: 'Ecosystem Fund', percentage: '38%', amount: '3.8B' },
-        { category: 'Token Sales', percentage: '30%', amount: '3B' },
-        { category: 'Team & Advisors', percentage: '20%', amount: '2B' },
-        { category: 'Marketing', percentage: '7%', amount: '700M' },
-        { category: 'Initial Liquidity', percentage: '5%', amount: '500M' },
-      ],
-    },
-    {
       id: 'adoption',
       title: 'Adoption Strategy',
       subtitle: 'Path to 1,000 merchants by Q4 2026',
@@ -200,10 +188,6 @@ const PitchDeck = () => {
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary border border-border">
                           <div className="h-2 w-2 rounded-full bg-foreground" />
                           <span className="text-sm font-medium text-foreground">Built on BASE Network</span>
-                        </div>
-                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary border border-border">
-                          <Coins className="h-4 w-4 text-foreground" />
-                          <span className="text-sm font-medium text-foreground">LOYAL Token | 10B Supply</span>
                         </div>
                         <a href="https://loyalspark.online/" target="_blank" rel="noopener noreferrer" className="text-base font-medium text-foreground hover:underline">
                           loyalspark.online
@@ -385,38 +369,6 @@ const PitchDeck = () => {
                               </div>
                               <div className="text-base text-muted-foreground">
                                 {item.detail}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Tokenomics Slide */}
-                  {slide.id === 'tokenomics' && (
-                    <div className="space-y-8">
-                      <div>
-                        <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                          Slide {index + 1}
-                        </div>
-                        <h2 className="text-4xl font-bold text-foreground mb-2">{slide.title}</h2>
-                        <p className="text-xl text-muted-foreground">{slide.subtitle}</p>
-                      </div>
-                      <div className="space-y-3">
-                        {slide.tokenomics?.map((item, i) => (
-                          <div key={i} className="flex items-center gap-6 p-6 rounded-xl border border-border bg-secondary/30">
-                            <div className="flex-shrink-0 text-center min-w-[100px]">
-                              <div className="text-3xl font-bold text-foreground">
-                                {item.percentage}
-                              </div>
-                              <div className="text-sm text-muted-foreground mt-1">
-                                {item.amount}
-                              </div>
-                            </div>
-                            <div className="flex-1">
-                              <div className="text-lg font-semibold text-foreground">
-                                {item.category}
                               </div>
                             </div>
                           </div>

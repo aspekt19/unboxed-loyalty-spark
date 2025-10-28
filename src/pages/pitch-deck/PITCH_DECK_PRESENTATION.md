@@ -1,7 +1,7 @@
 # Loyal Spark
 ## Authentic blockchain loyalty rewards with guaranteed merchant buyback
 
-Total Slides: 12
+Total Slides: 11
 
 ---
 
@@ -106,23 +106,7 @@ Optional liquidity via LOYAL hub
 
 ---
 
-## Slide 8: Token Economics
-
-### 10 Billion LOYAL Tokens (Deflationary)
-
-| Allocation | % | Amount | Vesting |
-|------------|---|--------|---------|
-| Ecosystem Fund (DAO) | 38% | 3.8B | 5-year linear |
-| Token Sales (Seed/Private/Public) | 30% | 3.0B | 12-18 months |
-| Team & Advisors | 20% | 2.0B | 1yr cliff + 3yr vest |
-| Marketing & Early Users | 7% | 700M | Performance-based |
-| DEX Liquidity Reserve | 5% | 500M | TGE unlock |
-
-**Deflationary Mechanism:** Revenue share burns contribute to token scarcity
-
----
-
-## Slide 9: Competitive Advantage
+## Slide 8: Competitive Advantage
 
 **Key Differentiator: Deposit Model vs. Subscription Fees**
 
@@ -142,7 +126,7 @@ Ensures 80% refund guarantee for all merchants
 
 ---
 
-## Slide 10: Roadmap
+## Slide 9: Roadmap
 
 **Q1 2026**
 ✅ MVP live on BASE Network  
@@ -161,7 +145,7 @@ Ensures 80% refund guarantee for all merchants
 
 ---
 
-## Slide 11: Team & Funding
+## Slide 10: Team & Funding
 
 **Core Team (6 Key Roles)**
 
@@ -178,7 +162,7 @@ Ensures 80% refund guarantee for all merchants
 
 ---
 
-## Slide 12: The Ask
+## Slide 11: The Ask
 
 # Raising $1.425M Seed Round
 
