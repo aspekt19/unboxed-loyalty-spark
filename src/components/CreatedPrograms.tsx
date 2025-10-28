@@ -333,21 +333,9 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         setPendingOperation({ program, operation: 'pause', step: 'complete' });
         await pauseProgram(program.tokenAddress as `0x${string}`);
       } else {
-        console.log('[DEBUG] Activating program (unpausing and enabling minting)...');
+        console.log('[DEBUG] Activating program - starting with unpause...');
         setPendingOperation({ program, operation: 'unpause', step: 'utility' });
-        
-        // Сначала разморозим utility
         await unpauseProgram(program.tokenAddress as `0x${string}`);
-        
-        // Даем немного времени на подтверждение и вызываем enableMinting
-        setTimeout(async () => {
-          try {
-            console.log('[DEBUG] Enabling minting after unpause...');
-            await enableMinting(program.tokenAddress as `0x${string}`);
-          } catch (mintingError) {
-            console.error('[ERROR] Failed to enable minting:', mintingError);
-          }
-        }, 3000); // Ждем 3 секунды после unpause
       }
       console.log('[DEBUG] Transaction initiated successfully');
     } catch (error) {
@@ -361,21 +349,47 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
   // Обрабатываем успешное завершение транзакции паузы/активации
   useEffect(() => {
     const handleSuccess = async () => {
-      console.log('[DEBUG] useEffect triggered:', { toggleSuccess, pendingOperation: !!pendingOperation, address: !!address });
+      console.log('[DEBUG] useEffect triggered:', { 
+        toggleSuccess, 
+        pendingOperation: !!pendingOperation, 
+        address: !!address,
+        step: pendingOperation?.step 
+      });
       
       if (!toggleSuccess || !pendingOperation || !address) {
         console.log('[DEBUG] Skipping - missing required data');
         return;
       }
       
-      const { program, operation } = pendingOperation;
+      const { program, operation, step } = pendingOperation;
       
-      // Обновление БД
+      // Если это активация и мы только что завершили unpause, теперь нужно включить minting
+      if (operation === 'unpause' && step === 'utility') {
+        console.log('[DEBUG] First transaction (unpause) confirmed, now enabling minting...');
+        setPendingOperation({ program, operation: 'unpause', step: 'minting' });
+        
+        try {
+          await enableMinting(program.tokenAddress as `0x${string}`);
+          console.log('[DEBUG] Minting transaction sent successfully');
+          return; // Выходим и ждем следующего успеха для обновления БД
+        } catch (error) {
+          console.error('[ERROR] Failed to enable minting:', error);
+          toast.error('Failed to enable minting. Please try again.');
+          setToggledProgram(null);
+          setPendingOperation(null);
+          return;
+        }
+      }
+      
+      // Если это был последний шаг (пауза или включение minting), обновляем БД
+      
+      // Обновление БД только после завершения всех транзакций
       const isPause = operation === 'pause';
-      console.log(`[DEBUG] Transaction successful, updating DB status to ${isPause ? 'paused' : 'active'}`, {
+      console.log(`[DEBUG] All transactions complete, updating DB status to ${isPause ? 'paused' : 'active'}`, {
         tokenAddress: program.tokenAddress,
         merchantAddress: address,
-        operation
+        operation,
+        step
       });
       
       try {
