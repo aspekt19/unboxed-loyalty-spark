@@ -47,6 +47,7 @@ export function useToggleProgramStatus() {
 
   const unpauseProgram = async (tokenAddress: `0x${string}`) => {
     try {
+      // Сначала разморозим utility
       await writeContract({
         address: tokenAddress,
         abi: [
@@ -60,6 +61,9 @@ export function useToggleProgramStatus() {
         ] as const,
         functionName: 'unpauseUtility',
       } as any);
+      
+      // Ждем подтверждения первой транзакции и затем включаем минтинг
+      console.log('[DEBUG] unpauseUtility transaction sent, will enable minting after confirmation');
     } catch (err: any) {
       console.error('Error activating program:', err);
       
@@ -71,10 +75,11 @@ export function useToggleProgramStatus() {
       } else {
         toast.error('Failed to activate program. Please check the program status.');
       }
+      throw err; // Пробрасываем ошибку дальше
     }
   };
 
-  const enableMinting = async (tokenAddress: `0x${string}`) => {
+  const enableMintingOnly = async (tokenAddress: `0x${string}`) => {
     try {
       await writeContract({
         address: tokenAddress,
@@ -92,13 +97,14 @@ export function useToggleProgramStatus() {
     } catch (err) {
       console.error('Error enabling minting:', err);
       toast.error('Failed to enable minting');
+      throw err;
     }
   };
 
   return {
     pauseProgram,
     unpauseProgram,
-    enableMinting,
+    enableMinting: enableMintingOnly,
     isPending,
     isConfirming,
     isSuccess,

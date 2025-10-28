@@ -333,10 +333,21 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         setPendingOperation({ program, operation: 'pause', step: 'complete' });
         await pauseProgram(program.tokenAddress as `0x${string}`);
       } else {
-        console.log('[DEBUG] Activating program (unpausing)...');
-        // При активации просто вызываем unpause (enableMinting уже не нужен для новых контрактов)
+        console.log('[DEBUG] Activating program (unpausing and enabling minting)...');
         setPendingOperation({ program, operation: 'unpause', step: 'utility' });
+        
+        // Сначала разморозим utility
         await unpauseProgram(program.tokenAddress as `0x${string}`);
+        
+        // Даем немного времени на подтверждение и вызываем enableMinting
+        setTimeout(async () => {
+          try {
+            console.log('[DEBUG] Enabling minting after unpause...');
+            await enableMinting(program.tokenAddress as `0x${string}`);
+          } catch (mintingError) {
+            console.error('[ERROR] Failed to enable minting:', mintingError);
+          }
+        }, 3000); // Ждем 3 секунды после unpause
       }
       console.log('[DEBUG] Transaction initiated successfully');
     } catch (error) {
