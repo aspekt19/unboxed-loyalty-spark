@@ -22,22 +22,19 @@ export function WalletConnectButton() {
 
   const handleFarcasterConnect = async () => {
     try {
-      toast.info('Подключение кошелька...');
+      toast.info('Connecting wallet...');
       
       const farcasterConnector = connectors.find(c => c.id === 'farcaster');
       
       if (farcasterConnector) {
-        toast.info(`Используется Farcaster connector`);
         await connect({ connector: farcasterConnector });
-        toast.success('Кошелек подключен!');
+        toast.success('Wallet connected!');
       } else {
-        toast.warning(`Farcaster connector не найден, используется ${connectors[0]?.name || 'первый доступный'}`);
-        await connect({ connector: connectors[0] });
-        toast.success('Кошелек подключен!');
+        toast.error('Farcaster wallet not found. Please try again.');
       }
     } catch (error: any) {
       console.error('Farcaster connect error:', error);
-      toast.error(`Ошибка подключения: ${error.message || 'Неизвестная ошибка'}`);
+      toast.error(`Connection failed: ${error.message || 'Unknown error'}`);
     }
   };
 
