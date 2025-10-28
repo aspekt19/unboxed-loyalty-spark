@@ -2,8 +2,7 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Wallet } from 'lucide-react';
 import { useDisconnect, useConnect, useAccount } from 'wagmi';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEffect } from 'react';
-import { sdk } from '@farcaster/miniapp-sdk';
+import { toast } from 'sonner';
 
 export function WalletConnectButton() {
   const { disconnect } = useDisconnect();
@@ -23,18 +22,22 @@ export function WalletConnectButton() {
 
   const handleFarcasterConnect = async () => {
     try {
-      console.log('Farcaster connect initiated');
+      toast.info('Подключение кошелька...');
+      
       const farcasterConnector = connectors.find(c => c.id === 'farcaster');
       
       if (farcasterConnector) {
-        console.log('Found Farcaster connector:', farcasterConnector);
+        toast.info(`Используется Farcaster connector`);
         await connect({ connector: farcasterConnector });
+        toast.success('Кошелек подключен!');
       } else {
-        console.log('No Farcaster connector, using first available:', connectors[0]);
+        toast.warning(`Farcaster connector не найден, используется ${connectors[0]?.name || 'первый доступный'}`);
         await connect({ connector: connectors[0] });
+        toast.success('Кошелек подключен!');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Farcaster connect error:', error);
+      toast.error(`Ошибка подключения: ${error.message || 'Неизвестная ошибка'}`);
     }
   };
 
