@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -96,6 +97,7 @@ export function VouchersManagement() {
     : vouchers;
 
   const activeVouchers = filteredVouchers.filter(v => v.status === 'active');
+  const inactiveVouchers = filteredVouchers.filter(v => v.status === 'expired');
   const usedVouchers = filteredVouchers.filter(v => v.status === 'used');
 
   if (!address) {
@@ -133,24 +135,37 @@ export function VouchersManagement() {
             </AlertDescription>
           </Alert>
         ) : (
-          <div className="space-y-6">
-            {activeVouchers.length > 0 && (
-              <div className="space-y-3">
-                <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
-                  Active Vouchers ({activeVouchers.length})
-                </h3>
+          <Tabs defaultValue="active" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 h-8">
+              <TabsTrigger value="active" className="text-xs">
+                Active ({activeVouchers.length})
+              </TabsTrigger>
+              <TabsTrigger value="inactive" className="text-xs">
+                Inactive ({inactiveVouchers.length})
+              </TabsTrigger>
+              <TabsTrigger value="used" className="text-xs">
+                Used ({usedVouchers.length})
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="active" className="mt-4">
+              {activeVouchers.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  No active vouchers
+                </p>
+              ) : (
                 <ScrollArea className="h-[400px] pr-4">
                   <div className="space-y-2">
                     {activeVouchers.map((voucher) => (
                       <div
                         key={voucher.id}
-                        className={`flex flex-col gap-2 p-2.5 border rounded-lg ${voucher.status === 'active' ? 'bg-primary/5' : 'bg-muted/50 opacity-70'}`}
+                        className="flex flex-col gap-2 p-2.5 border rounded-lg bg-primary/5"
                       >
                         <div className="space-y-1">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <code className="font-bold text-xs">{voucher.code}</code>
-                            <Badge variant={voucher.status === 'active' ? 'default' : 'secondary'} className="text-[10px] px-1.5 py-0 h-4">
-                              {voucher.status === 'active' ? 'Active' : 'Inactive'}
+                            <Badge variant="default" className="text-[10px] px-1.5 py-0 h-4">
+                              Active
                             </Badge>
                           </div>
                           <div className="text-xs font-medium truncate">{voucher.rewardName}</div>
@@ -160,17 +175,11 @@ export function VouchersManagement() {
                           <div className="text-[10px] text-muted-foreground">
                             Customer: {voucher.customerAddress.slice(0, 6)}...{voucher.customerAddress.slice(-4)}
                           </div>
-                          {voucher.status !== 'active' && (
-                            <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">
-                              Program is paused - voucher cannot be used
-                            </p>
-                          )}
                         </div>
                         <Button
                           size="sm"
                           onClick={() => handleMarkAsUsed(voucher.id, voucher.code)}
                           className="gap-1.5 h-7 w-full text-xs"
-                          disabled={voucher.status !== 'active'}
                         >
                           <CheckCircle2 className="h-3 w-3" />
                           <span>Mark as Used</span>
@@ -179,14 +188,53 @@ export function VouchersManagement() {
                     ))}
                   </div>
                 </ScrollArea>
-              </div>
-            )}
+              )}
+            </TabsContent>
 
-            {usedVouchers.length > 0 && (
-              <div className="space-y-3">
-                <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
-                  Used Vouchers ({usedVouchers.length})
-                </h3>
+            <TabsContent value="inactive" className="mt-4">
+              {inactiveVouchers.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  No inactive vouchers
+                </p>
+              ) : (
+                <ScrollArea className="h-[400px] pr-4">
+                  <div className="space-y-2">
+                    {inactiveVouchers.map((voucher) => (
+                      <div
+                        key={voucher.id}
+                        className="flex flex-col gap-2 p-2.5 border rounded-lg bg-muted/50 opacity-70"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <code className="font-bold text-xs">{voucher.code}</code>
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+                              Inactive
+                            </Badge>
+                          </div>
+                          <div className="text-xs font-medium truncate">{voucher.rewardName}</div>
+                          <div className="text-[10px] text-muted-foreground">
+                            Activated: {new Date(voucher.activatedAt).toLocaleDateString()}
+                          </div>
+                          <div className="text-[10px] text-muted-foreground">
+                            Customer: {voucher.customerAddress.slice(0, 6)}...{voucher.customerAddress.slice(-4)}
+                          </div>
+                          <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">
+                            Program is paused - voucher cannot be used
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+            </TabsContent>
+
+            <TabsContent value="used" className="mt-4">
+              {usedVouchers.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  No used vouchers
+                </p>
+              ) : (
                 <ScrollArea className="h-[400px] pr-4">
                   <div className="space-y-2">
                     {usedVouchers.map((voucher) => (
@@ -203,14 +251,17 @@ export function VouchersManagement() {
                           <div className="text-[10px] text-muted-foreground">
                             Used: {voucher.usedAt && new Date(voucher.usedAt).toLocaleDateString()}
                           </div>
+                          <div className="text-[10px] text-muted-foreground">
+                            Customer: {voucher.customerAddress.slice(0, 6)}...{voucher.customerAddress.slice(-4)}
+                          </div>
                         </div>
                       </div>
                     ))}
                   </div>
                 </ScrollArea>
-              </div>
-            )}
-          </div>
+              )}
+            </TabsContent>
+          </Tabs>
         )}
       </CardContent>
     </Card>
