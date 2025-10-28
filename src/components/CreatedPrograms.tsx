@@ -55,11 +55,12 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
   const [pendingOperation, setPendingOperation] = useState<{
     program: LoyaltyProgram;
     operation: 'pause' | 'activate';
+    step: 'unpause' | 'minting' | 'complete';
   } | null>(null);
   const publicClient = usePublicClient();
   const { address } = useAccount();
   const { burnAllTokens, isBurning, progress } = useBurnAllTokens();
-  const { pauseProgram, activateProgram, isPending: isToggling, isSuccess: toggleSuccess } = useToggleProgramStatus();
+  const { pauseProgram, unpauseUtility, enableMinting, isPending: isToggling, isSuccess: toggleSuccess } = useToggleProgramStatus();
 
   // Очищаем программы при отключении кошелька
   useEffect(() => {
@@ -329,12 +330,12 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     try {
       if (shouldPause) {
         console.log('[DEBUG] Pausing program...');
-        setPendingOperation({ program, operation: 'pause' });
+        setPendingOperation({ program, operation: 'pause', step: 'complete' });
         await pauseProgram(program.tokenAddress as `0x${string}`);
       } else {
-        console.log('[DEBUG] Activating program with single transaction...');
-        setPendingOperation({ program, operation: 'activate' });
-        await activateProgram(program.tokenAddress as `0x${string}`);
+        console.log('[DEBUG] Starting activation - Step 1: unpause utility...');
+        setPendingOperation({ program, operation: 'activate', step: 'unpause' });
+        await unpauseUtility(program.tokenAddress as `0x${string}`);
       }
       console.log('[DEBUG] Transaction initiated successfully');
     } catch (error) {
@@ -351,7 +352,8 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
       console.log('[DEBUG] useEffect triggered:', { 
         toggleSuccess, 
         pendingOperation: !!pendingOperation, 
-        address: !!address
+        address: !!address,
+        step: pendingOperation?.step
       });
       
       if (!toggleSuccess || !pendingOperation || !address) {
@@ -359,14 +361,32 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         return;
       }
       
-      const { program, operation } = pendingOperation;
+      const { program, operation, step } = pendingOperation;
       
-      // Обновление БД после успешной транзакции
+      // Если активация и только что выполнили unpause, теперь нужно enableMinting
+      if (operation === 'activate' && step === 'unpause') {
+        console.log('[DEBUG] Step 1 complete (unpause). Starting Step 2: enable minting...');
+        setPendingOperation({ program, operation: 'activate', step: 'minting' });
+        
+        try {
+          await enableMinting(program.tokenAddress as `0x${string}`);
+          return; // Ждем следующего успеха для обновления БД
+        } catch (error) {
+          console.error('[ERROR] Failed to enable minting:', error);
+          toast.error('Failed to enable minting. Please try again.');
+          setToggledProgram(null);
+          setPendingOperation(null);
+          return;
+        }
+      }
+      
+      // Обновление БД после завершения всех шагов
       const isPause = operation === 'pause';
-      console.log(`[DEBUG] Transaction complete, updating DB status to ${isPause ? 'paused' : 'active'}`, {
+      console.log(`[DEBUG] All steps complete, updating DB status to ${isPause ? 'paused' : 'active'}`, {
         tokenAddress: program.tokenAddress,
         merchantAddress: address,
-        operation
+        operation,
+        step
       });
       
       try {
@@ -470,7 +490,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     };
     
     handleSuccess();
-  }, [toggleSuccess, pendingOperation, address]);
+  }, [toggleSuccess, pendingOperation, address, enableMinting]);
 
   const handleDeleteProgram = async (programId: string, burnTokens: boolean) => {
     const program = programs.find(p => p.id === programId);
