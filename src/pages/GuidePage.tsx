@@ -113,7 +113,20 @@ export default function GuidePage() {
                     <h4 className="font-semibold text-lg mb-2">Create Rewards</h4>
                     <p className="text-muted-foreground">
                       Set up rewards that customers can claim by burning their tokens. 
-                      Generate voucher codes for redemption.
+                      Specify the reward name, description, and token cost.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
+                    5
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-lg mb-2">Manage Vouchers</h4>
+                    <p className="text-muted-foreground">
+                      View vouchers claimed by customers. Each voucher has a unique code that customers 
+                      present for redemption. Mark vouchers as "used" when customers redeem them at your store.
                     </p>
                   </div>
                 </div>
@@ -166,10 +179,9 @@ export default function GuidePage() {
                     3
                   </div>
                   <div>
-                    <h4 className="font-semibold text-lg mb-2">Redeem for Rewards</h4>
+                    <h4 className="font-semibold text-lg mb-2">Browse & Select Rewards</h4>
                     <p className="text-muted-foreground">
-                      Browse available rewards and exchange your tokens for vouchers. 
-                      Use voucher codes at merchants.
+                      View available rewards from merchants. Each reward shows the token cost and description.
                     </p>
                   </div>
                 </div>
@@ -179,10 +191,128 @@ export default function GuidePage() {
                     4
                   </div>
                   <div>
+                    <h4 className="font-semibold text-lg mb-2">Claim Vouchers</h4>
+                    <p className="text-muted-foreground">
+                      Exchange your tokens for vouchers by clicking "Claim Reward". Your tokens will be burned, 
+                      and you'll receive a voucher with a unique code. View all your vouchers in "My Vouchers" section.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
+                    5
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-lg mb-2">Redeem at Store</h4>
+                    <p className="text-muted-foreground">
+                      Show your voucher code to the merchant to redeem your reward. 
+                      The merchant will mark it as used in their system.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
+                    6
+                  </div>
+                  <div>
                     <h4 className="font-semibold text-lg mb-2">Trade on DEX (Optional)</h4>
                     <p className="text-muted-foreground">
                       Trade your loyalty tokens on decentralized exchanges or transfer to other users.
                     </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Vouchers Section */}
+          <Card className="mb-8 border-2 border-primary/30">
+            <CardHeader className="bg-primary/5">
+              <CardTitle className="text-2xl">Understanding Vouchers</CardTitle>
+              <CardDescription>How the voucher system works</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="space-y-6">
+                <div>
+                  <h4 className="font-semibold text-lg mb-3">What are Vouchers?</h4>
+                  <p className="text-muted-foreground">
+                    Vouchers are digital coupons that customers receive after burning their loyalty tokens 
+                    for rewards. Each voucher contains a unique code and can be redeemed at the merchant's store.
+                  </p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <h5 className="font-semibold mb-2 flex items-center gap-2">
+                      <Store className="w-5 h-5 text-primary" />
+                      For Merchants
+                    </h5>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                      <li className="flex gap-2">
+                        <span className="text-primary">•</span>
+                        View all vouchers claimed by customers
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-primary">•</span>
+                        Check voucher codes when customers redeem
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-primary">•</span>
+                        Mark vouchers as "used" after redemption
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-primary">•</span>
+                        Track voucher usage statistics
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h5 className="font-semibold mb-2 flex items-center gap-2">
+                      <ShoppingBag className="w-5 h-5 text-primary" />
+                      For Customers
+                    </h5>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                      <li className="flex gap-2">
+                        <span className="text-primary">•</span>
+                        Burn tokens to claim rewards as vouchers
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-primary">•</span>
+                        View all vouchers in "My Vouchers" section
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-primary">•</span>
+                        Show voucher code to merchant for redemption
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-primary">•</span>
+                        Track active and used vouchers
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="bg-muted/50 p-4 rounded-lg">
+                  <h5 className="font-semibold mb-2">Voucher Lifecycle</h5>
+                  <div className="flex items-center gap-2 text-sm flex-wrap">
+                    <span className="px-3 py-1 bg-primary/10 text-primary rounded-full font-medium">
+                      1. Customer Claims
+                    </span>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                    <span className="px-3 py-1 bg-primary/10 text-primary rounded-full font-medium">
+                      2. Voucher Created
+                    </span>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                    <span className="px-3 py-1 bg-primary/10 text-primary rounded-full font-medium">
+                      3. Customer Shows Code
+                    </span>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                    <span className="px-3 py-1 bg-primary/10 text-primary rounded-full font-medium">
+                      4. Merchant Marks Used
+                    </span>
                   </div>
                 </div>
               </div>
