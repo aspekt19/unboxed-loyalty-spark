@@ -33,7 +33,7 @@ interface LoyaltyProgram {
   timestamp: number;
   tokenAddress?: string;
   expirationDate?: string;
-  status?: 'active' | 'expiring_soon' | 'expired';
+  status?: 'active' | 'expiring_soon' | 'expired' | 'paused';
 }
 
 interface TokenStats {
@@ -418,6 +418,30 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
           console.error(`[ERROR] Error ${isPause ? 'deactivating' : 'reactivating'} vouchers:`, vouchersError);
         } else {
           console.log('[DEBUG] Vouchers updated successfully');
+        }
+        
+        // Принудительно перезагружаем программы из БД
+        console.log('[DEBUG] Reloading programs from database...');
+        const { data: updatedPrograms, error: reloadError } = await supabase
+          .from('loyalty_programs')
+          .select('*')
+          .eq('merchant_address', address.toLowerCase())
+          .order('created_at', { ascending: false });
+        
+        if (!reloadError && updatedPrograms) {
+          const reloadedPrograms: LoyaltyProgram[] = updatedPrograms.map(prog => ({
+            id: prog.id,
+            name: prog.name,
+            symbol: prog.symbol,
+            timestamp: new Date(prog.created_at).getTime(),
+            tokenAddress: prog.token_address,
+            expirationDate: prog.expiration_date,
+            status: prog.status as 'active' | 'expiring_soon' | 'expired' | 'paused',
+          }));
+          
+          setPrograms(reloadedPrograms);
+          localStorage.setItem('loyaltyPrograms', JSON.stringify(reloadedPrograms));
+          console.log('[DEBUG] Programs reloaded successfully:', reloadedPrograms);
         }
         
         // Отправляем события обновления
