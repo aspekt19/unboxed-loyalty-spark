@@ -726,7 +726,7 @@ MIT License - см. файл LICENSE для деталей
 
 - **Баг-репорты**: Создайте issue на GitHub
 - **Вопросы**: Задайте в Discussions на GitHub
-- **Email**: info@loyalspark.online
+- **Email**: admin@loyalspark.online
 
 ## 🗺 Дорожная Карта
 

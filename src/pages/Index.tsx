@@ -153,10 +153,10 @@ const Index = () => {
               <p>© 2025 Loyal Spark. Built on BASE Network.</p>
               <div className="flex items-center gap-4">
                 <a 
-                  href="mailto:info@loyalspark.online" 
+                  href="mailto:admin@loyalspark.online" 
                   className="hover:text-foreground transition-colors duration-200"
                 >
-                  info@loyalspark.online
+                  admin@loyalspark.online
                 </a>
                 <span>|</span>
                 <a 

@@ -299,7 +299,7 @@ MIT License - see LICENSE file for details
 - **Website**: https://loyalspark.online
 - **GitHub**: https://github.com/aspekt19/unboxed-loyalty-spark
 - **Twitter/X**: https://x.com/Loyal_Spark
-- **Contact**: info@loyalspark.online
+- **Contact**: admin@loyalspark.online
 
 ## Built With
 
