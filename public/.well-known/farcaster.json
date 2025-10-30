@@ -8,10 +8,10 @@
     "version": "1",
     "name": "Loyal Spark",
     "iconUrl": "https://loyalspark.online/new-favicon.png",
-    "imageUrl": "https://loyalspark.online/media-kit/logo-horizontal.png",
+    "imageUrl": "https://loyalspark.online/media-kit/social-banner-hero.png",
     "homeUrl": "https://loyalspark.online",
     "webhookUrl": "https://loyalspark.online",
-    "splashImageUrl": "https://loyalspark.online/new-favicon.png",
+    "splashImageUrl": "https://loyalspark.online/media-kit/social-banner-hero.png",
     "splashBackgroundColor": "#000000",
     "subtitle": "Decentralized Loyalty Rewards",
     "description": "Create, manage and trade loyalty tokens on-chain. Zero middlemen. Total transparency. Built on BASE Network with smart contracts.",
@@ -29,8 +29,8 @@
     "tagline": "On-chain loyalty rewards",
     "ogTitle": "Loyal Spark - Loyalty Rewards",
     "ogDescription": "Create, manage and trade loyalty tokens on-chain. Zero middlemen. Total transparency.",
-    "ogImageUrl": "https://loyalspark.online/media-kit/logo-horizontal.png",
-    "heroImageUrl": "https://loyalspark.online/media-kit/logo-horizontal.png",
+    "ogImageUrl": "https://loyalspark.online/media-kit/social-banner-hero.png",
+    "heroImageUrl": "https://loyalspark.online/media-kit/social-banner-hero.png",
     "requiredChains": [
       "eip155:8453"
     ],
