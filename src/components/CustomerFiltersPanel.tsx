@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAccount } from 'wagmi';
-import { Sparkles, Loader2, AlertCircle, Coins, Clock } from 'lucide-react';
+import { Gift, Loader2, AlertCircle, Coins, Clock } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useMultiTokenBalance } from '@/hooks/useMultiTokenBalance';
 import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
@@ -137,7 +137,7 @@ export function CustomerFiltersPanel() {
     <Card className="border-2 h-full flex flex-col">
       <CardHeader className="flex-shrink-0">
         <CardTitle className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-primary" />
+          <Gift className="h-5 w-5 text-primary" />
           Loyalty Programs
         </CardTitle>
         <CardDescription>Your loyalty programs overview</CardDescription>

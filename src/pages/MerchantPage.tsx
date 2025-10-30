@@ -1,7 +1,7 @@
 import { WalletConnectButton } from '@/components/WalletConnectButton';
 import { MerchantPanel } from '@/components/MerchantPanel';
 import { IssuedTokensHistory } from '@/components/IssuedTokensHistory';
-import { Sparkles, ArrowLeft } from 'lucide-react';
+import { Gift, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import PageTransition from '@/components/PageTransition';

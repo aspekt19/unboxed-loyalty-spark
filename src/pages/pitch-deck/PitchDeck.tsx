@@ -1,7 +1,7 @@
 import { WalletConnectButton } from '@/components/WalletConnectButton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Sparkles, TrendingUp, Users, DollarSign, Target, Zap, Shield, Globe, Wallet, Store, ShoppingBag, LineChart, Lock, Coins, BarChart3, Flame, UserPlus } from 'lucide-react';
+import { Gift, TrendingUp, Users, DollarSign, Target, Zap, Shield, Globe, Wallet, Store, ShoppingBag, LineChart, Lock, Coins, BarChart3, Flame, UserPlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PageTransition from '@/components/PageTransition';
 
@@ -12,7 +12,7 @@ const PitchDeck = () => {
       title: 'Loyal Spark',
       subtitle: 'Blockchain Loyalty Rewards for SMBs',
       tagline: 'Book loyalty rewards with merchants, not middlemen',
-      icon: Sparkles,
+      icon: Gift,
     },
     {
       id: 'problem',
@@ -72,7 +72,7 @@ const PitchDeck = () => {
       subtitle: 'How it works',
       productFlow: {
         merchant: [
-          { step: 'Deploy Token', description: 'Create custom ERC-20 loyalty token', icon: Sparkles },
+          { step: 'Deploy Token', description: 'Create custom ERC-20 loyalty token', icon: Gift },
           { step: 'Issue Rewards', description: 'Mint tokens to customers via vouchers', icon: UserPlus },
           { step: 'Manage Program', description: 'Track holders, create offers, earn fees', icon: BarChart3 },
         ],
