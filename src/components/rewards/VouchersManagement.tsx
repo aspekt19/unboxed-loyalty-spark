@@ -20,6 +20,7 @@ export function VouchersManagement() {
   const { session } = useAuth();
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [searchCode, setSearchCode] = useState('');
+  const [activeTab, setActiveTab] = useState('active');
 
   const loadMerchantVouchers = async () => {
     if (!address) {
@@ -105,6 +106,20 @@ export function VouchersManagement() {
   const inactiveVouchers = filteredVouchers.filter(v => v.status === 'expired');
   const usedVouchers = filteredVouchers.filter(v => v.status === 'used');
 
+  // Автоматическое переключение вкладки при поиске
+  useEffect(() => {
+    if (searchCode && filteredVouchers.length > 0) {
+      const firstVoucher = filteredVouchers[0];
+      if (firstVoucher.status === 'active' && activeTab !== 'active') {
+        setActiveTab('active');
+      } else if (firstVoucher.status === 'expired' && activeTab !== 'inactive') {
+        setActiveTab('inactive');
+      } else if (firstVoucher.status === 'used' && activeTab !== 'used') {
+        setActiveTab('used');
+      }
+    }
+  }, [searchCode, filteredVouchers]);
+
   if (!address) {
     return null;
   }
@@ -140,7 +155,7 @@ export function VouchersManagement() {
             </AlertDescription>
           </Alert>
         ) : (
-          <Tabs defaultValue="active" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3 h-8">
               <TabsTrigger value="active" className="text-xs">
                 Active ({activeVouchers.length})
