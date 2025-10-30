@@ -36,6 +36,15 @@ export function RewardsSelection() {
   const [availableRewards, setAvailableRewards] = useState<Reward[]>([]);
   // Отслеживаем hash транзакции для предотвращения дублирования ваучеров
   const [processedHash, setProcessedHash] = useState<string | undefined>(undefined);
+  // Состояние для неудачных попыток создания ваучера
+  const [failedVoucherAttempt, setFailedVoucherAttempt] = useState<{
+    hash: string;
+    rewardId: string;
+    rewardName: string;
+    tokenAddress: string;
+    cost: number;
+  } | null>(null);
+  const [isRecovering, setIsRecovering] = useState(false);
   
   const { balances, isLoading: balancesLoading, refetch } = useMultiTokenBalance(tokens);
   const { burnTokens, isPending, isSuccess, hash } = useBurnTokens();
@@ -219,7 +228,15 @@ export function RewardsSelection() {
         
         if (profileCheckError || !profileCheck) {
           console.error('[handleVoucherCreation] Profile check failed:', profileCheckError);
-          toast.error('Profile verification failed. Your tokens were transferred but voucher creation failed. Please contact support with transaction hash: ' + hash.slice(0, 10) + '...');
+          // Сохраняем информацию для восстановления
+          setFailedVoucherAttempt({
+            hash,
+            rewardId: reward.id,
+            rewardName: reward.name,
+            tokenAddress: selectedTokenAddress,
+            cost: reward.cost,
+          });
+          toast.error('Profile verification failed. Use the recovery button below to restore your voucher.');
           return;
         }
 
@@ -258,16 +275,22 @@ export function RewardsSelection() {
           console.log('[handleVoucherCreation] Voucher created successfully:', voucher.id);
           toast.success(`Voucher activated! Code: ${voucherCode}`);
           setSelectedRewardId('');
+          setFailedVoucherAttempt(null); // Очищаем состояние ошибки
           // Немедленно обновляем данные и диспетчим события
           refetch();
           window.dispatchEvent(new Event('vouchersUpdated'));
           window.dispatchEvent(new Event('tokenBalancesUpdated'));
         } else {
           console.error('[handleVoucherCreation] Failed to create voucher after', attempts, 'attempts');
-          toast.error(
-            `Failed to create voucher after ${attempts} attempts. Your tokens were transferred (tx: ${hash.slice(0, 10)}...). Please contact support to recover your voucher.`,
-            { duration: 10000 }
-          );
+          // Сохраняем информацию для восстановления
+          setFailedVoucherAttempt({
+            hash,
+            rewardId: reward.id,
+            rewardName: reward.name,
+            tokenAddress: selectedTokenAddress,
+            cost: reward.cost,
+          });
+          toast.error('Failed to create voucher. Use the recovery button below to restore it.');
         }
       }
     };
@@ -401,6 +424,75 @@ export function RewardsSelection() {
     );
   };
 
+  // Функция восстановления ваучера после неудачной попытки
+  const handleRecoverVoucher = async () => {
+    if (!failedVoucherAttempt || !address) {
+      toast.error('No voucher to recover');
+      return;
+    }
+
+    setIsRecovering(true);
+    console.log('[handleRecoverVoucher] Attempting to recover voucher for tx:', failedVoucherAttempt.hash);
+
+    try {
+      // Проверяем профиль еще раз
+      const { data: profileCheck, error: profileCheckError } = await supabase
+        .from('profiles')
+        .select('wallet_address')
+        .eq('wallet_address', address.toLowerCase())
+        .maybeSingle();
+      
+      if (profileCheckError || !profileCheck) {
+        console.error('[handleRecoverVoucher] Profile check failed:', profileCheckError);
+        toast.error('Profile not found. Please reconnect your wallet and try again.');
+        setIsRecovering(false);
+        return;
+      }
+
+      const reward = availableRewards.find(r => r.id === failedVoucherAttempt.rewardId);
+      const token = tokens.find(t => t.address === failedVoucherAttempt.tokenAddress);
+
+      if (!reward || !token) {
+        toast.error('Reward or token information not found');
+        setIsRecovering(false);
+        return;
+      }
+
+      // Пытаемся создать ваучер
+      const voucherCode = generateVoucherCode();
+      const voucher = await createVoucher({
+        code: voucherCode,
+        rewardId: reward.id,
+        rewardName: reward.name,
+        rewardDescription: reward.description,
+        tokenAddress: failedVoucherAttempt.tokenAddress,
+        tokenSymbol: token.name,
+        customerAddress: address,
+        merchantAddress: reward.merchantAddress,
+        status: 'active',
+        cost: failedVoucherAttempt.cost,
+      });
+
+      if (voucher) {
+        console.log('[handleRecoverVoucher] Voucher recovered successfully:', voucher.id);
+        toast.success(`Voucher recovered successfully! Code: ${voucherCode}`);
+        setFailedVoucherAttempt(null);
+        setSelectedRewardId('');
+        // Обновляем данные
+        refetch();
+        window.dispatchEvent(new Event('vouchersUpdated'));
+        window.dispatchEvent(new Event('tokenBalancesUpdated'));
+      } else {
+        toast.error('Recovery failed. Please try again or contact support.');
+      }
+    } catch (error) {
+      console.error('[handleRecoverVoucher] Error:', error);
+      toast.error('Recovery failed. Please try again later.');
+    } finally {
+      setIsRecovering(false);
+    }
+  };
+
   // Проверяем, нужно ли approve для выбранной награды
   // Approve больше не нужен, так как используется простой transfer
   const needsApproval = () => {
@@ -448,6 +540,49 @@ export function RewardsSelection() {
           </Alert>
         ) : (
           <div className="space-y-4">
+            {/* Alert для восстановления потерянного ваучера */}
+            {failedVoucherAttempt && (
+              <Alert variant="destructive" className="border-destructive/50 bg-destructive/10">
+                <AlertCircle className="h-4 w-4" />
+                <div className="flex flex-col gap-3">
+                  <AlertDescription>
+                    <div className="space-y-2">
+                      <p className="font-semibold">Voucher Creation Failed</p>
+                      <p className="text-sm">
+                        Your tokens were successfully transferred, but the voucher couldn't be created.
+                      </p>
+                      <div className="space-y-1 text-xs">
+                        <p><span className="font-medium">Reward:</span> {failedVoucherAttempt.rewardName}</p>
+                        <p><span className="font-medium">Cost:</span> {failedVoucherAttempt.cost} tokens</p>
+                        <p className="break-all">
+                          <span className="font-medium">Transaction:</span> {failedVoucherAttempt.hash}
+                        </p>
+                      </div>
+                    </div>
+                  </AlertDescription>
+                  <Button
+                    onClick={handleRecoverVoucher}
+                    disabled={isRecovering}
+                    size="sm"
+                    variant="default"
+                    className="w-full"
+                  >
+                    {isRecovering ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Recovering Voucher...
+                      </>
+                    ) : (
+                      <>
+                        <Gift className="mr-2 h-4 w-4" />
+                        Recover My Voucher
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </Alert>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="program">Loyalty Program</Label>
               <Select
