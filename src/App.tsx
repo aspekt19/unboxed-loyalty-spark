@@ -25,12 +25,7 @@ const queryClient = new QueryClient();
 function AnimatedRoutes() {
   const location = useLocation();
 
-  // Initialize Farcaster Mini App SDK
-  useEffect(() => {
-    sdk.actions.ready().catch((error) => {
-      console.error('Failed to initialize Farcaster SDK:', error);
-    });
-  }, []);
+  // SDK ready is called in FarcasterSplash component when content is loaded
 
   // Автоматическая миграция данных из localStorage в БД при каждой загрузке
   // (если есть данные для миграции)

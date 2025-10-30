@@ -1,11 +1,20 @@
 import { Button } from '@/components/ui/button';
 import { ArrowUpRight } from 'lucide-react';
+import { useEffect } from 'react';
+import { sdk } from '@farcaster/miniapp-sdk';
 
 interface FarcasterSplashProps {
   onLaunch: () => void;
 }
 
 const FarcasterSplash = ({ onLaunch }: FarcasterSplashProps) => {
+  useEffect(() => {
+    // Notify Farcaster that content is ready to be displayed
+    sdk.actions.ready().catch((error) => {
+      console.error('Failed to notify Farcaster SDK ready:', error);
+    });
+  }, []);
+
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
       {/* Logo */}
