@@ -31,15 +31,18 @@ export function WalletConnectButton() {
   
   useEffect(() => {
     const loadFarcasterUser = async () => {
-      if (isFarcasterContext() && sdk?.context) {
+      if (isFarcasterContext()) {
         try {
           const context = await sdk.context;
+          console.log('Farcaster context loaded:', context);
           if (context?.user) {
-            setFarcasterUser({
+            const userData = {
               username: context.user.username,
               displayName: context.user.displayName,
               pfpUrl: context.user.pfpUrl,
-            });
+            };
+            console.log('Setting Farcaster user data:', userData);
+            setFarcasterUser(userData);
           }
         } catch (error) {
           console.error('Failed to load Farcaster user:', error);
@@ -81,14 +84,18 @@ export function WalletConnectButton() {
         type="button"
         className="px-3 py-2 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center gap-2"
       >
-        <Avatar className="h-6 w-6">
-          <AvatarImage src={farcasterUser?.pfpUrl} alt={farcasterUser?.username || 'User'} />
-          <AvatarFallback className="text-xs">
-            {farcasterUser?.username?.[0]?.toUpperCase() || 'U'}
-          </AvatarFallback>
-        </Avatar>
+        {(farcasterUser?.pfpUrl || farcasterUser?.username) && (
+          <Avatar className="h-6 w-6">
+            {farcasterUser?.pfpUrl && (
+              <AvatarImage src={farcasterUser.pfpUrl} alt={farcasterUser.username || farcasterUser.displayName || 'User'} />
+            )}
+            <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+              {(farcasterUser?.displayName?.[0] || farcasterUser?.username?.[0] || 'U').toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+        )}
         <span className="text-xs">
-          {farcasterUser?.username || `${address?.slice(0, 6)}...${address?.slice(-4)}`}
+          {farcasterUser?.displayName || farcasterUser?.username || `${address?.slice(0, 6)}...${address?.slice(-4)}`}
         </span>
       </button>
     );
