@@ -188,6 +188,31 @@ export async function deleteReward(rewardId: string): Promise<boolean> {
 
 // Создание ваучера в базе данных
 export async function createVoucher(voucher: Omit<Voucher, 'id' | 'activatedAt'>): Promise<Voucher | null> {
+  // Проверяем, что профиль пользователя существует перед созданием ваучера
+  const { data: profileCheck, error: profileError } = await supabase
+    .from('profiles')
+    .select('wallet_address')
+    .eq('wallet_address', voucher.customerAddress.toLowerCase())
+    .maybeSingle();
+
+  if (profileError) {
+    console.error('[createVoucher] Error checking profile:', profileError);
+    return null;
+  }
+
+  if (!profileCheck) {
+    console.error('[createVoucher] Profile not found for address:', voucher.customerAddress);
+    return null;
+  }
+
+  console.log('[createVoucher] Creating voucher:', {
+    code: voucher.code,
+    rewardId: voucher.rewardId,
+    customerAddress: voucher.customerAddress.toLowerCase(),
+    merchantAddress: voucher.merchantAddress.toLowerCase(),
+    cost: voucher.cost,
+  });
+
   const { data, error } = await supabase
     .from('vouchers')
     .insert({
@@ -207,8 +232,17 @@ export async function createVoucher(voucher: Omit<Voucher, 'id' | 'activatedAt'>
     .single();
 
   if (error) {
+    console.error('[createVoucher] Error creating voucher:', error);
+    console.error('[createVoucher] Error details:', {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+    });
     return null;
   }
+
+  console.log('[createVoucher] Voucher created successfully:', data.id);
 
   return {
     id: data.id,

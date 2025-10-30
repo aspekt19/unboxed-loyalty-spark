@@ -192,20 +192,55 @@ export function RewardsSelection() {
     }
   }, [isApproved, refetchAllowance]);
 
-  // Обработка успешного сжигания
+  // Обработка успешного сжигания с механизмом повторных попыток
   useEffect(() => {
     const handleVoucherCreation = async () => {
       // Проверяем, что транзакция успешна, есть новый hash и он еще не обработан
       if (isSuccess && hash && hash !== processedHash && selectedRewardId && address) {
+        console.log('[handleVoucherCreation] Starting voucher creation for hash:', hash);
         const reward = availableRewards.find(r => r.id === selectedRewardId);
         const token = tokens.find(t => t.address === selectedTokenAddress);
         
-        if (reward && token) {
-          // Помечаем hash как обработанный сразу, чтобы избежать дублирования
-          setProcessedHash(hash);
+        if (!reward || !token) {
+          console.error('[handleVoucherCreation] Reward or token not found');
+          toast.error('Failed to create voucher: reward or token data missing');
+          return;
+        }
+
+        // Помечаем hash как обработанный сразу, чтобы избежать дублирования
+        setProcessedHash(hash);
+
+        // Дополнительная проверка профиля перед созданием ваучера
+        const { data: profileCheck, error: profileCheckError } = await supabase
+          .from('profiles')
+          .select('wallet_address')
+          .eq('wallet_address', address.toLowerCase())
+          .maybeSingle();
+        
+        if (profileCheckError || !profileCheck) {
+          console.error('[handleVoucherCreation] Profile check failed:', profileCheckError);
+          toast.error('Profile verification failed. Your tokens were transferred but voucher creation failed. Please contact support with transaction hash: ' + hash.slice(0, 10) + '...');
+          return;
+        }
+
+        console.log('[handleVoucherCreation] Profile verified, creating voucher...');
+        const voucherCode = generateVoucherCode();
+        
+        // Попытка создать ваучер с механизмом повторных попыток
+        let voucher = null;
+        let attempts = 0;
+        const maxAttempts = 3;
+        
+        while (!voucher && attempts < maxAttempts) {
+          attempts++;
+          console.log(`[handleVoucherCreation] Attempt ${attempts} of ${maxAttempts}`);
           
-          const voucherCode = generateVoucherCode();
-          const voucher = await createVoucher({
+          if (attempts > 1) {
+            // Ждем перед повторной попыткой
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+          }
+          
+          voucher = await createVoucher({
             code: voucherCode,
             rewardId: reward.id,
             rewardName: reward.name,
@@ -217,17 +252,22 @@ export function RewardsSelection() {
             status: 'active',
             cost: reward.cost,
           });
+        }
 
-          if (voucher) {
-            toast.success(`Voucher activated! Code: ${voucherCode}`);
-            setSelectedRewardId('');
-            // Немедленно обновляем данные и диспетчим события
-            refetch();
-            window.dispatchEvent(new Event('vouchersUpdated'));
-            window.dispatchEvent(new Event('tokenBalancesUpdated'));
-          } else {
-            toast.error('Failed to create voucher');
-          }
+        if (voucher) {
+          console.log('[handleVoucherCreation] Voucher created successfully:', voucher.id);
+          toast.success(`Voucher activated! Code: ${voucherCode}`);
+          setSelectedRewardId('');
+          // Немедленно обновляем данные и диспетчим события
+          refetch();
+          window.dispatchEvent(new Event('vouchersUpdated'));
+          window.dispatchEvent(new Event('tokenBalancesUpdated'));
+        } else {
+          console.error('[handleVoucherCreation] Failed to create voucher after', attempts, 'attempts');
+          toast.error(
+            `Failed to create voucher after ${attempts} attempts. Your tokens were transferred (tx: ${hash.slice(0, 10)}...). Please contact support to recover your voucher.`,
+            { duration: 10000 }
+          );
         }
       }
     };
@@ -278,32 +318,53 @@ export function RewardsSelection() {
       return;
     }
 
-    // Проверяем авторизацию и ждем завершения
+    // Проверяем авторизацию и профиль ПЕРЕД списанием токенов
     if (!session) {
       toast.info('Authenticating your wallet...');
       try {
         await signInWithWallet();
         // Даем время на создание профиля
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 1500));
         
         // Проверяем, что профиль создан
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('wallet_address')
           .eq('wallet_address', address.toLowerCase())
-          .single();
+          .maybeSingle();
+        
+        if (profileError) {
+          console.error('[handleActivate] Profile check error:', profileError);
+          toast.error('Failed to verify profile. Please try again.');
+          return;
+        }
         
         if (!profile) {
-          toast.error('Failed to create profile. Please try again.');
+          console.error('[handleActivate] Profile not found after sign in');
+          toast.error('Failed to create profile. Please disconnect and reconnect your wallet.');
           return;
         }
         
         toast.success('Authenticated! You can now activate the voucher.');
       } catch (error) {
-        console.error('Authentication error:', error);
+        console.error('[handleActivate] Authentication error:', error);
         toast.error('Authentication failed. Please try again.');
         return;
       }
+      return;
+    }
+
+    // Дополнительная проверка профиля для уже авторизованных пользователей
+    console.log('[handleActivate] Checking profile before token burn...');
+    const { data: profileCheck, error: profileCheckError } = await supabase
+      .from('profiles')
+      .select('wallet_address')
+      .eq('wallet_address', address.toLowerCase())
+      .maybeSingle();
+    
+    if (profileCheckError || !profileCheck) {
+      console.error('[handleActivate] Profile verification failed:', profileCheckError);
+      toast.error('Profile verification failed. Please reconnect your wallet.');
       return;
     }
 
