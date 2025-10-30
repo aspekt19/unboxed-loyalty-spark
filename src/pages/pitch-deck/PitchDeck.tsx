@@ -12,7 +12,7 @@ const PitchDeck = () => {
       title: 'Loyal Spark',
       subtitle: 'Blockchain Loyalty Rewards for SMBs',
       tagline: 'Book loyalty rewards with merchants, not middlemen',
-      icon: Gift,
+      icon: Coins,
     },
     {
       id: 'problem',
@@ -72,7 +72,7 @@ const PitchDeck = () => {
       subtitle: 'How it works',
       productFlow: {
         merchant: [
-          { step: 'Deploy Token', description: 'Create custom ERC-20 loyalty token', icon: Gift },
+          { step: 'Deploy Token', description: 'Create custom ERC-20 loyalty token', icon: Coins },
           { step: 'Issue Rewards', description: 'Mint tokens to customers via vouchers', icon: UserPlus },
           { step: 'Manage Program', description: 'Track holders, create offers, earn fees', icon: BarChart3 },
         ],

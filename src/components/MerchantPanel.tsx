@@ -12,7 +12,7 @@ import { useMintTokens } from '@/hooks/useMintTokens';
 import { useAccount } from 'wagmi';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { Gift, AlertCircle, Wallet, AlertTriangle } from 'lucide-react';
+import { Coins, AlertCircle, Wallet, AlertTriangle } from 'lucide-react';
 import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
 
 export function MerchantPanel() {
@@ -99,7 +99,7 @@ export function MerchantPanel() {
           <Card className="border-2 bg-gradient-to-br from-card to-muted/30">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Gift className="h-5 w-5 text-primary" />
+                <Coins className="h-5 w-5 text-primary" />
                 Issue Rewards
               </CardTitle>
               <CardDescription>Distribute loyalty tokens to customers</CardDescription>
