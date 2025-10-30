@@ -3,6 +3,8 @@ import { Wallet } from 'lucide-react';
 import { useDisconnect, useConnect, useAccount } from 'wagmi';
 import { useAuth } from '@/contexts/AuthContext';
 import sdk from '@farcaster/frame-sdk';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { useState, useEffect } from 'react';
 
 // Detect if running inside Farcaster using SDK context
 const isFarcasterContext = () => {
@@ -21,6 +23,32 @@ export function WalletConnectButton() {
   const { connect, connectors } = useConnect();
   const { address, isConnected, chain } = useAccount();
   const { signOut } = useAuth();
+  const [farcasterUser, setFarcasterUser] = useState<{
+    username?: string;
+    displayName?: string;
+    pfpUrl?: string;
+  } | null>(null);
+  
+  useEffect(() => {
+    const loadFarcasterUser = async () => {
+      if (isFarcasterContext() && sdk?.context) {
+        try {
+          const context = await sdk.context;
+          if (context?.user) {
+            setFarcasterUser({
+              username: context.user.username,
+              displayName: context.user.displayName,
+              pfpUrl: context.user.pfpUrl,
+            });
+          }
+        } catch (error) {
+          console.error('Failed to load Farcaster user:', error);
+        }
+      }
+    };
+    
+    loadFarcasterUser();
+  }, []);
   
   const handleDisconnect = async () => {
     try {
@@ -51,9 +79,17 @@ export function WalletConnectButton() {
       <button
         onClick={handleDisconnect}
         type="button"
-        className="px-3 py-1.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200"
+        className="px-3 py-2 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center gap-2"
       >
-        <span className="text-xs">{address?.slice(0, 6)}...{address?.slice(-4)}</span>
+        <Avatar className="h-6 w-6">
+          <AvatarImage src={farcasterUser?.pfpUrl} alt={farcasterUser?.username || 'User'} />
+          <AvatarFallback className="text-xs">
+            {farcasterUser?.username?.[0]?.toUpperCase() || 'U'}
+          </AvatarFallback>
+        </Avatar>
+        <span className="text-xs">
+          {farcasterUser?.username || `${address?.slice(0, 6)}...${address?.slice(-4)}`}
+        </span>
       </button>
     );
   }
