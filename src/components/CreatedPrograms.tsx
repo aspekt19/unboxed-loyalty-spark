@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Coins, Calendar, Check, Trash2, Loader2, Clock, AlertTriangle, Play, Pause } from 'lucide-react';
+import { Gift, Coins, Calendar, Check, Trash2, Loader2, Clock, AlertTriangle, Play, Pause } from 'lucide-react';
 import { usePublicClient, useAccount } from 'wagmi';
 import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
@@ -586,7 +586,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     <Card className="border-2 bg-gradient-to-br from-card to-muted/30">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Coins className="h-5 w-5 text-primary" />
+          <Gift className="h-5 w-5 text-primary" />
           Your Loyalty Programs
         </CardTitle>
         <CardDescription>Select a program to issue rewards</CardDescription>
