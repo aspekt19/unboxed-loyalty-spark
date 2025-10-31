@@ -55,8 +55,8 @@ export function VouchersManagement() {
     window.addEventListener('vouchersUpdated', handleUpdate);
     window.addEventListener('profileMigrated', handleUpdate);
     
-    // Подписка на realtime обновления ваучеров
-    const channelName = `vouchers_merchant_${address.toLowerCase()}`;
+    // Подписка на realtime обновления ваучеров - используем общий канал
+    const channelName = `vouchers_realtime`;
     console.log('[VouchersManagement] Setting up realtime subscription');
     console.log('[VouchersManagement] Merchant address:', address.toLowerCase());
     console.log('[VouchersManagement] Channel name:', channelName);
@@ -73,11 +73,11 @@ export function VouchersManagement() {
         (payload) => {
           console.log('[VouchersManagement] ===== REALTIME EVENT RECEIVED =====');
           console.log('[VouchersManagement] Event type:', payload.eventType);
-          console.log('[VouchersManagement] Full payload:', payload);
+          console.log('[VouchersManagement] Full payload:', JSON.stringify(payload));
           
           // Проверяем, что это ваучер для этого мерчанта
           const voucherData = (payload.new || payload.old) as any;
-          console.log('[VouchersManagement] Voucher data:', voucherData);
+          console.log('[VouchersManagement] Voucher data:', JSON.stringify(voucherData));
           
           if (voucherData?.merchant_address) {
             console.log('[VouchersManagement] Voucher merchant_address:', voucherData.merchant_address);
