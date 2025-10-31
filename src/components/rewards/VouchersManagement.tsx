@@ -55,7 +55,7 @@ export function VouchersManagement() {
     window.addEventListener('vouchersUpdated', handleUpdate);
     window.addEventListener('profileMigrated', handleUpdate);
     
-    // Подписка на realtime обновления ваучеров с уникальным именем канала
+    // Подписка на realtime обновления ваучеров с фильтром по merchant_address
     const channelName = `vouchers_merchant_${address.toLowerCase()}`;
     console.log('[VouchersManagement] Setting up realtime subscription for:', address.toLowerCase());
     const channel = supabase
@@ -66,15 +66,14 @@ export function VouchersManagement() {
           event: '*',
           schema: 'public',
           table: 'vouchers',
+          filter: `merchant_address=eq.${address.toLowerCase()}`,
         },
         (payload) => {
           console.log('[VouchersManagement] Voucher changed via realtime:', payload);
-          // Проверяем, что это ваучер для этого мерчанта
-          const voucherData = (payload.new || payload.old) as any;
-          if (voucherData && voucherData.merchant_address?.toLowerCase() === address.toLowerCase()) {
-            console.log('[VouchersManagement] Reloading merchant vouchers after realtime event');
-            loadMerchantVouchers();
-          }
+          console.log('[VouchersManagement] Event type:', payload.eventType);
+          console.log('[VouchersManagement] Reloading merchant vouchers after realtime event');
+          // Перезагружаем ваучеры при любом событии для этого мерчанта
+          loadMerchantVouchers();
         }
       )
       .subscribe((status) => {
