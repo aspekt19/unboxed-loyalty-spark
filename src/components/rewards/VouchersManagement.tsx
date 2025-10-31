@@ -55,9 +55,12 @@ export function VouchersManagement() {
     window.addEventListener('vouchersUpdated', handleUpdate);
     window.addEventListener('profileMigrated', handleUpdate);
     
-    // Подписка на realtime обновления ваучеров с фильтром по merchant_address
+    // Подписка на realtime обновления ваучеров
     const channelName = `vouchers_merchant_${address.toLowerCase()}`;
-    console.log('[VouchersManagement] Setting up realtime subscription for:', address.toLowerCase());
+    console.log('[VouchersManagement] Setting up realtime subscription');
+    console.log('[VouchersManagement] Merchant address:', address.toLowerCase());
+    console.log('[VouchersManagement] Channel name:', channelName);
+    
     const channel = supabase
       .channel(channelName)
       .on(
@@ -66,18 +69,37 @@ export function VouchersManagement() {
           event: '*',
           schema: 'public',
           table: 'vouchers',
-          filter: `merchant_address=eq.${address.toLowerCase()}`,
         },
         (payload) => {
-          console.log('[VouchersManagement] Voucher changed via realtime:', payload);
+          console.log('[VouchersManagement] ===== REALTIME EVENT RECEIVED =====');
           console.log('[VouchersManagement] Event type:', payload.eventType);
-          console.log('[VouchersManagement] Reloading merchant vouchers after realtime event');
-          // Перезагружаем ваучеры при любом событии для этого мерчанта
-          loadMerchantVouchers();
+          console.log('[VouchersManagement] Full payload:', payload);
+          
+          // Проверяем, что это ваучер для этого мерчанта
+          const voucherData = (payload.new || payload.old) as any;
+          console.log('[VouchersManagement] Voucher data:', voucherData);
+          
+          if (voucherData?.merchant_address) {
+            console.log('[VouchersManagement] Voucher merchant_address:', voucherData.merchant_address);
+            console.log('[VouchersManagement] Current merchant address:', address.toLowerCase());
+            console.log('[VouchersManagement] Addresses match:', voucherData.merchant_address === address.toLowerCase());
+            
+            if (voucherData.merchant_address === address.toLowerCase()) {
+              console.log('[VouchersManagement] ✅ This voucher belongs to current merchant - reloading...');
+              loadMerchantVouchers();
+            } else {
+              console.log('[VouchersManagement] ❌ This voucher belongs to different merchant - ignoring');
+            }
+          } else {
+            console.log('[VouchersManagement] ⚠️ No merchant_address in voucher data');
+          }
         }
       )
-      .subscribe((status) => {
-        console.log('[VouchersManagement] Vouchers realtime subscription status:', status);
+      .subscribe((status, err) => {
+        console.log('[VouchersManagement] Subscription status:', status);
+        if (err) {
+          console.error('[VouchersManagement] Subscription error:', err);
+        }
       });
     
     return () => {
