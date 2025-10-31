@@ -42,8 +42,10 @@ export function VouchersManagement() {
   }, [address]);
 
   useEffect(() => {
-    // Загружаем ваучеры только если есть адрес
-    if (!address) return;
+    // Загружаем ваучеры только если есть адрес и сессия
+    if (!address || !session) return;
+    
+    console.log('[VouchersManagement] Initializing with session user:', session?.user?.id);
     
     loadMerchantVouchers();
     
@@ -53,12 +55,13 @@ export function VouchersManagement() {
     };
     
     window.addEventListener('vouchersUpdated', handleUpdate);
-    window.addEventListener('profileMigrated', handleUpdate);
     
     // Подписка на realtime обновления ваучеров - используем общий канал
-    const channelName = `vouchers_realtime`;
+    // Генерируем уникальное имя канала чтобы избежать конфликтов при переподключении
+    const channelName = `vouchers_realtime_${Date.now()}`;
     console.log('[VouchersManagement] Setting up realtime subscription');
     console.log('[VouchersManagement] Merchant address:', address.toLowerCase());
+    console.log('[VouchersManagement] Session user:', session.user.id);
     console.log('[VouchersManagement] Channel name:', channelName);
     
     const channel = supabase
@@ -103,11 +106,11 @@ export function VouchersManagement() {
       });
     
     return () => {
+      console.log('[VouchersManagement] Cleaning up subscription');
       window.removeEventListener('vouchersUpdated', handleUpdate);
-      window.removeEventListener('profileMigrated', handleUpdate);
       supabase.removeChannel(channel);
     };
-  }, [address]);
+  }, [address, session]);
 
   const handleMarkAsUsed = async (voucherId: string, code: string) => {
     const success = await updateVoucherStatus(voucherId, 'used');
