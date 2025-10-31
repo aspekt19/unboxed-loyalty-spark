@@ -8,7 +8,7 @@
     "version": "1",
     "name": "Loyal Spark",
     "iconUrl": "https://loyalspark.online/new-favicon.png",
-    "imageUrl": "https://loyalspark.online/media-kit/imegurl.png",
+    "imageUrl": "https://loyalspark.online/media-kit/imegurl2.png",
     "homeUrl": "https://loyalspark.online",
     "webhookUrl": "https://loyalspark.online",
     "splashImageUrl": "https://loyalspark.online/media-kit/new-favicon.png",
@@ -29,8 +29,8 @@
     "tagline": "On-chain loyalty rewards",
     "ogTitle": "Loyal Spark - Loyalty Rewards",
     "ogDescription": "Create, manage and trade loyalty tokens on-chain. Zero middlemen. Total transparency.",
-    "ogImageUrl": "https://loyalspark.online/media-kit/imegurl.png",
-    "heroImageUrl": "https://loyalspark.online/media-kit/imegurl.png",
+    "ogImageUrl": "https://loyalspark.online/media-kit/imegurl2.png",
+    "heroImageUrl": "https://loyalspark.online/media-kit/imegurl2.png",
     "requiredChains": [
       "eip155:8453"
     ],
