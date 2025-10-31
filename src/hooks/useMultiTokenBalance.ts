@@ -106,6 +106,20 @@ export function useMultiTokenBalance(tokens: TokenInfo[]) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentAddresses, address, publicClient]);
 
+  // Listen for balance updates
+  useEffect(() => {
+    const handleBalanceUpdate = () => {
+      console.log('useMultiTokenBalance: tokenBalancesUpdated event received, refetching balances');
+      fetchBalances(true); // Silent refetch
+    };
+
+    window.addEventListener('tokenBalancesUpdated', handleBalanceUpdate);
+    return () => {
+      window.removeEventListener('tokenBalancesUpdated', handleBalanceUpdate);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address, publicClient, currentAddresses]);
+
   return {
     balances,
     isLoading,
