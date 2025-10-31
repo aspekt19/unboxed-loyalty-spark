@@ -93,6 +93,11 @@ export function CreateReward() {
       return;
     }
 
+    console.log('[CreateReward] handleSubmit called');
+    console.log('[CreateReward] Address:', address);
+    console.log('[CreateReward] User:', user?.id);
+    console.log('[CreateReward] Form data:', formData);
+
     if (!formData.tokenAddress || !formData.name || !formData.description || !formData.cost) {
       toast.error('Please fill all fields');
       return;

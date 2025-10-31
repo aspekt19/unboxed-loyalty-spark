@@ -46,11 +46,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       setIsLoading(true);
+      console.log('[signInWithWallet] Starting sign in for:', address.toLowerCase());
 
       // Sign in with Supabase using anonymous authentication
       const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
       
       if (authError) throw authError;
+
+      console.log('[signInWithWallet] Auth successful, user ID:', authData.user.id);
 
       // Use security definer function to migrate wallet profile
       const { error: migrationError } = await supabase.rpc('migrate_wallet_profile', {
@@ -59,16 +62,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (migrationError) {
-        console.error('Migration error:', migrationError);
+        console.error('[signInWithWallet] Migration error:', migrationError);
         throw migrationError;
       }
 
-      console.log('Profile migrated successfully for wallet:', address.toLowerCase());
+      console.log('[signInWithWallet] Profile migrated successfully for wallet:', address.toLowerCase());
+
+      // Verify session after migration
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('[signInWithWallet] Session after migration:', session ? 'exists' : 'null');
+      console.log('[signInWithWallet] Session user:', session?.user?.id);
 
       window.dispatchEvent(new Event('profileMigrated'));
       toast.success('Successfully signed in with wallet');
     } catch (error: any) {
-      console.error('Sign in error:', error);
+      console.error('[signInWithWallet] Sign in error:', error);
       toast.error(error.message || 'Failed to sign in');
     } finally {
       setIsLoading(false);

@@ -18,6 +18,21 @@ export function generateVoucherCode(): string {
 
 // Создание награды в базе данных
 export async function createReward(reward: Omit<Reward, 'id' | 'createdAt'>): Promise<Reward | null> {
+  // Check current session
+  const { data: { session } } = await supabase.auth.getSession();
+  console.log('[createReward] Current session:', session ? 'exists' : 'null');
+  console.log('[createReward] User ID:', session?.user?.id);
+  
+  // Check profile
+  if (session?.user?.id) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .maybeSingle();
+    console.log('[createReward] Profile:', profile);
+  }
+  
   const { data, error } = await supabase
     .from('rewards')
     .insert({
