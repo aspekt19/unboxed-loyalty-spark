@@ -106,7 +106,8 @@ export function TokenList() {
     };
     window.addEventListener('tokenBalancesUpdated', handleBalanceUpdate);
     return () => window.removeEventListener('tokenBalancesUpdated', handleBalanceUpdate);
-  }, [refetch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Remove refetch from deps to prevent re-subscription
 
   // Auto-refresh balances every 5 seconds for real-time updates
   useEffect(() => {
@@ -124,7 +125,8 @@ export function TokenList() {
       console.log('Stopping auto-refresh for token balances');
       clearInterval(interval);
     };
-  }, [walletAddress, allTokens.length, refetch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [walletAddress, allTokens.length]); // Remove refetch from deps to prevent re-creation
 
   const loadTokensFromBlockchain = async () => {
     if (!publicClient) {

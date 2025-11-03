@@ -1,6 +1,6 @@
 import { useAccount, usePublicClient } from 'wagmi';
 import { formatUnits } from 'viem';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 
 export interface TokenInfo {
   address: string;
@@ -30,7 +30,7 @@ export function useMultiTokenBalance(tokens: TokenInfo[]) {
   const tokenAddressesRef = useRef<string>('');
   const currentAddresses = tokens.map(t => t.address).sort().join(',');
 
-  const fetchBalances = async (silent = false) => {
+  const fetchBalances = useCallback(async (silent = false) => {
     console.log('useMultiTokenBalance: fetchBalances called');
     console.log('useMultiTokenBalance: address:', address);
     console.log('useMultiTokenBalance: publicClient:', !!publicClient);
@@ -38,11 +38,6 @@ export function useMultiTokenBalance(tokens: TokenInfo[]) {
     
     if (!address || !publicClient || tokens.length === 0) {
       console.log('useMultiTokenBalance: Skipping fetch - missing dependencies');
-      // Don't clear balances if we just don't have tokens yet
-      if (tokens.length === 0 && balances.length > 0) {
-        console.log('useMultiTokenBalance: Keeping existing balances');
-        return;
-      }
       setBalances([]);
       return;
     }
@@ -94,7 +89,7 @@ export function useMultiTokenBalance(tokens: TokenInfo[]) {
         setIsLoading(false);
       }
     }
-  };
+  }, [address, publicClient, tokens]);
 
   useEffect(() => {
     // Only fetch if token addresses actually changed
@@ -103,8 +98,7 @@ export function useMultiTokenBalance(tokens: TokenInfo[]) {
       tokenAddressesRef.current = currentAddresses;
       fetchBalances();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentAddresses, address, publicClient]);
+  }, [currentAddresses, fetchBalances]);
 
   // Listen for balance updates
   useEffect(() => {
@@ -118,7 +112,7 @@ export function useMultiTokenBalance(tokens: TokenInfo[]) {
       window.removeEventListener('tokenBalancesUpdated', handleBalanceUpdate);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address, publicClient, currentAddresses]);
+  }, []); // Remove dependencies to prevent re-subscription
 
   return {
     balances,
