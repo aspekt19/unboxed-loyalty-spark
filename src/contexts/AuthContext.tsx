@@ -125,26 +125,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Автоматический вход при подключении кошелька (только если не было ручного выхода)
     if (isConnected && address && !user && !manualSignOutRef.current) {
-      console.log('Auto-signing in merchant wallet...');
+      console.log('[AuthProvider] Auto-signing in wallet:', address);
       signInWithWallet();
     }
     
-    // Сброс флага manualSignOut при изменении адреса кошелька
-    if (isConnected && address) {
-      // Сбрасываем флаг если адрес кошелька изменился
+    // Сброс флага при отключении кошелька
+    if (!isConnected && manualSignOutRef.current) {
+      console.log('[AuthProvider] Wallet disconnected, resetting flag after delay');
+      // Даем время на полное отключение перед сбросом флага
       const timer = setTimeout(() => {
-        if (manualSignOutRef.current && user) {
-          console.log('[AuthProvider] Resetting manual sign out flag after address change');
+        manualSignOutRef.current = false;
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+    
+    // Сброс флага manualSignOut при смене адреса кошелька на новый
+    if (isConnected && address && user) {
+      const currentAddress = address.toLowerCase();
+      // Только сбрасываем если это действительно новый адрес
+      const timer = setTimeout(() => {
+        if (manualSignOutRef.current) {
+          console.log('[AuthProvider] Resetting flag - wallet address changed');
           manualSignOutRef.current = false;
         }
       }, 1000);
       return () => clearTimeout(timer);
-    }
-    
-    // Сброс флага при отключении кошелька
-    if (!isConnected) {
-      console.log('[AuthProvider] Wallet disconnected, resetting flag');
-      manualSignOutRef.current = false;
     }
   }, [isConnected, address, user, signInWithWallet]);
 
