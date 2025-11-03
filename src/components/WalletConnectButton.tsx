@@ -104,21 +104,17 @@ export function WalletConnectButton() {
     }
   };
   
-  const handleConnect = async () => {
+  const handleConnect = () => {
     console.log('[WalletButton] Connect wallet clicked');
+    
+    // Сбрасываем флаг ручного отключения
     setIsManuallyDisconnected(false);
     
-    // Сбрасываем флаг выхода в AuthContext
+    // Сбрасываем флаг выхода в AuthContext - это позволит автоматическому входу сработать
     resetManualSignOut();
     
-    // В Farcaster контексте кошелек уже подключен, нужно только войти в Supabase
-    if (isFarcasterContext() && address) {
-      console.log('[WalletButton] Reconnecting in Farcaster context');
-      await signInWithWallet();
-    } else {
-      // В веб-версии подключаем кошелек
-      connect({ connector: connectors[0] });
-    }
+    // Подключаем кошелек (в Farcaster контексте это быстро вернет существующее соединение)
+    connect({ connector: connectors[0] });
   };
 
   // Use simplified UI for Farcaster context
