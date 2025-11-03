@@ -93,15 +93,32 @@ export function WalletConnectButton() {
       await signOut();
       console.log('[WalletButton] Supabase signOut completed');
       
-      // Небольшая задержка чтобы флаг успел установиться
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // ПОТОМ отключаем кошелек
-      disconnect();
-      console.log('[WalletButton] Wallet disconnect initiated');
+      // Отключаем кошелек через connector
+      if (isConnected) {
+        // Для Farcaster context используем прямой доступ к connector
+        const currentConnector = connectors.find(c => c.id === 'farcasterMiniApp');
+        if (currentConnector) {
+          console.log('[WalletButton] Disconnecting via Farcaster connector');
+          await currentConnector.disconnect?.();
+        }
+        
+        // Также вызываем стандартный disconnect как fallback
+        disconnect();
+        console.log('[WalletButton] Wallet disconnect initiated');
+        
+        // Принудительно очищаем состояние wagmi из localStorage
+        try {
+          localStorage.removeItem('wagmi.store');
+          localStorage.removeItem('wagmi.cache');
+          localStorage.removeItem('wagmi.wallet');
+          console.log('[WalletButton] Cleared wagmi localStorage');
+        } catch (e) {
+          console.error('[WalletButton] Failed to clear localStorage:', e);
+        }
+      }
     } catch (error) {
       console.error('[WalletButton] Disconnect error:', error);
-      // В случае ошибки все равно отключаем кошелек
+      // В случае ошибки все равно пытаемся отключить
       disconnect();
     }
   };
