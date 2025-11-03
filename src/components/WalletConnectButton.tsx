@@ -10,16 +10,19 @@ import { useState, useEffect } from 'react';
 const isFarcasterContext = () => {
   if (typeof window === 'undefined') return false;
   try {
-    // Only consider it Farcaster if explicitly indicated in URL params
-    // This prevents false positives from regular iframes
+    // Check if SDK context is available - most reliable way
+    const hasContext = !!(sdk as any)?.context;
+    
+    // Additional checks as fallback
     const urlParams = new URLSearchParams(window.location.search);
     const hasFarcasterParam = urlParams.has('farcaster') || urlParams.has('fc');
     const isFarcasterPath = window.location.pathname.includes('/frame');
     const hasFarcasterUA = /farcaster/i.test(navigator.userAgent);
     
-    const isFarcaster = hasFarcasterParam || isFarcasterPath || hasFarcasterUA;
+    const isFarcaster = hasContext || hasFarcasterParam || isFarcasterPath || hasFarcasterUA;
     console.log('[Farcaster Detection]', { 
-      isFarcaster, 
+      isFarcaster,
+      hasContext,
       hasFarcasterParam,
       isFarcasterPath, 
       hasFarcasterUA,
