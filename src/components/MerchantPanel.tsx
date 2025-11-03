@@ -14,6 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Coins, AlertCircle, Wallet, AlertTriangle } from 'lucide-react';
 import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
+import { mintTokensSchema } from '@/lib/validationSchemas';
 
 export function MerchantPanel() {
   const { address } = useAccount();
@@ -60,6 +61,20 @@ export function MerchantPanel() {
     
     if (!recipientAddress || !amount) {
       toast.error('Please fill all fields');
+      return;
+    }
+
+    // Validate inputs using zod schema
+    const validation = mintTokensSchema.safeParse({
+      recipientAddress: recipientAddress.trim(),
+      amount: amount.trim(),
+      tokenAddress: selectedProgram.tokenAddress,
+    });
+
+    if (!validation.success) {
+      const errorMessage = validation.error.errors[0].message;
+      toast.error(errorMessage);
+      console.error('[Validation Error]', validation.error.errors);
       return;
     }
 
