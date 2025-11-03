@@ -52,11 +52,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Проверяем, есть ли уже активная сессия
+    // Проверяем, есть ли уже активная сессия с правильным профилем
     const { data: { session: existingSession } } = await supabase.auth.getSession();
     if (existingSession) {
-      console.log('[signInWithWallet] Active session already exists, skipping sign in');
-      return;
+      // Проверяем, связан ли текущий пользователь с этим кошельком
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('wallet_address')
+        .eq('user_id', existingSession.user.id)
+        .eq('wallet_address', address.toLowerCase())
+        .single();
+      
+      if (profile) {
+        console.log('[signInWithWallet] Active session with correct profile exists');
+        return;
+      } else {
+        console.log('[signInWithWallet] Session exists but profile mismatch, signing out old session');
+        await supabase.auth.signOut();
+      }
     }
 
     try {
@@ -83,10 +96,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       console.log('[signInWithWallet] Profile migrated successfully for wallet:', address.toLowerCase());
 
-      // Verify session after migration
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log('[signInWithWallet] Session after migration:', session ? 'exists' : 'null');
-      console.log('[signInWithWallet] Session user:', session?.user?.id);
+      // Небольшая задержка для применения изменений RLS
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Verify profile after migration
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', authData.user.id)
+        .single();
+
+      if (profileError || !profile) {
+        console.error('[signInWithWallet] Profile verification failed:', profileError);
+        throw new Error('Failed to verify profile after migration');
+      }
+
+      console.log('[signInWithWallet] Profile verified:', profile);
 
       window.dispatchEvent(new Event('profileMigrated'));
       toast.success('Successfully signed in with wallet');

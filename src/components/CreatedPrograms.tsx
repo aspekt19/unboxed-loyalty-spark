@@ -34,7 +34,7 @@ interface LoyaltyProgram {
   timestamp: number;
   tokenAddress?: string;
   expirationDate?: string;
-  status?: 'active' | 'expiring_soon' | 'expired' | 'paused';
+  status?: 'active' | 'expiring_soon' | 'expired' | 'paused' | 'inactive';
 }
 
 interface TokenStats {
@@ -101,7 +101,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
           timestamp: new Date(prog.created_at).getTime(),
           tokenAddress: prog.token_address,
           expirationDate: prog.expiration_date,
-          status: prog.status as 'active' | 'expiring_soon' | 'expired',
+          status: prog.status as 'active' | 'expiring_soon' | 'expired' | 'paused' | 'inactive',
         }));
 
         setPrograms(programs);

@@ -119,6 +119,25 @@ export function CreateReward() {
     }
 
     try {
+      // Verify profile exists before creating reward
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('wallet_address')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profileError || !profile) {
+        console.error('[CreateReward] Profile not found:', profileError);
+        toast.error('Profile not found. Please reconnect your wallet and try again.');
+        return;
+      }
+
+      if (profile.wallet_address.toLowerCase() !== address.toLowerCase()) {
+        console.error('[CreateReward] Profile wallet mismatch');
+        toast.error('Wallet address mismatch. Please reconnect your wallet.');
+        return;
+      }
+
       const result = await createReward({
         tokenAddress: formData.tokenAddress,
         merchantAddress: address,
@@ -133,7 +152,7 @@ export function CreateReward() {
         setFormData({ tokenAddress: '', name: '', description: '', cost: '' });
         window.dispatchEvent(new Event('rewardsUpdated'));
       } else {
-        toast.error('Failed to create reward. This may be due to authentication issues. Please sign in with your wallet first.');
+        toast.error('Failed to create reward. Please try again.');
       }
     } catch (error) {
       console.error('Error creating reward:', error);

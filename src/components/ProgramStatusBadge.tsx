@@ -4,7 +4,7 @@ import { Loader2 } from 'lucide-react';
 
 interface ProgramStatusBadgeProps {
   tokenAddress?: string;
-  fallbackStatus?: 'active' | 'pending' | 'expiring_soon' | 'expired' | 'paused';
+  fallbackStatus?: 'active' | 'pending' | 'expiring_soon' | 'expired' | 'paused' | 'inactive';
   expirationDate?: string;
 }
 
@@ -39,8 +39,8 @@ export function ProgramStatusBadge({ tokenAddress, fallbackStatus, expirationDat
   }
 
   // Приоритет 3: Проверяем fallbackStatus из БД (только для старых контрактов или если не истекла дата)
-  if ((fallbackStatus === 'expired' || fallbackStatus === 'paused') && !isExpired) {
-    // Если в БД expired/paused но дата не истекла - это manual pause, показываем Inactive
+  if ((fallbackStatus === 'expired' || fallbackStatus === 'paused' || fallbackStatus === 'inactive') && !isExpired) {
+    // Если в БД expired/paused/inactive но дата не истекла - это manual pause, показываем Inactive
     return (
       <Badge variant="secondary" className="bg-gray-500 text-white text-[10px] px-1.5 py-0 h-5">
         Inactive

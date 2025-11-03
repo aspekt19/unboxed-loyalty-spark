@@ -88,7 +88,7 @@ export function CreateLoyaltyProgram() {
   // Watch for success and handle post-deployment actions
   useEffect(() => {
     if (isSuccess && programName && tokenSymbol && deployedTokenAddress && expirationDate && !savedRef.current) {
-      // Сохраняем в БД
+      // Сохраняем в БД со статусом 'inactive' - программу нужно будет активировать
       const saveToDatabase = async () => {
         try {
           const { error } = await supabase
@@ -99,6 +99,7 @@ export function CreateLoyaltyProgram() {
               name: programName,
               symbol: tokenSymbol,
               expiration_date: expirationDate.toISOString(),
+              status: 'inactive',
             });
 
           if (error) {
@@ -107,7 +108,7 @@ export function CreateLoyaltyProgram() {
             return;
           }
 
-          toast.success(`Loyalty program "${programName}" created!`);
+          toast.success(`Loyalty program "${programName}" created! Activate it to start issuing tokens.`);
           
           // Save to localStorage для обратной совместимости
           const savedPrograms = JSON.parse(localStorage.getItem('loyaltyPrograms') || '[]');
