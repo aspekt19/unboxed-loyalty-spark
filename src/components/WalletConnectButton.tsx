@@ -41,6 +41,7 @@ export function WalletConnectButton() {
   const { connect, connectors } = useConnect();
   const { address, isConnected, chain } = useAccount();
   const { signOut, user } = useAuth();
+  const [isManuallyDisconnected, setIsManuallyDisconnected] = useState(false);
   const [farcasterUser, setFarcasterUser] = useState<{
     username?: string;
     displayName?: string;
@@ -89,51 +90,35 @@ export function WalletConnectButton() {
       console.log('[WalletButton] handleDisconnect called');
       console.log('[WalletButton] Current state:', { isConnected, address, user: !!user });
       
-      // СНАЧАЛА устанавливаем флаг выхода и очищаем Supabase состояние
+      // Устанавливаем флаг ручного отключения для UI
+      setIsManuallyDisconnected(true);
+      
+      // Выходим из Supabase
       await signOut();
       console.log('[WalletButton] Supabase signOut completed');
       
-      // Отключаем кошелек через connector
-      if (isConnected) {
-        // Для Farcaster context используем прямой доступ к connector
-        const currentConnector = connectors.find(c => c.id === 'farcasterMiniApp');
-        if (currentConnector) {
-          console.log('[WalletButton] Disconnecting via Farcaster connector');
-          await currentConnector.disconnect?.();
-        }
-        
-        // Также вызываем стандартный disconnect как fallback
-        disconnect();
-        console.log('[WalletButton] Wallet disconnect initiated');
-        
-        // Принудительно очищаем состояние wagmi из localStorage
-        try {
-          localStorage.removeItem('wagmi.store');
-          localStorage.removeItem('wagmi.cache');
-          localStorage.removeItem('wagmi.wallet');
-          console.log('[WalletButton] Cleared wagmi localStorage');
-        } catch (e) {
-          console.error('[WalletButton] Failed to clear localStorage:', e);
-        }
-      }
+      // В Farcaster контексте кошелек нельзя отключить полностью,
+      // но мы скрываем его в UI через флаг isManuallyDisconnected
     } catch (error) {
       console.error('[WalletButton] Disconnect error:', error);
-      // В случае ошибки все равно пытаемся отключить
-      disconnect();
     }
+  };
+  
+  const handleConnect = () => {
+    console.log('[WalletButton] Connect wallet clicked');
+    setIsManuallyDisconnected(false);
+    connect({ connector: connectors[0] });
   };
 
   // Use simplified UI for Farcaster context
   if (isFarcasterContext()) {
-    console.log('[WalletButton] Rendering Farcaster UI', { isConnected, address: address?.slice(0, 10), farcasterUser });
+    console.log('[WalletButton] Rendering Farcaster UI', { isConnected, address: address?.slice(0, 10), farcasterUser, isManuallyDisconnected });
     
-    if (!isConnected) {
+    // Показываем кнопку Connect если пользователь вышел вручную
+    if (!isConnected || isManuallyDisconnected) {
       return (
         <button
-          onClick={() => {
-            console.log('[WalletButton] Connect wallet clicked');
-            connect({ connector: connectors[0] });
-          }}
+          onClick={handleConnect}
           type="button"
           className="px-5 py-2.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center gap-2"
         >
