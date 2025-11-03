@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useRef } from 'react';
 import { useAccount } from 'wagmi';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
@@ -18,7 +18,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [manualSignOut, setManualSignOut] = useState(false);
+  const manualSignOutRef = useRef(false);
   const { address, isConnected } = useAccount();
 
   useEffect(() => {
@@ -42,6 +42,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithWallet = useCallback(async () => {
     if (!address || !isConnected) {
       toast.error('Please connect your wallet first');
+      return;
+    }
+
+    // Проверяем флаг ручного выхода
+    if (manualSignOutRef.current) {
+      console.log('[signInWithWallet] Skipping auto sign-in due to manual sign out');
       return;
     }
 
@@ -86,34 +92,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     try {
-      setManualSignOut(true);
+      console.log('[signOut] Manual sign out initiated');
+      manualSignOutRef.current = true;
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       toast.success('Signed out successfully');
     } catch (error: any) {
+      console.error('[signOut] Error:', error);
       toast.error('Failed to sign out');
     }
   }, []);
 
   useEffect(() => {
     // Автоматический вход при подключении кошелька (только если не было ручного выхода)
-    if (isConnected && address && !user && !manualSignOut) {
+    if (isConnected && address && !user && !manualSignOutRef.current) {
       console.log('Auto-signing in merchant wallet...');
       signInWithWallet();
     }
     
-    // Сброс флага manualSignOut при изменении адреса или отключении
-    if (!isConnected || (isConnected && address && manualSignOut)) {
-      if (!isConnected) {
-        console.log('Wallet disconnected');
-      }
-      // Сбрасываем флаг через небольшую задержку чтобы можно было переподключить другой кошелек
+    // Сброс флага manualSignOut при изменении адреса кошелька
+    if (isConnected && address) {
+      // Сбрасываем флаг если адрес кошелька изменился
       const timer = setTimeout(() => {
-        setManualSignOut(false);
-      }, 500);
+        if (manualSignOutRef.current && user) {
+          console.log('[AuthProvider] Resetting manual sign out flag after address change');
+          manualSignOutRef.current = false;
+        }
+      }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [isConnected, address, user, manualSignOut, signInWithWallet]);
+    
+    // Сброс флага при отключении кошелька
+    if (!isConnected) {
+      console.log('[AuthProvider] Wallet disconnected, resetting flag');
+      manualSignOutRef.current = false;
+    }
+  }, [isConnected, address, user, signInWithWallet]);
 
   return (
     <AuthContext.Provider value={{ user, session, isLoading, signInWithWallet, signOut }}>
