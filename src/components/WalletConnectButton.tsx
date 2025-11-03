@@ -10,19 +10,15 @@ import { useState, useEffect } from 'react';
 const isFarcasterContext = () => {
   if (typeof window === 'undefined') return false;
   try {
-    // Check if SDK context is available - most reliable way
-    const hasContext = !!(sdk as any)?.context;
-    
-    // Additional checks as fallback
+    // Only use explicit signals, not SDK context (which can be present in web version)
     const urlParams = new URLSearchParams(window.location.search);
     const hasFarcasterParam = urlParams.has('farcaster') || urlParams.has('fc');
     const isFarcasterPath = window.location.pathname.includes('/frame');
     const hasFarcasterUA = /farcaster/i.test(navigator.userAgent);
     
-    const isFarcaster = hasContext || hasFarcasterParam || isFarcasterPath || hasFarcasterUA;
+    const isFarcaster = hasFarcasterParam || isFarcasterPath || hasFarcasterUA;
     console.log('[Farcaster Detection]', { 
       isFarcaster,
-      hasContext,
       hasFarcasterParam,
       isFarcasterPath, 
       hasFarcasterUA,
