@@ -5,13 +5,17 @@ import { http } from 'viem';
 import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
 import { sdk } from '@farcaster/miniapp-sdk';
 
-// Detect if running inside Farcaster using SDK actions
+// Detect if running inside Farcaster miniapp
 const isFarcasterContext = () => {
   if (typeof window === 'undefined') return false;
   try {
-    // Check if SDK is initialized by checking for actions object
-    const hasSDK = sdk?.actions && typeof sdk.actions === 'object';
-    return hasSDK;
+    // Check multiple indicators that we're in a Farcaster frame/miniapp
+    const isInIframe = window !== window.parent;
+    const hasFarcasterUA = /farcaster/i.test(navigator.userAgent);
+    const hasFarcasterParams = window.location.search.includes('farcaster') || 
+                                window.location.pathname.includes('frame');
+    
+    return isInIframe || hasFarcasterUA || hasFarcasterParams;
   } catch {
     return false;
   }

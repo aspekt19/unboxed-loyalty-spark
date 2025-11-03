@@ -6,14 +6,25 @@ import { sdk } from '@farcaster/miniapp-sdk';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useState, useEffect } from 'react';
 
-// Detect if running inside Farcaster using SDK actions
+// Detect if running inside Farcaster miniapp
 const isFarcasterContext = () => {
   if (typeof window === 'undefined') return false;
   try {
-    // Check if SDK is initialized by checking for actions object
-    const hasSDK = sdk?.actions && typeof sdk.actions === 'object';
-    console.log('[Farcaster Detection]', { hasSDK, sdk: !!sdk, actions: !!sdk?.actions });
-    return hasSDK;
+    // Check multiple indicators that we're in a Farcaster frame/miniapp
+    const isInIframe = window !== window.parent;
+    const hasFarcasterUA = /farcaster/i.test(navigator.userAgent);
+    const hasFarcasterParams = window.location.search.includes('farcaster') || 
+                                window.location.pathname.includes('frame');
+    
+    const isFarcaster = isInIframe || hasFarcasterUA || hasFarcasterParams;
+    console.log('[Farcaster Detection]', { 
+      isFarcaster, 
+      isInIframe, 
+      hasFarcasterUA, 
+      hasFarcasterParams,
+      userAgent: navigator.userAgent 
+    });
+    return isFarcaster;
   } catch (error) {
     console.error('[Farcaster Detection Error]', error);
     return false;
