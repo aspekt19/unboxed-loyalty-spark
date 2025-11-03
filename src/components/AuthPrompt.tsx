@@ -10,13 +10,13 @@ import { sdk } from '@farcaster/miniapp-sdk';
 const isFarcasterContext = () => {
   if (typeof window === 'undefined') return false;
   try {
-    // Check multiple indicators that we're in a Farcaster frame/miniapp
-    const isInIframe = window !== window.parent;
+    // Only consider it Farcaster if explicitly indicated in URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasFarcasterParam = urlParams.has('farcaster') || urlParams.has('fc');
+    const isFarcasterPath = window.location.pathname.includes('/frame');
     const hasFarcasterUA = /farcaster/i.test(navigator.userAgent);
-    const hasFarcasterParams = window.location.search.includes('farcaster') || 
-                                window.location.pathname.includes('frame');
     
-    return isInIframe || hasFarcasterUA || hasFarcasterParams;
+    return hasFarcasterParam || isFarcasterPath || hasFarcasterUA;
   } catch {
     return false;
   }

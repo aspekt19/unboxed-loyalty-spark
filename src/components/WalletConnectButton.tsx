@@ -10,19 +10,21 @@ import { useState, useEffect } from 'react';
 const isFarcasterContext = () => {
   if (typeof window === 'undefined') return false;
   try {
-    // Check multiple indicators that we're in a Farcaster frame/miniapp
-    const isInIframe = window !== window.parent;
+    // Only consider it Farcaster if explicitly indicated in URL params
+    // This prevents false positives from regular iframes
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasFarcasterParam = urlParams.has('farcaster') || urlParams.has('fc');
+    const isFarcasterPath = window.location.pathname.includes('/frame');
     const hasFarcasterUA = /farcaster/i.test(navigator.userAgent);
-    const hasFarcasterParams = window.location.search.includes('farcaster') || 
-                                window.location.pathname.includes('frame');
     
-    const isFarcaster = isInIframe || hasFarcasterUA || hasFarcasterParams;
+    const isFarcaster = hasFarcasterParam || isFarcasterPath || hasFarcasterUA;
     console.log('[Farcaster Detection]', { 
       isFarcaster, 
-      isInIframe, 
-      hasFarcasterUA, 
-      hasFarcasterParams,
-      userAgent: navigator.userAgent 
+      hasFarcasterParam,
+      isFarcasterPath, 
+      hasFarcasterUA,
+      pathname: window.location.pathname,
+      search: window.location.search
     });
     return isFarcaster;
   } catch (error) {
@@ -35,7 +37,7 @@ export function WalletConnectButton() {
   const { disconnect } = useDisconnect();
   const { connect, connectors } = useConnect();
   const { address, isConnected, chain } = useAccount();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const [farcasterUser, setFarcasterUser] = useState<{
     username?: string;
     displayName?: string;
@@ -81,20 +83,33 @@ export function WalletConnectButton() {
   
   const handleDisconnect = async () => {
     try {
+      console.log('[WalletButton] handleDisconnect called');
+      console.log('[WalletButton] Current state:', { isConnected, address, user: !!user });
+      
+      // Сначала выход из Supabase
       await signOut();
+      console.log('[WalletButton] Supabase signOut completed');
+      
+      // Затем отключение кошелька
       disconnect();
+      console.log('[WalletButton] Wallet disconnect completed');
     } catch (error) {
-      console.error('Disconnect error:', error);
+      console.error('[WalletButton] Disconnect error:', error);
       disconnect();
     }
   };
 
   // Use simplified UI for Farcaster context
   if (isFarcasterContext()) {
+    console.log('[WalletButton] Rendering Farcaster UI', { isConnected, address: address?.slice(0, 10), farcasterUser });
+    
     if (!isConnected) {
       return (
         <button
-          onClick={() => connect({ connector: connectors[0] })}
+          onClick={() => {
+            console.log('[WalletButton] Connect wallet clicked');
+            connect({ connector: connectors[0] });
+          }}
           type="button"
           className="px-5 py-2.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center gap-2"
         >
@@ -106,7 +121,10 @@ export function WalletConnectButton() {
 
     return (
       <button
-        onClick={handleDisconnect}
+        onClick={() => {
+          console.log('[WalletButton] Disconnect clicked in Farcaster UI');
+          handleDisconnect();
+        }}
         type="button"
         className="px-3 py-2 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center gap-2"
       >
