@@ -94,8 +94,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log('[signOut] Manual sign out initiated');
       manualSignOutRef.current = true;
+      
+      // Очищаем состояние перед выходом
+      setUser(null);
+      setSession(null);
+      
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      
       toast.success('Signed out successfully');
     } catch (error: any) {
       console.error('[signOut] Error:', error);

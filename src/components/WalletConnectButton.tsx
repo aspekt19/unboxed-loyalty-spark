@@ -89,15 +89,16 @@ export function WalletConnectButton() {
       console.log('[WalletButton] handleDisconnect called');
       console.log('[WalletButton] Current state:', { isConnected, address, user: !!user });
       
-      // Сначала выход из Supabase
+      // Отключаем кошелек СНАЧАЛА
+      disconnect();
+      console.log('[WalletButton] Wallet disconnect initiated');
+      
+      // Затем выход из Supabase
       await signOut();
       console.log('[WalletButton] Supabase signOut completed');
-      
-      // Затем отключение кошелька
-      disconnect();
-      console.log('[WalletButton] Wallet disconnect completed');
     } catch (error) {
       console.error('[WalletButton] Disconnect error:', error);
+      // В случае ошибки все равно отключаем кошелек
       disconnect();
     }
   };
