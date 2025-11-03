@@ -12,8 +12,10 @@ const isFarcasterContext = () => {
   try {
     // Check if SDK is initialized and has context
     const hasContext = sdk?.context && typeof sdk.context === 'object';
+    console.log('[Farcaster Detection]', { hasContext, sdk: !!sdk });
     return hasContext;
-  } catch {
+  } catch (error) {
+    console.error('[Farcaster Detection Error]', error);
     return false;
   }
 };
@@ -31,25 +33,35 @@ export function WalletConnectButton() {
   
   useEffect(() => {
     const loadFarcasterUser = async () => {
+      console.log('[WalletButton] isFarcasterContext:', isFarcasterContext());
       if (isFarcasterContext()) {
         try {
+          console.log('[WalletButton] Calling SDK ready...');
+          // Ensure SDK is ready first
+          await sdk.actions.ready();
+          console.log('[WalletButton] SDK ready, loading context...');
+          
           // Wait for Farcaster context to load
           const context = await sdk.context;
-          console.log('Farcaster context loaded:', context);
+          console.log('[WalletButton] Farcaster context loaded:', context);
+          console.log('[WalletButton] Context user:', context?.user);
+          
           if (context?.user) {
             const userData = {
               username: context.user.username,
               displayName: context.user.displayName,
               pfpUrl: context.user.pfpUrl,
             };
-            console.log('Setting Farcaster user data:', userData);
+            console.log('[WalletButton] Setting Farcaster user data:', userData);
             setFarcasterUser(userData);
           } else {
-            console.warn('Farcaster context loaded but no user data found');
+            console.warn('[WalletButton] Farcaster context loaded but no user data found');
           }
         } catch (error) {
-          console.error('Failed to load Farcaster user:', error);
+          console.error('[WalletButton] Failed to load Farcaster user:', error);
         }
+      } else {
+        console.log('[WalletButton] Not in Farcaster context');
       }
     };
     
