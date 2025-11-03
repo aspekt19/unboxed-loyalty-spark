@@ -10,6 +10,7 @@ interface AuthContextType {
   isLoading: boolean;
   signInWithWallet: () => Promise<void>;
   signOut: () => Promise<void>;
+  resetManualSignOut: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -122,6 +123,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const resetManualSignOut = useCallback(() => {
+    console.log('[resetManualSignOut] Resetting manual sign out flag');
+    manualSignOutRef.current = false;
+  }, []);
+
   useEffect(() => {
     // Автоматический вход при подключении кошелька (только если не было ручного выхода)
     if (isConnected && address && !user && !manualSignOutRef.current) {
@@ -154,7 +160,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [isConnected, address, user, signInWithWallet]);
 
   return (
-    <AuthContext.Provider value={{ user, session, isLoading, signInWithWallet, signOut }}>
+    <AuthContext.Provider value={{ user, session, isLoading, signInWithWallet, signOut, resetManualSignOut }}>
       {children}
     </AuthContext.Provider>
   );
