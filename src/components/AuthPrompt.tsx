@@ -6,13 +6,13 @@ import { useAccount, useConnect } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { sdk } from '@farcaster/miniapp-sdk';
 
-// Detect if running inside Farcaster using SDK context
+// Detect if running inside Farcaster using SDK actions
 const isFarcasterContext = () => {
   if (typeof window === 'undefined') return false;
   try {
-    // Check if SDK is initialized and has context
-    const hasContext = sdk?.context && typeof sdk.context === 'object';
-    return hasContext;
+    // Check if SDK is initialized by checking for actions object
+    const hasSDK = sdk?.actions && typeof sdk.actions === 'object';
+    return hasSDK;
   } catch {
     return false;
   }

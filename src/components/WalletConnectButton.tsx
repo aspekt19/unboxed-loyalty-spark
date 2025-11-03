@@ -6,14 +6,14 @@ import { sdk } from '@farcaster/miniapp-sdk';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useState, useEffect } from 'react';
 
-// Detect if running inside Farcaster using SDK context
+// Detect if running inside Farcaster using SDK actions
 const isFarcasterContext = () => {
   if (typeof window === 'undefined') return false;
   try {
-    // Check if SDK is initialized and has context
-    const hasContext = sdk?.context && typeof sdk.context === 'object';
-    console.log('[Farcaster Detection]', { hasContext, sdk: !!sdk });
-    return hasContext;
+    // Check if SDK is initialized by checking for actions object
+    const hasSDK = sdk?.actions && typeof sdk.actions === 'object';
+    console.log('[Farcaster Detection]', { hasSDK, sdk: !!sdk, actions: !!sdk?.actions });
+    return hasSDK;
   } catch (error) {
     console.error('[Farcaster Detection Error]', error);
     return false;
