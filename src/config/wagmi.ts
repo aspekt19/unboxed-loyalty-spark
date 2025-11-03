@@ -3,7 +3,7 @@ import { createConfig } from 'wagmi';
 import { base } from 'wagmi/chains';
 import { http } from 'viem';
 import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
-import sdk from '@farcaster/frame-sdk';
+import { sdk } from '@farcaster/miniapp-sdk';
 
 // Detect if running inside Farcaster using SDK context
 const isFarcasterContext = () => {

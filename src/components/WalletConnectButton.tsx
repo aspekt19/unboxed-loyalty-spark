@@ -2,7 +2,7 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Wallet } from 'lucide-react';
 import { useDisconnect, useConnect, useAccount } from 'wagmi';
 import { useAuth } from '@/contexts/AuthContext';
-import sdk from '@farcaster/frame-sdk';
+import { sdk } from '@farcaster/miniapp-sdk';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useState, useEffect } from 'react';
 
@@ -33,6 +33,7 @@ export function WalletConnectButton() {
     const loadFarcasterUser = async () => {
       if (isFarcasterContext()) {
         try {
+          // Wait for Farcaster context to load
           const context = await sdk.context;
           console.log('Farcaster context loaded:', context);
           if (context?.user) {
@@ -43,6 +44,8 @@ export function WalletConnectButton() {
             };
             console.log('Setting Farcaster user data:', userData);
             setFarcasterUser(userData);
+          } else {
+            console.warn('Farcaster context loaded but no user data found');
           }
         } catch (error) {
           console.error('Failed to load Farcaster user:', error);

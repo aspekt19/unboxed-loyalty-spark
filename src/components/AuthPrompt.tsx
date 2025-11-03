@@ -4,7 +4,7 @@ import { Shield, Wallet } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAccount, useConnect } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import sdk from '@farcaster/frame-sdk';
+import { sdk } from '@farcaster/miniapp-sdk';
 
 // Detect if running inside Farcaster using SDK context
 const isFarcasterContext = () => {
