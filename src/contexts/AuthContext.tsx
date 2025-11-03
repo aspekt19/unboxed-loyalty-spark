@@ -51,6 +51,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Проверяем, есть ли уже активная сессия
+    const { data: { session: existingSession } } = await supabase.auth.getSession();
+    if (existingSession) {
+      console.log('[signInWithWallet] Active session already exists, skipping sign in');
+      return;
+    }
+
     try {
       setIsLoading(true);
       console.log('[signInWithWallet] Starting sign in for:', address.toLowerCase());
@@ -84,7 +91,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast.success('Successfully signed in with wallet');
     } catch (error: any) {
       console.error('[signInWithWallet] Sign in error:', error);
-      toast.error(error.message || 'Failed to sign in');
+      
+      // Обработка ошибки лимита запросов
+      if (error.status === 429 || error.code === 'over_request_rate_limit') {
+        toast.error('Too many requests. Please wait a moment and try again.');
+      } else {
+        toast.error(error.message || 'Failed to sign in');
+      }
     } finally {
       setIsLoading(false);
     }
