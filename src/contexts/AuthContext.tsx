@@ -18,6 +18,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [manualSignOut, setManualSignOut] = useState(false);
   const { address, isConnected } = useAccount();
 
   useEffect(() => {
@@ -85,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     try {
+      setManualSignOut(true);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       toast.success('Signed out successfully');
@@ -94,17 +96,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // Автоматический вход при подключении кошелька
-    if (isConnected && address && !user) {
+    // Автоматический вход при подключении кошелька (только если не было ручного выхода)
+    if (isConnected && address && !user && !manualSignOut) {
+      console.log('Auto-signing in merchant wallet...');
       signInWithWallet();
     }
     
-    // Автоматический выход при отключении кошелька
-    if (!isConnected && user) {
-      console.log('Wallet disconnected, signing out...');
-      signOut();
+    // Сброс флага manualSignOut при изменении адреса или отключении
+    if (!isConnected || (isConnected && address && manualSignOut)) {
+      if (!isConnected) {
+        console.log('Wallet disconnected');
+      }
+      // Сбрасываем флаг через небольшую задержку чтобы можно было переподключить другой кошелек
+      const timer = setTimeout(() => {
+        setManualSignOut(false);
+      }, 500);
+      return () => clearTimeout(timer);
     }
-  }, [isConnected, address, user]);
+  }, [isConnected, address, user, manualSignOut, signInWithWallet]);
 
   return (
     <AuthContext.Provider value={{ user, session, isLoading, signInWithWallet, signOut }}>
