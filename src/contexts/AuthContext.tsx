@@ -99,16 +99,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Небольшая задержка для применения изменений RLS
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Verify profile after migration
+      // Verify profile after migration using wallet_address (more reliable)
+      const normalizedAddress = address.toLowerCase();
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('user_id', authData.user.id)
-        .single();
+        .eq('wallet_address', normalizedAddress)
+        .maybeSingle();
 
-      if (profileError || !profile) {
-        console.error('[signInWithWallet] Profile verification failed:', profileError);
+      if (profileError) {
+        console.error('[signInWithWallet] Profile verification error:', profileError);
         throw new Error('Failed to verify profile after migration');
+      }
+
+      if (!profile) {
+        console.error('[signInWithWallet] Profile not found after migration');
+        throw new Error('Profile verification failed. Please reconnect your wallet.');
       }
 
       console.log('[signInWithWallet] Profile verified:', profile);
