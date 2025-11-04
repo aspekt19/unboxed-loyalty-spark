@@ -46,18 +46,12 @@ export function WalletConnectButton() {
   
   useEffect(() => {
     const loadFarcasterUser = async () => {
-      const isFC = isFarcasterContext();
-      console.log('[WalletButton] useEffect - isFarcasterContext:', isFC);
-      
-      if (!isFC) {
-        return;
-      }
-
       try {
-        console.log('[WalletButton] Loading Farcaster context...');
+        console.log('[WalletButton] Attempting to load Farcaster context...');
+        
+        // Try to load Farcaster context regardless of URL checks
         const context = await sdk.context;
-        console.log('[WalletButton] Farcaster context:', context);
-        console.log('[WalletButton] Context user:', context?.user);
+        console.log('[WalletButton] SDK context loaded:', context);
         
         if (context?.user) {
           const userData = {
@@ -68,10 +62,10 @@ export function WalletConnectButton() {
           console.log('[WalletButton] Setting farcasterUser:', userData);
           setFarcasterUser(userData);
         } else {
-          console.warn('[WalletButton] No user data in context');
+          console.log('[WalletButton] No user in context');
         }
       } catch (error) {
-        console.error('[WalletButton] Failed to load Farcaster user:', error);
+        console.log('[WalletButton] Not in Farcaster context or failed to load:', error);
       }
     };
     
@@ -110,14 +104,13 @@ export function WalletConnectButton() {
     connect({ connector: connectors[0] });
   };
 
-  // Use simplified UI for Farcaster context
-  if (isFarcasterContext()) {
-    console.log('[WalletButton] Rendering Farcaster UI', { 
+  // Use simplified UI for Farcaster context (if we have Farcaster user data)
+  if (farcasterUser) {
+    console.log('[WalletButton] Rendering Farcaster UI with user data', { 
       isConnected, 
       address: address?.slice(0, 10), 
       farcasterUser, 
       isManuallyDisconnected,
-      hasFarcasterData: !!farcasterUser,
       displayName: farcasterUser?.displayName,
       username: farcasterUser?.username
     });
