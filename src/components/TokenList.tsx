@@ -34,8 +34,10 @@ export function TokenList() {
   const { balances, isLoading, refetch } = useMultiTokenBalance(allTokens);
   const { transferTokens, isPending, isSuccess } = useTransferTokens();
 
-  // Track if initial load is complete
+  // Track if initial load is complete and retry attempts
   const hasLoadedRef = useRef(false);
+  const retryCountRef = useRef(0);
+  const MAX_RETRIES = 3;
 
   // Очищаем токены при отключении кошелька
   useEffect(() => {
@@ -46,10 +48,11 @@ export function TokenList() {
       setTransferAmount('');
       setDialogOpen(false);
       hasLoadedRef.current = false;
+      retryCountRef.current = 0;
     }
   }, [walletAddress]);
 
-  // Load tokens from blockchain once when component mounts or wallet connects
+  // Load tokens from blockchain with retry mechanism
   useEffect(() => {
     if (publicClient && walletAddress && !hasLoadedRef.current) {
       console.log('=== TokenList: Initial load - wallet connected ===');
@@ -59,6 +62,24 @@ export function TokenList() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [publicClient, walletAddress]);
+
+  // Listen for profile migration events (happens after authentication)
+  useEffect(() => {
+    const handleProfileMigrated = () => {
+      console.log('Profile migrated event received, reloading tokens...');
+      hasLoadedRef.current = false;
+      retryCountRef.current = 0;
+      // Small delay to ensure RLS policies are applied
+      setTimeout(() => {
+        loadTokensFromBlockchain();
+        loadActivePrograms();
+      }, 500);
+    };
+    
+    window.addEventListener('profileMigrated', handleProfileMigrated);
+    return () => window.removeEventListener('profileMigrated', handleProfileMigrated);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Load active programs from Supabase
   useEffect(() => {
@@ -90,7 +111,8 @@ export function TokenList() {
   useEffect(() => {
     const handleUpdate = () => {
       console.log('loyaltyProgramsUpdated event received, reloading tokens...');
-      hasLoadedRef.current = false; // Allow reload
+      hasLoadedRef.current = false;
+      retryCountRef.current = 0;
       loadTokensFromBlockchain();
       loadActivePrograms();
     };
@@ -132,6 +154,17 @@ export function TokenList() {
   const loadTokensFromBlockchain = async () => {
     if (!publicClient) {
       console.log('TokenList: No publicClient available');
+      // Retry if we haven't exceeded max retries
+      if (retryCountRef.current < MAX_RETRIES) {
+        retryCountRef.current++;
+        console.log(`TokenList: Scheduling retry ${retryCountRef.current}/${MAX_RETRIES}...`);
+        setTimeout(() => {
+          hasLoadedRef.current = false;
+          if (publicClient && walletAddress) {
+            loadTokensFromBlockchain();
+          }
+        }, 2000 * retryCountRef.current); // Exponential backoff
+      }
       return;
     }
     
@@ -215,15 +248,36 @@ export function TokenList() {
 
       console.log('TokenList: Parsed tokens:', tokensWithMerchant);
       setAllTokens(tokensWithMerchant);
+      retryCountRef.current = 0; // Reset retry count on success
       
       // Save to localStorage for future use
       if (tokensWithMerchant.length > 0) {
         localStorage.setItem('customerTokens', JSON.stringify(tokensWithMerchant));
+      } else {
+        // If no tokens found and we haven't exceeded retries, try again
+        if (retryCountRef.current < MAX_RETRIES) {
+          retryCountRef.current++;
+          console.log(`TokenList: No tokens found, scheduling retry ${retryCountRef.current}/${MAX_RETRIES}...`);
+          setTimeout(() => {
+            hasLoadedRef.current = false;
+            loadTokensFromBlockchain();
+          }, 3000 * retryCountRef.current);
+        }
       }
     } catch (error) {
       console.error('TokenList: Failed to load tokens from blockchain:', error);
       console.log('TokenList: Falling back to localStorage');
       loadTokensFromLocalStorage();
+      
+      // Retry on error if we haven't exceeded max retries
+      if (retryCountRef.current < MAX_RETRIES) {
+        retryCountRef.current++;
+        console.log(`TokenList: Error occurred, scheduling retry ${retryCountRef.current}/${MAX_RETRIES}...`);
+        setTimeout(() => {
+          hasLoadedRef.current = false;
+          loadTokensFromBlockchain();
+        }, 3000 * retryCountRef.current);
+      }
     } finally {
       setIsLoadingTokens(false);
     }
