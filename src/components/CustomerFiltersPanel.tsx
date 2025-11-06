@@ -160,7 +160,7 @@ export function CustomerFiltersPanel() {
             </AlertDescription>
           </Alert>
         ) : (
-          <ScrollArea className="h-[350px]">
+          <ScrollArea className="h-[500px]">
             <div className="space-y-3 pr-4 pb-4">
               {programsWithBalance.map((program) => {
                 const balance = balances.find(b => b.address === program.address);
