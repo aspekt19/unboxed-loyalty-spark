@@ -65,6 +65,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (profile) {
         console.log('[signInWithWallet] Active session with correct profile exists');
+        // Dispatch event so components know session is ready
+        window.dispatchEvent(new Event('sessionReady'));
         return;
       } else {
         console.log('[signInWithWallet] Session exists but profile mismatch, signing out old session');
@@ -120,6 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('[signInWithWallet] Profile verified:', profile);
 
       window.dispatchEvent(new Event('profileMigrated'));
+      window.dispatchEvent(new Event('sessionReady'));
       toast.success('Successfully signed in with wallet');
     } catch (error: any) {
       console.error('[signInWithWallet] Sign in error:', error);

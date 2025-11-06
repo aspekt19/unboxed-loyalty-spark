@@ -63,10 +63,10 @@ export function TokenList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [publicClient, walletAddress]);
 
-  // Listen for profile migration events (happens after authentication)
+  // Listen for session ready events (happens after authentication or when app reopens)
   useEffect(() => {
-    const handleProfileMigrated = () => {
-      console.log('Profile migrated event received, reloading tokens...');
+    const handleSessionReady = () => {
+      console.log('Session ready event received, reloading tokens...');
       hasLoadedRef.current = false;
       retryCountRef.current = 0;
       // Small delay to ensure RLS policies are applied
@@ -76,8 +76,13 @@ export function TokenList() {
       }, 500);
     };
     
-    window.addEventListener('profileMigrated', handleProfileMigrated);
-    return () => window.removeEventListener('profileMigrated', handleProfileMigrated);
+    window.addEventListener('sessionReady', handleSessionReady);
+    window.addEventListener('profileMigrated', handleSessionReady);
+    
+    return () => {
+      window.removeEventListener('sessionReady', handleSessionReady);
+      window.removeEventListener('profileMigrated', handleSessionReady);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
