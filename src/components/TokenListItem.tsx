@@ -16,7 +16,7 @@ export function TokenListItem({ address, name, symbol, balance, merchantAddress,
   const { isPaused } = useCheckProgramStatus(address as `0x${string}`);
   
   return (
-    <div className="flex flex-col gap-3 p-3 rounded-lg bg-gradient-to-r from-primary/5 to-secondary/5 border-2 border-primary/10 hover:border-primary/30 transition-all">
+    <div className="flex flex-col gap-3 p-3 rounded-lg bg-gradient-to-r from-primary/5 to-secondary/5 border-2 border-border hover:border-primary/50 transition-all">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0">
