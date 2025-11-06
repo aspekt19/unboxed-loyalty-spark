@@ -9,6 +9,7 @@ import { useTransferTokens } from '@/hooks/useTransferTokens';
 import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
 import { Loader2, Coins } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { usePublicClient, useAccount } from 'wagmi';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -360,20 +361,26 @@ export function TokenList() {
           </div>
         )}
         
-        {tokensWithBalance.map((token) => (
-          <TokenListItem
-            key={token.address}
-            address={token.address}
-            name={token.name}
-            symbol={token.symbol}
-            balance={token.balance}
-            merchantAddress={token.merchantAddress}
-            onSendClick={() => {
-              setSelectedToken(token);
-              setDialogOpen(true);
-            }}
-          />
-        ))}
+        {tokensWithBalance.length > 0 && (
+          <ScrollArea className="h-[400px] pr-4">
+            <div className="space-y-4">
+              {tokensWithBalance.map((token) => (
+                <TokenListItem
+                  key={token.address}
+                  address={token.address}
+                  name={token.name}
+                  symbol={token.symbol}
+                  balance={token.balance}
+                  merchantAddress={token.merchantAddress}
+                  onSendClick={() => {
+                    setSelectedToken(token);
+                    setDialogOpen(true);
+                  }}
+                />
+              ))}
+            </div>
+          </ScrollArea>
+        )}
 
         {/* Transfer Dialog - Outside the map to use selectedToken state */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
