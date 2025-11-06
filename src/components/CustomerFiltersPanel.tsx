@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAccount } from 'wagmi';
-import { Gift, Loader2, AlertCircle, Coins, Clock } from 'lucide-react';
+import { Gift, Loader2, AlertCircle, Store, Clock } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useMultiTokenBalance } from '@/hooks/useMultiTokenBalance';
 import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
@@ -26,6 +26,7 @@ interface TokenInfo {
   symbol: string;
   status: string;
   expirationDate: string;
+  merchantAddress: string;
 }
 
 export function CustomerFiltersPanel() {
@@ -115,6 +116,7 @@ export function CustomerFiltersPanel() {
         symbol: prog.symbol,
         status: prog.status,
         expirationDate: prog.expiration_date,
+        merchantAddress: prog.merchant_address,
       }));
 
       setPrograms(programsData);
@@ -188,6 +190,11 @@ function ProgramCard({ program, balance, isExpiringSoon }: {
 }) {
   const { isPaused } = useCheckProgramStatus(program.address as `0x${string}`);
   
+  const formatAddress = (address: string) => {
+    if (!address) return '';
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+  
   return (
     <div className="p-4 rounded-lg border bg-gradient-to-br from-card to-muted/30 space-y-3">
       <div className="flex items-start justify-between">
@@ -219,11 +226,19 @@ function ProgramCard({ program, balance, isExpiringSoon }: {
         </div>
       </div>
       
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <Clock className="h-3 w-3" />
-        <span>
-          Expires: {format(new Date(program.expirationDate), 'MMM dd, yyyy')}
-        </span>
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Store className="h-3 w-3 flex-shrink-0" />
+          <span className="font-mono">
+            {formatAddress(program.merchantAddress)}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Clock className="h-3 w-3 flex-shrink-0" />
+          <span>
+            Expires: {format(new Date(program.expirationDate), 'MMM dd, yyyy')}
+          </span>
+        </div>
       </div>
     </div>
   );
