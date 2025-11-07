@@ -255,29 +255,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [isConnected, address, user, signInWithWallet]);
 
-  // Handle Farcaster miniapp lifecycle events
+  // Handle Farcaster miniapp lifecycle events - восстановление сессии при возврате
   useEffect(() => {
     if (!isFarcasterContext.current) return;
 
     console.log('[AuthProvider] Setting up Farcaster lifecycle handlers');
 
     const handleVisibilityChange = async () => {
-      if (document.hidden) {
-        // Приложение закрывается или переходит в фон
-        console.log('[AuthProvider] Farcaster app hidden - signing out');
-        if (session) {
-          await supabase.auth.signOut();
-          setUser(null);
-          setSession(null);
-        }
-      } else {
-        // Приложение открывается или возвращается на передний план
-        console.log('[AuthProvider] Farcaster app visible - re-authenticating');
-        if (isConnected && address && !session) {
-          // Даем небольшую задержку для инициализации
+      // Только восстанавливаем сессию при возврате, НЕ выходим при скрытии
+      if (!document.hidden) {
+        console.log('[AuthProvider] Farcaster app visible - checking session');
+        
+        // Проверяем существующую сессию
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
+        if (!currentSession && isConnected && address) {
+          // Если сессии нет, но кошелек подключен - восстанавливаем
+          console.log('[AuthProvider] No session found, re-authenticating');
           setTimeout(() => {
             signInWithWallet();
           }, 500);
+        } else if (currentSession) {
+          // Если сессия есть - обновляем состояние
+          console.log('[AuthProvider] Session exists, updating state');
+          setSession(currentSession);
+          setUser(currentSession.user);
         }
       }
     };
@@ -285,43 +287,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Слушаем изменения видимости страницы
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // Также пытаемся использовать события SDK если доступны
-    try {
-      // При закрытии miniapp
-      const handleClose = async () => {
-        console.log('[AuthProvider] Farcaster miniapp closing');
-        if (session) {
-          await supabase.auth.signOut();
-          setUser(null);
-          setSession(null);
-        }
-      };
-
-      // При возобновлении miniapp
-      const handleResume = async () => {
-        console.log('[AuthProvider] Farcaster miniapp resumed');
-        if (isConnected && address && !session) {
+    // При фокусе окна также проверяем сессию
+    const handleFocus = async () => {
+      if (isConnected && address) {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        if (!currentSession) {
+          console.log('[AuthProvider] Farcaster app focused - re-authenticating');
           setTimeout(() => {
             signInWithWallet();
           }, 500);
         }
-      };
+      }
+    };
 
-      // Эти события могут быть доступны через SDK
-      window.addEventListener('beforeunload', handleClose);
-      window.addEventListener('focus', handleResume);
+    window.addEventListener('focus', handleFocus);
 
-      return () => {
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
-        window.removeEventListener('beforeunload', handleClose);
-        window.removeEventListener('focus', handleResume);
-      };
-    } catch (error) {
-      console.log('[AuthProvider] SDK events not available, using visibility API only');
-      return () => {
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
-      };
-    }
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, [isConnected, address, session, signInWithWallet]);
 
   return (
