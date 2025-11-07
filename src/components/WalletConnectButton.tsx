@@ -72,6 +72,16 @@ export function WalletConnectButton() {
     loadFarcasterUser();
   }, []);
   
+  // Эффект для автоматического подключения кошелька при запуске в Farcaster
+  useEffect(() => {
+    if (isFarcasterContext() && !isConnected && !isManuallyDisconnected && connectors.length > 0) {
+      console.log('[WalletButton] Farcaster context detected on mount - auto-connecting wallet');
+      setTimeout(() => {
+        connect({ connector: connectors[0] });
+      }, 500);
+    }
+  }, []); // Запускаем только при монтировании
+  
   // Эффект для автоматической авторизации при reconnect в Farcaster
   useEffect(() => {
     if (isFarcasterContext() && isConnected && address && !isManuallyDisconnected && !user) {
