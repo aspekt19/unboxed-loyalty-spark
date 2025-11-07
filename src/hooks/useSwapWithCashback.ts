@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { CONTRACTS } from '@/config/contracts';
 
 const ROUTING_FEE_PERCENT = 0.3; // 0.3% total routing fee
-const CASHBACK_PERCENT = 0.1; // 0.1% returned as LSP cashback
+const CASHBACK_PERCENT = 0.1; // 0.1% returned as LOYAL cashback
 const PLATFORM_FEE_PERCENT = 0.2; // 0.2% platform profit
 
 export function useSwapWithCashback() {
@@ -43,14 +43,14 @@ export function useSwapWithCashback() {
       setIsProcessing(true);
       const fees = calculateFees(amount);
       
-      toast.info(`Swap initiated! You'll receive ${fees.cashbackAmount.toFixed(4)} LSP cashback`, {
+      toast.info(`Swap initiated! You'll receive ${fees.cashbackAmount.toFixed(4)} LOYAL cashback`, {
         description: `Routing fee: ${fees.routingFee.toFixed(4)} tokens`
       });
 
       // Step 1: Execute the swap (simplified - in production would use actual DEX router)
       // For now, we'll just demonstrate the cashback minting
       
-      // Step 2: Mint LSP cashback to user
+      // Step 2: Mint LOYAL cashback to user
       const cashbackInWei = parseUnits(fees.cashbackAmount.toString(), 18);
       
       writeContract({
@@ -61,7 +61,7 @@ export function useSwapWithCashback() {
       } as any);
 
       toast.success('Swap completed successfully!', {
-        description: `${fees.cashbackAmount.toFixed(4)} LSP cashback credited`
+        description: `${fees.cashbackAmount.toFixed(4)} LOYAL cashback credited`
       });
 
     } catch (error: any) {

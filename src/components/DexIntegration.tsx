@@ -39,17 +39,17 @@ export function DexIntegration() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ArrowRightLeft className="h-5 w-5 text-primary" />
-          DEX Aggregator with LSP Cashback
+          DEX Aggregator with LOYAL Cashback
         </CardTitle>
         <CardDescription>
-          Swap tokens and earn 0.1% cashback in LSP tokens
+          Swap tokens and earn 0.1% cashback in LOYAL tokens
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <Alert className="bg-primary/5 border-primary/20">
           <Info className="h-4 w-4 text-primary" />
           <AlertDescription className="text-sm">
-            <strong>Routing Fee:</strong> 0.3% total fee (0.1% returned as LSP cashback, 0.2% platform fee)
+            <strong>Routing Fee:</strong> 0.3% total fee (0.1% returned as LOYAL cashback, 0.2% platform fee)
           </AlertDescription>
         </Alert>
 
@@ -117,8 +117,8 @@ export function DexIntegration() {
                 <span className="font-medium">{fees.routingFee.toFixed(4)}</span>
               </div>
               <div className="flex justify-between text-primary">
-                <span>LSP Cashback (0.1%)</span>
-                <span className="font-semibold">+{fees.cashbackAmount.toFixed(4)} LSP</span>
+                <span>LOYAL Cashback (0.1%)</span>
+                <span className="font-semibold">+{fees.cashbackAmount.toFixed(4)} LOYAL</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Platform Fee (0.2%)</span>

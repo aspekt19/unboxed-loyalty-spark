@@ -67,7 +67,7 @@ const Index = () => {
             </h1>
             
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-12">
-              Swap tokens, earn LSP cashback. Track your on-chain activity and build your Web3 reputation score.
+              Swap tokens, earn LOYAL cashback. Track your on-chain activity and build your Web3 reputation score.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
@@ -102,7 +102,7 @@ const Index = () => {
               
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-12">
                 {[
-                  { icon: Shield, title: 'Proof-of-Activity', description: 'Earn LSP for every on-chain transaction' },
+                  { icon: Shield, title: 'Proof-of-Activity', description: 'Earn LOYAL for every on-chain transaction' },
                   { icon: Zap, title: 'DEX Aggregator', description: 'Best swap rates with automatic cashback' },
                   { icon: Globe, title: 'Web3 Native', description: 'No KYC, no bank cards, pure crypto' },
                   { icon: TrendingUp, title: 'Reputation Score', description: 'Build your on-chain credit rating' }
@@ -129,7 +129,7 @@ const Index = () => {
                 Start Earning Today
               </h2>
               <p className="text-lg text-muted-foreground mb-8">
-                Connect your wallet and earn LSP cashback on every swap.
+                Connect your wallet and earn LOYAL cashback on every swap.
               </p>
               <Link to="/app">
                 <Button size="lg" className="h-12 px-8 text-base font-semibold rounded-lg bg-foreground text-background hover:bg-foreground/90 transition-all duration-200">

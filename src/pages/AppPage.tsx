@@ -41,7 +41,7 @@ export default function AppPage() {
                 DEX Aggregator
               </h1>
               <p className="text-lg text-muted-foreground">
-                Swap tokens and earn 0.1% LSP cashback on every transaction
+                Swap tokens and earn 0.1% LOYAL cashback on every transaction
               </p>
             </div>
 
@@ -50,7 +50,7 @@ export default function AppPage() {
               <Alert className="bg-muted/50 border-border">
                 <Wallet className="h-4 w-4" />
                 <AlertDescription>
-                  Connect your wallet to start swapping and earning LSP cashback
+                  Connect your wallet to start swapping and earning LOYAL cashback
                 </AlertDescription>
               </Alert>
             )}
@@ -66,7 +66,7 @@ export default function AppPage() {
               </div>
               <div className="p-4 rounded-lg bg-card border border-border text-center">
                 <div className="text-2xl font-bold text-primary mb-1">0.1%</div>
-                <div className="text-sm text-muted-foreground">LSP Cashback</div>
+                <div className="text-sm text-muted-foreground">LOYAL Cashback</div>
               </div>
               <div className="p-4 rounded-lg bg-card border border-border text-center">
                 <div className="text-2xl font-bold text-primary mb-1">0.2%</div>
