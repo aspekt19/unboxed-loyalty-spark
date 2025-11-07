@@ -3,6 +3,7 @@ import { useAccount } from 'wagmi';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
+import { sdk } from '@farcaster/miniapp-sdk';
 
 interface AuthContextType {
   user: User | null;
@@ -20,7 +21,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const manualSignOutRef = useRef(false);
+  const isFarcasterContext = useRef(false);
   const { address, isConnected } = useAccount();
+
+  // Detect Farcaster context on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const hasFarcasterParam = urlParams.has('farcaster') || urlParams.has('fc');
+      const isFarcasterPath = window.location.pathname.includes('/frame');
+      const hasFarcasterUA = /farcaster/i.test(navigator.userAgent);
+      isFarcasterContext.current = hasFarcasterParam || isFarcasterPath || hasFarcasterUA;
+      
+      console.log('[AuthProvider] Farcaster context detected:', isFarcasterContext.current);
+    } catch {
+      isFarcasterContext.current = false;
+    }
+  }, []);
 
   useEffect(() => {
     // Set up auth state listener
@@ -236,6 +254,75 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return () => clearTimeout(timer);
     }
   }, [isConnected, address, user, signInWithWallet]);
+
+  // Handle Farcaster miniapp lifecycle events
+  useEffect(() => {
+    if (!isFarcasterContext.current) return;
+
+    console.log('[AuthProvider] Setting up Farcaster lifecycle handlers');
+
+    const handleVisibilityChange = async () => {
+      if (document.hidden) {
+        // Приложение закрывается или переходит в фон
+        console.log('[AuthProvider] Farcaster app hidden - signing out');
+        if (session) {
+          await supabase.auth.signOut();
+          setUser(null);
+          setSession(null);
+        }
+      } else {
+        // Приложение открывается или возвращается на передний план
+        console.log('[AuthProvider] Farcaster app visible - re-authenticating');
+        if (isConnected && address && !session) {
+          // Даем небольшую задержку для инициализации
+          setTimeout(() => {
+            signInWithWallet();
+          }, 500);
+        }
+      }
+    };
+
+    // Слушаем изменения видимости страницы
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Также пытаемся использовать события SDK если доступны
+    try {
+      // При закрытии miniapp
+      const handleClose = async () => {
+        console.log('[AuthProvider] Farcaster miniapp closing');
+        if (session) {
+          await supabase.auth.signOut();
+          setUser(null);
+          setSession(null);
+        }
+      };
+
+      // При возобновлении miniapp
+      const handleResume = async () => {
+        console.log('[AuthProvider] Farcaster miniapp resumed');
+        if (isConnected && address && !session) {
+          setTimeout(() => {
+            signInWithWallet();
+          }, 500);
+        }
+      };
+
+      // Эти события могут быть доступны через SDK
+      window.addEventListener('beforeunload', handleClose);
+      window.addEventListener('focus', handleResume);
+
+      return () => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        window.removeEventListener('beforeunload', handleClose);
+        window.removeEventListener('focus', handleResume);
+      };
+    } catch (error) {
+      console.log('[AuthProvider] SDK events not available, using visibility API only');
+      return () => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      };
+    }
+  }, [isConnected, address, session, signInWithWallet]);
 
   return (
     <AuthContext.Provider value={{ user, session, isLoading, signInWithWallet, signOut, resetManualSignOut }}>
