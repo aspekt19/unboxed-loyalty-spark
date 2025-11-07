@@ -9,6 +9,10 @@ import { config, rainbowKitLocale } from "./config/wagmi";
 import "@rainbow-me/rainbowkit/styles.css";
 import Index from "./pages/Index";
 import AppPage from "./pages/AppPage";
+import CustomerPage from "./pages/CustomerPage";
+import MerchantPage from "./pages/MerchantPage";
+import PitchDeck from "./pages/pitch-deck/PitchDeck";
+import GuidePage from "./pages/GuidePage";
 import NotFound from "./pages/NotFound";
 import { AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
@@ -52,6 +56,10 @@ function AnimatedRoutes() {
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<Index />} />
         <Route path="/app" element={<AppPage />} />
+        <Route path="/customer" element={<CustomerPage />} />
+        <Route path="/merchant" element={<MerchantPage />} />
+        <Route path="/pitch" element={<PitchDeck />} />
+        <Route path="/guide" element={<GuidePage />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>

@@ -34,15 +34,7 @@ export function MyVouchers() {
     if (!address || !session) return;
     
     loadVouchers();
-    
-    const handleSessionReady = () => {
-      console.log('[MyVouchers] Session ready, reloading vouchers...');
-      loadVouchers();
-    };
-    
     window.addEventListener('vouchersUpdated', loadVouchers);
-    window.addEventListener('sessionReady', handleSessionReady);
-    window.addEventListener('profileMigrated', handleSessionReady);
     
     // Подписка на изменения в таблице vouchers для реалтайм обновлений
     const channel = supabase
@@ -64,8 +56,6 @@ export function MyVouchers() {
     
     return () => {
       window.removeEventListener('vouchersUpdated', loadVouchers);
-      window.removeEventListener('sessionReady', handleSessionReady);
-      window.removeEventListener('profileMigrated', handleSessionReady);
       supabase.removeChannel(channel);
     };
   }, [address, session]);

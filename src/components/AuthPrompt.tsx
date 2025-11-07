@@ -30,8 +30,7 @@ export function AuthPrompt() {
   const { isConnected } = useAccount();
   const { connect, connectors } = useConnect();
 
-  // Не показываем промпт если идет загрузка или пользователь уже авторизован
-  if (isLoading || user) return null;
+  if (user) return null;
 
   return (
     <Alert className="mb-6 border-2 border-primary/20 bg-primary/5">

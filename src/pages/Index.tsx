@@ -61,13 +61,13 @@ const Index = () => {
             </div>
             
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-[1.1] tracking-tight text-balance">
-              Your Web3 Activity,
+              Discover loyalty
               <br />
-              Rewarded.
+              rewards reimagined.
             </h1>
             
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-12">
-              Swap tokens, earn LOYAL cashback. Track your on-chain activity and build your Web3 reputation score.
+              Mint, manage and trade loyalty tokens on-chain. Built for the next generation of customer engagement.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
@@ -75,6 +75,11 @@ const Index = () => {
                 <Button size="lg" className="h-11 px-6 text-sm font-semibold rounded-lg bg-foreground text-background hover:bg-foreground/90 transition-all duration-200">
                   Launch App
                   <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              <Link to="/pitch">
+                <Button size="lg" variant="outline" className="h-11 px-6 text-sm font-semibold rounded-lg border transition-all duration-200 hover:bg-secondary">
+                  Learn more
                 </Button>
               </Link>
             </div>
@@ -102,10 +107,10 @@ const Index = () => {
               
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-12">
                 {[
-                  { icon: Shield, title: 'Proof-of-Activity', description: 'Earn LOYAL for every on-chain transaction' },
-                  { icon: Zap, title: 'DEX Aggregator', description: 'Best swap rates with automatic cashback' },
-                  { icon: Globe, title: 'Web3 Native', description: 'No KYC, no bank cards, pure crypto' },
-                  { icon: TrendingUp, title: 'Reputation Score', description: 'Build your on-chain credit rating' }
+                  { icon: Shield, title: 'Secure', description: 'Smart contract based security' },
+                  { icon: Zap, title: 'Fast', description: 'Instant transactions on BASE' },
+                  { icon: Globe, title: 'Decentralized', description: 'True ownership of rewards' },
+                  { icon: TrendingUp, title: 'Tradeable', description: 'Exchange on any DEX' }
                 ].map((feature) => (
                   <div 
                     key={feature.title} 
@@ -126,10 +131,10 @@ const Index = () => {
           <section className="py-16 md:py-24">
             <div className="max-w-3xl mx-auto text-center">
               <h2 className="text-3xl md:text-5xl font-bold mb-5 text-foreground tracking-tight">
-                Start Earning Today
+                Ready to get started?
               </h2>
               <p className="text-lg text-muted-foreground mb-8">
-                Connect your wallet and earn LOYAL cashback on every swap.
+                Join the future of loyalty rewards today.
               </p>
               <Link to="/app">
                 <Button size="lg" className="h-12 px-8 text-base font-semibold rounded-lg bg-foreground text-background hover:bg-foreground/90 transition-all duration-200">

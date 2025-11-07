@@ -46,26 +46,35 @@ export function WalletConnectButton() {
   
   useEffect(() => {
     const loadFarcasterUser = async () => {
-      try {
-        console.log('[WalletButton] Attempting to load Farcaster context...');
-        
-        // Try to load Farcaster context regardless of URL checks
-        const context = await sdk.context;
-        console.log('[WalletButton] SDK context loaded:', context);
-        
-        if (context?.user) {
-          const userData = {
-            username: context.user.username,
-            displayName: context.user.displayName,
-            pfpUrl: context.user.pfpUrl,
-          };
-          console.log('[WalletButton] Setting farcasterUser:', userData);
-          setFarcasterUser(userData);
-        } else {
-          console.log('[WalletButton] No user in context');
+      console.log('[WalletButton] isFarcasterContext:', isFarcasterContext());
+      if (isFarcasterContext()) {
+        try {
+          console.log('[WalletButton] Calling SDK ready...');
+          // Ensure SDK is ready first
+          await sdk.actions.ready();
+          console.log('[WalletButton] SDK ready, loading context...');
+          
+          // Wait for Farcaster context to load
+          const context = await sdk.context;
+          console.log('[WalletButton] Farcaster context loaded:', context);
+          console.log('[WalletButton] Context user:', context?.user);
+          
+          if (context?.user) {
+            const userData = {
+              username: context.user.username,
+              displayName: context.user.displayName,
+              pfpUrl: context.user.pfpUrl,
+            };
+            console.log('[WalletButton] Setting Farcaster user data:', userData);
+            setFarcasterUser(userData);
+          } else {
+            console.warn('[WalletButton] Farcaster context loaded but no user data found');
+          }
+        } catch (error) {
+          console.error('[WalletButton] Failed to load Farcaster user:', error);
         }
-      } catch (error) {
-        console.log('[WalletButton] Not in Farcaster context or failed to load:', error);
+      } else {
+        console.log('[WalletButton] Not in Farcaster context');
       }
     };
     
@@ -104,16 +113,9 @@ export function WalletConnectButton() {
     connect({ connector: connectors[0] });
   };
 
-  // Use simplified UI for Farcaster context (if we have Farcaster user data)
-  if (farcasterUser) {
-    console.log('[WalletButton] Rendering Farcaster UI with user data', { 
-      isConnected, 
-      address: address?.slice(0, 10), 
-      farcasterUser, 
-      isManuallyDisconnected,
-      displayName: farcasterUser?.displayName,
-      username: farcasterUser?.username
-    });
+  // Use simplified UI for Farcaster context
+  if (isFarcasterContext()) {
+    console.log('[WalletButton] Rendering Farcaster UI', { isConnected, address: address?.slice(0, 10), farcasterUser, isManuallyDisconnected });
     
     // Показываем кнопку Connect если пользователь вышел вручную
     if (!isConnected || isManuallyDisconnected) {

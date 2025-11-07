@@ -9,7 +9,6 @@ import { useTransferTokens } from '@/hooks/useTransferTokens';
 import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
 import { Loader2, Coins } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { usePublicClient, useAccount } from 'wagmi';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -34,10 +33,8 @@ export function TokenList() {
   const { balances, isLoading, refetch } = useMultiTokenBalance(allTokens);
   const { transferTokens, isPending, isSuccess } = useTransferTokens();
 
-  // Track if initial load is complete and retry attempts
+  // Track if initial load is complete
   const hasLoadedRef = useRef(false);
-  const retryCountRef = useRef(0);
-  const MAX_RETRIES = 3;
 
   // Очищаем токены при отключении кошелька
   useEffect(() => {
@@ -48,11 +45,10 @@ export function TokenList() {
       setTransferAmount('');
       setDialogOpen(false);
       hasLoadedRef.current = false;
-      retryCountRef.current = 0;
     }
   }, [walletAddress]);
 
-  // Load tokens from blockchain with retry mechanism
+  // Load tokens from blockchain once when component mounts or wallet connects
   useEffect(() => {
     if (publicClient && walletAddress && !hasLoadedRef.current) {
       console.log('=== TokenList: Initial load - wallet connected ===');
@@ -62,29 +58,6 @@ export function TokenList() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [publicClient, walletAddress]);
-
-  // Listen for session ready events (happens after authentication or when app reopens)
-  useEffect(() => {
-    const handleSessionReady = () => {
-      console.log('Session ready event received, reloading tokens...');
-      hasLoadedRef.current = false;
-      retryCountRef.current = 0;
-      // Small delay to ensure RLS policies are applied
-      setTimeout(() => {
-        loadTokensFromBlockchain();
-        loadActivePrograms();
-      }, 500);
-    };
-    
-    window.addEventListener('sessionReady', handleSessionReady);
-    window.addEventListener('profileMigrated', handleSessionReady);
-    
-    return () => {
-      window.removeEventListener('sessionReady', handleSessionReady);
-      window.removeEventListener('profileMigrated', handleSessionReady);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Load active programs from Supabase
   useEffect(() => {
@@ -116,8 +89,7 @@ export function TokenList() {
   useEffect(() => {
     const handleUpdate = () => {
       console.log('loyaltyProgramsUpdated event received, reloading tokens...');
-      hasLoadedRef.current = false;
-      retryCountRef.current = 0;
+      hasLoadedRef.current = false; // Allow reload
       loadTokensFromBlockchain();
       loadActivePrograms();
     };
@@ -159,75 +131,98 @@ export function TokenList() {
   const loadTokensFromBlockchain = async () => {
     if (!publicClient) {
       console.log('TokenList: No publicClient available');
-      // Retry if we haven't exceeded max retries
-      if (retryCountRef.current < MAX_RETRIES) {
-        retryCountRef.current++;
-        console.log(`TokenList: Scheduling retry ${retryCountRef.current}/${MAX_RETRIES}...`);
-        setTimeout(() => {
-          hasLoadedRef.current = false;
-          if (publicClient && walletAddress) {
-            loadTokensFromBlockchain();
-          }
-        }, 2000 * retryCountRef.current); // Exponential backoff
-      }
       return;
     }
     
     setIsLoadingTokens(true);
-    console.log('TokenList: Loading tokens from database...');
+    console.log('TokenList: Loading tokens from blockchain...');
+    console.log('TokenList: Factory address:', CONTRACTS.LOYALTY_TOKEN_FACTORY.address);
     
     try {
-      // Load all active programs from database instead of blockchain events
-      // This is more reliable and shows all tokens regardless of when they were created
-      const { data: programs, error } = await supabase
-        .from('loyalty_programs')
-        .select('token_address, name, symbol, merchant_address')
-        .in('status', ['active', 'expiring_soon', 'paused']);
+      // Get current block
+      const currentBlock = await publicClient.getBlockNumber();
+      console.log('TokenList: Current block:', currentBlock);
+      
+      // Find the LoyaltyTokenCreated event ABI
+      const eventAbi = CONTRACTS.LOYALTY_TOKEN_FACTORY.abi.find(
+        (item) => item.type === 'event' && item.name === 'LoyaltyTokenCreated'
+      ) as any;
 
-      if (error) {
-        console.error('TokenList: Error loading programs from database:', error);
-        throw error;
+      if (!eventAbi) {
+        console.error('TokenList: LoyaltyTokenCreated event not found in ABI');
+        loadTokensFromLocalStorage();
+        setIsLoadingTokens(false);
+        return;
       }
 
-      const tokens: TokenInfo[] = programs.map(program => ({
-        address: program.token_address,
-        name: program.name,
-        symbol: program.symbol,
-        merchantAddress: program.merchant_address,
+      // Query in chunks to avoid "exceed maximum block range" error
+      const CHUNK_SIZE = 40000n; // Stay under 50k limit
+      const LOOKBACK_BLOCKS = 200000n; // ~5 days on Base (2 sec blocks)
+      const fromBlock = currentBlock > LOOKBACK_BLOCKS ? currentBlock - LOOKBACK_BLOCKS : 0n;
+      
+      console.log('TokenList: Querying from block:', fromBlock, 'to', currentBlock);
+
+      let allLogs: any[] = [];
+      let currentChunkStart = fromBlock;
+
+      while (currentChunkStart <= currentBlock) {
+        const currentChunkEnd = currentChunkStart + CHUNK_SIZE > currentBlock 
+          ? currentBlock 
+          : currentChunkStart + CHUNK_SIZE;
+
+        console.log(`TokenList: Querying chunk ${currentChunkStart} to ${currentChunkEnd}`);
+
+        try {
+          const logs = await publicClient.getLogs({
+            address: CONTRACTS.LOYALTY_TOKEN_FACTORY.address,
+            event: eventAbi,
+            fromBlock: currentChunkStart,
+            toBlock: currentChunkEnd,
+          });
+
+          allLogs = [...allLogs, ...logs];
+          console.log(`TokenList: Found ${logs.length} events in this chunk`);
+        } catch (chunkError) {
+          console.error(`TokenList: Error querying chunk:`, chunkError);
+        }
+
+        currentChunkStart = currentChunkEnd + 1n;
+      }
+
+      console.log('TokenList: Total events found:', allLogs.length);
+
+      const tokens: TokenInfo[] = allLogs.map((log: any) => ({
+        address: log.args.tokenAddress,
+        name: log.args.name,
+        symbol: log.args.symbol,
       }));
 
-      console.log('TokenList: Loaded tokens from database:', tokens.length);
-      setAllTokens(tokens);
-      retryCountRef.current = 0; // Reset retry count on success
+      // Load merchant addresses from database
+      const { data: programs } = await supabase
+        .from('loyalty_programs')
+        .select('token_address, merchant_address')
+        .in('token_address', tokens.map(t => t.address));
+
+      const merchantMap = new Map(
+        programs?.map(p => [p.token_address.toLowerCase(), p.merchant_address]) || []
+      );
+
+      const tokensWithMerchant = tokens.map(token => ({
+        ...token,
+        merchantAddress: merchantMap.get(token.address.toLowerCase()),
+      }));
+
+      console.log('TokenList: Parsed tokens:', tokensWithMerchant);
+      setAllTokens(tokensWithMerchant);
       
       // Save to localStorage for future use
-      if (tokens.length > 0) {
-        localStorage.setItem('customerTokens', JSON.stringify(tokens));
-      } else {
-        // If no tokens found and we haven't exceeded retries, try again
-        if (retryCountRef.current < MAX_RETRIES) {
-          retryCountRef.current++;
-          console.log(`TokenList: No tokens found, scheduling retry ${retryCountRef.current}/${MAX_RETRIES}...`);
-          setTimeout(() => {
-            hasLoadedRef.current = false;
-            loadTokensFromBlockchain();
-          }, 3000 * retryCountRef.current);
-        }
+      if (tokensWithMerchant.length > 0) {
+        localStorage.setItem('customerTokens', JSON.stringify(tokensWithMerchant));
       }
     } catch (error) {
-      console.error('TokenList: Failed to load tokens from database:', error);
+      console.error('TokenList: Failed to load tokens from blockchain:', error);
       console.log('TokenList: Falling back to localStorage');
       loadTokensFromLocalStorage();
-      
-      // Retry on error if we haven't exceeded max retries
-      if (retryCountRef.current < MAX_RETRIES) {
-        retryCountRef.current++;
-        console.log(`TokenList: Error occurred, scheduling retry ${retryCountRef.current}/${MAX_RETRIES}...`);
-        setTimeout(() => {
-          hasLoadedRef.current = false;
-          loadTokensFromBlockchain();
-        }, 3000 * retryCountRef.current);
-      }
     } finally {
       setIsLoadingTokens(false);
     }
@@ -365,26 +360,20 @@ export function TokenList() {
           </div>
         )}
         
-        {tokensWithBalance.length > 0 && (
-          <ScrollArea className="h-[330px]">
-            <div className="space-y-3 pr-4 pb-4">
-              {tokensWithBalance.map((token) => (
-                <TokenListItem
-                  key={token.address}
-                  address={token.address}
-                  name={token.name}
-                  symbol={token.symbol}
-                  balance={token.balance}
-                  merchantAddress={token.merchantAddress}
-                  onSendClick={() => {
-                    setSelectedToken(token);
-                    setDialogOpen(true);
-                  }}
-                />
-              ))}
-            </div>
-          </ScrollArea>
-        )}
+        {tokensWithBalance.map((token) => (
+          <TokenListItem
+            key={token.address}
+            address={token.address}
+            name={token.name}
+            symbol={token.symbol}
+            balance={token.balance}
+            merchantAddress={token.merchantAddress}
+            onSendClick={() => {
+              setSelectedToken(token);
+              setDialogOpen(true);
+            }}
+          />
+        ))}
 
         {/* Transfer Dialog - Outside the map to use selectedToken state */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

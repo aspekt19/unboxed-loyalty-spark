@@ -24,7 +24,7 @@ interface IssuedToken {
 
 export function IssuedTokensHistory() {
   const { address } = useAccount();
-  const { session, isLoading: authLoading } = useAuth();
+  const { session } = useAuth();
   const publicClient = usePublicClient();
   const [history, setHistory] = useState<IssuedToken[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,20 +33,12 @@ export function IssuedTokensHistory() {
   const [programs, setPrograms] = useState<any[]>([]);
 
   useEffect(() => {
-    // Не загружаем данные пока идет авторизация
-    if (authLoading) {
-      console.log('IssuedTokensHistory: Waiting for auth to complete...');
-      return;
-    }
-
     if (!address || !session) {
-      console.log('IssuedTokensHistory: No address or session', { address, hasSession: !!session });
       setHistory([]);
       setPrograms([]);
       return;
     }
 
-    console.log('IssuedTokensHistory: Loading tokens for address:', address);
     loadIssuedTokens();
 
     // Обновляем историю когда выдаются новые токены или меняются программы
@@ -57,40 +49,31 @@ export function IssuedTokensHistory() {
 
     window.addEventListener('loyaltyProgramsUpdated', handleUpdate);
     window.addEventListener('tokensIssued', handleUpdate);
-    window.addEventListener('sessionReady', handleUpdate);
     
     return () => {
       window.removeEventListener('loyaltyProgramsUpdated', handleUpdate);
       window.removeEventListener('tokensIssued', handleUpdate);
-      window.removeEventListener('sessionReady', handleUpdate);
     };
-  }, [address, session, publicClient, authLoading]);
+  }, [address, session, publicClient]);
 
   const loadIssuedTokens = async () => {
     if (!publicClient || !address || !session) {
-      console.log('IssuedTokensHistory: Missing requirements', { 
-        hasPublicClient: !!publicClient, 
-        hasAddress: !!address, 
-        hasSession: !!session 
-      });
+      console.log('IssuedTokensHistory: No publicClient, address or session');
       return;
     }
 
-    console.log('IssuedTokensHistory: Loading issued tokens for address:', address);
+    console.log('IssuedTokensHistory: Loading issued tokens...');
     setIsLoading(true);
     try {
       // Загружаем программы мерчанта из БД (включая недавно истекшие за последние 30 дней)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       
-      const normalizedAddress = address.toLowerCase();
-      console.log('IssuedTokensHistory: Querying programs for:', normalizedAddress);
-      
       const { data: programsData, error } = await supabase
         .from('loyalty_programs')
         .select('*')
-        .eq('merchant_address', normalizedAddress)
-        .or(`status.in.(active,expiring_soon,paused),and(status.eq.expired,expiration_date.gte.${thirtyDaysAgo.toISOString()})`)
+        .eq('merchant_address', address.toLowerCase())
+        .or(`status.in.(active,expiring_soon),and(status.eq.expired,expiration_date.gte.${thirtyDaysAgo.toISOString()})`)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -100,8 +83,6 @@ export function IssuedTokensHistory() {
         setIsLoading(false);
         return;
       }
-
-      console.log('IssuedTokensHistory: Found programs:', programsData?.length || 0);
 
       if (!programsData || programsData.length === 0) {
         console.log('IssuedTokensHistory: No programs found for merchant');
@@ -231,7 +212,7 @@ export function IssuedTokensHistory() {
         <CardDescription>Track all loyalty tokens you've issued to customers</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden flex flex-col">
-        {authLoading || isLoading ? (
+        {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
             <span className="ml-2 text-sm text-muted-foreground">Loading history...</span>
