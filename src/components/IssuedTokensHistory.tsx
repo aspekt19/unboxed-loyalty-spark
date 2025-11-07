@@ -76,26 +76,9 @@ export function IssuedTokensHistory() {
       return;
     }
 
-    console.log('IssuedTokensHistory: Loading issued tokens...');
+    console.log('IssuedTokensHistory: Loading issued tokens for address:', address);
     setIsLoading(true);
     try {
-      // Проверяем что профиль существует
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('wallet_address')
-        .eq('user_id', session.user.id)
-        .single();
-
-      if (profileError || !profile) {
-        console.error('IssuedTokensHistory: Profile not found', profileError);
-        setHistory([]);
-        setPrograms([]);
-        setIsLoading(false);
-        return;
-      }
-
-      console.log('IssuedTokensHistory: Profile found:', profile.wallet_address);
-      
       // Загружаем программы мерчанта из БД (включая недавно истекшие за последние 30 дней)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
