@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import { Gift, AlertCircle, Loader2, Ticket } from 'lucide-react';
+import { Gift, AlertCircle, Loader2, Ticket, X } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { parseUnits } from 'viem';
 import { useBurnTokens } from '@/hooks/useBurnTokens';
@@ -351,6 +351,13 @@ export function RewardsSelection() {
       return;
     }
 
+    // Проверяем, что мерчант не активирует ваучер для себя
+    const selectedRewardForCheck = availableRewards.find(r => r.id === selectedRewardId);
+    if (selectedRewardForCheck && selectedRewardForCheck.merchantAddress.toLowerCase() === address.toLowerCase()) {
+      toast.error('Merchants cannot activate vouchers for their own loyalty programs');
+      return;
+    }
+
     // Проверяем авторизацию и профиль ПЕРЕД списанием токенов
     if (!session) {
       toast.info('Authenticating your wallet...');
@@ -445,6 +452,14 @@ export function RewardsSelection() {
     console.log('[handleRecoverVoucher] Attempting to recover voucher for tx:', failedVoucherAttempt.hash);
 
     try {
+      // Проверяем и гарантируем наличие сессии
+      if (!session) {
+        console.log('[handleRecoverVoucher] No session, attempting to sign in...');
+        await signInWithWallet();
+        // Даем время на создание профиля
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+
       // Проверяем профиль еще раз
       const { data: profileCheck, error: profileCheckError } = await supabase
         .from('profiles')
@@ -454,34 +469,54 @@ export function RewardsSelection() {
       
       if (profileCheckError || !profileCheck) {
         console.error('[handleRecoverVoucher] Profile check failed:', profileCheckError);
-        toast.error('Profile not found. Please reconnect your wallet and try again.');
+        toast.error('Profile not found. Please disconnect and reconnect your wallet, then try again.');
         setIsRecovering(false);
         return;
       }
 
-      const reward = availableRewards.find(r => r.id === failedVoucherAttempt.rewardId);
-      const token = tokens.find(t => t.address === failedVoucherAttempt.tokenAddress);
+      // Загружаем свежие данные о наградах и токенах
+      const rewards = await getRewardsByToken(failedVoucherAttempt.tokenAddress);
+      const reward = rewards.find(r => r.id === failedVoucherAttempt.rewardId);
+      
+      const { data: programs } = await supabase
+        .from('loyalty_programs')
+        .select('*')
+        .eq('token_address', failedVoucherAttempt.tokenAddress)
+        .maybeSingle();
 
-      if (!reward || !token) {
-        toast.error('Reward or token information not found');
+      if (!reward || !programs) {
+        toast.error('Reward or program information not found. The program may have been deleted.');
         setIsRecovering(false);
         return;
       }
 
-      // Пытаемся создать ваучер
+      // Пытаемся создать ваучер с несколькими попытками
       const voucherCode = generateVoucherCode();
-      const voucher = await createVoucher({
-        code: voucherCode,
-        rewardId: reward.id,
-        rewardName: reward.name,
-        rewardDescription: reward.description,
-        tokenAddress: failedVoucherAttempt.tokenAddress,
-        tokenSymbol: token.name,
-        customerAddress: address,
-        merchantAddress: reward.merchantAddress,
-        status: 'active',
-        cost: failedVoucherAttempt.cost,
-      });
+      let voucher = null;
+      let attempts = 0;
+      const maxAttempts = 3;
+      
+      while (!voucher && attempts < maxAttempts) {
+        attempts++;
+        console.log(`[handleRecoverVoucher] Attempt ${attempts} of ${maxAttempts}`);
+        
+        if (attempts > 1) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+        }
+        
+        voucher = await createVoucher({
+          code: voucherCode,
+          rewardId: reward.id,
+          rewardName: reward.name,
+          rewardDescription: reward.description,
+          tokenAddress: failedVoucherAttempt.tokenAddress,
+          tokenSymbol: programs.symbol,
+          customerAddress: address,
+          merchantAddress: reward.merchantAddress,
+          status: 'active',
+          cost: failedVoucherAttempt.cost,
+        });
+      }
 
       if (voucher) {
         console.log('[handleRecoverVoucher] Voucher recovered successfully:', voucher.id);
@@ -493,7 +528,8 @@ export function RewardsSelection() {
         window.dispatchEvent(new Event('vouchersUpdated'));
         window.dispatchEvent(new Event('tokenBalancesUpdated'));
       } else {
-        toast.error('Recovery failed. Please try again or contact support.');
+        console.error('[handleRecoverVoucher] Failed after', attempts, 'attempts');
+        toast.error('Recovery failed after multiple attempts. Please try again later or contact support.');
       }
     } catch (error) {
       console.error('[handleRecoverVoucher] Error:', error);
@@ -552,9 +588,16 @@ export function RewardsSelection() {
           <div className="space-y-4">
             {/* Alert для восстановления потерянного ваучера */}
             {failedVoucherAttempt && (
-              <Alert variant="destructive" className="border-destructive/50 bg-destructive/10">
+              <Alert variant="destructive" className="border-destructive/50 bg-destructive/10 relative">
+                <button
+                  onClick={() => setFailedVoucherAttempt(null)}
+                  className="absolute top-2 right-2 text-destructive hover:text-destructive/80 transition-colors"
+                  aria-label="Close"
+                >
+                  <X className="h-4 w-4" />
+                </button>
                 <AlertCircle className="h-4 w-4" />
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-3 pr-6">
                   <AlertDescription>
                     <div className="space-y-2">
                       <p className="font-semibold">Voucher Creation Failed</p>
