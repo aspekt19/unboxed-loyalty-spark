@@ -136,8 +136,16 @@ export function RewardsSelection() {
       }
     };
 
+    // Listen for session ready events to reload data when app reopens
+    const handleSessionReady = () => {
+      console.log('[RewardsSelection] Session ready, reloading programs...');
+      loadPrograms();
+    };
+
     window.addEventListener('loyaltyProgramsUpdated', loadPrograms);
     window.addEventListener('rewardsUpdated', handleRewardsUpdate);
+    window.addEventListener('sessionReady', handleSessionReady);
+    window.addEventListener('profileMigrated', handleSessionReady);
 
     // Подписка на realtime обновления программ лояльности и наград
     const programsChannel = supabase
@@ -175,6 +183,8 @@ export function RewardsSelection() {
     return () => {
       window.removeEventListener('loyaltyProgramsUpdated', loadPrograms);
       window.removeEventListener('rewardsUpdated', handleRewardsUpdate);
+      window.removeEventListener('sessionReady', handleSessionReady);
+      window.removeEventListener('profileMigrated', handleSessionReady);
       supabase.removeChannel(programsChannel);
       supabase.removeChannel(rewardsChannel);
     };
