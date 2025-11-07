@@ -65,6 +65,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (profile) {
         console.log('[signInWithWallet] Active session with correct profile exists');
+        // Обновляем состояние явно, чтобы компоненты получили актуальные данные
+        setSession(existingSession);
+        setUser(existingSession.user);
+        setIsLoading(false);
         // Dispatch event so components know session is ready
         window.dispatchEvent(new Event('sessionReady'));
         return;
