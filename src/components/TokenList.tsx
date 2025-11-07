@@ -174,90 +174,35 @@ export function TokenList() {
     }
     
     setIsLoadingTokens(true);
-    console.log('TokenList: Loading tokens from blockchain...');
-    console.log('TokenList: Factory address:', CONTRACTS.LOYALTY_TOKEN_FACTORY.address);
+    console.log('TokenList: Loading tokens from database...');
     
     try {
-      // Get current block
-      const currentBlock = await publicClient.getBlockNumber();
-      console.log('TokenList: Current block:', currentBlock);
-      
-      // Find the LoyaltyTokenCreated event ABI
-      const eventAbi = CONTRACTS.LOYALTY_TOKEN_FACTORY.abi.find(
-        (item) => item.type === 'event' && item.name === 'LoyaltyTokenCreated'
-      ) as any;
-
-      if (!eventAbi) {
-        console.error('TokenList: LoyaltyTokenCreated event not found in ABI');
-        loadTokensFromLocalStorage();
-        setIsLoadingTokens(false);
-        return;
-      }
-
-      // Query in chunks to avoid "exceed maximum block range" error
-      const CHUNK_SIZE = 40000n; // Stay under 50k limit
-      const LOOKBACK_BLOCKS = 200000n; // ~5 days on Base (2 sec blocks)
-      const fromBlock = currentBlock > LOOKBACK_BLOCKS ? currentBlock - LOOKBACK_BLOCKS : 0n;
-      
-      console.log('TokenList: Querying from block:', fromBlock, 'to', currentBlock);
-
-      let allLogs: any[] = [];
-      let currentChunkStart = fromBlock;
-
-      while (currentChunkStart <= currentBlock) {
-        const currentChunkEnd = currentChunkStart + CHUNK_SIZE > currentBlock 
-          ? currentBlock 
-          : currentChunkStart + CHUNK_SIZE;
-
-        console.log(`TokenList: Querying chunk ${currentChunkStart} to ${currentChunkEnd}`);
-
-        try {
-          const logs = await publicClient.getLogs({
-            address: CONTRACTS.LOYALTY_TOKEN_FACTORY.address,
-            event: eventAbi,
-            fromBlock: currentChunkStart,
-            toBlock: currentChunkEnd,
-          });
-
-          allLogs = [...allLogs, ...logs];
-          console.log(`TokenList: Found ${logs.length} events in this chunk`);
-        } catch (chunkError) {
-          console.error(`TokenList: Error querying chunk:`, chunkError);
-        }
-
-        currentChunkStart = currentChunkEnd + 1n;
-      }
-
-      console.log('TokenList: Total events found:', allLogs.length);
-
-      const tokens: TokenInfo[] = allLogs.map((log: any) => ({
-        address: log.args.tokenAddress,
-        name: log.args.name,
-        symbol: log.args.symbol,
-      }));
-
-      // Load merchant addresses from database
-      const { data: programs } = await supabase
+      // Load all active programs from database instead of blockchain events
+      // This is more reliable and shows all tokens regardless of when they were created
+      const { data: programs, error } = await supabase
         .from('loyalty_programs')
-        .select('token_address, merchant_address')
-        .in('token_address', tokens.map(t => t.address));
+        .select('token_address, name, symbol, merchant_address')
+        .in('status', ['active', 'expiring_soon', 'paused']);
 
-      const merchantMap = new Map(
-        programs?.map(p => [p.token_address.toLowerCase(), p.merchant_address]) || []
-      );
+      if (error) {
+        console.error('TokenList: Error loading programs from database:', error);
+        throw error;
+      }
 
-      const tokensWithMerchant = tokens.map(token => ({
-        ...token,
-        merchantAddress: merchantMap.get(token.address.toLowerCase()),
+      const tokens: TokenInfo[] = programs.map(program => ({
+        address: program.token_address,
+        name: program.name,
+        symbol: program.symbol,
+        merchantAddress: program.merchant_address,
       }));
 
-      console.log('TokenList: Parsed tokens:', tokensWithMerchant);
-      setAllTokens(tokensWithMerchant);
+      console.log('TokenList: Loaded tokens from database:', tokens.length);
+      setAllTokens(tokens);
       retryCountRef.current = 0; // Reset retry count on success
       
       // Save to localStorage for future use
-      if (tokensWithMerchant.length > 0) {
-        localStorage.setItem('customerTokens', JSON.stringify(tokensWithMerchant));
+      if (tokens.length > 0) {
+        localStorage.setItem('customerTokens', JSON.stringify(tokens));
       } else {
         // If no tokens found and we haven't exceeded retries, try again
         if (retryCountRef.current < MAX_RETRIES) {
@@ -270,7 +215,7 @@ export function TokenList() {
         }
       }
     } catch (error) {
-      console.error('TokenList: Failed to load tokens from blockchain:', error);
+      console.error('TokenList: Failed to load tokens from database:', error);
       console.log('TokenList: Falling back to localStorage');
       loadTokensFromLocalStorage();
       
