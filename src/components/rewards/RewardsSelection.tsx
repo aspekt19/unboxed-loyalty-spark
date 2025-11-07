@@ -88,7 +88,7 @@ export function RewardsSelection() {
     }
   }, [address]);
 
-  // Загрузка токенов из БД
+  // Загрузка токенов из БД (исключая собственные программы мерчанта)
   useEffect(() => {
     const loadPrograms = async () => {
       try {
@@ -105,7 +105,12 @@ export function RewardsSelection() {
         }
 
         if (programs && programs.length > 0) {
-          const activePrograms = programs.map(p => ({
+          // Фильтруем программы: исключаем те, где текущий пользователь - мерчант
+          const filteredPrograms = programs.filter(p => 
+            p.merchant_address.toLowerCase() !== address?.toLowerCase()
+          );
+          
+          const activePrograms = filteredPrograms.map(p => ({
             address: p.token_address,
             name: p.name,
             symbol: p.symbol,

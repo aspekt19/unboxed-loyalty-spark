@@ -110,12 +110,7 @@ export function CustomerFiltersPanel() {
         return;
       }
 
-      // Фильтруем программы: исключаем те, где пользователь является мерчантом
-      const filteredData = data.filter((prog: LoyaltyProgram) => 
-        prog.merchant_address.toLowerCase() !== address?.toLowerCase()
-      );
-
-      const programsData: TokenInfo[] = filteredData.map((prog: LoyaltyProgram) => ({
+      const programsData: TokenInfo[] = data.map((prog: LoyaltyProgram) => ({
         address: prog.token_address,
         name: prog.name,
         symbol: prog.symbol,
