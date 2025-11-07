@@ -366,8 +366,8 @@ export function TokenList() {
         )}
         
         {tokensWithBalance.length > 0 && (
-          <ScrollArea className="h-[330px] pr-2">
-            <div className="space-y-4 pr-2">
+          <ScrollArea className="h-[330px]">
+            <div className="space-y-4 pr-4">
               {tokensWithBalance.map((token) => (
                 <TokenListItem
                   key={token.address}
