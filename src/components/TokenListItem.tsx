@@ -44,7 +44,7 @@ export function TokenListItem({ address, name, symbol, balance, merchantAddress,
           </div>
         </div>
         
-        <div className="flex flex-col items-end gap-2 flex-shrink-0 min-w-[110px]">
+        <div className="flex flex-col items-end gap-2 flex-shrink-0">
           <div className="text-right">
             <p className="text-lg font-bold whitespace-nowrap">
               {parseFloat(balance).toFixed(2)}
@@ -56,10 +56,10 @@ export function TokenListItem({ address, name, symbol, balance, merchantAddress,
             size="sm"
             onClick={onSendClick}
             disabled={isPaused}
-            className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 disabled:opacity-50 h-8 px-3 w-full"
+            className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 disabled:opacity-50 h-8 px-4"
           >
             <Send className="h-3.5 w-3.5 mr-1.5" />
-            <span className="text-xs">Send</span>
+            <span className="text-xs whitespace-nowrap">Send</span>
           </Button>
         </div>
       </div>
