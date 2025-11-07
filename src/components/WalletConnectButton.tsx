@@ -46,13 +46,18 @@ export function WalletConnectButton() {
   
   useEffect(() => {
     const loadFarcasterUser = async () => {
-      if (!isFarcasterContext()) {
+      const isFC = isFarcasterContext();
+      console.log('[WalletButton] useEffect - isFarcasterContext:', isFC);
+      
+      if (!isFC) {
         return;
       }
 
       try {
-        // Load Farcaster user data directly from context
+        console.log('[WalletButton] Loading Farcaster context...');
         const context = await sdk.context;
+        console.log('[WalletButton] Farcaster context:', context);
+        console.log('[WalletButton] Context user:', context?.user);
         
         if (context?.user) {
           const userData = {
@@ -60,7 +65,10 @@ export function WalletConnectButton() {
             displayName: context.user.displayName,
             pfpUrl: context.user.pfpUrl,
           };
+          console.log('[WalletButton] Setting farcasterUser:', userData);
           setFarcasterUser(userData);
+        } else {
+          console.warn('[WalletButton] No user data in context');
         }
       } catch (error) {
         console.error('[WalletButton] Failed to load Farcaster user:', error);
@@ -104,7 +112,15 @@ export function WalletConnectButton() {
 
   // Use simplified UI for Farcaster context
   if (isFarcasterContext()) {
-    console.log('[WalletButton] Rendering Farcaster UI', { isConnected, address: address?.slice(0, 10), farcasterUser, isManuallyDisconnected });
+    console.log('[WalletButton] Rendering Farcaster UI', { 
+      isConnected, 
+      address: address?.slice(0, 10), 
+      farcasterUser, 
+      isManuallyDisconnected,
+      hasFarcasterData: !!farcasterUser,
+      displayName: farcasterUser?.displayName,
+      username: farcasterUser?.username
+    });
     
     // Показываем кнопку Connect если пользователь вышел вручную
     if (!isConnected || isManuallyDisconnected) {
