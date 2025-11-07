@@ -17,7 +17,7 @@ export function TokenListItem({ address, name, symbol, balance, merchantAddress,
   
   return (
     <div className="flex flex-col gap-3 p-3 rounded-lg bg-gradient-to-r from-primary/5 to-secondary/5 border-2 border-primary/10 hover:border-primary/30 transition-all">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0">
             <Coins className="h-4 w-4 text-primary-foreground" />
@@ -44,7 +44,7 @@ export function TokenListItem({ address, name, symbol, balance, merchantAddress,
           </div>
         </div>
         
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex flex-col items-end gap-2 flex-shrink-0 min-w-[110px]">
           <div className="text-right">
             <p className="text-lg font-bold whitespace-nowrap">
               {parseFloat(balance).toFixed(2)}
@@ -56,9 +56,9 @@ export function TokenListItem({ address, name, symbol, balance, merchantAddress,
             size="sm"
             onClick={onSendClick}
             disabled={isPaused}
-            className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 disabled:opacity-50 h-8 px-2"
+            className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 disabled:opacity-50 h-8 px-3 w-full"
           >
-            <Send className="h-3.5 w-3.5 mr-1" />
+            <Send className="h-3.5 w-3.5 mr-1.5" />
             <span className="text-xs">Send</span>
           </Button>
         </div>
