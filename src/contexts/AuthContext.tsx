@@ -159,6 +159,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     manualSignOutRef.current = false;
   }, []);
 
+  // Проверка и обновление сессии при возвращении пользователя
+  useEffect(() => {
+    if (!isConnected || !address || manualSignOutRef.current) {
+      return;
+    }
+
+    const checkSession = async () => {
+      try {
+        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+        
+        // Если есть ошибка или нет сессии, но кошелек подключен - переподключаемся
+        if (error || !currentSession) {
+          console.log('[AuthProvider] Session expired or invalid, reconnecting...');
+          await signInWithWallet();
+          return;
+        }
+
+        // Проверяем, что профиль соответствует текущему кошельку
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('wallet_address')
+          .eq('wallet_address', address.toLowerCase())
+          .maybeSingle();
+
+        if (!profile && currentSession) {
+          console.log('[AuthProvider] Profile mismatch detected, reconnecting...');
+          await signInWithWallet();
+        }
+      } catch (error) {
+        console.error('[AuthProvider] Session check error:', error);
+      }
+    };
+
+    // Проверяем сессию при монтировании и каждые 30 секунд
+    checkSession();
+    const interval = setInterval(checkSession, 30000);
+
+    return () => clearInterval(interval);
+  }, [isConnected, address, signInWithWallet]);
+
   useEffect(() => {
     // Автоматический вход при подключении кошелька (только если не было ручного выхода)
     if (isConnected && address && !user && !manualSignOutRef.current) {
