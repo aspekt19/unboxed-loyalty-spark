@@ -72,6 +72,16 @@ export function WalletConnectButton() {
     loadFarcasterUser();
   }, []);
   
+  // Эффект для автоматической авторизации при reconnect в Farcaster
+  useEffect(() => {
+    if (isFarcasterContext() && isConnected && address && !isManuallyDisconnected && !user) {
+      console.log('[WalletButton] Farcaster wallet connected and not manually disconnected - signing in');
+      setTimeout(() => {
+        signInWithWallet();
+      }, 300);
+    }
+  }, [isConnected, address, isManuallyDisconnected, user, signInWithWallet]);
+  
   const handleDisconnect = async () => {
     try {
       console.log('[WalletButton] handleDisconnect called');
@@ -91,7 +101,7 @@ export function WalletConnectButton() {
     }
   };
   
-  const handleConnect = () => {
+  const handleConnect = async () => {
     console.log('[WalletButton] Connect wallet clicked');
     
     // Сбрасываем флаг ручного отключения
@@ -102,6 +112,14 @@ export function WalletConnectButton() {
     
     // Подключаем кошелек (в Farcaster контексте это быстро вернет существующее соединение)
     connect({ connector: connectors[0] });
+    
+    // В Farcaster кошелек уже подключен, поэтому явно вызываем signIn
+    if (isFarcasterContext() && isConnected && address) {
+      console.log('[WalletButton] Farcaster context - signing in immediately');
+      setTimeout(() => {
+        signInWithWallet();
+      }, 300);
+    }
   };
 
   // Use simplified UI for Farcaster context (if we have Farcaster user data)
