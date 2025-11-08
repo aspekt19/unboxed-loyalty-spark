@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { TokenList } from './TokenList';
 import { DexIntegration } from './DexIntegration';
 import { RewardsSelection } from './rewards/RewardsSelection';
@@ -12,6 +13,7 @@ import { Wallet } from 'lucide-react';
 
 export function CustomerPanel() {
   const { address } = useAccount();
+  const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
 
   if (!address) {
     return (
@@ -30,9 +32,14 @@ export function CustomerPanel() {
       
       <PersonalizedOffers />
       
-      <CustomerTiersSection />
-      
-      <TokenList />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <TokenList 
+          selectedProgram={selectedProgram}
+          onProgramSelect={setSelectedProgram}
+        />
+        
+        <CustomerTiersSection selectedProgram={selectedProgram} />
+      </div>
       
       <RewardsSelection />
       

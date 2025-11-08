@@ -10,13 +10,20 @@ interface TokenListItemProps {
   balance: string;
   merchantAddress?: string;
   onSendClick: () => void;
+  onClick?: () => void;
+  selected?: boolean;
 }
 
-export function TokenListItem({ address, name, symbol, balance, merchantAddress, onSendClick }: TokenListItemProps) {
+export function TokenListItem({ address, name, symbol, balance, merchantAddress, onSendClick, onClick, selected }: TokenListItemProps) {
   const { isPaused } = useCheckProgramStatus(address as `0x${string}`);
   
   return (
-    <div className="p-4 rounded-lg border bg-gradient-to-br from-card to-muted/30 space-y-3">
+    <div 
+      className={`p-4 rounded-lg border bg-gradient-to-br from-card to-muted/30 space-y-3 transition-all ${
+        onClick ? 'cursor-pointer hover:border-primary/50 hover:shadow-md' : ''
+      } ${selected ? 'border-primary border-2 shadow-lg' : ''}`}
+      onClick={onClick}
+    >
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-2 flex-wrap">
@@ -53,7 +60,10 @@ export function TokenListItem({ address, name, symbol, balance, merchantAddress,
         
         <Button
           size="sm"
-          onClick={onSendClick}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSendClick();
+          }}
           disabled={isPaused}
           className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 disabled:opacity-50 h-9 w-full"
         >
