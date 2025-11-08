@@ -29,7 +29,7 @@ import PageTransition from '@/components/PageTransition';
 export default function DashboardPage() {
   const { isConnected } = useAccount();
   const { isContractReady, userBalance } = useRoundUpVault();
-  const { balance: lspBalance } = useTokenBalance();
+  const { balance: loyalBalance } = useTokenBalance();
   const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
 
   // Parse balances from contract
@@ -40,7 +40,10 @@ export default function DashboardPage() {
   // Mock data for demo
   const currentStreak = 7;
   const totalRoundUps = 142;
-  const lspEarned = Number(lspBalance);
+  const loyalEarned = Number(loyalBalance);
+  
+  // DeFi yields earned (calculated from invested amount)
+  const defiYieldEarned = totalInvested * 0.04; // 4% APY example
 
   const savingsGoals = [
     { id: '1', name: 'Emergency Fund', target: 1000, current: 340, icon: Shield, color: 'bg-blue-500' },
@@ -52,14 +55,14 @@ export default function DashboardPage() {
     { id: '1', name: 'First Save', description: 'Complete your first round-up', earned: true, icon: Star },
     { id: '2', name: '7 Day Streak', description: 'Save for 7 days in a row', earned: currentStreak >= 7, icon: Flame },
     { id: '3', name: '100 Round-Ups', description: 'Complete 100 round-ups', earned: totalRoundUps >= 100, icon: Zap },
-    { id: '4', name: '$500 Saved', description: 'Save $500 total', earned: totalSaved * 3400 >= 500, icon: Trophy },
+    { id: '4', name: 'Investor', description: 'Start earning DeFi yields', earned: totalInvested > 0, icon: Trophy },
   ];
 
   const recentActivity = [
     { date: '2 hours ago', description: 'Round-up saved', amount: '+$0.47', type: 'roundup' },
     { date: '5 hours ago', description: 'DeFi yield earned', amount: '+$0.12', type: 'yield' },
     { date: '1 day ago', description: 'Round-up saved', amount: '+$0.83', type: 'roundup' },
-    { date: '1 day ago', description: 'LSP rewards earned', amount: '+2.5 LSP', type: 'reward' },
+    { date: '2 days ago', description: 'DeFi yield earned', amount: '+$0.08', type: 'yield' },
   ];
 
   return (
@@ -85,11 +88,22 @@ export default function DashboardPage() {
 
         <div className="container max-w-7xl mx-auto py-8 px-4">
           {/* Welcome Section */}
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2">Welcome Back! 👋</h1>
-            <p className="text-muted-foreground">
-              You're building wealth one transaction at a time
-            </p>
+          <div className="mb-8 flex justify-between items-start">
+            <div>
+              <h1 className="text-4xl font-bold mb-2">Welcome Back! 👋</h1>
+              <p className="text-muted-foreground">
+                You're building wealth one transaction at a time
+              </p>
+            </div>
+            {isConnected && loyalEarned > 0 && (
+              <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20 rounded-lg">
+                <Sparkles className="h-5 w-5 text-purple-600" />
+                <div>
+                  <p className="text-xs text-muted-foreground">LOYAL Balance</p>
+                  <p className="text-lg font-bold">{loyalEarned.toFixed(1)}</p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Wallet Connection Prompt */}
@@ -145,16 +159,16 @@ export default function DashboardPage() {
             <Card>
               <CardHeader className="pb-3">
                 <CardDescription className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4" />
-                  LSP Rewards
+                  <TrendingUp className="h-4 w-4" />
+                  DeFi Yield
                 </CardDescription>
-                <CardTitle className="text-4xl">
-                  {isConnected ? lspEarned.toFixed(1) : '0'}
+                <CardTitle className="text-4xl text-green-600">
+                  ${isConnected ? (defiYieldEarned * 3400).toFixed(2) : '0.00'}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-xs text-muted-foreground">
-                  ≈ ${(lspEarned * 0.05).toFixed(2)}
+                  From your investments
                 </p>
               </CardContent>
             </Card>
@@ -267,16 +281,20 @@ export default function DashboardPage() {
                       </div>
                     </div>
 
-                    <div className="pt-4 border-t border-border">
+                    <div className="pt-4 border-t border-border space-y-3">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">Total Invested</span>
                         <span className="font-semibold">${(totalInvested * 3400).toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between items-center mt-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">DeFi Yield Earned</span>
+                        <span className="font-semibold text-green-600">+${(defiYieldEarned * 3400).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">Pending Round-Up</span>
                         <span className="font-semibold">${(pendingRoundUp * 3400).toFixed(2)}</span>
                       </div>
-                      <Button className="w-full mt-4" size="lg" disabled={!isConnected || pendingRoundUp === 0}>
+                      <Button className="w-full mt-2" size="lg" disabled={!isConnected || pendingRoundUp === 0}>
                         Invest Pending Round-Up
                       </Button>
                     </div>
@@ -388,8 +406,29 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
 
+              {/* Bonus Features */}
+              {loyalEarned > 0 && (
+                <Card className="bg-gradient-to-br from-purple-500/10 to-blue-500/10 border-2 border-purple-500/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Sparkles className="h-5 w-5" />
+                      LOYAL Rewards
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center mb-4">
+                      <p className="text-3xl font-bold">{loyalEarned.toFixed(1)}</p>
+                      <p className="text-sm text-muted-foreground">Bonus tokens earned</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Coming soon: Use LOYAL for premium features, governance, and special perks!
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Social Challenge */}
-              <Card className="bg-gradient-to-br from-purple-500/10 to-blue-500/10 border-2 border-purple-500/20">
+              <Card className="bg-gradient-to-br from-green-500/10 to-blue-500/10 border-2 border-green-500/20">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-base">
                     <Users className="h-5 w-5" />

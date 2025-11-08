@@ -109,7 +109,7 @@ const Index = () => {
                 {[
                   { icon: Zap, title: 'Auto Round-Up', description: 'Every transaction saves for you' },
                   { icon: TrendingUp, title: 'Auto Invest', description: 'Savings grow in DeFi protocols' },
-                  { icon: Shield, title: 'Earn Rewards', description: 'Get LSP tokens for every save' },
+                  { icon: Shield, title: 'DeFi Yields', description: 'Earn returns on your savings' },
                   { icon: Globe, title: 'Track Goals', description: 'Visual progress & achievements' }
                 ].map((feature) => (
                   <div 
