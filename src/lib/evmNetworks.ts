@@ -1,5 +1,5 @@
 import { Chain } from "viem";
-import { mainnet, base, polygon, arbitrum, optimism, bsc, avalanche } from "viem/chains";
+import { mainnet, base, baseSepolia, polygon, arbitrum, optimism, bsc, avalanche } from "viem/chains";
 
 export interface CustomChain extends Chain {
   iconUrl?: string;
@@ -9,6 +9,10 @@ export interface CustomChain extends Chain {
  * Предустановленные EVM сети
  */
 export const DEFAULT_NETWORKS: CustomChain[] = [
+  {
+    ...baseSepolia,
+    iconUrl: "https://avatars.githubusercontent.com/u/108554348?s=280&v=4",
+  },
   {
     ...base,
     iconUrl: "https://avatars.githubusercontent.com/u/108554348?s=280&v=4",
@@ -51,7 +55,7 @@ export function saveSelectedNetwork(chainId: number) {
  */
 export function getSelectedNetwork(): number {
   const saved = localStorage.getItem('selected_network');
-  return saved ? parseInt(saved) : base.id;
+  return saved ? parseInt(saved) : baseSepolia.id;
 }
 
 /**

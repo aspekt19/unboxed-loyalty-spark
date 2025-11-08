@@ -3,7 +3,7 @@ import { useWriteContract, useWaitForTransactionReceipt, useAccount, useConfig }
 import { parseEther } from 'viem';
 import { toast } from 'sonner';
 import { ROUND_UP_CONFIG, ROUND_UP_VAULT_ABI } from '@/config/roundup';
-import { base } from 'wagmi/chains';
+import { baseSepolia } from 'wagmi/chains';
 
 /**
  * Hook для выполнения Round-Up транзакций
@@ -61,7 +61,7 @@ export function useRoundUp() {
         args: [primaryTxValueUSD],
         value: roundUpValue,
         account: address,
-        chain: base,
+        chain: baseSepolia,
       });
 
       toast.info('Please confirm transaction in your wallet...');
@@ -73,7 +73,7 @@ export function useRoundUp() {
         args: [primaryTxValueUSD],
         value: roundUpValue,
         account: address,
-        chain: base,
+        chain: baseSepolia,
       } as any);
 
       return true;
