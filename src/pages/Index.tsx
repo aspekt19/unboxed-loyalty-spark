@@ -61,9 +61,7 @@ const Index = () => {
             </div>
             
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-[1.1] tracking-tight text-balance">
-              Discover loyalty
-              <br />
-              rewards reimagined.
+              Discover loyalty rewards reimagined.
             </h1>
             
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-12">
