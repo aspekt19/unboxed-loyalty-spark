@@ -37,7 +37,7 @@ interface IInvestmentStrategy {
 contract RoundUpVault {
     // Constants
     uint256 public constant USD_DECIMALS = 8;
-    uint256 public constant MIN_ROUND_UP = 0.01 ether;
+    uint256 public constant MIN_ROUND_UP = 0.0001 ether; // ~$0.34 at $3400/ETH
     uint256 public constant MAX_DAILY_ROUND_UP = 1 ether;
     uint256 public constant ONE_DAY = 1 days;
     
