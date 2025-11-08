@@ -20,6 +20,17 @@ interface AggregatorV3Interface {
 }
 
 /**
+ * @title IERC20
+ * @notice Interface for ERC20 tokens
+ */
+interface IERC20 {
+    function transfer(address to, uint256 amount) external returns (bool);
+    function transferFrom(address from, address to, uint256 amount) external returns (bool);
+    function balanceOf(address account) external view returns (uint256);
+    function decimals() external view returns (uint8);
+}
+
+/**
  * @title IInvestmentStrategy
  * @notice Interface for investment strategy contracts
  */
@@ -37,13 +48,19 @@ interface IInvestmentStrategy {
 contract RoundUpVault {
     // Constants
     uint256 public constant USD_DECIMALS = 8;
-    uint256 public constant MIN_ROUND_UP = 0.0001 ether; // ~$0.34 at $3400/ETH
-    uint256 public constant MAX_DAILY_ROUND_UP = 1 ether;
-    uint256 public constant ONE_DAY = 1 days;
     
     address public owner;
     IInvestmentStrategy public strategy;
-    AggregatorV3Interface public priceFeed;
+    
+    // Supported tokens with their price feeds
+    struct TokenInfo {
+        address priceFeed;
+        bool isSupported;
+        uint8 decimals;
+    }
+    
+    mapping(address => TokenInfo) public supportedTokens;
+    address public constant NATIVE_TOKEN = address(0); // ETH
     
     enum Strategy {
         AAVE_CONSERVATIVE
@@ -52,9 +69,6 @@ contract RoundUpVault {
     struct UserSettings {
         bool autoInvest;
         uint256 roundUpMultiplier;
-        uint256 dailyLimit;
-        uint256 lastResetTime;
-        uint256 dailySpent;
     }
     
     struct UserBalance {
@@ -62,93 +76,164 @@ contract RoundUpVault {
         uint256 invested;
     }
     
+    struct TokenBalance {
+        mapping(address => uint256) pendingRoundUp;
+        mapping(address => uint256) invested;
+    }
+    
     mapping(address => UserSettings) public userSettings;
     mapping(address => UserBalance) public userBalances;
+    mapping(address => TokenBalance) private userTokenBalances;
     
-    event SettingsUpdated(address indexed user, bool autoInvest, uint256 roundUpMultiplier, uint256 dailyLimit);
-    event RoundUpCollected(address indexed user, uint256 roundUpAmount, uint256 primaryTxValue);
+    event SettingsUpdated(address indexed user, bool autoInvest, uint256 roundUpMultiplier);
+    event RoundUpCollected(address indexed user, address indexed token, uint256 roundUpAmount, uint256 primaryTxValue);
     event Invested(address indexed user, uint256 amount, uint256 investedValue);
     event Withdrawn(address indexed user, uint256 amount, uint256 ethReturned);
     event StrategyUpdated(address indexed newStrategy);
+    event TokenAdded(address indexed token, address indexed priceFeed);
+    event TokenRemoved(address indexed token);
     
     modifier onlyOwner() {
         require(msg.sender == owner, "Not owner");
         _;
     }
     
-    constructor(address _priceFeed, address _strategy) {
+    constructor(address _ethPriceFeed, address _strategy) {
         owner = msg.sender;
-        priceFeed = AggregatorV3Interface(_priceFeed);
         strategy = IInvestmentStrategy(_strategy);
+        
+        // Add ETH as default supported token
+        supportedTokens[NATIVE_TOKEN] = TokenInfo({
+            priceFeed: _ethPriceFeed,
+            isSupported: true,
+            decimals: 18
+        });
+    }
+    
+    /**
+     * @notice Add support for a new token
+     * @param _token Token address (use address(0) for native ETH)
+     * @param _priceFeed Chainlink price feed address for the token
+     */
+    function addSupportedToken(address _token, address _priceFeed) external onlyOwner {
+        require(_priceFeed != address(0), "Invalid price feed");
+        
+        uint8 decimals = 18;
+        if (_token != NATIVE_TOKEN) {
+            decimals = IERC20(_token).decimals();
+        }
+        
+        supportedTokens[_token] = TokenInfo({
+            priceFeed: _priceFeed,
+            isSupported: true,
+            decimals: decimals
+        });
+        
+        emit TokenAdded(_token, _priceFeed);
+    }
+    
+    /**
+     * @notice Remove support for a token
+     * @param _token Token address to remove
+     */
+    function removeSupportedToken(address _token) external onlyOwner {
+        require(_token != NATIVE_TOKEN, "Cannot remove native token");
+        supportedTokens[_token].isSupported = false;
+        emit TokenRemoved(_token);
     }
     
     function initializeSettings() external {
-        require(userSettings[msg.sender].dailyLimit == 0, "Already initialized");
+        require(userSettings[msg.sender].roundUpMultiplier == 0, "Already initialized");
         
         userSettings[msg.sender] = UserSettings({
             autoInvest: true,
-            roundUpMultiplier: 1,
-            dailyLimit: MAX_DAILY_ROUND_UP,
-            lastResetTime: block.timestamp,
-            dailySpent: 0
+            roundUpMultiplier: 1
         });
         
-        emit SettingsUpdated(msg.sender, true, 1, MAX_DAILY_ROUND_UP);
+        emit SettingsUpdated(msg.sender, true, 1);
     }
     
     function updateSettings(
         bool _autoInvest,
-        uint256 _roundUpMultiplier,
-        uint256 _dailyLimit
+        uint256 _roundUpMultiplier
     ) external {
         require(_roundUpMultiplier > 0 && _roundUpMultiplier <= 10, "Invalid multiplier");
-        require(_dailyLimit >= MIN_ROUND_UP && _dailyLimit <= MAX_DAILY_ROUND_UP, "Invalid limit");
         
         UserSettings storage settings = userSettings[msg.sender];
         settings.autoInvest = _autoInvest;
         settings.roundUpMultiplier = _roundUpMultiplier;
-        settings.dailyLimit = _dailyLimit;
         
-        emit SettingsUpdated(msg.sender, _autoInvest, _roundUpMultiplier, _dailyLimit);
+        emit SettingsUpdated(msg.sender, _autoInvest, _roundUpMultiplier);
     }
     
-    function getEthPrice() public view returns (uint256) {
+    /**
+     * @notice Get token price from Chainlink
+     * @param _token Token address (use address(0) for ETH)
+     */
+    function getTokenPrice(address _token) public view returns (uint256) {
+        require(supportedTokens[_token].isSupported, "Token not supported");
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(supportedTokens[_token].priceFeed);
         (, int256 price, , ,) = priceFeed.latestRoundData();
         require(price > 0, "Invalid price");
         return uint256(price);
     }
     
-    function calculateRoundUp(uint256 _ethAmount) public view returns (uint256) {
-        uint256 ethPrice = getEthPrice();
-        uint256 purchaseValueUSD = (_ethAmount * ethPrice) / (10 ** 18);
+    /**
+     * @notice Calculate round-up amount for any token
+     * @param _token Token address (use address(0) for ETH)
+     * @param _tokenAmount Amount of tokens
+     */
+    function calculateRoundUp(address _token, uint256 _tokenAmount) public view returns (uint256) {
+        require(supportedTokens[_token].isSupported, "Token not supported");
+        
+        uint256 tokenPrice = getTokenPrice(_token);
+        uint8 tokenDecimals = supportedTokens[_token].decimals;
+        
+        uint256 purchaseValueUSD = (_tokenAmount * tokenPrice) / (10 ** tokenDecimals);
         uint256 nextDollar = ((purchaseValueUSD / (10 ** USD_DECIMALS)) + 1) * (10 ** USD_DECIMALS);
         uint256 roundUpUSD = nextDollar - purchaseValueUSD;
-        uint256 roundUpETH = (roundUpUSD * (10 ** 18)) / ethPrice;
+        uint256 roundUpTokens = (roundUpUSD * (10 ** tokenDecimals)) / tokenPrice;
         
-        return roundUpETH;
+        return roundUpTokens;
     }
     
+    /**
+     * @notice Round-up ETH transaction
+     * @param _primaryTxValueUSD Original transaction value in USD (scaled by 100, e.g., $3.40 = 340)
+     */
     function roundUp(uint256 _primaryTxValueUSD) external payable {
-        require(msg.value >= MIN_ROUND_UP, "Round-up too small");
+        require(msg.value > 0, "Amount must be > 0");
         
         UserSettings storage settings = userSettings[msg.sender];
-        
-        if (block.timestamp >= settings.lastResetTime + ONE_DAY) {
-            settings.dailySpent = 0;
-            settings.lastResetTime = block.timestamp;
-        }
-        
         uint256 effectiveRoundUp = msg.value * settings.roundUpMultiplier;
-        require(settings.dailySpent + effectiveRoundUp <= settings.dailyLimit, "Daily limit exceeded");
         
-        settings.dailySpent += effectiveRoundUp;
         userBalances[msg.sender].pendingRoundUp += msg.value;
+        userTokenBalances[msg.sender].pendingRoundUp[NATIVE_TOKEN] += msg.value;
         
-        emit RoundUpCollected(msg.sender, msg.value, _primaryTxValueUSD);
+        emit RoundUpCollected(msg.sender, NATIVE_TOKEN, msg.value, _primaryTxValueUSD);
         
-        if (settings.autoInvest && userBalances[msg.sender].pendingRoundUp >= MIN_ROUND_UP) {
+        if (settings.autoInvest && userBalances[msg.sender].pendingRoundUp > 0) {
             _invest(msg.sender);
         }
+    }
+    
+    /**
+     * @notice Round-up ERC20 token transaction
+     * @param _token Token address
+     * @param _amount Round-up amount in tokens
+     * @param _primaryTxValueUSD Original transaction value in USD
+     */
+    function roundUpToken(address _token, uint256 _amount, uint256 _primaryTxValueUSD) external {
+        require(_token != NATIVE_TOKEN, "Use roundUp for ETH");
+        require(supportedTokens[_token].isSupported, "Token not supported");
+        require(_amount > 0, "Amount must be > 0");
+        
+        // Transfer tokens from user to contract
+        require(IERC20(_token).transferFrom(msg.sender, address(this), _amount), "Transfer failed");
+        
+        userTokenBalances[msg.sender].pendingRoundUp[_token] += _amount;
+        
+        emit RoundUpCollected(msg.sender, _token, _amount, _primaryTxValueUSD);
     }
     
     function invest() external {
@@ -180,6 +265,30 @@ contract RoundUpVault {
         require(success, "ETH transfer failed");
         
         emit Withdrawn(msg.sender, _amount, ethReturned);
+    }
+    
+    /**
+     * @notice Withdraw pending ERC20 tokens (not invested yet)
+     * @param _token Token address
+     * @param _amount Amount to withdraw
+     */
+    function withdrawToken(address _token, uint256 _amount) external {
+        require(_token != NATIVE_TOKEN, "Use withdraw for ETH");
+        require(_amount > 0, "Amount must be > 0");
+        require(userTokenBalances[msg.sender].pendingRoundUp[_token] >= _amount, "Insufficient balance");
+        
+        userTokenBalances[msg.sender].pendingRoundUp[_token] -= _amount;
+        
+        require(IERC20(_token).transfer(msg.sender, _amount), "Transfer failed");
+    }
+    
+    /**
+     * @notice Get user's pending token balance
+     * @param _user User address
+     * @param _token Token address
+     */
+    function getUserTokenBalance(address _user, address _token) external view returns (uint256) {
+        return userTokenBalances[_user].pendingRoundUp[_token];
     }
     
     function getUserInvestmentValue(address _user) external view returns (uint256) {
