@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useConfig } from 'wagmi';
 import { Loader2, Zap, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { parseEther } from 'viem';
+import { parseEther, formatEther } from 'viem';
 import { getEthPrice, ethToUsd, roundUpUsd, usdToEth } from '@/lib/ethPrice';
 import { ROUND_UP_CONFIG, ROUND_UP_VAULT_ABI } from '@/config/roundup';
 
@@ -47,6 +47,9 @@ export function MetaMaskRoundUpTest() {
       const roundUpEth = usdToEth(roundUpUsdAmount, ethPrice);
       const roundUpValueWei = parseEther(roundUpEth);
       
+      // Calculate TOTAL value to send (original + roundUp)
+      const totalValueWei = originalValueWei + roundUpValueWei;
+      
       // Show round-up info
       toast.info(
         `Round-Up Applied: +$${roundUpUsdAmount.toFixed(2)} (+${roundUpEth} ETH)`,
@@ -59,43 +62,38 @@ export function MetaMaskRoundUpTest() {
       console.log('Round-Up Transaction:', {
         originalETH: amount,
         roundUpETH: roundUpEth,
+        totalETH: formatEther(totalValueWei),
         originalUSD: usdAmount.toFixed(2),
         roundedUSD: roundedUsd.toFixed(2),
         roundUpUSD: roundUpUsdAmount.toFixed(2),
+        originalValueWei: originalValueWei.toString(),
         roundUpValueWei: roundUpValueWei.toString(),
+        totalValueWei: totalValueWei.toString(),
+        recipient,
       });
       
-      // Step 1: Send primary transaction to recipient
-      if (!recipient || recipient.length !== 42) {
+      // Validate recipient address
+      if (!recipient || recipient.length !== 42 || !recipient.startsWith('0x')) {
         toast.error('Invalid recipient address');
         return;
       }
       
-      toast.info('Step 1: Sending primary transaction to recipient...');
-      
-      const primaryTx = await window.ethereum.request({
-        method: 'eth_sendTransaction',
-        params: [{
-          from: address,
-          to: recipient,
-          value: originalValueWei.toString(16),
-        }],
-      });
-      
-      console.log('Primary transaction sent:', primaryTx);
-      
-      toast.success('Primary transaction sent! Now sending round-up...');
-      
-      // Step 2: Call RoundUpVault contract with ONLY the round-up difference
-      // USD amount with 2 decimals (e.g., 3.40 becomes 340)
+      // Call RoundUpVault contract with roundUpWithTransfer
+      // This function automatically:
+      // 1. Sends primary amount to recipient
+      // 2. Keeps round-up in contract for investing
       const usdAmountScaled = BigInt(Math.floor(usdAmount * 100));
       
       writeContract({
         address: ROUND_UP_CONFIG.VAULT_ADDRESS as `0x${string}`,
         abi: ROUND_UP_VAULT_ABI,
-        functionName: 'roundUp',
-        args: [usdAmountScaled],
-        value: roundUpValueWei, // Send ONLY the round-up difference!
+        functionName: 'roundUpWithTransfer',
+        args: [
+          recipient as `0x${string}`,  // Recipient address
+          originalValueWei,             // Primary amount in wei
+          usdAmountScaled               // USD for statistics
+        ],
+        value: totalValueWei,           // Total: primary + roundUp
         account: address,
         chain: chain,
       });
@@ -133,12 +131,13 @@ export function MetaMaskRoundUpTest() {
       <CardContent className="space-y-4">
         {/* Info Banner */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
-          <p className="text-sm font-semibold text-blue-900">💡 How it works:</p>
+          <p className="text-sm font-semibold text-blue-900">💡 How it works (ONE transaction!):</p>
           <ol className="text-xs text-blue-800 space-y-1 list-decimal list-inside">
             <li>Enter an amount in ETH below (e.g., 0.001 ETH ≈ $3.41)</li>
             <li>We calculate the round-up to nearest dollar ($4.00)</li>
-            <li>The transaction is sent to the RoundUpVault contract</li>
-            <li>Your round-up ($0.59) is tracked and invested automatically!</li>
+            <li>ONE transaction automatically splits the payment:</li>
+            <li className="ml-6">• Original amount → Recipient</li>
+            <li className="ml-6">• Round-up ($0.59) → RoundUpVault for investing</li>
           </ol>
         </div>
 
@@ -220,10 +219,10 @@ export function MetaMaskRoundUpTest() {
         )}
 
         {/* Additional Info */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-          <p className="text-xs text-yellow-800">
-            <strong>Note:</strong> The transaction calls the RoundUpVault smart contract which automatically 
-            calculates and stores your round-up amount for investment.
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+          <p className="text-xs text-green-800">
+            <strong>⭐ New feature:</strong> One transaction automatically splits your payment! 
+            The recipient gets the original amount, and the round-up goes to your investment vault.
           </p>
         </div>
       </CardContent>
