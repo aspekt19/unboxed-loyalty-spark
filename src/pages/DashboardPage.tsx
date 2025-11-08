@@ -5,17 +5,10 @@ import { Badge } from '@/components/ui/badge';
 import { 
   TrendingUp, 
   ArrowLeft, 
-  Target, 
-  Trophy, 
   Zap, 
-  TrendingDown,
-  Flame,
-  Star,
-  Gift,
-  Users,
   DollarSign,
   Sparkles,
-  Shield
+  Globe
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { WalletConnectButton } from '@/components/WalletConnectButton';
@@ -30,40 +23,21 @@ export default function DashboardPage() {
   const { isConnected } = useAccount();
   const { isContractReady, userBalance } = useRoundUpVault();
   const { balance: loyalBalance } = useTokenBalance();
-  const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
 
   // Parse balances from contract
   const pendingRoundUp = userBalance ? Number(formatEther(userBalance[0] || 0n)) : 0;
   const totalInvested = userBalance ? Number(formatEther(userBalance[1] || 0n)) : 0;
   const totalSaved = pendingRoundUp + totalInvested;
-
-  // Mock data for demo
-  const currentStreak = 7;
-  const totalRoundUps = 142;
   const loyalEarned = Number(loyalBalance);
   
-  // DeFi yields earned (calculated from invested amount)
-  const defiYieldEarned = totalInvested * 0.04; // 4% APY example
-
-  const savingsGoals = [
-    { id: '1', name: 'Emergency Fund', target: 1000, current: 340, icon: Shield, color: 'bg-blue-500' },
-    { id: '2', name: 'Vacation', target: 2000, current: 680, icon: Gift, color: 'bg-purple-500' },
-    { id: '3', name: 'New Phone', target: 800, current: 120, icon: Sparkles, color: 'bg-green-500' },
-  ];
-
-  const achievements = [
-    { id: '1', name: 'First Save', description: 'Complete your first round-up', earned: true, icon: Star },
-    { id: '2', name: '7 Day Streak', description: 'Save for 7 days in a row', earned: currentStreak >= 7, icon: Flame },
-    { id: '3', name: '100 Round-Ups', description: 'Complete 100 round-ups', earned: totalRoundUps >= 100, icon: Zap },
-    { id: '4', name: 'Investor', description: 'Start earning DeFi yields', earned: totalInvested > 0, icon: Trophy },
-  ];
-
-  const recentActivity = [
-    { date: '2 hours ago', description: 'Round-up saved', amount: '+$0.47', type: 'roundup' },
-    { date: '5 hours ago', description: 'DeFi yield earned', amount: '+$0.12', type: 'yield' },
-    { date: '1 day ago', description: 'Round-up saved', amount: '+$0.83', type: 'roundup' },
-    { date: '2 days ago', description: 'DeFi yield earned', amount: '+$0.08', type: 'yield' },
-  ];
+  // DeFi yields earned (calculated from invested amount, 4% APY)
+  const defiYieldEarned = totalInvested * 0.04;
+  
+  // ETH price for USD conversion
+  const ETH_PRICE = 3400;
+  
+  // Check if user has any activity
+  const hasActivity = totalSaved > 0 || loyalEarned > 0;
 
   return (
     <PageTransition>
@@ -88,22 +62,18 @@ export default function DashboardPage() {
 
         <div className="container max-w-7xl mx-auto py-8 px-4">
           {/* Welcome Section */}
-          <div className="mb-8 flex justify-between items-start">
-            <div>
-              <h1 className="text-4xl font-bold mb-2">Welcome Back! 👋</h1>
-              <p className="text-muted-foreground">
-                You're building wealth one transaction at a time
-              </p>
-            </div>
-            {isConnected && loyalEarned > 0 && (
-              <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20 rounded-lg">
-                <Sparkles className="h-5 w-5 text-purple-600" />
-                <div>
-                  <p className="text-xs text-muted-foreground">LOYAL Balance</p>
-                  <p className="text-lg font-bold">{loyalEarned.toFixed(1)}</p>
-                </div>
-              </div>
-            )}
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold mb-2">
+              {isConnected ? 'Welcome Back!' : 'Get Started'} 👋
+            </h1>
+            <p className="text-muted-foreground">
+              {isConnected 
+                ? hasActivity 
+                  ? "You're building wealth one transaction at a time"
+                  : "Start your savings journey with your first transaction"
+                : "Connect your wallet to begin saving automatically"
+              }
+            </p>
           </div>
 
           {/* Wallet Connection Prompt */}
@@ -121,7 +91,7 @@ export default function DashboardPage() {
           )}
 
           {/* Stats Overview */}
-          <div className="grid md:grid-cols-4 gap-6 mb-8">
+          <div className="grid md:grid-cols-3 gap-6 mb-8">
             <Card className="border-2">
               <CardHeader className="pb-3">
                 <CardDescription className="flex items-center gap-2">
@@ -129,29 +99,15 @@ export default function DashboardPage() {
                   Total Saved
                 </CardDescription>
                 <CardTitle className="text-4xl">
-                  ${isConnected ? (totalSaved * 3400).toFixed(2) : '0.00'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-xs text-green-600 font-medium">
-                  +12.5% this month
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardDescription className="flex items-center gap-2">
-                  <Flame className="h-4 w-4" />
-                  Current Streak
-                </CardDescription>
-                <CardTitle className="text-4xl">
-                  {isConnected ? currentStreak : 0} days
+                  ${isConnected ? (totalSaved * ETH_PRICE).toFixed(2) : '0.00'}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-xs text-muted-foreground">
-                  Keep it up! 🔥
+                  {isConnected && totalSaved > 0 
+                    ? `${totalSaved.toFixed(6)} ETH`
+                    : 'Start saving to see your progress'
+                  }
                 </p>
               </CardContent>
             </Card>
@@ -160,32 +116,35 @@ export default function DashboardPage() {
               <CardHeader className="pb-3">
                 <CardDescription className="flex items-center gap-2">
                   <TrendingUp className="h-4 w-4" />
+                  Pending Round-Up
+                </CardDescription>
+                <CardTitle className="text-4xl text-blue-600">
+                  ${isConnected ? (pendingRoundUp * ETH_PRICE).toFixed(2) : '0.00'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">
+                  {isConnected && pendingRoundUp > 0
+                    ? 'Ready to invest'
+                    : 'Waiting for round-ups'
+                  }
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardDescription className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4" />
                   DeFi Yield
                 </CardDescription>
                 <CardTitle className="text-4xl text-green-600">
-                  ${isConnected ? (defiYieldEarned * 3400).toFixed(2) : '0.00'}
+                  ${isConnected ? (defiYieldEarned * ETH_PRICE).toFixed(2) : '0.00'}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-xs text-muted-foreground">
-                  From your investments
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardDescription className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" />
-                  Total Round-Ups
-                </CardDescription>
-                <CardTitle className="text-4xl">
-                  {isConnected ? totalRoundUps : 0}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-xs text-muted-foreground">
-                  Auto-saved moments
+                  {totalInvested > 0 ? '~4% APY' : 'Start investing to earn'}
                 </p>
               </CardContent>
             </Card>
@@ -194,219 +153,239 @@ export default function DashboardPage() {
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Savings Goals */}
+              {/* Quick Actions */}
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        <Target className="h-5 w-5" />
-                        Savings Goals
-                      </CardTitle>
-                      <CardDescription>Track your progress towards your goals</CardDescription>
-                    </div>
-                    <Button variant="outline" size="sm">
-                      + New Goal
-                    </Button>
-                  </div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Zap className="h-5 w-5" />
+                    Quick Actions
+                  </CardTitle>
+                  <CardDescription>Test and manage your savings</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  {savingsGoals.map((goal) => {
-                    const progress = (goal.current / goal.target) * 100;
-                    return (
-                      <div key={goal.id} className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-xl ${goal.color} flex items-center justify-center`}>
-                              <goal.icon className="h-5 w-5 text-white" />
-                            </div>
-                            <div>
-                              <h4 className="font-semibold">{goal.name}</h4>
-                              <p className="text-sm text-muted-foreground">
-                                ${goal.current} of ${goal.target}
-                              </p>
-                            </div>
-                          </div>
-                          <span className="text-sm font-medium text-muted-foreground">
-                            {progress.toFixed(0)}%
-                          </span>
+                <CardContent className="grid sm:grid-cols-2 gap-4">
+                  <Link to="/roundup-test" className="block">
+                    <div className="p-4 border-2 border-primary/20 rounded-lg hover:border-primary/40 transition-all bg-gradient-to-br from-primary/5 to-transparent cursor-pointer">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                          <Zap className="h-5 w-5 text-primary" />
                         </div>
-                        <Progress value={progress} className="h-2" />
+                        <h4 className="font-semibold">Test Round-Up</h4>
                       </div>
-                    );
-                  })}
+                      <p className="text-sm text-muted-foreground">
+                        Try automatic transaction rounding
+                      </p>
+                    </div>
+                  </Link>
+
+                  <Link to="/wallet" className="block">
+                    <div className="p-4 border-2 border-border rounded-lg hover:border-border/60 transition-all cursor-pointer">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center">
+                          <DollarSign className="h-5 w-5 text-foreground" />
+                        </div>
+                        <h4 className="font-semibold">Manage Wallet</h4>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        View balances and transactions
+                      </p>
+                    </div>
+                  </Link>
                 </CardContent>
               </Card>
 
-              {/* Investment Breakdown */}
+              {/* Investment Portfolio */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="h-5 w-5" />
-                    Investment Breakdown
-                  </CardTitle>
-                  <CardDescription>Your DeFi portfolio performance</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-secondary/20 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                          <span className="text-lg">🏦</span>
-                        </div>
-                        <div>
-                          <h4 className="font-semibold">Aave</h4>
-                          <p className="text-sm text-muted-foreground">Conservative</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold">${(totalInvested * 3400 * 0.7).toFixed(2)}</p>
-                        <p className="text-sm text-green-600">+3.2% APY</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between p-4 bg-secondary/20 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                          <span className="text-lg">🌙</span>
-                        </div>
-                        <div>
-                          <h4 className="font-semibold">Moonwell</h4>
-                          <p className="text-sm text-muted-foreground">Balanced</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold">${(totalInvested * 3400 * 0.3).toFixed(2)}</p>
-                        <p className="text-sm text-green-600">+5.8% APY</p>
-                      </div>
-                    </div>
-
-                    <div className="pt-4 border-t border-border space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Total Invested</span>
-                        <span className="font-semibold">${(totalInvested * 3400).toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">DeFi Yield Earned</span>
-                        <span className="font-semibold text-green-600">+${(defiYieldEarned * 3400).toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Pending Round-Up</span>
-                        <span className="font-semibold">${(pendingRoundUp * 3400).toFixed(2)}</span>
-                      </div>
-                      <Button className="w-full mt-2" size="lg" disabled={!isConnected || pendingRoundUp === 0}>
-                        Invest Pending Round-Up
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Test Round-Up */}
-              <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Zap className="h-5 w-5" />
-                    Try Round-Up Now
+                    Investment Portfolio
                   </CardTitle>
                   <CardDescription>
-                    Test automatic transaction rounding in action
+                    {totalInvested > 0 
+                      ? 'Your DeFi portfolio performance'
+                      : 'Start investing to see your portfolio'
+                    }
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Link to="/roundup-test">
-                    <Button className="w-full" size="lg">
-                      Test Auto Round-Up →
-                    </Button>
-                  </Link>
+                  {totalInvested > 0 ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-4 bg-secondary/20 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                            <span className="text-lg">🏦</span>
+                          </div>
+                          <div>
+                            <h4 className="font-semibold">Aave</h4>
+                            <p className="text-sm text-muted-foreground">Conservative • 70%</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">${(totalInvested * ETH_PRICE * 0.7).toFixed(2)}</p>
+                          <p className="text-sm text-green-600">~3.2% APY</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 bg-secondary/20 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                            <span className="text-lg">🌙</span>
+                          </div>
+                          <div>
+                            <h4 className="font-semibold">Moonwell</h4>
+                            <p className="text-sm text-muted-foreground">Balanced • 30%</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">${(totalInvested * ETH_PRICE * 0.3).toFixed(2)}</p>
+                          <p className="text-sm text-green-600">~5.8% APY</p>
+                        </div>
+                      </div>
+
+                      <div className="pt-4 border-t border-border space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">Total Invested</span>
+                          <span className="font-semibold">${(totalInvested * ETH_PRICE).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">Estimated Yield</span>
+                          <span className="font-semibold text-green-600">+${(defiYieldEarned * ETH_PRICE).toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 rounded-2xl bg-secondary/50 flex items-center justify-center mx-auto mb-4">
+                        <TrendingUp className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                      <h4 className="font-semibold mb-2">No Investments Yet</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Start saving with round-ups, then invest to earn DeFi yields
+                      </p>
+                      {pendingRoundUp > 0 && (
+                        <Button size="sm" disabled={!isConnected}>
+                          Invest ${(pendingRoundUp * ETH_PRICE).toFixed(2)}
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* How it Works */}
+              <Card className="bg-secondary/20">
+                <CardHeader>
+                  <CardTitle className="text-lg">How It Works</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex gap-4">
+                    <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold flex-shrink-0">
+                      1
+                    </div>
+                    <div>
+                      <h3 className="font-semibold mb-1">Round-Up Every Transaction</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Every crypto transaction automatically rounds up to the nearest dollar
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold flex-shrink-0">
+                      2
+                    </div>
+                    <div>
+                      <h3 className="font-semibold mb-1">Invest in DeFi</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Your round-ups are invested into secure DeFi protocols like Aave
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold flex-shrink-0">
+                      3
+                    </div>
+                    <div>
+                      <h3 className="font-semibold mb-1">Earn Automatic Yields</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Watch your savings grow with DeFi yields - completely hands-off
+                      </p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
 
             {/* Sidebar */}
             <div className="space-y-6">
-              {/* Achievements */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Trophy className="h-5 w-5" />
-                    Achievements
-                  </CardTitle>
-                  <CardDescription>Unlock rewards as you save</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {achievements.map((achievement) => (
-                    <div
-                      key={achievement.id}
-                      className={`flex items-start gap-3 p-3 rounded-lg transition-all ${
-                        achievement.earned
-                          ? 'bg-primary/10 border border-primary/20'
-                          : 'bg-secondary/20 opacity-60'
-                      }`}
-                    >
-                      <div
-                        className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                          achievement.earned
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted text-muted-foreground'
-                        }`}
-                      >
-                        <achievement.icon className="h-5 w-5" />
+              {/* Pending Actions */}
+              {isConnected && pendingRoundUp > 0 && (
+                <Card className="border-2 border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-transparent">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Zap className="h-5 w-5 text-blue-600" />
+                      Action Required
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="mb-4">
+                      <p className="text-sm text-muted-foreground mb-2">Pending Round-Up</p>
+                      <p className="text-2xl font-bold">${(pendingRoundUp * ETH_PRICE).toFixed(2)}</p>
+                    </div>
+                    <Button className="w-full" size="sm" disabled={!isContractReady}>
+                      Invest Now
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Start earning DeFi yields on your savings
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Getting Started */}
+              {isConnected && !hasActivity && (
+                <Card className="bg-gradient-to-br from-primary/10 to-secondary/10 border-2 border-primary/20">
+                  <CardHeader>
+                    <CardTitle className="text-base">🚀 Getting Started</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold flex-shrink-0">
+                        1
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-sm">{achievement.name}</h4>
+                      <div>
+                        <p className="text-sm font-medium">Test Round-Up</p>
                         <p className="text-xs text-muted-foreground">
-                          {achievement.description}
+                          Try the automatic savings feature
                         </p>
                       </div>
-                      {achievement.earned && (
-                        <Badge variant="secondary" className="text-xs">
-                          ✓
-                        </Badge>
-                      )}
                     </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              {/* Recent Activity */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Recent Activity</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {recentActivity.map((activity, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                          activity.type === 'roundup'
-                            ? 'bg-blue-500/20 text-blue-600'
-                            : activity.type === 'yield'
-                            ? 'bg-green-500/20 text-green-600'
-                            : 'bg-purple-500/20 text-purple-600'
-                        }`}
-                      >
-                        {activity.type === 'roundup' ? (
-                          <Zap className="h-4 w-4" />
-                        ) : activity.type === 'yield' ? (
-                          <TrendingUp className="h-4 w-4" />
-                        ) : (
-                          <Gift className="h-4 w-4" />
-                        )}
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-xs font-bold flex-shrink-0">
+                        2
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{activity.description}</p>
-                        <p className="text-xs text-muted-foreground">{activity.date}</p>
+                      <div>
+                        <p className="text-sm font-medium">Accumulate Savings</p>
+                        <p className="text-xs text-muted-foreground">
+                          Round-ups add up automatically
+                        </p>
                       </div>
-                      <span className="text-sm font-semibold text-green-600">
-                        {activity.amount}
-                      </span>
                     </div>
-                  ))}
-                </CardContent>
-              </Card>
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-xs font-bold flex-shrink-0">
+                        3
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Invest & Earn</p>
+                        <p className="text-xs text-muted-foreground">
+                          Put savings to work in DeFi
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
-              {/* Bonus Features */}
+              {/* LOYAL Bonus */}
               {loyalEarned > 0 && (
                 <Card className="bg-gradient-to-br from-purple-500/10 to-blue-500/10 border-2 border-purple-500/20">
                   <CardHeader>
@@ -416,32 +395,64 @@ export default function DashboardPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-center mb-4">
+                    <div className="text-center mb-3">
                       <p className="text-3xl font-bold">{loyalEarned.toFixed(1)}</p>
-                      <p className="text-sm text-muted-foreground">Bonus tokens earned</p>
+                      <p className="text-sm text-muted-foreground">Bonus tokens</p>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Coming soon: Use LOYAL for premium features, governance, and special perks!
+                    <p className="text-xs text-center text-muted-foreground">
+                      Future utility: Premium features, governance & more
                     </p>
                   </CardContent>
                 </Card>
               )}
 
-              {/* Social Challenge */}
-              <Card className="bg-gradient-to-br from-green-500/10 to-blue-500/10 border-2 border-green-500/20">
+              {/* Stats Summary */}
+              {isConnected && hasActivity && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Your Stats</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Total Saved</span>
+                      <span className="font-semibold">${(totalSaved * ETH_PRICE).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Currently Invested</span>
+                      <span className="font-semibold">${(totalInvested * ETH_PRICE).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Yield Earned</span>
+                      <span className="font-semibold text-green-600">+${(defiYieldEarned * ETH_PRICE).toFixed(2)}</span>
+                    </div>
+                    {pendingRoundUp > 0 && (
+                      <div className="flex justify-between items-center pt-2 border-t border-border">
+                        <span className="text-sm text-muted-foreground">Pending</span>
+                        <span className="font-semibold text-blue-600">${(pendingRoundUp * ETH_PRICE).toFixed(2)}</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Network Info */}
+              <Card className="bg-secondary/20">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <Users className="h-5 w-5" />
-                    Group Challenge
-                  </CardTitle>
+                  <CardTitle className="text-base">Network</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm mb-4">
-                    Join your friends in the "Save $1000 in 30 Days" challenge!
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                      <Globe className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold">Base Sepolia</p>
+                      <p className="text-xs text-muted-foreground">Testnet</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Using Base Sepolia testnet for testing. No real funds at risk.
                   </p>
-                  <Button variant="outline" className="w-full" size="sm">
-                    View Challenge →
-                  </Button>
                 </CardContent>
               </Card>
             </div>
