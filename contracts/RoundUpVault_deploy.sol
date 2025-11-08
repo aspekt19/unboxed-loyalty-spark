@@ -205,7 +205,6 @@ contract RoundUpVault {
         require(msg.value > 0, "Amount must be > 0");
         
         UserSettings storage settings = userSettings[msg.sender];
-        uint256 effectiveRoundUp = msg.value * settings.roundUpMultiplier;
         
         userBalances[msg.sender].pendingRoundUp += msg.value;
         userTokenBalances[msg.sender].pendingRoundUp[NATIVE_TOKEN] += msg.value;
