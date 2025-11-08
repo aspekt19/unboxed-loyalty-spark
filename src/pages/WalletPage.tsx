@@ -84,7 +84,7 @@ export default function WalletPage() {
                     <span className="bg-background px-2 text-muted-foreground">Or</span>
                   </div>
                 </div>
-                <WalletConnectButton />
+                <WalletConnectButton size="lg" />
               </div>
             </Card>
           )}

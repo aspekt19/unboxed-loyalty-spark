@@ -32,7 +32,7 @@ const isFarcasterContext = () => {
   }
 };
 
-export function WalletConnectButton() {
+export function WalletConnectButton({ size = "default" }: { size?: "default" | "lg" }) {
   const { disconnect } = useDisconnect();
   const { connect, connectors } = useConnect();
   const { address, isConnected, chain } = useAccount();
@@ -115,13 +115,17 @@ export function WalletConnectButton() {
       username: farcasterUser?.username
     });
     
-    // Показываем кнопку Connect если пользователь вышел вручную
+  // Показываем кнопку Connect если пользователь вышел вручную
     if (!isConnected || isManuallyDisconnected) {
+      const buttonClasses = size === "lg" 
+        ? "w-full h-11 rounded-md px-8 font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center justify-center gap-2"
+        : "px-5 py-2.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center gap-2";
+      
       return (
         <button
           onClick={handleConnect}
           type="button"
-          className="px-5 py-2.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center gap-2"
+          className={buttonClasses}
         >
           <Wallet className="h-4 w-4" />
           <span>Connect Wallet</span>
@@ -182,11 +186,15 @@ export function WalletConnectButton() {
           >
             {(() => {
               if (!connected) {
+                const buttonClasses = size === "lg" 
+                  ? "w-full h-11 rounded-md px-8 font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center justify-center gap-2"
+                  : "px-5 py-2.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center gap-2";
+                
                 return (
                   <button
                     onClick={openConnectModal}
                     type="button"
-                    className="px-5 py-2.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center gap-2"
+                    className={buttonClasses}
                   >
                     <Wallet className="h-4 w-4" />
                     <span>Connect Wallet</span>
