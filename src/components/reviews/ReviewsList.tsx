@@ -98,10 +98,10 @@ export const ReviewsList = ({ tokenAddress, merchantAddress, isMerchant = false 
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Отзывы</CardTitle>
+          <CardTitle>Reviews</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">Загрузка отзывов...</p>
+          <p className="text-sm text-muted-foreground">Loading reviews...</p>
         </CardContent>
       </Card>
     );
@@ -112,7 +112,7 @@ export const ReviewsList = ({ tokenAddress, merchantAddress, isMerchant = false 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>Отзывы и рейтинги</span>
+            <span>Reviews & Ratings</span>
             {stats.totalReviews > 0 && (
               <div className="flex items-center gap-2">
                 <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
@@ -123,21 +123,21 @@ export const ReviewsList = ({ tokenAddress, merchantAddress, isMerchant = false 
             )}
           </CardTitle>
           <CardDescription>
-            {isMerchant ? "Управляйте отзывами клиентов" : "Отзывы от других клиентов"}
+            {isMerchant ? "Manage customer reviews" : "Reviews from other customers"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex gap-4 flex-wrap">
             <Badge variant="outline" className="gap-2">
               <TrendingUp className="h-4 w-4" />
-              Всего отзывов: {stats.totalReviews}
+              Total Reviews: {stats.totalReviews}
             </Badge>
             <Badge variant="outline" className="gap-2">
-              Верифицированных: {stats.verifiedReviews}
+              Verified: {stats.verifiedReviews}
             </Badge>
             {stats.totalReviews > 0 && (
               <Badge variant="outline">
-                Процент верификации:{" "}
+                Verification Rate:{" "}
                 {((stats.verifiedReviews / stats.totalReviews) * 100).toFixed(0)}%
               </Badge>
             )}
@@ -150,8 +150,8 @@ export const ReviewsList = ({ tokenAddress, merchantAddress, isMerchant = false 
           <CardContent className="py-8">
             <p className="text-center text-muted-foreground">
               {isMerchant
-                ? "Пока нет отзывов. Мотивируйте клиентов делиться своим опытом!"
-                : "Пока нет отзывов. Будьте первым!"}
+                ? "No reviews yet. Encourage customers to share their experience!"
+                : "No reviews yet. Be the first!"}
             </p>
           </CardContent>
         </Card>

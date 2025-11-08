@@ -86,7 +86,7 @@ export const CustomerReviewsSection = () => {
               value={`${program.tokenAddress}-${program.merchantAddress}`}
               className="flex-1"
             >
-              Программа {idx + 1}
+              Program {idx + 1}
             </TabsTrigger>
           ))}
         </TabsList>

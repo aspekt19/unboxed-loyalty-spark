@@ -113,11 +113,61 @@ export function CustomerTierDisplay({ tokenAddress, tokenSymbol, programName, ba
     return <Skeleton className="h-64 w-full" />;
   }
 
-  if (!tierStatus || !tierStatus.current_tier) {
+  if (!tierStatus) {
     return null;
   }
 
   const { current_tier, next_tier, progress_percentage, tokens_to_next } = tierStatus;
+
+  // If no current tier (new user), show the path to first tier
+  if (!current_tier && next_tier) {
+    return (
+      <Card className="border-2">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <Award className="h-8 w-8 text-muted-foreground" />
+            <div>
+              <CardTitle>New Member</CardTitle>
+              <CardDescription>{programName} Loyalty Program</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Current Balance</span>
+              <span className="font-semibold">
+                {balance.toFixed(0)} {tokenSymbol}
+              </span>
+            </div>
+            <Progress value={progress_percentage} className="h-2" />
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground flex items-center gap-1">
+                <TrendingUp className="h-3 w-3" />
+                Next: {next_tier.tier_name}
+              </span>
+              <span className="font-semibold">
+                {tokens_to_next.toFixed(0)} {tokenSymbol} more
+              </span>
+            </div>
+          </div>
+          <div className="pt-4 border-t">
+            <p className="text-xs text-muted-foreground">
+              Reach {next_tier.min_tokens} {tokenSymbol} to unlock{' '}
+              <span className="font-semibold" style={{ color: next_tier.badge_color }}>
+                {next_tier.tier_name}
+              </span>{' '}
+              tier with {next_tier.cashback_multiplier}x cashback
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!current_tier) {
+    return null;
+  }
 
   return (
     <Card className="border-2" style={{ borderColor: current_tier.badge_color }}>

@@ -40,7 +40,7 @@ export const CreateReview = ({
 
   const handleSubmit = async () => {
     if (!selectedVoucherId || rating === 0) {
-      toast.error("Выберите ваучер и поставьте оценку");
+      toast.error("Please select a voucher and rate");
       return;
     }
 
@@ -59,12 +59,12 @@ export const CreateReview = ({
 
       if (error) {
         if (error.code === "23505") {
-          toast.error("Вы уже оставили отзыв на этот ваучер");
+          toast.error("You already reviewed this voucher");
         } else {
           throw error;
         }
       } else {
-        toast.success("Отзыв опубликован");
+        toast.success("Review published");
         setSelectedVoucherId("");
         setRating(0);
         setComment("");
@@ -72,7 +72,7 @@ export const CreateReview = ({
       }
     } catch (error) {
       console.error("Error creating review:", error);
-      toast.error("Не удалось опубликовать отзыв");
+      toast.error("Failed to publish review");
     } finally {
       setIsSubmitting(false);
     }
@@ -82,14 +82,14 @@ export const CreateReview = ({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Оставить отзыв</CardTitle>
+          <CardTitle>Leave a Review</CardTitle>
           <CardDescription>
-            Используйте ваучеры, чтобы оставить верифицированный отзыв
+            Use vouchers to leave a verified review
           </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            У вас нет использованных ваучеров для этой программы лояльности
+            You have no used vouchers for this loyalty program
           </p>
         </CardContent>
       </Card>
@@ -99,22 +99,22 @@ export const CreateReview = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Оставить отзыв</CardTitle>
+        <CardTitle>Leave a Review</CardTitle>
         <CardDescription>
-          Поделитесь своим опытом и получите верифицированный статус
+          Share your experience and get verified status
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <label className="text-sm font-medium">Выберите ваучер</label>
+          <label className="text-sm font-medium">Select Voucher</label>
           <Select value={selectedVoucherId} onValueChange={setSelectedVoucherId}>
             <SelectTrigger>
-              <SelectValue placeholder="Выберите использованный ваучер" />
+              <SelectValue placeholder="Select used voucher" />
             </SelectTrigger>
             <SelectContent>
               {usedVouchers.map((voucher) => (
                 <SelectItem key={voucher.id} value={voucher.id}>
-                  {voucher.reward_name} - {new Date(voucher.used_at).toLocaleDateString("ru")}
+                  {voucher.reward_name} - {new Date(voucher.used_at).toLocaleDateString("en")}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -122,7 +122,7 @@ export const CreateReview = ({
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Оценка</label>
+          <label className="text-sm font-medium">Rating</label>
           <div className="flex gap-1">
             {[1, 2, 3, 4, 5].map((star) => (
               <button
@@ -146,9 +146,9 @@ export const CreateReview = ({
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Комментарий (необязательно)</label>
+          <label className="text-sm font-medium">Comment (optional)</label>
           <Textarea
-            placeholder="Расскажите о вашем опыте..."
+            placeholder="Tell us about your experience..."
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             rows={4}
@@ -160,7 +160,7 @@ export const CreateReview = ({
           disabled={isSubmitting || !selectedVoucherId || rating === 0}
           className="w-full"
         >
-          {isSubmitting ? "Публикация..." : "Опубликовать отзыв"}
+          {isSubmitting ? "Publishing..." : "Publish Review"}
         </Button>
       </CardContent>
     </Card>

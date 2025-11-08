@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, CheckCircle2, MessageSquare } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { ru } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -47,12 +47,12 @@ export const ReviewCard = ({ review, isMerchant = false, merchantAddress }: Revi
 
       if (error) throw error;
 
-      toast.success("Ответ опубликован");
+      toast.success("Response published");
       setResponseText("");
       setShowResponseForm(false);
     } catch (error) {
       console.error("Error submitting response:", error);
-      toast.error("Не удалось отправить ответ");
+      toast.error("Failed to submit response");
     } finally {
       setIsSubmitting(false);
     }
@@ -80,14 +80,14 @@ export const ReviewCard = ({ review, isMerchant = false, merchantAddress }: Revi
             {review.is_verified && (
               <Badge variant="outline" className="gap-1">
                 <CheckCircle2 className="h-3 w-3" />
-                Верифицирован
+                Verified
               </Badge>
             )}
           </div>
           <span className="text-xs text-muted-foreground">
             {formatDistanceToNow(new Date(review.created_at), {
               addSuffix: true,
-              locale: ru,
+              locale: enUS,
             })}
           </span>
         </div>
@@ -104,11 +104,11 @@ export const ReviewCard = ({ review, isMerchant = false, merchantAddress }: Revi
           <div className="rounded-lg border bg-muted/50 p-3 space-y-2">
             <div className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4 text-primary" />
-              <span className="text-xs font-medium">Ответ мерчанта</span>
+              <span className="text-xs font-medium">Merchant Response</span>
               <span className="text-xs text-muted-foreground">
                 {formatDistanceToNow(new Date(response.created_at), {
                   addSuffix: true,
-                  locale: ru,
+                  locale: enUS,
                 })}
               </span>
             </div>
@@ -122,14 +122,14 @@ export const ReviewCard = ({ review, isMerchant = false, merchantAddress }: Revi
             className="w-full"
           >
             <MessageSquare className="h-4 w-4 mr-2" />
-            Ответить на отзыв
+            Reply to Review
           </Button>
         ) : null}
 
         {showResponseForm && (
           <div className="space-y-2">
             <Textarea
-              placeholder="Напишите ваш ответ..."
+              placeholder="Write your response..."
               value={responseText}
               onChange={(e) => setResponseText(e.target.value)}
               rows={3}
@@ -140,7 +140,7 @@ export const ReviewCard = ({ review, isMerchant = false, merchantAddress }: Revi
                 disabled={isSubmitting || !responseText.trim()}
                 size="sm"
               >
-                Отправить
+                Submit
               </Button>
               <Button
                 variant="outline"
@@ -150,7 +150,7 @@ export const ReviewCard = ({ review, isMerchant = false, merchantAddress }: Revi
                 }}
                 size="sm"
               >
-                Отмена
+                Cancel
               </Button>
             </div>
           </div>
