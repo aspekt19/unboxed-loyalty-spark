@@ -4,16 +4,21 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { CreateReview } from "./CreateReview";
 import { ReviewsList } from "./ReviewsList";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const CustomerReviewsSection = () => {
   const { address } = useAccount();
   const { session } = useAuth();
   const [usedVouchers, setUsedVouchers] = useState<any[]>([]);
-  const [selectedProgram, setSelectedProgram] = useState<{
-    tokenAddress: string;
-    merchantAddress: string;
-  } | null>(null);
+  const [programs, setPrograms] = useState<any[]>([]);
+  const [selectedProgramKey, setSelectedProgramKey] = useState<string>("");
 
   useEffect(() => {
     if (!address || !session) return;
@@ -36,12 +41,27 @@ export const CustomerReviewsSection = () => {
 
       setUsedVouchers(data || []);
 
+      // Group vouchers by program
+      const programGroups = (data || []).reduce((acc, voucher) => {
+        const key = `${voucher.token_address}-${voucher.merchant_address}`;
+        if (!acc[key]) {
+          acc[key] = {
+            key,
+            tokenAddress: voucher.token_address,
+            merchantAddress: voucher.merchant_address,
+            vouchers: [],
+          };
+        }
+        acc[key].vouchers.push(voucher);
+        return acc;
+      }, {} as Record<string, any>);
+
+      const programsList = Object.values(programGroups);
+      setPrograms(programsList);
+
       // Set the first program as selected by default
-      if (data && data.length > 0) {
-        setSelectedProgram({
-          tokenAddress: data[0].token_address,
-          merchantAddress: data[0].merchant_address,
-        });
+      if (programsList.length > 0 && !selectedProgramKey) {
+        setSelectedProgramKey(programsList[0].key);
       }
     } catch (error) {
       console.error("Error loading used vouchers:", error);
@@ -50,69 +70,57 @@ export const CustomerReviewsSection = () => {
 
   if (!address || !session) return null;
 
-  // Group vouchers by program
-  const programGroups = usedVouchers.reduce((acc, voucher) => {
-    const key = `${voucher.token_address}-${voucher.merchant_address}`;
-    if (!acc[key]) {
-      acc[key] = {
-        tokenAddress: voucher.token_address,
-        merchantAddress: voucher.merchant_address,
-        vouchers: [],
-      };
-    }
-    acc[key].vouchers.push(voucher);
-    return acc;
-  }, {} as Record<string, any>);
-
-  const programs = Object.values(programGroups);
-
   if (programs.length === 0) {
     return null;
   }
 
-  return (
-    <div className="space-y-4">
-      <Tabs
-        value={selectedProgram ? `${selectedProgram.tokenAddress}-${selectedProgram.merchantAddress}` : undefined}
-        onValueChange={(value) => {
-          const [tokenAddress, merchantAddress] = value.split("-");
-          setSelectedProgram({ tokenAddress, merchantAddress });
-        }}
-      >
-        <TabsList className="w-full">
-          {programs.map((program: any, idx: number) => (
-            <TabsTrigger
-              key={`${program.tokenAddress}-${program.merchantAddress}`}
-              value={`${program.tokenAddress}-${program.merchantAddress}`}
-              className="flex-1"
-            >
-              Program {idx + 1}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+  const selectedProgram = programs.find((p) => p.key === selectedProgramKey);
 
-        {programs.map((program: any) => (
-          <TabsContent
-            key={`${program.tokenAddress}-${program.merchantAddress}`}
-            value={`${program.tokenAddress}-${program.merchantAddress}`}
-            className="space-y-4"
-          >
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Reviews & Ratings</CardTitle>
+        <CardDescription>
+          Share your experience and read reviews from other customers
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {programs.length > 1 && (
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Select Loyalty Program</label>
+            <Select value={selectedProgramKey} onValueChange={setSelectedProgramKey}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose a program" />
+              </SelectTrigger>
+              <SelectContent>
+                {programs.map((program, idx) => (
+                  <SelectItem key={program.key} value={program.key}>
+                    Loyalty Program #{idx + 1} ({program.vouchers.length} used vouchers)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {selectedProgram && (
+          <div className="space-y-4">
             <CreateReview
-              tokenAddress={program.tokenAddress}
-              merchantAddress={program.merchantAddress}
+              tokenAddress={selectedProgram.tokenAddress}
+              merchantAddress={selectedProgram.merchantAddress}
               customerAddress={address.toLowerCase()}
-              usedVouchers={program.vouchers}
+              usedVouchers={selectedProgram.vouchers}
               onReviewCreated={loadUsedVouchers}
             />
 
             <ReviewsList
-              tokenAddress={program.tokenAddress}
-              merchantAddress={program.merchantAddress}
+              tokenAddress={selectedProgram.tokenAddress}
+              merchantAddress={selectedProgram.merchantAddress}
               isMerchant={false}
             />
-          </TabsContent>
-        ))}
-      </Tabs>
-    </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
