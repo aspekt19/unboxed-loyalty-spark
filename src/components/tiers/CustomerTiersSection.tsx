@@ -1,66 +1,61 @@
 import { useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
+import { supabase } from '@/integrations/supabase/client';
 import { useMultiTokenBalance } from '@/hooks/useMultiTokenBalance';
 import { CustomerTierDisplay } from './CustomerTierDisplay';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Award, Info } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Award } from 'lucide-react';
 
-interface CustomerTiersSectionProps {
-  selectedProgram: {
-    tokenAddress: string;
-    tokenSymbol: string;
-    programName: string;
-  } | null;
+interface TokenInfo {
+  address: string;
+  name: string;
+  symbol: string;
 }
 
-export function CustomerTiersSection({ selectedProgram }: CustomerTiersSectionProps) {
+export function CustomerTiersSection() {
   const { address } = useAccount();
+  const [programs, setPrograms] = useState<TokenInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Get balance for the selected program
-  const tokens = selectedProgram ? [{
-    address: selectedProgram.tokenAddress,
-    name: selectedProgram.programName,
-    symbol: selectedProgram.tokenSymbol,
-  }] : [];
-
-  const { balances, isLoading: balancesLoading } = useMultiTokenBalance(tokens);
-  
-  const balance = balances.find(b => b.address === selectedProgram?.tokenAddress);
-  const balanceValue = balance ? parseFloat(balance.balance) : 0;
+  const { balances } = useMultiTokenBalance(programs);
 
   useEffect(() => {
-    setIsLoading(balancesLoading);
-  }, [balancesLoading]);
+    if (!address) {
+      setPrograms([]);
+      return;
+    }
+
+    const loadPrograms = async () => {
+      try {
+        setIsLoading(true);
+
+        const { data, error } = await supabase
+          .from('loyalty_programs')
+          .select('token_address, name, symbol')
+          .in('status', ['active', 'expiring_soon', 'paused']);
+
+        if (error) throw error;
+
+        const formattedPrograms = (data || []).map((p) => ({
+          address: p.token_address,
+          name: p.name,
+          symbol: p.symbol,
+        }));
+
+        setPrograms(formattedPrograms);
+      } catch (err) {
+        console.error('Error loading programs:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadPrograms();
+  }, [address]);
 
   if (!address) {
     return null;
-  }
-
-  if (!selectedProgram) {
-    return (
-      <Card className="border-2">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Award className="h-5 w-5 text-primary" />
-            Your Tier Status
-          </CardTitle>
-          <CardDescription>
-            Select a loyalty program from the left to view your tier status
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Alert>
-            <Info className="h-4 w-4" />
-            <AlertDescription>
-              <strong>How it works:</strong> Each loyalty program has its own tier system (Bronze, Silver, Gold, Platinum). Your tier level is determined by your token balance for that specific program. Select a program from the left to see your tier details.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
-    );
   }
 
   if (isLoading) {
@@ -71,25 +66,47 @@ export function CustomerTiersSection({ selectedProgram }: CustomerTiersSectionPr
     );
   }
 
+  const programsWithBalance = programs.filter((program) => {
+    const balance = balances.find((b) => b.address === program.address);
+    return balance && parseFloat(balance.balance) > 0;
+  });
+
+  if (programsWithBalance.length === 0) {
+    return (
+      <Alert>
+        <Award className="h-4 w-4" />
+        <AlertDescription>
+          Get loyalty tokens from merchants to see your tier status here!
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
-    <div className="space-y-4">
-      <Card className="border-2 bg-muted/30">
-        <CardContent className="pt-6">
-          <Alert>
-            <Info className="h-4 w-4" />
-            <AlertDescription>
-              <strong>How it works:</strong> Each loyalty program has its own tier system (Bronze, Silver, Gold, Platinum). Your tier level is determined by your token balance for that specific program. Earn more tokens to unlock higher tiers and better rewards!
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">Your Tier Status</h2>
+        <p className="text-muted-foreground">
+          Track your loyalty level across programs
+        </p>
+      </div>
       
-      <CustomerTierDisplay
-        tokenAddress={selectedProgram.tokenAddress}
-        tokenSymbol={selectedProgram.tokenSymbol}
-        programName={selectedProgram.programName}
-        balance={balanceValue}
-      />
+      <div className="grid gap-6 md:grid-cols-2">
+        {programsWithBalance.map((program) => {
+          const balance = balances.find((b) => b.address === program.address);
+          const balanceValue = parseFloat(balance?.balance || '0');
+
+          return (
+            <CustomerTierDisplay
+              key={program.address}
+              tokenAddress={program.address}
+              tokenSymbol={program.symbol}
+              programName={program.name}
+              balance={balanceValue}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }

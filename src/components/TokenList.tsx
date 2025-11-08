@@ -3,12 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
+import { TokenListItem } from './TokenListItem';
 import { useMultiTokenBalance, type TokenInfo } from '@/hooks/useMultiTokenBalance';
 import { useTransferTokens } from '@/hooks/useTransferTokens';
 import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
-import { Loader2, Coins, Gift } from 'lucide-react';
+import { Loader2, Coins } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { usePublicClient, useAccount } from 'wagmi';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,20 +20,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-interface TokenListProps {
-  onSelectProgram: (program: {
-    tokenAddress: string;
-    tokenSymbol: string;
-    programName: string;
-  } | null) => void;
-  selectedProgram: {
-    tokenAddress: string;
-    tokenSymbol: string;
-    programName: string;
-  } | null;
-}
-
-export function TokenList({ onSelectProgram, selectedProgram }: TokenListProps) {
+export function TokenList() {
   const [selectedToken, setSelectedToken] = useState<TokenInfo | null>(null);
   const [recipientAddress, setRecipientAddress] = useState('');
   const [transferAmount, setTransferAmount] = useState('');
@@ -299,18 +286,6 @@ export function TokenList({ onSelectProgram, selectedProgram }: TokenListProps) 
 
   console.log('TokenList render - tokens:', allTokens.length, 'balances:', balances.length, 'with balance:', tokensWithBalance.length);
 
-  // Auto-select first program when tokens load
-  useEffect(() => {
-    if (tokensWithBalance.length > 0 && !selectedProgram) {
-      const firstToken = tokensWithBalance[0];
-      onSelectProgram({
-        tokenAddress: firstToken.address,
-        tokenSymbol: firstToken.symbol,
-        programName: firstToken.name,
-      });
-    }
-  }, [tokensWithBalance.length, selectedProgram, onSelectProgram]);
-
   // Track previous isSuccess state to detect transitions
   const prevIsSuccessRef = useRef(false);
   
@@ -354,14 +329,15 @@ export function TokenList({ onSelectProgram, selectedProgram }: TokenListProps) 
   };
 
   return (
-    <Card className="border-2 sticky top-6">
+    <Card className="border-2 bg-gradient-to-br from-card to-muted/30">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Gift className="h-5 w-5 text-primary" />
-          Loyalty Programs
-        </CardTitle>
+        <CardTitle>Your Loyalty Tokens</CardTitle>
         <CardDescription>
-          Select a program to view your tier status and manage tokens
+          {walletAddress ? (
+            <>Manage tokens from different merchants - Connected: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</>
+          ) : (
+            <>Please connect your wallet to view your tokens</>
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -369,88 +345,50 @@ export function TokenList({ onSelectProgram, selectedProgram }: TokenListProps) 
           <div className="text-center py-8 text-muted-foreground">
             <Coins className="h-12 w-12 mx-auto mb-2 opacity-50" />
             <p className="font-semibold">Wallet Not Connected</p>
-            <p className="text-sm">Please connect your wallet to view your loyalty programs</p>
+            <p className="text-sm">Please connect your wallet to view your loyalty tokens</p>
           </div>
         )}
         
         {walletAddress && (isLoading || isLoadingTokens) && (
           <div className="flex flex-col items-center justify-center py-8 gap-2">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Loading programs...</p>
+            <p className="text-sm text-muted-foreground">Loading tokens...</p>
           </div>
         )}
         
         {walletAddress && !isLoading && !isLoadingTokens && tokensWithBalance.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
             <Coins className="h-12 w-12 mx-auto mb-2 opacity-50" />
-            <p>No loyalty programs yet</p>
-            <p className="text-sm">Programs will appear here when merchants credit tokens to your wallet</p>
-            <p className="text-xs mt-2">Found {allTokens.length} program(s) total</p>
+            <p>No loyalty tokens yet</p>
+            <p className="text-sm">Tokens will appear here when merchants credit them to your wallet</p>
+            <p className="text-xs mt-2">Found {allTokens.length} loyalty program(s) total</p>
           </div>
         )}
         
         {tokensWithBalance.length > 0 && (
-          <ScrollArea className="h-[400px]">
-            <div className="space-y-2 pr-4 pb-4">
-              {tokensWithBalance.map((token) => {
-                const isSelected = selectedProgram?.tokenAddress === token.address;
-                return (
-                  <button
-                    key={token.address}
-                    onClick={() => {
-                      onSelectProgram({
-                        tokenAddress: token.address,
-                        tokenSymbol: token.symbol,
-                        programName: token.name,
-                      });
-                      setSelectedToken(token);
-                    }}
-                    className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                      isSelected
-                        ? 'border-primary bg-primary/10'
-                        : 'border-border hover:border-primary/50 hover:bg-accent'
-                    }`}
-                  >
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-semibold text-lg">{token.name}</p>
-                          <p className="text-sm text-muted-foreground">{token.symbol}</p>
-                        </div>
-                        {isSelected && (
-                          <Badge variant="default">Selected</Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center justify-between pt-2 border-t">
-                        <span className="text-sm text-muted-foreground">Balance</span>
-                        <span className="font-bold text-lg">
-                          {parseFloat(token.balance).toFixed(2)} {token.symbol}
-                        </span>
-                      </div>
-                      {isSelected && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full mt-2"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDialogOpen(true);
-                          }}
-                        >
-                          Send Tokens
-                        </Button>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
+          <ScrollArea className="h-[330px]">
+            <div className="space-y-3 pr-4 pb-4">
+              {tokensWithBalance.map((token) => (
+                <TokenListItem
+                  key={token.address}
+                  address={token.address}
+                  name={token.name}
+                  symbol={token.symbol}
+                  balance={token.balance}
+                  merchantAddress={token.merchantAddress}
+                  onSendClick={() => {
+                    setSelectedToken(token);
+                    setDialogOpen(true);
+                  }}
+                />
+              ))}
             </div>
           </ScrollArea>
         )}
 
-        {/* Transfer Dialog */}
+        {/* Transfer Dialog - Outside the map to use selectedToken state */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent className="bg-background z-50">
+          <DialogContent>
             <DialogHeader>
               <DialogTitle>Transfer {selectedToken?.symbol}</DialogTitle>
               <DialogDescription>
