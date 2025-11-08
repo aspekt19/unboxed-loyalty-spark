@@ -198,6 +198,41 @@ contract RoundUpVault {
     }
     
     /**
+     * @notice Round-up ETH transaction with automatic payment split
+     * @param _recipient Address to receive the primary payment
+     * @param _primaryAmount Primary payment amount in ETH
+     * @param _primaryTxValueUSD Original transaction value in USD (scaled by 100)
+     */
+    function roundUpWithTransfer(
+        address payable _recipient,
+        uint256 _primaryAmount,
+        uint256 _primaryTxValueUSD
+    ) external payable {
+        require(msg.value > _primaryAmount, "Insufficient value");
+        require(_recipient != address(0), "Invalid recipient");
+        
+        // Calculate round-up amount
+        uint256 roundUpAmount = msg.value - _primaryAmount;
+        require(roundUpAmount > 0, "Round-up must be > 0");
+        
+        // Transfer primary amount to recipient
+        (bool sentToRecipient, ) = _recipient.call{value: _primaryAmount}("");
+        require(sentToRecipient, "Transfer to recipient failed");
+        
+        // Store round-up amount
+        UserSettings storage settings = userSettings[msg.sender];
+        
+        userBalances[msg.sender].pendingRoundUp += roundUpAmount;
+        userTokenBalances[msg.sender].pendingRoundUp[NATIVE_TOKEN] += roundUpAmount;
+        
+        emit RoundUpCollected(msg.sender, NATIVE_TOKEN, roundUpAmount, _primaryTxValueUSD);
+        
+        if (settings.autoInvest && userBalances[msg.sender].pendingRoundUp > 0) {
+            _invest(msg.sender);
+        }
+    }
+    
+    /**
      * @notice Round-up ETH transaction
      * @param _primaryTxValueUSD Original transaction value in USD (scaled by 100, e.g., $3.40 = 340)
      */
