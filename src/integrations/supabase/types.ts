@@ -410,6 +410,87 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_programs: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          max_referrals_per_user: number | null
+          merchant_address: string
+          min_purchase_required: number | null
+          referee_bonus: number | null
+          referrer_bonus: number | null
+          token_address: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_referrals_per_user?: number | null
+          merchant_address: string
+          min_purchase_required?: number | null
+          referee_bonus?: number | null
+          referrer_bonus?: number | null
+          token_address: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_referrals_per_user?: number | null
+          merchant_address?: string
+          min_purchase_required?: number | null
+          referee_bonus?: number | null
+          referrer_bonus?: number | null
+          token_address?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          bonus_claimed: boolean | null
+          claimed_at: string | null
+          created_at: string | null
+          id: string
+          merchant_address: string
+          referee_address: string
+          referee_bonus_amount: number | null
+          referral_code: string
+          referrer_address: string
+          referrer_bonus_amount: number | null
+          token_address: string
+        }
+        Insert: {
+          bonus_claimed?: boolean | null
+          claimed_at?: string | null
+          created_at?: string | null
+          id?: string
+          merchant_address: string
+          referee_address: string
+          referee_bonus_amount?: number | null
+          referral_code: string
+          referrer_address: string
+          referrer_bonus_amount?: number | null
+          token_address: string
+        }
+        Update: {
+          bonus_claimed?: boolean | null
+          claimed_at?: string | null
+          created_at?: string | null
+          id?: string
+          merchant_address?: string
+          referee_address?: string
+          referee_bonus_amount?: number | null
+          referral_code?: string
+          referrer_address?: string
+          referrer_bonus_amount?: number | null
+          token_address?: string
+        }
+        Relationships: []
+      }
       rewards: {
         Row: {
           cost: number
@@ -445,6 +526,56 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      traffic_sources: {
+        Row: {
+          campaign_id: string | null
+          created_at: string | null
+          customer_address: string
+          id: string
+          merchant_address: string
+          referral_code: string | null
+          source: string
+          token_address: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string | null
+          customer_address: string
+          id?: string
+          merchant_address: string
+          referral_code?: string | null
+          source: string
+          token_address: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string | null
+          customer_address?: string
+          id?: string
+          merchant_address?: string
+          referral_code?: string | null
+          source?: string
+          token_address?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "traffic_sources_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vouchers: {
         Row: {
@@ -525,6 +656,10 @@ export type Database = {
     }
     Functions: {
       check_program_expiration: { Args: never; Returns: undefined }
+      generate_referral_code: {
+        Args: { p_referrer_address: string; p_token_address: string }
+        Returns: string
+      }
       get_customers_by_segment: {
         Args: {
           p_max_balance?: number
@@ -545,6 +680,14 @@ export type Database = {
       migrate_wallet_profile: {
         Args: { p_new_user_id: string; p_wallet_address: string }
         Returns: undefined
+      }
+      process_referral: {
+        Args: {
+          p_referee_address: string
+          p_referral_code: string
+          p_token_address: string
+        }
+        Returns: boolean
       }
       update_customer_rfm_score: { Args: never; Returns: undefined }
       update_customer_tier: {

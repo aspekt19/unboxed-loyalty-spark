@@ -10,6 +10,8 @@ import { RFMSegmentation } from './crm/RFMSegmentation';
 import { TierManagement } from './tiers/TierManagement';
 import { CreateCampaign } from './marketing/CreateCampaign';
 import { CampaignList } from './marketing/CampaignList';
+import { ReferralManagement } from './referral/ReferralManagement';
+import { ReferralStats } from './referral/ReferralStats';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -114,12 +116,13 @@ export function MerchantPanel() {
         </Alert>
       ) : (
         <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="customers">Customers</TabsTrigger>
             <TabsTrigger value="programs">Programs</TabsTrigger>
             <TabsTrigger value="tiers">Tiers</TabsTrigger>
             <TabsTrigger value="marketing">Marketing</TabsTrigger>
+            <TabsTrigger value="referrals">Referrals</TabsTrigger>
             <TabsTrigger value="rewards">Rewards</TabsTrigger>
           </TabsList>
 
@@ -190,6 +193,11 @@ export function MerchantPanel() {
           <TabsContent value="marketing" className="space-y-6 mt-6">
             <CreateCampaign />
             <CampaignList />
+          </TabsContent>
+
+          <TabsContent value="referrals" className="space-y-6 mt-6">
+            <ReferralStats />
+            <ReferralManagement />
           </TabsContent>
 
           <TabsContent value="rewards" className="space-y-6 mt-6">
