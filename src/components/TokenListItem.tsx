@@ -19,9 +19,9 @@ export function TokenListItem({ address, name, symbol, balance, merchantAddress,
   
   return (
     <div 
-      className={`p-4 rounded-lg border bg-gradient-to-br from-card to-muted/30 space-y-3 transition-all ${
-        onClick ? 'cursor-pointer hover:border-primary/50 hover:shadow-md' : ''
-      } ${selected ? 'border-primary border-2 shadow-lg' : ''}`}
+      className={`p-4 rounded-lg border bg-gradient-to-br from-card to-muted/30 space-y-3 transition-all duration-300 ${
+        onClick ? 'cursor-pointer hover:border-primary/50 hover:shadow-md hover:scale-[1.02]' : ''
+      } ${selected ? 'border-primary border-2 shadow-lg scale-[1.02] animate-scale-in' : ''}`}
       onClick={onClick}
     >
       <div className="flex items-start justify-between">

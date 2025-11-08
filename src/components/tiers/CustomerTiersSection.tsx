@@ -121,7 +121,7 @@ export function CustomerTiersSection({ selectedProgram }: CustomerTiersSectionPr
 
   if (!selectedProgram) {
     return (
-      <Card className="border-2 bg-gradient-to-br from-card to-muted/30">
+      <Card className="border-2 bg-gradient-to-br from-card to-muted/30 animate-fade-in">
         <CardContent className="pt-6">
           <Alert>
             <Award className="h-4 w-4" />
@@ -138,7 +138,7 @@ export function CustomerTiersSection({ selectedProgram }: CustomerTiersSectionPr
   
   if (!selectedProgramData) {
     return (
-      <Card className="border-2 bg-gradient-to-br from-card to-muted/30">
+      <Card className="border-2 bg-gradient-to-br from-card to-muted/30 animate-fade-in">
         <CardContent className="pt-6">
           <Alert>
             <Award className="h-4 w-4" />
@@ -156,21 +156,23 @@ export function CustomerTiersSection({ selectedProgram }: CustomerTiersSectionPr
 
   return (
     <div className="space-y-4">
-      <div>
+      <div className="animate-fade-in">
         <h2 className="text-2xl font-bold tracking-tight">
-          Your Tier Status: <span className="text-primary">{tierName}</span>
+          Your Tier Status: <span className="text-primary animate-scale-in">{tierName}</span>
         </h2>
         <p className="text-muted-foreground">
           Track your loyalty level across programs
         </p>
       </div>
       
-      <CustomerTierDisplay
-        tokenAddress={selectedProgram}
-        tokenSymbol={selectedProgramData.symbol}
-        programName={selectedProgramData.name}
-        balance={balanceValue}
-      />
+      <div key={selectedProgram} className="animate-fade-in">
+        <CustomerTierDisplay
+          tokenAddress={selectedProgram}
+          tokenSymbol={selectedProgramData.symbol}
+          programName={selectedProgramData.name}
+          balance={balanceValue}
+        />
+      </div>
     </div>
   );
 }
