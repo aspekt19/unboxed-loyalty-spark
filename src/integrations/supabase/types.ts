@@ -59,6 +59,95 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_tier_status: {
+        Row: {
+          created_at: string | null
+          current_balance: number | null
+          current_tier_id: string | null
+          customer_address: string
+          id: string
+          last_calculated_at: string | null
+          tier_achieved_at: string | null
+          token_address: string
+          tokens_earned_total: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_balance?: number | null
+          current_tier_id?: string | null
+          customer_address: string
+          id?: string
+          last_calculated_at?: string | null
+          tier_achieved_at?: string | null
+          token_address: string
+          tokens_earned_total?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_balance?: number | null
+          current_tier_id?: string | null
+          customer_address?: string
+          id?: string
+          last_calculated_at?: string | null
+          tier_achieved_at?: string | null
+          token_address?: string
+          tokens_earned_total?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_tier_status_current_tier_id_fkey"
+            columns: ["current_tier_id"]
+            isOneToOne: false
+            referencedRelation: "customer_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_tiers: {
+        Row: {
+          badge_color: string | null
+          cashback_multiplier: number | null
+          created_at: string | null
+          id: string
+          min_tokens: number
+          perks: Json | null
+          tier_level: number
+          tier_name: string
+          token_address: string
+          updated_at: string | null
+          welcome_bonus: number | null
+        }
+        Insert: {
+          badge_color?: string | null
+          cashback_multiplier?: number | null
+          created_at?: string | null
+          id?: string
+          min_tokens: number
+          perks?: Json | null
+          tier_level: number
+          tier_name: string
+          token_address: string
+          updated_at?: string | null
+          welcome_bonus?: number | null
+        }
+        Update: {
+          badge_color?: string | null
+          cashback_multiplier?: number | null
+          created_at?: string | null
+          id?: string
+          min_tokens?: number
+          perks?: Json | null
+          tier_level?: number
+          tier_name?: string
+          token_address?: string
+          updated_at?: string | null
+          welcome_bonus?: number | null
+        }
+        Relationships: []
+      }
       customer_transactions: {
         Row: {
           amount: number
@@ -289,6 +378,14 @@ export type Database = {
         Returns: undefined
       }
       update_customer_rfm_score: { Args: never; Returns: undefined }
+      update_customer_tier: {
+        Args: {
+          p_current_balance: number
+          p_customer_address: string
+          p_token_address: string
+        }
+        Returns: string
+      }
       update_program_status: {
         Args: {
           p_merchant_address: string
