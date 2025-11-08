@@ -7,7 +7,7 @@ import { useAccount, useWriteContract, useWaitForTransactionReceipt, useConfig }
 import { Loader2, Zap, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { parseEther } from 'viem';
-import { getEthPrice, ethToUsd, roundUpUsd } from '@/lib/ethPrice';
+import { getEthPrice, ethToUsd, roundUpUsd, usdToEth } from '@/lib/ethPrice';
 import { ROUND_UP_CONFIG, ROUND_UP_VAULT_ABI } from '@/config/roundup';
 
 export function MetaMaskRoundUpTest() {
@@ -43,6 +43,10 @@ export function MetaMaskRoundUpTest() {
       const roundedUsd = roundUpUsd(usdAmount);
       const roundUpUsdAmount = roundedUsd - usdAmount;
       
+      // Convert rounded USD back to ETH
+      const roundedEth = usdToEth(roundedUsd, ethPrice);
+      const roundedValueWei = parseEther(roundedEth);
+      
       // Show round-up info
       toast.info(
         `Round-Up Applied: +$${roundUpUsdAmount.toFixed(2)}`,
@@ -54,12 +58,13 @@ export function MetaMaskRoundUpTest() {
       
       console.log('Round-Up Transaction:', {
         originalETH: amount,
+        roundedETH: roundedEth,
         originalUSD: usdAmount.toFixed(2),
         roundedUSD: roundedUsd.toFixed(2),
         roundUpUSD: roundUpUsdAmount.toFixed(2),
       });
       
-      // Call RoundUpVault contract - it will track the round-up amount
+      // Call RoundUpVault contract with ROUNDED amount
       // USD amount with 2 decimals (e.g., 3.40 becomes 340)
       const usdAmountScaled = BigInt(Math.floor(usdAmount * 100));
       
@@ -68,7 +73,7 @@ export function MetaMaskRoundUpTest() {
         abi: ROUND_UP_VAULT_ABI,
         functionName: 'roundUp',
         args: [usdAmountScaled],
-        value: originalValueWei,
+        value: roundedValueWei, // Send ROUNDED amount, not original!
         account: address,
         chain: chain,
       });
