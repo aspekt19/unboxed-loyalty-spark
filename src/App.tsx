@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import AppPage from "./pages/AppPage";
 import CustomerPage from "./pages/CustomerPage";
 import InstallPage from "./pages/InstallPage";
+import WalletPage from "./pages/WalletPage";
 import PitchDeck from "./pages/pitch-deck/PitchDeck";
 import GuidePage from "./pages/GuidePage";
 import NotFound from "./pages/NotFound";
@@ -58,6 +59,7 @@ function AnimatedRoutes() {
         <Route path="/app" element={<AppPage />} />
         <Route path="/customer" element={<CustomerPage />} />
         <Route path="/install" element={<InstallPage />} />
+        <Route path="/wallet" element={<WalletPage />} />
         <Route path="/pitch" element={<PitchDeck />} />
         <Route path="/guide" element={<GuidePage />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
