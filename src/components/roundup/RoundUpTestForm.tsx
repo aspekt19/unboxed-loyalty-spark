@@ -100,6 +100,17 @@ export function RoundUpTestForm() {
     ethPriceData && 
     parseFloat(roundUpETH) >= 0.0001;
 
+  console.log('Form validation state:', {
+    purchaseAmount,
+    purchaseAmountValid: purchaseAmount && parseFloat(purchaseAmount) > 0,
+    ethPriceData: !!ethPriceData,
+    roundUpETH,
+    roundUpETHValid: parseFloat(roundUpETH) >= 0.0001,
+    isFormValid,
+    isConnected,
+    isProcessing,
+  });
+
   return (
     <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
       <CardHeader>
@@ -172,6 +183,7 @@ export function RoundUpTestForm() {
             className="w-full"
             size="lg"
             disabled={!isConnected || isProcessing || !isFormValid}
+            onClick={() => console.log('Button clicked!', { isConnected, isProcessing, isFormValid })}
           >
             {isProcessing ? 'Processing...' : 'Execute Round-Up'}
           </Button>
