@@ -5,6 +5,7 @@ import { MyVouchers } from './rewards/MyVouchers';
 import { CustomerTiersSection } from './tiers/CustomerTiersSection';
 import { PersonalizedOffers } from './marketing/PersonalizedOffers';
 import { ReferralCard } from './referral/ReferralCard';
+import { CustomerReviewsSection } from './reviews/CustomerReviewsSection';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAccount } from 'wagmi';
 import { Wallet } from 'lucide-react';
@@ -36,6 +37,8 @@ export function CustomerPanel() {
       <RewardsSelection />
       
       <MyVouchers />
+      
+      <CustomerReviewsSection />
       
       <DexIntegration />
     </div>

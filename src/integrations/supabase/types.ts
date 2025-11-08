@@ -491,6 +491,88 @@ export type Database = {
         }
         Relationships: []
       }
+      review_responses: {
+        Row: {
+          created_at: string | null
+          id: string
+          merchant_address: string
+          response_text: string
+          review_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          merchant_address: string
+          response_text: string
+          review_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          merchant_address?: string
+          response_text?: string
+          review_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_responses_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: true
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reviews: {
+        Row: {
+          comment: string | null
+          created_at: string | null
+          customer_address: string
+          id: string
+          is_verified: boolean | null
+          merchant_address: string
+          rating: number
+          token_address: string
+          updated_at: string | null
+          voucher_id: string | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string | null
+          customer_address: string
+          id?: string
+          is_verified?: boolean | null
+          merchant_address: string
+          rating: number
+          token_address: string
+          updated_at?: string | null
+          voucher_id?: string | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string | null
+          customer_address?: string
+          id?: string
+          is_verified?: boolean | null
+          merchant_address?: string
+          rating?: number
+          token_address?: string
+          updated_at?: string | null
+          voucher_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_voucher_id_fkey"
+            columns: ["voucher_id"]
+            isOneToOne: true
+            referencedRelation: "vouchers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rewards: {
         Row: {
           cost: number
