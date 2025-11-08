@@ -156,14 +156,14 @@ export default function CreateWallet({ onWalletCreated }: CreateWalletProps) {
                 </Button>
               </div>
               <div className="relative">
-                <div className="p-3 rounded-lg bg-muted font-mono text-sm break-all">
+                <div className="p-3 pr-12 rounded-lg bg-muted font-mono text-sm break-all">
                   {showSeedPhrase ? generatedWallet.mnemonic : "• ".repeat(12) + "(Click eye to reveal)"}
                 </div>
                 {showSeedPhrase && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute right-2 top-2"
+                    className="absolute right-1 top-1"
                     onClick={handleCopySeedPhrase}
                   >
                     {copiedSeed ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
@@ -189,14 +189,14 @@ export default function CreateWallet({ onWalletCreated }: CreateWalletProps) {
                 </Button>
               </div>
               <div className="relative">
-                <div className="p-3 rounded-lg bg-muted font-mono text-sm break-all">
+                <div className="p-3 pr-12 rounded-lg bg-muted font-mono text-sm break-all">
                   {showPrivateKey ? generatedWallet.privateKey : "•".repeat(66)}
                 </div>
                 {showPrivateKey && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute right-2 top-2"
+                    className="absolute right-1 top-1"
                     onClick={handleCopyPrivateKey}
                   >
                     {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
