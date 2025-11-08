@@ -108,12 +108,51 @@ export function RoundUpDashboard() {
           </div>
         )}
 
-        {/* Test Form */}
-        {isConnected && isContractReady && (
-          <div className="mb-8">
-            <RoundUpTestForm />
-          </div>
-        )}
+        {/* Test Options */}
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5" />
+                Manual Round-Up Test
+              </CardTitle>
+              <CardDescription>
+                Test by manually sending round-up to the contract
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isConnected && isContractReady ? (
+                <RoundUpTestForm />
+              ) : (
+                <Button variant="outline" disabled className="w-full">
+                  Connect wallet to test
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-2 border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-transparent">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <div className="w-5 h-5 text-blue-600">⚡</div>
+                Auto Round-Up Test
+              </CardTitle>
+              <CardDescription>
+                Test automatic transaction rounding through MetaMask
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to="/roundup-test">
+                <Button className="w-full" variant="default">
+                  Test Auto Round-Up →
+                </Button>
+              </Link>
+              <p className="text-xs text-muted-foreground mt-3">
+                Simulates a real transaction with automatic rounding
+              </p>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Stats Overview */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">

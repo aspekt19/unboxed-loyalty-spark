@@ -14,6 +14,7 @@ import InstallPage from "./pages/InstallPage";
 import WalletPage from "./pages/WalletPage";
 import PitchDeck from "./pages/pitch-deck/PitchDeck";
 import GuidePage from "./pages/GuidePage";
+import RoundUpAutoTestPage from "./pages/RoundUpAutoTestPage";
 import NotFound from "./pages/NotFound";
 import { AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
@@ -58,6 +59,7 @@ function AnimatedRoutes() {
         <Route path="/" element={<Index />} />
         <Route path="/app" element={<AppPage />} />
         <Route path="/customer" element={<CustomerPage />} />
+        <Route path="/roundup-test" element={<RoundUpAutoTestPage />} />
         <Route path="/install" element={<InstallPage />} />
         <Route path="/wallet" element={<WalletPage />} />
         <Route path="/pitch" element={<PitchDeck />} />
