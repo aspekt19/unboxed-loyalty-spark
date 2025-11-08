@@ -16,7 +16,7 @@ export function RoundUpTestForm() {
   const { executeRoundUp, isProcessing, isSuccess } = useRoundUp();
 
   // Получаем текущую цену ETH из контракта
-  const { data: ethPriceData } = useReadContract({
+  const { data: ethPriceData, error: priceError } = useReadContract({
     address: ROUND_UP_CONFIG.VAULT_ADDRESS,
     abi: ROUND_UP_VAULT_ABI,
     functionName: 'getEthPrice',
@@ -24,6 +24,16 @@ export function RoundUpTestForm() {
       enabled: isConnected && ROUND_UP_CONFIG.VAULT_ADDRESS !== '0x0000000000000000000000000000000000000000',
     },
   });
+
+  // Временная фиксированная цена для тестирования (если Chainlink не работает)
+  const FALLBACK_ETH_PRICE = 3400; // $3400 за ETH
+  
+  useEffect(() => {
+    console.log('ETH Price fetch result:', { ethPriceData, priceError });
+    if (priceError) {
+      console.error('Price fetch error:', priceError);
+    }
+  }, [ethPriceData, priceError]);
 
   useEffect(() => {
     if (isSuccess) {
@@ -47,15 +57,36 @@ export function RoundUpTestForm() {
     const rounded = Math.ceil(purchase);
     const roundUpUSD = rounded - purchase;
 
+    let ethPrice = FALLBACK_ETH_PRICE; // Используем fallback цену
     let roundUpETH = '0';
-    if (ethPriceData) {
-      // ethPriceData comes with 8 decimals from Chainlink
-      const ethPrice = Number(ethPriceData) / 1e8; // Convert to normal USD
-      roundUpETH = (roundUpUSD / ethPrice).toFixed(6);
+    
+    // Пытаемся использовать цену из контракта, если доступна
+    if (ethPriceData && typeof ethPriceData === 'bigint') {
+      try {
+        // ethPriceData comes with 8 decimals from Chainlink
+        ethPrice = Number(ethPriceData) / 1e8; // Convert to normal USD
+        console.log('Using contract ETH price:', ethPrice);
+      } catch (e) {
+        console.error('Error parsing ETH price from contract:', e);
+        console.log('Using fallback ETH price:', ethPrice);
+      }
+    } else {
+      console.log('Using fallback ETH price (contract price unavailable):', ethPrice);
     }
+    
+    roundUpETH = (roundUpUSD / ethPrice).toFixed(6);
 
     // Convert purchase amount to USD with 8 decimals for contract
     const primaryTxValueUSD = parseUnits(purchase.toFixed(2), 8);
+
+    console.log('Round-up calculation:', {
+      purchase,
+      rounded,
+      roundUpUSD,
+      ethPrice,
+      roundUpETH,
+      primaryTxValueUSD: primaryTxValueUSD.toString(),
+    });
 
     return {
       roundedAmount: rounded,
@@ -77,11 +108,8 @@ export function RoundUpTestForm() {
       return;
     }
 
-    if (!ethPriceData) {
-      toast.error('Unable to fetch ETH price');
-      console.error('ETH price not available');
-      return;
-    }
+    // ETH цена берется из fallback, если контракт не возвращает
+    console.log('Using ETH price for transaction');
 
     if (parseFloat(roundUpETH) < 0.0001) {
       toast.error('Round-up amount too small');
@@ -97,13 +125,12 @@ export function RoundUpTestForm() {
   const isFormValid = 
     purchaseAmount && 
     parseFloat(purchaseAmount) > 0 && 
-    ethPriceData && 
     parseFloat(roundUpETH) >= 0.0001;
 
   console.log('Form validation state:', {
     purchaseAmount,
     purchaseAmountValid: purchaseAmount && parseFloat(purchaseAmount) > 0,
-    ethPriceData: !!ethPriceData,
+    ethPriceData: ethPriceData ? ethPriceData.toString() : 'null',
     roundUpETH,
     roundUpETHValid: parseFloat(roundUpETH) >= 0.0001,
     isFormValid,
@@ -167,11 +194,14 @@ export function RoundUpTestForm() {
                   <span className="text-sm font-semibold text-primary">Round-Up amount:</span>
                   <span className="font-mono font-bold text-primary">${roundUpUSD.toFixed(2)}</span>
                 </div>
-                {ethPriceData && (
-                  <div className="flex justify-between items-center mt-2">
-                    <span className="text-xs text-muted-foreground">In ETH:</span>
-                    <span className="font-mono text-sm">{roundUpETH} ETH</span>
-                  </div>
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-xs text-muted-foreground">In ETH:</span>
+                  <span className="font-mono text-sm">{roundUpETH} ETH</span>
+                </div>
+                {!ethPriceData && (
+                  <p className="text-xs text-yellow-600 mt-2">
+                    ⚠️ Using fallback ETH price (${FALLBACK_ETH_PRICE})
+                  </p>
                 )}
               </div>
             </div>
