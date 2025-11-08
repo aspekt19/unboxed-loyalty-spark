@@ -6,10 +6,12 @@ import { Label } from '@/components/ui/label';
 import { useAccount } from 'wagmi';
 import { Loader2, Zap } from 'lucide-react';
 import { toast } from 'sonner';
+import { parseEther } from 'viem';
 
 export function MetaMaskRoundUpTest() {
   const { address, isConnected } = useAccount();
   const [recipient, setRecipient] = useState('0x742d35Cc6634C0532925a3b844Bc454e4438f44e'); // Тестовый адрес
+  const [amount, setAmount] = useState('0.001'); // Сумма в ETH
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSendTransaction = async () => {
@@ -18,23 +20,30 @@ export function MetaMaskRoundUpTest() {
       return;
     }
 
+    if (!amount || parseFloat(amount) <= 0) {
+      toast.error('Enter valid amount');
+      return;
+    }
+
     try {
       setIsLoading(true);
       
       toast.info('Opening MetaMask', {
-        description: 'Enter the amount you want to send. It will be automatically rounded up.',
+        description: 'Amount will be automatically rounded up before signing',
       });
 
-      // Открываем MetaMask с минимальными параметрами
-      // Пользователь сам вводит сумму в MetaMask
+      // Конвертируем сумму в wei
+      const valueInWei = parseEther(amount);
+
+      // Отправляем транзакцию с указанной суммой
+      // roundUpTransport перехватит и округлит перед подписью
       const txHash = await window.ethereum.request({
         method: 'eth_sendTransaction',
         params: [
           {
             from: address,
             to: recipient,
-            // value НЕ указываем - пользователь введет в MetaMask
-            // Наш roundUpTransport перехватит и округлит перед подписью
+            value: `0x${valueInWei.toString(16)}`,
           },
         ],
       });
@@ -74,12 +83,30 @@ export function MetaMaskRoundUpTest() {
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
           <p className="text-sm font-semibold text-blue-900">💡 How to test:</p>
           <ol className="text-xs text-blue-800 space-y-1 list-decimal list-inside">
-            <li>Click "Open MetaMask" button below</li>
-            <li>Enter amount in ETH in MetaMask popup (e.g., amount worth $2.50)</li>
-            <li>Check the USD value shown in MetaMask</li>
-            <li>Our system will automatically round it up before signature</li>
+            <li>Enter amount in ETH below (e.g., 0.001 ETH)</li>
+            <li>Click "Send Transaction" button</li>
+            <li>Check the USD value in MetaMask popup - it will be rounded up!</li>
             <li>You'll see a notification with the round-up amount</li>
+            <li>Confirm or reject the transaction in MetaMask</li>
           </ol>
+        </div>
+
+        {/* Amount Input */}
+        <div className="space-y-2">
+          <Label htmlFor="amount">Amount to Send (ETH)</Label>
+          <Input
+            id="amount"
+            type="number"
+            step="0.0001"
+            min="0"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="0.001"
+            className="font-mono text-sm"
+          />
+          <p className="text-xs text-muted-foreground">
+            Example: 0.001 ETH ≈ $3.40 → will be rounded to $4.00
+          </p>
         </div>
 
         {/* Recipient Address */}
@@ -100,7 +127,7 @@ export function MetaMaskRoundUpTest() {
         {/* Action Button */}
         <Button
           onClick={handleSendTransaction}
-          disabled={!isConnected || isLoading}
+          disabled={!isConnected || isLoading || !amount}
           className="w-full"
           size="lg"
         >
@@ -112,7 +139,7 @@ export function MetaMaskRoundUpTest() {
           ) : (
             <>
               <Zap className="mr-2 h-4 w-4" />
-              Open MetaMask Transaction
+              Send Transaction with Round-Up
             </>
           )}
         </Button>
@@ -126,8 +153,8 @@ export function MetaMaskRoundUpTest() {
         {/* Additional Info */}
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
           <p className="text-xs text-yellow-800">
-            <strong>Note:</strong> The amount will be automatically rounded to the nearest whole dollar.
-            For example, if you enter ETH worth $2.50, MetaMask will show $3.00 for signature.
+            <strong>Note:</strong> The amount you enter will be automatically rounded to the nearest whole dollar before you sign.
+            For example, if you send ETH worth $2.50, MetaMask will show $3.00 in the confirmation popup.
           </p>
         </div>
       </CardContent>
