@@ -121,11 +121,11 @@ export function MerchantPanel() {
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="customers">Customers</TabsTrigger>
             <TabsTrigger value="programs">Programs</TabsTrigger>
+            <TabsTrigger value="rewards">Rewards</TabsTrigger>
             <TabsTrigger value="tiers">Tiers</TabsTrigger>
             <TabsTrigger value="marketing">Marketing</TabsTrigger>
             <TabsTrigger value="referrals">Referrals</TabsTrigger>
             <TabsTrigger value="reviews">Reviews</TabsTrigger>
-            <TabsTrigger value="rewards">Rewards</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6 mt-6">
@@ -188,6 +188,12 @@ export function MerchantPanel() {
             />
           </TabsContent>
 
+          <TabsContent value="rewards" className="space-y-6 mt-6">
+            <CreateReward />
+            <RewardsList />
+            <VouchersManagement />
+          </TabsContent>
+
           <TabsContent value="tiers" className="space-y-6 mt-6">
             <TierManagement />
           </TabsContent>
@@ -217,12 +223,6 @@ export function MerchantPanel() {
                 </AlertDescription>
               </Alert>
             )}
-          </TabsContent>
-
-          <TabsContent value="rewards" className="space-y-6 mt-6">
-            <CreateReward />
-            <RewardsList />
-            <VouchersManagement />
           </TabsContent>
         </Tabs>
       )}
