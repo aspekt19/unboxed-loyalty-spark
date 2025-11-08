@@ -336,9 +336,13 @@ export function TokenList({ selectedProgram, onProgramSelect }: TokenListProps) 
   return (
     <Card className="border-2 bg-gradient-to-br from-card to-muted/30">
       <CardHeader>
-        <CardTitle>Loyalty Programs</CardTitle>
+        <CardTitle>Your Loyalty Tokens</CardTitle>
         <CardDescription>
-          Your loyalty programs overview
+          {walletAddress ? (
+            <>Manage tokens from different merchants - Connected: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</>
+          ) : (
+            <>Please connect your wallet to view your tokens</>
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
