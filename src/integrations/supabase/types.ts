@@ -14,6 +14,95 @@ export type Database = {
   }
   public: {
     Tables: {
+      customer_profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          last_purchase_date: string | null
+          phone: string | null
+          rfm_score: string | null
+          total_purchases: number | null
+          total_spent: number | null
+          updated_at: string | null
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          last_purchase_date?: string | null
+          phone?: string | null
+          rfm_score?: string | null
+          total_purchases?: number | null
+          total_spent?: number | null
+          updated_at?: string | null
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          last_purchase_date?: string | null
+          phone?: string | null
+          rfm_score?: string | null
+          total_purchases?: number | null
+          total_spent?: number | null
+          updated_at?: string | null
+          wallet_address?: string
+        }
+        Relationships: []
+      }
+      customer_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          customer_address: string
+          id: string
+          merchant_address: string
+          token_address: string
+          transaction_date: string | null
+          transaction_type: string
+          voucher_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          customer_address: string
+          id?: string
+          merchant_address: string
+          token_address: string
+          transaction_date?: string | null
+          transaction_type: string
+          voucher_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          customer_address?: string
+          id?: string
+          merchant_address?: string
+          token_address?: string
+          transaction_date?: string | null
+          transaction_type?: string
+          voucher_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_transactions_voucher_id_fkey"
+            columns: ["voucher_id"]
+            isOneToOne: false
+            referencedRelation: "vouchers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loyalty_programs: {
         Row: {
           created_at: string
@@ -174,7 +263,24 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      merchant_analytics: {
+        Row: {
+          active_customers_30d: number | null
+          active_customers_7d: number | null
+          avg_voucher_cost: number | null
+          merchant_address: string | null
+          program_created_at: string | null
+          program_name: string | null
+          token_address: string | null
+          token_symbol: string | null
+          total_customers: number | null
+          total_tokens_spent: number | null
+          total_vouchers_issued: number | null
+          vouchers_last_30d: number | null
+          vouchers_redeemed: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_program_expiration: { Args: never; Returns: undefined }
@@ -182,6 +288,7 @@ export type Database = {
         Args: { p_new_user_id: string; p_wallet_address: string }
         Returns: undefined
       }
+      update_customer_rfm_score: { Args: never; Returns: undefined }
       update_program_status: {
         Args: {
           p_merchant_address: string
