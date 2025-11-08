@@ -55,7 +55,7 @@ export function CustomerTiersSection({ selectedProgram }: CustomerTiersSectionPr
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription>
-              Each loyalty program has its own tier system. Your tier level is based on your token balance for that specific program.
+              <strong>How it works:</strong> Each loyalty program has its own tier system (Bronze, Silver, Gold, Platinum). Your tier level is determined by your token balance for that specific program. Select a program from the left to see your tier details.
             </AlertDescription>
           </Alert>
         </CardContent>
