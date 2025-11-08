@@ -14,6 +14,7 @@ export function MetaMaskRoundUpTest() {
   const { address, isConnected, chain } = useAccount();
   const config = useConfig();
   const [amount, setAmount] = useState('0.001');
+  const [recipient, setRecipient] = useState('0x742d35Cc6634C0532925a3b844Bc454e4438f44e');
   const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
@@ -129,6 +130,21 @@ export function MetaMaskRoundUpTest() {
           />
           <p className="text-xs text-muted-foreground">
             Example: 0.001 ETH ≈ $3.41 → will be rounded to $4.00
+          </p>
+        </div>
+
+        {/* Recipient Address */}
+        <div className="space-y-2">
+          <Label htmlFor="recipient">Recipient Address</Label>
+          <Input
+            id="recipient"
+            value={recipient}
+            onChange={(e) => setRecipient(e.target.value)}
+            placeholder="0x..."
+            className="font-mono text-sm"
+          />
+          <p className="text-xs text-muted-foreground">
+            Where to send the primary amount (test address provided)
           </p>
         </div>
 
