@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.frame]
 verify_jwt = false
+
+[functions.framesnap-frame]
+verify_jwt = false
+
+[functions.upload-to-ipfs]
+verify_jwt = false

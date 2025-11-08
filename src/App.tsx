@@ -16,6 +16,7 @@ import WalletPage from "./pages/WalletPage";
 import PitchDeck from "./pages/pitch-deck/PitchDeck";
 import GuidePage from "./pages/GuidePage";
 import RoundUpAutoTestPage from "./pages/RoundUpAutoTestPage";
+import FrameSnapPage from "./pages/FrameSnapPage";
 import NotFound from "./pages/NotFound";
 import { AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
@@ -66,6 +67,7 @@ function AnimatedRoutes() {
         <Route path="/wallet" element={<WalletPage />} />
         <Route path="/pitch" element={<PitchDeck />} />
         <Route path="/guide" element={<GuidePage />} />
+        <Route path="/framesnap" element={<FrameSnapPage />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
