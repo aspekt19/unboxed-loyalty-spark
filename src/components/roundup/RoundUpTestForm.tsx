@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 export function RoundUpTestForm() {
   const { isConnected } = useAccount();
   const [purchaseAmount, setPurchaseAmount] = useState('');
-  const { executeRoundUp, isProcessing, isSuccess } = useRoundUp();
+  const { executeRoundUp, isProcessing, isSuccess, hash } = useRoundUp();
 
   // Получаем текущую цену ETH из контракта
   const { data: ethPriceData, error: priceError } = useReadContract({
@@ -36,11 +36,17 @@ export function RoundUpTestForm() {
   }, [ethPriceData, priceError]);
 
   useEffect(() => {
-    if (isSuccess) {
+    if (isSuccess && hash) {
       setPurchaseAmount('');
-      toast.success('Round-Up successfully completed!');
+      toast.success('Round-Up successfully completed!', {
+        description: 'View transaction on Base Sepolia',
+        action: {
+          label: 'View',
+          onClick: () => window.open(`https://sepolia.basescan.org/tx/${hash}`, '_blank'),
+        },
+      });
     }
-  }, [isSuccess]);
+  }, [isSuccess, hash]);
 
   // Рассчитываем Round-Up
   const calculateRoundUp = () => {
@@ -153,6 +159,17 @@ export function RoundUpTestForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Info Banner */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
+            <p className="text-sm font-semibold text-blue-900">💡 How this works:</p>
+            <ul className="text-xs text-blue-800 space-y-1 list-disc list-inside">
+              <li>Enter a simulated purchase amount (e.g., $34.41)</li>
+              <li>System rounds up to next dollar ($35.00)</li>
+              <li>Only the round-up difference ($0.59) is sent to RoundUpVault</li>
+              <li>Your spare change gets invested automatically!</li>
+            </ul>
+          </div>
+
           {/* Purchase Amount Input */}
           <div className="space-y-2">
             <Label htmlFor="purchaseAmount">Purchase Amount (USD)</Label>
@@ -217,6 +234,20 @@ export function RoundUpTestForm() {
           >
             {isProcessing ? 'Processing...' : 'Execute Round-Up'}
           </Button>
+
+          {hash && (
+            <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-sm font-semibold text-green-900 mb-2">✅ Transaction sent!</p>
+              <a
+                href={`https://sepolia.basescan.org/tx/${hash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-green-700 hover:text-green-900 underline break-all"
+              >
+                View on Base Sepolia Explorer →
+              </a>
+            </div>
+          )}
 
           {!isConnected && (
             <p className="text-xs text-center text-muted-foreground">
