@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   generateWallet, 
+  generateWalletWithMnemonic,
   importWallet, 
   encryptPrivateKey, 
   saveEncryptedWallet 
@@ -24,10 +25,16 @@ export default function CreateWallet({ onWalletCreated }: CreateWalletProps) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [privateKey, setPrivateKey] = useState("");
-  const [generatedWallet, setGeneratedWallet] = useState<{ address: string; privateKey: string } | null>(null);
+  const [generatedWallet, setGeneratedWallet] = useState<{ 
+    address: string; 
+    privateKey?: string; 
+    mnemonic?: string;
+  } | null>(null);
   const [showPrivateKey, setShowPrivateKey] = useState(false);
+  const [showSeedPhrase, setShowSeedPhrase] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copiedSeed, setCopiedSeed] = useState(false);
 
   const handleGenerateWallet = () => {
     if (!password || password.length < 8) {
@@ -57,15 +64,20 @@ export default function CreateWallet({ onWalletCreated }: CreateWalletProps) {
       return;
     }
 
-    const wallet = generateWallet();
+    // Генерируем кошелек с seed-фразой
+    const wallet = generateWalletWithMnemonic();
     setGeneratedWallet(wallet);
   };
 
   const handleSaveWallet = () => {
-    if (!generatedWallet) return;
+    if (!generatedWallet || !generatedWallet.privateKey) return;
 
-    const encrypted = encryptPrivateKey(generatedWallet.privateKey, password);
-    saveEncryptedWallet(generatedWallet.address, encrypted);
+    const encryptedKey = encryptPrivateKey(generatedWallet.privateKey, password);
+    const encryptedMnemonic = generatedWallet.mnemonic 
+      ? encryptPrivateKey(generatedWallet.mnemonic, password)
+      : undefined;
+    
+    saveEncryptedWallet(generatedWallet.address, encryptedKey, encryptedMnemonic);
 
     toast({
       title: "Wallet Created",
@@ -115,7 +127,7 @@ export default function CreateWallet({ onWalletCreated }: CreateWalletProps) {
   };
 
   const handleCopyPrivateKey = async () => {
-    if (!generatedWallet) return;
+    if (!generatedWallet?.privateKey) return;
     await navigator.clipboard.writeText(generatedWallet.privateKey);
     setCopied(true);
     toast({
@@ -123,6 +135,17 @@ export default function CreateWallet({ onWalletCreated }: CreateWalletProps) {
       description: "Private key copied to clipboard",
     });
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleCopySeedPhrase = async () => {
+    if (!generatedWallet?.mnemonic) return;
+    await navigator.clipboard.writeText(generatedWallet.mnemonic);
+    setCopiedSeed(true);
+    toast({
+      title: "Copied",
+      description: "Seed phrase copied to clipboard",
+    });
+    setTimeout(() => setCopiedSeed(false), 2000);
   };
 
   if (generatedWallet) {
@@ -141,8 +164,8 @@ export default function CreateWallet({ onWalletCreated }: CreateWalletProps) {
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              <strong>IMPORTANT:</strong> Save your private key in a secure place. 
-              If you lose it, you will lose access to your wallet forever!
+              <strong>IMPORTANT:</strong> Save your seed phrase and private key in a secure place. 
+              If you lose them, you will lose access to your wallet forever!
             </AlertDescription>
           </Alert>
 
@@ -153,31 +176,64 @@ export default function CreateWallet({ onWalletCreated }: CreateWalletProps) {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>Your Private Key</Label>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowPrivateKey(!showPrivateKey)}
-              >
-                {showPrivateKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </Button>
-            </div>
-            <div className="relative">
-              <div className="p-3 rounded-lg bg-muted font-mono text-sm break-all">
-                {showPrivateKey ? generatedWallet.privateKey : "•".repeat(66)}
+          {generatedWallet.mnemonic && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Your Seed Phrase (12 words)</Label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowSeedPhrase(!showSeedPhrase)}
+                >
+                  {showSeedPhrase ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </Button>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-2 top-2"
-                onClick={handleCopyPrivateKey}
-              >
-                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              </Button>
+              <div className="relative">
+                <div className="p-3 rounded-lg bg-muted font-mono text-sm break-all">
+                  {showSeedPhrase ? generatedWallet.mnemonic : "•".repeat(60)}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 top-2"
+                  onClick={handleCopySeedPhrase}
+                >
+                  {copiedSeed ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Write down these 12 words in order and keep them safe. You can use them to recover your wallet.
+              </p>
             </div>
-          </div>
+          )}
+
+          {generatedWallet.privateKey && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Your Private Key</Label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowPrivateKey(!showPrivateKey)}
+                >
+                  {showPrivateKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </Button>
+              </div>
+              <div className="relative">
+                <div className="p-3 rounded-lg bg-muted font-mono text-sm break-all">
+                  {showPrivateKey ? generatedWallet.privateKey : "•".repeat(66)}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 top-2"
+                  onClick={handleCopyPrivateKey}
+                >
+                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                </Button>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <Button

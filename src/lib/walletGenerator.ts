@@ -1,8 +1,29 @@
-import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import { generatePrivateKey, privateKeyToAccount, mnemonicToAccount, generateMnemonic, english } from "viem/accounts";
 import { createPublicClient, http } from "viem";
 
 /**
- * Генерация нового кошелька
+ * Генерация новой seed-фразы (12 слов)
+ */
+export function generateSeedPhrase(): string {
+  return generateMnemonic(english);
+}
+
+/**
+ * Генерация нового кошелька с seed-фразой
+ */
+export function generateWalletWithMnemonic() {
+  const mnemonic = generateSeedPhrase();
+  const account = mnemonicToAccount(mnemonic);
+  
+  return {
+    address: account.address,
+    privateKey: account.getHdKey().privateKey ? `0x${Buffer.from(account.getHdKey().privateKey!).toString('hex')}` : undefined,
+    mnemonic: mnemonic,
+  };
+}
+
+/**
+ * Генерация нового кошелька (без seed-фразы)
  */
 export function generateWallet() {
   const privateKey = generatePrivateKey();
@@ -12,6 +33,25 @@ export function generateWallet() {
     address: account.address,
     privateKey: privateKey,
   };
+}
+
+/**
+ * Восстановление кошелька из seed-фразы
+ */
+export function recoverFromMnemonic(mnemonic: string) {
+  try {
+    // Нормализуем: удаляем лишние пробелы, приводим к lowercase
+    const normalizedMnemonic = mnemonic.trim().toLowerCase().replace(/\s+/g, ' ');
+    const account = mnemonicToAccount(normalizedMnemonic);
+    
+    return {
+      address: account.address,
+      privateKey: account.getHdKey().privateKey ? `0x${Buffer.from(account.getHdKey().privateKey!).toString('hex')}` : undefined,
+      mnemonic: normalizedMnemonic,
+    };
+  } catch (error) {
+    throw new Error("Invalid seed phrase");
+  }
 }
 
 /**
@@ -63,18 +103,32 @@ export function decryptPrivateKey(encrypted: string, password: string): string {
 /**
  * Сохранение зашифрованного кошелька в localStorage
  */
-export function saveEncryptedWallet(address: string, encryptedKey: string) {
+export function saveEncryptedWallet(
+  address: string, 
+  encryptedKey: string, 
+  encryptedMnemonic?: string
+) {
   const wallets = JSON.parse(localStorage.getItem('encrypted_wallets') || '{}');
-  wallets[address] = encryptedKey;
+  wallets[address] = {
+    key: encryptedKey,
+    mnemonic: encryptedMnemonic,
+  };
   localStorage.setItem('encrypted_wallets', JSON.stringify(wallets));
 }
 
 /**
- * Получение зашифрованного приватного ключа
+ * Получение зашифрованного приватного ключа и mnemonic
  */
-export function getEncryptedWallet(address: string): string | null {
+export function getEncryptedWallet(address: string): { key: string; mnemonic?: string } | null {
   const wallets = JSON.parse(localStorage.getItem('encrypted_wallets') || '{}');
-  return wallets[address] || null;
+  const wallet = wallets[address];
+  
+  // Поддержка старого формата (если кошелек был создан до обновления)
+  if (typeof wallet === 'string') {
+    return { key: wallet };
+  }
+  
+  return wallet || null;
 }
 
 /**

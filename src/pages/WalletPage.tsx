@@ -11,6 +11,7 @@ import ReceiveTokens from "@/components/wallet/ReceiveTokens";
 import TransactionHistory from "@/components/wallet/TransactionHistory";
 import { RoundUpDashboard } from "@/components/roundup/RoundUpDashboard";
 import CreateWallet from "@/components/wallet/CreateWallet";
+import RecoverWallet from "@/components/wallet/RecoverWallet";
 import NetworkSelector from "@/components/wallet/NetworkSelector";
 import { getSavedWallets } from "@/lib/walletGenerator";
 
@@ -19,6 +20,7 @@ export default function WalletPage() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [hasLocalWallet, setHasLocalWallet] = useState(false);
   const [showCreateWallet, setShowCreateWallet] = useState(false);
+  const [showRecoverWallet, setShowRecoverWallet] = useState(false);
 
   useEffect(() => {
     const wallets = getSavedWallets();
@@ -28,6 +30,7 @@ export default function WalletPage() {
   const handleWalletCreated = (address: string) => {
     setHasLocalWallet(true);
     setShowCreateWallet(false);
+    setShowRecoverWallet(false);
   };
 
   // Show create wallet if no wallet exists and not connected
@@ -49,6 +52,11 @@ export default function WalletPage() {
           
           {showCreateWallet ? (
             <CreateWallet onWalletCreated={handleWalletCreated} />
+          ) : showRecoverWallet ? (
+            <RecoverWallet 
+              onWalletRecovered={handleWalletCreated}
+              onCancel={() => setShowRecoverWallet(false)}
+            />
           ) : (
             <Card className="p-8 text-center space-y-6">
               <div className="space-y-4">
@@ -59,6 +67,14 @@ export default function WalletPage() {
                 >
                   <Wallet className="w-4 h-4 mr-2" />
                   Create New Wallet
+                </Button>
+                <Button 
+                  onClick={() => setShowRecoverWallet(true)}
+                  variant="outline"
+                  className="w-full"
+                  size="lg"
+                >
+                  Recover Existing Wallet
                 </Button>
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
