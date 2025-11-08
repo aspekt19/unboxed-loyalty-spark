@@ -6,15 +6,14 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import QRCode from "react-qr-code";
 
-export default function ReceiveTokens() {
-  const { address } = useAccount();
+export default function ReceiveTokens({ walletAddress }: { walletAddress?: `0x${string}` }) {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
-    if (!address) return;
+    if (!walletAddress) return;
     
-    await navigator.clipboard.writeText(address);
+    await navigator.clipboard.writeText(walletAddress);
     setCopied(true);
     toast({
       title: "Address Copied",
@@ -53,7 +52,7 @@ export default function ReceiveTokens() {
     img.src = "data:image/svg+xml;base64," + btoa(svgData);
   };
 
-  if (!address) return null;
+  if (!walletAddress) return null;
 
   return (
     <Card>
@@ -70,7 +69,7 @@ export default function ReceiveTokens() {
         <div className="flex justify-center p-6 bg-white rounded-lg">
           <div id="qr-code">
             <QRCode
-              value={address}
+              value={walletAddress}
               size={200}
               style={{ height: "auto", maxWidth: "100%", width: "100%" }}
             />
@@ -80,7 +79,7 @@ export default function ReceiveTokens() {
         <div className="space-y-3">
           <div className="p-4 rounded-lg bg-muted">
             <p className="text-xs text-muted-foreground mb-2">Your Wallet Address</p>
-            <p className="font-mono text-sm break-all">{address}</p>
+            <p className="font-mono text-sm break-all">{walletAddress}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

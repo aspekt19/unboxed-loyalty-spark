@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Wallet, Send, Download, History, TrendingUp, Settings } from "lucide-react";
 import { WalletConnectButton } from "@/components/WalletConnectButton";
@@ -12,28 +12,32 @@ import TransactionHistory from "@/components/wallet/TransactionHistory";
 import { RoundUpDashboard } from "@/components/roundup/RoundUpDashboard";
 import CreateWallet from "@/components/wallet/CreateWallet";
 import RecoverWallet from "@/components/wallet/RecoverWallet";
+import UnlockWallet from "@/components/wallet/UnlockWallet";
 import NetworkSelector from "@/components/wallet/NetworkSelector";
 import { getSavedWallets } from "@/lib/walletGenerator";
+import { useLocalWallet } from "@/hooks/useLocalWallet";
 
 export default function WalletPage() {
   const { isConnected } = useAccount();
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [hasLocalWallet, setHasLocalWallet] = useState(false);
   const [showCreateWallet, setShowCreateWallet] = useState(false);
   const [showRecoverWallet, setShowRecoverWallet] = useState(false);
-
-  useEffect(() => {
-    const wallets = getSavedWallets();
-    setHasLocalWallet(wallets.length > 0);
-  }, []);
+  
+  const {
+    localWallet,
+    hasLocalWallet,
+    isUnlocked,
+    unlockWallet,
+    isUnlocking,
+    error: unlockError,
+  } = useLocalWallet();
 
   const handleWalletCreated = (address: string) => {
-    setHasLocalWallet(true);
-    setShowCreateWallet(false);
-    setShowRecoverWallet(false);
+    // Перезагружаем страницу чтобы подхватить новый кошелек
+    window.location.reload();
   };
 
-  // Show create wallet if no wallet exists and not connected
+  // Если нет кошелька (ни локального, ни подключенного)
   if (!isConnected && !hasLocalWallet) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-primary/5">
@@ -93,26 +97,39 @@ export default function WalletPage() {
     );
   }
 
-  if (!isConnected && hasLocalWallet) {
+  // Если есть локальный кошелек, но он заблокирован
+  if (!isConnected && hasLocalWallet && !isUnlocked) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-primary/5">
-        <Card className="p-8 max-w-md w-full text-center space-y-6">
-          <div className="flex justify-center">
-            <div className="p-4 rounded-full bg-primary/10">
-              <Wallet className="w-12 h-12 text-primary" />
+        <div className="max-w-md w-full">
+          <div className="text-center space-y-2 mb-6">
+            <div className="flex justify-center">
+              <div className="p-4 rounded-full bg-primary/10">
+                <Wallet className="w-12 h-12 text-primary" />
+              </div>
             </div>
-          </div>
-          <div className="space-y-2">
             <h1 className="text-2xl font-bold">Web3 Wallet</h1>
             <p className="text-muted-foreground">
-              Connect your wallet to access all features
+              Your wallet is locked
             </p>
           </div>
-          <WalletConnectButton />
-        </Card>
+          
+          <UnlockWallet
+            address={localWallet?.address || ""}
+            onUnlock={unlockWallet}
+            isUnlocking={isUnlocking}
+            error={unlockError}
+          />
+        </div>
       </div>
     );
   }
+
+  // Определяем адрес кошелька (локальный или подключенный)
+  const { address: connectedAddress } = useAccount();
+  const walletAddress = isUnlocked && localWallet?.account 
+    ? localWallet.account.address 
+    : connectedAddress;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
@@ -122,9 +139,16 @@ export default function WalletPage() {
             <div className="p-2 rounded-full bg-primary/10">
               <Wallet className="w-6 h-6 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold">My Wallet</h1>
+            <div>
+              <h1 className="text-2xl font-bold">My Wallet</h1>
+              {walletAddress && (
+                <p className="text-sm text-muted-foreground font-mono">
+                  {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+                </p>
+              )}
+            </div>
           </div>
-          <WalletConnectButton />
+          {!isUnlocked && <WalletConnectButton />}
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -156,15 +180,24 @@ export default function WalletPage() {
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
-            <TokenList />
+            <TokenList walletAddress={walletAddress} />
           </TabsContent>
 
           <TabsContent value="send">
-            <SendTokens />
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center space-y-4 py-8">
+                  <p className="text-muted-foreground">
+                    To send transactions, please connect an external wallet like MetaMask
+                  </p>
+                  <WalletConnectButton size="lg" />
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="receive">
-            <ReceiveTokens />
+            <ReceiveTokens walletAddress={walletAddress} />
           </TabsContent>
 
           <TabsContent value="history">
@@ -172,7 +205,20 @@ export default function WalletPage() {
           </TabsContent>
 
           <TabsContent value="roundup">
-            <RoundUpDashboard />
+            {isConnected ? (
+              <RoundUpDashboard />
+            ) : (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center space-y-4 py-8">
+                    <p className="text-muted-foreground">
+                      Round-Up feature requires an external wallet connection (MetaMask, etc.)
+                    </p>
+                    <WalletConnectButton size="lg" />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">

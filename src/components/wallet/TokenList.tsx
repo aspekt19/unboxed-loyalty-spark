@@ -16,10 +16,9 @@ const TOKENS = [
   // Можно добавить другие токены
 ];
 
-export default function TokenList() {
-  const { address } = useAccount();
+export default function TokenList({ walletAddress }: { walletAddress?: `0x${string}` }) {
   const { data: ethBalance, isLoading } = useBalance({
-    address: address,
+    address: walletAddress,
   });
 
   if (isLoading) {
