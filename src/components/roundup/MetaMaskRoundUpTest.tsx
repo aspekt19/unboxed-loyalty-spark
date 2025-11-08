@@ -43,13 +43,13 @@ export function MetaMaskRoundUpTest() {
       const roundedUsd = roundUpUsd(usdAmount);
       const roundUpUsdAmount = roundedUsd - usdAmount;
       
-      // Convert rounded USD back to ETH
-      const roundedEth = usdToEth(roundedUsd, ethPrice);
-      const roundedValueWei = parseEther(roundedEth);
+      // Convert ONLY THE ROUND-UP DIFFERENCE to ETH
+      const roundUpEth = usdToEth(roundUpUsdAmount, ethPrice);
+      const roundUpValueWei = parseEther(roundUpEth);
       
       // Show round-up info
       toast.info(
-        `Round-Up Applied: +$${roundUpUsdAmount.toFixed(2)}`,
+        `Round-Up Applied: +$${roundUpUsdAmount.toFixed(2)} (+${roundUpEth} ETH)`,
         {
           description: `Original: $${usdAmount.toFixed(2)} → Rounded: $${roundedUsd.toFixed(2)}`,
           duration: 5000,
@@ -58,13 +58,14 @@ export function MetaMaskRoundUpTest() {
       
       console.log('Round-Up Transaction:', {
         originalETH: amount,
-        roundedETH: roundedEth,
+        roundUpETH: roundUpEth,
         originalUSD: usdAmount.toFixed(2),
         roundedUSD: roundedUsd.toFixed(2),
         roundUpUSD: roundUpUsdAmount.toFixed(2),
+        roundUpValueWei: roundUpValueWei.toString(),
       });
       
-      // Call RoundUpVault contract with ROUNDED amount
+      // Call RoundUpVault contract with ONLY the round-up difference
       // USD amount with 2 decimals (e.g., 3.40 becomes 340)
       const usdAmountScaled = BigInt(Math.floor(usdAmount * 100));
       
@@ -73,7 +74,7 @@ export function MetaMaskRoundUpTest() {
         abi: ROUND_UP_VAULT_ABI,
         functionName: 'roundUp',
         args: [usdAmountScaled],
-        value: roundedValueWei, // Send ROUNDED amount, not original!
+        value: roundUpValueWei, // Send ONLY the round-up difference!
         account: address,
         chain: chain,
       });
