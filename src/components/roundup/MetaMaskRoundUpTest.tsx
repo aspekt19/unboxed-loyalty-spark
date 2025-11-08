@@ -1,22 +1,24 @@
-import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAccount } from 'wagmi';
-import { Loader2, Zap } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+import { useAccount, useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
+import { Loader2, Zap, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { parseEther } from 'viem';
+import { getEthPrice, ethToUsd, roundUpUsd, usdToEth } from '@/lib/ethPrice';
 
 export function MetaMaskRoundUpTest() {
   const { address, isConnected } = useAccount();
-  const [recipient, setRecipient] = useState('0x742d35Cc6634C0532925a3b844Bc454e4438f44e'); // Тестовый адрес
-  const [amount, setAmount] = useState('0.001'); // Сумма в ETH
-  const [isLoading, setIsLoading] = useState(false);
+  const [recipient, setRecipient] = useState('0x742d35Cc6634C0532925a3b844Bc454e4438f44e');
+  const [amount, setAmount] = useState('0.001');
+  const { sendTransaction, data: hash, isPending } = useSendTransaction();
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   const handleSendTransaction = async () => {
-    if (!window.ethereum || !address) {
-      toast.error('MetaMask not found');
+    if (!isConnected || !address) {
+      toast.error('Please connect your wallet first');
       return;
     }
 
@@ -26,40 +28,66 @@ export function MetaMaskRoundUpTest() {
     }
 
     try {
-      setIsLoading(true);
+      // Получаем цену ETH
+      const ethPrice = await getEthPrice();
       
-      toast.info('Opening MetaMask', {
-        description: 'Amount will be automatically rounded up before signing',
+      // Конвертируем введенную сумму в wei
+      const originalValueWei = parseEther(amount);
+      
+      // Конвертируем в USD для расчета round-up
+      const usdAmount = ethToUsd(originalValueWei, ethPrice);
+      
+      // Округляем до целого доллара
+      const roundedUsd = roundUpUsd(usdAmount);
+      const roundUpUsdAmount = roundedUsd - usdAmount;
+      
+      // Если сумма уже целая, показываем предупреждение
+      if (roundUpUsdAmount < 0.01) {
+        toast.warning('Amount is already whole dollar', {
+          description: `$${usdAmount.toFixed(2)} - no round-up needed`,
+        });
+        return;
+      }
+      
+      // Конвертируем округленную сумму обратно в ETH
+      const roundedEth = usdToEth(roundedUsd, ethPrice);
+      const roundedValueWei = parseEther(roundedEth);
+      
+      // Показываем информацию о round-up
+      toast.info(
+        `Round-Up Applied: +$${roundUpUsdAmount.toFixed(2)}`,
+        {
+          description: `Original: $${usdAmount.toFixed(2)} → Rounded: $${roundedUsd.toFixed(2)}`,
+          duration: 5000,
+        }
+      );
+      
+      console.log('Round-Up Transaction:', {
+        originalETH: amount,
+        roundedETH: roundedEth,
+        originalUSD: usdAmount.toFixed(2),
+        roundedUSD: roundedUsd.toFixed(2),
+        roundUpUSD: roundUpUsdAmount.toFixed(2),
       });
-
-      // Конвертируем сумму в wei
-      const valueInWei = parseEther(amount);
-
-      // Отправляем транзакцию с указанной суммой
-      // roundUpTransport перехватит и округлит перед подписью
-      const txHash = await window.ethereum.request({
-        method: 'eth_sendTransaction',
-        params: [
-          {
-            from: address,
-            to: recipient,
-            value: `0x${valueInWei.toString(16)}`,
-          },
-        ],
+      
+      // Отправляем транзакцию с округленной суммой
+      sendTransaction({
+        to: recipient as `0x${string}`,
+        value: roundedValueWei,
       });
-
-      toast.success('Transaction sent!', {
-        description: `Hash: ${txHash}`,
-      });
+      
     } catch (error: any) {
       console.error('Transaction error:', error);
+      
       if (error.code === 4001) {
-        toast.error('Transaction rejected');
+        toast.error('Transaction rejected', {
+          description: 'You rejected the transaction in MetaMask',
+        });
       } else {
-        toast.error(error.message || 'Transaction failed');
+        toast.error('Transaction failed', {
+          description: error.message || 'An error occurred',
+        });
       }
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -73,7 +101,7 @@ export function MetaMaskRoundUpTest() {
           <div>
             <CardTitle>MetaMask Round-Up Test</CardTitle>
             <CardDescription>
-              Send ETH through MetaMask and see automatic rounding
+              Send ETH and see automatic USD round-up in action
             </CardDescription>
           </div>
         </div>
@@ -81,13 +109,12 @@ export function MetaMaskRoundUpTest() {
       <CardContent className="space-y-4">
         {/* Info Banner */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
-          <p className="text-sm font-semibold text-blue-900">💡 How to test:</p>
+          <p className="text-sm font-semibold text-blue-900">💡 How it works:</p>
           <ol className="text-xs text-blue-800 space-y-1 list-decimal list-inside">
-            <li>Enter amount in ETH below (e.g., 0.001 ETH)</li>
-            <li>Click "Send Transaction" button</li>
-            <li>Check the USD value in MetaMask popup - it will be rounded up!</li>
-            <li>You'll see a notification with the round-up amount</li>
-            <li>Confirm or reject the transaction in MetaMask</li>
+            <li>Enter an amount in ETH below (e.g., 0.001 ETH ≈ $3.41)</li>
+            <li>We automatically round it up to nearest dollar ($4.00)</li>
+            <li>MetaMask will show the rounded amount for you to confirm</li>
+            <li>The difference ($0.59) is your automatic round-up savings!</li>
           </ol>
         </div>
 
@@ -105,13 +132,13 @@ export function MetaMaskRoundUpTest() {
             className="font-mono text-sm"
           />
           <p className="text-xs text-muted-foreground">
-            Example: 0.001 ETH ≈ $3.40 → will be rounded to $4.00
+            Example: 0.001 ETH ≈ $3.41 → will be rounded to $4.00
           </p>
         </div>
 
         {/* Recipient Address */}
         <div className="space-y-2">
-          <Label htmlFor="recipient">Recipient Address (for testing)</Label>
+          <Label htmlFor="recipient">Recipient Address</Label>
           <Input
             id="recipient"
             value={recipient}
@@ -120,41 +147,58 @@ export function MetaMaskRoundUpTest() {
             className="font-mono text-sm"
           />
           <p className="text-xs text-muted-foreground">
-            You can use any test address or keep the default
+            Test address (you can change it)
           </p>
         </div>
 
         {/* Action Button */}
         <Button
           onClick={handleSendTransaction}
-          disabled={!isConnected || isLoading || !amount}
+          disabled={!isConnected || isPending || isConfirming || !amount}
           className="w-full"
           size="lg"
         >
-          {isLoading ? (
+          {isPending || isConfirming ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Waiting for MetaMask...
+              {isPending ? 'Check MetaMask...' : 'Confirming...'}
+            </>
+          ) : isSuccess ? (
+            <>
+              <CheckCircle2 className="mr-2 h-4 w-4" />
+              Transaction Confirmed!
             </>
           ) : (
             <>
               <Zap className="mr-2 h-4 w-4" />
-              Send Transaction with Round-Up
+              Send with Auto Round-Up
             </>
           )}
         </Button>
+        
+        {/* Transaction Status */}
+        {hash && (
+          <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-sm font-semibold text-green-900 mb-1">
+              {isConfirming ? '⏳ Confirming transaction...' : '✅ Transaction confirmed!'}
+            </p>
+            <p className="text-xs text-green-700 break-all">
+              Hash: {hash}
+            </p>
+          </div>
+        )}
 
         {!isConnected && (
           <p className="text-xs text-center text-muted-foreground">
-            Connect your wallet first
+            Connect your wallet to test
           </p>
         )}
 
         {/* Additional Info */}
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
           <p className="text-xs text-yellow-800">
-            <strong>Note:</strong> The amount you enter will be automatically rounded to the nearest whole dollar before you sign.
-            For example, if you send ETH worth $2.50, MetaMask will show $3.00 in the confirmation popup.
+            <strong>Note:</strong> We calculate the USD value, round it up to the nearest dollar, 
+            and convert back to ETH. MetaMask will show the rounded amount for your approval.
           </p>
         </div>
       </CardContent>
