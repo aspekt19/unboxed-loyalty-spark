@@ -19,7 +19,8 @@ export function RoundUpTestForm() {
   const { data: ethPriceData, error: priceError } = useReadContract({
     address: ROUND_UP_CONFIG.VAULT_ADDRESS,
     abi: ROUND_UP_VAULT_ABI,
-    functionName: 'getEthPrice',
+    functionName: 'getTokenPrice',
+    args: [ROUND_UP_CONFIG.NATIVE_TOKEN], // ETH = address(0)
     query: {
       enabled: isConnected && ROUND_UP_CONFIG.VAULT_ADDRESS !== '0x0000000000000000000000000000000000000000',
     },

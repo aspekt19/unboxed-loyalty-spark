@@ -9,7 +9,7 @@ import { ROUND_UP_CONFIG, ROUND_UP_VAULT_ABI } from '@/config/roundup';
 export function useRoundUpVault() {
   const { address } = useAccount();
 
-  // Чтение настроек пользователя
+  // Чтение настроек пользователя (обновлено для нового контракта)
   const { data: userSettings } = useReadContract({
     address: ROUND_UP_CONFIG.VAULT_ADDRESS,
     abi: ROUND_UP_VAULT_ABI,
