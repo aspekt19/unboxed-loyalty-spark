@@ -3,17 +3,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
-import { useAccount, useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useConfig } from 'wagmi';
 import { Loader2, Zap, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { parseEther } from 'viem';
-import { getEthPrice, ethToUsd, roundUpUsd, usdToEth } from '@/lib/ethPrice';
+import { getEthPrice, ethToUsd, roundUpUsd } from '@/lib/ethPrice';
+import { ROUND_UP_CONFIG, ROUND_UP_VAULT_ABI } from '@/config/roundup';
 
 export function MetaMaskRoundUpTest() {
-  const { address, isConnected } = useAccount();
-  const [recipient, setRecipient] = useState('0x742d35Cc6634C0532925a3b844Bc454e4438f44e');
+  const { address, isConnected, chain } = useAccount();
+  const config = useConfig();
   const [amount, setAmount] = useState('0.001');
-  const { sendTransaction, data: hash, isPending } = useSendTransaction();
+  const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   const handleSendTransaction = async () => {
@@ -28,32 +29,20 @@ export function MetaMaskRoundUpTest() {
     }
 
     try {
-      // Получаем цену ETH
+      // Get ETH price
       const ethPrice = await getEthPrice();
       
-      // Конвертируем введенную сумму в wei
+      // Convert entered amount to wei
       const originalValueWei = parseEther(amount);
       
-      // Конвертируем в USD для расчета round-up
+      // Convert to USD for round-up calculation
       const usdAmount = ethToUsd(originalValueWei, ethPrice);
       
-      // Округляем до целого доллара
+      // Round up to nearest dollar
       const roundedUsd = roundUpUsd(usdAmount);
       const roundUpUsdAmount = roundedUsd - usdAmount;
       
-      // Если сумма уже целая, показываем предупреждение
-      if (roundUpUsdAmount < 0.01) {
-        toast.warning('Amount is already whole dollar', {
-          description: `$${usdAmount.toFixed(2)} - no round-up needed`,
-        });
-        return;
-      }
-      
-      // Конвертируем округленную сумму обратно в ETH
-      const roundedEth = usdToEth(roundedUsd, ethPrice);
-      const roundedValueWei = parseEther(roundedEth);
-      
-      // Показываем информацию о round-up
+      // Show round-up info
       toast.info(
         `Round-Up Applied: +$${roundUpUsdAmount.toFixed(2)}`,
         {
@@ -64,16 +53,23 @@ export function MetaMaskRoundUpTest() {
       
       console.log('Round-Up Transaction:', {
         originalETH: amount,
-        roundedETH: roundedEth,
         originalUSD: usdAmount.toFixed(2),
         roundedUSD: roundedUsd.toFixed(2),
         roundUpUSD: roundUpUsdAmount.toFixed(2),
       });
       
-      // Отправляем транзакцию с округленной суммой
-      sendTransaction({
-        to: recipient as `0x${string}`,
-        value: roundedValueWei,
+      // Call RoundUpVault contract - it will track the round-up amount
+      // USD amount with 2 decimals (e.g., 3.40 becomes 340)
+      const usdAmountScaled = BigInt(Math.floor(usdAmount * 100));
+      
+      writeContract({
+        address: ROUND_UP_CONFIG.VAULT_ADDRESS as `0x${string}`,
+        abi: ROUND_UP_VAULT_ABI,
+        functionName: 'roundUp',
+        args: [usdAmountScaled],
+        value: originalValueWei,
+        account: address,
+        chain: chain,
       });
       
     } catch (error: any) {
@@ -112,9 +108,9 @@ export function MetaMaskRoundUpTest() {
           <p className="text-sm font-semibold text-blue-900">💡 How it works:</p>
           <ol className="text-xs text-blue-800 space-y-1 list-decimal list-inside">
             <li>Enter an amount in ETH below (e.g., 0.001 ETH ≈ $3.41)</li>
-            <li>We automatically round it up to nearest dollar ($4.00)</li>
-            <li>MetaMask will show the rounded amount for you to confirm</li>
-            <li>The difference ($0.59) is your automatic round-up savings!</li>
+            <li>We calculate the round-up to nearest dollar ($4.00)</li>
+            <li>The transaction is sent to the RoundUpVault contract</li>
+            <li>Your round-up ($0.59) is tracked and invested automatically!</li>
           </ol>
         </div>
 
@@ -136,20 +132,6 @@ export function MetaMaskRoundUpTest() {
           </p>
         </div>
 
-        {/* Recipient Address */}
-        <div className="space-y-2">
-          <Label htmlFor="recipient">Recipient Address</Label>
-          <Input
-            id="recipient"
-            value={recipient}
-            onChange={(e) => setRecipient(e.target.value)}
-            placeholder="0x..."
-            className="font-mono text-sm"
-          />
-          <p className="text-xs text-muted-foreground">
-            Test address (you can change it)
-          </p>
-        </div>
 
         {/* Action Button */}
         <Button
@@ -197,8 +179,8 @@ export function MetaMaskRoundUpTest() {
         {/* Additional Info */}
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
           <p className="text-xs text-yellow-800">
-            <strong>Note:</strong> We calculate the USD value, round it up to the nearest dollar, 
-            and convert back to ETH. MetaMask will show the rounded amount for your approval.
+            <strong>Note:</strong> The transaction calls the RoundUpVault smart contract which automatically 
+            calculates and stores your round-up amount for investment.
           </p>
         </div>
       </CardContent>
