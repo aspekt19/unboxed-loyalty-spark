@@ -3,7 +3,7 @@ import { ArrowLeft, Zap, Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { WalletConnectButton } from '@/components/WalletConnectButton';
 import { useAccount } from 'wagmi';
-import SendTokens from '@/components/wallet/SendTokens';
+import { MetaMaskRoundUpTest } from '@/components/roundup/MetaMaskRoundUpTest';
 import PageTransition from '@/components/PageTransition';
 
 export default function RoundUpAutoTestPage() {
@@ -105,8 +105,8 @@ export default function RoundUpAutoTestPage() {
             </CardContent>
           </Card>
 
-          {/* Send Form */}
-          {isConnected && <SendTokens />}
+          {/* MetaMask Test */}
+          <MetaMaskRoundUpTest />
 
           {/* Additional Info */}
           <Card className="mt-8 bg-yellow-50 border-yellow-200">
