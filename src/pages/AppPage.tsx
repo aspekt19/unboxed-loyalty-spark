@@ -6,8 +6,8 @@ export default function AppPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Redirect directly to customer dashboard (Round-Up investing)
-    navigate('/customer');
+    // Redirect directly to new user-centric dashboard
+    navigate('/dashboard');
   }, [navigate]);
 
   return (

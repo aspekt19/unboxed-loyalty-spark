@@ -9,6 +9,7 @@ import { config, rainbowKitLocale } from "./config/wagmi";
 import "@rainbow-me/rainbowkit/styles.css";
 import Index from "./pages/Index";
 import AppPage from "./pages/AppPage";
+import DashboardPage from "./pages/DashboardPage";
 import CustomerPage from "./pages/CustomerPage";
 import InstallPage from "./pages/InstallPage";
 import WalletPage from "./pages/WalletPage";
@@ -58,6 +59,7 @@ function AnimatedRoutes() {
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<Index />} />
         <Route path="/app" element={<AppPage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/customer" element={<CustomerPage />} />
         <Route path="/roundup-test" element={<RoundUpAutoTestPage />} />
         <Route path="/install" element={<InstallPage />} />
