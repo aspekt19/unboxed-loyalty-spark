@@ -61,13 +61,13 @@ const Index = () => {
             </div>
             
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-[1.1] tracking-tight text-balance">
-              Discover loyalty
+              Invest Every Cent.
               <br />
-              rewards reimagined.
+              Keep Every Gain.
             </h1>
             
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-12">
-              Mint, manage and trade loyalty tokens on-chain. Built for the next generation of customer engagement.
+              Turn spare change into wealth. Automated Round-Up investing powered by DeFi on BASE Network.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
@@ -107,10 +107,10 @@ const Index = () => {
               
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-12">
                 {[
-                  { icon: Shield, title: 'Secure', description: 'Smart contract based security' },
-                  { icon: Zap, title: 'Fast', description: 'Instant transactions on BASE' },
-                  { icon: Globe, title: 'Decentralized', description: 'True ownership of rewards' },
-                  { icon: TrendingUp, title: 'Tradeable', description: 'Exchange on any DEX' }
+                  { icon: Shield, title: 'Secure', description: 'Non-custodial Smart Accounts' },
+                  { icon: Zap, title: 'Automatic', description: 'Round-Up spare change instantly' },
+                  { icon: TrendingUp, title: 'DeFi Yields', description: 'Earn returns from Aave, Moonwell' },
+                  { icon: Globe, title: 'On-Chain', description: 'Full transparency on BASE' }
                 ].map((feature) => (
                   <div 
                     key={feature.title} 
@@ -131,10 +131,10 @@ const Index = () => {
           <section className="py-16 md:py-24">
             <div className="max-w-3xl mx-auto text-center">
               <h2 className="text-3xl md:text-5xl font-bold mb-5 text-foreground tracking-tight">
-                Ready to get started?
+                Ready to start investing?
               </h2>
               <p className="text-lg text-muted-foreground mb-8">
-                Join the future of loyalty rewards today.
+                Turn your spare change into a growing investment portfolio.
               </p>
               <Link to="/app">
                 <Button size="lg" className="h-12 px-8 text-base font-semibold rounded-lg bg-foreground text-background hover:bg-foreground/90 transition-all duration-200">
