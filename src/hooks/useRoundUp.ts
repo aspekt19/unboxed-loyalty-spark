@@ -1,21 +1,19 @@
 import { useState } from 'react';
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useWriteContract, useWaitForTransactionReceipt, useAccount } from 'wagmi';
 import { parseEther } from 'viem';
 import { toast } from 'sonner';
+import { ROUND_UP_CONFIG, ROUND_UP_VAULT_ABI } from '@/config/roundup';
 
 /**
  * Hook для выполнения Round-Up транзакций
- * Будет обновлен после получения финального ABI и адреса контракта
  */
-
-// Placeholder
-const ROUND_UP_VAULT_ADDRESS = '0x0000000000000000000000000000000000000000' as `0x${string}`;
-const ROUND_UP_VAULT_ABI = [] as const;
 
 export function useRoundUp() {
   const [isProcessing, setIsProcessing] = useState(false);
+  const { address } = useAccount();
 
-  const { writeContractAsync } = useWriteContract();
+  const { writeContract, data: hash } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   /**
    * Выполнить Round-Up транзакцию
@@ -23,7 +21,7 @@ export function useRoundUp() {
    * @param roundUpAmountETH - Сумма round-up в ETH
    */
   const executeRoundUp = async (primaryTxValueUSD: bigint, roundUpAmountETH: string) => {
-    if (ROUND_UP_VAULT_ADDRESS === '0x0000000000000000000000000000000000000000') {
+    if (ROUND_UP_CONFIG.VAULT_ADDRESS === '0x0000000000000000000000000000000000000000') {
       toast.error('RoundUpVault contract not configured');
       return;
     }
@@ -33,14 +31,13 @@ export function useRoundUp() {
     try {
       toast.info('Initiating Round-Up transaction...');
 
-      // Placeholder для будущей транзакции
-      // const hash = await writeContractAsync({
-      //   address: ROUND_UP_VAULT_ADDRESS,
-      //   abi: ROUND_UP_VAULT_ABI,
-      //   functionName: 'roundUp',
-      //   args: [primaryTxValueUSD],
-      //   value: parseEther(roundUpAmountETH),
-      // });
+      writeContract({
+        address: ROUND_UP_CONFIG.VAULT_ADDRESS,
+        abi: ROUND_UP_VAULT_ABI,
+        functionName: 'roundUp',
+        args: [primaryTxValueUSD],
+        value: parseEther(roundUpAmountETH),
+      } as any);
 
       toast.success('Round-Up completed!');
       return true;
@@ -55,6 +52,8 @@ export function useRoundUp() {
 
   return {
     executeRoundUp,
-    isProcessing,
+    isProcessing: isProcessing || isConfirming,
+    isSuccess,
+    hash,
   };
 }
