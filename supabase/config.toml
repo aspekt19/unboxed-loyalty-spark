@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.upload-to-ipfs]
 verify_jwt = false
+
+[functions.check-token-ownership]
+verify_jwt = false

@@ -1,14 +1,17 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Camera, SwitchCamera, Download, Upload } from 'lucide-react';
+import { Camera, SwitchCamera, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import PhotoEditor from '@/components/framesnap/PhotoEditor';
 
 const FrameSnapPage = () => {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [isUploading, setIsUploading] = useState(false);
+  const [showEditor, setShowEditor] = useState(false);
+  const [userTokens, setUserTokens] = useState<string[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
@@ -36,8 +39,8 @@ const FrameSnapPage = () => {
     } catch (error) {
       console.error('Error accessing camera:', error);
       toast({
-        title: 'Ошибка доступа к камере',
-        description: 'Не удалось получить доступ к камере. Проверьте разрешения.',
+        title: 'Camera Access Error',
+        description: 'Failed to access camera. Please check permissions.',
         variant: 'destructive',
       });
     }
@@ -61,12 +64,14 @@ const FrameSnapPage = () => {
         const imageData = canvas.toDataURL('image/png');
         setCapturedImage(imageData);
         stopCamera();
+        setShowEditor(true);
       }
     }
   };
 
   const retakePhoto = () => {
     setCapturedImage(null);
+    setShowEditor(false);
     startCamera();
   };
 
@@ -74,18 +79,12 @@ const FrameSnapPage = () => {
     setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
   };
 
-  const uploadToIPFS = async () => {
-    if (!capturedImage) return;
-
+  const uploadToIPFS = async (imageBlob: Blob) => {
     setIsUploading(true);
     try {
-      // Convert base64 to blob
-      const response = await fetch(capturedImage);
-      const blob = await response.blob();
-      
       // Create form data
       const formData = new FormData();
-      formData.append('file', blob, 'framesnap.png');
+      formData.append('file', imageBlob, 'framesnap.png');
 
       // Upload to IPFS via edge function
       const { data, error } = await supabase.functions.invoke('upload-to-ipfs', {
@@ -96,8 +95,8 @@ const FrameSnapPage = () => {
 
       if (data.success) {
         toast({
-          title: 'Успешно загружено!',
-          description: 'Изображение загружено на IPFS',
+          title: 'Upload Successful!',
+          description: 'Image uploaded to IPFS',
         });
 
         // Redirect back to Frame with image URL
@@ -111,14 +110,25 @@ const FrameSnapPage = () => {
     } catch (error) {
       console.error('Error uploading to IPFS:', error);
       toast({
-        title: 'Ошибка загрузки',
-        description: 'Не удалось загрузить изображение на IPFS',
+        title: 'Upload Error',
+        description: 'Failed to upload image to IPFS',
         variant: 'destructive',
       });
     } finally {
       setIsUploading(false);
     }
   };
+
+  if (showEditor && capturedImage) {
+    return (
+      <PhotoEditor
+        imageUrl={capturedImage}
+        onSave={uploadToIPFS}
+        onCancel={retakePhoto}
+        userTokens={userTokens}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
@@ -159,45 +169,11 @@ const FrameSnapPage = () => {
                 </div>
               </div>
             </>
-          ) : (
-            <>
-              <img src={capturedImage} alt="Captured" className="w-full h-auto" />
-              
-              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/60 to-transparent">
-                <div className="flex justify-center gap-4">
-                  <Button
-                    size="lg"
-                    variant="secondary"
-                    onClick={retakePhoto}
-                  >
-                    Переснять
-                  </Button>
-                  
-                  <Button
-                    size="lg"
-                    onClick={uploadToIPFS}
-                    disabled={isUploading}
-                  >
-                    {isUploading ? (
-                      <>
-                        <Upload className="h-5 w-5 mr-2 animate-spin" />
-                        Загрузка...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="h-5 w-5 mr-2" />
-                        Загрузить на IPFS
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
+          ) : null}
         </div>
 
         <p className="text-center text-muted-foreground mt-4 text-sm">
-          Сделайте снимок и загрузите его на IPFS для минтинга NFT
+          Take a snap and upload it to IPFS for NFT minting
         </p>
       </div>
     </div>
