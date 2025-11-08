@@ -65,7 +65,28 @@ export function MetaMaskRoundUpTest() {
         roundUpValueWei: roundUpValueWei.toString(),
       });
       
-      // Call RoundUpVault contract with ONLY the round-up difference
+      // Step 1: Send primary transaction to recipient
+      if (!recipient || recipient.length !== 42) {
+        toast.error('Invalid recipient address');
+        return;
+      }
+      
+      toast.info('Step 1: Sending primary transaction to recipient...');
+      
+      const primaryTx = await window.ethereum.request({
+        method: 'eth_sendTransaction',
+        params: [{
+          from: address,
+          to: recipient,
+          value: originalValueWei.toString(16),
+        }],
+      });
+      
+      console.log('Primary transaction sent:', primaryTx);
+      
+      toast.success('Primary transaction sent! Now sending round-up...');
+      
+      // Step 2: Call RoundUpVault contract with ONLY the round-up difference
       // USD amount with 2 decimals (e.g., 3.40 becomes 340)
       const usdAmountScaled = BigInt(Math.floor(usdAmount * 100));
       
