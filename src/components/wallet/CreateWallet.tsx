@@ -3,12 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
-  generateWallet, 
   generateWalletWithMnemonic,
-  importWallet, 
   encryptPrivateKey, 
   saveEncryptedWallet 
 } from "@/lib/walletGenerator";
@@ -24,7 +21,6 @@ export default function CreateWallet({ onWalletCreated }: CreateWalletProps) {
   const { toast } = useToast();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [privateKey, setPrivateKey] = useState("");
   const [generatedWallet, setGeneratedWallet] = useState<{ 
     address: string; 
     privateKey?: string; 
@@ -64,9 +60,19 @@ export default function CreateWallet({ onWalletCreated }: CreateWalletProps) {
       return;
     }
 
-    // Генерируем кошелек с seed-фразой
-    const wallet = generateWalletWithMnemonic();
-    setGeneratedWallet(wallet);
+    try {
+      // Генерируем кошелек с seed-фразой
+      const wallet = generateWalletWithMnemonic();
+      console.log("Generated wallet:", wallet);
+      setGeneratedWallet(wallet);
+    } catch (error) {
+      console.error("Wallet generation error:", error);
+      toast({
+        title: "Generation Failed",
+        description: error instanceof Error ? error.message : "Failed to generate wallet",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSaveWallet = () => {
@@ -85,45 +91,6 @@ export default function CreateWallet({ onWalletCreated }: CreateWalletProps) {
     });
 
     onWalletCreated(generatedWallet.address);
-  };
-
-  const handleImportWallet = () => {
-    if (!password || password.length < 8) {
-      toast({
-        title: "Weak Password",
-        description: "Password must be at least 8 characters",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!privateKey.startsWith("0x") || privateKey.length !== 66) {
-      toast({
-        title: "Invalid Private Key",
-        description: "Private key must start with 0x and be 66 characters long",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const wallet = importWallet(privateKey as `0x${string}`);
-      const encrypted = encryptPrivateKey(wallet.privateKey, password);
-      saveEncryptedWallet(wallet.address, encrypted);
-
-      toast({
-        title: "Wallet Imported",
-        description: "Your wallet has been imported successfully",
-      });
-
-      onWalletCreated(wallet.address);
-    } catch (error) {
-      toast({
-        title: "Import Failed",
-        description: error instanceof Error ? error.message : "Invalid private key",
-        variant: "destructive",
-      });
-    }
   };
 
   const handleCopyPrivateKey = async () => {
@@ -157,15 +124,15 @@ export default function CreateWallet({ onWalletCreated }: CreateWalletProps) {
             Save Your Wallet
           </CardTitle>
           <CardDescription>
-            This is your only chance to save your private key!
+            Write down your seed phrase - this is your only chance!
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              <strong>IMPORTANT:</strong> Save your seed phrase and private key in a secure place. 
-              If you lose them, you will lose access to your wallet forever!
+              <strong>IMPORTANT:</strong> Save your seed phrase in a secure place. 
+              If you lose it, you will lose access to your wallet forever!
             </AlertDescription>
           </Alert>
 
@@ -190,19 +157,21 @@ export default function CreateWallet({ onWalletCreated }: CreateWalletProps) {
               </div>
               <div className="relative">
                 <div className="p-3 rounded-lg bg-muted font-mono text-sm break-all">
-                  {showSeedPhrase ? generatedWallet.mnemonic : "•".repeat(60)}
+                  {showSeedPhrase ? generatedWallet.mnemonic : "• ".repeat(12) + "(Click eye to reveal)"}
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-2 top-2"
-                  onClick={handleCopySeedPhrase}
-                >
-                  {copiedSeed ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                </Button>
+                {showSeedPhrase && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-2"
+                    onClick={handleCopySeedPhrase}
+                  >
+                    {copiedSeed ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  </Button>
+                )}
               </div>
               <p className="text-xs text-muted-foreground">
-                Write down these 12 words in order and keep them safe. You can use them to recover your wallet.
+                ✍️ Write down these 12 words in order and keep them safe. You can use them to recover your wallet.
               </p>
             </div>
           )}
@@ -210,7 +179,7 @@ export default function CreateWallet({ onWalletCreated }: CreateWalletProps) {
           {generatedWallet.privateKey && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>Your Private Key</Label>
+                <Label>Your Private Key (alternative backup)</Label>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -223,14 +192,16 @@ export default function CreateWallet({ onWalletCreated }: CreateWalletProps) {
                 <div className="p-3 rounded-lg bg-muted font-mono text-sm break-all">
                   {showPrivateKey ? generatedWallet.privateKey : "•".repeat(66)}
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-2 top-2"
-                  onClick={handleCopyPrivateKey}
-                >
-                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                </Button>
+                {showPrivateKey && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-2"
+                    onClick={handleCopyPrivateKey}
+                  >
+                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  </Button>
+                )}
               </div>
             </div>
           )}
@@ -244,7 +215,7 @@ export default function CreateWallet({ onWalletCreated }: CreateWalletProps) {
             </Button>
             <Button onClick={handleSaveWallet}>
               <Download className="w-4 h-4 mr-2" />
-              Save Wallet
+              I Saved It, Continue
             </Button>
           </div>
         </CardContent>
@@ -257,115 +228,65 @@ export default function CreateWallet({ onWalletCreated }: CreateWalletProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Wallet className="w-5 h-5" />
-          Create or Import Wallet
+          Create New Wallet
         </CardTitle>
         <CardDescription>
-          Generate a new wallet or import an existing one
+          Generate a new secure wallet with seed phrase
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="create" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="create">Create New</TabsTrigger>
-            <TabsTrigger value="import">Import</TabsTrigger>
-          </TabsList>
+      <CardContent className="space-y-4">
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            Your wallet will be stored encrypted in your browser. 
+            Only you have access to it with your password.
+          </AlertDescription>
+        </Alert>
 
-          <TabsContent value="create" className="space-y-4">
-            <Alert>
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                Your wallet will be stored encrypted in your browser. 
-                Only you have access to it with your password.
-              </AlertDescription>
-            </Alert>
+        <div className="space-y-2">
+          <Label htmlFor="create-password">Password</Label>
+          <Input
+            id="create-password"
+            type="password"
+            placeholder="Min 8 characters"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="create-password">Password</Label>
-              <Input
-                id="create-password"
-                type="password"
-                placeholder="Min 8 characters"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
+        <div className="space-y-2">
+          <Label htmlFor="confirm-password">Confirm Password</Label>
+          <Input
+            id="confirm-password"
+            type="password"
+            placeholder="Confirm password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
+        </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirm Password</Label>
-              <Input
-                id="confirm-password"
-                type="password"
-                placeholder="Confirm password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
-            </div>
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="terms"
+            checked={agreedToTerms}
+            onCheckedChange={(checked) => setAgreedToTerms(checked === true)}
+          />
+          <label
+            htmlFor="terms"
+            className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          >
+            I understand that I am responsible for keeping my wallet secure
+          </label>
+        </div>
 
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="terms"
-                checked={agreedToTerms}
-                onCheckedChange={(checked) => setAgreedToTerms(checked === true)}
-              />
-              <label
-                htmlFor="terms"
-                className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                I understand that I am responsible for keeping my wallet secure
-              </label>
-            </div>
-
-            <Button 
-              onClick={handleGenerateWallet} 
-              className="w-full"
-              disabled={!password || !confirmPassword || !agreedToTerms}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Generate New Wallet
-            </Button>
-          </TabsContent>
-
-          <TabsContent value="import" className="space-y-4">
-            <Alert>
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                Never share your private key with anyone!
-              </AlertDescription>
-            </Alert>
-
-            <div className="space-y-2">
-              <Label htmlFor="private-key">Private Key</Label>
-              <Input
-                id="private-key"
-                type="password"
-                placeholder="0x..."
-                value={privateKey}
-                onChange={(e) => setPrivateKey(e.target.value)}
-                className="font-mono"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="import-password">Password</Label>
-              <Input
-                id="import-password"
-                type="password"
-                placeholder="Encrypt with password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-
-            <Button 
-              onClick={handleImportWallet} 
-              className="w-full"
-              disabled={!password || !privateKey}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Import Wallet
-            </Button>
-          </TabsContent>
-        </Tabs>
+        <Button 
+          onClick={handleGenerateWallet} 
+          className="w-full"
+          disabled={!password || !confirmPassword || !agreedToTerms}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Generate New Wallet
+        </Button>
       </CardContent>
     </Card>
   );

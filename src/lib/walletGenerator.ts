@@ -15,9 +15,22 @@ export function generateWalletWithMnemonic() {
   const mnemonic = generateSeedPhrase();
   const account = mnemonicToAccount(mnemonic);
   
+  // Получаем приватный ключ напрямую из аккаунта
+  const hdKey = account.getHdKey();
+  const privateKeyBytes = hdKey.privateKey;
+  
+  // Конвертируем в hex строку
+  let privateKey: string | undefined;
+  if (privateKeyBytes) {
+    const hexString = Array.from(privateKeyBytes)
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    privateKey = `0x${hexString}`;
+  }
+  
   return {
     address: account.address,
-    privateKey: account.getHdKey().privateKey ? `0x${Buffer.from(account.getHdKey().privateKey!).toString('hex')}` : undefined,
+    privateKey: privateKey,
     mnemonic: mnemonic,
   };
 }
@@ -44,9 +57,21 @@ export function recoverFromMnemonic(mnemonic: string) {
     const normalizedMnemonic = mnemonic.trim().toLowerCase().replace(/\s+/g, ' ');
     const account = mnemonicToAccount(normalizedMnemonic);
     
+    // Получаем приватный ключ
+    const hdKey = account.getHdKey();
+    const privateKeyBytes = hdKey.privateKey;
+    
+    let privateKey: string | undefined;
+    if (privateKeyBytes) {
+      const hexString = Array.from(privateKeyBytes)
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+      privateKey = `0x${hexString}`;
+    }
+    
     return {
       address: account.address,
-      privateKey: account.getHdKey().privateKey ? `0x${Buffer.from(account.getHdKey().privateKey!).toString('hex')}` : undefined,
+      privateKey: privateKey,
       mnemonic: normalizedMnemonic,
     };
   } catch (error) {
