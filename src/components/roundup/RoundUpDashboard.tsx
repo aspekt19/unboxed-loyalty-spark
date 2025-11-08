@@ -1,15 +1,34 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, Wallet, Settings, History, ArrowLeft } from 'lucide-react';
+import { TrendingUp, Settings, History, ArrowLeft, Smartphone } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { WalletConnectButton } from '@/components/WalletConnectButton';
 import { useAccount } from 'wagmi';
 import { useRoundUpVault } from '@/hooks/useRoundUpVault';
 import { RoundUpTestForm } from './RoundUpTestForm';
+import { InvestButton } from './InvestButton';
+import { WithdrawButton } from './WithdrawButton';
+import { formatEther } from 'viem';
+import { useState, useEffect } from 'react';
 
 export function RoundUpDashboard() {
   const { isConnected } = useAccount();
-  const { isContractReady } = useRoundUpVault();
+  const { isContractReady, userBalance } = useRoundUpVault();
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+
+  useEffect(() => {
+    // Check if app is not installed and user is on mobile
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    
+    if (!isStandalone && isMobile) {
+      setShowInstallPrompt(true);
+    }
+  }, []);
+
+  // Parse balances from contract
+  const pendingRoundUp = userBalance ? Number(formatEther(userBalance[0] || 0n)) : 0;
+  const totalInvested = userBalance ? Number(formatEther(userBalance[1] || 0n)) : 0;
 
   return (
     <div className="min-h-screen bg-white">
@@ -49,6 +68,35 @@ export function RoundUpDashboard() {
           </div>
         )}
 
+        {/* Install App Prompt */}
+        {showInstallPrompt && (
+          <div className="mb-8 p-6 bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20 rounded-lg">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
+                <Smartphone className="w-6 h-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-foreground mb-2">📱 Install Loyal Spark App</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Get the best experience! Install our app on your phone for quick access and offline functionality.
+                </p>
+                <div className="flex gap-3">
+                  <Link to="/install">
+                    <Button size="sm">Install App</Button>
+                  </Link>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setShowInstallPrompt(false)}
+                  >
+                    Maybe Later
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Wallet Connection Prompt */}
         {!isConnected && (
           <div className="mb-8 p-6 bg-secondary/20 border border-border rounded-lg">
@@ -72,11 +120,15 @@ export function RoundUpDashboard() {
           <Card>
             <CardHeader className="pb-3">
               <CardDescription>Pending Round-Up</CardDescription>
-              <CardTitle className="text-3xl">$0.00</CardTitle>
+              <CardTitle className="text-3xl">
+                {isConnected && isContractReady ? `$${(pendingRoundUp * 3400).toFixed(2)}` : '$0.00'}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground">
-                Waiting to be invested
+                {isConnected && isContractReady 
+                  ? `${pendingRoundUp.toFixed(6)} ETH waiting to invest`
+                  : 'Waiting to be invested'}
               </p>
             </CardContent>
           </Card>
@@ -84,11 +136,15 @@ export function RoundUpDashboard() {
           <Card>
             <CardHeader className="pb-3">
               <CardDescription>Total Invested</CardDescription>
-              <CardTitle className="text-3xl">$0.00</CardTitle>
+              <CardTitle className="text-3xl">
+                {isConnected && isContractReady ? `$${(totalInvested * 3400).toFixed(2)}` : '$0.00'}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground">
-                Principal + returns
+                {isConnected && isContractReady 
+                  ? `${totalInvested.toFixed(6)} ETH in DeFi`
+                  : 'Principal + returns'}
               </p>
             </CardContent>
           </Card>
@@ -107,6 +163,39 @@ export function RoundUpDashboard() {
         </div>
 
         {/* Main Actions */}
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Invest Pending Round-Up</CardTitle>
+              <CardDescription>
+                Move your pending round-up into DeFi protocols to start earning yield
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <InvestButton 
+                pendingAmount={pendingRoundUp} 
+                disabled={!isConnected || !isContractReady}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Withdraw Investment</CardTitle>
+              <CardDescription>
+                Take your invested funds back to your wallet
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <WithdrawButton 
+                investedAmount={totalInvested} 
+                disabled={!isConnected || !isContractReady}
+              />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Secondary Actions */}
         <div className="grid md:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
@@ -142,25 +231,6 @@ export function RoundUpDashboard() {
             <CardContent>
               <Button variant="outline" className="w-full" size="lg" disabled={!isConnected || !isContractReady}>
                 View Portfolio
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <History className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <CardTitle>Transaction History</CardTitle>
-                  <CardDescription>See your Round-Up activity</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Button variant="outline" className="w-full" size="lg" disabled={!isConnected || !isContractReady}>
-                View History
               </Button>
             </CardContent>
           </Card>
