@@ -231,6 +231,158 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_campaigns: {
+        Row: {
+          created_at: string | null
+          id: string
+          max_balance: number | null
+          merchant_address: string
+          message: string
+          min_balance: number | null
+          recipients_count: number | null
+          scheduled_at: string | null
+          sent_at: string | null
+          status: string | null
+          target_segment: string | null
+          title: string
+          token_address: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          max_balance?: number | null
+          merchant_address: string
+          message: string
+          min_balance?: number | null
+          recipients_count?: number | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string | null
+          target_segment?: string | null
+          title: string
+          token_address: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          max_balance?: number | null
+          merchant_address?: string
+          message?: string
+          min_balance?: number | null
+          recipients_count?: number | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string | null
+          target_segment?: string | null
+          title?: string
+          token_address?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      notification_history: {
+        Row: {
+          campaign_id: string | null
+          clicked: boolean | null
+          created_at: string | null
+          customer_address: string
+          customer_email: string | null
+          delivered_at: string | null
+          id: string
+          opened_at: string | null
+          status: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          clicked?: boolean | null
+          created_at?: string | null
+          customer_address: string
+          customer_email?: string | null
+          delivered_at?: string | null
+          id?: string
+          opened_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          clicked?: boolean | null
+          created_at?: string | null
+          customer_address?: string
+          customer_email?: string | null
+          delivered_at?: string | null
+          id?: string
+          opened_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_history_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      personalized_offers: {
+        Row: {
+          bonus_tokens: number | null
+          created_at: string | null
+          customer_address: string
+          description: string | null
+          discount_percentage: number | null
+          id: string
+          is_active: boolean | null
+          is_used: boolean | null
+          merchant_address: string
+          min_purchase: number | null
+          title: string
+          token_address: string
+          updated_at: string | null
+          used_at: string | null
+          valid_from: string | null
+          valid_until: string
+        }
+        Insert: {
+          bonus_tokens?: number | null
+          created_at?: string | null
+          customer_address: string
+          description?: string | null
+          discount_percentage?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_used?: boolean | null
+          merchant_address: string
+          min_purchase?: number | null
+          title: string
+          token_address: string
+          updated_at?: string | null
+          used_at?: string | null
+          valid_from?: string | null
+          valid_until: string
+        }
+        Update: {
+          bonus_tokens?: number | null
+          created_at?: string | null
+          customer_address?: string
+          description?: string | null
+          discount_percentage?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_used?: boolean | null
+          merchant_address?: string
+          min_purchase?: number | null
+          title?: string
+          token_address?: string
+          updated_at?: string | null
+          used_at?: string | null
+          valid_from?: string | null
+          valid_until?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -373,6 +525,23 @@ export type Database = {
     }
     Functions: {
       check_program_expiration: { Args: never; Returns: undefined }
+      get_customers_by_segment: {
+        Args: {
+          p_max_balance?: number
+          p_merchant_address: string
+          p_min_balance?: number
+          p_segment: string
+          p_token_address: string
+        }
+        Returns: {
+          balance: number
+          customer_address: string
+          email: string
+          first_name: string
+          last_name: string
+          rfm_score: string
+        }[]
+      }
       migrate_wallet_profile: {
         Args: { p_new_user_id: string; p_wallet_address: string }
         Returns: undefined
