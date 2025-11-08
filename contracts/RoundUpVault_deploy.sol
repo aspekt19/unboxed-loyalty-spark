@@ -48,6 +48,7 @@ interface IInvestmentStrategy {
 contract RoundUpVault {
     // Constants
     uint256 public constant USD_DECIMALS = 8;
+    uint256 public constant MIN_INVEST_AMOUNT = 0.001 ether; // ~$3-4, минимум для инвестирования
     
     address public owner;
     IInvestmentStrategy public strategy;
@@ -272,12 +273,19 @@ contract RoundUpVault {
     
     function invest() external {
         require(userBalances[msg.sender].pendingRoundUp > 0, "No pending round-up");
+        require(userBalances[msg.sender].pendingRoundUp >= MIN_INVEST_AMOUNT, "Amount too small to invest");
         _invest(msg.sender);
     }
     
     function _invest(address _user) internal {
         uint256 amount = userBalances[_user].pendingRoundUp;
         require(amount > 0, "Nothing to invest");
+        
+        // Check minimum amount for investment strategy
+        if (amount < MIN_INVEST_AMOUNT) {
+            // Keep pending if too small
+            return;
+        }
         
         userBalances[_user].pendingRoundUp = 0;
         
