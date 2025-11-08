@@ -62,7 +62,7 @@ export default function WalletPage() {
               <div className="space-y-4">
                 <Button 
                   onClick={() => setShowCreateWallet(true)}
-                  className="w-full"
+                  className="w-full text-base"
                   size="lg"
                 >
                   <Wallet className="w-4 h-4 mr-2" />
@@ -71,7 +71,7 @@ export default function WalletPage() {
                 <Button 
                   onClick={() => setShowRecoverWallet(true)}
                   variant="outline"
-                  className="w-full"
+                  className="w-full text-base"
                   size="lg"
                 >
                   Recover Existing Wallet

@@ -118,8 +118,8 @@ export function WalletConnectButton({ size = "default" }: { size?: "default" | "
   // Показываем кнопку Connect если пользователь вышел вручную
     if (!isConnected || isManuallyDisconnected) {
       const buttonClasses = size === "lg" 
-        ? "w-full h-11 rounded-md px-8 font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center justify-center gap-2"
-        : "px-5 py-2.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center gap-2";
+        ? "w-full h-11 rounded-md px-8 text-base font-medium text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center justify-center gap-2"
+        : "px-5 py-2.5 rounded-lg text-base font-medium text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center gap-2";
       
       return (
         <button
@@ -187,8 +187,8 @@ export function WalletConnectButton({ size = "default" }: { size?: "default" | "
             {(() => {
               if (!connected) {
                 const buttonClasses = size === "lg" 
-                  ? "w-full h-11 rounded-md px-8 font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center justify-center gap-2"
-                  : "px-5 py-2.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center gap-2";
+                  ? "w-full h-11 rounded-md px-8 text-base font-medium text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center justify-center gap-2"
+                  : "px-5 py-2.5 rounded-lg text-base font-medium text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center gap-2";
                 
                 return (
                   <button
