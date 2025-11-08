@@ -1,9 +1,10 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit';
 import { createConfig } from 'wagmi';
 import { base } from 'wagmi/chains';
-import { http } from 'viem';
+import { http, custom } from 'viem';
 import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
 import { sdk } from '@farcaster/miniapp-sdk';
+import { createRoundUpTransport } from '@/lib/roundUpTransport';
 
 // Detect if running inside Farcaster miniapp
 const isFarcasterContext = () => {
@@ -27,6 +28,14 @@ const transport = http('https://base-rpc.publicnode.com', {
   retryDelay: 1000,
 });
 
+// Создаем транспорт с автоматическим round-up для MetaMask
+const getRoundUpTransport = () => {
+  if (typeof window !== 'undefined' && window.ethereum) {
+    return createRoundUpTransport(window.ethereum);
+  }
+  return transport;
+};
+
 export const config = isFarcasterContext()
   ? createConfig({
       chains: [base],
@@ -41,7 +50,7 @@ export const config = isFarcasterContext()
       projectId: '2bf3fb72e7f66e63215bb32b7127f1bc',
       chains: [base],
       transports: {
-        [base.id]: transport,
+        [base.id]: getRoundUpTransport(),
       },
       ssr: false,
     });
