@@ -1,6 +1,6 @@
 # RoundUpVault Deployment Guide
 
-## Обновления в контракте
+## Обновления в контракте v2
 
 ### ✅ Убраны все ограничения:
 - ❌ `MIN_ROUND_UP` - теперь можно отправлять любую сумму
@@ -13,6 +13,13 @@
 - 📊 Автоматическое получение цен через Chainlink Oracle
 - 💰 Функции для round-up токенов: `roundUpToken()`
 - 💸 Функции для вывода токенов: `withdrawToken()`
+
+### ⭐ НОВАЯ ФУНКЦИЯ: One-Transaction Round-Up
+- 🚀 **`roundUpWithTransfer()`** - одна транзакция для всего!
+  - Автоматически отправляет основную сумму получателю
+  - Автоматически отправляет round-up в контракт для инвестирования
+  - **Намного удобнее** чем две отдельные транзакции
+  - Экономит gas и время
 
 ## Шаги для деплоя
 
@@ -75,7 +82,29 @@ vault.addSupportedToken(
 
 ## Примеры использования
 
-### Round-up ETH (как сейчас)
+### ⭐ ONE-TRANSACTION Round-up (РЕКОМЕНДУЕТСЯ)
+```typescript
+// Одна транзакция для всего!
+await writeContract({
+  address: VAULT_ADDRESS,
+  abi: VAULT_ABI,
+  functionName: 'roundUpWithTransfer',
+  args: [
+    recipientAddress,      // Кому отправить основную сумму
+    primaryAmountWei,      // Основная сумма в wei
+    usdAmountScaled        // USD для статистики (scaled by 100)
+  ],
+  value: totalValueWei     // Полная сумма (primary + roundUp)
+});
+```
+
+**Преимущества:**
+- ✅ Одна транзакция вместо двух
+- ✅ Меньше gas fees
+- ✅ Автоматическое разделение платежа
+- ✅ Проще в использовании
+
+### Round-up только в контракт (как раньше)
 ```typescript
 await writeContract({
   address: VAULT_ADDRESS,
@@ -108,6 +137,7 @@ await writeContract({
 ## Что изменилось в ABI
 
 Добавлены новые функции:
+- **`roundUpWithTransfer(address recipient, uint256 primaryAmount, uint256 primaryTxValueUSD)`** ⭐ НОВОЕ - одна транзакция для всего
 - `addSupportedToken(address token, address priceFeed)` - добавить токен
 - `removeSupportedToken(address token)` - удалить токен
 - `roundUpToken(address token, uint256 amount, uint256 primaryTxValueUSD)` - round-up токенов
