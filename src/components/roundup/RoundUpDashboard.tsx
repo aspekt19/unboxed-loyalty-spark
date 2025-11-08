@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { WalletConnectButton } from '@/components/WalletConnectButton';
 import { useAccount } from 'wagmi';
 import { useRoundUpVault } from '@/hooks/useRoundUpVault';
+import { RoundUpTestForm } from './RoundUpTestForm';
 
 export function RoundUpDashboard() {
   const { isConnected } = useAccount();
@@ -56,6 +57,13 @@ export function RoundUpDashboard() {
               Connect your wallet to start Round-Up investing
             </p>
             <WalletConnectButton />
+          </div>
+        )}
+
+        {/* Test Form */}
+        {isConnected && isContractReady && (
+          <div className="mb-8">
+            <RoundUpTestForm />
           </div>
         )}
 
