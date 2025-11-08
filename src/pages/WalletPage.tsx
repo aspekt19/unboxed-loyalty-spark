@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
-import { Wallet, Send, Download, History, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Wallet, Send, Download, History, TrendingUp, Settings } from "lucide-react";
 import { WalletConnectButton } from "@/components/WalletConnectButton";
 import { useAccount } from "wagmi";
 import TokenList from "@/components/wallet/TokenList";
@@ -9,12 +10,74 @@ import SendTokens from "@/components/wallet/SendTokens";
 import ReceiveTokens from "@/components/wallet/ReceiveTokens";
 import TransactionHistory from "@/components/wallet/TransactionHistory";
 import { RoundUpDashboard } from "@/components/roundup/RoundUpDashboard";
+import CreateWallet from "@/components/wallet/CreateWallet";
+import NetworkSelector from "@/components/wallet/NetworkSelector";
+import { getSavedWallets } from "@/lib/walletGenerator";
 
 export default function WalletPage() {
   const { isConnected } = useAccount();
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [hasLocalWallet, setHasLocalWallet] = useState(false);
+  const [showCreateWallet, setShowCreateWallet] = useState(false);
 
-  if (!isConnected) {
+  useEffect(() => {
+    const wallets = getSavedWallets();
+    setHasLocalWallet(wallets.length > 0);
+  }, []);
+
+  const handleWalletCreated = (address: string) => {
+    setHasLocalWallet(true);
+    setShowCreateWallet(false);
+  };
+
+  // Show create wallet if no wallet exists and not connected
+  if (!isConnected && !hasLocalWallet) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-primary/5">
+        <div className="max-w-md w-full space-y-4">
+          <div className="text-center space-y-2 mb-6">
+            <div className="flex justify-center">
+              <div className="p-4 rounded-full bg-primary/10">
+                <Wallet className="w-12 h-12 text-primary" />
+              </div>
+            </div>
+            <h1 className="text-2xl font-bold">Web3 Wallet</h1>
+            <p className="text-muted-foreground">
+              Create a new wallet or connect an existing one
+            </p>
+          </div>
+          
+          {showCreateWallet ? (
+            <CreateWallet onWalletCreated={handleWalletCreated} />
+          ) : (
+            <Card className="p-8 text-center space-y-6">
+              <div className="space-y-4">
+                <Button 
+                  onClick={() => setShowCreateWallet(true)}
+                  className="w-full"
+                  size="lg"
+                >
+                  <Wallet className="w-4 h-4 mr-2" />
+                  Create New Wallet
+                </Button>
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">Or</span>
+                  </div>
+                </div>
+                <WalletConnectButton />
+              </div>
+            </Card>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (!isConnected && hasLocalWallet) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-primary/5">
         <Card className="p-8 max-w-md w-full text-center space-y-6">
@@ -49,7 +112,7 @@ export default function WalletPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6">
+          <TabsList className="grid w-full grid-cols-6 mb-6">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <Wallet className="w-4 h-4" />
               <span className="hidden sm:inline">Dashboard</span>
@@ -69,6 +132,10 @@ export default function WalletPage() {
             <TabsTrigger value="roundup" className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4" />
               <span className="hidden sm:inline">Round-Up</span>
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-2">
+              <Settings className="w-4 h-4" />
+              <span className="hidden sm:inline">Settings</span>
             </TabsTrigger>
           </TabsList>
 
@@ -90,6 +157,10 @@ export default function WalletPage() {
 
           <TabsContent value="roundup">
             <RoundUpDashboard />
+          </TabsContent>
+
+          <TabsContent value="settings" className="space-y-6">
+            <NetworkSelector />
           </TabsContent>
         </Tabs>
       </div>
