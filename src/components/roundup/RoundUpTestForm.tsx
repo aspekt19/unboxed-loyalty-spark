@@ -70,6 +70,8 @@ export function RoundUpTestForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    console.log('Form submitted', { purchaseAmount, ethPriceData, roundUpETH });
+
     if (!purchaseAmount || parseFloat(purchaseAmount) <= 0) {
       toast.error('Please enter a valid purchase amount');
       return;
@@ -77,15 +79,19 @@ export function RoundUpTestForm() {
 
     if (!ethPriceData) {
       toast.error('Unable to fetch ETH price');
+      console.error('ETH price not available');
       return;
     }
 
     if (parseFloat(roundUpETH) < 0.0001) {
       toast.error('Round-up amount too small');
+      console.error('Round-up too small:', roundUpETH);
       return;
     }
 
-    await executeRoundUp(primaryTxValueUSD, roundUpETH);
+    console.log('Executing round-up with:', { primaryTxValueUSD, roundUpETH });
+    const result = await executeRoundUp(primaryTxValueUSD, roundUpETH);
+    console.log('Round-up result:', result);
   };
 
   const isFormValid = 
