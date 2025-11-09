@@ -164,7 +164,7 @@ export function WalletConnectButton() {
           handleDisconnect();
         }}
         type="button"
-        className="px-3 py-2 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center gap-2"
+        className="px-4 py-2 rounded-xl font-bold bg-gradient-uds text-white hover:opacity-90 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
       >
         {(farcasterUser?.pfpUrl || farcasterUser?.username) && (
           <Avatar className="h-6 w-6">
@@ -214,9 +214,9 @@ export function WalletConnectButton() {
                   <button
                     onClick={openConnectModal}
                     type="button"
-                    className="px-5 py-2.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center gap-2"
+                    className="px-6 py-3 rounded-xl font-bold bg-gradient-uds text-white hover:opacity-90 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
                   >
-                    <Wallet className="h-4 w-4" />
+                    <Wallet className="h-5 w-5" />
                     <span>Connect Wallet</span>
                   </button>
                 );
@@ -239,7 +239,7 @@ export function WalletConnectButton() {
                   <button
                     onClick={openChainModal}
                     type="button"
-                    className="px-2 py-1.5 rounded-lg font-medium transition-all duration-200 flex items-center gap-1.5 border border-border hover:bg-secondary"
+                    className="px-2 py-1.5 rounded-lg font-medium transition-all duration-200 flex items-center gap-1.5 border-2 border-primary/30 hover:bg-uds-lavender hover:border-primary"
                   >
                     {chain.hasIcon && (
                       <div className="w-3.5 h-3.5 rounded-full overflow-hidden">
@@ -260,7 +260,7 @@ export function WalletConnectButton() {
                   <button
                     onClick={openAccountModal}
                     type="button"
-                    className="px-3 py-1.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200"
+                    className="px-4 py-1.5 rounded-lg font-bold bg-uds-purple text-white hover:bg-uds-purple-light shadow-md hover:shadow-lg transition-all duration-200"
                   >
                     <span className="text-xs">{account.displayName}</span>
                   </button>

@@ -19,9 +19,9 @@ export function TokenListItem({ address, name, symbol, balance, merchantAddress,
   
   return (
     <div 
-      className={`p-4 rounded-lg border bg-gradient-to-br from-card to-muted/30 space-y-3 transition-all duration-300 ${
-        onClick ? 'cursor-pointer hover:border-primary/50 hover:shadow-md hover:scale-[1.02]' : ''
-      } ${selected ? 'border-primary border-2 shadow-lg scale-[1.02] animate-scale-in' : ''}`}
+      className={`p-4 rounded-xl border-2 bg-gradient-to-br from-card to-uds-lavender-light space-y-3 transition-all duration-300 shadow-md hover:shadow-2xl ${
+        onClick ? 'cursor-pointer hover:border-primary hover:scale-[1.02]' : ''
+      } ${selected ? 'border-primary border-2 shadow-2xl scale-[1.02] animate-scale-in ring-2 ring-primary/20' : 'border-border'}`}
       onClick={onClick}
     >
       <div className="flex items-start justify-between">
@@ -29,11 +29,11 @@ export function TokenListItem({ address, name, symbol, balance, merchantAddress,
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-semibold">{name}</h3>
             {isPaused ? (
-              <Badge variant="secondary" className="bg-gray-500 text-white text-xs">
+              <Badge variant="secondary" className="bg-muted text-muted-foreground text-xs">
                 Inactive
               </Badge>
             ) : (
-              <Badge variant="default" className="bg-green-600 text-xs">
+              <Badge variant="purple" className="text-xs font-semibold">
                 Active
               </Badge>
             )}
@@ -60,12 +60,13 @@ export function TokenListItem({ address, name, symbol, balance, merchantAddress,
         
         <Button
           size="sm"
+          variant="uds"
           onClick={(e) => {
             e.stopPropagation();
             onSendClick();
           }}
           disabled={isPaused}
-          className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 disabled:opacity-50 h-9 w-full"
+          className="h-9 w-full font-semibold"
         >
           <Send className="h-4 w-4 mr-2" />
           <span>Send</span>

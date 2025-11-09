@@ -56,6 +56,14 @@ export default {
           'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))'
+        },
+        uds: {
+          purple: 'hsl(var(--uds-purple))',
+          'purple-light': 'hsl(var(--uds-purple-light))',
+          'purple-dark': 'hsl(var(--uds-purple-dark))',
+          orange: 'hsl(var(--uds-orange))',
+          lavender: 'hsl(var(--uds-lavender))',
+          'lavender-light': 'hsl(var(--uds-lavender-light))'
         }
       },
       fontFamily: {

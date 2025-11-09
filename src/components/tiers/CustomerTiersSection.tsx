@@ -108,8 +108,8 @@ export function CustomerTiersSection({ selectedProgram }: CustomerTiersSectionPr
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-64 w-full" />
+      <div className="space-y-4 animate-fade-in">
+        <Skeleton className="h-64 w-full rounded-xl" />
       </div>
     );
   }
@@ -121,11 +121,11 @@ export function CustomerTiersSection({ selectedProgram }: CustomerTiersSectionPr
 
   if (!selectedProgram) {
     return (
-      <Card className="border-2 bg-gradient-to-br from-card to-muted/30 animate-fade-in">
+      <Card className="border-2 border-primary/20 bg-gradient-to-br from-card to-uds-lavender-light animate-fade-in shadow-lg hover:shadow-xl transition-all duration-200">
         <CardContent className="pt-6">
-          <Alert>
-            <Award className="h-4 w-4" />
-            <AlertDescription>
+          <Alert className="border-2 border-primary/30 bg-uds-lavender">
+            <Award className="h-5 w-5 text-primary" />
+            <AlertDescription className="text-foreground">
               Select a loyalty program below to view your tier status
             </AlertDescription>
           </Alert>
@@ -144,12 +144,12 @@ export function CustomerTiersSection({ selectedProgram }: CustomerTiersSectionPr
   const balanceValue = parseFloat(balance?.balance || '0');
 
   return (
-    <div className="space-y-4">
-      <div className="animate-fade-in">
-        <h2 className="text-2xl font-bold tracking-tight">
-          Your Tier Status: <span className="text-primary animate-scale-in">{tierName}</span>
+    <div className="space-y-6">
+      <div className="animate-fade-in bg-gradient-to-r from-uds-purple to-uds-orange rounded-2xl p-6 shadow-xl">
+        <h2 className="text-3xl font-bold tracking-tight text-white mb-2">
+          Your Tier Status: <span className="animate-scale-in">{tierName}</span>
         </h2>
-        <p className="text-muted-foreground">
+        <p className="text-white/90 font-medium">
           Track your loyalty level across programs
         </p>
       </div>
