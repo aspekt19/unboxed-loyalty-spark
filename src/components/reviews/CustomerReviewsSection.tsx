@@ -57,6 +57,28 @@ export const CustomerReviewsSection = () => {
       }, {} as Record<string, any>);
 
       const programsList = Object.values(programGroups);
+
+      // Load program names from loyalty_programs table
+      const tokenAddresses = programsList.map((p) => p.tokenAddress);
+      if (tokenAddresses.length > 0) {
+        const { data: loyaltyPrograms, error: programError } = await supabase
+          .from("loyalty_programs")
+          .select("token_address, name, symbol")
+          .in("token_address", tokenAddresses);
+
+        if (!programError && loyaltyPrograms) {
+          programsList.forEach((program) => {
+            const loyaltyProgram = loyaltyPrograms.find(
+              (lp) => lp.token_address.toLowerCase() === program.tokenAddress.toLowerCase()
+            );
+            if (loyaltyProgram) {
+              program.name = loyaltyProgram.name;
+              program.symbol = loyaltyProgram.symbol;
+            }
+          });
+        }
+      }
+
       setPrograms(programsList);
 
       // Set the first program as selected by default
@@ -93,9 +115,9 @@ export const CustomerReviewsSection = () => {
                 <SelectValue placeholder="Choose a program" />
               </SelectTrigger>
               <SelectContent>
-                {programs.map((program, idx) => (
+                {programs.map((program) => (
                   <SelectItem key={program.key} value={program.key}>
-                    Loyalty Program #{idx + 1} ({program.vouchers.length} used vouchers)
+                    {program.name || 'Unknown Program'} ({program.vouchers.length} used vouchers)
                   </SelectItem>
                 ))}
               </SelectContent>
