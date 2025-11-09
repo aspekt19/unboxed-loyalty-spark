@@ -80,7 +80,7 @@ export function CustomerTiersSection({ selectedProgram }: CustomerTiersSectionPr
         if (error) throw error;
 
         if (!tiers || tiers.length === 0) {
-          setTierName('No tiers configured');
+          setTierName('Bronze');
           return;
         }
 
@@ -91,7 +91,7 @@ export function CustomerTiersSection({ selectedProgram }: CustomerTiersSectionPr
         if (currentTier) {
           setTierName(currentTier.tier_name);
         } else {
-          setTierName('New Member');
+          setTierName('Bronze');
         }
       } catch (err) {
         console.error('Error loading tier name:', err);
@@ -126,7 +126,7 @@ export function CustomerTiersSection({ selectedProgram }: CustomerTiersSectionPr
           <Alert>
             <Award className="h-4 w-4" />
             <AlertDescription>
-              Select a loyalty program from the left to view your tier status
+              Select a loyalty program below to view your tier status
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -137,18 +137,7 @@ export function CustomerTiersSection({ selectedProgram }: CustomerTiersSectionPr
   const selectedProgramData = programsWithBalance.find(p => p.address === selectedProgram);
   
   if (!selectedProgramData) {
-    return (
-      <Card className="border-2 bg-gradient-to-br from-card to-muted/30 animate-fade-in">
-        <CardContent className="pt-6">
-          <Alert>
-            <Award className="h-4 w-4" />
-            <AlertDescription>
-              No tier information available for this program
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
-    );
+    return null;
   }
 
   const balance = balances.find((b) => b.address === selectedProgram);

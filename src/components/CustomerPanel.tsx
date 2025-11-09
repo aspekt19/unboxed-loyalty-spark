@@ -32,14 +32,12 @@ export function CustomerPanel() {
       
       <PersonalizedOffers />
       
-      <div className="grid gap-6 lg:grid-cols-2">
-        <TokenList 
-          selectedProgram={selectedProgram}
-          onProgramSelect={setSelectedProgram}
-        />
-        
-        <CustomerTiersSection selectedProgram={selectedProgram} />
-      </div>
+      <CustomerTiersSection selectedProgram={selectedProgram} />
+      
+      <TokenList 
+        selectedProgram={selectedProgram}
+        onProgramSelect={setSelectedProgram}
+      />
       
       <RewardsSelection />
       
