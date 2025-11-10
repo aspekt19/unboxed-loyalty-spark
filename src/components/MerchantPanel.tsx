@@ -117,15 +117,15 @@ export function MerchantPanel() {
         </Alert>
       ) : (
         <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-8">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="customers">Customers</TabsTrigger>
-            <TabsTrigger value="programs">Programs</TabsTrigger>
-            <TabsTrigger value="rewards">Rewards</TabsTrigger>
-            <TabsTrigger value="tiers">Tiers</TabsTrigger>
-            <TabsTrigger value="marketing">Marketing</TabsTrigger>
-            <TabsTrigger value="referrals">Referrals</TabsTrigger>
-            <TabsTrigger value="reviews">Reviews</TabsTrigger>
+          <TabsList className="flex w-full overflow-x-auto overflow-y-hidden whitespace-nowrap scrollbar-hide">
+            <TabsTrigger value="dashboard" className="flex-shrink-0 text-xs px-2 md:px-4 md:text-sm">Dashboard</TabsTrigger>
+            <TabsTrigger value="customers" className="flex-shrink-0 text-xs px-2 md:px-4 md:text-sm">Customers</TabsTrigger>
+            <TabsTrigger value="programs" className="flex-shrink-0 text-xs px-2 md:px-4 md:text-sm">Programs</TabsTrigger>
+            <TabsTrigger value="rewards" className="flex-shrink-0 text-xs px-2 md:px-4 md:text-sm">Rewards</TabsTrigger>
+            <TabsTrigger value="tiers" className="flex-shrink-0 text-xs px-2 md:px-4 md:text-sm">Tiers</TabsTrigger>
+            <TabsTrigger value="marketing" className="flex-shrink-0 text-xs px-2 md:px-4 md:text-sm">Marketing</TabsTrigger>
+            <TabsTrigger value="referrals" className="flex-shrink-0 text-xs px-2 md:px-4 md:text-sm">Referrals</TabsTrigger>
+            <TabsTrigger value="reviews" className="flex-shrink-0 text-xs px-2 md:px-4 md:text-sm">Reviews</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6 mt-6">

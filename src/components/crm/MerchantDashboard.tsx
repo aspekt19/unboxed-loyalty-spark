@@ -112,8 +112,8 @@ export function MerchantDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Analytics Dashboard</h2>
-        <p className="text-muted-foreground">
+        <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Analytics Dashboard</h2>
+        <p className="text-sm md:text-base text-muted-foreground">
           Overview of your loyalty programs performance
         </p>
       </div>
@@ -203,23 +203,23 @@ export function MerchantDashboard() {
               {analytics.map((program) => (
                 <div
                   key={program.token_address}
-                  className="flex items-center justify-between p-4 border rounded-lg"
+                  className="flex flex-col md:flex-row md:items-center md:justify-between p-4 border rounded-lg space-y-3 md:space-y-0"
                 >
-                  <div>
-                    <h3 className="font-semibold">{program.program_name}</h3>
-                    <p className="text-sm text-muted-foreground">{program.token_symbol}</p>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold truncate">{program.program_name}</h3>
+                    <p className="text-sm text-muted-foreground truncate">{program.token_symbol}</p>
                   </div>
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <p className="text-muted-foreground">Customers</p>
+                  <div className="grid grid-cols-3 gap-2 md:gap-4 text-sm">
+                    <div className="text-center md:text-left">
+                      <p className="text-xs md:text-sm text-muted-foreground truncate">Customers</p>
                       <p className="font-semibold">{program.total_customers}</p>
                     </div>
-                    <div>
-                      <p className="text-muted-foreground">Vouchers</p>
+                    <div className="text-center md:text-left">
+                      <p className="text-xs md:text-sm text-muted-foreground truncate">Vouchers</p>
                       <p className="font-semibold">{program.total_vouchers_issued}</p>
                     </div>
-                    <div>
-                      <p className="text-muted-foreground">Redeemed</p>
+                    <div className="text-center md:text-left">
+                      <p className="text-xs md:text-sm text-muted-foreground truncate">Redeemed</p>
                       <p className="font-semibold">{program.vouchers_redeemed}</p>
                     </div>
                   </div>

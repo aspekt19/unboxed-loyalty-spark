@@ -126,7 +126,7 @@ export function CustomerTiersSection({ selectedProgram }: CustomerTiersSectionPr
           <Alert className="border-2 border-primary/30 bg-uds-lavender">
             <Award className="h-5 w-5 text-primary" />
             <AlertDescription className="text-foreground">
-              Select a loyalty program below to view your tier status
+              Select a loyalty token below to view your tier status
             </AlertDescription>
           </Alert>
         </CardContent>

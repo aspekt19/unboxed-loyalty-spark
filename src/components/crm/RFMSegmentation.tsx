@@ -142,10 +142,10 @@ export function RFMSegmentation() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
-            <CardTitle>RFM Segmentation</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-lg md:text-xl">RFM Segmentation</CardTitle>
+            <CardDescription className="text-xs md:text-sm">
               Customer segments based on Recency, Frequency, and Monetary value
             </CardDescription>
           </div>
@@ -154,8 +154,9 @@ export function RFMSegmentation() {
             size="sm"
             onClick={updateRFMScores}
             disabled={updating || total === 0}
+            className="w-full md:w-auto text-xs"
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${updating ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-3 w-3 md:h-4 md:w-4 mr-2 ${updating ? 'animate-spin' : ''}`} />
             Update Scores
           </Button>
         </div>
@@ -175,17 +176,17 @@ export function RFMSegmentation() {
 
               return (
                 <div key={segment.key} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-3 h-3 rounded-full ${segment.color}`} />
-                      <div>
-                        <p className="font-medium">{segment.label}</p>
-                        <p className="text-sm text-muted-foreground">{segment.description}</p>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div className="flex items-center gap-2 md:gap-3 min-w-0">
+                      <div className={`w-3 h-3 rounded-full flex-shrink-0 ${segment.color}`} />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-sm md:text-base truncate">{segment.label}</p>
+                        <p className="text-xs md:text-sm text-muted-foreground truncate">{segment.description}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold">{count}</p>
-                      <p className="text-sm text-muted-foreground">{percentage}%</p>
+                    <div className="text-left sm:text-right flex-shrink-0 ml-5 sm:ml-0">
+                      <p className="font-semibold text-sm md:text-base">{count}</p>
+                      <p className="text-xs md:text-sm text-muted-foreground">{percentage}%</p>
                     </div>
                   </div>
                   <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">

@@ -113,6 +113,15 @@ All colors MUST be HSL.
     text-wrap: balance;
   }
   
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
   .floating {
     animation: floating 3s ease-in-out infinite;
   }
