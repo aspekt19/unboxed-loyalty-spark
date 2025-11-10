@@ -124,35 +124,35 @@ export function CustomerTierDisplay({ tokenAddress, tokenSymbol, programName, ba
     return (
       <Card className="border-2">
         <CardHeader>
-          <div className="flex items-center gap-3">
-            <Award className="h-8 w-8 text-muted-foreground" />
-            <div>
-              <CardTitle>New Member</CardTitle>
-              <CardDescription>{programName} Loyalty Program</CardDescription>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Award className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground flex-shrink-0" />
+            <div className="min-w-0">
+              <CardTitle className="text-base sm:text-lg md:text-2xl">New Member</CardTitle>
+              <CardDescription className="text-[10px] sm:text-xs md:text-sm truncate">{programName} Loyalty Program</CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
+        <CardContent className="space-y-3 sm:space-y-4">
+          <div className="space-y-1.5 sm:space-y-2">
+            <div className="flex justify-between text-xs sm:text-sm">
               <span className="text-muted-foreground">Current Balance</span>
               <span className="font-semibold">
                 {balance.toFixed(0)} {tokenSymbol}
               </span>
             </div>
-            <Progress value={progress_percentage} className="h-2" />
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground flex items-center gap-1">
-                <TrendingUp className="h-3 w-3" />
-                Next: {next_tier.tier_name}
+            <Progress value={progress_percentage} className="h-1.5 sm:h-2" />
+            <div className="flex justify-between text-xs sm:text-sm gap-2">
+              <span className="text-muted-foreground flex items-center gap-1 min-w-0 truncate">
+                <TrendingUp className="h-3 w-3 flex-shrink-0" />
+                <span className="truncate">Next: {next_tier.tier_name}</span>
               </span>
-              <span className="font-semibold">
+              <span className="font-semibold whitespace-nowrap">
                 {tokens_to_next.toFixed(0)} {tokenSymbol} more
               </span>
             </div>
           </div>
-          <div className="pt-4 border-t">
-            <p className="text-xs text-muted-foreground">
+          <div className="pt-3 sm:pt-4 border-t">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">
               Reach {next_tier.min_tokens} {tokenSymbol} to unlock{' '}
               <span className="font-semibold" style={{ color: next_tier.badge_color }}>
                 {next_tier.tier_name}
@@ -172,30 +172,31 @@ export function CustomerTierDisplay({ tokenAddress, tokenSymbol, programName, ba
   return (
     <Card className="border-2" style={{ borderColor: current_tier.badge_color }}>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Award className="h-8 w-8" style={{ color: current_tier.badge_color }} />
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                {current_tier.tier_name} Member
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <Award className="h-6 w-6 sm:h-8 sm:w-8 flex-shrink-0" style={{ color: current_tier.badge_color }} />
+            <div className="min-w-0">
+              <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-base sm:text-lg md:text-2xl">
+                <span className="truncate">{current_tier.tier_name} Member</span>
                 <Badge
                   variant="secondary"
+                  className="text-[10px] sm:text-xs flex-shrink-0"
                   style={{
                     backgroundColor: current_tier.badge_color + '20',
                     color: current_tier.badge_color,
                   }}
                 >
-                  {current_tier.cashback_multiplier}x Cashback
+                  {current_tier.cashback_multiplier}x
                 </Badge>
               </CardTitle>
-              <CardDescription>{programName} Loyalty Program</CardDescription>
+              <CardDescription className="text-[10px] sm:text-xs md:text-sm truncate">{programName} Loyalty Program</CardDescription>
             </div>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
+      <CardContent className="space-y-4 sm:space-y-6">
+        <div className="space-y-1.5 sm:space-y-2">
+          <div className="flex justify-between text-xs sm:text-sm">
             <span className="text-muted-foreground">Current Balance</span>
             <span className="font-semibold">
               {balance.toFixed(0)} {tokenSymbol}
@@ -203,40 +204,40 @@ export function CustomerTierDisplay({ tokenAddress, tokenSymbol, programName, ba
           </div>
           {next_tier && (
             <>
-              <Progress value={progress_percentage} className="h-2" />
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground flex items-center gap-1">
-                  <TrendingUp className="h-3 w-3" />
-                  Next: {next_tier.tier_name}
+              <Progress value={progress_percentage} className="h-1.5 sm:h-2" />
+              <div className="flex justify-between text-xs sm:text-sm gap-2">
+                <span className="text-muted-foreground flex items-center gap-1 min-w-0 truncate">
+                  <TrendingUp className="h-3 w-3 flex-shrink-0" />
+                  <span className="truncate">Next: {next_tier.tier_name}</span>
                 </span>
-                <span className="font-semibold">
+                <span className="font-semibold whitespace-nowrap">
                   {tokens_to_next.toFixed(0)} {tokenSymbol} more
                 </span>
               </div>
             </>
           )}
           {!next_tier && (
-            <p className="text-sm text-muted-foreground text-center">
+            <p className="text-xs sm:text-sm text-muted-foreground text-center">
               🎉 You've reached the highest tier!
             </p>
           )}
         </div>
 
-        <div className="space-y-2">
-          <h4 className="font-semibold text-sm">Your Benefits:</h4>
-          <ul className="space-y-1 text-sm text-muted-foreground">
+        <div className="space-y-1.5 sm:space-y-2">
+          <h4 className="font-semibold text-xs sm:text-sm">Your Benefits:</h4>
+          <ul className="space-y-1 text-xs sm:text-sm text-muted-foreground">
             {Array.isArray(current_tier.perks) && current_tier.perks.map((perk, index) => (
-              <li key={index} className="flex items-start gap-2">
-                <span className="text-primary mt-0.5">✓</span>
-                <span>{String(perk)}</span>
+              <li key={index} className="flex items-start gap-1.5 sm:gap-2">
+                <span className="text-primary mt-0.5 flex-shrink-0">✓</span>
+                <span className="break-words">{String(perk)}</span>
               </li>
             ))}
           </ul>
         </div>
 
         {next_tier && (
-          <div className="pt-4 border-t">
-            <p className="text-xs text-muted-foreground">
+          <div className="pt-3 sm:pt-4 border-t">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">
               Reach {next_tier.min_tokens} {tokenSymbol} to unlock{' '}
               <span className="font-semibold" style={{ color: next_tier.badge_color }}>
                 {next_tier.tier_name}

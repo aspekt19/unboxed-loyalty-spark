@@ -145,11 +145,11 @@ export function CustomerTiersSection({ selectedProgram }: CustomerTiersSectionPr
 
   return (
     <div className="space-y-6">
-      <div className="animate-fade-in bg-gradient-to-r from-uds-purple to-uds-orange rounded-2xl p-6 shadow-xl">
-        <h2 className="text-3xl font-bold tracking-tight text-white mb-2">
+      <div className="animate-fade-in bg-gradient-to-r from-uds-purple to-uds-orange rounded-2xl p-4 sm:p-5 md:p-6 shadow-xl">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-white mb-1.5 sm:mb-2">
           Your Tier Status: <span className="animate-scale-in">{tierName}</span>
         </h2>
-        <p className="text-white/90 font-medium">
+        <p className="text-sm sm:text-base text-white/90 font-medium">
           Track your loyalty level across programs
         </p>
       </div>
