@@ -142,18 +142,18 @@ const PitchDeck = () => {
       <div className="min-h-screen bg-background">
         {/* Header */}
         <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
-          <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-            <Link to="/" className="flex items-center gap-2.5 group">
+          <div className="container mx-auto px-3 xxs:px-4 py-3 flex flex-wrap justify-between items-center gap-2">
+            <Link to="/" className="flex items-center gap-1.5 xxs:gap-2 group">
               <img 
                 src="/new-favicon.png" 
                 alt="Loyal Spark" 
-                className="h-9 w-9 rounded-lg transition-transform duration-300 group-hover:scale-105" 
+                className="h-7 w-7 xxs:h-8 xxs:w-8 sm:h-9 sm:w-9 rounded-lg transition-transform duration-300 group-hover:scale-105" 
               />
-              <span className="text-xl font-bold text-foreground tracking-tight">Loyal Spark</span>
+              <span className="text-base xxs:text-lg sm:text-xl font-bold text-foreground tracking-tight">Loyal Spark</span>
             </Link>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 xxs:gap-3">
               <Link to="/">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="text-xs xxs:text-sm px-2 xxs:px-3">
                   Back to Home
                 </Button>
               </Link>
@@ -162,34 +162,34 @@ const PitchDeck = () => {
           </div>
         </header>
 
-        <main className="container mx-auto px-6 py-12">
-          <div className="max-w-5xl mx-auto space-y-8">
+        <main className="container mx-auto px-3 xxs:px-4 sm:px-6 py-6 sm:py-12">
+          <div className="max-w-5xl mx-auto space-y-4 sm:space-y-8">
             {slides.map((slide, index) => (
               <Card key={slide.id} className="border bg-card overflow-hidden">
-                <CardContent className="p-12">
+                <CardContent className="p-4 xxs:p-6 sm:p-8 md:p-12">
                   {/* Cover Slide */}
                   {slide.id === 'cover' && (
-                    <div className="text-center space-y-6 py-16">
+                    <div className="text-center space-y-4 sm:space-y-6 py-8 sm:py-16">
                       <img 
                         src="/new-favicon.png" 
                         alt="Loyal Spark" 
-                        className="mx-auto h-24 w-24 rounded-2xl mb-8" 
+                        className="mx-auto h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 rounded-2xl mb-4 sm:mb-8" 
                       />
-                      <h1 className="text-6xl font-bold text-foreground tracking-tight">
+                      <h1 className="text-3xl xxs:text-4xl sm:text-5xl md:text-6xl font-bold text-foreground tracking-tight px-2">
                         {slide.title}
                       </h1>
-                      <p className="text-2xl text-muted-foreground font-medium">
+                      <p className="text-lg xxs:text-xl sm:text-2xl text-muted-foreground font-medium px-2">
                         {slide.subtitle}
                       </p>
-                      <p className="text-lg text-muted-foreground max-w-2xl mx-auto italic">
+                      <p className="text-sm xxs:text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto italic px-4">
                         {slide.tagline}
                       </p>
-                      <div className="pt-8 flex flex-col items-center gap-4">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary border border-border">
-                          <div className="h-2 w-2 rounded-full bg-foreground" />
-                          <span className="text-sm font-medium text-foreground">Built on BASE Network</span>
+                      <div className="pt-4 sm:pt-8 flex flex-col items-center gap-3 sm:gap-4">
+                        <div className="inline-flex items-center gap-2 px-3 xxs:px-4 py-1.5 xxs:py-2 rounded-full bg-secondary border border-border">
+                          <div className="h-1.5 w-1.5 xxs:h-2 xxs:w-2 rounded-full bg-foreground" />
+                          <span className="text-xs xxs:text-sm font-medium text-foreground">Built on BASE Network</span>
                         </div>
-                        <a href="https://loyalspark.online/" target="_blank" rel="noopener noreferrer" className="text-base font-medium text-foreground hover:underline">
+                        <a href="https://loyalspark.online/" target="_blank" rel="noopener noreferrer" className="text-sm xxs:text-base font-medium text-foreground hover:underline">
                           loyalspark.online
                         </a>
                       </div>
@@ -198,20 +198,20 @@ const PitchDeck = () => {
 
                   {/* Problem Slide */}
                   {slide.id === 'problem' && (
-                    <div className="space-y-8">
+                    <div className="space-y-4 sm:space-y-8">
                       <div>
-                        <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                        <div className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                           Slide {index + 1}
                         </div>
-                        <h2 className="text-5xl font-bold text-foreground">{slide.title}</h2>
+                        <h2 className="text-2xl xxs:text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">{slide.title}</h2>
                       </div>
-                      <div className="space-y-4">
+                      <div className="space-y-3 sm:space-y-4">
                         {slide.items?.map((item, i) => (
-                          <div key={i} className="flex items-start gap-4 p-6 rounded-xl bg-secondary/50 border border-border">
-                            <div className="h-12 w-12 rounded-lg bg-foreground/10 flex items-center justify-center flex-shrink-0">
-                              <item.icon className="h-6 w-6 text-foreground" />
+                          <div key={i} className="flex items-start gap-3 sm:gap-4 p-4 sm:p-6 rounded-xl bg-secondary/50 border border-border">
+                            <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg bg-foreground/10 flex items-center justify-center flex-shrink-0">
+                              <item.icon className="h-5 w-5 sm:h-6 sm:w-6 text-foreground" />
                             </div>
-                            <p className="text-lg font-medium text-foreground leading-relaxed pt-2">
+                            <p className="text-sm xxs:text-base sm:text-lg font-medium text-foreground leading-relaxed pt-1 sm:pt-2">
                               {item.text}
                             </p>
                           </div>
@@ -222,23 +222,23 @@ const PitchDeck = () => {
 
                   {/* Solution Slide */}
                   {slide.id === 'solution' && (
-                    <div className="space-y-8">
+                    <div className="space-y-4 sm:space-y-8">
                       <div>
-                        <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                        <div className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                           Slide {index + 1}
                         </div>
-                        <h2 className="text-5xl font-bold text-foreground mb-4">{slide.title}</h2>
-                        <p className="text-xl text-muted-foreground">{slide.subtitle}</p>
+                        <h2 className="text-2xl xxs:text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-3 sm:mb-4">{slide.title}</h2>
+                        <p className="text-base xxs:text-lg sm:text-xl text-muted-foreground">{slide.subtitle}</p>
                       </div>
-                      <div className="grid grid-cols-3 gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                         {slide.solutionColumns?.map((col, i) => (
-                          <div key={i} className="text-center p-8 rounded-xl bg-foreground text-background">
-                            <div className="mx-auto h-16 w-16 rounded-full bg-background/10 flex items-center justify-center mb-6">
-                              <col.icon className="h-8 w-8 text-background" />
+                          <div key={i} className="text-center p-6 sm:p-8 rounded-xl bg-foreground text-background">
+                            <div className="mx-auto h-12 w-12 sm:h-14 sm:w-14 md:h-16 md:w-16 rounded-full bg-background/10 flex items-center justify-center mb-4 sm:mb-6">
+                              <col.icon className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-background" />
                             </div>
-                            <div className="text-2xl font-bold mb-1">{col.title}</div>
-                            <div className="text-xl font-semibold mb-4">{col.subtitle}</div>
-                            <p className="text-sm leading-relaxed">{col.description}</p>
+                            <div className="text-xl sm:text-2xl font-bold mb-1">{col.title}</div>
+                            <div className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">{col.subtitle}</div>
+                            <p className="text-xs xxs:text-sm leading-relaxed">{col.description}</p>
                           </div>
                         ))}
                       </div>
@@ -247,20 +247,20 @@ const PitchDeck = () => {
 
                   {/* Market Validation Slide */}
                   {slide.id === 'validation' && (
-                    <div className="space-y-8">
+                    <div className="space-y-4 sm:space-y-8">
                       <div>
-                        <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                        <div className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                           Slide {index + 1}
                         </div>
-                        <h2 className="text-5xl font-bold text-foreground">{slide.title}</h2>
+                        <h2 className="text-2xl xxs:text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">{slide.title}</h2>
                       </div>
-                      <div className="grid grid-cols-2 gap-8">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
                         {slide.stats?.map((stat, i) => (
-                          <div key={i} className="text-center p-12 rounded-xl border-2 border-border bg-secondary/30">
-                            <div className="text-6xl font-bold text-foreground mb-4">
+                          <div key={i} className="text-center p-6 sm:p-8 md:p-12 rounded-xl border-2 border-border bg-secondary/30">
+                            <div className="text-3xl xxs:text-4xl sm:text-5xl md:text-6xl font-bold text-foreground mb-3 sm:mb-4">
                               {stat.value}
                             </div>
-                            <div className="text-lg font-medium text-muted-foreground">
+                            <div className="text-sm xxs:text-base sm:text-lg font-medium text-muted-foreground">
                               {stat.label}
                             </div>
                           </div>
@@ -271,27 +271,27 @@ const PitchDeck = () => {
 
                   {/* Market Size Slide */}
                   {slide.id === 'market-size' && (
-                    <div className="space-y-8">
+                    <div className="space-y-4 sm:space-y-8">
                       <div>
-                        <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                        <div className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                           Slide {index + 1}
                         </div>
-                        <h2 className="text-5xl font-bold text-foreground mb-2">{slide.title}</h2>
-                        <p className="text-xl text-muted-foreground">{slide.subtitle}</p>
+                        <h2 className="text-2xl xxs:text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-2">{slide.title}</h2>
+                        <p className="text-base xxs:text-lg sm:text-xl text-muted-foreground">{slide.subtitle}</p>
                       </div>
-                      <div className="space-y-6">
+                      <div className="space-y-4 sm:space-y-6">
                         {slide.marketData && Object.entries(slide.marketData).map(([key, data]) => (
-                          <div key={key} className="p-8 rounded-xl border border-border bg-secondary/30">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <div className="text-lg font-semibold text-muted-foreground mb-2">
+                          <div key={key} className="p-4 sm:p-6 md:p-8 rounded-xl border border-border bg-secondary/30">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+                              <div className="flex-1">
+                                <div className="text-sm xxs:text-base sm:text-lg font-semibold text-muted-foreground mb-1 sm:mb-2">
                                   {data.label}
                                 </div>
-                                <div className="text-sm text-muted-foreground">
+                                <div className="text-xs xxs:text-sm text-muted-foreground">
                                   {data.description}
                                 </div>
                               </div>
-                              <div className="text-5xl font-bold text-foreground">
+                              <div className="text-3xl xxs:text-4xl sm:text-5xl font-bold text-foreground whitespace-nowrap">
                                 {data.value}
                               </div>
                             </div>
@@ -406,33 +406,33 @@ const PitchDeck = () => {
 
                   {/* Competition Slide */}
                   {slide.id === 'competition' && (
-                    <div className="space-y-8">
+                    <div className="space-y-4 sm:space-y-8">
                       <div>
-                        <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                        <div className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                           Slide {index + 1}
                         </div>
-                        <h2 className="text-5xl font-bold text-foreground mb-2">{slide.title}</h2>
-                        <p className="text-xl text-muted-foreground">{slide.subtitle}</p>
+                        <h2 className="text-2xl xxs:text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-2">{slide.title}</h2>
+                        <p className="text-base xxs:text-lg sm:text-xl text-muted-foreground">{slide.subtitle}</p>
                       </div>
-                      <div className="grid grid-cols-2 gap-8">
-                        <div className="p-8 rounded-xl border border-border bg-secondary/30">
-                          <h3 className="text-2xl font-bold text-foreground mb-6">Traditional Solutions</h3>
-                          <ul className="space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
+                        <div className="p-5 sm:p-6 md:p-8 rounded-xl border border-border bg-secondary/30">
+                          <h3 className="text-lg xxs:text-xl sm:text-2xl font-bold text-foreground mb-4 sm:mb-6">Traditional Solutions</h3>
+                          <ul className="space-y-2 sm:space-y-3">
                             {slide.competitive?.traditional.map((item, i) => (
                               <li key={i} className="flex items-start gap-2">
                                 <div className="h-1.5 w-1.5 rounded-full bg-foreground mt-2 flex-shrink-0" />
-                                <span className="text-base text-foreground">{item}</span>
+                                <span className="text-xs xxs:text-sm sm:text-base text-foreground">{item}</span>
                               </li>
                             ))}
                           </ul>
                         </div>
-                        <div className="p-8 rounded-xl bg-foreground text-background">
-                          <h3 className="text-2xl font-bold mb-6">Loyal Spark</h3>
-                          <ul className="space-y-3">
+                        <div className="p-5 sm:p-6 md:p-8 rounded-xl bg-foreground text-background">
+                          <h3 className="text-lg xxs:text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Loyal Spark</h3>
+                          <ul className="space-y-2 sm:space-y-3">
                             {slide.competitive?.loyalSpark.map((item, i) => (
                               <li key={i} className="flex items-start gap-2">
                                 <div className="h-1.5 w-1.5 rounded-full bg-background mt-2 flex-shrink-0" />
-                                <span className="text-base">{item}</span>
+                                <span className="text-xs xxs:text-sm sm:text-base">{item}</span>
                               </li>
                             ))}
                           </ul>
@@ -443,21 +443,21 @@ const PitchDeck = () => {
 
                   {/* Competitive Advantages Slide */}
                   {slide.id === 'advantages' && (
-                    <div className="space-y-8">
+                    <div className="space-y-4 sm:space-y-8">
                       <div>
-                        <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                        <div className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                           Slide {index + 1}
                         </div>
-                        <h2 className="text-5xl font-bold text-foreground mb-2">{slide.title}</h2>
-                        <p className="text-xl text-muted-foreground">{slide.subtitle}</p>
+                        <h2 className="text-2xl xxs:text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-2">{slide.title}</h2>
+                        <p className="text-base xxs:text-lg sm:text-xl text-muted-foreground">{slide.subtitle}</p>
                       </div>
-                      <div className="grid grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
                         {slide.advantages?.map((adv, i) => (
-                          <div key={i} className="flex items-start gap-4 p-6 rounded-xl bg-foreground text-background">
-                            <div className="h-10 w-10 rounded-lg bg-background/10 flex items-center justify-center flex-shrink-0">
-                              <adv.icon className="h-5 w-5 text-background" />
+                          <div key={i} className="flex items-start gap-3 sm:gap-4 p-4 sm:p-6 rounded-xl bg-foreground text-background">
+                            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-background/10 flex items-center justify-center flex-shrink-0">
+                              <adv.icon className="h-4 w-4 sm:h-5 sm:w-5 text-background" />
                             </div>
-                            <p className="text-base font-medium leading-relaxed pt-1">
+                            <p className="text-xs xxs:text-sm sm:text-base font-medium leading-relaxed pt-0.5 sm:pt-1">
                               {adv.point}
                             </p>
                           </div>
@@ -468,23 +468,23 @@ const PitchDeck = () => {
 
                   {/* Current Status Slide */}
                   {slide.id === 'traction' && (
-                    <div className="space-y-8">
+                    <div className="space-y-4 sm:space-y-8">
                       <div>
-                        <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                        <div className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                           Slide {index + 1}
                         </div>
-                        <h2 className="text-5xl font-bold text-foreground">{slide.title}</h2>
+                        <h2 className="text-2xl xxs:text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">{slide.title}</h2>
                       </div>
-                      <div className="grid grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                         {slide.metrics?.map((metric, i) => (
-                          <div key={i} className="p-8 rounded-xl border border-border bg-card text-center">
-                            <div className="mx-auto h-14 w-14 rounded-xl bg-foreground flex items-center justify-center mb-4">
-                              <metric.icon className="h-7 w-7 text-background" />
+                          <div key={i} className="p-6 sm:p-8 rounded-xl border border-border bg-card text-center">
+                            <div className="mx-auto h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-foreground flex items-center justify-center mb-3 sm:mb-4">
+                              <metric.icon className="h-6 w-6 sm:h-7 sm:w-7 text-background" />
                             </div>
-                            <div className="text-sm font-medium text-muted-foreground mb-2">
+                            <div className="text-xs xxs:text-sm font-medium text-muted-foreground mb-2">
                               {metric.label}
                             </div>
-                            <div className="text-lg font-semibold text-foreground">
+                            <div className="text-base xxs:text-lg font-semibold text-foreground break-words">
                               {metric.value}
                             </div>
                           </div>
@@ -499,17 +499,17 @@ const PitchDeck = () => {
 
             {/* Footer */}
             <Card className="border bg-card">
-              <CardContent className="p-12 text-center space-y-4">
-                <h2 className="text-4xl font-bold text-foreground">Thank You</h2>
-                <p className="text-xl text-muted-foreground">
+              <CardContent className="p-6 sm:p-8 md:p-12 text-center space-y-3 sm:space-y-4">
+                <h2 className="text-2xl xxs:text-3xl sm:text-4xl font-bold text-foreground">Thank You</h2>
+                <p className="text-base xxs:text-lg sm:text-xl text-muted-foreground px-2">
                   Let's build the future of loyalty rewards together
                 </p>
-                <div className="pt-4">
+                <div className="pt-2 sm:pt-4">
                   <a 
                     href="https://loyalspark.online/" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-lg font-medium text-foreground hover:underline"
+                    className="text-base xxs:text-lg font-medium text-foreground hover:underline"
                   >
                     loyalspark.online
                   </a>
