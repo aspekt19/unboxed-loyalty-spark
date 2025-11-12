@@ -203,24 +203,63 @@ export async function deleteReward(rewardId: string): Promise<boolean> {
 
 // Создание ваучера в базе данных
 export async function createVoucher(voucher: Omit<Voucher, 'id' | 'activatedAt'>): Promise<Voucher | null> {
+  console.log('[createVoucher] Starting voucher creation for:', voucher.customerAddress);
+  
+  // Проверяем текущую сессию
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  
+  if (sessionError) {
+    console.error('[createVoucher] Session error:', sessionError);
+    return null;
+  }
+  
+  if (!session) {
+    console.error('[createVoucher] No active session');
+    return null;
+  }
+  
+  console.log('[createVoucher] Session exists for user:', session.user.id);
+  
   // Проверяем, что профиль пользователя существует перед созданием ваучера
   const { data: profileCheck, error: profileError } = await supabase
     .from('profiles')
-    .select('wallet_address')
+    .select('wallet_address, user_id')
     .eq('wallet_address', voucher.customerAddress.toLowerCase())
     .maybeSingle();
 
   if (profileError) {
-    console.error('[createVoucher] Error checking profile:', profileError);
+    console.error('[createVoucher] Error checking profile:', {
+      error: profileError,
+      code: profileError.code,
+      message: profileError.message,
+      details: profileError.details,
+    });
     return null;
   }
 
   if (!profileCheck) {
     console.error('[createVoucher] Profile not found for address:', voucher.customerAddress);
+    console.log('[createVoucher] Session user_id:', session.user.id);
+    
+    // Пытаемся найти профиль по user_id
+    const { data: profileByUserId } = await supabase
+      .from('profiles')
+      .select('wallet_address, user_id')
+      .eq('user_id', session.user.id)
+      .maybeSingle();
+    
+    console.log('[createVoucher] Profile by user_id:', profileByUserId);
+    
     return null;
   }
 
-  console.log('[createVoucher] Creating voucher:', {
+  console.log('[createVoucher] Profile verified:', {
+    wallet: profileCheck.wallet_address,
+    user_id: profileCheck.user_id,
+    matches_session: profileCheck.user_id === session.user.id,
+  });
+
+  console.log('[createVoucher] Creating voucher with data:', {
     code: voucher.code,
     rewardId: voucher.rewardId,
     customerAddress: voucher.customerAddress.toLowerCase(),
