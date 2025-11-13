@@ -48,7 +48,7 @@ export function MerchantPanel() {
       console.log('Auto-signing in merchant wallet...');
       signInWithWallet();
     }
-  }, [address, session, authLoading]);
+  }, [address, session, authLoading, signInWithWallet]);
 
   // Сбрасываем выбранную программу при отключении кошелька
   useEffect(() => {

@@ -66,7 +66,7 @@ export function CreateLoyaltyProgram() {
         .select('user_id, wallet_address')
         .eq('wallet_address', address.toLowerCase())
         .eq('user_id', session.session.user.id)
-        .single();
+        .maybeSingle();
 
       if (profileError || !profile) {
         console.error('Profile verification failed:', profileError);

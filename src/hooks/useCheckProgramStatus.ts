@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 export function useCheckProgramStatus(tokenAddress: `0x${string}` | undefined) {
   const queryClient = useQueryClient();
 
-  const { data: isMintingActive, isError: mintingError, queryKey: mintingQueryKey } = useReadContract({
+  const { data: isMintingActive, isError: mintingError } = useReadContract({
     address: tokenAddress,
     abi: [
       {
@@ -26,7 +26,7 @@ export function useCheckProgramStatus(tokenAddress: `0x${string}` | undefined) {
     },
   });
 
-  const { data: isUtilityActive, isError: utilityError, queryKey: utilityQueryKey } = useReadContract({
+  const { data: isUtilityActive, isError: utilityError } = useReadContract({
     address: tokenAddress,
     abi: [
       {
@@ -52,14 +52,20 @@ export function useCheckProgramStatus(tokenAddress: `0x${string}` | undefined) {
     const handleProgramUpdate = () => {
       if (tokenAddress) {
         console.log('[DEBUG useCheckProgramStatus] Invalidating contract status cache for', tokenAddress);
-        queryClient.invalidateQueries({ queryKey: mintingQueryKey });
-        queryClient.invalidateQueries({ queryKey: utilityQueryKey });
+        // Инвалидируем все запросы для этого адреса
+        queryClient.invalidateQueries({ 
+          predicate: (query) => {
+            const state = query.state;
+            return state.data !== undefined && 
+                   JSON.stringify(state.data).includes(tokenAddress);
+          }
+        });
       }
     };
 
     window.addEventListener('loyaltyProgramsUpdated', handleProgramUpdate);
     return () => window.removeEventListener('loyaltyProgramsUpdated', handleProgramUpdate);
-  }, [tokenAddress, queryClient, mintingQueryKey, utilityQueryKey]);
+  }, [tokenAddress, queryClient]);
 
   // Логируем текущее состояние для отладки
   useEffect(() => {
