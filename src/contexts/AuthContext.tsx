@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select('wallet_address')
         .eq('user_id', existingSession.user.id)
         .eq('wallet_address', address.toLowerCase())
-        .single();
+        .maybeSingle();
       
       if (profile) {
         console.log('[signInWithWallet] Active session with correct profile exists');

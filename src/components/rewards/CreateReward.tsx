@@ -124,7 +124,7 @@ export function CreateReward() {
         .from('profiles')
         .select('wallet_address')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (profileError || !profile) {
         console.error('[CreateReward] Profile not found:', profileError);
