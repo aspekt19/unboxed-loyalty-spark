@@ -84,13 +84,15 @@ export function WalletConnectButton() {
   
   // Эффект для автоматической авторизации при reconnect в Farcaster
   useEffect(() => {
-    if (isFarcasterContext() && isConnected && address && !isManuallyDisconnected && !user) {
+    if (isFarcasterContext() && isConnected && address && !isManuallyDisconnected) {
+      // Всегда пытаемся войти при подключении, даже если user уже есть
+      // Это важно для refresh устаревших сессий
       console.log('[WalletButton] Farcaster wallet connected and not manually disconnected - signing in');
       setTimeout(() => {
         signInWithWallet();
       }, 300);
     }
-  }, [isConnected, address, isManuallyDisconnected, user, signInWithWallet]);
+  }, [isConnected, address, isManuallyDisconnected, signInWithWallet]);
   
   const handleDisconnect = async () => {
     try {
