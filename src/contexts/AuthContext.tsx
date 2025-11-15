@@ -70,30 +70,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Проверяем, есть ли уже активная сессия с правильным профилем
-    const { data: { session: existingSession } } = await supabase.auth.getSession();
-    if (existingSession) {
-      // Проверяем, связан ли текущий пользователь с этим кошельком
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('wallet_address')
-        .eq('user_id', existingSession.user.id)
-        .eq('wallet_address', address.toLowerCase())
-        .maybeSingle();
+    try {
+      // Проверяем, есть ли уже активная сессия с правильным профилем
+      const { data: { session: existingSession }, error: sessionError } = await supabase.auth.getSession();
       
-      if (profile) {
-        console.log('[signInWithWallet] Active session with correct profile exists');
-        // Обновляем состояние явно, чтобы компоненты получили актуальные данные
-        setSession(existingSession);
-        setUser(existingSession.user);
-        setIsLoading(false);
-        // Dispatch event so components know session is ready
-        window.dispatchEvent(new Event('sessionReady'));
-        return;
-      } else {
-        console.log('[signInWithWallet] Session exists but profile mismatch, signing out old session');
+      // Если ошибка получения сессии, очищаем и пересоздаем
+      if (sessionError) {
+        console.log('[signInWithWallet] Session error, clearing:', sessionError);
         await supabase.auth.signOut();
+      } else if (existingSession) {
+        // Проверяем валидность сессии
+        const isExpired = existingSession.expires_at 
+          ? new Date(existingSession.expires_at * 1000) < new Date()
+          : false;
+        
+        if (isExpired) {
+          console.log('[signInWithWallet] Session expired, clearing...');
+          await supabase.auth.signOut();
+        } else {
+          // Проверяем, связан ли текущий пользователь с этим кошельком
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('wallet_address')
+            .eq('user_id', existingSession.user.id)
+            .eq('wallet_address', address.toLowerCase())
+            .maybeSingle();
+          
+          // Если ошибка RLS или профиль не найден - сессия устарела
+          if (profileError || !profile) {
+            console.log('[signInWithWallet] Profile not accessible or mismatch, clearing session');
+            await supabase.auth.signOut();
+          } else {
+            console.log('[signInWithWallet] Active valid session with correct profile exists');
+            // Обновляем состояние явно, чтобы компоненты получили актуальные данные
+            setSession(existingSession);
+            setUser(existingSession.user);
+            setIsLoading(false);
+            // Dispatch event so components know session is ready
+            window.dispatchEvent(new Event('sessionReady'));
+            return;
+          }
+        }
       }
+    } catch (error) {
+      console.error('[signInWithWallet] Error checking existing session:', error);
+      // В случае любой ошибки очищаем сессию
+      try {
+        await supabase.auth.signOut();
+      } catch {}
     }
 
     try {
@@ -201,15 +225,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        // Проверяем, что профиль соответствует текущему кошельку
-        const { data: profile } = await supabase
+        // Проверяем не истекла ли сессия
+        const isExpired = currentSession.expires_at 
+          ? new Date(currentSession.expires_at * 1000) < new Date()
+          : false;
+        
+        if (isExpired) {
+          console.log('[AuthProvider] Session expired, reconnecting...');
+          await supabase.auth.signOut();
+          await signInWithWallet();
+          return;
+        }
+
+        // Проверяем доступность профиля (может быть RLS проблема)
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('wallet_address')
+          .select('id')
+          .eq('user_id', currentSession.user.id)
           .eq('wallet_address', address.toLowerCase())
           .maybeSingle();
-
-        if (!profile && currentSession) {
-          console.log('[AuthProvider] Profile mismatch detected, reconnecting...');
+        
+        if (profileError || !profile) {
+          console.log('[AuthProvider] Profile not accessible, reconnecting...');
+          await supabase.auth.signOut();
           await signInWithWallet();
         }
       } catch (error) {
@@ -217,10 +255,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    // Проверяем сессию при монтировании и каждые 30 секунд
+    // Проверяем сессию сразу при изменении кошелька
     checkSession();
-    const interval = setInterval(checkSession, 30000);
 
+    // Проверяем сессию каждую минуту
+    const interval = setInterval(checkSession, 60000);
     return () => clearInterval(interval);
   }, [isConnected, address, signInWithWallet]);
 

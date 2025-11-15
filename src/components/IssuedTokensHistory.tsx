@@ -37,13 +37,21 @@ export function IssuedTokensHistory() {
     // Не загружаем данные пока идет авторизация
     if (authLoading) {
       console.log('IssuedTokensHistory: Waiting for auth to complete...');
+      setIsLoading(false); // Не показываем лоадер во время ожидания авторизации
       return;
     }
 
-    if (!address || !session) {
-      console.log('IssuedTokensHistory: No address or session', { address, hasSession: !!session });
+    if (!address) {
+      console.log('IssuedTokensHistory: No address');
       setHistory([]);
       setPrograms([]);
+      setIsLoading(false);
+      return;
+    }
+
+    if (!session) {
+      console.log('IssuedTokensHistory: No session, waiting...');
+      setIsLoading(true); // Показываем лоадер если кошелек есть но нет сессии
       return;
     }
 
