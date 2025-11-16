@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Award, Save, Info } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Award, Save, Info, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Tier {
@@ -43,7 +45,6 @@ export function TierManagement() {
       try {
         setLoading(true);
 
-        // Получаем программы мерчанта
         const { data: programs, error: programsError } = await supabase
           .from('loyalty_programs')
           .select('token_address, name, symbol')
@@ -58,7 +59,6 @@ export function TierManagement() {
 
         const tiersData: ProgramTiers = {};
 
-        // Загружаем уровни для каждой программы
         for (const program of programs) {
           const { data: tiers, error: tiersError } = await supabase
             .from('customer_tiers')
@@ -124,170 +124,144 @@ export function TierManagement() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Tier Management</h2>
-        <p className="text-muted-foreground">
-          Customize loyalty tiers for your programs
+        <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Tier Management</h2>
+        <p className="text-sm text-muted-foreground">
+          Configure tier parameters for your loyalty programs
         </p>
       </div>
 
-      {Object.entries(programTiers).map(([tokenAddress, program]) => (
-        <Card key={tokenAddress}>
-          <CardHeader>
-            <CardTitle>
-              {program.programName} ({program.symbol})
-            </CardTitle>
-            <CardDescription>
-              Configure tier thresholds and benefits
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {program.tiers.map((tier) => (
-                <div
-                  key={tier.id}
-                  className="p-4 border rounded-lg space-y-4"
-                  style={{ borderColor: tier.badge_color + '40' }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Award
-                        className="h-6 w-6"
-                        style={{ color: tier.badge_color }}
-                      />
-                      <div>
-                        <h3 className="font-semibold">{tier.tier_name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Level {tier.tier_level}
-                        </p>
-                      </div>
-                    </div>
-                    <Badge
-                      variant="secondary"
-                      style={{
-                        backgroundColor: tier.badge_color + '20',
-                        color: tier.badge_color,
-                      }}
-                    >
-                      {tier.cashback_multiplier}x
-                    </Badge>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor={`min-tokens-${tier.id}`}>
-                        Minimum Tokens
-                      </Label>
-                      <Input
-                        id={`min-tokens-${tier.id}`}
-                        type="number"
-                        min="0"
-                        value={tier.min_tokens}
-                        disabled={!editing[tier.id]}
-                        onChange={(e) => {
-                          const newTiers = { ...programTiers };
-                          const tierIndex = newTiers[tokenAddress].tiers.findIndex(
-                            (t) => t.id === tier.id
-                          );
-                          if (tierIndex !== -1) {
-                            newTiers[tokenAddress].tiers[tierIndex].min_tokens =
-                              Number(e.target.value);
-                            setProgramTiers(newTiers);
-                          }
-                        }}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor={`multiplier-${tier.id}`}>
-                        Cashback Multiplier
-                      </Label>
-                      <Input
-                        id={`multiplier-${tier.id}`}
-                        type="number"
-                        min="0"
-                        step="0.1"
-                        value={tier.cashback_multiplier}
-                        disabled={!editing[tier.id]}
-                        onChange={(e) => {
-                          const newTiers = { ...programTiers };
-                          const tierIndex = newTiers[tokenAddress].tiers.findIndex(
-                            (t) => t.id === tier.id
-                          );
-                          if (tierIndex !== -1) {
-                            newTiers[tokenAddress].tiers[
-                              tierIndex
-                            ].cashback_multiplier = Number(e.target.value);
-                            setProgramTiers(newTiers);
-                          }
-                        }}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor={`welcome-${tier.id}`}>Welcome Bonus</Label>
-                      <Input
-                        id={`welcome-${tier.id}`}
-                        type="number"
-                        min="0"
-                        value={tier.welcome_bonus}
-                        disabled={!editing[tier.id]}
-                        onChange={(e) => {
-                          const newTiers = { ...programTiers };
-                          const tierIndex = newTiers[tokenAddress].tiers.findIndex(
-                            (t) => t.id === tier.id
-                          );
-                          if (tierIndex !== -1) {
-                            newTiers[tokenAddress].tiers[tierIndex].welcome_bonus =
-                              Number(e.target.value);
-                            setProgramTiers(newTiers);
-                          }
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end gap-2">
-                    {editing[tier.id] ? (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setEditing({ ...editing, [tier.id]: false });
-                            // Reload to reset changes
-                            window.location.reload();
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => handleUpdateTier(tier)}
-                        >
-                          <Save className="h-4 w-4 mr-2" />
-                          Save
-                        </Button>
-                      </>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          setEditing({ ...editing, [tier.id]: true })
-                        }
-                      >
-                        Edit
-                      </Button>
-                    )}
-                  </div>
+      <Accordion type="single" collapsible className="w-full space-y-2">
+        {Object.entries(programTiers).map(([tokenAddress, program]) => (
+          <AccordionItem key={tokenAddress} value={tokenAddress} className="border rounded-lg px-4">
+            <AccordionTrigger className="hover:no-underline py-4">
+              <div className="flex items-center gap-2 text-left">
+                <Award className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
+                <div>
+                  <div className="font-semibold text-sm sm:text-base">{program.programName}</div>
+                  <div className="text-xs text-muted-foreground">{program.symbol} • {program.tiers.length} tiers</div>
                 </div>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-3 pb-4">
+              {program.tiers.map((tier) => (
+                <Collapsible key={tier.id}>
+                  <Card className="border-border/50">
+                    <CardHeader className="p-3 sm:p-4">
+                      <div className="flex items-center justify-between gap-2">
+                        <CollapsibleTrigger className="flex items-center gap-2 hover:opacity-70 transition-opacity flex-1">
+                          <Badge 
+                            variant="outline" 
+                            style={{ borderColor: tier.badge_color }}
+                            className="text-xs shrink-0"
+                          >
+                            L{tier.tier_level}
+                          </Badge>
+                          <span className="font-semibold text-sm">{tier.tier_name}</span>
+                          <ChevronDown className="h-4 w-4 ml-auto shrink-0" />
+                        </CollapsibleTrigger>
+                        {!editing[tier.id] ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEditing({ ...editing, [tier.id]: true })}
+                            className="shrink-0 h-8 text-xs"
+                          >
+                            Edit
+                          </Button>
+                        ) : (
+                          <div className="flex gap-1 shrink-0">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setEditing({ ...editing, [tier.id]: false })}
+                              className="h-8 text-xs"
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => handleUpdateTier(tier)}
+                              className="h-8 text-xs"
+                            >
+                              <Save className="h-3 w-3 mr-1" />
+                              Save
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CollapsibleContent>
+                      <CardContent className="p-3 sm:p-4 pt-0 space-y-3">
+                        <div className="grid gap-3 sm:grid-cols-3">
+                          <div>
+                            <Label htmlFor={`min-tokens-${tier.id}`} className="text-xs">
+                              Minimum Tokens
+                            </Label>
+                            <Input
+                              id={`min-tokens-${tier.id}`}
+                              type="number"
+                              value={tier.min_tokens}
+                              onChange={(e) => {
+                                const updated = { ...programTiers };
+                                const tierIndex = updated[tokenAddress].tiers.findIndex(t => t.id === tier.id);
+                                updated[tokenAddress].tiers[tierIndex].min_tokens = Number(e.target.value);
+                                setProgramTiers(updated);
+                              }}
+                              disabled={!editing[tier.id]}
+                              className="mt-1 h-9 text-sm"
+                            />
+                          </div>
+
+                          <div>
+                            <Label htmlFor={`cashback-${tier.id}`} className="text-xs">
+                              Cashback Multiplier
+                            </Label>
+                            <Input
+                              id={`cashback-${tier.id}`}
+                              type="number"
+                              step="0.1"
+                              value={tier.cashback_multiplier}
+                              onChange={(e) => {
+                                const updated = { ...programTiers };
+                                const tierIndex = updated[tokenAddress].tiers.findIndex(t => t.id === tier.id);
+                                updated[tokenAddress].tiers[tierIndex].cashback_multiplier = Number(e.target.value);
+                                setProgramTiers(updated);
+                              }}
+                              disabled={!editing[tier.id]}
+                              className="mt-1 h-9 text-sm"
+                            />
+                          </div>
+
+                          <div>
+                            <Label htmlFor={`welcome-bonus-${tier.id}`} className="text-xs">
+                              Welcome Bonus
+                            </Label>
+                            <Input
+                              id={`welcome-bonus-${tier.id}`}
+                              type="number"
+                              value={tier.welcome_bonus}
+                              onChange={(e) => {
+                                const updated = { ...programTiers };
+                                const tierIndex = updated[tokenAddress].tiers.findIndex(t => t.id === tier.id);
+                                updated[tokenAddress].tiers[tierIndex].welcome_bonus = Number(e.target.value);
+                                setProgramTiers(updated);
+                              }}
+                              disabled={!editing[tier.id]}
+                              className="mt-1 h-9 text-sm"
+                            />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </CollapsibleContent>
+                  </Card>
+                </Collapsible>
               ))}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
     </div>
   );
 }
