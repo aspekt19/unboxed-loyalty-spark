@@ -37,6 +37,7 @@ export function TierManagement() {
   const [programTiers, setProgramTiers] = useState<ProgramTiers>({});
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<{ [key: string]: boolean }>({});
+  const [openTiers, setOpenTiers] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
     if (!address) return;
@@ -146,7 +147,7 @@ export function TierManagement() {
             </AccordionTrigger>
             <AccordionContent className="space-y-3 pb-4">
               {program.tiers.map((tier) => (
-                <Collapsible key={tier.id}>
+                <Collapsible key={tier.id} open={openTiers[tier.id]} onOpenChange={(open) => setOpenTiers({ ...openTiers, [tier.id]: open })}>
                   <Card className="border-border/50">
                     <CardHeader className="p-3 sm:p-4">
                       <div className="flex items-center justify-between gap-2">
@@ -165,7 +166,10 @@ export function TierManagement() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setEditing({ ...editing, [tier.id]: true })}
+                            onClick={() => {
+                              setEditing({ ...editing, [tier.id]: true });
+                              setOpenTiers({ ...openTiers, [tier.id]: true });
+                            }}
                             className="shrink-0 h-8 text-xs"
                           >
                             Edit
