@@ -39,6 +39,57 @@ export function TierManagement() {
   const [editing, setEditing] = useState<{ [key: string]: boolean }>({});
   const [openTiers, setOpenTiers] = useState<{ [key: string]: boolean }>({});
 
+  const createDefaultTiers = async (tokenAddress: string) => {
+    const defaultTiers = [
+      {
+        token_address: tokenAddress,
+        tier_name: 'Bronze',
+        tier_level: 1,
+        min_tokens: 0,
+        cashback_multiplier: 1.0,
+        welcome_bonus: 10,
+        badge_color: '#CD7F32',
+        perks: ["Access to basic rewards", "1x cashback rate"]
+      },
+      {
+        token_address: tokenAddress,
+        tier_name: 'Silver',
+        tier_level: 2,
+        min_tokens: 100,
+        cashback_multiplier: 1.25,
+        welcome_bonus: 25,
+        badge_color: '#C0C0C0',
+        perks: ["Priority rewards access", "1.25x cashback rate", "Exclusive offers"]
+      },
+      {
+        token_address: tokenAddress,
+        tier_name: 'Gold',
+        tier_level: 3,
+        min_tokens: 500,
+        cashback_multiplier: 1.5,
+        welcome_bonus: 50,
+        badge_color: '#FFD700',
+        perks: ["Premium rewards", "1.5x cashback rate", "Birthday bonus", "Early access"]
+      },
+      {
+        token_address: tokenAddress,
+        tier_name: 'Platinum',
+        tier_level: 4,
+        min_tokens: 1000,
+        cashback_multiplier: 2.0,
+        welcome_bonus: 100,
+        badge_color: '#E5E4E2',
+        perks: ["VIP rewards", "2x cashback rate", "Personal manager", "Exclusive events", "Maximum benefits"]
+      }
+    ];
+
+    const { error } = await supabase
+      .from('customer_tiers')
+      .insert(defaultTiers);
+
+    if (error) throw error;
+  };
+
   useEffect(() => {
     if (!address) return;
 
@@ -59,6 +110,7 @@ export function TierManagement() {
         }
 
         const tiersData: ProgramTiers = {};
+        const programsNeedingTiers: string[] = [];
 
         for (const program of programs) {
           const { data: tiers, error: tiersError } = await supabase
@@ -74,9 +126,47 @@ export function TierManagement() {
             symbol: program.symbol,
             tiers: tiers || [],
           };
+
+          // Проверяем, есть ли tier'ы для программы
+          if (!tiers || tiers.length === 0) {
+            programsNeedingTiers.push(program.token_address);
+          }
         }
 
-        setProgramTiers(tiersData);
+        // Автоматически создаем tier'ы для программ без них
+        if (programsNeedingTiers.length > 0) {
+          console.log(`Creating default tiers for ${programsNeedingTiers.length} programs`);
+          
+          for (const tokenAddress of programsNeedingTiers) {
+            try {
+              await createDefaultTiers(tokenAddress);
+              console.log(`Created default tiers for ${tokenAddress}`);
+            } catch (err) {
+              console.error(`Failed to create tiers for ${tokenAddress}:`, err);
+            }
+          }
+
+          // Перезагружаем данные после создания tier'ов
+          const updatedTiersData: ProgramTiers = {};
+          for (const program of programs) {
+            const { data: tiers } = await supabase
+              .from('customer_tiers')
+              .select('*')
+              .eq('token_address', program.token_address)
+              .order('tier_level', { ascending: true });
+
+            updatedTiersData[program.token_address] = {
+              programName: program.name,
+              symbol: program.symbol,
+              tiers: tiers || [],
+            };
+          }
+          
+          setProgramTiers(updatedTiersData);
+          toast.success(`Automatically created tiers for ${programsNeedingTiers.length} program(s)`);
+        } else {
+          setProgramTiers(tiersData);
+        }
       } catch (err) {
         console.error('Error loading tiers:', err);
         toast.error('Failed to load tier configuration');
