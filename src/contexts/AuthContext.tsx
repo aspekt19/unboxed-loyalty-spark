@@ -22,6 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const manualSignOutRef = useRef(false);
   const isFarcasterContext = useRef(false);
+  const signingInRef = useRef(false);
   const { address, isConnected } = useAccount();
 
   // Detect Farcaster context on mount
@@ -70,6 +71,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Защита от множественных одновременных вызовов
+    if (signingInRef.current) {
+      console.log('[signInWithWallet] Already signing in, skipping duplicate call');
+      return;
+    }
+
+    signingInRef.current = true;
     try {
       // Проверяем, есть ли уже активная сессия с правильным профилем
       const { data: { session: existingSession }, error: sessionError } = await supabase.auth.getSession();
@@ -180,6 +188,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         toast.error(error.message || 'Failed to sign in');
       }
     } finally {
+      signingInRef.current = false;
       setIsLoading(false);
     }
   }, [address, isConnected]);
