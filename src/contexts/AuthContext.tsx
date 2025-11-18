@@ -29,14 +29,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
+      // Проверяем SDK контекст - самый надежный способ
+      const hasContext = !!(sdk as any)?.context;
+      
+      // Дополнительные проверки как fallback
       const urlParams = new URLSearchParams(window.location.search);
       const hasFarcasterParam = urlParams.has('farcaster') || urlParams.has('fc');
       const isFarcasterPath = window.location.pathname.includes('/frame');
       const hasFarcasterUA = /farcaster/i.test(navigator.userAgent);
-      isFarcasterContext.current = hasFarcasterParam || isFarcasterPath || hasFarcasterUA;
       
-      console.log('[AuthProvider] Farcaster context detected:', isFarcasterContext.current);
-    } catch {
+      isFarcasterContext.current = hasContext || hasFarcasterParam || isFarcasterPath || hasFarcasterUA;
+      
+      console.log('[AuthProvider] Farcaster context detected:', isFarcasterContext.current, {
+        hasContext,
+        hasFarcasterParam,
+        isFarcasterPath,
+        hasFarcasterUA
+      });
+    } catch (error) {
+      console.error('[AuthProvider] Error detecting Farcaster context:', error);
       isFarcasterContext.current = false;
     }
   }, []);
