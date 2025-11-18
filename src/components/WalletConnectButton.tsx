@@ -10,15 +10,19 @@ import { useState, useEffect } from 'react';
 const isFarcasterContext = () => {
   if (typeof window === 'undefined') return false;
   try {
-    // Only use explicit signals, not SDK context (which can be present in web version)
+    // Проверяем SDK контекст - самый надежный способ
+    const hasContext = !!(sdk as any)?.context;
+    
+    // Дополнительные проверки как fallback
     const urlParams = new URLSearchParams(window.location.search);
     const hasFarcasterParam = urlParams.has('farcaster') || urlParams.has('fc');
     const isFarcasterPath = window.location.pathname.includes('/frame');
     const hasFarcasterUA = /farcaster/i.test(navigator.userAgent);
     
-    const isFarcaster = hasFarcasterParam || isFarcasterPath || hasFarcasterUA;
+    const isFarcaster = hasContext || hasFarcasterParam || isFarcasterPath || hasFarcasterUA;
     console.log('[Farcaster Detection]', { 
       isFarcaster,
+      hasContext,
       hasFarcasterParam,
       isFarcasterPath, 
       hasFarcasterUA,
@@ -75,12 +79,12 @@ export function WalletConnectButton() {
   // Эффект для автоматического подключения кошелька при запуске в Farcaster
   useEffect(() => {
     if (isFarcasterContext() && !isConnected && !isManuallyDisconnected && connectors.length > 0) {
-      console.log('[WalletButton] Farcaster context detected on mount - auto-connecting wallet');
+      console.log('[WalletButton] Farcaster context detected - auto-connecting wallet');
       setTimeout(() => {
         connect({ connector: connectors[0] });
       }, 500);
     }
-  }, []); // Запускаем только при монтировании
+  }, [connectors.length]); // Добавляем connectors.length как зависимость
   
   // Эффект для автоматической авторизации при reconnect в Farcaster
   useEffect(() => {
