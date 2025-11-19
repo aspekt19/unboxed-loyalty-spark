@@ -20,6 +20,7 @@ import { useEffect } from "react";
 import { migrateAllData } from "./lib/migrateLocalStorageData";
 import { AuthProvider } from "./contexts/AuthContext";
 import { sdk } from "@farcaster/miniapp-sdk";
+import { ThemeProvider } from "next-themes";
 
 const queryClient = new QueryClient();
 
@@ -70,21 +71,23 @@ function AnimatedRoutes() {
 }
 
 const App = () => (
-  <WagmiProvider config={config}>
-    <QueryClientProvider client={queryClient}>
-      <RainbowKitProvider locale={rainbowKitLocale}>
-        <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <AnimatedRoutes />
-            </BrowserRouter>
-          </TooltipProvider>
-        </AuthProvider>
-      </RainbowKitProvider>
-    </QueryClientProvider>
-  </WagmiProvider>
+  <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} storageKey="loyal-spark-theme">
+    <WagmiProvider config={config}>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider locale={rainbowKitLocale}>
+          <AuthProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <AnimatedRoutes />
+              </BrowserRouter>
+            </TooltipProvider>
+          </AuthProvider>
+        </RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
+  </ThemeProvider>
 );
 
 export default App;

@@ -91,6 +91,18 @@ All colors MUST be HSL.
     --success: 142 60% 50%;
     --success-foreground: 260 50% 10%;
     
+    --shadow-soft: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow-medium: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+    --shadow-large: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+    --shadow-glow: 0 0 30px rgb(262 70% 68% / 0.3);
+    --shadow-glow-orange: 0 0 30px rgb(24 95% 65% / 0.3);
+    
+    --gradient-primary: linear-gradient(135deg, hsl(262 70% 68%) 0%, hsl(262 60% 55%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(24 95% 65%) 0%, hsl(30 95% 72%) 100%);
+    --gradient-uds: linear-gradient(135deg, hsl(262 70% 68%) 0%, hsl(24 95% 65%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(260 45% 10%) 0%, hsl(260 40% 13%) 50%, hsl(260 45% 10%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(260 40% 13%) 0%, hsl(260 35% 15%) 100%);
+    
     --sidebar-background: 260 45% 10%;
     --sidebar-foreground: 250 55% 95%;
     --sidebar-primary: 262 70% 68%;
