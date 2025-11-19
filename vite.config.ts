@@ -19,6 +19,13 @@ export default defineConfig(({ mode }) => ({
   publicDir: 'public',
   build: {
     rollupOptions: {
+      onwarn(warning, warn) {
+        // Suppress /*#__PURE__*/ warnings from dependencies
+        if (warning.code === 'INVALID_ANNOTATION' && warning.message.includes('/*#__PURE__*/')) {
+          return;
+        }
+        warn(warning);
+      },
       output: {
         assetFileNames: (assetInfo) => {
           // Preserve .well-known directory structure
