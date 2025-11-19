@@ -40,54 +40,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(), 
     mode === "development" && componentTagger(),
-    mode === "production" && VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['new-favicon.png', 'media-kit/*.png'],
-      manifest: {
-        name: 'Loyal Spark - Decentralized Loyalty Rewards',
-        short_name: 'Loyal Spark',
-        description: 'Create, manage & trade loyalty tokens on-chain. Zero middlemen. Total transparency.',
-        theme_color: '#0EA5E9',
-        background_color: '#0F172A',
-        display: 'standalone',
-        orientation: 'portrait',
-        start_url: '/',
-        scope: '/',
-        icons: [
-          {
-            src: '/new-favicon.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any maskable'
-          },
-          {
-            src: '/new-favicon.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any maskable'
-          }
-        ]
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          }
-        ]
-      }
-    })
+    // PWA plugin temporarily disabled to ensure successful builds in the current environment.
   ].filter(Boolean),
   resolve: {
     alias: {
