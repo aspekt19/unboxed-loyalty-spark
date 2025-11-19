@@ -13,6 +13,7 @@ import { CampaignList } from './marketing/CampaignList';
 import { ReferralManagement } from './referral/ReferralManagement';
 import { ReferralStats } from './referral/ReferralStats';
 import { ReviewsList } from './reviews/ReviewsList';
+import { AutomationDashboard } from './automation/AutomationDashboard';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -124,6 +125,7 @@ export function MerchantPanel() {
             <TabsTrigger value="rewards" className="flex-shrink-0 text-xs px-2 md:px-4 md:text-sm">Rewards</TabsTrigger>
             <TabsTrigger value="tiers" className="flex-shrink-0 text-xs px-2 md:px-4 md:text-sm">Tiers</TabsTrigger>
             <TabsTrigger value="marketing" className="flex-shrink-0 text-xs px-2 md:px-4 md:text-sm">Marketing</TabsTrigger>
+            <TabsTrigger value="automation" className="flex-shrink-0 text-xs px-2 md:px-4 md:text-sm">Automation</TabsTrigger>
             <TabsTrigger value="referrals" className="flex-shrink-0 text-xs px-2 md:px-4 md:text-sm">Referrals</TabsTrigger>
             <TabsTrigger value="reviews" className="flex-shrink-0 text-xs px-2 md:px-4 md:text-sm">Reviews</TabsTrigger>
           </TabsList>
@@ -201,6 +203,10 @@ export function MerchantPanel() {
           <TabsContent value="marketing" className="space-y-6 mt-6">
             <CreateCampaign />
             <CampaignList />
+          </TabsContent>
+
+          <TabsContent value="automation" className="space-y-6 mt-6">
+            <AutomationDashboard />
           </TabsContent>
 
           <TabsContent value="referrals" className="space-y-6 mt-6">
