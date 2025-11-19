@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(), 
     mode === "development" && componentTagger(),
-    VitePWA({
+    mode === "production" && VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['new-favicon.png', 'media-kit/*.png'],
       manifest: {
