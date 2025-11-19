@@ -1,6 +1,7 @@
 import { WalletConnectButton } from '@/components/WalletConnectButton';
 import { CustomerPanel } from '@/components/CustomerPanel';
 import { CustomerFiltersPanel } from '@/components/CustomerFiltersPanel';
+import { WelcomeFlow } from '@/components/onboarding/WelcomeFlow';
 import { Gift, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,7 @@ const CustomerPage = () => {
 
   return (
     <PageTransition>
+      <WelcomeFlow userRole="customer" />
       <div className="min-h-screen bg-white">
         <header className="sticky top-0 z-50 border-b border-border bg-white/80 backdrop-blur-xl">
           <div className="container mx-auto px-2 sm:px-3 py-2 flex justify-between items-center gap-1.5 sm:gap-2">
