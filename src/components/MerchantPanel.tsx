@@ -5,6 +5,7 @@ import { RewardsList } from './rewards/RewardsList';
 import { VouchersManagement } from './rewards/VouchersManagement';
 import { MintTokensDialog } from './MintTokensDialog';
 import { MerchantDashboard } from './crm/MerchantDashboard';
+import { EnhancedAnalytics } from './crm/EnhancedAnalytics';
 import { CustomerList } from './crm/CustomerList';
 import { RFMSegmentation } from './crm/RFMSegmentation';
 import { TierManagement } from './tiers/TierManagement';
