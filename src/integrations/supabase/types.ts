@@ -14,6 +14,83 @@ export type Database = {
   }
   public: {
     Tables: {
+      automation_rules: {
+        Row: {
+          action_config: Json
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          merchant_address: string
+          rule_type: string
+          token_address: string
+          trigger_condition: Json
+          updated_at: string | null
+        }
+        Insert: {
+          action_config: Json
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          merchant_address: string
+          rule_type: string
+          token_address: string
+          trigger_condition: Json
+          updated_at?: string | null
+        }
+        Update: {
+          action_config?: Json
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          merchant_address?: string
+          rule_type?: string
+          token_address?: string
+          trigger_condition?: Json
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      automation_triggers_history: {
+        Row: {
+          action_taken: string
+          customer_address: string
+          id: string
+          merchant_address: string
+          result: Json | null
+          rule_id: string | null
+          success: boolean | null
+          triggered_at: string | null
+        }
+        Insert: {
+          action_taken: string
+          customer_address: string
+          id?: string
+          merchant_address: string
+          result?: Json | null
+          rule_id?: string | null
+          success?: boolean | null
+          triggered_at?: string | null
+        }
+        Update: {
+          action_taken?: string
+          customer_address?: string
+          id?: string
+          merchant_address?: string
+          result?: Json | null
+          rule_id?: string | null
+          success?: boolean | null
+          triggered_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_triggers_history_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "automation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_profiles: {
         Row: {
           created_at: string | null
