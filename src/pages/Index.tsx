@@ -51,14 +51,14 @@ const Index = () => {
           </div>
         </header>
 
-        <main className="container mx-auto px-4 sm:px-6 relative">
+        <main className="container mx-auto px-4 sm:px-6 relative overflow-hidden">
           <section className="pt-12 pb-12 sm:pt-20 sm:pb-16 md:pt-32 md:pb-24 text-center">
             <div className="inline-flex items-center gap-2 sm:gap-2.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-primary/10 border border-primary/20 mb-6 sm:mb-8 hover-lift animate-fade-in">
               <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
               <span className="text-[10px] sm:text-xs font-semibold text-primary uppercase tracking-wider">Built on BASE Network</span>
             </div>
             
-            <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-bold mb-4 sm:mb-6 leading-[1.1] tracking-tight text-balance px-2 animate-fade-in-up bg-clip-text text-transparent bg-gradient-to-r from-foreground via-primary to-foreground">
+            <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-bold mb-4 sm:mb-6 leading-[1.1] tracking-tight text-balance px-4 sm:px-6 animate-fade-in-up bg-clip-text text-transparent bg-gradient-to-r from-foreground via-primary to-foreground overflow-visible">
               Discover loyalty rewards reimagined.
             </h1>
             
