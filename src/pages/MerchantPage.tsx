@@ -2,6 +2,7 @@ import { WalletConnectButton } from '@/components/WalletConnectButton';
 import { MerchantPanel } from '@/components/MerchantPanel';
 import { IssuedTokensHistory } from '@/components/IssuedTokensHistory';
 import { WelcomeFlow } from '@/components/onboarding/WelcomeFlow';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { Gift, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -33,7 +34,8 @@ const MerchantPage = () => {
                 <p className="text-[9px] sm:text-[10px] text-muted-foreground truncate">Merchant Portal</p>
               </div>
             </div>
-            <div className="flex-shrink-0">
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <ThemeToggle />
               <WalletConnectButton />
             </div>
           </div>
