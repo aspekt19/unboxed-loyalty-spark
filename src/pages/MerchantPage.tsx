@@ -1,6 +1,7 @@
 import { WalletConnectButton } from '@/components/WalletConnectButton';
 import { MerchantPanel } from '@/components/MerchantPanel';
 import { IssuedTokensHistory } from '@/components/IssuedTokensHistory';
+import { WelcomeFlow } from '@/components/onboarding/WelcomeFlow';
 import { Gift, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ const MerchantPage = () => {
 
   return (
     <PageTransition>
+      <WelcomeFlow userRole="merchant" />
       <div className="min-h-screen bg-white">
         <header className="sticky top-0 z-50 border-b border-border bg-white/80 backdrop-blur-xl">
           <div className="container mx-auto px-2 sm:px-3 py-2 flex justify-between items-center gap-1.5 sm:gap-2">
