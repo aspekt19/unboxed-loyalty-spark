@@ -460,6 +460,42 @@ export type Database = {
         }
         Relationships: []
       }
+      premium_subscriptions: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          started_at: string | null
+          subscription_type: string
+          updated_at: string
+          user_id: string
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          started_at?: string | null
+          subscription_type?: string
+          updated_at?: string
+          user_id: string
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          started_at?: string | null
+          subscription_type?: string
+          updated_at?: string
+          user_id?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -835,6 +871,10 @@ export type Database = {
           last_name: string
           rfm_score: string
         }[]
+      }
+      has_premium_access: {
+        Args: { p_wallet_address: string }
+        Returns: boolean
       }
       migrate_wallet_profile: {
         Args: { p_new_user_id: string; p_wallet_address: string }
