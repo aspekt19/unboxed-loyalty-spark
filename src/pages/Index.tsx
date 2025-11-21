@@ -67,7 +67,7 @@ const Index = () => {
             </h1>
             
             <p className="text-sm sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-8 sm:mb-12 px-4 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-              Loyalty tokens that earn, invest and multiply on-chain. Get rewarded for purchases, save automatically, and grow your rewards in DeFi—all in one platform.
+              Loyalty tokens that earn, invest and multiply on-chain. Get rewarded for purchases, save automatically, and grow your rewards in DeFi - all in one platform.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
