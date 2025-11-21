@@ -65,7 +65,9 @@ contract RoundUpVault {
     // STATE VARIABLES
     // ============================
     address public owner;
-    IInvestmentStrategy public strategy;
+    
+    // Multiple investment strategies
+    mapping(Strategy => IInvestmentStrategy) public strategies;
     
     // Supported tokens with their price feeds
     struct TokenInfo {
@@ -84,11 +86,12 @@ contract RoundUpVault {
     struct UserSettings {
         bool autoInvest;
         uint256 roundUpMultiplier;
+        Strategy preferredStrategy; // User's preferred investment strategy
     }
     
     struct UserBalance {
         uint256 pendingRoundUp;
-        uint256 invested;
+        mapping(Strategy => uint256) invested; // Track investments per strategy
     }
     
     struct TokenBalance {
@@ -97,17 +100,17 @@ contract RoundUpVault {
     }
     
     mapping(address => UserSettings) public userSettings;
-    mapping(address => UserBalance) public userBalances;
+    mapping(address => UserBalance) private userBalances;
     mapping(address => TokenBalance) private userTokenBalances;
     
     // ============================
     // EVENTS
     // ============================
-    event SettingsUpdated(address indexed user, bool autoInvest, uint256 roundUpMultiplier);
+    event SettingsUpdated(address indexed user, bool autoInvest, uint256 roundUpMultiplier, Strategy preferredStrategy);
     event RoundUpCollected(address indexed user, address indexed token, uint256 roundUpAmount, uint256 primaryTxValue);
-    event Invested(address indexed user, uint256 amount, uint256 investedValue);
-    event Withdrawn(address indexed user, uint256 amount, uint256 ethReturned);
-    event StrategyUpdated(address indexed newStrategy);
+    event Invested(address indexed user, Strategy strategy, uint256 amount, uint256 investedValue);
+    event Withdrawn(address indexed user, Strategy strategy, uint256 amount, uint256 ethReturned);
+    event StrategySet(Strategy indexed strategyType, address indexed strategyAddress);
     event TokenAdded(address indexed token, address indexed priceFeed);
     event TokenRemoved(address indexed token);
     event DirectDeposit(address indexed user, uint256 amount);
@@ -123,9 +126,12 @@ contract RoundUpVault {
     // ============================
     // CONSTRUCTOR
     // ============================
-    constructor(address _ethPriceFeed, address _strategy) {
+    constructor(address _ethPriceFeed, address _aaveStrategy, address _compoundStrategy) {
         owner = msg.sender;
-        strategy = IInvestmentStrategy(_strategy);
+        
+        // Set both strategies
+        strategies[Strategy.AAVE_CONSERVATIVE] = IInvestmentStrategy(_aaveStrategy);
+        strategies[Strategy.COMPOUND_LENDING_PLUS] = IInvestmentStrategy(_compoundStrategy);
         
         // Add ETH as default supported token
         supportedTokens[NATIVE_TOKEN] = TokenInfo({
@@ -177,35 +183,40 @@ contract RoundUpVault {
     
     /**
      * @notice Initialize settings for new user
-     * @dev Sets default values: autoInvest=true, multiplier=1
+     * @dev Sets default values: autoInvest=true, multiplier=1, Aave as default strategy
      */
     function initializeSettings() external {
         require(userSettings[msg.sender].roundUpMultiplier == 0, "Already initialized");
         
         userSettings[msg.sender] = UserSettings({
             autoInvest: true,
-            roundUpMultiplier: 1
+            roundUpMultiplier: 1,
+            preferredStrategy: Strategy.AAVE_CONSERVATIVE
         });
         
-        emit SettingsUpdated(msg.sender, true, 1);
+        emit SettingsUpdated(msg.sender, true, 1, Strategy.AAVE_CONSERVATIVE);
     }
     
     /**
      * @notice Update user settings
      * @param _autoInvest Enable automatic investment
      * @param _roundUpMultiplier Multiplier for round-up (1-10)
+     * @param _preferredStrategy Preferred investment strategy
      */
     function updateSettings(
         bool _autoInvest,
-        uint256 _roundUpMultiplier
+        uint256 _roundUpMultiplier,
+        Strategy _preferredStrategy
     ) external {
         require(_roundUpMultiplier > 0 && _roundUpMultiplier <= 10, "Invalid multiplier");
+        require(address(strategies[_preferredStrategy]) != address(0), "Strategy not set");
         
         UserSettings storage settings = userSettings[msg.sender];
         settings.autoInvest = _autoInvest;
         settings.roundUpMultiplier = _roundUpMultiplier;
+        settings.preferredStrategy = _preferredStrategy;
         
-        emit SettingsUpdated(msg.sender, _autoInvest, _roundUpMultiplier);
+        emit SettingsUpdated(msg.sender, _autoInvest, _roundUpMultiplier, _preferredStrategy);
     }
     
     // ============================
@@ -263,11 +274,15 @@ contract RoundUpVault {
         emit DirectDeposit(msg.sender, msg.value);
         
         if (settings.autoInvest) {
-            // Invest immediately
-            uint256 investedValue = strategy.deposit{value: msg.value}(msg.sender);
-            userBalances[msg.sender].invested += investedValue;
+            // Invest immediately using preferred strategy
+            Strategy strategyType = settings.preferredStrategy;
+            IInvestmentStrategy strategyContract = strategies[strategyType];
+            require(address(strategyContract) != address(0), "Strategy not set");
             
-            emit Invested(msg.sender, msg.value, investedValue);
+            uint256 investedValue = strategyContract.deposit{value: msg.value}(msg.sender);
+            userBalances[msg.sender].invested[strategyType] += investedValue;
+            
+            emit Invested(msg.sender, strategyType, msg.value, investedValue);
         } else {
             // Add to pending balance
             userBalances[msg.sender].pendingRoundUp += msg.value;
@@ -312,7 +327,7 @@ contract RoundUpVault {
         emit RoundUpCollected(msg.sender, NATIVE_TOKEN, roundUpAmount, _primaryTxValueUSD);
         
         if (settings.autoInvest && userBalances[msg.sender].pendingRoundUp >= MIN_INVEST_AMOUNT) {
-            _invest(msg.sender);
+            _invest(msg.sender, settings.preferredStrategy);
         }
     }
     
@@ -331,7 +346,7 @@ contract RoundUpVault {
         emit RoundUpCollected(msg.sender, NATIVE_TOKEN, msg.value, _primaryTxValueUSD);
         
         if (settings.autoInvest && userBalances[msg.sender].pendingRoundUp >= MIN_INVEST_AMOUNT) {
-            _invest(msg.sender);
+            _invest(msg.sender, settings.preferredStrategy);
         }
     }
     
@@ -359,20 +374,23 @@ contract RoundUpVault {
     // ============================
     
     /**
-     * @notice Manually invest pending round-up balance
+     * @notice Manually invest pending round-up balance with specific strategy
      * @dev Can only invest if balance >= MIN_INVEST_AMOUNT
+     * @param _strategy Strategy to use for investment
      */
-    function invest() external {
+    function invest(Strategy _strategy) external {
         require(userBalances[msg.sender].pendingRoundUp > 0, "No pending round-up");
         require(userBalances[msg.sender].pendingRoundUp >= MIN_INVEST_AMOUNT, "Amount too small to invest");
-        _invest(msg.sender);
+        require(address(strategies[_strategy]) != address(0), "Strategy not set");
+        _invest(msg.sender, _strategy);
     }
     
     /**
      * @notice Internal function to invest user's pending balance
      * @param _user Address of the user
+     * @param _strategyType Strategy to use for investment
      */
-    function _invest(address _user) internal {
+    function _invest(address _user, Strategy _strategyType) internal {
         uint256 amount = userBalances[_user].pendingRoundUp;
         require(amount > 0, "Nothing to invest");
         
@@ -382,30 +400,36 @@ contract RoundUpVault {
             return;
         }
         
+        IInvestmentStrategy strategyContract = strategies[_strategyType];
+        require(address(strategyContract) != address(0), "Strategy not set");
+        
         userBalances[_user].pendingRoundUp = 0;
         
-        uint256 investedValue = strategy.deposit{value: amount}(_user);
-        userBalances[_user].invested += investedValue;
+        uint256 investedValue = strategyContract.deposit{value: amount}(_user);
+        userBalances[_user].invested[_strategyType] += investedValue;
         
-        emit Invested(_user, amount, investedValue);
+        emit Invested(_user, _strategyType, amount, investedValue);
     }
     
     /**
-     * @notice Withdraw invested funds
+     * @notice Withdraw invested funds from specific strategy
+     * @param _strategy Strategy to withdraw from
      * @param _amount Amount to withdraw (in shares)
      */
-    function withdraw(uint256 _amount) external {
+    function withdraw(Strategy _strategy, uint256 _amount) external {
         require(_amount > 0, "Amount must be > 0");
-        require(userBalances[msg.sender].invested >= _amount, "Insufficient invested balance");
+        require(userBalances[msg.sender].invested[_strategy] >= _amount, "Insufficient invested balance");
+        require(address(strategies[_strategy]) != address(0), "Strategy not set");
         
-        userBalances[msg.sender].invested -= _amount;
+        userBalances[msg.sender].invested[_strategy] -= _amount;
         
-        uint256 ethReturned = strategy.withdraw(msg.sender, _amount);
+        IInvestmentStrategy strategyContract = strategies[_strategy];
+        uint256 ethReturned = strategyContract.withdraw(msg.sender, _amount);
         
         (bool success, ) = msg.sender.call{value: ethReturned}("");
         require(success, "ETH transfer failed");
         
-        emit Withdrawn(msg.sender, _amount, ethReturned);
+        emit Withdrawn(msg.sender, _strategy, _amount, ethReturned);
     }
     
     /**
@@ -438,12 +462,55 @@ contract RoundUpVault {
     }
     
     /**
-     * @notice Get user's current investment value
+     * @notice Get user's current investment value in specific strategy
      * @param _user User address
+     * @param _strategy Strategy to check
      * @return value Current value including accrued interest
      */
-    function getUserInvestmentValue(address _user) external view returns (uint256) {
-        return strategy.getUserValue(_user);
+    function getUserInvestmentValue(address _user, Strategy _strategy) external view returns (uint256) {
+        IInvestmentStrategy strategyContract = strategies[_strategy];
+        if (address(strategyContract) == address(0)) return 0;
+        return strategyContract.getUserValue(_user);
+    }
+    
+    /**
+     * @notice Get user's total investment value across all strategies
+     * @param _user User address
+     * @return value Total current value including accrued interest
+     */
+    function getUserTotalInvestmentValue(address _user) external view returns (uint256) {
+        uint256 total = 0;
+        
+        IInvestmentStrategy aaveStrategy = strategies[Strategy.AAVE_CONSERVATIVE];
+        if (address(aaveStrategy) != address(0)) {
+            total += aaveStrategy.getUserValue(_user);
+        }
+        
+        IInvestmentStrategy compoundStrategy = strategies[Strategy.COMPOUND_LENDING_PLUS];
+        if (address(compoundStrategy) != address(0)) {
+            total += compoundStrategy.getUserValue(_user);
+        }
+        
+        return total;
+    }
+    
+    /**
+     * @notice Get user's invested amount in specific strategy
+     * @param _user User address
+     * @param _strategy Strategy to check
+     * @return amount Invested amount (shares)
+     */
+    function getUserInvestedAmount(address _user, Strategy _strategy) external view returns (uint256) {
+        return userBalances[_user].invested[_strategy];
+    }
+    
+    /**
+     * @notice Get user's pending round-up balance
+     * @param _user User address
+     * @return amount Pending balance
+     */
+    function getUserPendingBalance(address _user) external view returns (uint256) {
+        return userBalances[_user].pendingRoundUp;
     }
     
     // ============================
@@ -460,12 +527,14 @@ contract RoundUpVault {
     }
     
     /**
-     * @notice Update investment strategy
-     * @param _newStrategy Address of new strategy contract
+     * @notice Set or update a specific investment strategy
+     * @param _strategyType Type of strategy to set
+     * @param _strategyAddress Address of strategy contract
      */
-    function updateStrategy(address _newStrategy) external onlyOwner {
-        strategy = IInvestmentStrategy(_newStrategy);
-        emit StrategyUpdated(_newStrategy);
+    function setStrategy(Strategy _strategyType, address _strategyAddress) external onlyOwner {
+        require(_strategyAddress != address(0), "Invalid strategy address");
+        strategies[_strategyType] = IInvestmentStrategy(_strategyAddress);
+        emit StrategySet(_strategyType, _strategyAddress);
     }
     
     /**
