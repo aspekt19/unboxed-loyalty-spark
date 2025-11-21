@@ -1,18 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-/**
- * @title AaveConservativeStrategy
- * @notice Conservative investment strategy using Aave V3 on Base Mainnet
- * @dev Deposits ETH into Aave V3, receives aWETH tokens with yield
- * 
- * DEPLOYMENT INSTRUCTIONS:
- * 1. Deploy this contract (no constructor parameters)
- * 2. Deploy RoundUpVault with this strategy address
- * 3. Call setVault(vaultAddress) on this contract
- */
+// AaveConservativeStrategy
+// Conservative investment strategy using Aave V3 on Base Mainnet
+// Deposits ETH into Aave V3, receives aWETH tokens with yield
+// 
+// DEPLOYMENT INSTRUCTIONS:
+// 1. Deploy this contract (no constructor parameters)
+// 2. Deploy RoundUpVault with this strategy address
+// 3. Call setVault(vaultAddress) on this contract
 
-// Base Mainnet addresses (no NatSpec for file-level constants)
+// Base Mainnet addresses
 address constant WETH = address(0x4200000000000000000000000000000000000006);
 address constant AAVE_POOL = address(0xA238Dd80C259a72e81d7e4664a9801593F98d1c5);
 address constant AWETH_TOKEN = address(0xD4a0e0b9149BCee3C920d2E00b5dE09138fd8bb7);
