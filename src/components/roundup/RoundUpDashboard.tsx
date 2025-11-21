@@ -7,6 +7,7 @@ import { useRoundUpInvest } from '@/hooks/useRoundUpInvest';
 import { formatEther } from 'viem';
 import { RoundUpSettings } from './RoundUpSettings';
 import { InvestmentStrategies } from './InvestmentStrategies';
+import { InvestmentPositions } from './InvestmentPositions';
 import { DirectDepositDialog } from './DirectDepositDialog';
 import { useState } from 'react';
 
@@ -82,6 +83,8 @@ export const RoundUpDashboard = () => {
         <RoundUpSettings />
         <InvestmentStrategies />
       </div>
+
+      <InvestmentPositions />
 
       <DirectDepositDialog 
         open={showDepositDialog} 
