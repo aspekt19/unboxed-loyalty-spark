@@ -3,12 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAccount, useBalance } from 'wagmi';
 import { useRoundUp } from '@/hooks/useRoundUp';
 import { Send, TrendingUp, Info } from 'lucide-react';
 import { isAddress, parseEther, formatEther } from 'viem';
 import { z } from 'zod';
+import { toast } from 'sonner';
 
 const sendSchema = z.object({
   recipient: z.string().refine((val) => isAddress(val), {
@@ -30,19 +31,54 @@ export const SendWithRoundUp = () => {
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
   const [errors, setErrors] = useState<{ recipient?: string; amount?: string }>({});
+  const [ethPriceUsd, setEthPriceUsd] = useState<number>(0);
+  const [loadingPrice, setLoadingPrice] = useState(true);
 
-  // Calculate round-up amount
-  const calculateRoundUp = (value: string): string => {
-    if (!value || parseFloat(value) <= 0) return '0';
-    const num = parseFloat(value);
-    const rounded = Math.ceil(num * 100) / 100; // Round up to nearest 0.01
-    const roundUpAmount = rounded - num;
-    return roundUpAmount.toFixed(6);
+  // Fetch ETH price in USD
+  useEffect(() => {
+    const fetchEthPrice = async () => {
+      try {
+        const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
+        const data = await response.json();
+        setEthPriceUsd(data.ethereum.usd);
+        setLoadingPrice(false);
+      } catch (error) {
+        console.error('Failed to fetch ETH price:', error);
+        toast.error('Failed to fetch ETH price. Using fallback.');
+        setEthPriceUsd(3000); // Fallback price
+        setLoadingPrice(false);
+      }
+    };
+    
+    fetchEthPrice();
+    const interval = setInterval(fetchEthPrice, 60000); // Update every minute
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  // Calculate round-up amount to nearest dollar
+  const calculateRoundUp = (value: string): { roundUpEth: string; amountUsd: string; roundUpUsd: string; totalUsd: string } => {
+    if (!value || parseFloat(value) <= 0 || ethPriceUsd === 0) {
+      return { roundUpEth: '0', amountUsd: '0', roundUpUsd: '0', totalUsd: '0' };
+    }
+    
+    const ethAmount = parseFloat(value);
+    const amountInUsd = ethAmount * ethPriceUsd;
+    const roundedUsd = Math.ceil(amountInUsd); // Round up to nearest dollar
+    const roundUpUsd = roundedUsd - amountInUsd;
+    const roundUpEth = roundUpUsd / ethPriceUsd;
+    
+    return {
+      roundUpEth: roundUpEth.toFixed(6),
+      amountUsd: amountInUsd.toFixed(2),
+      roundUpUsd: roundUpUsd.toFixed(2),
+      totalUsd: roundedUsd.toFixed(2)
+    };
   };
 
-  const roundUpAmount = calculateRoundUp(amount);
+  const { roundUpEth, amountUsd, roundUpUsd, totalUsd } = calculateRoundUp(amount);
   const totalAmount = amount && parseFloat(amount) > 0 
-    ? (parseFloat(amount) + parseFloat(roundUpAmount)).toFixed(6)
+    ? (parseFloat(amount) + parseFloat(roundUpEth)).toFixed(6)
     : '0';
 
   const handleSend = async () => {
@@ -135,28 +171,36 @@ export const SendWithRoundUp = () => {
             }}
             className={errors.amount ? 'border-destructive' : ''}
           />
+          {loadingPrice && (
+            <p className="text-xs text-muted-foreground">Loading ETH price...</p>
+          )}
+          {!loadingPrice && ethPriceUsd > 0 && amount && parseFloat(amount) > 0 && (
+            <p className="text-xs text-muted-foreground">
+              ≈ ${amountUsd} USD (ETH @ ${ethPriceUsd.toLocaleString()})
+            </p>
+          )}
           {errors.amount && (
             <p className="text-xs text-destructive">{errors.amount}</p>
           )}
         </div>
 
         {/* Round-Up Info */}
-        {amount && parseFloat(amount) > 0 && (
+        {amount && parseFloat(amount) > 0 && !loadingPrice && (
           <Alert>
             <TrendingUp className="h-4 w-4" />
             <AlertDescription>
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
                   <span>Sending to recipient:</span>
-                  <span className="font-semibold">{amount} ETH</span>
+                  <span className="font-semibold">{amount} ETH (${amountUsd})</span>
                 </div>
                 <div className="flex justify-between text-primary">
-                  <span>Round-up amount:</span>
-                  <span className="font-semibold">+{roundUpAmount} ETH</span>
+                  <span>Round-up to nearest $:</span>
+                  <span className="font-semibold">+{roundUpEth} ETH (+${roundUpUsd})</span>
                 </div>
                 <div className="flex justify-between border-t pt-1 mt-1">
                   <span>Total from wallet:</span>
-                  <span className="font-bold">{totalAmount} ETH</span>
+                  <span className="font-bold">{totalAmount} ETH (${totalUsd})</span>
                 </div>
               </div>
             </AlertDescription>
@@ -172,9 +216,10 @@ export const SendWithRoundUp = () => {
                 <strong>How it works:</strong>
               </p>
               <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-                <li>Amount is rounded up to nearest 0.01 ETH</li>
+                <li>Amount is rounded up to nearest whole dollar (in USD)</li>
                 <li>Recipient receives exact amount you specify</li>
                 <li>Round-up difference goes to your investment vault</li>
+                <li>ETH price updated every minute</li>
                 <li>Gas fees apply to the transaction</li>
               </ul>
             </div>
@@ -184,9 +229,9 @@ export const SendWithRoundUp = () => {
         <Button
           className="w-full"
           onClick={handleSend}
-          disabled={isPending || !recipient || !amount || parseFloat(amount) <= 0}
+          disabled={isPending || loadingPrice || !recipient || !amount || parseFloat(amount) <= 0}
         >
-          {isPending ? 'Sending...' : 'Send with Round-Up'}
+          {isPending ? 'Sending...' : loadingPrice ? 'Loading...' : 'Send with Round-Up'}
         </Button>
       </div>
     </Card>
