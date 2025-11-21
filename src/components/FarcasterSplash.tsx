@@ -34,6 +34,11 @@ const FarcasterSplash = ({ onLaunch }: FarcasterSplashProps) => {
         <ArrowUpRight className="ml-2 h-5 w-5" />
       </Button>
 
+      {/* Tagline */}
+      <p className="mt-4 text-sm text-muted-foreground max-w-md text-center px-4">
+        Loyalty rewards that grow. Earn tokens, save automatically, invest in DeFi.
+      </p>
+
       {/* Links */}
       <div className="mt-8 flex flex-col items-center gap-2">
         <p className="text-sm text-muted-foreground">https://loyalspark.online/</p>

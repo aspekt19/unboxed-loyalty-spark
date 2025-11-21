@@ -13,8 +13,8 @@
     "webhookUrl": "https://loyalspark.online",
     "splashImageUrl": "https://loyalspark.online/media-kit/new-favicon.png",
     "splashBackgroundColor": "#000000",
-    "subtitle": "Decentralized Loyalty Rewards",
-    "description": "Create, manage and trade loyalty tokens on-chain. Zero middlemen. Total transparency. Built on BASE Network with smart contracts.",
+    "subtitle": "Loyalty Rewards That Grow",
+    "description": "Earn loyalty tokens, save automatically, and grow your rewards in DeFi. On-chain loyalty platform with automated investing on BASE Network.",
     "screenshotUrls": [
       "https://loyalspark.online/media-kit/logo-horizontal.png"
     ],
@@ -26,9 +26,9 @@
       "tokens",
       "base"
     ],
-    "tagline": "On-chain loyalty rewards",
-    "ogTitle": "Loyal Spark - Loyalty Rewards",
-    "ogDescription": "Create, manage and trade loyalty tokens on-chain. Zero middlemen. Total transparency.",
+    "tagline": "Loyalty rewards that grow",
+    "ogTitle": "Loyal Spark - Loyalty Rewards That Grow",
+    "ogDescription": "Earn loyalty tokens, save automatically, and grow your rewards in DeFi. On-chain loyalty platform with automated investing.",
     "ogImageUrl": "https://loyalspark.online/media-kit/miniapp-preview-v5.png",
     "heroImageUrl": "https://loyalspark.online/media-kit/miniapp-preview-v5.png",
     "requiredChains": [

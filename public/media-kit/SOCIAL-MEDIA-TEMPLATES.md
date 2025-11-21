@@ -6,31 +6,31 @@ Ready-to-use content templates for various social media platforms.
 
 ### Launch Announcement
 ```
-🚀 Introducing Loyal Spark - loyalty rewards reimagined on blockchain
+🚀 Introducing Loyal Spark - loyalty rewards that actually grow
 
-✨ Mint & manage loyalty tokens
-🔐 True customer ownership
-💱 Trade on any DEX
+✨ Earn loyalty tokens
+💰 Auto-invest in DeFi (3-10% APY)
+🔄 Round-up every transaction
 ⚡ Built on @base
 
-Ready to transform customer engagement?
+Ready to watch your rewards multiply?
 👉 [link]
 
-#LoyalSpark #Web3Loyalty #BASE
+#LoyalSpark #DeFi #BASE
 ```
 
 ### Feature Highlight
 ```
 Why Loyal Spark? 🤔
 
-🔒 Secure - Smart contract protection
-⚡ Fast - Instant BASE transactions
-🌍 Decentralized - True ownership
-📈 Tradeable - Works on any DEX
+💎 Earn - Get loyalty tokens from purchases
+📈 Grow - Auto-invest in Aave & Compound
+🔄 Save - Round-up spare change automatically
+💱 Trade - Works on any DEX
 
-The future of loyalty rewards is here 🚀
+Loyalty rewards that work for you 🚀
 
-#Web3 #LoyaltyPrograms #Blockchain
+#Web3 #DeFi #LoyaltyPrograms
 ```
 
 ### Merchant-Focused
@@ -67,27 +67,27 @@ Take control of your rewards 👉 [link]
 
 ### Company Announcement
 ```
-We're excited to announce the launch of Loyal Spark - a decentralized loyalty rewards platform built on BASE Network.
+We're excited to announce the launch of Loyal Spark - a loyalty platform that combines blockchain rewards with automated DeFi investing on BASE Network.
 
-Traditional loyalty programs lock customers into closed ecosystems. Loyal Spark changes that by using ERC-20 tokens and smart contracts to give customers true ownership of their rewards.
+Traditional loyalty programs leave points sitting idle. Loyal Spark transforms loyalty into a wealth-building tool by automatically investing your rewards in curated DeFi strategies.
 
 Key benefits for businesses:
 • Easy deployment with no blockchain expertise needed
-• Low transaction costs on BASE Network
-• Increased customer engagement through tradeable rewards
+• Zero platform fees
+• Increased customer engagement through growing rewards
 • Full transparency with on-chain tracking
 
 For customers:
 • True ownership as ERC-20 tokens
-• Ability to trade rewards on decentralized exchanges
-• Transfer tokens between wallets
-• Full control over redemption
+• Automatic DeFi yield generation (3-10% APY)
+• Round-up savings invest spare change
+• Trade, transfer, or redeem rewards
 
 Built on BASE Network for fast, cost-effective transactions.
 
 Learn more: [link]
 
-#Blockchain #LoyaltyPrograms #CustomerEngagement #Web3 #Innovation
+#Blockchain #LoyaltyPrograms #DeFi #Web3 #Innovation
 ```
 
 ### Thought Leadership

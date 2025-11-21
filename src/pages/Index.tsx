@@ -63,11 +63,11 @@ const Index = () => {
             </div>
             
             <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-bold mb-4 sm:mb-6 leading-[1.1] tracking-tight text-balance px-4 sm:px-6 animate-fade-in-up bg-clip-text text-transparent bg-gradient-to-r from-foreground via-primary to-foreground overflow-visible">
-              Discover loyalty rewards reimagined.
+              Earn rewards. Watch them grow.
             </h1>
             
             <p className="text-sm sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-8 sm:mb-12 px-4 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-              Mint, manage and trade loyalty tokens on-chain. Built for the next generation of customer engagement.
+              Loyalty tokens that earn, invest and multiply on-chain. Get rewarded for purchases, save automatically, and grow your rewards in DeFi—all in one platform.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>

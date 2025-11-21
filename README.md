@@ -1,6 +1,6 @@
-# Loyal Spark - Decentralized Loyalty Rewards Platform
+# Loyal Spark - Loyalty Rewards That Grow
 
-A Web3-powered loyalty rewards platform built on Base Mainnet, enabling merchants to create custom loyalty token programs and offer exclusive voucher rewards to customers.
+A Web3-powered loyalty platform built on Base Mainnet, enabling merchants to create custom loyalty token programs while customers earn rewards that automatically invest and grow through DeFi.
 
 ## Overview
 
