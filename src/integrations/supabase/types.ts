@@ -403,6 +403,30 @@ export type Database = {
           },
         ]
       }
+      payment_settings: {
+        Row: {
+          admin_wallet_address: string
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          usdc_price: number
+        }
+        Insert: {
+          admin_wallet_address: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          usdc_price?: number
+        }
+        Update: {
+          admin_wallet_address?: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          usdc_price?: number
+        }
+        Relationships: []
+      }
       personalized_offers: {
         Row: {
           bonus_tokens: number | null
@@ -457,6 +481,42 @@ export type Database = {
           used_at?: string | null
           valid_from?: string | null
           valid_until?: string
+        }
+        Relationships: []
+      }
+      premium_payment_requests: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          payment_type: string
+          status: string
+          transaction_hash: string | null
+          verified_at: string | null
+          verified_by: string | null
+          wallet_address: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          payment_type: string
+          status?: string
+          transaction_hash?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+          wallet_address: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          payment_type?: string
+          status?: string
+          transaction_hash?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+          wallet_address?: string
         }
         Relationships: []
       }
@@ -868,6 +928,10 @@ export type Database = {
       }
     }
     Functions: {
+      activate_premium_subscription: {
+        Args: { p_request_id: string; p_wallet_address: string }
+        Returns: boolean
+      }
       check_program_expiration: { Args: never; Returns: undefined }
       generate_referral_code: {
         Args: { p_referrer_address: string; p_token_address: string }
