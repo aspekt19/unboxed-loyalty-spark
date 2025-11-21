@@ -110,6 +110,7 @@ contract RoundUpVault {
     event StrategyUpdated(address indexed newStrategy);
     event TokenAdded(address indexed token, address indexed priceFeed);
     event TokenRemoved(address indexed token);
+    event DirectDeposit(address indexed user, uint256 amount);
     
     // ============================
     // MODIFIERS
@@ -174,6 +175,10 @@ contract RoundUpVault {
     // USER SETTINGS
     // ============================
     
+    /**
+     * @notice Initialize settings for new user
+     * @dev Sets default values: autoInvest=true, multiplier=1
+     */
     function initializeSettings() external {
         require(userSettings[msg.sender].roundUpMultiplier == 0, "Already initialized");
         
@@ -185,6 +190,11 @@ contract RoundUpVault {
         emit SettingsUpdated(msg.sender, true, 1);
     }
     
+    /**
+     * @notice Update user settings
+     * @param _autoInvest Enable automatic investment
+     * @param _roundUpMultiplier Multiplier for round-up (1-10)
+     */
     function updateSettings(
         bool _autoInvest,
         uint256 _roundUpMultiplier
@@ -205,6 +215,7 @@ contract RoundUpVault {
     /**
      * @notice Get token price from Chainlink
      * @param _token Token address (use address(0) for ETH)
+     * @return price Token price in USD (8 decimals)
      */
     function getTokenPrice(address _token) public view returns (uint256) {
         require(supportedTokens[_token].isSupported, "Token not supported");
@@ -218,6 +229,7 @@ contract RoundUpVault {
      * @notice Calculate round-up amount for any token
      * @param _token Token address (use address(0) for ETH)
      * @param _tokenAmount Amount of tokens
+     * @return roundUpAmount Amount of tokens needed to round up to next dollar
      */
     function calculateRoundUp(address _token, uint256 _tokenAmount) public view returns (uint256) {
         require(supportedTokens[_token].isSupported, "Token not supported");
@@ -240,12 +252,15 @@ contract RoundUpVault {
     /**
      * @notice Direct deposit ETH for investment (bypassing round-up)
      * @dev Allows users to invest directly without round-up transactions
+     *      Respects autoInvest setting: invests immediately or adds to pending
      */
     function directDeposit() external payable {
         require(msg.value > 0, "Amount must be > 0");
         require(msg.value >= MIN_INVEST_AMOUNT, "Amount below minimum");
         
         UserSettings storage settings = userSettings[msg.sender];
+        
+        emit DirectDeposit(msg.sender, msg.value);
         
         if (settings.autoInvest) {
             // Invest immediately
@@ -343,12 +358,20 @@ contract RoundUpVault {
     // INVESTMENT FUNCTIONS
     // ============================
     
+    /**
+     * @notice Manually invest pending round-up balance
+     * @dev Can only invest if balance >= MIN_INVEST_AMOUNT
+     */
     function invest() external {
         require(userBalances[msg.sender].pendingRoundUp > 0, "No pending round-up");
         require(userBalances[msg.sender].pendingRoundUp >= MIN_INVEST_AMOUNT, "Amount too small to invest");
         _invest(msg.sender);
     }
     
+    /**
+     * @notice Internal function to invest user's pending balance
+     * @param _user Address of the user
+     */
     function _invest(address _user) internal {
         uint256 amount = userBalances[_user].pendingRoundUp;
         require(amount > 0, "Nothing to invest");
@@ -367,6 +390,10 @@ contract RoundUpVault {
         emit Invested(_user, amount, investedValue);
     }
     
+    /**
+     * @notice Withdraw invested funds
+     * @param _amount Amount to withdraw (in shares)
+     */
     function withdraw(uint256 _amount) external {
         require(_amount > 0, "Amount must be > 0");
         require(userBalances[msg.sender].invested >= _amount, "Insufficient invested balance");
@@ -404,11 +431,17 @@ contract RoundUpVault {
      * @notice Get user's pending token balance
      * @param _user User address
      * @param _token Token address
+     * @return balance Pending balance of the token
      */
     function getUserTokenBalance(address _user, address _token) external view returns (uint256) {
         return userTokenBalances[_user].pendingRoundUp[_token];
     }
     
+    /**
+     * @notice Get user's current investment value
+     * @param _user User address
+     * @return value Current value including accrued interest
+     */
     function getUserInvestmentValue(address _user) external view returns (uint256) {
         return strategy.getUserValue(_user);
     }
@@ -417,15 +450,26 @@ contract RoundUpVault {
     // ADMIN FUNCTIONS
     // ============================
     
+    /**
+     * @notice Emergency withdraw all ETH to owner
+     * @dev Only callable by owner in case of emergency
+     */
     function emergencyWithdraw() external onlyOwner {
         (bool success, ) = owner.call{value: address(this).balance}("");
         require(success, "Transfer failed");
     }
     
+    /**
+     * @notice Update investment strategy
+     * @param _newStrategy Address of new strategy contract
+     */
     function updateStrategy(address _newStrategy) external onlyOwner {
         strategy = IInvestmentStrategy(_newStrategy);
         emit StrategyUpdated(_newStrategy);
     }
     
+    /**
+     * @notice Receive ETH
+     */
     receive() external payable {}
 }
