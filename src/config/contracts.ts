@@ -1,4 +1,16 @@
 export const CONTRACTS = {
+  // Round-Up Vault System
+  ROUND_UP_VAULT: {
+    address: '0x9102ada6805DB9100CaE03448B23f2b2668EcFe8' as `0x${string}`,
+  },
+  AAVE_CONSERVATIVE_STRATEGY: {
+    address: '0xe067a4c3b684f68C3Cbcc63d541414f6cC3fA5B3' as `0x${string}`,
+  },
+  LENDING_PLUS_STRATEGY: {
+    address: '0x930E6a11d25822115c5Cc76dFb202dE762CdC8Ab' as `0x${string}`,
+  },
+  
+  // Loyalty Token System
   LOYALTY_TOKEN_FACTORY: {
     address: '0x5F3DdBa12580CFdc6016258774cCc19C4250dA80' as `0x${string}`,
     abi: [
