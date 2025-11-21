@@ -8,7 +8,7 @@
     "version": "1",
     "name": "Loyal Spark",
     "iconUrl": "https://loyalspark.online/new-favicon.png",
-    "imageUrl": "https://loyalspark.online/media-kit/miniapp-preview-v5.png",
+    "imageUrl": "https://loyalspark.online/media-kit/miniapp-preview-new.png",
     "homeUrl": "https://loyalspark.online",
     "webhookUrl": "https://loyalspark.online",
     "splashImageUrl": "https://loyalspark.online/media-kit/new-favicon.png",
@@ -29,8 +29,8 @@
     "tagline": "Loyalty rewards that grow",
     "ogTitle": "Loyal Spark - Loyalty Rewards That Grow",
     "ogDescription": "Earn loyalty tokens, save automatically, and grow your rewards in DeFi. On-chain loyalty platform with automated investing.",
-    "ogImageUrl": "https://loyalspark.online/media-kit/miniapp-preview-v5.png",
-    "heroImageUrl": "https://loyalspark.online/media-kit/miniapp-preview-v5.png",
+    "ogImageUrl": "https://loyalspark.online/media-kit/og-image-new.png",
+    "heroImageUrl": "https://loyalspark.online/media-kit/hero-banner-new.png",
     "requiredChains": [
       "eip155:8453"
     ],
