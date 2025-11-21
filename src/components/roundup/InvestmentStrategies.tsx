@@ -109,7 +109,11 @@ export const InvestmentStrategies = () => {
                 <Button
                   size="sm"
                   onClick={() => handleInvest(strategy.id as 0 | 1, strategy.premium || false)}
-                  disabled={!hasPendingBalance || isPending || isPremiumLoading}
+                  disabled={
+                    strategy.premium && !isPremium 
+                      ? isPremiumLoading 
+                      : !hasPendingBalance || isPending || isPremiumLoading
+                  }
                   variant={strategy.premium && !isPremium ? 'outline' : 'default'}
                 >
                   {strategy.premium && !isPremium ? (
