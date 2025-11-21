@@ -47,13 +47,14 @@ export const InvestmentStrategies = () => {
   ];
 
   const handleInvest = async (strategyId: 0 | 1, isPremiumStrategy: boolean) => {
-    if (!hasPendingBalance) {
-      return;
-    }
-    
     // Check if premium is required and user doesn't have it
     if (isPremiumStrategy && !isPremium) {
       setShowUpgradeDialog(true);
+      return;
+    }
+    
+    // For non-premium strategies, check pending balance
+    if (!hasPendingBalance) {
       return;
     }
     
