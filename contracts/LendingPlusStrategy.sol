@@ -1,18 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-/**
- * @title LendingPlusStrategy
- * @notice Medium-risk investment strategy using Compound V3 on Base Mainnet
- * @dev Deposits ETH into Compound V3 cWETHv3 market for higher yields
- * 
- * DEPLOYMENT INSTRUCTIONS:
- * 1. Deploy this contract (no constructor parameters)
- * 2. Deploy RoundUpVault with this strategy address (or deploy vault with Aave first)
- * 3. Call setVault(vaultAddress) on this contract
- */
+// LendingPlusStrategy
+// Medium-risk investment strategy using Compound V3 on Base Mainnet
+// Deposits ETH into Compound V3 cWETHv3 market for higher yields
+// 
+// DEPLOYMENT INSTRUCTIONS:
+// 1. Deploy this contract (no constructor parameters)
+// 2. Deploy RoundUpVault with this strategy address (or deploy vault with Aave first)
+// 3. Call setVault(vaultAddress) on this contract
 
-// Base Mainnet addresses (no NatSpec for file-level constants)
+// Base Mainnet addresses
 address constant WETH = address(0x4200000000000000000000000000000000000006);
 address constant C_WETH_V3 = address(0x46e6b214b524310239732D51387075E0e70970bf); // Compound V3 cWETHv3
 
