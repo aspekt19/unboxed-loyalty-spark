@@ -186,7 +186,7 @@ Farcaster - это децентрализованная социальная с�
 2. Войдите с помощью своего Farcaster аккаунта
 3. Создайте новое приложение:
    - Название: "Loyal Spark"
-   - Описание: "Decentralized loyalty rewards platform"
+   - Описание: "Loyalty rewards platform with automated DeFi investing"
    - URL: `http://localhost:8080` (для разработки)
 4. Скопируйте **App ID**
 
