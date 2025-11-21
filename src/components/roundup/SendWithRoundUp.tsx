@@ -107,7 +107,7 @@ export const SendWithRoundUp = () => {
     }
 
     try {
-      await roundUp(recipient as `0x${string}`, amount);
+      await roundUp(recipient as `0x${string}`, totalAmount);
       setRecipient('');
       setAmount('');
     } catch (error) {
