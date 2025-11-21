@@ -3,12 +3,14 @@ import { CustomerPanel } from '@/components/CustomerPanel';
 import { CustomerFiltersPanel } from '@/components/CustomerFiltersPanel';
 import { WelcomeFlow } from '@/components/onboarding/WelcomeFlow';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { Gift, ArrowLeft } from 'lucide-react';
+import { Gift, ArrowLeft, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PageTransition from '@/components/PageTransition';
 import { useEffect } from 'react';
 import { initializeCleanState } from '@/lib/clearOldData';
+import { RoundUpDashboard } from '@/components/roundup/RoundUpDashboard';
 
 const CustomerPage = () => {
   // Clear old test data on first load
@@ -48,14 +50,33 @@ const CustomerPage = () => {
         </header>
 
         <main className="container mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8 md:py-12 relative">
-          <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6">
-            <aside className="lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)]">
-              <CustomerFiltersPanel />
-            </aside>
-            <div className="max-w-4xl">
-              <CustomerPanel />
-            </div>
-          </div>
+          <Tabs defaultValue="loyalty" className="space-y-6">
+            <TabsList className="grid w-full max-w-md grid-cols-2">
+              <TabsTrigger value="loyalty" className="gap-2">
+                <Gift className="h-4 w-4" />
+                Loyalty Rewards
+              </TabsTrigger>
+              <TabsTrigger value="roundup" className="gap-2">
+                <TrendingUp className="h-4 w-4" />
+                Round-Up Invest
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="loyalty">
+              <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6">
+                <aside className="lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)]">
+                  <CustomerFiltersPanel />
+                </aside>
+                <div className="max-w-4xl">
+                  <CustomerPanel />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="roundup">
+              <RoundUpDashboard />
+            </TabsContent>
+          </Tabs>
         </main>
       </div>
     </PageTransition>
