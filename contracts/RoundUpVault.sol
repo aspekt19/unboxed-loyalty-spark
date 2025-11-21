@@ -1,22 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-/**
- * @title RoundUpVault
- * @notice Main contract for Round-Up investment system on Base Mainnet
- * @dev MVP version for Base mainnet with ETH round-up and investment strategies
- * 
- * DEPLOYMENT INSTRUCTIONS:
- * 1. Deploy AaveConservativeStrategy and/or LendingPlusStrategy first
- * 2. Deploy this contract with:
- *    - _ethPriceFeed: 0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70
- *    - _strategy: Address of deployed strategy (Aave or Compound)
- * 3. Call setVault(vaultAddress) on strategy contracts
- */
+// RoundUpVault
+// Main contract for Round-Up investment system on Base Mainnet
+// MVP version for Base mainnet with ETH round-up and investment strategies
+// 
+// DEPLOYMENT INSTRUCTIONS:
+// 1. Deploy AaveConservativeStrategy and LendingPlusStrategy first
+// 2. Deploy this contract with:
+//    - _ethPriceFeed: 0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70
+//    - _aaveStrategy: Address of AaveConservativeStrategy
+//    - _compoundStrategy: Address of LendingPlusStrategy
+// 3. Call setVault(vaultAddress) on both strategy contracts
 
-// ============================
-// BASE MAINNET ADDRESSES
-// ============================
+// Base Mainnet addresses
 address constant NATIVE_TOKEN = address(0); // ETH
 
 // ============================
