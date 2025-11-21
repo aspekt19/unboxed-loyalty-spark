@@ -463,10 +463,16 @@ export type Database = {
       premium_subscriptions: {
         Row: {
           created_at: string
+          currency: string | null
           expires_at: string | null
           id: string
           is_active: boolean
+          monthly_price: number | null
+          price_id: string | null
           started_at: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_status: string | null
           subscription_type: string
           updated_at: string
           user_id: string
@@ -474,10 +480,16 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          currency?: string | null
           expires_at?: string | null
           id?: string
           is_active?: boolean
+          monthly_price?: number | null
+          price_id?: string | null
           started_at?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
           subscription_type?: string
           updated_at?: string
           user_id: string
@@ -485,10 +497,16 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          currency?: string | null
           expires_at?: string | null
           id?: string
           is_active?: boolean
+          monthly_price?: number | null
+          price_id?: string | null
           started_at?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
           subscription_type?: string
           updated_at?: string
           user_id?: string
