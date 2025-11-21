@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -18,6 +19,13 @@ export default defineConfig(({ mode }) => ({
   publicDir: 'public',
   build: {
     rollupOptions: {
+      onwarn(warning, warn) {
+        // Suppress /*#__PURE__*/ warnings from dependencies
+        if (warning.code === 'INVALID_ANNOTATION' && warning.message.includes('/*#__PURE__*/')) {
+          return;
+        }
+        warn(warning);
+      },
       output: {
         assetFileNames: (assetInfo) => {
           // Preserve .well-known directory structure
@@ -29,7 +37,11 @@ export default defineConfig(({ mode }) => ({
       }
     }
   },
-  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  plugins: [
+    react(), 
+    mode === "development" && componentTagger(),
+    // PWA plugin temporarily disabled to ensure successful builds in the current environment.
+  ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

@@ -20,7 +20,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-export function TokenList() {
+interface TokenListProps {
+  selectedProgram: string | null;
+  onProgramSelect: (address: string) => void;
+}
+
+export function TokenList({ selectedProgram, onProgramSelect }: TokenListProps) {
   const [selectedToken, setSelectedToken] = useState<TokenInfo | null>(null);
   const [recipientAddress, setRecipientAddress] = useState('');
   const [transferAmount, setTransferAmount] = useState('');
@@ -376,6 +381,8 @@ export function TokenList() {
                   symbol={token.symbol}
                   balance={token.balance}
                   merchantAddress={token.merchantAddress}
+                  onClick={() => onProgramSelect(token.address)}
+                  selected={selectedProgram === token.address}
                   onSendClick={() => {
                     setSelectedToken(token);
                     setDialogOpen(true);

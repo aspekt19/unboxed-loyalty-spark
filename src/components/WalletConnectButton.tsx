@@ -10,15 +10,19 @@ import { useState, useEffect } from 'react';
 const isFarcasterContext = () => {
   if (typeof window === 'undefined') return false;
   try {
-    // Only use explicit signals, not SDK context (which can be present in web version)
+    // Проверяем SDK контекст - самый надежный способ
+    const hasContext = !!(sdk as any)?.context;
+    
+    // Дополнительные проверки как fallback
     const urlParams = new URLSearchParams(window.location.search);
     const hasFarcasterParam = urlParams.has('farcaster') || urlParams.has('fc');
     const isFarcasterPath = window.location.pathname.includes('/frame');
     const hasFarcasterUA = /farcaster/i.test(navigator.userAgent);
     
-    const isFarcaster = hasFarcasterParam || isFarcasterPath || hasFarcasterUA;
+    const isFarcaster = hasContext || hasFarcasterParam || isFarcasterPath || hasFarcasterUA;
     console.log('[Farcaster Detection]', { 
       isFarcaster,
+      hasContext,
       hasFarcasterParam,
       isFarcasterPath, 
       hasFarcasterUA,
@@ -75,22 +79,24 @@ export function WalletConnectButton() {
   // Эффект для автоматического подключения кошелька при запуске в Farcaster
   useEffect(() => {
     if (isFarcasterContext() && !isConnected && !isManuallyDisconnected && connectors.length > 0) {
-      console.log('[WalletButton] Farcaster context detected on mount - auto-connecting wallet');
+      console.log('[WalletButton] Farcaster context detected - auto-connecting wallet');
       setTimeout(() => {
         connect({ connector: connectors[0] });
       }, 500);
     }
-  }, []); // Запускаем только при монтировании
+  }, [connectors.length]); // Добавляем connectors.length как зависимость
   
   // Эффект для автоматической авторизации при reconnect в Farcaster
   useEffect(() => {
-    if (isFarcasterContext() && isConnected && address && !isManuallyDisconnected && !user) {
+    if (isFarcasterContext() && isConnected && address && !isManuallyDisconnected) {
+      // Всегда пытаемся войти при подключении, даже если user уже есть
+      // Это важно для refresh устаревших сессий
       console.log('[WalletButton] Farcaster wallet connected and not manually disconnected - signing in');
       setTimeout(() => {
         signInWithWallet();
       }, 300);
     }
-  }, [isConnected, address, isManuallyDisconnected, user, signInWithWallet]);
+  }, [isConnected, address, isManuallyDisconnected, signInWithWallet]);
   
   const handleDisconnect = async () => {
     try {
@@ -164,7 +170,7 @@ export function WalletConnectButton() {
           handleDisconnect();
         }}
         type="button"
-        className="px-3 py-2 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center gap-2"
+        className="px-4 py-2 rounded-xl font-bold bg-gradient-uds text-white hover:opacity-90 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
       >
         {(farcasterUser?.pfpUrl || farcasterUser?.username) && (
           <Avatar className="h-6 w-6">
@@ -214,9 +220,9 @@ export function WalletConnectButton() {
                   <button
                     onClick={openConnectModal}
                     type="button"
-                    className="px-5 py-2.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center gap-2"
+                    className="px-6 py-3 rounded-xl font-bold bg-gradient-uds text-white hover:opacity-90 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
                   >
-                    <Wallet className="h-4 w-4" />
+                    <Wallet className="h-5 w-5" />
                     <span>Connect Wallet</span>
                   </button>
                 );
@@ -239,7 +245,7 @@ export function WalletConnectButton() {
                   <button
                     onClick={openChainModal}
                     type="button"
-                    className="px-2 py-1.5 rounded-lg font-medium transition-all duration-200 flex items-center gap-1.5 border border-border hover:bg-secondary"
+                    className="px-2 py-1.5 rounded-lg font-medium transition-all duration-200 flex items-center gap-1.5 border-2 border-primary/30 hover:bg-uds-lavender hover:border-primary"
                   >
                     {chain.hasIcon && (
                       <div className="w-3.5 h-3.5 rounded-full overflow-hidden">
@@ -260,7 +266,7 @@ export function WalletConnectButton() {
                   <button
                     onClick={openAccountModal}
                     type="button"
-                    className="px-3 py-1.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200"
+                    className="px-4 py-1.5 rounded-lg font-bold bg-uds-purple text-white hover:bg-uds-purple-light shadow-md hover:shadow-lg transition-all duration-200"
                   >
                     <span className="text-xs">{account.displayName}</span>
                   </button>

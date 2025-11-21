@@ -13,12 +13,14 @@ import CustomerPage from "./pages/CustomerPage";
 import MerchantPage from "./pages/MerchantPage";
 import PitchDeck from "./pages/pitch-deck/PitchDeck";
 import GuidePage from "./pages/GuidePage";
+import InstallPage from "./pages/InstallPage";
 import NotFound from "./pages/NotFound";
 import { AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
 import { migrateAllData } from "./lib/migrateLocalStorageData";
 import { AuthProvider } from "./contexts/AuthContext";
 import { sdk } from "@farcaster/miniapp-sdk";
+import { ThemeProvider } from "next-themes";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +62,7 @@ function AnimatedRoutes() {
         <Route path="/merchant" element={<MerchantPage />} />
         <Route path="/pitch" element={<PitchDeck />} />
         <Route path="/guide" element={<GuidePage />} />
+        <Route path="/install" element={<InstallPage />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
@@ -68,21 +71,23 @@ function AnimatedRoutes() {
 }
 
 const App = () => (
-  <WagmiProvider config={config}>
-    <QueryClientProvider client={queryClient}>
-      <RainbowKitProvider locale={rainbowKitLocale}>
-        <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <AnimatedRoutes />
-            </BrowserRouter>
-          </TooltipProvider>
-        </AuthProvider>
-      </RainbowKitProvider>
-    </QueryClientProvider>
-  </WagmiProvider>
+  <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} storageKey="loyal-spark-theme">
+    <WagmiProvider config={config}>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider locale={rainbowKitLocale}>
+          <AuthProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <AnimatedRoutes />
+              </BrowserRouter>
+            </TooltipProvider>
+          </AuthProvider>
+        </RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
+  </ThemeProvider>
 );
 
 export default App;

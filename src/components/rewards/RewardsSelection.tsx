@@ -457,28 +457,58 @@ export function RewardsSelection() {
     console.log('[handleRecoverVoucher] Attempting to recover voucher for tx:', failedVoucherAttempt.hash);
 
     try {
-      // Проверяем и гарантируем наличие сессии
-      if (!session) {
+      // Проверяем текущую сессию
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      console.log('[handleRecoverVoucher] Current session:', currentSession ? 'exists' : 'null');
+      
+      if (!currentSession) {
         console.log('[handleRecoverVoucher] No session, attempting to sign in...');
+        toast.info('Authenticating your wallet...');
         await signInWithWallet();
-        // Даем время на создание профиля
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Даем время на создание профиля и сессии
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        // Проверяем сессию снова
+        const { data: { session: newSession } } = await supabase.auth.getSession();
+        if (!newSession) {
+          console.error('[handleRecoverVoucher] Failed to create session');
+          toast.error('Failed to authenticate. Please disconnect and reconnect your wallet.');
+          setIsRecovering(false);
+          return;
+        }
+        console.log('[handleRecoverVoucher] New session created:', newSession.user.id);
       }
 
-      // Проверяем профиль еще раз
+      // Проверяем профиль с более подробным логированием
+      console.log('[handleRecoverVoucher] Checking profile for address:', address.toLowerCase());
       const { data: profileCheck, error: profileCheckError } = await supabase
         .from('profiles')
-        .select('wallet_address')
+        .select('wallet_address, user_id')
         .eq('wallet_address', address.toLowerCase())
         .maybeSingle();
       
-      if (profileCheckError || !profileCheck) {
-        console.error('[handleRecoverVoucher] Profile check failed:', profileCheckError);
+      console.log('[handleRecoverVoucher] Profile check result:', {
+        found: !!profileCheck,
+        error: profileCheckError,
+        profile: profileCheck,
+      });
+      
+      if (profileCheckError) {
+        console.error('[handleRecoverVoucher] Profile check error:', profileCheckError);
+        toast.error('Database error. Please try again.');
+        setIsRecovering(false);
+        return;
+      }
+      
+      if (!profileCheck) {
+        console.error('[handleRecoverVoucher] Profile not found');
         toast.error('Profile not found. Please disconnect and reconnect your wallet, then try again.');
         setIsRecovering(false);
         return;
       }
 
+      console.log('[handleRecoverVoucher] Profile verified, loading program data...');
+      
       // Загружаем свежие данные о наградах и токенах
       const rewards = await getRewardsByToken(failedVoucherAttempt.tokenAddress);
       const reward = rewards.find(r => r.id === failedVoucherAttempt.rewardId);
@@ -490,23 +520,38 @@ export function RewardsSelection() {
         .maybeSingle();
 
       if (!reward || !programs) {
+        console.error('[handleRecoverVoucher] Missing data:', { reward: !!reward, programs: !!programs });
         toast.error('Reward or program information not found. The program may have been deleted.');
         setIsRecovering(false);
         return;
       }
 
+      console.log('[handleRecoverVoucher] Program data loaded, creating voucher...');
+      
       // Пытаемся создать ваучер с несколькими попытками
       const voucherCode = generateVoucherCode();
       let voucher = null;
       let attempts = 0;
-      const maxAttempts = 3;
+      const maxAttempts = 5; // Увеличиваем до 5 попыток
       
       while (!voucher && attempts < maxAttempts) {
         attempts++;
         console.log(`[handleRecoverVoucher] Attempt ${attempts} of ${maxAttempts}`);
         
         if (attempts > 1) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+          // Увеличиваем задержку между попытками
+          const delay = 2000 * attempts;
+          console.log(`[handleRecoverVoucher] Waiting ${delay}ms before retry...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          
+          // Проверяем сессию перед каждой попыткой
+          const { data: { session: retrySession } } = await supabase.auth.getSession();
+          if (!retrySession) {
+            console.error('[handleRecoverVoucher] Session lost during retry');
+            toast.error('Session expired. Please try again.');
+            setIsRecovering(false);
+            return;
+          }
         }
         
         voucher = await createVoucher({
@@ -521,6 +566,10 @@ export function RewardsSelection() {
           status: 'active',
           cost: failedVoucherAttempt.cost,
         });
+        
+        if (!voucher) {
+          console.log(`[handleRecoverVoucher] Attempt ${attempts} failed, voucher is null`);
+        }
       }
 
       if (voucher) {
@@ -534,11 +583,12 @@ export function RewardsSelection() {
         window.dispatchEvent(new Event('tokenBalancesUpdated'));
       } else {
         console.error('[handleRecoverVoucher] Failed after', attempts, 'attempts');
-        toast.error('Recovery failed after multiple attempts. Please try again later or contact support.');
+        console.error('[handleRecoverVoucher] Check console logs above for detailed error information');
+        toast.error('Recovery failed. Please check your connection and try again, or contact support with transaction hash: ' + failedVoucherAttempt.hash.slice(0, 10) + '...');
       }
     } catch (error) {
-      console.error('[handleRecoverVoucher] Error:', error);
-      toast.error('Recovery failed. Please try again later.');
+      console.error('[handleRecoverVoucher] Unexpected error:', error);
+      toast.error('Unexpected error occurred. Please try again.');
     } finally {
       setIsRecovering(false);
     }

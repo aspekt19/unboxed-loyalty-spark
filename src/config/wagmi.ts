@@ -9,13 +9,16 @@ import { sdk } from '@farcaster/miniapp-sdk';
 const isFarcasterContext = () => {
   if (typeof window === 'undefined') return false;
   try {
-    // Only use explicit signals, not SDK context (which can be present in web version)
+    // Проверяем SDK контекст - самый надежный способ
+    const hasContext = !!(sdk as any)?.context;
+    
+    // Дополнительные проверки как fallback
     const urlParams = new URLSearchParams(window.location.search);
     const hasFarcasterParam = urlParams.has('farcaster') || urlParams.has('fc');
     const isFarcasterPath = window.location.pathname.includes('/frame');
     const hasFarcasterUA = /farcaster/i.test(navigator.userAgent);
     
-    return hasFarcasterParam || isFarcasterPath || hasFarcasterUA;
+    return hasContext || hasFarcasterParam || isFarcasterPath || hasFarcasterUA;
   } catch {
     return false;
   }

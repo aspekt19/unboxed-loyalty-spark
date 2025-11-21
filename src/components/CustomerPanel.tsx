@@ -1,13 +1,19 @@
+import { useState } from 'react';
 import { TokenList } from './TokenList';
 import { DexIntegration } from './DexIntegration';
 import { RewardsSelection } from './rewards/RewardsSelection';
 import { MyVouchers } from './rewards/MyVouchers';
+import { CustomerTiersSection } from './tiers/CustomerTiersSection';
+import { PersonalizedOffers } from './marketing/PersonalizedOffers';
+import { ReferralCard } from './referral/ReferralCard';
+import { CustomerReviewsSection } from './reviews/CustomerReviewsSection';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAccount } from 'wagmi';
 import { Wallet } from 'lucide-react';
 
 export function CustomerPanel() {
   const { address } = useAccount();
+  const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
 
   if (!address) {
     return (
@@ -22,11 +28,22 @@ export function CustomerPanel() {
 
   return (
     <div className="space-y-6">
-      <TokenList />
+      <ReferralCard />
+      
+      <PersonalizedOffers />
+      
+      <CustomerTiersSection selectedProgram={selectedProgram} />
+      
+      <TokenList 
+        selectedProgram={selectedProgram}
+        onProgramSelect={setSelectedProgram}
+      />
       
       <RewardsSelection />
       
       <MyVouchers />
+      
+      <CustomerReviewsSection />
       
       <DexIntegration />
     </div>

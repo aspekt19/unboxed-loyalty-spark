@@ -28,6 +28,7 @@ export function IssuedTokensHistory() {
   const publicClient = usePublicClient();
   const [history, setHistory] = useState<IssuedToken[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [selectedProgramFilter, setSelectedProgramFilter] = useState<string>('all');
   const [customerSearch, setCustomerSearch] = useState<string>('');
   const [programs, setPrograms] = useState<any[]>([]);
@@ -36,13 +37,21 @@ export function IssuedTokensHistory() {
     // Не загружаем данные пока идет авторизация
     if (authLoading) {
       console.log('IssuedTokensHistory: Waiting for auth to complete...');
+      setIsLoading(false); // Не показываем лоадер во время ожидания авторизации
       return;
     }
 
-    if (!address || !session) {
-      console.log('IssuedTokensHistory: No address or session', { address, hasSession: !!session });
+    if (!address) {
+      console.log('IssuedTokensHistory: No address');
       setHistory([]);
       setPrograms([]);
+      setIsLoading(false);
+      return;
+    }
+
+    if (!session) {
+      console.log('IssuedTokensHistory: No session, waiting...');
+      setIsLoading(true); // Показываем лоадер если кошелек есть но нет сессии
       return;
     }
 
@@ -78,7 +87,16 @@ export function IssuedTokensHistory() {
 
     console.log('IssuedTokensHistory: Loading issued tokens for address:', address);
     setIsLoading(true);
+    setError(null);
+    
+    // Добавляем таймаут 30 секунд
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('Loading timeout - please try again')), 30000);
+    });
+
     try {
+      await Promise.race([
+        (async () => {
       // Загружаем программы мерчанта из БД (включая недавно истекшие за последние 30 дней)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -198,8 +216,14 @@ export function IssuedTokensHistory() {
       // Сортируем по времени (новые сверху)
       allIssuedTokens.sort((a, b) => b.timestamp - a.timestamp);
       setHistory(allIssuedTokens);
-    } catch (error) {
+        })(),
+        timeoutPromise
+      ]);
+    } catch (error: any) {
       console.error('Error loading issued tokens history:', error);
+      setError(error?.message || 'Failed to load history. Please try again.');
+      setHistory([]);
+      setPrograms([]);
     } finally {
       setIsLoading(false);
     }
@@ -232,10 +256,23 @@ export function IssuedTokensHistory() {
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden flex flex-col">
         {authLoading || isLoading ? (
-          <div className="flex items-center justify-center py-8">
+          <div className="flex flex-col items-center justify-center py-8 gap-2">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
             <span className="ml-2 text-sm text-muted-foreground">Loading history...</span>
           </div>
+        ) : error ? (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="flex flex-col gap-3">
+              <span>{error}</span>
+              <button
+                onClick={() => loadIssuedTokens()}
+                className="text-sm underline hover:no-underline self-start"
+              >
+                Try again
+              </button>
+            </AlertDescription>
+          </Alert>
         ) : history.length === 0 ? (
           <Alert>
             <AlertCircle className="h-4 w-4" />

@@ -66,7 +66,7 @@ export function CreateLoyaltyProgram() {
         .select('user_id, wallet_address')
         .eq('wallet_address', address.toLowerCase())
         .eq('user_id', session.session.user.id)
-        .single();
+        .maybeSingle();
 
       if (profileError || !profile) {
         console.error('Profile verification failed:', profileError);
@@ -91,6 +91,41 @@ export function CreateLoyaltyProgram() {
       // Сохраняем в БД со статусом 'inactive' - программу нужно будет активировать
       const saveToDatabase = async () => {
         try {
+          // Проверяем сессию перед сохранением
+          const { data: session } = await supabase.auth.getSession();
+          if (!session?.session?.user) {
+            console.error('No active session when saving program');
+            toast.error('Session expired. Please sign in again and redeploy.');
+            return;
+          }
+
+          // Проверяем профиль перед сохранением
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('user_id, wallet_address')
+            .eq('wallet_address', address!.toLowerCase())
+            .eq('user_id', session.session.user.id)
+            .maybeSingle();
+
+          if (profileError) {
+            console.error('Profile check error:', profileError);
+            toast.error('Profile verification failed. Please reconnect wallet.');
+            return;
+          }
+
+          if (!profile) {
+            console.error('Profile not found for address:', address?.toLowerCase(), 'user:', session.session.user.id);
+            toast.error('Profile not found. Please reconnect your wallet.');
+            return;
+          }
+
+          console.log('Saving program with:', {
+            token_address: deployedTokenAddress.toLowerCase(),
+            merchant_address: address!.toLowerCase(),
+            profile_wallet: profile.wallet_address,
+            user_id: session.session.user.id
+          });
+
           const { error } = await supabase
             .from('loyalty_programs')
             .insert({
@@ -104,7 +139,20 @@ export function CreateLoyaltyProgram() {
 
           if (error) {
             console.error('Error saving program to DB:', error);
-            toast.error('Program deployed but failed to save to database. Please contact support.');
+            console.error('Error details:', {
+              code: error.code,
+              message: error.message,
+              details: error.details,
+              hint: error.hint
+            });
+            
+            if (error.code === '42501') {
+              toast.error('Permission denied. Please reconnect your wallet and try again.');
+            } else if (error.code === '23505') {
+              toast.error('This program already exists in the database.');
+            } else {
+              toast.error(`Failed to save program: ${error.message}`);
+            }
             return;
           }
 
