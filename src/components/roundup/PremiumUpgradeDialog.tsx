@@ -1,12 +1,11 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useState } from 'react';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
-import { Copy, ExternalLink } from 'lucide-react';
-import { toast } from 'sonner';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { usePremiumPayment } from '@/hooks/usePremiumPayment';
+import { Wallet, CheckCircle2, Loader2 } from 'lucide-react';
+import { useAccount } from 'wagmi';
+import { formatUnits } from 'viem';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface PremiumUpgradeDialogProps {
   open: boolean;
@@ -14,32 +13,23 @@ interface PremiumUpgradeDialogProps {
 }
 
 export const PremiumUpgradeDialog = ({ open, onOpenChange }: PremiumUpgradeDialogProps) => {
-  const { paymentSettings, createPaymentRequest, isCreatingRequest } = usePremiumStatus();
-  const [transactionHash, setTransactionHash] = useState('');
-  const [paymentType, setPaymentType] = useState<'usdc' | 'eth'>('usdc');
+  const { address } = useAccount();
+  const { paymentSettings } = usePremiumStatus();
+  const { 
+    handlePayment, 
+    isSending, 
+    isConfirming, 
+    isPaymentConfirmed,
+    usdcBalance,
+    hasEnoughBalance,
+    isActivating 
+  } = usePremiumPayment(address, paymentSettings?.admin_wallet_address);
 
-  const handleCopyAddress = () => {
-    if (paymentSettings?.admin_wallet_address) {
-      navigator.clipboard.writeText(paymentSettings.admin_wallet_address);
-      toast.success('Address copied to clipboard!');
-    }
+  const handleUpgrade = () => {
+    handlePayment(paymentSettings?.usdc_price || 10);
   };
 
-  const handleSubmitPayment = () => {
-    if (!transactionHash) {
-      toast.error('Please enter transaction hash');
-      return;
-    }
-
-    createPaymentRequest({
-      transactionHash,
-      paymentType,
-      amount: paymentSettings?.usdc_price || 10,
-    });
-
-    setTransactionHash('');
-    onOpenChange(false);
-  };
+  const isProcessing = isSending || isConfirming || isActivating;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -47,85 +37,93 @@ export const PremiumUpgradeDialog = ({ open, onOpenChange }: PremiumUpgradeDialo
         <DialogHeader>
           <DialogTitle>Upgrade to Premium</DialogTitle>
           <DialogDescription>
-            Get access to advanced investment strategies including Compound Lending Plus
+            Get access to Compound Lending Plus with 6-10% APY returns
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Payment Instructions */}
-          <div className="space-y-4">
-            <div>
-              <h4 className="text-sm font-medium mb-2">Step 1: Send Payment</h4>
-              <p className="text-sm text-muted-foreground mb-3">
-                Send {paymentSettings?.usdc_price || 10} USDC or equivalent ETH to:
-              </p>
+          {/* Payment Status */}
+          {isPaymentConfirmed ? (
+            <Alert className="border-green-500/50 bg-green-500/10">
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <AlertDescription className="text-green-700 dark:text-green-400">
+                Payment successful! Activating your premium subscription...
+              </AlertDescription>
+            </Alert>
+          ) : null}
+
+          {/* Wallet Balance */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
               <div className="flex items-center gap-2">
-                <Input
-                  value={paymentSettings?.admin_wallet_address || ''}
-                  readOnly
-                  className="font-mono text-xs"
-                />
-                <Button
-                  size="icon"
-                  variant="outline"
-                  onClick={handleCopyAddress}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
+                <Wallet className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Your USDC Balance</span>
               </div>
+              <span className="text-sm font-semibold">
+                {usdcBalance ? formatUnits(usdcBalance, 6) : '0'} USDC
+              </span>
             </div>
 
-            {/* Payment Type Selection */}
-            <div className="space-y-2">
-              <Label>Payment Type</Label>
-              <Select value={paymentType} onValueChange={(value: 'usdc' | 'eth') => setPaymentType(value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="usdc">USDC</SelectItem>
-                  <SelectItem value="eth">ETH (Equivalent)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {!hasEnoughBalance && (
+              <Alert variant="destructive">
+                <AlertDescription>
+                  Insufficient USDC balance. You need at least 10 USDC to upgrade to Premium.
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
 
-            {/* Transaction Hash Input */}
-            <div className="space-y-2">
-              <Label htmlFor="txHash">Step 2: Enter Transaction Hash</Label>
-              <Input
-                id="txHash"
-                placeholder="0x..."
-                value={transactionHash}
-                onChange={(e) => setTransactionHash(e.target.value)}
-                className="font-mono text-xs"
-              />
-              <p className="text-xs text-muted-foreground">
-                After sending the payment, paste your transaction hash here
-              </p>
+          {/* Pricing Info */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Premium Subscription</span>
+              <span className="text-lg font-bold">{paymentSettings?.usdc_price || 10} USDC</span>
+            </div>
+            <div className="text-xs text-muted-foreground space-y-1">
+              <p>✓ Valid for 30 days</p>
+              <p>✓ 6-10% APY with Compound strategy</p>
+              <p>✓ Advanced analytics dashboard</p>
+              <p>✓ Priority support</p>
             </div>
           </div>
 
-          {/* Submit Button */}
+          {/* Payment Button */}
           <Button 
-            className="w-full" 
-            onClick={handleSubmitPayment}
-            disabled={isCreatingRequest || !transactionHash}
+            className="w-full h-12 text-base font-semibold"
+            onClick={handleUpgrade}
+            disabled={!hasEnoughBalance || isProcessing || !address}
+            size="lg"
           >
-            {isCreatingRequest ? 'Submitting...' : 'Submit Payment Proof'}
+            {isProcessing ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                {isSending ? 'Confirm in wallet...' : isConfirming ? 'Confirming...' : 'Activating...'}
+              </>
+            ) : (
+              <>Pay {paymentSettings?.usdc_price || 10} USDC</>
+            )}
           </Button>
 
           {/* Additional Info */}
-          <div className="bg-muted/50 p-4 rounded-lg space-y-2">
-            <p className="text-xs text-muted-foreground">
-              • Your subscription will be activated after payment verification
-            </p>
-            <p className="text-xs text-muted-foreground">
-              • Verification typically takes 1-24 hours
-            </p>
-            <p className="text-xs text-muted-foreground">
-              • Premium access is valid for 30 days
-            </p>
+          <div className="bg-primary/5 p-4 rounded-lg space-y-2 border border-primary/20">
+            <p className="text-xs font-medium">How it works:</p>
+            <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+              <li>Click "Pay" and confirm the USDC transfer in your wallet</li>
+              <li>Your premium subscription activates automatically</li>
+              <li>Start using Compound Lending Plus strategy immediately</li>
+            </ol>
           </div>
+
+          {/* Get USDC Link */}
+          {!hasEnoughBalance && (
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => window.open('https://app.uniswap.org/swap?chain=base&outputCurrency=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', '_blank')}
+            >
+              Get USDC on Base Network
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
