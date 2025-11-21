@@ -234,6 +234,35 @@ contract RoundUpVault {
     }
     
     // ============================
+    // DEPOSIT FUNCTIONS
+    // ============================
+    
+    /**
+     * @notice Direct deposit ETH for investment (bypassing round-up)
+     * @dev Allows users to invest directly without round-up transactions
+     */
+    function directDeposit() external payable {
+        require(msg.value > 0, "Amount must be > 0");
+        require(msg.value >= MIN_INVEST_AMOUNT, "Amount below minimum");
+        
+        UserSettings storage settings = userSettings[msg.sender];
+        
+        if (settings.autoInvest) {
+            // Invest immediately
+            uint256 investedValue = strategy.deposit{value: msg.value}(msg.sender);
+            userBalances[msg.sender].invested += investedValue;
+            
+            emit Invested(msg.sender, msg.value, investedValue);
+        } else {
+            // Add to pending balance
+            userBalances[msg.sender].pendingRoundUp += msg.value;
+            userTokenBalances[msg.sender].pendingRoundUp[NATIVE_TOKEN] += msg.value;
+            
+            emit RoundUpCollected(msg.sender, NATIVE_TOKEN, msg.value, 0);
+        }
+    }
+    
+    // ============================
     // ROUND-UP FUNCTIONS
     // ============================
     
