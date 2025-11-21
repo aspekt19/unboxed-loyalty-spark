@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import AppPage from "./pages/AppPage";
 import CustomerPage from "./pages/CustomerPage";
 import MerchantPage from "./pages/MerchantPage";
+import AdminPage from "./pages/AdminPage";
 import PitchDeck from "./pages/pitch-deck/PitchDeck";
 import GuidePage from "./pages/GuidePage";
 import InstallPage from "./pages/InstallPage";
@@ -60,6 +61,7 @@ function AnimatedRoutes() {
         <Route path="/app" element={<AppPage />} />
         <Route path="/customer" element={<CustomerPage />} />
         <Route path="/merchant" element={<MerchantPage />} />
+        <Route path="/admin" element={<AdminPage />} />
         <Route path="/pitch" element={<PitchDeck />} />
         <Route path="/guide" element={<GuidePage />} />
         <Route path="/install" element={<InstallPage />} />
