@@ -47,20 +47,15 @@ contract LendingPlusStrategy is IInvestmentStrategy {
     // State variables
     address public vault;
     address public owner;
-    address public feeRecipient; // Адрес для получения комиссий
-    uint256 public constant PERFORMANCE_FEE_BPS = 500; // 5% = 500 basis points (из 10000)
     
     // User accounting
     mapping(address => uint256) public userShares;
-    mapping(address => uint256) public userInitialDeposit; // Для расчета прибыли
     uint256 public totalShares;
     
     // Events
     event VaultSet(address indexed vault);
     event Deposited(address indexed user, uint256 ethAmount, uint256 shares);
     event Withdrawn(address indexed user, uint256 shares, uint256 ethAmount);
-    event PerformanceFeeCollected(address indexed user, uint256 feeAmount);
-    event FeeRecipientUpdated(address indexed newRecipient);
 
     // ============================
     // CONSTRUCTOR
@@ -68,7 +63,6 @@ contract LendingPlusStrategy is IInvestmentStrategy {
     
     constructor() {
         owner = msg.sender;
-        feeRecipient = msg.sender; // По умолчанию комиссии идут владельцу
     }
 
     // ============================
@@ -130,12 +124,7 @@ contract LendingPlusStrategy is IInvestmentStrategy {
         // 2. Supply WETH to Compound V3 Comet
         comet.supply(WETH, ethAmount);
         
-        // 3. Track user shares and initial deposit
-        if (userShares[_user] == 0) {
-            userInitialDeposit[_user] = ethAmount;
-        } else {
-            userInitialDeposit[_user] += ethAmount;
-        }
+        // 3. Track user shares
         userShares[_user] += ethAmount;
         totalShares += ethAmount;
         
@@ -159,20 +148,6 @@ contract LendingPlusStrategy is IInvestmentStrategy {
             ? (_amount * totalValue) / totalShares 
             : _amount;
         
-        // Calculate user's initial deposit portion
-        uint256 initialDepositPortion = totalShares > 0
-            ? (_amount * userInitialDeposit[_user]) / userShares[_user]
-            : _amount;
-        
-        // Calculate profit (if any)
-        uint256 profit = actualAmount > initialDepositPortion 
-            ? actualAmount - initialDepositPortion 
-            : 0;
-        
-        // Calculate 5% performance fee on profit only
-        uint256 performanceFee = (profit * PERFORMANCE_FEE_BPS) / 10000;
-        uint256 amountAfterFee = actualAmount - performanceFee;
-        
         // 1. Withdraw WETH from Compound V3 Comet
         comet.withdraw(WETH, actualAmount);
         
@@ -180,29 +155,16 @@ contract LendingPlusStrategy is IInvestmentStrategy {
         (bool success, ) = WETH.call(abi.encodeWithSignature("withdraw(uint256)", actualAmount));
         require(success, "WETH unwrap failed");
         
-        // 3. Send performance fee to fee recipient
-        if (performanceFee > 0) {
-            (bool feeSent, ) = feeRecipient.call{value: performanceFee}("");
-            require(feeSent, "Fee transfer failed");
-            emit PerformanceFeeCollected(_user, performanceFee);
-        }
-        
-        // 4. Update shares and initial deposit
-        uint256 remainingShares = userShares[_user] - _amount;
-        if (remainingShares == 0) {
-            userInitialDeposit[_user] = 0;
-        } else {
-            userInitialDeposit[_user] -= initialDepositPortion;
-        }
-        userShares[_user] = remainingShares;
+        // 3. Update shares
+        userShares[_user] -= _amount;
         totalShares -= _amount;
         
-        // 5. Send ETH to vault (vault will forward to user)
-        (bool sent, ) = vault.call{value: amountAfterFee}("");
+        // 4. Send ETH to vault (vault will forward to user)
+        (bool sent, ) = vault.call{value: actualAmount}("");
         require(sent, "ETH transfer failed");
 
-        emit Withdrawn(_user, _amount, amountAfterFee);
-        return amountAfterFee;
+        emit Withdrawn(_user, _amount, actualAmount);
+        return actualAmount;
     }
 
     /**
@@ -221,20 +183,6 @@ contract LendingPlusStrategy is IInvestmentStrategy {
         return (userShares[_user] * totalValue) / totalShares;
     }
 
-    // ============================
-    // ADMIN FUNCTIONS
-    // ============================
-    
-    /**
-     * @notice Update fee recipient address
-     * @param _newRecipient New address to receive performance fees
-     */
-    function setFeeRecipient(address _newRecipient) external onlyOwner {
-        require(_newRecipient != address(0), "Invalid address");
-        feeRecipient = _newRecipient;
-        emit FeeRecipientUpdated(_newRecipient);
-    }
-    
     // ============================
     // EMERGENCY FUNCTIONS
     // ============================
