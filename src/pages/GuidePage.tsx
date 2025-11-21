@@ -18,7 +18,10 @@ import {
   ExternalLink,
   BookOpen,
   Video,
-  HelpCircle
+  HelpCircle,
+  Percent,
+  PiggyBank,
+  LineChart
 } from "lucide-react";
 
 export default function GuidePage() {
@@ -51,12 +54,19 @@ export default function GuidePage() {
           </div>
 
           {/* Quick Links */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card className="hover:border-primary transition-colors cursor-pointer">
               <CardHeader>
                 <BookOpen className="h-8 w-8 text-primary mb-2" />
                 <CardTitle className="text-lg">Getting Started</CardTitle>
                 <CardDescription>Learn the basics in 5 minutes</CardDescription>
+              </CardHeader>
+            </Card>
+            <Card className="hover:border-primary transition-colors cursor-pointer">
+              <CardHeader>
+                <PiggyBank className="h-8 w-8 text-primary mb-2" />
+                <CardTitle className="text-lg">Investing Guide</CardTitle>
+                <CardDescription>Grow rewards with DeFi</CardDescription>
               </CardHeader>
             </Card>
             <Card className="hover:border-primary transition-colors cursor-pointer">
@@ -76,10 +86,11 @@ export default function GuidePage() {
           </div>
 
           <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="merchants">For Merchants</TabsTrigger>
               <TabsTrigger value="customers">For Customers</TabsTrigger>
+              <TabsTrigger value="investing">Investing</TabsTrigger>
               <TabsTrigger value="faq">FAQ</TabsTrigger>
             </TabsList>
 
@@ -427,6 +438,283 @@ export default function GuidePage() {
                       <strong>Platinum:</strong> 2x cashback + VIP perks
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="investing" className="space-y-6">
+              <Alert>
+                <PiggyBank className="h-4 w-4" />
+                <AlertDescription>
+                  Transform your loyalty rewards into growing investments with automated DeFi strategies. Watch your tokens multiply over time!
+                </AlertDescription>
+              </Alert>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>What is Round-Up Investment?</CardTitle>
+                  <CardDescription>Automatically grow your loyalty rewards through DeFi</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-muted-foreground leading-relaxed">
+                    Round-Up Investment is a unique feature that automatically invests your spare change from every transaction
+                    into curated DeFi (Decentralized Finance) strategies. Your loyalty tokens don't just sit idle - they grow and
+                    generate yield through proven lending protocols on the blockchain.
+                  </p>
+
+                  <div className="grid md:grid-cols-2 gap-4 mt-6">
+                    <div className="space-y-2">
+                      <h3 className="font-semibold flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5 text-primary" />
+                        Automatic Growth
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Every transaction rounds up to the nearest dollar, investing the spare change into DeFi protocols that generate 3-10% APY.
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h3 className="font-semibold flex items-center gap-2">
+                        <Shield className="h-5 w-5 text-primary" />
+                        Secure Protocols
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Built on battle-tested DeFi protocols like Aave and Compound with billions in total value locked.
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h3 className="font-semibold flex items-center gap-2">
+                        <Zap className="h-5 w-5 text-primary" />
+                        Instant Deposits
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Round-ups are automatically deposited into your chosen strategy. No manual intervention needed.
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h3 className="font-semibold flex items-center gap-2">
+                        <LineChart className="h-5 w-5 text-primary" />
+                        Track Performance
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Monitor your investment growth in real-time with detailed analytics and performance charts.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-purple-500" />
+                    Aave Conservative Strategy
+                  </CardTitle>
+                  <CardDescription>Free • 3-5% APY • Lower Risk</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    The Aave Conservative strategy is perfect for users who want steady, passive income generation with lower risk.
+                    This strategy uses Aave V3, one of the most trusted DeFi lending protocols with over $20B in total value locked.
+                  </p>
+
+                  <div className="space-y-3 mt-4">
+                    <div className="flex gap-3">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-500 font-bold text-sm">
+                        ✓
+                      </div>
+                      <div>
+                        <h4 className="font-medium mb-1">How it Works</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Your tokens are supplied to Aave's lending pool where they earn interest from borrowers. 
+                          The protocol automatically manages risk and maintains liquidity.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-500 font-bold text-sm">
+                        ✓
+                      </div>
+                      <div>
+                        <h4 className="font-medium mb-1">Expected Returns</h4>
+                        <p className="text-sm text-muted-foreground">
+                          3-5% APY (Annual Percentage Yield). Returns vary based on market conditions but remain stable due to Aave's conservative approach.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-500 font-bold text-sm">
+                        ✓
+                      </div>
+                      <div>
+                        <h4 className="font-medium mb-1">Risk Level</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Low. Aave is one of the most battle-tested DeFi protocols with multiple security audits and a proven track record since 2020.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-500 font-bold text-sm">
+                        ✓
+                      </div>
+                      <div>
+                        <h4 className="font-medium mb-1">Withdraw Anytime</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Your funds are never locked. Withdraw your principal plus earned interest anytime with no penalties.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-purple-500/5 p-4 rounded-lg mt-4 border border-purple-500/20">
+                    <p className="text-sm font-medium mb-2">💡 Best For:</p>
+                    <p className="text-sm text-muted-foreground">
+                      Users who want steady passive income with minimal risk. Perfect for long-term holding and "set it and forget it" investing.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-primary/50">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5 text-orange-500" />
+                      Compound Lending Plus Strategy
+                    </CardTitle>
+                    <span className="px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold">
+                      Premium
+                    </span>
+                  </div>
+                  <CardDescription>$10/month • 6-10% APY • Higher Returns</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    The Compound Lending Plus strategy is designed for users who want to maximize their returns through advanced DeFi strategies.
+                    Using Compound V3 protocol, this premium strategy offers significantly higher yields while maintaining strong security.
+                  </p>
+
+                  <div className="space-y-3 mt-4">
+                    <div className="flex gap-3">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500 font-bold text-sm">
+                        ⭐
+                      </div>
+                      <div>
+                        <h4 className="font-medium mb-1">How it Works</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Utilizes Compound V3's advanced lending mechanics with optimized collateral ratios and automated rebalancing 
+                          to maximize yield while managing risk.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500 font-bold text-sm">
+                        ⭐
+                      </div>
+                      <div>
+                        <h4 className="font-medium mb-1">Expected Returns</h4>
+                        <p className="text-sm text-muted-foreground">
+                          6-10% APY. Higher returns come from optimized lending strategies and additional yield farming opportunities.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500 font-bold text-sm">
+                        ⭐
+                      </div>
+                      <div>
+                        <h4 className="font-medium mb-1">Risk Level</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Medium. Uses more sophisticated strategies than conservative approach but still relies on proven protocols with extensive security measures.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500 font-bold text-sm">
+                        ⭐
+                      </div>
+                      <div>
+                        <h4 className="font-medium mb-1">Premium Features</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Includes advanced analytics dashboard, priority support, gas fee optimization, and access to exclusive yield opportunities.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-orange-500/5 p-4 rounded-lg mt-4 border border-orange-500/20">
+                    <p className="text-sm font-medium mb-2">🚀 Best For:</p>
+                    <p className="text-sm text-muted-foreground">
+                      Power users who want to maximize returns and are comfortable with slightly higher risk. Perfect for active investors building long-term wealth.
+                    </p>
+                  </div>
+
+                  <Alert className="mt-4 border-primary/50">
+                    <Percent className="h-4 w-4" />
+                    <AlertDescription>
+                      <strong>Premium Subscription:</strong> $10/month unlocks Compound Lending Plus strategy. Cancel anytime with no fees.
+                    </AlertDescription>
+                  </Alert>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Zap className="h-5 w-5" />
+                    How to Get Started with Investing
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <ol className="list-decimal list-inside space-y-3 text-sm text-muted-foreground">
+                    <li className="leading-relaxed">
+                      <strong className="text-foreground">Connect your wallet</strong> and navigate to the Customer section
+                    </li>
+                    <li className="leading-relaxed">
+                      <strong className="text-foreground">Go to Round-Up tab</strong> to access investment features
+                    </li>
+                    <li className="leading-relaxed">
+                      <strong className="text-foreground">Choose your strategy:</strong>
+                      <ul className="list-disc list-inside ml-6 mt-2 space-y-1">
+                        <li>Aave Conservative (Free) - Lower risk, steady returns</li>
+                        <li>Compound Lending Plus ($10/mo) - Higher returns, more features</li>
+                      </ul>
+                    </li>
+                    <li className="leading-relaxed">
+                      <strong className="text-foreground">Make a direct deposit</strong> or enable Round-Up on your transactions
+                    </li>
+                    <li className="leading-relaxed">
+                      <strong className="text-foreground">Track your growth</strong> in the Investment Positions dashboard
+                    </li>
+                    <li className="leading-relaxed">
+                      <strong className="text-foreground">Withdraw anytime</strong> - your funds are never locked
+                    </li>
+                  </ol>
+
+                  <div className="bg-muted p-4 rounded-lg mt-6">
+                    <p className="text-sm font-medium mb-2">💡 Pro Tips:</p>
+                    <ul className="text-sm text-muted-foreground space-y-2">
+                      <li>• Start with small deposits to get familiar with how DeFi investing works</li>
+                      <li>• Enable Round-Up to automatically grow your balance with every transaction</li>
+                      <li>• Check your positions regularly to track accumulated interest</li>
+                      <li>• Consider starting with Aave Conservative and upgrading to Premium as you grow more comfortable</li>
+                    </ul>
+                  </div>
+
+                  <Alert className="mt-4">
+                    <Shield className="h-4 w-4" />
+                    <AlertDescription>
+                      <strong>Security:</strong> Your funds are secured by audited smart contracts. We never have custody of your assets - you maintain full control through your wallet.
+                    </AlertDescription>
+                  </Alert>
                 </CardContent>
               </Card>
             </TabsContent>
