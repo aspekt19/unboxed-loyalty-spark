@@ -8,6 +8,7 @@ import { formatEther } from 'viem';
 import { RoundUpSettings } from './RoundUpSettings';
 import { InvestmentStrategies } from './InvestmentStrategies';
 import { InvestmentPositions } from './InvestmentPositions';
+import { SendWithRoundUp } from './SendWithRoundUp';
 import { DirectDepositDialog } from './DirectDepositDialog';
 import { useState } from 'react';
 
@@ -78,6 +79,8 @@ export const RoundUpDashboard = () => {
           </Card>
         ))}
       </div>
+
+      <SendWithRoundUp />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <RoundUpSettings />
