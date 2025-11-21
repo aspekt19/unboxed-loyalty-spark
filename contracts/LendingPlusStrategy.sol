@@ -12,11 +12,9 @@ pragma solidity ^0.8.20;
  * 3. Call setVault(vaultAddress) on this contract
  */
 
-// ============================
-// BASE MAINNET ADDRESSES
-// ============================
-address constant WETH = 0x4200000000000000000000000000000000000006;
-address constant C_WETH_V3 = 0x46e6b214b524310239732D51387075E0e70970bf; // Compound V3 cWETHv3
+// Base Mainnet addresses (no NatSpec for file-level constants)
+address constant WETH = address(0x4200000000000000000000000000000000000006);
+address constant C_WETH_V3 = address(0x46e6b214b524310239732D51387075E0e70970bf); // Compound V3 cWETHv3
 
 // ============================
 // INTERFACES
