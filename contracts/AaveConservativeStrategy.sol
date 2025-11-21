@@ -12,12 +12,10 @@ pragma solidity ^0.8.20;
  * 3. Call setVault(vaultAddress) on this contract
  */
 
-// ============================
-// BASE MAINNET ADDRESSES
-// ============================
-address constant WETH = 0x4200000000000000000000000000000000000006;
-address constant AAVE_POOL = 0x403E5c3385731b53e83b4b57424682054A6B8B8f;
-address constant AWETH_TOKEN = 0x77c2250d4f6C76426C153f317A71887304192F13;
+// Base Mainnet addresses (no NatSpec for file-level constants)
+address constant WETH = address(0x4200000000000000000000000000000000000006);
+address constant AAVE_POOL = address(0xA238Dd80C259a72e81d7e4664a9801593F98d1c5);
+address constant AWETH_TOKEN = address(0xD4a0e0b9149BCee3C920d2E00b5dE09138fd8bb7);
 
 // ============================
 // INTERFACES
