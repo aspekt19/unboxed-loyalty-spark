@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import PageTransition from '@/components/PageTransition';
 import FarcasterSplash from '@/components/FarcasterSplash';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { AdminLink } from '@/components/AdminLink';
 import { useState, useEffect } from 'react';
 import { sdk } from '@farcaster/miniapp-sdk';
 
@@ -47,7 +48,10 @@ const Index = () => {
               />
               <span className="text-base sm:text-xl font-bold text-foreground tracking-tight">Loyal Spark</span>
             </Link>
-            <ThemeToggle />
+            <div className="flex items-center gap-2">
+              <AdminLink />
+              <ThemeToggle />
+            </div>
           </div>
         </header>
 
