@@ -3,6 +3,7 @@ import { CustomerPanel } from '@/components/CustomerPanel';
 import { CustomerFiltersPanel } from '@/components/CustomerFiltersPanel';
 import { WelcomeFlow } from '@/components/onboarding/WelcomeFlow';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { PremiumStatusBadge } from '@/components/PremiumStatusBadge';
 import { Gift, ArrowLeft, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -50,6 +51,10 @@ const CustomerPage = () => {
         </header>
 
         <main className="container mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8 md:py-12 relative">
+          <div className="mb-6">
+            <PremiumStatusBadge />
+          </div>
+          
           <Tabs defaultValue="loyalty" className="space-y-6">
             <TabsList className="grid w-full max-w-md grid-cols-2">
               <TabsTrigger value="loyalty" className="gap-2">

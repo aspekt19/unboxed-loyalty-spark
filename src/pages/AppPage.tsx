@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import PageTransition from '@/components/PageTransition';
 import { WalletConnectButton } from '@/components/WalletConnectButton';
 import { PremiumUpgradeDialog } from '@/components/roundup/PremiumUpgradeDialog';
+import { PremiumStatusBadge } from '@/components/PremiumStatusBadge';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { Button } from '@/components/ui/button';
 import { Crown } from 'lucide-react';
@@ -51,6 +52,10 @@ export default function AppPage() {
             </div>
           </div>
         </header>
+        
+        <div className="container mx-auto px-4 py-6">
+          <PremiumStatusBadge />
+        </div>
         
         <RoleSelector onRoleSelect={handleRoleSelect} />
         
