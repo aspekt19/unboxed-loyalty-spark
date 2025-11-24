@@ -3,6 +3,7 @@ import { MerchantPanel } from '@/components/MerchantPanel';
 import { IssuedTokensHistory } from '@/components/IssuedTokensHistory';
 import { WelcomeFlow } from '@/components/onboarding/WelcomeFlow';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { PremiumStatusBadge } from '@/components/PremiumStatusBadge';
 import { Gift, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -42,6 +43,10 @@ const MerchantPage = () => {
         </header>
 
         <main className="container mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8 md:py-12 relative">
+          <div className="mb-6">
+            <PremiumStatusBadge />
+          </div>
+          
           <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6">
             <aside className="lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)]">
               <IssuedTokensHistory />
