@@ -2,9 +2,16 @@ import { RoleSelector } from '@/components/RoleSelector';
 import { useNavigate } from 'react-router-dom';
 import PageTransition from '@/components/PageTransition';
 import { WalletConnectButton } from '@/components/WalletConnectButton';
+import { PremiumUpgradeDialog } from '@/components/roundup/PremiumUpgradeDialog';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import { Button } from '@/components/ui/button';
+import { Crown } from 'lucide-react';
+import { useState } from 'react';
 
 export default function AppPage() {
   const navigate = useNavigate();
+  const { isPremium } = usePremiumStatus();
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
   const handleRoleSelect = (role: 'merchant' | 'customer') => {
     if (role === 'customer') {
@@ -28,11 +35,29 @@ export default function AppPage() {
               />
               <span className="text-lg font-bold text-foreground">Loyal Spark</span>
             </div>
-            <WalletConnectButton />
+            <div className="flex items-center gap-3">
+              {!isPremium && (
+                <Button 
+                  onClick={() => setShowUpgradeDialog(true)}
+                  variant="default"
+                  size="sm"
+                  className="gap-2"
+                >
+                  <Crown className="h-4 w-4" />
+                  Premium
+                </Button>
+              )}
+              <WalletConnectButton />
+            </div>
           </div>
         </header>
         
         <RoleSelector onRoleSelect={handleRoleSelect} />
+        
+        <PremiumUpgradeDialog 
+          open={showUpgradeDialog}
+          onOpenChange={setShowUpgradeDialog}
+        />
       </div>
     </PageTransition>
   );
