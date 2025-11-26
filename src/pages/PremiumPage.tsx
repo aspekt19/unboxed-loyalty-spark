@@ -76,18 +76,22 @@ const PremiumPage = () => {
           </div>
 
           <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1">
-              <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
-              <TabsTrigger value="plans" className="text-xs sm:text-sm">Plans</TabsTrigger>
-              <TabsTrigger value="notifications" className="text-xs sm:text-sm">
-                <Bell className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Notifications</span>
-              </TabsTrigger>
-              <TabsTrigger value="activity" className="text-xs sm:text-sm">
-                <Activity className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Activity</span>
-              </TabsTrigger>
-            </TabsList>
+            <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-2">
+              <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-4 gap-1">
+                <TabsTrigger value="overview" className="text-xs sm:text-sm whitespace-nowrap flex-shrink-0">Overview</TabsTrigger>
+                <TabsTrigger value="plans" className="text-xs sm:text-sm whitespace-nowrap flex-shrink-0">Plans</TabsTrigger>
+                <TabsTrigger value="notifications" className="text-xs sm:text-sm whitespace-nowrap flex-shrink-0 gap-1 sm:gap-2">
+                  <Bell className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Notifications</span>
+                  <span className="sm:hidden">Notif</span>
+                </TabsTrigger>
+                <TabsTrigger value="activity" className="text-xs sm:text-sm whitespace-nowrap flex-shrink-0 gap-1 sm:gap-2">
+                  <Activity className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Activity</span>
+                  <span className="sm:hidden">Log</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
             <TabsContent value="overview" className="space-y-4 sm:space-y-6">
               <Card>

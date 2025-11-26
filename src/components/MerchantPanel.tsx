@@ -119,17 +119,19 @@ export function MerchantPanel() {
         </Alert>
       ) : (
         <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="flex w-full overflow-x-auto overflow-y-hidden whitespace-nowrap scrollbar-hide">
-            <TabsTrigger value="dashboard" className="flex-shrink-0 text-xs px-2 md:px-4 md:text-sm">Dashboard</TabsTrigger>
-            <TabsTrigger value="customers" className="flex-shrink-0 text-xs px-2 md:px-4 md:text-sm">Customers</TabsTrigger>
-            <TabsTrigger value="programs" className="flex-shrink-0 text-xs px-2 md:px-4 md:text-sm">Programs</TabsTrigger>
-            <TabsTrigger value="rewards" className="flex-shrink-0 text-xs px-2 md:px-4 md:text-sm">Rewards</TabsTrigger>
-            <TabsTrigger value="tiers" className="flex-shrink-0 text-xs px-2 md:px-4 md:text-sm">Tiers</TabsTrigger>
-            <TabsTrigger value="marketing" className="flex-shrink-0 text-xs px-2 md:px-4 md:text-sm">Marketing</TabsTrigger>
-            <TabsTrigger value="automation" className="flex-shrink-0 text-xs px-2 md:px-4 md:text-sm">Automation</TabsTrigger>
-            <TabsTrigger value="referrals" className="flex-shrink-0 text-xs px-2 md:px-4 md:text-sm">Referrals</TabsTrigger>
-            <TabsTrigger value="reviews" className="flex-shrink-0 text-xs px-2 md:px-4 md:text-sm">Reviews</TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-2">
+            <TabsList className="inline-flex w-auto min-w-full">
+              <TabsTrigger value="dashboard" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Dashboard</TabsTrigger>
+              <TabsTrigger value="customers" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Customers</TabsTrigger>
+              <TabsTrigger value="programs" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Programs</TabsTrigger>
+              <TabsTrigger value="rewards" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Rewards</TabsTrigger>
+              <TabsTrigger value="tiers" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Tiers</TabsTrigger>
+              <TabsTrigger value="marketing" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Marketing</TabsTrigger>
+              <TabsTrigger value="automation" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Automation</TabsTrigger>
+              <TabsTrigger value="referrals" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Referrals</TabsTrigger>
+              <TabsTrigger value="reviews" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Reviews</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="dashboard" className="space-y-6 mt-6">
             <MerchantDashboard />

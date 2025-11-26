@@ -62,12 +62,14 @@ const AdminPage = () => {
         </div>
 
         <Tabs defaultValue="premium" className="space-y-4 sm:space-y-6">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1">
-            <TabsTrigger value="premium" className="text-xs sm:text-sm">Premium</TabsTrigger>
-            <TabsTrigger value="admins" className="text-xs sm:text-sm">Admins</TabsTrigger>
-            <TabsTrigger value="requests" className="text-xs sm:text-sm">Requests</TabsTrigger>
-            <TabsTrigger value="settings" className="text-xs sm:text-sm">Settings</TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-2">
+            <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-4 gap-1">
+              <TabsTrigger value="premium" className="text-xs sm:text-sm whitespace-nowrap flex-shrink-0">Premium</TabsTrigger>
+              <TabsTrigger value="admins" className="text-xs sm:text-sm whitespace-nowrap flex-shrink-0">Admins</TabsTrigger>
+              <TabsTrigger value="requests" className="text-xs sm:text-sm whitespace-nowrap flex-shrink-0">Requests</TabsTrigger>
+              <TabsTrigger value="settings" className="text-xs sm:text-sm whitespace-nowrap flex-shrink-0">Settings</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="premium">
             <PremiumManagement />
