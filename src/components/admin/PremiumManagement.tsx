@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Crown, Users, DollarSign, TrendingUp } from 'lucide-react';
 import { format } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 
 export const PremiumManagement = () => {
   const { data: subscriptions } = useQuery({
@@ -56,33 +56,33 @@ export const PremiumManagement = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Активные подписки</CardTitle>
+            <CardTitle className="text-sm font-medium">Active Subscriptions</CardTitle>
             <Crown className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{activeSubscriptions.length}</div>
             <p className="text-xs text-muted-foreground">
-              Всего: {subscriptions?.length || 0}
+              Total: {subscriptions?.length || 0}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Общий доход</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
-              Подтвержденных платежей: {paymentRequests?.filter(r => r.status === 'verified').length || 0}
+              Verified payments: {paymentRequests?.filter(r => r.status === 'verified').length || 0}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ожидающие подтверждения</CardTitle>
+            <CardTitle className="text-sm font-medium">Pending Confirmations</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -90,7 +90,7 @@ export const PremiumManagement = () => {
               {paymentRequests?.filter(r => r.status === 'pending').length || 0}
             </div>
             <p className="text-xs text-muted-foreground">
-              Требуют проверки
+              Require verification
             </p>
           </CardContent>
         </Card>
@@ -98,9 +98,9 @@ export const PremiumManagement = () => {
 
       <Tabs defaultValue="subscriptions" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="subscriptions">Подписки</TabsTrigger>
-          <TabsTrigger value="payments">Платежи</TabsTrigger>
-          <TabsTrigger value="activity">Активность</TabsTrigger>
+          <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
+          <TabsTrigger value="payments">Payments</TabsTrigger>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
 
         <TabsContent value="subscriptions" className="space-y-4">
@@ -114,9 +114,9 @@ export const PremiumManagement = () => {
                         {sub.wallet_address.slice(0, 6)}...{sub.wallet_address.slice(-4)}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {sub.started_at && format(new Date(sub.started_at), 'd MMMM yyyy', { locale: ru })}
+                        {sub.started_at && format(new Date(sub.started_at), 'd MMMM yyyy', { locale: enUS })}
                         {' → '}
-                        {sub.expires_at && format(new Date(sub.expires_at), 'd MMMM yyyy', { locale: ru })}
+                        {sub.expires_at && format(new Date(sub.expires_at), 'd MMMM yyyy', { locale: enUS })}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -133,7 +133,7 @@ export const PremiumManagement = () => {
             <Card>
               <CardContent className="p-8 text-center">
                 <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground">Подписок пока нет</p>
+                <p className="text-muted-foreground">No subscriptions yet</p>
               </CardContent>
             </Card>
           )}
@@ -153,7 +153,7 @@ export const PremiumManagement = () => {
                         {payment.wallet_address.slice(0, 6)}...{payment.wallet_address.slice(-4)}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {format(new Date(payment.created_at), 'd MMMM yyyy, HH:mm', { locale: ru })}
+                        {format(new Date(payment.created_at), 'd MMMM yyyy, HH:mm', { locale: enUS })}
                       </p>
                     </div>
                     <Badge 
@@ -178,7 +178,7 @@ export const PremiumManagement = () => {
             <Card>
               <CardContent className="p-8 text-center">
                 <DollarSign className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground">Платежей пока нет</p>
+                <p className="text-muted-foreground">No payments yet</p>
               </CardContent>
             </Card>
           )}
@@ -197,7 +197,7 @@ export const PremiumManagement = () => {
                       </p>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {format(new Date(log.created_at), 'd MMM, HH:mm', { locale: ru })}
+                      {format(new Date(log.created_at), 'd MMM, HH:mm', { locale: enUS })}
                     </p>
                   </div>
                 </CardContent>
@@ -207,7 +207,7 @@ export const PremiumManagement = () => {
             <Card>
               <CardContent className="p-8 text-center">
                 <TrendingUp className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground">История активности пуста</p>
+                <p className="text-muted-foreground">Activity history is empty</p>
               </CardContent>
             </Card>
           )}
