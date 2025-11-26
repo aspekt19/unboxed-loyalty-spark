@@ -4,6 +4,7 @@ import { CustomerFiltersPanel } from '@/components/CustomerFiltersPanel';
 import { WelcomeFlow } from '@/components/onboarding/WelcomeFlow';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { PremiumStatusBadge } from '@/components/PremiumStatusBadge';
+import { PremiumExpirationAlert } from '@/components/PremiumExpirationAlert';
 import { Gift, ArrowLeft, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,11 @@ import { useEffect } from 'react';
 import { initializeCleanState } from '@/lib/clearOldData';
 import { RoundUpDashboard } from '@/components/roundup/RoundUpDashboard';
 
+import { PremiumUpgradeDialog } from '@/components/roundup/PremiumUpgradeDialog';
+import { useState } from 'react';
+
 const CustomerPage = () => {
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   // Clear old test data on first load
   useEffect(() => {
     initializeCleanState();
@@ -51,8 +56,9 @@ const CustomerPage = () => {
         </header>
 
         <main className="container mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8 md:py-12 relative">
-          <div className="mb-6">
+          <div className="mb-6 space-y-4">
             <PremiumStatusBadge />
+            <PremiumExpirationAlert onUpgrade={() => setShowUpgradeDialog(true)} />
           </div>
           
           <Tabs defaultValue="loyalty" className="space-y-6">
@@ -83,6 +89,11 @@ const CustomerPage = () => {
             </TabsContent>
           </Tabs>
         </main>
+
+        <PremiumUpgradeDialog 
+          open={showUpgradeDialog}
+          onOpenChange={setShowUpgradeDialog}
+        />
       </div>
     </PageTransition>
   );
