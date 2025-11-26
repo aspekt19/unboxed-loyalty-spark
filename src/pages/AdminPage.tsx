@@ -5,6 +5,7 @@ import PageTransition from '@/components/PageTransition';
 import { PaymentRequestsManagement } from '@/components/admin/PaymentRequestsManagement';
 import { PaymentSettingsManagement } from '@/components/admin/PaymentSettingsManagement';
 import { PremiumManagement } from '@/components/admin/PremiumManagement';
+import { AdminManagement } from '@/components/admin/AdminManagement';
 import { Shield, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -61,14 +62,19 @@ const AdminPage = () => {
         </div>
 
         <Tabs defaultValue="premium" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 max-w-xl">
+          <TabsList className="grid w-full grid-cols-4 max-w-2xl">
             <TabsTrigger value="premium">Premium</TabsTrigger>
+            <TabsTrigger value="admins">Админы</TabsTrigger>
             <TabsTrigger value="requests">Requests</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="premium">
             <PremiumManagement />
+          </TabsContent>
+
+          <TabsContent value="admins">
+            <AdminManagement />
           </TabsContent>
 
           <TabsContent value="requests">
