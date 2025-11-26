@@ -3,12 +3,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, ExternalLink, Clock } from 'lucide-react';
+import { CheckCircle, XCircle, ExternalLink, Clock, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { useState } from 'react';
 
 export const PaymentRequestsManagement = () => {
   const queryClient = useQueryClient();
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
 
   const { data: requests, isLoading } = useQuery({
     queryKey: ['payment-requests-admin'],
@@ -24,30 +26,29 @@ export const PaymentRequestsManagement = () => {
   });
 
   const verifyPayment = useMutation({
-    mutationFn: async ({ requestId, walletAddress }: { requestId: string; walletAddress: string }) => {
-      // Update request status
-      const { error: updateError } = await supabase
-        .from('premium_payment_requests')
-        .update({ status: 'verified', verified_at: new Date().toISOString() })
-        .eq('id', requestId);
-
-      if (updateError) throw updateError;
-
-      // Activate premium subscription
-      const { error: activateError } = await supabase.rpc('activate_premium_subscription', {
-        p_wallet_address: walletAddress,
-        p_request_id: requestId,
+    mutationFn: async (requestId: string) => {
+      setVerifyingId(requestId);
+      
+      const { data, error } = await supabase.functions.invoke('verify-payment', {
+        body: { requestId }
       });
 
-      if (activateError) throw activateError;
+      if (error) throw error;
+      if (!data.success) throw new Error(data.error);
+      
+      return data;
     },
-    onSuccess: () => {
-      toast.success('Payment verified and premium activated!');
+    onSuccess: (data) => {
+      toast.success('Payment verified successfully! Premium activated. ✅');
+      console.log('Verification result:', data);
       queryClient.invalidateQueries({ queryKey: ['payment-requests-admin'] });
+      setVerifyingId(null);
     },
-    onError: (error) => {
-      console.error('Verification error:', error);
-      toast.error('Failed to verify payment');
+    onError: (error: unknown) => {
+      console.error('Error verifying payment:', error);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Failed to verify payment: ${message}`);
+      setVerifyingId(null);
     },
   });
 
@@ -125,15 +126,12 @@ export const PaymentRequestsManagement = () => {
                   <div className="flex gap-2">
                     <Button
                       size="sm"
-                      onClick={() => verifyPayment.mutate({ 
-                        requestId: request.id, 
-                        walletAddress: request.wallet_address 
-                      })}
-                      disabled={verifyPayment.isPending}
+                      onClick={() => verifyPayment.mutate(request.id)}
+                      disabled={verifyingId === request.id}
                       className="flex-1"
                     >
-                      <CheckCircle className="h-4 w-4 mr-1" />
-                      Verify & Activate
+                      <Shield className="h-4 w-4 mr-1" />
+                      {verifyingId === request.id ? 'Verifying on Blockchain...' : 'Verify & Activate'}
                     </Button>
                     <Button
                       size="sm"

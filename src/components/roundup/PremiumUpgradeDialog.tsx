@@ -22,14 +22,14 @@ export const PremiumUpgradeDialog = ({ open, onOpenChange }: PremiumUpgradeDialo
     isPaymentConfirmed,
     usdcBalance,
     hasEnoughBalance,
-    isActivating 
+    isCreatingRequest
   } = usePremiumPayment(address, paymentSettings?.admin_wallet_address);
 
   const handleUpgrade = () => {
     handlePayment(paymentSettings?.usdc_price || 10);
   };
 
-  const isProcessing = isSending || isConfirming || isActivating;
+  const isProcessing = isSending || isConfirming || isCreatingRequest;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -47,7 +47,7 @@ export const PremiumUpgradeDialog = ({ open, onOpenChange }: PremiumUpgradeDialo
             <Alert className="border-green-500/50 bg-green-500/10">
               <CheckCircle2 className="h-4 w-4 text-green-500" />
               <AlertDescription className="text-green-700 dark:text-green-400">
-                Payment successful! Activating your premium subscription...
+                Payment submitted! An admin will verify your transaction shortly.
               </AlertDescription>
             </Alert>
           ) : null}
@@ -97,7 +97,7 @@ export const PremiumUpgradeDialog = ({ open, onOpenChange }: PremiumUpgradeDialo
             {isProcessing ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                {isSending ? 'Confirm in wallet...' : isConfirming ? 'Confirming...' : 'Activating...'}
+                {isSending ? 'Confirm in wallet...' : isConfirming ? 'Confirming...' : 'Submitting...'}
               </>
             ) : (
               <>Pay {paymentSettings?.usdc_price || 10} USDC</>
@@ -109,8 +109,8 @@ export const PremiumUpgradeDialog = ({ open, onOpenChange }: PremiumUpgradeDialo
             <p className="text-xs font-medium">How it works:</p>
             <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
               <li>Click "Pay" and confirm the USDC transfer in your wallet</li>
-              <li>Your premium subscription activates automatically</li>
-              <li>Start using Compound Lending Plus strategy immediately</li>
+              <li>Wait for blockchain confirmation</li>
+              <li>An admin will verify your payment and activate premium</li>
             </ol>
           </div>
 

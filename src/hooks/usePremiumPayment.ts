@@ -69,8 +69,8 @@ export const usePremiumPayment = (
     }
   }, [paymentHash]);
 
-  // Activate premium after payment
-  const activatePremium = useMutation({
+  // Create payment request after payment confirmation
+  const createPaymentRequest = useMutation({
     mutationFn: async ({ 
       walletAddress, 
       transactionHash,
@@ -82,7 +82,7 @@ export const usePremiumPayment = (
       paymentAmount: number;
       paymentType: 'usdc' | 'eth';
     }) => {
-      // Create payment request
+      // Create payment request with PENDING status
       const { data: requestData, error: requestError } = await supabase
         .from('premium_payment_requests')
         .insert({
@@ -90,37 +90,28 @@ export const usePremiumPayment = (
           transaction_hash: transactionHash,
           payment_type: paymentType,
           amount: paymentAmount,
-          status: 'verified',
-          verified_at: new Date().toISOString(),
+          status: 'pending',
         })
         .select()
         .single();
 
       if (requestError) throw requestError;
-
-      // Activate subscription using DB function
-      const { data, error } = await supabase.rpc('activate_premium_subscription', {
-        p_wallet_address: walletAddress.toLowerCase(),
-        p_request_id: requestData.id,
-      });
-
-      if (error) throw error;
-      return data;
+      return requestData;
     },
     onSuccess: () => {
-      toast.success('Premium activated! 🎉');
+      toast.success('Payment submitted for verification! An admin will verify your transaction shortly. 📝');
       queryClient.invalidateQueries({ queryKey: ['premium-status'] });
     },
     onError: (error) => {
-      console.error('Activation error:', error);
-      toast.error('Failed to activate premium');
+      console.error('Payment request error:', error);
+      toast.error('Failed to submit payment request');
     },
   });
 
-  // Auto-activate when payment is confirmed
+  // Create payment request when payment is confirmed
   useEffect(() => {
     if (isPaymentConfirmed && lastTxHash && userAddress) {
-      activatePremium.mutate({
+      createPaymentRequest.mutate({
         walletAddress: userAddress,
         transactionHash: lastTxHash,
         paymentAmount: amount,
@@ -169,6 +160,6 @@ export const usePremiumPayment = (
     isPaymentConfirmed,
     usdcBalance,
     hasEnoughBalance,
-    isActivating: activatePremium.isPending,
+    isCreatingRequest: createPaymentRequest.isPending,
   };
 };
