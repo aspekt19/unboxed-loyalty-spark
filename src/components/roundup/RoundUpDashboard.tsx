@@ -51,14 +51,14 @@ export const RoundUpDashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold">Round-Up Investment</h2>
           <p className="text-sm text-muted-foreground mt-1">
             Automatically invest your spare change into DeFi strategies
           </p>
         </div>
-        <Button onClick={() => setShowDepositDialog(true)}>
+        <Button onClick={() => setShowDepositDialog(true)} className="w-full sm:w-auto">
           <ArrowUpRight className="h-4 w-4 mr-2" />
           Direct Deposit
         </Button>

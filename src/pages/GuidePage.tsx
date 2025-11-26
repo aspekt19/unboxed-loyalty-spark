@@ -86,13 +86,15 @@ export default function GuidePage() {
           </div>
 
           <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="merchants">For Merchants</TabsTrigger>
-              <TabsTrigger value="customers">For Customers</TabsTrigger>
-              <TabsTrigger value="investing">Investing</TabsTrigger>
-              <TabsTrigger value="faq">FAQ</TabsTrigger>
-            </TabsList>
+            <div className="overflow-x-auto -mx-4 px-4 pb-2">
+              <TabsList className="inline-flex w-auto min-w-full">
+                <TabsTrigger value="overview" className="whitespace-nowrap">Overview</TabsTrigger>
+                <TabsTrigger value="merchants" className="whitespace-nowrap">For Merchants</TabsTrigger>
+                <TabsTrigger value="customers" className="whitespace-nowrap">For Customers</TabsTrigger>
+                <TabsTrigger value="investing" className="whitespace-nowrap">Investing</TabsTrigger>
+                <TabsTrigger value="faq" className="whitespace-nowrap">FAQ</TabsTrigger>
+              </TabsList>
+            </div>
 
             <TabsContent value="overview" className="space-y-6">
               <Card>
