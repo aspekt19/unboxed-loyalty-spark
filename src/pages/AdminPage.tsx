@@ -64,7 +64,7 @@ const AdminPage = () => {
         <Tabs defaultValue="premium" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4 max-w-2xl">
             <TabsTrigger value="premium">Premium</TabsTrigger>
-            <TabsTrigger value="admins">Админы</TabsTrigger>
+            <TabsTrigger value="admins">Admins</TabsTrigger>
             <TabsTrigger value="requests">Requests</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>

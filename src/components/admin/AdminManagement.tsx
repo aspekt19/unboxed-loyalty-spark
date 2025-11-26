@@ -80,16 +80,16 @@ export const AdminManagement = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success('Админ успешно добавлен!');
+      toast.success('Admin successfully added!');
       queryClient.invalidateQueries({ queryKey: ['admins'] });
       setSearchWallet('');
     },
     onError: (error: any) => {
       console.error('Error adding admin:', error);
       if (error.code === '23505') {
-        toast.error('Этот пользователь уже является админом');
+        toast.error('This user is already an admin');
       } else {
-        toast.error('Ошибка при добавлении админа');
+        toast.error('Error adding admin');
       }
     },
   });
@@ -104,7 +104,7 @@ export const AdminManagement = () => {
         .eq('role', 'admin');
 
       if (count && count <= 1) {
-        throw new Error('Нельзя удалить последнего админа');
+        throw new Error('Cannot remove the last admin');
       }
 
       const { error } = await supabase
@@ -116,18 +116,18 @@ export const AdminManagement = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success('Админ успешно удалён');
+      toast.success('Admin successfully removed');
       queryClient.invalidateQueries({ queryKey: ['admins'] });
     },
     onError: (error: any) => {
       console.error('Error removing admin:', error);
-      toast.error(error.message || 'Ошибка при удалении админа');
+      toast.error(error.message || 'Error removing admin');
     },
   });
 
   const handleSearch = () => {
     if (searchWallet.length < 10) {
-      toast.error('Введите корректный wallet адрес');
+      toast.error('Please enter a valid wallet address');
       return;
     }
     searchUser();
@@ -135,7 +135,7 @@ export const AdminManagement = () => {
 
   const handleAddAdmin = () => {
     if (!searchedUser) {
-      toast.error('Пользователь не найден');
+      toast.error('User not found');
       return;
     }
 
@@ -145,7 +145,7 @@ export const AdminManagement = () => {
     );
 
     if (isAlreadyAdmin) {
-      toast.error('Этот пользователь уже является админом');
+      toast.error('This user is already an admin');
       return;
     }
 
@@ -157,16 +157,16 @@ export const AdminManagement = () => {
       <Alert>
         <Shield className="h-4 w-4" />
         <AlertDescription>
-          Будьте осторожны при назначении админов. Админы имеют полный доступ ко всем функциям системы.
+          Be careful when assigning admins. Admins have full access to all system functions.
         </AlertDescription>
       </Alert>
 
       {/* Поиск и добавление админа */}
       <Card>
         <CardHeader>
-          <CardTitle>Добавить админа</CardTitle>
+          <CardTitle>Add Admin</CardTitle>
           <CardDescription>
-            Найдите пользователя по wallet адресу и назначьте его админом
+            Find a user by wallet address and assign them as admin
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -179,7 +179,7 @@ export const AdminManagement = () => {
             />
             <Button onClick={handleSearch} variant="outline">
               <Search className="h-4 w-4 mr-2" />
-              Найти
+              Search
             </Button>
           </div>
 
@@ -188,7 +188,7 @@ export const AdminManagement = () => {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium">Найден пользователь</p>
+                    <p className="text-sm font-medium">User Found</p>
                     <p className="text-xs text-muted-foreground font-mono">
                       {searchedUser.wallet_address}
                     </p>
@@ -199,7 +199,7 @@ export const AdminManagement = () => {
                     disabled={addAdmin.isPending}
                   >
                     <UserPlus className="h-4 w-4 mr-2" />
-                    Назначить админом
+                    Assign as Admin
                   </Button>
                 </div>
               </CardContent>
@@ -213,10 +213,10 @@ export const AdminManagement = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
-            Текущие админы ({admins?.length || 0})
+            Current Admins ({admins?.length || 0})
           </CardTitle>
           <CardDescription>
-            Список всех пользователей с правами администратора
+            List of all users with administrator privileges
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -263,7 +263,7 @@ export const AdminManagement = () => {
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Админы не найдены</p>
+              <p>No admins found</p>
             </div>
           )}
         </CardContent>
