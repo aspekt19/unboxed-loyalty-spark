@@ -28,7 +28,12 @@ const USDC_ABI = [
   }
 ] as const;
 
-export const usePremiumPayment = (userAddress?: `0x${string}`, adminAddress?: string) => {
+export const usePremiumPayment = (
+  userAddress?: `0x${string}`, 
+  adminAddress?: string,
+  paymentType: 'usdc' | 'eth' = 'usdc',
+  amount: number = 10
+) => {
   const queryClient = useQueryClient();
   const [lastTxHash, setLastTxHash] = useState<`0x${string}` | undefined>();
 
@@ -68,10 +73,14 @@ export const usePremiumPayment = (userAddress?: `0x${string}`, adminAddress?: st
   const activatePremium = useMutation({
     mutationFn: async ({ 
       walletAddress, 
-      transactionHash 
+      transactionHash,
+      paymentAmount,
+      paymentType
     }: { 
       walletAddress: string; 
       transactionHash: string;
+      paymentAmount: number;
+      paymentType: 'usdc' | 'eth';
     }) => {
       // Create payment request
       const { data: requestData, error: requestError } = await supabase
@@ -79,8 +88,8 @@ export const usePremiumPayment = (userAddress?: `0x${string}`, adminAddress?: st
         .insert({
           wallet_address: walletAddress.toLowerCase(),
           transaction_hash: transactionHash,
-          payment_type: 'usdc',
-          amount: 10,
+          payment_type: paymentType,
+          amount: paymentAmount,
           status: 'verified',
           verified_at: new Date().toISOString(),
         })
@@ -114,25 +123,37 @@ export const usePremiumPayment = (userAddress?: `0x${string}`, adminAddress?: st
       activatePremium.mutate({
         walletAddress: userAddress,
         transactionHash: lastTxHash,
+        paymentAmount: amount,
+        paymentType: paymentType,
       });
     }
   }, [isPaymentConfirmed, lastTxHash, userAddress]);
 
-  const handlePayment = (amount: number = 10) => {
+  const handlePayment = (customAmount?: number, customPaymentType?: 'usdc' | 'eth') => {
     if (!userAddress || !adminAddress) {
       toast.error('Wallet not connected');
       return;
     }
 
-    try {
-      const amountInUnits = parseUnits(amount.toString(), 6); // USDC has 6 decimals
+    const finalAmount = customAmount || amount;
+    const finalType = customPaymentType || paymentType;
 
-      sendPayment({
-        address: USDC_ADDRESS,
-        abi: USDC_ABI,
-        functionName: 'transfer',
-        args: [adminAddress as `0x${string}`, amountInUnits],
-      } as any);
+    try {
+      if (finalType === 'usdc') {
+        const amountInUnits = parseUnits(finalAmount.toString(), 6); // USDC has 6 decimals
+        sendPayment({
+          address: USDC_ADDRESS,
+          abi: USDC_ABI,
+          functionName: 'transfer',
+          args: [adminAddress as `0x${string}`, amountInUnits],
+        } as any);
+      } else {
+        // ETH native transfer
+        sendPayment({
+          to: adminAddress as `0x${string}`,
+          value: parseUnits(finalAmount.toString(), 18), // ETH has 18 decimals
+        } as any);
+      }
     } catch (error: any) {
       console.error('Payment error:', error);
       toast.error('Failed to send payment');

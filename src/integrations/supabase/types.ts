@@ -484,6 +484,65 @@ export type Database = {
         }
         Relationships: []
       }
+      premium_activity_log: {
+        Row: {
+          activity_data: Json | null
+          activity_type: string
+          created_at: string | null
+          id: string
+          wallet_address: string
+        }
+        Insert: {
+          activity_data?: Json | null
+          activity_type: string
+          created_at?: string | null
+          id?: string
+          wallet_address: string
+        }
+        Update: {
+          activity_data?: Json | null
+          activity_type?: string
+          created_at?: string | null
+          id?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
+      premium_expiration_notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          notification_type: string
+          sent_at: string | null
+          subscription_id: string
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          notification_type: string
+          sent_at?: string | null
+          subscription_id: string
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notification_type?: string
+          sent_at?: string | null
+          subscription_id?: string
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "premium_expiration_notifications_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "premium_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       premium_payment_requests: {
         Row: {
           amount: number
@@ -520,6 +579,45 @@ export type Database = {
         }
         Relationships: []
       }
+      premium_plans: {
+        Row: {
+          created_at: string | null
+          discount_percentage: number | null
+          duration_months: number
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          name: string
+          price_eth: number
+          price_usdc: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          discount_percentage?: number | null
+          duration_months: number
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price_eth: number
+          price_usdc: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          discount_percentage?: number | null
+          duration_months?: number
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price_eth?: number
+          price_usdc?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       premium_subscriptions: {
         Row: {
           created_at: string
@@ -528,6 +626,7 @@ export type Database = {
           id: string
           is_active: boolean
           monthly_price: number | null
+          plan_id: string | null
           price_id: string | null
           started_at: string | null
           stripe_customer_id: string | null
@@ -545,6 +644,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           monthly_price?: number | null
+          plan_id?: string | null
           price_id?: string | null
           started_at?: string | null
           stripe_customer_id?: string | null
@@ -562,6 +662,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           monthly_price?: number | null
+          plan_id?: string | null
           price_id?: string | null
           started_at?: string | null
           stripe_customer_id?: string | null
@@ -572,7 +673,15 @@ export type Database = {
           user_id?: string
           wallet_address?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "premium_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "premium_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -953,6 +1062,7 @@ export type Database = {
         Args: { p_request_id: string; p_wallet_address: string }
         Returns: boolean
       }
+      check_expiring_subscriptions: { Args: never; Returns: undefined }
       check_program_expiration: { Args: never; Returns: undefined }
       generate_referral_code: {
         Args: { p_referrer_address: string; p_token_address: string }
@@ -987,6 +1097,14 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      log_premium_activity: {
+        Args: {
+          p_activity_data?: Json
+          p_activity_type: string
+          p_wallet_address: string
+        }
+        Returns: undefined
+      }
       migrate_wallet_profile: {
         Args: { p_new_user_id: string; p_wallet_address: string }
         Returns: undefined

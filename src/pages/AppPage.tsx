@@ -37,18 +37,29 @@ export default function AppPage() {
               <span className="text-lg font-bold text-foreground">Loyal Spark</span>
             </div>
             <div className="flex items-center gap-3">
-              {!isPremium && (
-                <Button 
-                  onClick={() => setShowUpgradeDialog(true)}
-                  variant="default"
-                  size="sm"
-                  className="gap-2"
-                >
-                  <Crown className="h-4 w-4" />
-                  Premium
-                </Button>
-              )}
-              <WalletConnectButton />
+          {!isPremium && (
+            <Button 
+              onClick={() => setShowUpgradeDialog(true)}
+              variant="default"
+              size="sm"
+              className="gap-2"
+            >
+              <Crown className="h-4 w-4" />
+              Premium
+            </Button>
+          )}
+          {isPremium && (
+            <Button 
+              onClick={() => navigate('/premium')}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <Crown className="h-4 w-4" />
+              Premium
+            </Button>
+          )}
+          <WalletConnectButton />
             </div>
           </div>
         </header>

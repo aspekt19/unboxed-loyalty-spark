@@ -15,6 +15,7 @@ import AdminPage from "./pages/AdminPage";
 import PitchDeck from "./pages/pitch-deck/PitchDeck";
 import GuidePage from "./pages/GuidePage";
 import InstallPage from "./pages/InstallPage";
+import PremiumPage from "./pages/PremiumPage";
 import NotFound from "./pages/NotFound";
 import { AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
@@ -61,6 +62,7 @@ function AnimatedRoutes() {
         <Route path="/app" element={<AppPage />} />
         <Route path="/customer" element={<CustomerPage />} />
         <Route path="/merchant" element={<MerchantPage />} />
+        <Route path="/premium" element={<PremiumPage />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/pitch" element={<PitchDeck />} />
         <Route path="/guide" element={<GuidePage />} />
