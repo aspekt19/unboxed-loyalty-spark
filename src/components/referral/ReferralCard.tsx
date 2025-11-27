@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Users, Copy, Gift, Check } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Users, Copy, Gift, Check, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ReferralProgram {
@@ -26,6 +27,7 @@ export function ReferralCard() {
   const [programs, setPrograms] = useState<ReferralProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState<string | null>(null);
+  const [expandedPrograms, setExpandedPrograms] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!address) return;
@@ -141,6 +143,18 @@ export function ReferralCard() {
     setTimeout(() => setCopied(null), 2000);
   };
 
+  const toggleProgram = (tokenAddress: string) => {
+    setExpandedPrograms((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(tokenAddress)) {
+        newSet.delete(tokenAddress);
+      } else {
+        newSet.add(tokenAddress);
+      }
+      return newSet;
+    });
+  };
+
   if (loading) {
     return <Skeleton className="h-64 w-full" />;
   }
@@ -164,71 +178,92 @@ export function ReferralCard() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {programs.map((program) => (
-          <Card key={program.token_address} className="border-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                {program.program_name}
-              </CardTitle>
-              <CardDescription>Share your code and earn bonuses</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Your Referral Code</p>
-                <div className="flex gap-2">
-                  <Input
-                    value={program.referral_code || ''}
-                    readOnly
-                    className="font-mono text-lg"
-                  />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() =>
-                      program.referral_code &&
-                      handleCopy(program.referral_code, program.token_address)
-                    }
-                  >
-                    {copied === program.token_address ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
+        {programs.map((program) => {
+          const isExpanded = expandedPrograms.has(program.token_address);
+          
+          return (
+            <Collapsible
+              key={program.token_address}
+              open={isExpanded}
+              onOpenChange={() => toggleProgram(program.token_address)}
+            >
+              <Card className="border-2">
+                <CardHeader>
+                  <CollapsibleTrigger asChild>
+                    <button className="w-full text-left hover:opacity-80 transition-opacity">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Users className="h-5 w-5 text-primary" />
+                          <CardTitle className="text-base sm:text-lg">
+                            {program.program_name}
+                          </CardTitle>
+                        </div>
+                        <ChevronDown
+                          className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${
+                            isExpanded ? 'transform rotate-180' : ''
+                          }`}
+                        />
+                      </div>
+                    </button>
+                  </CollapsibleTrigger>
+                  <CardDescription>
+                    {program.referral_count} referral{program.referral_count !== 1 ? 's' : ''}
+                  </CardDescription>
+                </CardHeader>
 
-              <div className="grid grid-cols-2 gap-4 pt-2 border-t">
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Your Bonus</p>
-                  <div className="flex items-center gap-1">
-                    <Gift className="h-4 w-4 text-primary" />
-                    <p className="font-semibold">
-                      {program.referrer_bonus} {program.symbol}
-                    </p>
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Friend Bonus</p>
-                  <div className="flex items-center gap-1">
-                    <Gift className="h-4 w-4 text-primary" />
-                    <p className="font-semibold">
-                      {program.referee_bonus} {program.symbol}
-                    </p>
-                  </div>
-                </div>
-              </div>
+                <CollapsibleContent>
+                  <CardContent className="space-y-4 pt-0">
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">Your Referral Code</p>
+                      <div className="flex gap-2">
+                        <Input
+                          value={program.referral_code || ''}
+                          readOnly
+                          className="font-mono text-lg"
+                        />
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() =>
+                            program.referral_code &&
+                            handleCopy(program.referral_code, program.token_address)
+                          }
+                        >
+                          {copied === program.token_address ? (
+                            <Check className="h-4 w-4" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
 
-              <div className="pt-2 border-t">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">Referrals</p>
-                  <Badge variant="secondary">{program.referral_count}</Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                    <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Your Bonus</p>
+                        <div className="flex items-center gap-1">
+                          <Gift className="h-4 w-4 text-primary" />
+                          <p className="font-semibold">
+                            {program.referrer_bonus} {program.symbol}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Friend Bonus</p>
+                        <div className="flex items-center gap-1">
+                          <Gift className="h-4 w-4 text-primary" />
+                          <p className="font-semibold">
+                            {program.referee_bonus} {program.symbol}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
+          );
+        })}
       </div>
     </div>
   );
