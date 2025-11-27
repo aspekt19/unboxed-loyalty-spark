@@ -6,6 +6,7 @@ import { MyVouchers } from './rewards/MyVouchers';
 import { CustomerTiersSection } from './tiers/CustomerTiersSection';
 import { PersonalizedOffers } from './marketing/PersonalizedOffers';
 import { ReferralCard } from './referral/ReferralCard';
+import { ReferralCodeInput } from './referral/ReferralCodeInput';
 import { CustomerReviewsSection } from './reviews/CustomerReviewsSection';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAccount } from 'wagmi';
@@ -28,6 +29,8 @@ export function CustomerPanel() {
 
   return (
     <div className="space-y-6">
+      <ReferralCodeInput />
+      
       <ReferralCard />
       
       <PersonalizedOffers />
