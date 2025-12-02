@@ -3,11 +3,12 @@ import { useAccount } from 'wagmi';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useTransferTokens } from '@/hooks/useTransferTokens';
 import { CONTRACTS } from '@/config/contracts';
-import { Loader2, ArrowRightLeft, X } from 'lucide-react';
+import { Loader2, ArrowRightLeft, X, Users, Info } from 'lucide-react';
 
 interface MarketplaceOffer {
   id: string;
@@ -182,10 +183,21 @@ export function MarketplaceOffersList() {
 
   return (
     <div className="space-y-4">
+      {offers.length > 0 && (
+        <Alert className="border-green-500/50 bg-green-500/5">
+          <Users className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-sm">
+            <strong>{offers.length} P2P {offers.length === 1 ? 'offer' : 'offers'} available</strong> from other users. Accept any offer to exchange tokens directly.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       {offers.length === 0 ? (
         <Card>
-          <CardContent className="text-center py-8">
-            <p className="text-muted-foreground">No active offers available</p>
+          <CardContent className="text-center py-8 space-y-2">
+            <Users className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+            <p className="text-muted-foreground">No P2P offers available</p>
+            <p className="text-sm text-muted-foreground">Be the first to create an exchange offer!</p>
           </CardContent>
         </Card>
       ) : (
@@ -200,11 +212,15 @@ export function MarketplaceOffersList() {
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
-                    <CardTitle className="text-lg">
-                      Exchange Offer
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Users className="h-4 w-4 text-primary" />
+                      P2P Exchange Offer
                     </CardTitle>
-                    <CardDescription className="text-xs">
-                      From: {offer.creator_address.slice(0, 6)}...{offer.creator_address.slice(-4)}
+                    <CardDescription className="text-xs flex items-center gap-1">
+                      <span className="text-muted-foreground">Direct exchange with:</span>
+                      <code className="text-xs bg-muted px-1.5 py-0.5 rounded">
+                        {offer.creator_address.slice(0, 6)}...{offer.creator_address.slice(-4)}
+                      </code>
                     </CardDescription>
                   </div>
                   {isOwnOffer(offer) && (
@@ -213,9 +229,18 @@ export function MarketplaceOffersList() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
+                {!isOwnOffer(offer) && (
+                  <Alert className="border-blue-500/50 bg-blue-500/5">
+                    <Info className="h-4 w-4 text-blue-500" />
+                    <AlertDescription className="text-xs">
+                      P2P Exchange: Tokens will be transferred directly between your wallet and the creator's wallet
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 <div className="flex items-center gap-4">
                   <div className="flex-1 space-y-1 p-3 rounded-lg bg-muted">
-                    <p className="text-sm text-muted-foreground">Offering</p>
+                    <p className="text-sm text-muted-foreground">They Offer</p>
                     <p className="font-semibold">
                       {formatAmount(offer.offer_amount)} {offerToken.symbol}
                     </p>
@@ -225,7 +250,7 @@ export function MarketplaceOffersList() {
                   <ArrowRightLeft className="h-5 w-5 text-muted-foreground" />
 
                   <div className="flex-1 space-y-1 p-3 rounded-lg bg-muted">
-                    <p className="text-sm text-muted-foreground">Requesting</p>
+                    <p className="text-sm text-muted-foreground">They Want</p>
                     <p className="font-semibold">
                       {formatAmount(offer.request_amount)} {requestToken.symbol}
                     </p>
@@ -251,7 +276,7 @@ export function MarketplaceOffersList() {
                       disabled={processingOfferId === offer.id || isPending}
                     >
                       {processingOfferId === offer.id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      {processingOfferId === offer.id ? 'Exchanging...' : 'Accept Exchange'}
+                      {processingOfferId === offer.id ? 'Processing P2P Exchange...' : 'Accept P2P Exchange'}
                     </Button>
                   )}
                 </div>
