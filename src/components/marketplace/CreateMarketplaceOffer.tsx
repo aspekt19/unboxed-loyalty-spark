@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useMultiTokenBalance } from '@/hooks/useMultiTokenBalance';
-import { Loader2, ArrowRightLeft } from 'lucide-react';
+import { Loader2, ArrowRightLeft, Users, Info } from 'lucide-react';
 import { z } from 'zod';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface TokenInfo {
   address: string;
@@ -138,14 +139,21 @@ export function CreateMarketplaceOffer() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <ArrowRightLeft className="h-5 w-5 text-primary" />
-          Create Exchange Offer
+          <Users className="h-5 w-5 text-primary" />
+          Create P2P Exchange Offer
         </CardTitle>
         <CardDescription>
-          List your tokens for exchange with other users
+          Create a direct peer-to-peer offer - other users will see your offer and can accept it to exchange tokens with you
         </CardDescription>
       </CardHeader>
       <CardContent>
+        <Alert className="mb-4 border-blue-500/50 bg-blue-500/5">
+          <Info className="h-4 w-4 text-blue-500" />
+          <AlertDescription className="text-sm">
+            Your offer will be visible to all users. When someone accepts, tokens will be exchanged directly between your wallets.
+          </AlertDescription>
+        </Alert>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="offerToken">Token You Offer</Label>
