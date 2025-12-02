@@ -5,17 +5,16 @@ import { WelcomeFlow } from '@/components/onboarding/WelcomeFlow';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { PremiumStatusBadge } from '@/components/PremiumStatusBadge';
 import { PremiumExpirationAlert } from '@/components/PremiumExpirationAlert';
-import { Gift, ArrowLeft, TrendingUp } from 'lucide-react';
+import { Gift, ArrowLeft, TrendingUp, Store } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PageTransition from '@/components/PageTransition';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { initializeCleanState } from '@/lib/clearOldData';
 import { RoundUpDashboard } from '@/components/roundup/RoundUpDashboard';
-
 import { PremiumUpgradeDialog } from '@/components/roundup/PremiumUpgradeDialog';
-import { useState } from 'react';
+import { MarketplaceDashboard } from '@/components/marketplace/MarketplaceDashboard';
 
 const CustomerPage = () => {
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
@@ -62,14 +61,18 @@ const CustomerPage = () => {
           </div>
           
           <Tabs defaultValue="loyalty" className="space-y-6">
-            <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsList className="grid w-full max-w-2xl grid-cols-3">
               <TabsTrigger value="loyalty" className="gap-2">
                 <Gift className="h-4 w-4" />
-                Loyalty Rewards
+                Loyalty
+              </TabsTrigger>
+              <TabsTrigger value="marketplace" className="gap-2">
+                <Store className="h-4 w-4" />
+                Exchange
               </TabsTrigger>
               <TabsTrigger value="roundup" className="gap-2">
                 <TrendingUp className="h-4 w-4" />
-                Round-Up Invest
+                Invest
               </TabsTrigger>
             </TabsList>
 
@@ -81,6 +84,12 @@ const CustomerPage = () => {
                 <div className="max-w-4xl">
                   <CustomerPanel />
                 </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="marketplace">
+              <div className="max-w-4xl mx-auto">
+                <MarketplaceDashboard />
               </div>
             </TabsContent>
 

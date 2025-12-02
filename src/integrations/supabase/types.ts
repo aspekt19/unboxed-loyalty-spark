@@ -359,6 +359,48 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_offers: {
+        Row: {
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string | null
+          creator_address: string
+          id: string
+          offer_amount: number
+          offer_token_address: string
+          request_amount: number
+          request_token_address: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string | null
+          creator_address: string
+          id?: string
+          offer_amount: number
+          offer_token_address: string
+          request_amount: number
+          request_token_address: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string | null
+          creator_address?: string
+          id?: string
+          offer_amount?: number
+          offer_token_address?: string
+          request_amount?: number
+          request_token_address?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       notification_history: {
         Row: {
           campaign_id: string | null
