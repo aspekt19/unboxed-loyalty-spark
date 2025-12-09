@@ -1150,10 +1150,10 @@ export type Database = {
       migrate_wallet_profile: {
         Args: { p_new_user_id: string; p_wallet_address: string }
         Returns: {
-          id: string
-          role: string
-          user_id: string
-          wallet_address: string
+          profile_id: string
+          profile_role: string
+          profile_user_id: string
+          profile_wallet_address: string
         }[]
       }
       process_referral: {
