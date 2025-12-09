@@ -164,12 +164,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // The function returns the profile directly, bypassing RLS
       const profile = profileData?.[0];
       
-      if (!profile) {
+      if (!profile || !profile.profile_id) {
         console.error('[signInWithWallet] Profile not returned from migration');
         throw new Error('Failed to create profile. Please disconnect and reconnect your wallet.');
       }
 
-      console.log('[signInWithWallet] Profile migrated and verified:', profile);
+      console.log('[signInWithWallet] Profile migrated and verified:', {
+        id: profile.profile_id,
+        user_id: profile.profile_user_id,
+        wallet_address: profile.profile_wallet_address
+      });
 
       window.dispatchEvent(new Event('profileMigrated'));
       window.dispatchEvent(new Event('sessionReady'));
