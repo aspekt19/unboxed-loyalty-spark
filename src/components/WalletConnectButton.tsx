@@ -1,10 +1,16 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { Wallet } from 'lucide-react';
+import { Wallet, Smartphone } from 'lucide-react';
 import { useDisconnect, useConnect, useAccount } from 'wagmi';
 import { useAuth } from '@/contexts/AuthContext';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useState, useEffect } from 'react';
+
+// Detect if user is on mobile device
+const isMobileDevice = () => {
+  if (typeof window === 'undefined') return false;
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+};
 
 // Detect if running inside Farcaster miniapp
 const isFarcasterContext = () => {
@@ -217,14 +223,22 @@ export function WalletConnectButton() {
             {(() => {
               if (!connected) {
                 return (
-                  <button
-                    onClick={openConnectModal}
-                    type="button"
-                    className="px-6 py-3 rounded-xl font-bold bg-gradient-uds text-white hover:opacity-90 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
-                  >
-                    <Wallet className="h-5 w-5" />
-                    <span>Connect Wallet</span>
-                  </button>
+                  <div className="flex flex-col items-center gap-2">
+                    <button
+                      onClick={openConnectModal}
+                      type="button"
+                      className="px-6 py-3 rounded-xl font-bold bg-gradient-uds text-white hover:opacity-90 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
+                    >
+                      <Wallet className="h-5 w-5" />
+                      <span>Connect Wallet</span>
+                    </button>
+                    {isMobileDevice() && (
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground max-w-[200px] text-center">
+                        <Smartphone className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span>Open this site in your wallet's browser for best experience</span>
+                      </div>
+                    )}
+                  </div>
                 );
               }
 
