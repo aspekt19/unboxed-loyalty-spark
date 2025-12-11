@@ -27,39 +27,45 @@ export default function AppPage() {
       <div className="min-h-screen bg-white">
         {/* Header with wallet connection */}
         <header className="sticky top-0 z-50 border-b border-border bg-white/80 backdrop-blur-xl">
-          <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 flex justify-between items-center gap-2">
-            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-              <img 
-                src="/new-favicon.png" 
-                alt="Loyal Spark" 
-                className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg flex-shrink-0" 
-              />
-              <span className="text-sm sm:text-base md:text-lg font-bold text-foreground truncate">Loyal Spark</span>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-          {!isPremium && (
-            <Button 
-              onClick={() => setShowUpgradeDialog(true)}
-              variant="default"
-              size="sm"
-              className="gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3"
-            >
-              <Crown className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="text-xs sm:text-sm">Premium</span>
-            </Button>
-          )}
-          {isPremium && (
-            <Button 
-              onClick={() => navigate('/premium')}
-              variant="outline"
-              size="sm"
-              className="gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3"
-            >
-              <Crown className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="text-xs sm:text-sm">Premium</span>
-            </Button>
-          )}
-          <WalletConnectButton />
+          <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
+            {/* Mobile: two rows, Desktop: single row */}
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+              {/* Logo - always visible */}
+              <div className="flex items-center justify-center sm:justify-start gap-2">
+                <img 
+                  src="/new-favicon.png" 
+                  alt="Loyal Spark" 
+                  className="h-8 w-8 sm:h-8 sm:w-8 rounded-lg flex-shrink-0" 
+                />
+                <span className="text-base sm:text-lg font-bold text-foreground">Loyal Spark</span>
+              </div>
+              
+              {/* Buttons - centered on mobile, right on desktop */}
+              <div className="flex items-center justify-center sm:justify-end gap-2 sm:gap-3">
+                {!isPremium && (
+                  <Button 
+                    onClick={() => setShowUpgradeDialog(true)}
+                    variant="default"
+                    size="sm"
+                    className="gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3"
+                  >
+                    <Crown className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="text-xs sm:text-sm">Premium</span>
+                  </Button>
+                )}
+                {isPremium && (
+                  <Button 
+                    onClick={() => navigate('/premium')}
+                    variant="outline"
+                    size="sm"
+                    className="gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3"
+                  >
+                    <Crown className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="text-xs sm:text-sm">Premium</span>
+                  </Button>
+                )}
+                <WalletConnectButton />
+              </div>
             </div>
           </div>
         </header>
