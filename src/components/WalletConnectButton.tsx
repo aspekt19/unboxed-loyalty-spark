@@ -17,24 +17,20 @@ const isMobileDevice = () => {
 const isFarcasterContext = () => {
   if (typeof window === 'undefined') return false;
   try {
-    // Проверяем SDK контекст - самый надежный способ
-    const hasContext = !!(sdk as any)?.context;
-    
-    // Дополнительные проверки как fallback
+    // Здесь не используем sdk.context, чтобы не ошибиться в обычном браузере.
     const urlParams = new URLSearchParams(window.location.search);
     const hasFarcasterParam = urlParams.has('farcaster') || urlParams.has('fc');
     const isFarcasterPath = window.location.pathname.includes('/frame');
     const hasFarcasterUA = /farcaster/i.test(navigator.userAgent);
-    
-    const isFarcaster = hasContext || hasFarcasterParam || isFarcasterPath || hasFarcasterUA;
-    console.log('[Farcaster Detection]', { 
+
+    const isFarcaster = hasFarcasterParam || isFarcasterPath || hasFarcasterUA;
+    console.log('[Farcaster Detection]', {
       isFarcaster,
-      hasContext,
       hasFarcasterParam,
-      isFarcasterPath, 
+      isFarcasterPath,
       hasFarcasterUA,
       pathname: window.location.pathname,
-      search: window.location.search
+      search: window.location.search,
     });
     return isFarcaster;
   } catch (error) {
