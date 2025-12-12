@@ -1,4 +1,5 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit';
+import { metaMaskWallet, walletConnectWallet, injectedWallet } from '@rainbow-me/rainbowkit/wallets';
 import { createConfig } from 'wagmi';
 import { base } from 'wagmi/chains';
 import { http } from 'viem';
@@ -46,6 +47,12 @@ export const config = isFarcasterContext()
       transports: {
         [base.id]: transport,
       },
+      wallets: [
+        {
+          groupName: 'Popular',
+          wallets: [metaMaskWallet, walletConnectWallet, injectedWallet],
+        },
+      ],
       ssr: false,
     });
 
