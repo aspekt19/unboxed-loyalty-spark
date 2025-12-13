@@ -1,7 +1,8 @@
 import { useCallback, useEffect } from 'react';
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
-import { maxUint256 } from 'viem';
+import { maxUint256, encodeFunctionData } from 'viem';
 import { toast } from 'sonner';
+import { appendBuilderCodeToCalldata } from '@/config/builder-code';
 
 export function useApproveTokens() {
   const { writeContract, data: hash, isPending, error } = useWriteContract();
@@ -33,17 +34,22 @@ export function useApproveTokens() {
     console.log('useApproveTokens: isPending before call:', isPending);
     
     try {
-      console.log('useApproveTokens: Calling writeContract with args:', {
-        address: tokenAddress,
-        spender: spenderAddress,
-        amount: maxUint256.toString(),
+      // Encode approve calldata with builder code attribution
+      const approveData = encodeFunctionData({
+        abi: tokenAbi,
+        functionName: 'approve',
+        args: [spenderAddress as `0x${string}`, maxUint256],
       });
+      
+      const dataWithAttribution = appendBuilderCodeToCalldata(approveData);
+      console.log('[ApproveTokens] Approve with Builder Code attribution');
       
       writeContract({
         address: tokenAddress as `0x${string}`,
         abi: tokenAbi,
         functionName: 'approve',
         args: [spenderAddress as `0x${string}`, maxUint256],
+        dataSuffix: dataWithAttribution.slice(approveData.length),
       } as any);
       
       console.log('useApproveTokens: writeContract called');
