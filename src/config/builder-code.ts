@@ -14,30 +14,24 @@ export const BUILDER_CODE = 'bc_wdmnog7m';
  * Generate the data suffix for transaction attribution
  * This suffix is appended to transaction calldata to track
  * which transactions originated from this app.
+ * 
+ * Returns the suffix as hex string with 0x prefix for use with wagmi dataSuffix
  */
-export const getBuilderCodeSuffix = (): string => {
+export const getBuilderCodeSuffix = (): `0x${string}` => {
   try {
-    return Attribution.toDataSuffix({
+    const suffix = Attribution.toDataSuffix({
       codes: [BUILDER_CODE]
     });
+    console.log('[BuilderCode] Generated suffix:', suffix);
+    return suffix as `0x${string}`;
   } catch (error) {
     console.error('[BuilderCode] Failed to generate suffix:', error);
-    return '';
+    return '0x';
   }
 };
 
-/**
- * Append builder code suffix to existing calldata
- * @param calldata - The original transaction calldata (hex string starting with 0x)
- * @returns The calldata with builder attribution suffix appended
- */
-export const appendBuilderCodeToCalldata = (calldata: `0x${string}`): `0x${string}` => {
-  const suffix = getBuilderCodeSuffix();
-  if (!suffix) {
-    return calldata;
-  }
-  // Remove '0x' prefix from suffix before appending
-  return `${calldata}${suffix.slice(2)}` as `0x${string}`;
-};
+// Pre-generate the suffix for efficiency
+export const BUILDER_CODE_SUFFIX = getBuilderCodeSuffix();
 
 console.log('[BuilderCode] Loyal Spark is using Base Builder Code:', BUILDER_CODE);
+console.log('[BuilderCode] Suffix:', BUILDER_CODE_SUFFIX);

@@ -2,8 +2,7 @@ import { useWriteContract, useWaitForTransactionReceipt, useAccount, usePublicCl
 import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
 import { useEffect, useState, useCallback } from 'react';
-import { encodeFunctionData } from 'viem';
-import { appendBuilderCodeToCalldata } from '@/config/builder-code';
+import { BUILDER_CODE_SUFFIX } from '@/config/builder-code';
 
 export function useDeployLoyaltyToken() {
   const { address } = useAccount();
@@ -55,22 +54,14 @@ export function useDeployLoyaltyToken() {
     setDeployedTokenAddress(null);
 
     try {
-      // Encode createLoyaltyToken calldata with builder code attribution
-      const deployData = encodeFunctionData({
-        abi: CONTRACTS.LOYALTY_TOKEN_FACTORY.abi,
-        functionName: 'createLoyaltyToken',
-        args: [name, symbol, address],
-      });
-      
-      const dataWithAttribution = appendBuilderCodeToCalldata(deployData);
-      console.log('[DeployToken] Deploy with Builder Code attribution');
+      console.log('[DeployToken] Deploy with Builder Code attribution:', BUILDER_CODE_SUFFIX);
       
       writeContract({
         address: CONTRACTS.LOYALTY_TOKEN_FACTORY.address,
         abi: CONTRACTS.LOYALTY_TOKEN_FACTORY.abi,
         functionName: 'createLoyaltyToken',
         args: [name, symbol, address],
-        dataSuffix: dataWithAttribution.slice(deployData.length),
+        dataSuffix: BUILDER_CODE_SUFFIX,
       } as any);
     } catch (error) {
       console.error('[DeployToken] Deploy error:', error);
