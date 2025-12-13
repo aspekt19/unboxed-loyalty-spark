@@ -21,6 +21,7 @@ export const getBuilderCodeSuffix = (): `0x${string}` => {
     const suffix = Attribution.toDataSuffix({
       codes: [BUILDER_CODE]
     });
+    console.log('[BuilderCode] Generated suffix for code:', BUILDER_CODE, '→', suffix);
     return suffix as `0x${string}`;
   } catch (error) {
     console.error('[BuilderCode] Failed to generate suffix:', error);
@@ -47,16 +48,30 @@ export function encodeWithBuilderCode(
     args: args as any,
   });
   
-  // Append suffix (remove 0x prefix from suffix since encoded already has it)
-  const dataWithSuffix = (encoded + BUILDER_CODE_SUFFIX.slice(2)) as `0x${string}`;
+  // Check if suffix is valid
+  if (!BUILDER_CODE_SUFFIX || BUILDER_CODE_SUFFIX === '0x') {
+    console.error('[BuilderCode] Invalid suffix, returning original calldata');
+    return encoded;
+  }
   
-  console.log('[BuilderCode] Encoded with suffix:', {
+  // Append suffix (remove 0x prefix from suffix since encoded already has it)
+  const suffixWithout0x = BUILDER_CODE_SUFFIX.slice(2);
+  const dataWithSuffix = (encoded + suffixWithout0x) as `0x${string}`;
+  
+  console.log('[BuilderCode] Transaction encoding:', {
     functionName,
+    originalDataLength: encoded.length,
+    suffixLength: suffixWithout0x.length,
+    finalDataLength: dataWithSuffix.length,
     suffix: BUILDER_CODE_SUFFIX,
+    // Show last 64 chars to verify suffix is appended
+    dataEnding: dataWithSuffix.slice(-64),
   });
   
   return dataWithSuffix;
 }
 
-console.log('[BuilderCode] Loyal Spark using Base Builder Code:', BUILDER_CODE);
-console.log('[BuilderCode] Suffix:', BUILDER_CODE_SUFFIX);
+// Verify suffix format on load
+console.log('[BuilderCode] Loyal Spark Builder Code:', BUILDER_CODE);
+console.log('[BuilderCode] Full suffix (hex):', BUILDER_CODE_SUFFIX);
+console.log('[BuilderCode] Suffix length (bytes):', BUILDER_CODE_SUFFIX ? (BUILDER_CODE_SUFFIX.length - 2) / 2 : 0);
