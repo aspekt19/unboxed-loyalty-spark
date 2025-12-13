@@ -2,6 +2,8 @@ import { useWriteContract, useWaitForTransactionReceipt, useAccount, usePublicCl
 import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
 import { useEffect, useState, useCallback } from 'react';
+import { encodeFunctionData } from 'viem';
+import { appendBuilderCodeToCalldata } from '@/config/builder-code';
 
 export function useDeployLoyaltyToken() {
   const { address } = useAccount();
@@ -29,12 +31,12 @@ export function useDeployLoyaltyToken() {
 
           if (eventLog && eventLog.topics && eventLog.topics.length > 1) {
             const tokenAddress = '0x' + eventLog.topics[1].slice(-40);
-            console.log('Token created:', tokenAddress);
+            console.log('[DeployToken] Token created:', tokenAddress);
             setDeployedTokenAddress(tokenAddress);
             toast.success('Loyalty program deployed successfully!');
           }
         } catch (error) {
-          console.error('Error extracting token address:', error);
+          console.error('[DeployToken] Error extracting token address:', error);
           toast.error('Failed to extract token address');
         }
       };
@@ -53,14 +55,25 @@ export function useDeployLoyaltyToken() {
     setDeployedTokenAddress(null);
 
     try {
+      // Encode createLoyaltyToken calldata with builder code attribution
+      const deployData = encodeFunctionData({
+        abi: CONTRACTS.LOYALTY_TOKEN_FACTORY.abi,
+        functionName: 'createLoyaltyToken',
+        args: [name, symbol, address],
+      });
+      
+      const dataWithAttribution = appendBuilderCodeToCalldata(deployData);
+      console.log('[DeployToken] Deploy with Builder Code attribution');
+      
       writeContract({
         address: CONTRACTS.LOYALTY_TOKEN_FACTORY.address,
         abi: CONTRACTS.LOYALTY_TOKEN_FACTORY.abi,
         functionName: 'createLoyaltyToken',
         args: [name, symbol, address],
+        dataSuffix: dataWithAttribution.slice(deployData.length),
       } as any);
     } catch (error) {
-      console.error('Deploy error:', error);
+      console.error('[DeployToken] Deploy error:', error);
       toast.error('Failed to create loyalty token');
     }
   }, [address, writeContract]);
