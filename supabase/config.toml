@@ -3,8 +3,20 @@ project_id = "bzxmejzssxjazswgwqqs"
 [functions.check-program-expiration]
 verify_jwt = false
 
+[functions.check-premium-expiration]
+verify_jwt = false
+
 [functions.frame]
+verify_jwt = false
+
+[functions.get-token-holders]
 verify_jwt = false
 
 [functions.process-automation]
 verify_jwt = false
+
+[functions.verify-payment]
+verify_jwt = false
+
+[functions.verify-voucher]
+verify_jwt = true

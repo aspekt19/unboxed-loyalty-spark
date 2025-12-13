@@ -13,7 +13,8 @@ import { useApproveTokens, useCheckAllowance } from '@/hooks/useApproveTokens';
 import { useMultiTokenBalance } from '@/hooks/useMultiTokenBalance';
 import { CONTRACTS } from '@/config/contracts';
 import { Reward } from '@/types/rewards';
-import { getRewardsByToken, createVoucher, generateVoucherCode } from '@/lib/vouchers';
+import { getRewardsByToken } from '@/lib/vouchers';
+import { createVerifiedVoucher } from '@/lib/verifiedVoucher';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { ProgramExpirationInfo } from '@/components/ProgramExpirationInfo';
@@ -216,12 +217,12 @@ export function RewardsSelection() {
     }
   }, [isApproved, refetchAllowance]);
 
-  // Обработка успешного сжигания с механизмом повторных попыток
+  // Обработка успешного сжигания с верификацией на блокчейне
   useEffect(() => {
     const handleVoucherCreation = async () => {
       // Проверяем, что транзакция успешна, есть новый hash и он еще не обработан
       if (isSuccess && hash && hash !== processedHash && selectedRewardId && address) {
-        console.log('[handleVoucherCreation] Starting voucher creation for hash:', hash);
+        console.log('[handleVoucherCreation] Starting verified voucher creation for hash:', hash);
         const reward = availableRewards.find(r => r.id === selectedRewardId);
         const token = tokens.find(t => t.address === selectedTokenAddress);
         
@@ -234,70 +235,45 @@ export function RewardsSelection() {
         // Помечаем hash как обработанный сразу, чтобы избежать дублирования
         setProcessedHash(hash);
 
-        // Дополнительная проверка профиля перед созданием ваучера
-        const { data: profileCheck, error: profileCheckError } = await supabase
-          .from('profiles')
-          .select('wallet_address')
-          .eq('wallet_address', address.toLowerCase())
-          .maybeSingle();
+        console.log('[handleVoucherCreation] Calling Edge Function for blockchain-verified voucher creation...');
         
-        if (profileCheckError || !profileCheck) {
-          console.error('[handleVoucherCreation] Profile check failed:', profileCheckError);
-          // Сохраняем информацию для восстановления
-          setFailedVoucherAttempt({
-            hash,
-            rewardId: reward.id,
-            rewardName: reward.name,
-            tokenAddress: selectedTokenAddress,
-            cost: reward.cost,
-          });
-          toast.error('Profile verification failed. Use the recovery button below to restore your voucher.');
-          return;
-        }
-
-        console.log('[handleVoucherCreation] Profile verified, creating voucher...');
-        const voucherCode = generateVoucherCode();
-        
-        // Попытка создать ваучер с механизмом повторных попыток
-        let voucher = null;
+        // Use verified voucher creation via Edge Function
+        let result = null;
         let attempts = 0;
         const maxAttempts = 3;
         
-        while (!voucher && attempts < maxAttempts) {
+        while (!result?.success && attempts < maxAttempts) {
           attempts++;
           console.log(`[handleVoucherCreation] Attempt ${attempts} of ${maxAttempts}`);
           
           if (attempts > 1) {
-            // Ждем перед повторной попыткой
-            await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+            // Wait before retry (increasing delay for blockchain propagation)
+            await new Promise(resolve => setTimeout(resolve, 3000 * attempts));
           }
           
-          voucher = await createVoucher({
-            code: voucherCode,
+          result = await createVerifiedVoucher({
+            transactionHash: hash,
             rewardId: reward.id,
-            rewardName: reward.name,
-            rewardDescription: reward.description,
             tokenAddress: selectedTokenAddress,
             tokenSymbol: token.name,
             customerAddress: address,
             merchantAddress: reward.merchantAddress,
-            status: 'active',
             cost: reward.cost,
           });
         }
 
-        if (voucher) {
-          console.log('[handleVoucherCreation] Voucher created successfully:', voucher.id);
-          toast.success(`Voucher activated! Code: ${voucherCode}`);
+        if (result?.success && result.voucher) {
+          console.log('[handleVoucherCreation] Verified voucher created successfully:', result.voucher.id);
+          toast.success(`Voucher activated! Code: ${result.voucher.code}`);
           setSelectedRewardId('');
-          setFailedVoucherAttempt(null); // Очищаем состояние ошибки
-          // Немедленно обновляем данные и диспетчим события
+          setFailedVoucherAttempt(null);
+          // Update data and dispatch events
           refetch();
           window.dispatchEvent(new Event('vouchersUpdated'));
           window.dispatchEvent(new Event('tokenBalancesUpdated'));
         } else {
-          console.error('[handleVoucherCreation] Failed to create voucher after', attempts, 'attempts');
-          // Сохраняем информацию для восстановления
+          console.error('[handleVoucherCreation] Failed to create verified voucher after', attempts, 'attempts:', result?.error);
+          // Save info for recovery
           setFailedVoucherAttempt({
             hash,
             rewardId: reward.id,
@@ -305,7 +281,7 @@ export function RewardsSelection() {
             tokenAddress: selectedTokenAddress,
             cost: reward.cost,
           });
-          toast.error('Failed to create voucher. Use the recovery button below to restore it.');
+          toast.error(result?.error || 'Failed to create voucher. Use the recovery button below to restore it.');
         }
       }
     };
@@ -526,25 +502,24 @@ export function RewardsSelection() {
         return;
       }
 
-      console.log('[handleRecoverVoucher] Program data loaded, creating voucher...');
+      console.log('[handleRecoverVoucher] Program data loaded, creating verified voucher...');
       
-      // Пытаемся создать ваучер с несколькими попытками
-      const voucherCode = generateVoucherCode();
-      let voucher = null;
+      // Use verified voucher creation via Edge Function
+      let result = null;
       let attempts = 0;
-      const maxAttempts = 5; // Увеличиваем до 5 попыток
+      const maxAttempts = 5;
       
-      while (!voucher && attempts < maxAttempts) {
+      while (!result?.success && attempts < maxAttempts) {
         attempts++;
         console.log(`[handleRecoverVoucher] Attempt ${attempts} of ${maxAttempts}`);
         
         if (attempts > 1) {
-          // Увеличиваем задержку между попытками
-          const delay = 2000 * attempts;
+          // Wait longer between retries for blockchain propagation
+          const delay = 3000 * attempts;
           console.log(`[handleRecoverVoucher] Waiting ${delay}ms before retry...`);
           await new Promise(resolve => setTimeout(resolve, delay));
           
-          // Проверяем сессию перед каждой попыткой
+          // Check session before each retry
           const { data: { session: retrySession } } = await supabase.auth.getSession();
           if (!retrySession) {
             console.error('[handleRecoverVoucher] Session lost during retry');
@@ -554,37 +529,33 @@ export function RewardsSelection() {
           }
         }
         
-        voucher = await createVoucher({
-          code: voucherCode,
+        result = await createVerifiedVoucher({
+          transactionHash: failedVoucherAttempt.hash,
           rewardId: reward.id,
-          rewardName: reward.name,
-          rewardDescription: reward.description,
           tokenAddress: failedVoucherAttempt.tokenAddress,
           tokenSymbol: programs.symbol,
           customerAddress: address,
           merchantAddress: reward.merchantAddress,
-          status: 'active',
           cost: failedVoucherAttempt.cost,
         });
         
-        if (!voucher) {
-          console.log(`[handleRecoverVoucher] Attempt ${attempts} failed, voucher is null`);
+        if (!result.success) {
+          console.log(`[handleRecoverVoucher] Attempt ${attempts} failed:`, result.error);
         }
       }
 
-      if (voucher) {
-        console.log('[handleRecoverVoucher] Voucher recovered successfully:', voucher.id);
-        toast.success(`Voucher recovered successfully! Code: ${voucherCode}`);
+      if (result?.success && result.voucher) {
+        console.log('[handleRecoverVoucher] Voucher recovered successfully:', result.voucher.id);
+        toast.success(`Voucher recovered successfully! Code: ${result.voucher.code}`);
         setFailedVoucherAttempt(null);
         setSelectedRewardId('');
-        // Обновляем данные
+        // Update data
         refetch();
         window.dispatchEvent(new Event('vouchersUpdated'));
         window.dispatchEvent(new Event('tokenBalancesUpdated'));
       } else {
-        console.error('[handleRecoverVoucher] Failed after', attempts, 'attempts');
-        console.error('[handleRecoverVoucher] Check console logs above for detailed error information');
-        toast.error('Recovery failed. Please check your connection and try again, or contact support with transaction hash: ' + failedVoucherAttempt.hash.slice(0, 10) + '...');
+        console.error('[handleRecoverVoucher] Failed after', attempts, 'attempts:', result?.error);
+        toast.error(result?.error || 'Recovery failed. Please contact support with transaction hash: ' + failedVoucherAttempt.hash.slice(0, 10) + '...');
       }
     } catch (error) {
       console.error('[handleRecoverVoucher] Unexpected error:', error);
