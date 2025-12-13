@@ -1,7 +1,7 @@
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { parseUnits, encodeFunctionData } from 'viem';
+import { parseUnits } from 'viem';
 import { toast } from 'sonner';
-import { appendBuilderCodeToCalldata } from '@/config/builder-code';
+import { BUILDER_CODE_SUFFIX } from '@/config/builder-code';
 
 export function useBurnTokens() {
   const { writeContract, data: hash, isPending, error } = useWriteContract();
@@ -16,40 +16,24 @@ export function useBurnTokens() {
       
       // Если указан recipientAddress, используем transfer, иначе burn
       if (recipientAddress) {
-        // Encode transfer calldata with builder code
-        const transferData = encodeFunctionData({
-          abi: tokenAbi,
-          functionName: 'transfer',
-          args: [recipientAddress as `0x${string}`, amountInWei],
-        });
-        
-        const dataWithAttribution = appendBuilderCodeToCalldata(transferData);
-        console.log('[BurnTokens] Transfer with Builder Code attribution');
+        console.log('[BurnTokens] Transfer with Builder Code attribution:', BUILDER_CODE_SUFFIX);
         
         writeContract({
           address: tokenAddress as `0x${string}`,
           abi: tokenAbi,
           functionName: 'transfer',
           args: [recipientAddress as `0x${string}`, amountInWei],
-          dataSuffix: dataWithAttribution.slice(transferData.length),
+          dataSuffix: BUILDER_CODE_SUFFIX,
         } as any);
       } else {
-        // Encode burn calldata with builder code
-        const burnData = encodeFunctionData({
-          abi: tokenAbi,
-          functionName: 'burn',
-          args: [amountInWei],
-        });
-        
-        const dataWithAttribution = appendBuilderCodeToCalldata(burnData);
-        console.log('[BurnTokens] Burn with Builder Code attribution');
+        console.log('[BurnTokens] Burn with Builder Code attribution:', BUILDER_CODE_SUFFIX);
         
         writeContract({
           address: tokenAddress as `0x${string}`,
           abi: tokenAbi,
           functionName: 'burn',
           args: [amountInWei],
-          dataSuffix: dataWithAttribution.slice(burnData.length),
+          dataSuffix: BUILDER_CODE_SUFFIX,
         } as any);
       }
     } catch (error) {
