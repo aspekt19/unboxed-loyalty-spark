@@ -1036,6 +1036,7 @@ export type Database = {
           status: string
           token_address: string
           token_symbol: string
+          transaction_hash: string | null
           used_at: string | null
         }
         Insert: {
@@ -1051,6 +1052,7 @@ export type Database = {
           status?: string
           token_address: string
           token_symbol: string
+          transaction_hash?: string | null
           used_at?: string | null
         }
         Update: {
@@ -1066,6 +1068,7 @@ export type Database = {
           status?: string
           token_address?: string
           token_symbol?: string
+          transaction_hash?: string | null
           used_at?: string | null
         }
         Relationships: [
@@ -1095,6 +1098,24 @@ export type Database = {
           total_vouchers_issued: number | null
           vouchers_last_30d: number | null
           vouchers_redeemed: number | null
+        }
+        Relationships: []
+      }
+      merchant_customer_view: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          first_name: string | null
+          id: string | null
+          last_name: string | null
+          last_purchase_date: string | null
+          merchant_address: string | null
+          phone: string | null
+          rfm_score: string | null
+          total_purchases: number | null
+          total_spent: number | null
+          updated_at: string | null
+          wallet_address: string | null
         }
         Relationships: []
       }
@@ -1147,6 +1168,8 @@ export type Database = {
         }
         Returns: undefined
       }
+      mask_email: { Args: { email: string }; Returns: string }
+      mask_phone: { Args: { phone: string }; Returns: string }
       migrate_wallet_profile: {
         Args: { p_new_user_id: string; p_wallet_address: string }
         Returns: {
