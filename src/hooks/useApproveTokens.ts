@@ -2,7 +2,6 @@ import { useCallback, useEffect } from 'react';
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { maxUint256 } from 'viem';
 import { toast } from 'sonner';
-import { BUILDER_CODE_SUFFIX } from '@/config/builder-code';
 
 export function useApproveTokens() {
   const { writeContract, data: hash, isPending, error } = useWriteContract();
@@ -31,15 +30,20 @@ export function useApproveTokens() {
     console.log('🚀 useApproveTokens: approveTokens called');
     console.log('useApproveTokens: tokenAddress:', tokenAddress);
     console.log('useApproveTokens: spenderAddress:', spenderAddress);
-    console.log('[ApproveTokens] Approve with Builder Code attribution:', BUILDER_CODE_SUFFIX);
+    console.log('useApproveTokens: isPending before call:', isPending);
     
     try {
+      console.log('useApproveTokens: Calling writeContract with args:', {
+        address: tokenAddress,
+        spender: spenderAddress,
+        amount: maxUint256.toString(),
+      });
+      
       writeContract({
         address: tokenAddress as `0x${string}`,
         abi: tokenAbi,
         functionName: 'approve',
         args: [spenderAddress as `0x${string}`, maxUint256],
-        dataSuffix: BUILDER_CODE_SUFFIX,
       } as any);
       
       console.log('useApproveTokens: writeContract called');
@@ -47,7 +51,7 @@ export function useApproveTokens() {
       console.error('❌ useApproveTokens: Caught error:', error);
       toast.error('Failed to initiate approval');
     }
-  }, [writeContract]);
+  }, [writeContract, isPending]);
 
   console.log('useApproveTokens hook state:', { 
     isPending, 

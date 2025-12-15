@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface BasescanV2Response {
+interface BasescanResponse {
   status: string;
   message: string;
   result: {
@@ -15,16 +15,8 @@ interface BasescanV2Response {
     value: string;
     contractAddress: string;
     tokenDecimal: string;
-    isError?: string;
+    isError: string;
   }[];
-}
-
-interface TransactionReceiptResponse {
-  status: string;
-  message: string;
-  result: {
-    status: string;
-  };
 }
 
 interface VoucherRequest {
@@ -129,68 +121,71 @@ Deno.serve(async (req) => {
       throw new Error('Cost mismatch');
     }
 
-    // Verify the transaction on blockchain using Basescan API V2
+    // Verify the transaction on blockchain
     const BASESCAN_API_KEY = Deno.env.get('BASESCAN_API_KEY');
     if (!BASESCAN_API_KEY) {
       console.error('Basescan API key not configured');
       throw new Error('Blockchain verification service not available');
     }
 
-    // Use Basescan API V2 format
-    // Documentation: https://docs.etherscan.io/v2-migration
-    const chainId = 8453; // Base mainnet
-    
-    // First, try to get transaction receipt to verify transaction is confirmed
-    const txReceiptUrl = `https://api.etherscan.io/v2/api?chainid=${chainId}&module=transaction&action=gettxreceiptstatus&txhash=${transactionHash}&apikey=${BASESCAN_API_KEY}`;
-    
-    console.log('Checking transaction receipt via Etherscan V2 API...');
-    const receiptResponse = await fetch(txReceiptUrl);
-    const receiptData: TransactionReceiptResponse = await receiptResponse.json();
-    
-    console.log('Transaction receipt response:', JSON.stringify(receiptData));
-    
-    if (receiptData.status !== '1') {
-      console.error('Receipt API error:', receiptData);
+    // Query Basescan for the transaction
+    // We're looking for ERC20 token transfers from the customer
+    const basescanUrl = `https://api.basescan.org/api?module=account&action=tokentx&contractaddress=${tokenAddress}&address=${customerAddress}&page=1&offset=100&sort=desc&apikey=${BASESCAN_API_KEY}`;
+
+    console.log('Querying Basescan for token transactions...');
+    const response = await fetch(basescanUrl);
+    const data: BasescanResponse = await response.json();
+
+    console.log('Basescan API response status:', data.status);
+
+    if (data.status !== '1') {
+      // Try to get transaction receipt directly
+      const txReceiptUrl = `https://api.basescan.org/api?module=transaction&action=gettxreceiptstatus&txhash=${transactionHash}&apikey=${BASESCAN_API_KEY}`;
+      const receiptResponse = await fetch(txReceiptUrl);
+      const receiptData = await receiptResponse.json();
       
-      // Fallback: check token transfers
-      const tokenTxUrl = `https://api.etherscan.io/v2/api?chainid=${chainId}&module=account&action=tokentx&contractaddress=${tokenAddress}&address=${customerAddress}&page=1&offset=100&sort=desc&apikey=${BASESCAN_API_KEY}`;
-      
-      console.log('Querying token transactions via V2 API...');
-      const tokenResponse = await fetch(tokenTxUrl);
-      const tokenData: BasescanV2Response = await tokenResponse.json();
-      
-      console.log('Token transactions response status:', tokenData.status, 'message:', tokenData.message);
-      
-      if (tokenData.status !== '1' || !Array.isArray(tokenData.result)) {
-        throw new Error('Unable to verify transaction. Please wait a few minutes and try again.');
-      }
-      
-      const transaction = tokenData.result.find(
-        (tx) => tx.hash.toLowerCase() === transactionHash.toLowerCase()
-      );
-      
-      if (!transaction) {
-        throw new Error('Transaction not found. It may still be processing. Please wait and try again.');
-      }
-      
-      console.log('Transaction found in token transfers:', {
-        from: transaction.from,
-        to: transaction.to,
-        value: transaction.value,
-      });
-      
-      // Verify transaction was from the customer
-      if (transaction.from.toLowerCase() !== customerAddress.toLowerCase()) {
-        throw new Error('Transaction sender does not match customer');
+      if (receiptData.status === '1' && receiptData.result.status === '1') {
+        // Transaction succeeded but not in token transfer list yet
+        console.log('Transaction confirmed via receipt, allowing voucher creation');
+      } else {
+        console.error('Transaction verification failed:', receiptData);
+        throw new Error('Transaction not confirmed on blockchain. Please wait and try again.');
       }
     } else {
-      // Check if transaction succeeded
-      if (receiptData.result?.status !== '1') {
-        console.error('Transaction failed:', receiptData.result);
-        throw new Error('Transaction failed on blockchain');
+      // Find the transaction in the token transfers
+      const transaction = data.result.find(
+        (tx) => tx.hash.toLowerCase() === transactionHash.toLowerCase()
+      );
+
+      if (!transaction) {
+        // Check if transaction is pending/not indexed yet
+        console.warn('Transaction not found in token transfers, checking receipt...');
+        const txReceiptUrl = `https://api.basescan.org/api?module=transaction&action=gettxreceiptstatus&txhash=${transactionHash}&apikey=${BASESCAN_API_KEY}`;
+        const receiptResponse = await fetch(txReceiptUrl);
+        const receiptData = await receiptResponse.json();
+        
+        if (receiptData.status !== '1' || receiptData.result.status !== '1') {
+          throw new Error('Transaction not found or not confirmed. Please wait and try again.');
+        }
+        console.log('Transaction confirmed via receipt');
+      } else {
+        console.log('Transaction found:', {
+          from: transaction.from,
+          to: transaction.to,
+          value: transaction.value,
+          decimals: transaction.tokenDecimal,
+        });
+
+        // Verify transaction was from the customer
+        if (transaction.from.toLowerCase() !== customerAddress.toLowerCase()) {
+          throw new Error('Transaction sender does not match customer');
+        }
+
+        // Verify transaction was successful
+        if (transaction.isError !== '0') {
+          throw new Error('Transaction failed on blockchain');
+        }
       }
-      
-      console.log('Transaction confirmed via receipt status');
     }
 
     // Generate voucher code

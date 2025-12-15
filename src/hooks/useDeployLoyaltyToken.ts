@@ -2,7 +2,6 @@ import { useWriteContract, useWaitForTransactionReceipt, useAccount, usePublicCl
 import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
 import { useEffect, useState, useCallback } from 'react';
-import { BUILDER_CODE_SUFFIX } from '@/config/builder-code';
 
 export function useDeployLoyaltyToken() {
   const { address } = useAccount();
@@ -30,12 +29,12 @@ export function useDeployLoyaltyToken() {
 
           if (eventLog && eventLog.topics && eventLog.topics.length > 1) {
             const tokenAddress = '0x' + eventLog.topics[1].slice(-40);
-            console.log('[DeployToken] Token created:', tokenAddress);
+            console.log('Token created:', tokenAddress);
             setDeployedTokenAddress(tokenAddress);
             toast.success('Loyalty program deployed successfully!');
           }
         } catch (error) {
-          console.error('[DeployToken] Error extracting token address:', error);
+          console.error('Error extracting token address:', error);
           toast.error('Failed to extract token address');
         }
       };
@@ -54,17 +53,14 @@ export function useDeployLoyaltyToken() {
     setDeployedTokenAddress(null);
 
     try {
-      console.log('[DeployToken] Deploy with Builder Code attribution:', BUILDER_CODE_SUFFIX);
-      
       writeContract({
         address: CONTRACTS.LOYALTY_TOKEN_FACTORY.address,
         abi: CONTRACTS.LOYALTY_TOKEN_FACTORY.abi,
         functionName: 'createLoyaltyToken',
         args: [name, symbol, address],
-        dataSuffix: BUILDER_CODE_SUFFIX,
       } as any);
     } catch (error) {
-      console.error('[DeployToken] Deploy error:', error);
+      console.error('Deploy error:', error);
       toast.error('Failed to create loyalty token');
     }
   }, [address, writeContract]);
