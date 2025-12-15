@@ -1,11 +1,11 @@
-import { useSendTransaction, useWaitForTransactionReceipt, usePublicClient } from 'wagmi';
+import { useWriteContract, useWaitForTransactionReceipt, usePublicClient } from 'wagmi';
 import { CONTRACTS } from '@/config/contracts';
 import { parseUnits } from 'viem';
 import { toast } from 'sonner';
-import { encodeWithBuilderCode } from '@/config/builder-code';
+import { BUILDER_CODE_SUFFIX } from '@/config/builder-code';
 
 export function useMintTokens() {
-  const { sendTransaction, data: hash, isPending, error, reset } = useSendTransaction();
+  const { writeContract, data: hash, isPending, error, reset } = useWriteContract();
   const publicClient = usePublicClient();
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
@@ -35,32 +35,27 @@ export function useMintTokens() {
         console.log('[MintTokens] Minting is not active, enabling it first...');
         toast.info('Enabling minting for this program first...');
         
-        const enableMintingData = encodeWithBuilderCode(
-          CONTRACTS.LOYAL_SPARK_ERC20.abi,
-          'enableMinting'
-        );
-
-        sendTransaction({
-          to: tokenAddress as `0x${string}`,
-          data: enableMintingData,
-        });
+        writeContract({
+          address: tokenAddress as `0x${string}`,
+          abi: CONTRACTS.LOYAL_SPARK_ERC20.abi,
+          functionName: 'enableMinting',
+          dataSuffix: BUILDER_CODE_SUFFIX,
+        } as any);
 
         toast.info('Please confirm the transaction to enable minting, then try issuing tokens again');
         return;
       }
       
-      console.log('[MintTokens] Minting tokens with Builder Code attribution');
+      console.log('[MintTokens] Mint with Builder Code attribution:', BUILDER_CODE_SUFFIX);
       
-      const mintData = encodeWithBuilderCode(
-        CONTRACTS.LOYAL_SPARK_ERC20.abi,
-        'mint',
-        [recipientAddress as `0x${string}`, amountInWei]
-      );
-
-      sendTransaction({
-        to: tokenAddress as `0x${string}`,
-        data: mintData,
-      });
+      // Minting is active, proceed with mint
+      writeContract({
+        address: tokenAddress as `0x${string}`,
+        abi: CONTRACTS.LOYAL_SPARK_ERC20.abi,
+        functionName: 'mint',
+        args: [recipientAddress as `0x${string}`, amountInWei],
+        dataSuffix: BUILDER_CODE_SUFFIX,
+      } as any);
     } catch (error) {
       console.error('[MintTokens] Mint error:', error);
       toast.error('Failed to mint tokens');

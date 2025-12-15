@@ -129,76 +129,69 @@ Deno.serve(async (req) => {
       throw new Error('Cost mismatch');
     }
 
-    // Verify the transaction on blockchain using Base JSON-RPC (no third-party API limits)
-    const rpcUrl = 'https://base-rpc.publicnode.com';
-
-    console.log('Checking transaction receipt via Base RPC...');
-    const receiptResponse = await fetch(rpcUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'eth_getTransactionReceipt',
-        params: [transactionHash],
-      }),
-    });
-
-    const receiptData = (await receiptResponse.json()) as any;
-    console.log('RPC receipt response:', JSON.stringify(receiptData));
-
-    if (receiptData.error) {
-      console.error('RPC receipt error:', receiptData.error);
-      throw new Error('Blockchain verification failed');
+    // Verify the transaction on blockchain using Basescan API V2
+    const BASESCAN_API_KEY = Deno.env.get('BASESCAN_API_KEY');
+    if (!BASESCAN_API_KEY) {
+      console.error('Basescan API key not configured');
+      throw new Error('Blockchain verification service not available');
     }
 
-    const receipt = receiptData.result;
-
-    if (!receipt) {
-      throw new Error('Transaction not found yet. Please wait a moment and try again.');
+    // Use Basescan API V2 format
+    // Documentation: https://docs.etherscan.io/v2-migration
+    const chainId = 8453; // Base mainnet
+    
+    // First, try to get transaction receipt to verify transaction is confirmed
+    const txReceiptUrl = `https://api.etherscan.io/v2/api?chainid=${chainId}&module=transaction&action=gettxreceiptstatus&txhash=${transactionHash}&apikey=${BASESCAN_API_KEY}`;
+    
+    console.log('Checking transaction receipt via Etherscan V2 API...');
+    const receiptResponse = await fetch(txReceiptUrl);
+    const receiptData: TransactionReceiptResponse = await receiptResponse.json();
+    
+    console.log('Transaction receipt response:', JSON.stringify(receiptData));
+    
+    if (receiptData.status !== '1') {
+      console.error('Receipt API error:', receiptData);
+      
+      // Fallback: check token transfers
+      const tokenTxUrl = `https://api.etherscan.io/v2/api?chainid=${chainId}&module=account&action=tokentx&contractaddress=${tokenAddress}&address=${customerAddress}&page=1&offset=100&sort=desc&apikey=${BASESCAN_API_KEY}`;
+      
+      console.log('Querying token transactions via V2 API...');
+      const tokenResponse = await fetch(tokenTxUrl);
+      const tokenData: BasescanV2Response = await tokenResponse.json();
+      
+      console.log('Token transactions response status:', tokenData.status, 'message:', tokenData.message);
+      
+      if (tokenData.status !== '1' || !Array.isArray(tokenData.result)) {
+        throw new Error('Unable to verify transaction. Please wait a few minutes and try again.');
+      }
+      
+      const transaction = tokenData.result.find(
+        (tx) => tx.hash.toLowerCase() === transactionHash.toLowerCase()
+      );
+      
+      if (!transaction) {
+        throw new Error('Transaction not found. It may still be processing. Please wait and try again.');
+      }
+      
+      console.log('Transaction found in token transfers:', {
+        from: transaction.from,
+        to: transaction.to,
+        value: transaction.value,
+      });
+      
+      // Verify transaction was from the customer
+      if (transaction.from.toLowerCase() !== customerAddress.toLowerCase()) {
+        throw new Error('Transaction sender does not match customer');
+      }
+    } else {
+      // Check if transaction succeeded
+      if (receiptData.result?.status !== '1') {
+        console.error('Transaction failed:', receiptData.result);
+        throw new Error('Transaction failed on blockchain');
+      }
+      
+      console.log('Transaction confirmed via receipt status');
     }
-
-    if (receipt.status && receipt.status !== '0x1') {
-      console.error('Transaction failed on blockchain:', receipt.status);
-      throw new Error('Transaction failed on blockchain');
-    }
-
-    console.log('Transaction receipt confirmed, checking sender and contract...');
-
-    const txResponse = await fetch(rpcUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 2,
-        method: 'eth_getTransactionByHash',
-        params: [transactionHash],
-      }),
-    });
-
-    const txData = (await txResponse.json()) as any;
-    console.log('RPC tx response:', JSON.stringify(txData));
-
-    if (txData.error) {
-      console.error('RPC tx error:', txData.error);
-      throw new Error('Blockchain verification failed');
-    }
-
-    const tx = txData.result;
-
-    if (!tx) {
-      throw new Error('Transaction not found yet. Please wait a moment and try again.');
-    }
-
-    if (tx.from && tx.from.toLowerCase() !== customerAddress.toLowerCase()) {
-      throw new Error('Transaction sender does not match customer');
-    }
-
-    if (tx.to && tx.to.toLowerCase() !== tokenAddress.toLowerCase()) {
-      throw new Error('Transaction recipient does not match token contract');
-    }
-
-    console.log('Blockchain transaction verified via Base RPC');
 
     // Generate voucher code
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';

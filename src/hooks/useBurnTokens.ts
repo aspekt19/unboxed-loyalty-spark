@@ -1,10 +1,10 @@
-import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
+import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { parseUnits } from 'viem';
 import { toast } from 'sonner';
-import { encodeWithBuilderCode } from '@/config/builder-code';
+import { BUILDER_CODE_SUFFIX } from '@/config/builder-code';
 
 export function useBurnTokens() {
-  const { sendTransaction, data: hash, isPending, error } = useSendTransaction();
+  const { writeContract, data: hash, isPending, error } = useWriteContract();
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
@@ -14,32 +14,27 @@ export function useBurnTokens() {
     try {
       const amountInWei = parseUnits(amount, 18);
       
+      // Если указан recipientAddress, используем transfer, иначе burn
       if (recipientAddress) {
-        console.log('[BurnTokens] Transfer with Builder Code attribution');
+        console.log('[BurnTokens] Transfer with Builder Code attribution:', BUILDER_CODE_SUFFIX);
         
-        const transferData = encodeWithBuilderCode(
-          tokenAbi,
-          'transfer',
-          [recipientAddress as `0x${string}`, amountInWei]
-        );
-
-        sendTransaction({
-          to: tokenAddress as `0x${string}`,
-          data: transferData,
-        });
+        writeContract({
+          address: tokenAddress as `0x${string}`,
+          abi: tokenAbi,
+          functionName: 'transfer',
+          args: [recipientAddress as `0x${string}`, amountInWei],
+          dataSuffix: BUILDER_CODE_SUFFIX,
+        } as any);
       } else {
-        console.log('[BurnTokens] Burn with Builder Code attribution');
+        console.log('[BurnTokens] Burn with Builder Code attribution:', BUILDER_CODE_SUFFIX);
         
-        const burnData = encodeWithBuilderCode(
-          tokenAbi,
-          'burn',
-          [amountInWei]
-        );
-
-        sendTransaction({
-          to: tokenAddress as `0x${string}`,
-          data: burnData,
-        });
+        writeContract({
+          address: tokenAddress as `0x${string}`,
+          abi: tokenAbi,
+          functionName: 'burn',
+          args: [amountInWei],
+          dataSuffix: BUILDER_CODE_SUFFIX,
+        } as any);
       }
     } catch (error) {
       console.error('[BurnTokens] Token transfer/burn error:', error);

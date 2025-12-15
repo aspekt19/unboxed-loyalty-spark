@@ -1,13 +1,13 @@
-import { useSendTransaction, useWaitForTransactionReceipt, useAccount, usePublicClient } from 'wagmi';
+import { useWriteContract, useWaitForTransactionReceipt, useAccount, usePublicClient } from 'wagmi';
 import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
 import { useEffect, useState, useCallback } from 'react';
-import { encodeWithBuilderCode } from '@/config/builder-code';
+import { BUILDER_CODE_SUFFIX } from '@/config/builder-code';
 
 export function useDeployLoyaltyToken() {
   const { address } = useAccount();
   const publicClient = usePublicClient();
-  const { sendTransaction, data: hash, isPending, error } = useSendTransaction();
+  const { writeContract, data: hash, isPending, error } = useWriteContract();
   const [deployedTokenAddress, setDeployedTokenAddress] = useState<string | null>(null);
 
   const { isLoading: isConfirming, isSuccess, data: receipt } = useWaitForTransactionReceipt({
@@ -54,23 +54,20 @@ export function useDeployLoyaltyToken() {
     setDeployedTokenAddress(null);
 
     try {
-      console.log('[DeployToken] Deploy with Builder Code attribution');
+      console.log('[DeployToken] Deploy with Builder Code attribution:', BUILDER_CODE_SUFFIX);
       
-      const deployData = encodeWithBuilderCode(
-        CONTRACTS.LOYALTY_TOKEN_FACTORY.abi,
-        'createLoyaltyToken',
-        [name, symbol, address]
-      );
-
-      sendTransaction({
-        to: CONTRACTS.LOYALTY_TOKEN_FACTORY.address,
-        data: deployData,
-      });
+      writeContract({
+        address: CONTRACTS.LOYALTY_TOKEN_FACTORY.address,
+        abi: CONTRACTS.LOYALTY_TOKEN_FACTORY.abi,
+        functionName: 'createLoyaltyToken',
+        args: [name, symbol, address],
+        dataSuffix: BUILDER_CODE_SUFFIX,
+      } as any);
     } catch (error) {
       console.error('[DeployToken] Deploy error:', error);
       toast.error('Failed to create loyalty token');
     }
-  }, [address, sendTransaction]);
+  }, [address, writeContract]);
 
   return {
     deployToken,
