@@ -1,9 +1,10 @@
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { parseUnits } from 'viem';
 import { toast } from 'sonner';
+import { encodeWithBuilderCode } from '@/config/builder-code';
 
 export function useTransferTokens() {
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
+  const { sendTransaction, data: hash, isPending, error } = useSendTransaction();
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
@@ -13,14 +14,20 @@ export function useTransferTokens() {
     try {
       const amountInWei = parseUnits(amount, 18);
       
-      writeContract({
-        address: tokenAddress as `0x${string}`,
-        abi: tokenAbi,
-        functionName: 'transfer',
-        args: [recipientAddress as `0x${string}`, amountInWei],
-      } as any);
+      console.log('[TransferTokens] Transfer with Builder Code attribution');
+      
+      const transferData = encodeWithBuilderCode(
+        tokenAbi,
+        'transfer',
+        [recipientAddress as `0x${string}`, amountInWei]
+      );
+
+      sendTransaction({
+        to: tokenAddress as `0x${string}`,
+        data: transferData,
+      });
     } catch (error) {
-      console.error('Transfer error:', error);
+      console.error('[TransferTokens] Transfer error:', error);
       toast.error('Failed to transfer tokens');
     }
   };

@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface BasescanResponse {
+interface BasescanV2Response {
   status: string;
   message: string;
   result: {
@@ -15,8 +15,16 @@ interface BasescanResponse {
     value: string;
     contractAddress: string;
     tokenDecimal: string;
-    isError: string;
+    isError?: string;
   }[];
+}
+
+interface TransactionReceiptResponse {
+  status: string;
+  message: string;
+  result: {
+    status: string;
+  };
 }
 
 interface VoucherRequest {
@@ -121,72 +129,76 @@ Deno.serve(async (req) => {
       throw new Error('Cost mismatch');
     }
 
-    // Verify the transaction on blockchain
-    const BASESCAN_API_KEY = Deno.env.get('BASESCAN_API_KEY');
-    if (!BASESCAN_API_KEY) {
-      console.error('Basescan API key not configured');
-      throw new Error('Blockchain verification service not available');
+    // Verify the transaction on blockchain using Base JSON-RPC (no third-party API limits)
+    const rpcUrl = 'https://base-rpc.publicnode.com';
+
+    console.log('Checking transaction receipt via Base RPC...');
+    const receiptResponse = await fetch(rpcUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'eth_getTransactionReceipt',
+        params: [transactionHash],
+      }),
+    });
+
+    const receiptData = (await receiptResponse.json()) as any;
+    console.log('RPC receipt response:', JSON.stringify(receiptData));
+
+    if (receiptData.error) {
+      console.error('RPC receipt error:', receiptData.error);
+      throw new Error('Blockchain verification failed');
     }
 
-    // Query Basescan for the transaction
-    // We're looking for ERC20 token transfers from the customer
-    const basescanUrl = `https://api.basescan.org/api?module=account&action=tokentx&contractaddress=${tokenAddress}&address=${customerAddress}&page=1&offset=100&sort=desc&apikey=${BASESCAN_API_KEY}`;
+    const receipt = receiptData.result;
 
-    console.log('Querying Basescan for token transactions...');
-    const response = await fetch(basescanUrl);
-    const data: BasescanResponse = await response.json();
-
-    console.log('Basescan API response status:', data.status);
-
-    if (data.status !== '1') {
-      // Try to get transaction receipt directly
-      const txReceiptUrl = `https://api.basescan.org/api?module=transaction&action=gettxreceiptstatus&txhash=${transactionHash}&apikey=${BASESCAN_API_KEY}`;
-      const receiptResponse = await fetch(txReceiptUrl);
-      const receiptData = await receiptResponse.json();
-      
-      if (receiptData.status === '1' && receiptData.result.status === '1') {
-        // Transaction succeeded but not in token transfer list yet
-        console.log('Transaction confirmed via receipt, allowing voucher creation');
-      } else {
-        console.error('Transaction verification failed:', receiptData);
-        throw new Error('Transaction not confirmed on blockchain. Please wait and try again.');
-      }
-    } else {
-      // Find the transaction in the token transfers
-      const transaction = data.result.find(
-        (tx) => tx.hash.toLowerCase() === transactionHash.toLowerCase()
-      );
-
-      if (!transaction) {
-        // Check if transaction is pending/not indexed yet
-        console.warn('Transaction not found in token transfers, checking receipt...');
-        const txReceiptUrl = `https://api.basescan.org/api?module=transaction&action=gettxreceiptstatus&txhash=${transactionHash}&apikey=${BASESCAN_API_KEY}`;
-        const receiptResponse = await fetch(txReceiptUrl);
-        const receiptData = await receiptResponse.json();
-        
-        if (receiptData.status !== '1' || receiptData.result.status !== '1') {
-          throw new Error('Transaction not found or not confirmed. Please wait and try again.');
-        }
-        console.log('Transaction confirmed via receipt');
-      } else {
-        console.log('Transaction found:', {
-          from: transaction.from,
-          to: transaction.to,
-          value: transaction.value,
-          decimals: transaction.tokenDecimal,
-        });
-
-        // Verify transaction was from the customer
-        if (transaction.from.toLowerCase() !== customerAddress.toLowerCase()) {
-          throw new Error('Transaction sender does not match customer');
-        }
-
-        // Verify transaction was successful
-        if (transaction.isError !== '0') {
-          throw new Error('Transaction failed on blockchain');
-        }
-      }
+    if (!receipt) {
+      throw new Error('Transaction not found yet. Please wait a moment and try again.');
     }
+
+    if (receipt.status && receipt.status !== '0x1') {
+      console.error('Transaction failed on blockchain:', receipt.status);
+      throw new Error('Transaction failed on blockchain');
+    }
+
+    console.log('Transaction receipt confirmed, checking sender and contract...');
+
+    const txResponse = await fetch(rpcUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'eth_getTransactionByHash',
+        params: [transactionHash],
+      }),
+    });
+
+    const txData = (await txResponse.json()) as any;
+    console.log('RPC tx response:', JSON.stringify(txData));
+
+    if (txData.error) {
+      console.error('RPC tx error:', txData.error);
+      throw new Error('Blockchain verification failed');
+    }
+
+    const tx = txData.result;
+
+    if (!tx) {
+      throw new Error('Transaction not found yet. Please wait a moment and try again.');
+    }
+
+    if (tx.from && tx.from.toLowerCase() !== customerAddress.toLowerCase()) {
+      throw new Error('Transaction sender does not match customer');
+    }
+
+    if (tx.to && tx.to.toLowerCase() !== tokenAddress.toLowerCase()) {
+      throw new Error('Transaction recipient does not match token contract');
+    }
+
+    console.log('Blockchain transaction verified via Base RPC');
 
     // Generate voucher code
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';

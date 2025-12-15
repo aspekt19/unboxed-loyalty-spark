@@ -1,10 +1,11 @@
 import { useCallback, useEffect } from 'react';
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
+import { useSendTransaction, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { maxUint256 } from 'viem';
 import { toast } from 'sonner';
+import { encodeWithBuilderCode } from '@/config/builder-code';
 
 export function useApproveTokens() {
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
+  const { sendTransaction, data: hash, isPending, error } = useSendTransaction();
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
@@ -30,28 +31,26 @@ export function useApproveTokens() {
     console.log('🚀 useApproveTokens: approveTokens called');
     console.log('useApproveTokens: tokenAddress:', tokenAddress);
     console.log('useApproveTokens: spenderAddress:', spenderAddress);
-    console.log('useApproveTokens: isPending before call:', isPending);
+    console.log('[ApproveTokens] Approve with Builder Code attribution');
     
     try {
-      console.log('useApproveTokens: Calling writeContract with args:', {
-        address: tokenAddress,
-        spender: spenderAddress,
-        amount: maxUint256.toString(),
+      const approveData = encodeWithBuilderCode(
+        tokenAbi,
+        'approve',
+        [spenderAddress as `0x${string}`, maxUint256]
+      );
+
+      sendTransaction({
+        to: tokenAddress as `0x${string}`,
+        data: approveData,
       });
       
-      writeContract({
-        address: tokenAddress as `0x${string}`,
-        abi: tokenAbi,
-        functionName: 'approve',
-        args: [spenderAddress as `0x${string}`, maxUint256],
-      } as any);
-      
-      console.log('useApproveTokens: writeContract called');
+      console.log('useApproveTokens: sendTransaction called');
     } catch (error) {
       console.error('❌ useApproveTokens: Caught error:', error);
       toast.error('Failed to initiate approval');
     }
-  }, [writeContract, isPending]);
+  }, [sendTransaction]);
 
   console.log('useApproveTokens hook state:', { 
     isPending, 
