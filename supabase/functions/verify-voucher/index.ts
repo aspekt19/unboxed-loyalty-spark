@@ -37,6 +37,15 @@ interface VoucherRequest {
   cost: number;
 }
 
+const ERC20_TRANSFER_TOPIC =
+  '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+
+function topicToAddress(topic: string) {
+  // topic is 32-bytes hex; take last 20 bytes
+  return `0x${topic.slice(-40)}`.toLowerCase();
+}
+
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -222,16 +231,37 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (tx.from && tx.from.toLowerCase() !== customerAddress.toLowerCase()) {
-      throw new Error('Transaction sender does not match customer');
-    }
+    // NOTE: In some mobile wallets / relayed flows, tx.from can be a relayer.
+    // We verify ownership using ERC-20 Transfer logs instead (authoritative for token movement).
 
-    // For ERC-20 transfers, tx.to should be the token contract.
+    // For a direct ERC-20 transfer, tx.to should be the token contract.
     if (tx.to && tx.to.toLowerCase() !== tokenAddress.toLowerCase()) {
       throw new Error('Transaction recipient does not match token contract');
     }
 
-    console.log('Blockchain transaction verified via Base RPC');
+    const receiptLogs = Array.isArray(receipt?.logs) ? receipt.logs : [];
+    const tokenAddr = tokenAddress.toLowerCase();
+    const customerAddr = customerAddress.toLowerCase();
+    const merchantAddr = merchantAddress.toLowerCase();
+
+    const hasExpectedTransfer = receiptLogs.some((log: any) => {
+      const logAddr = (log?.address || '').toLowerCase();
+      const topics = Array.isArray(log?.topics) ? log.topics : [];
+      if (logAddr !== tokenAddr) return false;
+      if (topics[0]?.toLowerCase() !== ERC20_TRANSFER_TOPIC) return false;
+      if (topics.length < 3) return false;
+
+      const fromAddr = topicToAddress(topics[1]);
+      const toAddr = topicToAddress(topics[2]);
+      return fromAddr === customerAddr && toAddr === merchantAddr;
+    });
+
+    if (!hasExpectedTransfer) {
+      throw new Error('Unable to verify token transfer in transaction logs');
+    }
+
+    console.log('Blockchain transaction verified via Base RPC (logs matched)');
+
 
     // Generate voucher code
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
