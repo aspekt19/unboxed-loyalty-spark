@@ -131,31 +131,50 @@ Deno.serve(async (req) => {
 
     // Verify the transaction on blockchain using Base JSON-RPC (no third-party API limits)
     const rpcUrl = 'https://base-rpc.publicnode.com';
+    const normalizedTxHash = transactionHash.startsWith('0x') ? transactionHash : `0x${transactionHash}`;
 
-    console.log('Checking transaction receipt via Base RPC...');
-    const receiptResponse = await fetch(rpcUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'eth_getTransactionReceipt',
-        params: [transactionHash],
-      }),
-    });
+    const maxAttempts = 5;
+    const delayMs = 2500;
 
-    const receiptData = (await receiptResponse.json()) as any;
-    console.log('RPC receipt response:', JSON.stringify(receiptData));
+    console.log('Checking transaction receipt via Base RPC (polling)...');
 
-    if (receiptData.error) {
-      console.error('RPC receipt error:', receiptData.error);
-      throw new Error('Blockchain verification failed');
+    let receipt: any = null;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const receiptResponse = await fetch(rpcUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'eth_getTransactionReceipt',
+          params: [normalizedTxHash],
+        }),
+      });
+
+      const receiptData = (await receiptResponse.json()) as any;
+      if (receiptData?.error) {
+        console.error('RPC receipt error:', receiptData.error);
+        throw new Error('Blockchain verification failed');
+      }
+
+      receipt = receiptData?.result ?? null;
+      if (receipt) break;
+
+      console.log('Receipt not found yet, retrying...', { attempt, maxAttempts });
+      if (attempt < maxAttempts) await new Promise((r) => setTimeout(r, delayMs));
     }
 
-    const receipt = receiptData.result;
-
     if (!receipt) {
-      throw new Error('Transaction not found yet. Please wait a moment and try again.');
+      // IMPORTANT: return 200 so the web client doesn't treat it as a transport error.
+      return new Response(
+        JSON.stringify({
+          success: false,
+          retryable: true,
+          retry_after_ms: delayMs,
+          error: 'Transaction not found yet. Please wait a moment and try again.',
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     if (receipt.status && receipt.status !== '0x1') {
@@ -165,35 +184,49 @@ Deno.serve(async (req) => {
 
     console.log('Transaction receipt confirmed, checking sender and contract...');
 
-    const txResponse = await fetch(rpcUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 2,
-        method: 'eth_getTransactionByHash',
-        params: [transactionHash],
-      }),
-    });
+    let tx: any = null;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const txResponse = await fetch(rpcUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 2,
+          method: 'eth_getTransactionByHash',
+          params: [normalizedTxHash],
+        }),
+      });
 
-    const txData = (await txResponse.json()) as any;
-    console.log('RPC tx response:', JSON.stringify(txData));
+      const txData = (await txResponse.json()) as any;
+      if (txData?.error) {
+        console.error('RPC tx error:', txData.error);
+        throw new Error('Blockchain verification failed');
+      }
 
-    if (txData.error) {
-      console.error('RPC tx error:', txData.error);
-      throw new Error('Blockchain verification failed');
+      tx = txData?.result ?? null;
+      if (tx) break;
+
+      console.log('Tx not found yet, retrying...', { attempt, maxAttempts });
+      if (attempt < maxAttempts) await new Promise((r) => setTimeout(r, delayMs));
     }
 
-    const tx = txData.result;
-
     if (!tx) {
-      throw new Error('Transaction not found yet. Please wait a moment and try again.');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          retryable: true,
+          retry_after_ms: delayMs,
+          error: 'Transaction not found yet. Please wait a moment and try again.',
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     if (tx.from && tx.from.toLowerCase() !== customerAddress.toLowerCase()) {
       throw new Error('Transaction sender does not match customer');
     }
 
+    // For ERC-20 transfers, tx.to should be the token contract.
     if (tx.to && tx.to.toLowerCase() !== tokenAddress.toLowerCase()) {
       throw new Error('Transaction recipient does not match token contract');
     }
