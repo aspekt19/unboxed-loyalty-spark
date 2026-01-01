@@ -31,31 +31,56 @@ export async function createVerifiedVoucher(
 ): Promise<VerifiedVoucherResponse> {
   try {
     console.log('[createVerifiedVoucher] Starting verified voucher creation:', request.transactionHash);
-    
-    const { data, error } = await supabase.functions.invoke('verify-voucher', {
-      body: request,
-    });
 
-    if (error) {
-      console.error('[createVerifiedVoucher] Edge function error:', error);
+    // Retry a few times because Base RPC / indexers can be slightly behind on mobile.
+    const maxAttempts = 3;
+    const baseDelayMs = 2500;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const { data, error } = await supabase.functions.invoke('verify-voucher', {
+        body: request,
+      });
+
+      if (error) {
+        console.error('[createVerifiedVoucher] Edge function error:', error);
+        return {
+          success: false,
+          error: error.message || 'Failed to verify voucher',
+        };
+      }
+
+      if (data?.success) {
+        console.log('[createVerifiedVoucher] Voucher created successfully:', data.voucher);
+        return {
+          success: true,
+          voucher: data.voucher,
+        };
+      }
+
+      const retryable = Boolean(data?.retryable);
+      const retryAfter = Number(data?.retry_after_ms ?? baseDelayMs);
+
+      if (retryable && attempt < maxAttempts) {
+        console.warn('[createVerifiedVoucher] Retryable verification response, retrying...', {
+          attempt,
+          maxAttempts,
+          retryAfter,
+          error: data?.error,
+        });
+        await new Promise((r) => setTimeout(r, retryAfter));
+        continue;
+      }
+
+      console.error('[createVerifiedVoucher] Verification failed:', data?.error);
       return {
         success: false,
-        error: error.message || 'Failed to verify voucher',
+        error: data?.error || 'Voucher verification failed',
       };
     }
 
-    if (!data.success) {
-      console.error('[createVerifiedVoucher] Verification failed:', data.error);
-      return {
-        success: false,
-        error: data.error || 'Voucher verification failed',
-      };
-    }
-
-    console.log('[createVerifiedVoucher] Voucher created successfully:', data.voucher);
     return {
-      success: true,
-      voucher: data.voucher,
+      success: false,
+      error: 'Voucher verification failed',
     };
   } catch (error) {
     console.error('[createVerifiedVoucher] Unexpected error:', error);
@@ -65,3 +90,4 @@ export async function createVerifiedVoucher(
     };
   }
 }
+
