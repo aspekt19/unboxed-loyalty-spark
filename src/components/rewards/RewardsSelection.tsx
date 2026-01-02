@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import { Gift, AlertCircle, Loader2, Ticket, X } from 'lucide-react';
+import { Gift, AlertCircle, Loader2, Ticket, X, RefreshCw, CheckCircle } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { parseUnits } from 'viem';
 import { useBurnTokens } from '@/hooks/useBurnTokens';
@@ -46,6 +46,23 @@ export function RewardsSelection() {
     cost: number;
   } | null>(null);
   const [isRecovering, setIsRecovering] = useState(false);
+  
+  // Verification status state for better UX
+  const [verificationStatus, setVerificationStatus] = useState<{
+    isVerifying: boolean;
+    attempt: number;
+    maxAttempts: number;
+    hash: string | null;
+    rewardName: string | null;
+    canRetry: boolean;
+  }>({
+    isVerifying: false,
+    attempt: 0,
+    maxAttempts: 5,
+    hash: null,
+    rewardName: null,
+    canRetry: false,
+  });
   
   const { balances, isLoading: balancesLoading, refetch } = useMultiTokenBalance(tokens);
   const { burnTokens, isPending, isSuccess, hash } = useBurnTokens();
@@ -235,16 +252,32 @@ export function RewardsSelection() {
         // Помечаем hash как обработанный сразу, чтобы избежать дублирования
         setProcessedHash(hash);
 
+        // Start verification UI
+        const maxAttempts = 5;
+        setVerificationStatus({
+          isVerifying: true,
+          attempt: 1,
+          maxAttempts,
+          hash,
+          rewardName: reward.name,
+          canRetry: false,
+        });
+
         console.log('[handleVoucherCreation] Calling Edge Function for blockchain-verified voucher creation...');
         
         // Use verified voucher creation via Edge Function
         let result = null;
         let attempts = 0;
-        const maxAttempts = 3;
         
         while (!result?.success && attempts < maxAttempts) {
           attempts++;
           console.log(`[handleVoucherCreation] Attempt ${attempts} of ${maxAttempts}`);
+          
+          setVerificationStatus(prev => ({
+            ...prev,
+            attempt: attempts,
+            canRetry: false,
+          }));
           
           if (attempts > 1) {
             // Wait before retry (increasing delay for blockchain propagation)
@@ -260,10 +293,23 @@ export function RewardsSelection() {
             merchantAddress: reward.merchantAddress,
             cost: reward.cost,
           });
+          
+          // If retryable, continue; otherwise break
+          if (!result?.success && result?.retryable === false) {
+            break;
+          }
         }
 
         if (result?.success && result.voucher) {
           console.log('[handleVoucherCreation] Verified voucher created successfully:', result.voucher.id);
+          setVerificationStatus({
+            isVerifying: false,
+            attempt: 0,
+            maxAttempts: 5,
+            hash: null,
+            rewardName: null,
+            canRetry: false,
+          });
           toast.success(`Voucher activated! Code: ${result.voucher.code}`);
           setSelectedRewardId('');
           setFailedVoucherAttempt(null);
@@ -273,6 +319,12 @@ export function RewardsSelection() {
           window.dispatchEvent(new Event('tokenBalancesUpdated'));
         } else {
           console.error('[handleVoucherCreation] Failed to create verified voucher after', attempts, 'attempts:', result?.error);
+          // Show retry option
+          setVerificationStatus(prev => ({
+            ...prev,
+            isVerifying: false,
+            canRetry: true,
+          }));
           // Save info for recovery
           setFailedVoucherAttempt({
             hash,
@@ -281,7 +333,6 @@ export function RewardsSelection() {
             tokenAddress: selectedTokenAddress,
             cost: reward.cost,
           });
-          toast.error(result?.error || 'Failed to create voucher. Use the recovery button below to restore it.');
         }
       }
     };
@@ -504,14 +555,29 @@ export function RewardsSelection() {
 
       console.log('[handleRecoverVoucher] Program data loaded, creating verified voucher...');
       
+      // Show verification UI
+      const maxAttempts = 5;
+      setVerificationStatus({
+        isVerifying: true,
+        attempt: 1,
+        maxAttempts,
+        hash: failedVoucherAttempt.hash,
+        rewardName: failedVoucherAttempt.rewardName,
+        canRetry: false,
+      });
+      
       // Use verified voucher creation via Edge Function
       let result = null;
       let attempts = 0;
-      const maxAttempts = 5;
       
       while (!result?.success && attempts < maxAttempts) {
         attempts++;
         console.log(`[handleRecoverVoucher] Attempt ${attempts} of ${maxAttempts}`);
+        
+        setVerificationStatus(prev => ({
+          ...prev,
+          attempt: attempts,
+        }));
         
         if (attempts > 1) {
           // Wait longer between retries for blockchain propagation
@@ -525,6 +591,7 @@ export function RewardsSelection() {
             console.error('[handleRecoverVoucher] Session lost during retry');
             toast.error('Session expired. Please try again.');
             setIsRecovering(false);
+            setVerificationStatus(prev => ({ ...prev, isVerifying: false, canRetry: true }));
             return;
           }
         }
@@ -541,12 +608,24 @@ export function RewardsSelection() {
         
         if (!result.success) {
           console.log(`[handleRecoverVoucher] Attempt ${attempts} failed:`, result.error);
+          // If not retryable, break immediately
+          if (result?.retryable === false) {
+            break;
+          }
         }
       }
 
       if (result?.success && result.voucher) {
         console.log('[handleRecoverVoucher] Voucher recovered successfully:', result.voucher.id);
-        toast.success(`Voucher recovered successfully! Code: ${result.voucher.code}`);
+        setVerificationStatus({
+          isVerifying: false,
+          attempt: 0,
+          maxAttempts: 5,
+          hash: null,
+          rewardName: null,
+          canRetry: false,
+        });
+        toast.success(`Voucher activated! Code: ${result.voucher.code}`);
         setFailedVoucherAttempt(null);
         setSelectedRewardId('');
         // Update data
@@ -555,7 +634,11 @@ export function RewardsSelection() {
         window.dispatchEvent(new Event('tokenBalancesUpdated'));
       } else {
         console.error('[handleRecoverVoucher] Failed after', attempts, 'attempts:', result?.error);
-        toast.error(result?.error || 'Recovery failed. Please contact support with transaction hash: ' + failedVoucherAttempt.hash.slice(0, 10) + '...');
+        setVerificationStatus(prev => ({
+          ...prev,
+          isVerifying: false,
+          canRetry: true,
+        }));
       }
     } catch (error) {
       console.error('[handleRecoverVoucher] Unexpected error:', error);
@@ -612,8 +695,92 @@ export function RewardsSelection() {
           </Alert>
         ) : (
           <div className="space-y-4">
-            {/* Alert для восстановления потерянного ваучера */}
-            {failedVoucherAttempt && (
+            {/* Verification in progress UI */}
+            {verificationStatus.isVerifying && (
+              <Alert className="border-primary/50 bg-primary/10">
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                <AlertDescription>
+                  <div className="space-y-2">
+                    <p className="font-semibold text-primary">Verifying Transaction...</p>
+                    <p className="text-sm text-muted-foreground">
+                      Please wait while we confirm your payment on the blockchain.
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>Attempt {verificationStatus.attempt} of {verificationStatus.maxAttempts}</span>
+                      <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
+                        <div 
+                          className="bg-primary h-full transition-all duration-500" 
+                          style={{ width: `${(verificationStatus.attempt / verificationStatus.maxAttempts) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                    {verificationStatus.rewardName && (
+                      <p className="text-xs">
+                        <span className="font-medium">Reward:</span> {verificationStatus.rewardName}
+                      </p>
+                    )}
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Verification failed with retry option */}
+            {!verificationStatus.isVerifying && verificationStatus.canRetry && failedVoucherAttempt && (
+              <Alert className="border-amber-500/50 bg-amber-500/10">
+                <RefreshCw className="h-4 w-4 text-amber-600" />
+                <div className="flex flex-col gap-3">
+                  <AlertDescription>
+                    <div className="space-y-2">
+                      <p className="font-semibold text-amber-700 dark:text-amber-400">
+                        Verification Pending
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Your payment was sent but verification is taking longer than expected. 
+                        The blockchain may need a few more seconds to process.
+                      </p>
+                      <div className="space-y-1 text-xs">
+                        <p><span className="font-medium">Reward:</span> {failedVoucherAttempt.rewardName}</p>
+                        <p><span className="font-medium">Cost:</span> {failedVoucherAttempt.cost} tokens</p>
+                      </div>
+                    </div>
+                  </AlertDescription>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleRecoverVoucher}
+                      disabled={isRecovering}
+                      size="sm"
+                      variant="default"
+                      className="flex-1"
+                    >
+                      {isRecovering ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Verifying...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="mr-2 h-4 w-4" />
+                          Retry Now
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setFailedVoucherAttempt(null);
+                        setVerificationStatus(prev => ({ ...prev, canRetry: false }));
+                      }}
+                      size="sm"
+                      variant="ghost"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </Alert>
+            )}
+
+            {/* Legacy alert for recovery (only show when canRetry is false) */}
+            {failedVoucherAttempt && !verificationStatus.canRetry && !verificationStatus.isVerifying && (
               <Alert variant="destructive" className="border-destructive/50 bg-destructive/10 relative">
                 <button
                   onClick={() => setFailedVoucherAttempt(null)}

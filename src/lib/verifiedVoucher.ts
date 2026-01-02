@@ -12,6 +12,7 @@ interface VerifiedVoucherRequest {
 
 interface VerifiedVoucherResponse {
   success: boolean;
+  retryable?: boolean;
   voucher?: {
     id: string;
     code: string;
@@ -74,6 +75,7 @@ export async function createVerifiedVoucher(
       console.error('[createVerifiedVoucher] Verification failed:', data?.error);
       return {
         success: false,
+        retryable: retryable,
         error: data?.error || 'Voucher verification failed',
       };
     }
