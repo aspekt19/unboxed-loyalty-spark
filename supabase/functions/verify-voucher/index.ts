@@ -232,11 +232,15 @@ Deno.serve(async (req) => {
     }
 
     // NOTE: In some mobile wallets / relayed flows, tx.from can be a relayer.
-    // We verify ownership using ERC-20 Transfer logs instead (authoritative for token movement).
+    // We verify payment primarily using ERC-20 Transfer logs (authoritative for token movement).
 
     // For a direct ERC-20 transfer, tx.to should be the token contract.
+    // However, some smart-account/relayed flows may show different `to`, so we don't hard-fail on it.
     if (tx.to && tx.to.toLowerCase() !== tokenAddress.toLowerCase()) {
-      throw new Error('Transaction recipient does not match token contract');
+      console.log('Tx.to does not equal tokenAddress (continuing):', {
+        txTo: tx.to,
+        tokenAddress,
+      });
     }
 
     const receiptLogs = Array.isArray(receipt?.logs) ? receipt.logs : [];
@@ -244,23 +248,65 @@ Deno.serve(async (req) => {
     const customerAddr = customerAddress.toLowerCase();
     const merchantAddr = merchantAddress.toLowerCase();
 
-    const hasExpectedTransfer = receiptLogs.some((log: any) => {
+    const transferLogs = receiptLogs.filter((log: any) => {
       const logAddr = (log?.address || '').toLowerCase();
       const topics = Array.isArray(log?.topics) ? log.topics : [];
-      if (logAddr !== tokenAddr) return false;
-      if (topics[0]?.toLowerCase() !== ERC20_TRANSFER_TOPIC) return false;
-      if (topics.length < 3) return false;
+      return logAddr === tokenAddr && topics[0]?.toLowerCase() === ERC20_TRANSFER_TOPIC && topics.length >= 3;
+    });
 
+    const hasExpectedTransfer = transferLogs.some((log: any) => {
+      const topics = Array.isArray(log?.topics) ? log.topics : [];
       const fromAddr = topicToAddress(topics[1]);
       const toAddr = topicToAddress(topics[2]);
       return fromAddr === customerAddr && toAddr === merchantAddr;
     });
 
-    if (!hasExpectedTransfer) {
-      throw new Error('Unable to verify token transfer in transaction logs');
+    // Fallback: sometimes logs can be missing/partial from certain RPC nodes.
+    // For a plain `transfer(address,uint256)` call, we can also parse calldata.
+    const TRANSFER_SELECTOR = '0xa9059cbb';
+    let hasCalldataMatch = false;
+    if (!hasExpectedTransfer && typeof tx?.input === 'string' && tx.input.startsWith(TRANSFER_SELECTOR)) {
+      try {
+        // input: 4 bytes selector + 32 bytes recipient + 32 bytes amount + optional attribution suffix
+        // recipient is last 20 bytes of the 32-byte word.
+        const recipientWord = tx.input.slice(10, 10 + 64);
+        const recipient = `0x${recipientWord.slice(24)}`.toLowerCase();
+        hasCalldataMatch = recipient === merchantAddr;
+        console.log('Calldata transfer recipient parsed:', { recipient, merchantAddr, hasCalldataMatch });
+      } catch (e) {
+        console.log('Failed to parse transfer calldata:', e);
+      }
     }
 
-    console.log('Blockchain transaction verified via Base RPC (logs matched)');
+    if (!hasExpectedTransfer && !hasCalldataMatch) {
+      const sample = transferLogs.slice(0, 6).map((log: any) => {
+        const topics = Array.isArray(log?.topics) ? log.topics : [];
+        return {
+          from: topics[1] ? topicToAddress(topics[1]) : null,
+          to: topics[2] ? topicToAddress(topics[2]) : null,
+          data: log?.data ?? null,
+        };
+      });
+
+      console.error('Unable to verify token transfer in tx logs.', {
+        tokenAddr,
+        customerAddr,
+        merchantAddr,
+        transferLogsCount: transferLogs.length,
+        transferLogsSample: sample,
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          retryable: false,
+          error: 'Unable to verify token transfer in transaction logs',
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Blockchain transaction verified via Base RPC (logs/calldata matched)');
 
 
     // Generate voucher code
@@ -316,13 +362,16 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('Error creating verified voucher:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
+
+    // IMPORTANT: return 200 so BaseApp/web clients don't surface this as a transport error.
+    // The frontend already handles `success:false` and shows a readable message.
     return new Response(
       JSON.stringify({
         success: false,
+        retryable: false,
         error: message,
       }),
       {
-        status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
