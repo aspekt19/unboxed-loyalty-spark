@@ -35,6 +35,7 @@ export function RewardsSelection() {
   const [selectedTokenAddress, setSelectedTokenAddress] = useState<string>('');
   const [selectedRewardId, setSelectedRewardId] = useState<string>('');
   const [availableRewards, setAvailableRewards] = useState<Reward[]>([]);
+  const [isLoadingRewards, setIsLoadingRewards] = useState(false);
   // Отслеживаем hash транзакции для предотвращения дублирования ваучеров
   const [processedHash, setProcessedHash] = useState<string | undefined>(undefined);
   // Состояние для неудачных попыток создания ваучера
@@ -213,13 +214,24 @@ export function RewardsSelection() {
     };
   }, []);
 
-  // Загрузка наград для выбранного токена
+  // Загрузка наград для выбранного токена - немедленно сбрасываем награду при смене программы
   useEffect(() => {
+    // Немедленно сбрасываем выбранную награду и очищаем список при смене программы
+    setSelectedRewardId('');
+    setAvailableRewards([]);
+    
     const loadRewardsForToken = async () => {
       if (selectedTokenAddress) {
-        const rewards = await getRewardsByToken(selectedTokenAddress);
-        setAvailableRewards(rewards);
-        setSelectedRewardId('');
+        setIsLoadingRewards(true);
+        try {
+          const rewards = await getRewardsByToken(selectedTokenAddress);
+          setAvailableRewards(rewards);
+        } catch (error) {
+          console.error('Error loading rewards:', error);
+          setAvailableRewards([]);
+        } finally {
+          setIsLoadingRewards(false);
+        }
       }
     };
 
@@ -878,7 +890,12 @@ export function RewardsSelection() {
             {selectedTokenAddress && (
               <div className="space-y-2">
                 <Label htmlFor="reward">Select Reward</Label>
-                {availableRewards.length === 0 ? (
+                {isLoadingRewards ? (
+                  <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted/30">
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    <span className="text-sm text-muted-foreground">Loading rewards...</span>
+                  </div>
+                ) : availableRewards.length === 0 ? (
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
@@ -889,7 +906,7 @@ export function RewardsSelection() {
                   <Select
                     value={selectedRewardId}
                     onValueChange={setSelectedRewardId}
-                    disabled={isPending || balancesLoading}
+                    disabled={isPending || balancesLoading || isLoadingRewards}
                   >
                     <SelectTrigger id="reward">
                       <SelectValue placeholder="Select a reward" />
@@ -914,14 +931,14 @@ export function RewardsSelection() {
               </div>
             )}
 
-            {selectedRewardId && (
+            {selectedRewardId && !isLoadingRewards && (
               <Button
                 type="button"
                 onClick={(e) => {
                   e.preventDefault();
                   handleActivate();
                 }}
-                disabled={!selectedRewardId || isPending || balancesLoading || isProgramPaused}
+                disabled={!selectedRewardId || isPending || balancesLoading || isProgramPaused || isLoadingRewards}
                 className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
               >
                 {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
