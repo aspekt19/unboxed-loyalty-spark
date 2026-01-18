@@ -26,8 +26,8 @@
     ],
     "tagline": "Loyalty rewards that grow",
     "heroImageUrl": "https://loyalspark.online/media-kit/hero-banner-new.png",
-    "ogTitle": "Loyal Spark - Loyalty Rewards That Grow",
-    "ogDescription": "Earn loyalty tokens, save automatically, and grow your rewards in DeFi. On-chain loyalty platform with automated investing.",
+    "ogTitle": "Loyal Spark",
+    "ogDescription": "Earn loyalty tokens, save automatically, and grow your rewards in DeFi on BASE.",
     "ogImageUrl": "https://loyalspark.online/media-kit/og-image-new.png",
     "requiredChains": [
       "eip155:8453"
