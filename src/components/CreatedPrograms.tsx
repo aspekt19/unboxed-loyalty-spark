@@ -592,8 +592,8 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         <CardDescription>Select a program to issue rewards</CardDescription>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[350px] pr-4">
-          <div className="space-y-3 pb-4">
+        <ScrollArea className="h-[350px]">
+          <div className="space-y-3 pb-4 pr-4">
             {programs.map((program, index) => (
             <div
               key={index}
