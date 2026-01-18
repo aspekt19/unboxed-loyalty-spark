@@ -3,7 +3,7 @@ import { useAccount } from 'wagmi';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
-import { isFarcasterContext } from '@/hooks/useFarcasterInit';
+import { sdk } from '@farcaster/miniapp-sdk';
 
 interface AuthContextType {
   user: User | null;
@@ -21,14 +21,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const manualSignOutRef = useRef(false);
-  const isFarcaster = useRef(false);
+  const isFarcasterContext = useRef(false);
   const signingInRef = useRef(false);
   const { address, isConnected } = useAccount();
 
-  // Detect Farcaster context on mount (sync check only)
+  // Detect Farcaster context on mount
   useEffect(() => {
-    isFarcaster.current = isFarcasterContext();
-    console.log('[AuthProvider] Farcaster context:', isFarcaster.current);
+    if (typeof window === 'undefined') return;
+    try {
+      // Проверяем SDK контекст - самый надежный способ
+      const hasContext = !!(sdk as any)?.context;
+      
+      // Дополнительные проверки как fallback
+      const urlParams = new URLSearchParams(window.location.search);
+      const hasFarcasterParam = urlParams.has('farcaster') || urlParams.has('fc');
+      const isFarcasterPath = window.location.pathname.includes('/frame');
+      const hasFarcasterUA = /farcaster/i.test(navigator.userAgent);
+      
+      isFarcasterContext.current = hasContext || hasFarcasterParam || isFarcasterPath || hasFarcasterUA;
+      
+      console.log('[AuthProvider] Farcaster context detected:', isFarcasterContext.current, {
+        hasContext,
+        hasFarcasterParam,
+        isFarcasterPath,
+        hasFarcasterUA
+      });
+    } catch (error) {
+      console.error('[AuthProvider] Error detecting Farcaster context:', error);
+      isFarcasterContext.current = false;
+    }
   }, []);
 
   useEffect(() => {
@@ -251,45 +272,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, [isConnected, address, signInWithWallet]);
 
-  // Auto sign-in when wallet connects (non-Farcaster context)
-  // For Farcaster, WalletConnectButton handles this via useFarcasterInit
   useEffect(() => {
-    // Skip if in Farcaster - handled by WalletConnectButton
-    if (isFarcaster.current) return;
-    
-    // Auto-sign in when wallet connects
+    // Автоматический вход при подключении кошелька (только если не было ручного выхода)
     if (isConnected && address && !user && !manualSignOutRef.current) {
       console.log('[AuthProvider] Auto-signing in wallet:', address);
       signInWithWallet();
     }
     
-    // Reset flag when wallet disconnects
+    // Сброс флага при отключении кошелька
     if (!isConnected && manualSignOutRef.current) {
-      console.log('[AuthProvider] Wallet disconnected, resetting flag');
+      console.log('[AuthProvider] Wallet disconnected, resetting flag after delay');
+      // Даем время на полное отключение перед сбросом флага
       const timer = setTimeout(() => {
         manualSignOutRef.current = false;
       }, 2000);
       return () => clearTimeout(timer);
     }
+    
+    // Сброс флага manualSignOut при смене адреса кошелька на новый
+    if (isConnected && address && user) {
+      const currentAddress = address.toLowerCase();
+      // Только сбрасываем если это действительно новый адрес
+      const timer = setTimeout(() => {
+        if (manualSignOutRef.current) {
+          console.log('[AuthProvider] Resetting flag - wallet address changed');
+          manualSignOutRef.current = false;
+        }
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
   }, [isConnected, address, user, signInWithWallet]);
 
-  // Handle Farcaster miniapp lifecycle events - session recovery on return
+  // Handle Farcaster miniapp lifecycle events - восстановление сессии при возврате
   useEffect(() => {
-    if (!isFarcaster.current) return;
+    if (!isFarcasterContext.current) return;
 
     console.log('[AuthProvider] Setting up Farcaster lifecycle handlers');
 
     const handleVisibilityChange = async () => {
-      // Only restore session when returning, NOT when hiding
-      if (!document.hidden && isConnected && address) {
+      // Только восстанавливаем сессию при возврате, НЕ выходим при скрытии
+      if (!document.hidden) {
         console.log('[AuthProvider] Farcaster app visible - checking session');
         
+        // Проверяем существующую сессию
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         
-        if (!currentSession) {
+        if (!currentSession && isConnected && address) {
+          // Если сессии нет, но кошелек подключен - восстанавливаем
           console.log('[AuthProvider] No session found, re-authenticating');
-          signInWithWallet();
-        } else {
+          setTimeout(() => {
+            signInWithWallet();
+          }, 500);
+        } else if (currentSession) {
+          // Если сессия есть - обновляем состояние
           console.log('[AuthProvider] Session exists, updating state');
           setSession(currentSession);
           setUser(currentSession.user);
@@ -297,12 +332,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
+    // Слушаем изменения видимости страницы
     document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // При фокусе окна также проверяем сессию
+    const handleFocus = async () => {
+      if (isConnected && address) {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        if (!currentSession) {
+          console.log('[AuthProvider] Farcaster app focused - re-authenticating');
+          setTimeout(() => {
+            signInWithWallet();
+          }, 500);
+        }
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
     };
-  }, [isConnected, address, signInWithWallet]);
+  }, [isConnected, address, session, signInWithWallet]);
 
   return (
     <AuthContext.Provider value={{ user, session, isLoading, signInWithWallet, signOut, resetManualSignOut }}>
