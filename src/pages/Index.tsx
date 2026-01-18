@@ -1,39 +1,30 @@
 import { Button } from '@/components/ui/button';
 import { Shield, Zap, Globe, TrendingUp, ArrowRight, Sparkles } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import PageTransition from '@/components/PageTransition';
 import FarcasterSplash from '@/components/FarcasterSplash';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { AdminLink } from '@/components/AdminLink';
-import { useState, useEffect } from 'react';
-import { sdk } from '@farcaster/miniapp-sdk';
+import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import { useFarcasterInit } from '@/hooks/useFarcasterInit';
 
 const Index = () => {
-  const [isFarcaster, setIsFarcaster] = useState(false);
+  const navigate = useNavigate();
+  const { isFarcaster, isReady } = useFarcasterInit();
   const [showWelcome, setShowWelcome] = useState(false);
 
-  useEffect(() => {
-    const checkFarcasterContext = async () => {
-      if (typeof window !== 'undefined') {
-        try {
-          const context = await sdk.context;
-          setIsFarcaster(!!context?.client?.clientFid);
-        } catch {
-          setIsFarcaster(false);
-        }
-      }
-    };
-    checkFarcasterContext();
-  }, []);
+  const handleLaunch = useCallback(() => {
+    setShowWelcome(true);
+    // Navigate after a short delay to ensure state is set
+    setTimeout(() => {
+      navigate('/app');
+    }, 100);
+  }, [navigate]);
 
+  // Show Farcaster splash screen while initializing
   if (isFarcaster && !showWelcome) {
-    return <FarcasterSplash onLaunch={() => setShowWelcome(true)} />;
-  }
-
-  if (isFarcaster && showWelcome) {
-    window.location.href = '/app';
-    return null;
+    return <FarcasterSplash onLaunch={handleLaunch} />;
   }
 
   return (

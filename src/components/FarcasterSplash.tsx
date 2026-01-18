@@ -1,19 +1,14 @@
 import { Button } from '@/components/ui/button';
-import { ArrowUpRight } from 'lucide-react';
-import { useEffect } from 'react';
-import { sdk } from '@farcaster/miniapp-sdk';
+import { ArrowUpRight, Loader2 } from 'lucide-react';
+import { useFarcasterInit } from '@/hooks/useFarcasterInit';
 
 interface FarcasterSplashProps {
   onLaunch: () => void;
 }
 
 const FarcasterSplash = ({ onLaunch }: FarcasterSplashProps) => {
-  useEffect(() => {
-    // Notify Farcaster that content is ready to be displayed
-    sdk.actions.ready().catch((error) => {
-      console.error('Failed to notify Farcaster SDK ready:', error);
-    });
-  }, []);
+  // Use centralized Farcaster initialization - this handles sdk.actions.ready()
+  const { isReady, isInitializing } = useFarcasterInit();
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
@@ -28,10 +23,20 @@ const FarcasterSplash = ({ onLaunch }: FarcasterSplashProps) => {
       <Button
         onClick={onLaunch}
         size="lg"
+        disabled={isInitializing}
         className="w-full max-w-md h-14 text-base font-medium rounded-xl bg-foreground text-background hover:bg-foreground/90 transition-all duration-200"
       >
-        Launch Loyal Spark
-        <ArrowUpRight className="ml-2 h-5 w-5" />
+        {isInitializing ? (
+          <>
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            Initializing...
+          </>
+        ) : (
+          <>
+            Launch Loyal Spark
+            <ArrowUpRight className="ml-2 h-5 w-5" />
+          </>
+        )}
       </Button>
 
       {/* Tagline */}

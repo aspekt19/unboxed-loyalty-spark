@@ -1,42 +1,16 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { Wallet, Smartphone } from 'lucide-react';
+import { Wallet } from 'lucide-react';
 import { useDisconnect, useConnect, useAccount } from 'wagmi';
 import { useAuth } from '@/contexts/AuthContext';
-import { sdk } from '@farcaster/miniapp-sdk';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useFarcasterInit, isFarcasterContext } from '@/hooks/useFarcasterInit';
 
 // Detect if user is on mobile device
 const isMobileDevice = () => {
   if (typeof window === 'undefined') return false;
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-};
-
-// Detect if running inside Farcaster miniapp
-const isFarcasterContext = () => {
-  if (typeof window === 'undefined') return false;
-  try {
-    // Здесь не используем sdk.context, чтобы не ошибиться в обычном браузере.
-    const urlParams = new URLSearchParams(window.location.search);
-    const hasFarcasterParam = urlParams.has('farcaster') || urlParams.has('fc');
-    const isFarcasterPath = window.location.pathname.includes('/frame');
-    const hasFarcasterUA = /farcaster/i.test(navigator.userAgent);
-
-    const isFarcaster = hasFarcasterParam || isFarcasterPath || hasFarcasterUA;
-    console.log('[Farcaster Detection]', {
-      isFarcaster,
-      hasFarcasterParam,
-      isFarcasterPath,
-      hasFarcasterUA,
-      pathname: window.location.pathname,
-      search: window.location.search,
-    });
-    return isFarcaster;
-  } catch (error) {
-    console.error('[Farcaster Detection Error]', error);
-    return false;
-  }
 };
 
 export function WalletConnectButton() {
@@ -45,62 +19,37 @@ export function WalletConnectButton() {
   const { address, isConnected, chain } = useAccount();
   const { signOut, signInWithWallet, resetManualSignOut, user } = useAuth();
   const [isManuallyDisconnected, setIsManuallyDisconnected] = useState(false);
-  const [farcasterUser, setFarcasterUser] = useState<{
-    username?: string;
-    displayName?: string;
-    pfpUrl?: string;
-  } | null>(null);
   const [isMobileWalletDialogOpen, setIsMobileWalletDialogOpen] = useState(false);
-
+  const signInAttemptedRef = useRef(false);
+  
+  // Use centralized Farcaster initialization
+  const { farcasterUser, isReady, isFarcaster } = useFarcasterInit();
+  
+  // Auto sign-in when wallet connects in Farcaster context
   useEffect(() => {
-    const loadFarcasterUser = async () => {
-      try {
-        console.log('[WalletButton] Attempting to load Farcaster context...');
-        
-        // Try to load Farcaster context regardless of URL checks
-        const context = await sdk.context;
-        console.log('[WalletButton] SDK context loaded:', context);
-        
-        if (context?.user) {
-          const userData = {
-            username: context.user.username,
-            displayName: context.user.displayName,
-            pfpUrl: context.user.pfpUrl,
-          };
-          console.log('[WalletButton] Setting farcasterUser:', userData);
-          setFarcasterUser(userData);
-        } else {
-          console.log('[WalletButton] No user in context');
-        }
-      } catch (error) {
-        console.log('[WalletButton] Not in Farcaster context or failed to load:', error);
-      }
-    };
+    if (!isFarcaster || !isReady) return;
+    if (!isConnected || !address) return;
+    if (isManuallyDisconnected) return;
+    if (signInAttemptedRef.current) return;
     
-    loadFarcasterUser();
-  }, []);
-  
-  // Эффект для автоматического подключения кошелька при запуске в Farcaster
-  useEffect(() => {
-    if (isFarcasterContext() && !isConnected && !isManuallyDisconnected && connectors.length > 0) {
-      console.log('[WalletButton] Farcaster context detected - auto-connecting wallet');
-      setTimeout(() => {
-        connect({ connector: connectors[0] });
-      }, 500);
-    }
-  }, [connectors.length]); // Добавляем connectors.length как зависимость
-  
-  // Эффект для автоматической авторизации при reconnect в Farcaster
-  useEffect(() => {
-    if (isFarcasterContext() && isConnected && address && !isManuallyDisconnected) {
-      // Всегда пытаемся войти при подключении, даже если user уже есть
-      // Это важно для refresh устаревших сессий
-      console.log('[WalletButton] Farcaster wallet connected and not manually disconnected - signing in');
-      setTimeout(() => {
+    // Wait a tick for wallet state to stabilize
+    const timer = setTimeout(() => {
+      if (isConnected && address && !isManuallyDisconnected) {
+        console.log('[WalletButton] Farcaster wallet ready - signing in');
+        signInAttemptedRef.current = true;
         signInWithWallet();
-      }, 300);
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [isFarcaster, isReady, isConnected, address, isManuallyDisconnected, signInWithWallet]);
+  
+  // Reset sign-in attempt flag when disconnected
+  useEffect(() => {
+    if (!isConnected) {
+      signInAttemptedRef.current = false;
     }
-  }, [isConnected, address, isManuallyDisconnected, signInWithWallet]);
+  }, [isConnected]);
   
   const handleDisconnect = async () => {
     try {
