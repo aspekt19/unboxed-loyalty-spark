@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useFarcasterHaptics } from '@/hooks/useFarcasterHaptics';
 
 interface LoyaltyProgram {
   id: string;
@@ -37,7 +38,7 @@ export function CustomerFiltersPanel() {
   const [programs, setPrograms] = useState<TokenInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const isMobile = useIsMobile();
-
+  const { selectionChanged, impactOccurred } = useFarcasterHaptics();
   // Embla carousel for mobile swipe
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     align: 'start',
@@ -52,8 +53,12 @@ export function CustomerFiltersPanel() {
     if (!emblaApi) return;
     setCanScrollPrev(emblaApi.canScrollPrev());
     setCanScrollNext(emblaApi.canScrollNext());
-    setCurrentSlide(emblaApi.selectedScrollSnap());
-  }, [emblaApi]);
+    const newSlide = emblaApi.selectedScrollSnap();
+    if (newSlide !== currentSlide) {
+      selectionChanged(); // Haptic feedback on slide change
+    }
+    setCurrentSlide(newSlide);
+  }, [emblaApi, currentSlide, selectionChanged]);
   
   useEffect(() => {
     if (!emblaApi) return;

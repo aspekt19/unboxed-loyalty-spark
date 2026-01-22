@@ -17,6 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { format, formatDistanceToNow } from 'date-fns';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useFarcasterHaptics } from '@/hooks/useFarcasterHaptics';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -65,7 +66,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
   const { burnAllTokens, isBurning, progress } = useBurnAllTokens();
   const { pauseProgram, unpauseUtility, enableMinting, isPending: isToggling, isSuccess: toggleSuccess, hash } = useToggleProgramStatus();
   const isMobile = useIsMobile();
-  
+  const { selectionChanged, impactOccurred } = useFarcasterHaptics();
   // Embla carousel for mobile swipe
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     align: 'start',
@@ -80,8 +81,12 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     if (!emblaApi) return;
     setCanScrollPrev(emblaApi.canScrollPrev());
     setCanScrollNext(emblaApi.canScrollNext());
-    setCurrentSlide(emblaApi.selectedScrollSnap());
-  }, [emblaApi]);
+    const newSlide = emblaApi.selectedScrollSnap();
+    if (newSlide !== currentSlide) {
+      selectionChanged(); // Haptic feedback on slide change
+    }
+    setCurrentSlide(newSlide);
+  }, [emblaApi, currentSlide, selectionChanged]);
   
   useEffect(() => {
     if (!emblaApi) return;
