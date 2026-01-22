@@ -1,14 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAccount } from 'wagmi';
-import { Gift, Loader2, AlertCircle, Store, Clock } from 'lucide-react';
+import { Gift, Loader2, AlertCircle, Store, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useMultiTokenBalance } from '@/hooks/useMultiTokenBalance';
 import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+import useEmblaCarousel from 'embla-carousel-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface LoyaltyProgram {
   id: string;
@@ -33,6 +36,35 @@ export function CustomerFiltersPanel() {
   const { address } = useAccount();
   const [programs, setPrograms] = useState<TokenInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const isMobile = useIsMobile();
+
+  // Embla carousel for mobile swipe
+  const [emblaRef, emblaApi] = useEmblaCarousel({ 
+    align: 'start',
+    containScroll: 'trimSnaps',
+    dragFree: false,
+  });
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setCanScrollPrev(emblaApi.canScrollPrev());
+    setCanScrollNext(emblaApi.canScrollNext());
+    setCurrentSlide(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
+  
+  useEffect(() => {
+    if (!emblaApi) return;
+    onSelect();
+    emblaApi.on('select', onSelect);
+    emblaApi.on('reInit', onSelect);
+    return () => {
+      emblaApi.off('select', onSelect);
+      emblaApi.off('reInit', onSelect);
+    };
+  }, [emblaApi, onSelect]);
 
   const { balances, isLoading: balancesLoading, refetch } = useMultiTokenBalance(programs);
 
@@ -160,23 +192,95 @@ export function CustomerFiltersPanel() {
             </AlertDescription>
           </Alert>
         ) : (
-          <ScrollArea className="h-[500px]">
-            <div className="space-y-3 pr-4 pb-4">
-              {programsWithBalance.map((program) => {
-                const balance = balances.find(b => b.address === program.address);
-                const isExpiringSoon = program.status === 'expiring_soon';
-                
-                return (
-                  <ProgramCard
-                    key={program.address}
-                    program={program}
-                    balance={balance?.balance || '0'}
-                    isExpiringSoon={isExpiringSoon}
-                  />
-                );
-              })}
+          isMobile ? (
+            // Mobile: Swipeable carousel
+            <div className="relative">
+              <div className="overflow-hidden" ref={emblaRef}>
+                <div className="flex gap-3">
+                  {programsWithBalance.map((program) => {
+                    const balance = balances.find(b => b.address === program.address);
+                    const isExpiringSoon = program.status === 'expiring_soon';
+                    
+                    return (
+                      <div 
+                        key={program.address} 
+                        className="flex-[0_0_90%] min-w-0"
+                      >
+                        <ProgramCard
+                          program={program}
+                          balance={balance?.balance || '0'}
+                          isExpiringSoon={isExpiringSoon}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              {/* Carousel indicators */}
+              {programsWithBalance.length > 1 && (
+                <div className="flex justify-center gap-1.5 mt-3">
+                  {programsWithBalance.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => emblaApi?.scrollTo(index)}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        currentSlide === index 
+                          ? 'bg-primary w-4' 
+                          : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
+                      }`}
+                      aria-label={`Go to slide ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+              {/* Navigation arrows */}
+              {programsWithBalance.length > 1 && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 h-8 w-8 rounded-full bg-background/80 shadow-md ${
+                      !canScrollPrev ? 'opacity-30 pointer-events-none' : ''
+                    }`}
+                    onClick={() => emblaApi?.scrollPrev()}
+                    disabled={!canScrollPrev}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 h-8 w-8 rounded-full bg-background/80 shadow-md ${
+                      !canScrollNext ? 'opacity-30 pointer-events-none' : ''
+                    }`}
+                    onClick={() => emblaApi?.scrollNext()}
+                    disabled={!canScrollNext}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
             </div>
-          </ScrollArea>
+          ) : (
+            // Desktop: ScrollArea list
+            <ScrollArea className="h-[500px]">
+              <div className="space-y-3 pr-4 pb-4">
+                {programsWithBalance.map((program) => {
+                  const balance = balances.find(b => b.address === program.address);
+                  const isExpiringSoon = program.status === 'expiring_soon';
+                  
+                  return (
+                    <ProgramCard
+                      key={program.address}
+                      program={program}
+                      balance={balance?.balance || '0'}
+                      isExpiringSoon={isExpiringSoon}
+                    />
+                  );
+                })}
+              </div>
+            </ScrollArea>
+          )
         )}
       </CardContent>
     </Card>
