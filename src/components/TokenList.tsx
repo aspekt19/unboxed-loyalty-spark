@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,10 +8,13 @@ import { useMultiTokenBalance, type TokenInfo } from '@/hooks/useMultiTokenBalan
 import { useTransferTokens } from '@/hooks/useTransferTokens';
 import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
-import { Loader2, Coins } from 'lucide-react';
+import { Loader2, Coins, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { usePublicClient, useAccount } from 'wagmi';
 import { supabase } from '@/integrations/supabase/client';
+import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from '@/components/ui/carousel';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useFarcasterHaptics } from '@/hooks/useFarcasterHaptics';
 import {
   Dialog,
   DialogContent,
@@ -33,16 +36,48 @@ export function TokenList({ selectedProgram, onProgramSelect }: TokenListProps) 
   const [allTokens, setAllTokens] = useState<TokenInfo[]>([]);
   const [isLoadingTokens, setIsLoadingTokens] = useState(true);
   const [activePrograms, setActivePrograms] = useState<Set<string>>(new Set());
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   const publicClient = usePublicClient();
   const { address: walletAddress } = useAccount();
   const { balances, isLoading, refetch } = useMultiTokenBalance(allTokens);
   const { transferTokens, isPending, isSuccess } = useTransferTokens();
+  const isMobile = useIsMobile();
+  const { selectionChanged } = useFarcasterHaptics();
 
   // Track if initial load is complete and retry attempts
   const hasLoadedRef = useRef(false);
   const retryCountRef = useRef(0);
   const MAX_RETRIES = 3;
+
+  // Carousel haptic feedback
+  useEffect(() => {
+    if (!carouselApi) return;
+
+    const onSelect = () => {
+      const newSlide = carouselApi.selectedScrollSnap();
+      if (newSlide !== currentSlide) {
+        selectionChanged();
+        setCurrentSlide(newSlide);
+      }
+    };
+
+    carouselApi.on('select', onSelect);
+    return () => {
+      carouselApi.off('select', onSelect);
+    };
+  }, [carouselApi, currentSlide, selectionChanged]);
+
+  const scrollPrev = useCallback(() => {
+    carouselApi?.scrollPrev();
+    selectionChanged();
+  }, [carouselApi, selectionChanged]);
+
+  const scrollNext = useCallback(() => {
+    carouselApi?.scrollNext();
+    selectionChanged();
+  }, [carouselApi, selectionChanged]);
 
   // Очищаем токены при отключении кошелька
   useEffect(() => {
@@ -333,17 +368,43 @@ export function TokenList({ selectedProgram, onProgramSelect }: TokenListProps) 
     );
   };
 
+  const renderTokenItem = (token: typeof tokensWithBalance[0]) => (
+    <TokenListItem
+      key={token.address}
+      address={token.address}
+      name={token.name}
+      symbol={token.symbol}
+      balance={token.balance}
+      merchantAddress={token.merchantAddress}
+      onClick={() => onProgramSelect(token.address)}
+      selected={selectedProgram === token.address}
+      onSendClick={() => {
+        setSelectedToken(token);
+        setDialogOpen(true);
+      }}
+    />
+  );
+
   return (
     <Card className="border-2 bg-gradient-to-br from-card to-muted/30">
       <CardHeader>
-        <CardTitle>Your Loyalty Tokens</CardTitle>
-        <CardDescription>
-          {walletAddress ? (
-            <>Manage tokens from different merchants - Connected: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</>
-          ) : (
-            <>Please connect your wallet to view your tokens</>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Your Loyalty Tokens</CardTitle>
+            <CardDescription>
+              {walletAddress ? (
+                <>Manage tokens from different merchants - Connected: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</>
+              ) : (
+                <>Please connect your wallet to view your tokens</>
+              )}
+            </CardDescription>
+          </div>
+          {isMobile && tokensWithBalance.length > 1 && (
+            <div className="text-sm text-muted-foreground">
+              {currentSlide + 1}/{tokensWithBalance.length}
+            </div>
           )}
-        </CardDescription>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {!walletAddress && (
@@ -371,26 +432,63 @@ export function TokenList({ selectedProgram, onProgramSelect }: TokenListProps) 
         )}
         
         {tokensWithBalance.length > 0 && (
-          <ScrollArea className="h-[330px]">
-            <div className="space-y-3 pr-4 pb-4">
-              {tokensWithBalance.map((token) => (
-                <TokenListItem
-                  key={token.address}
-                  address={token.address}
-                  name={token.name}
-                  symbol={token.symbol}
-                  balance={token.balance}
-                  merchantAddress={token.merchantAddress}
-                  onClick={() => onProgramSelect(token.address)}
-                  selected={selectedProgram === token.address}
-                  onSendClick={() => {
-                    setSelectedToken(token);
-                    setDialogOpen(true);
-                  }}
-                />
-              ))}
+          isMobile && tokensWithBalance.length > 1 ? (
+            <div className="relative">
+              <Carousel
+                setApi={setCarouselApi}
+                opts={{
+                  align: 'start',
+                  loop: false,
+                }}
+                className="w-full"
+              >
+                <CarouselContent className="-ml-2">
+                  {tokensWithBalance.map((token) => (
+                    <CarouselItem key={token.address} className="pl-2 basis-[90%]">
+                      {renderTokenItem(token)}
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+              </Carousel>
+              
+              <div className="flex justify-center gap-2 mt-3">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 rounded-full"
+                  onClick={scrollPrev}
+                  disabled={currentSlide === 0}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <div className="flex items-center gap-1">
+                  {tokensWithBalance.map((_, index) => (
+                    <div
+                      key={index}
+                      className={`h-2 w-2 rounded-full transition-colors ${
+                        index === currentSlide ? 'bg-primary' : 'bg-muted'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 rounded-full"
+                  onClick={scrollNext}
+                  disabled={currentSlide === tokensWithBalance.length - 1}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-          </ScrollArea>
+          ) : (
+            <ScrollArea className="h-[330px]">
+              <div className="space-y-3 pr-4 pb-4">
+                {tokensWithBalance.map((token) => renderTokenItem(token))}
+              </div>
+            </ScrollArea>
+          )
         )}
 
         {/* Transfer Dialog - Outside the map to use selectedToken state */}
