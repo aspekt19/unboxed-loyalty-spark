@@ -56,6 +56,9 @@ export async function createReward(reward: Omit<Reward, 'id' | 'createdAt'>): Pr
     return null;
   }
 
+  // Инвалидируем кеш для этого токена
+  invalidateRewardsCache(reward.tokenAddress);
+
   return {
     id: data.id,
     tokenAddress: data.token_address,
@@ -123,38 +126,72 @@ export async function getMerchantRewards(merchantAddress: string): Promise<Rewar
   }));
 }
 
-// Получение наград для конкретного токена
+// Простой in-memory кеш для наград с TTL
+const rewardsCache = new Map<string, { data: Reward[]; timestamp: number }>();
+const CACHE_TTL_MS = 30000; // 30 секунд кеш
+
+// Кеш для статусов программ (обновляется реже)
+const programStatusCache = new Map<string, { status: string; timestamp: number }>();
+const PROGRAM_CACHE_TTL_MS = 60000; // 60 секунд для статусов
+
+// Получение наград для конкретного токена (оптимизированная версия)
 export async function getRewardsByToken(tokenAddress: string): Promise<Reward[]> {
-  // Сначала проверяем статус программы лояльности
-  const { data: program, error: programError } = await supabase
-    .from('loyalty_programs')
-    .select('status')
-    .eq('token_address', tokenAddress.toLowerCase())
-    .maybeSingle();
+  const cacheKey = tokenAddress.toLowerCase();
+  const now = Date.now();
   
-  if (programError) {
-    console.error('Error fetching program status:', programError);
-    return [];
+  // Проверяем кеш наград
+  const cached = rewardsCache.get(cacheKey);
+  if (cached && (now - cached.timestamp) < CACHE_TTL_MS) {
+    console.log(`[getRewardsByToken] Cache hit for ${cacheKey}`);
+    return cached.data;
   }
   
-  // Если программа неактивна (expired, paused и т.д.), не показываем награды
-  if (!program || !['active', 'expiring_soon'].includes(program.status)) {
-    console.log(`Program ${tokenAddress} is not active, status:`, program?.status);
+  console.log(`[getRewardsByToken] Cache miss, fetching from DB for ${cacheKey}`);
+  
+  // Проверяем кеш статуса программы
+  let programStatus = programStatusCache.get(cacheKey);
+  
+  if (!programStatus || (now - programStatus.timestamp) >= PROGRAM_CACHE_TTL_MS) {
+    // Загружаем статус программы
+    const { data: program, error: programError } = await supabase
+      .from('loyalty_programs')
+      .select('status')
+      .eq('token_address', cacheKey)
+      .maybeSingle();
+    
+    if (programError) {
+      console.error('Error fetching program status:', programError);
+      return [];
+    }
+    
+    if (program) {
+      programStatusCache.set(cacheKey, { status: program.status, timestamp: now });
+      programStatus = { status: program.status, timestamp: now };
+    }
+  }
+  
+  // Если программа неактивна, не показываем награды
+  if (!programStatus || !['active', 'expiring_soon'].includes(programStatus.status)) {
+    console.log(`Program ${cacheKey} is not active, status:`, programStatus?.status);
+    // Кешируем пустой результат
+    rewardsCache.set(cacheKey, { data: [], timestamp: now });
     return [];
   }
 
+  // Загружаем награды
   const { data, error } = await supabase
     .from('rewards')
     .select('*')
-    .eq('token_address', tokenAddress.toLowerCase())
+    .eq('token_address', cacheKey)
     .eq('is_active', true)
     .order('created_at', { ascending: false });
 
   if (error) {
+    console.error('Error fetching rewards:', error);
     return [];
   }
 
-  return data.map(r => ({
+  const rewards = (data || []).map(r => ({
     id: r.id,
     tokenAddress: r.token_address,
     merchantAddress: r.merchant_address,
@@ -164,10 +201,30 @@ export async function getRewardsByToken(tokenAddress: string): Promise<Reward[]>
     createdAt: r.created_at,
     isActive: r.is_active,
   }));
+  
+  // Сохраняем в кеш
+  rewardsCache.set(cacheKey, { data: rewards, timestamp: now });
+  console.log(`[getRewardsByToken] Cached ${rewards.length} rewards for ${cacheKey}`);
+  
+  return rewards;
+}
+
+// Функция для инвалидации кеша (вызывать при обновлении наград)
+export function invalidateRewardsCache(tokenAddress?: string): void {
+  if (tokenAddress) {
+    const key = tokenAddress.toLowerCase();
+    rewardsCache.delete(key);
+    programStatusCache.delete(key);
+    console.log(`[invalidateRewardsCache] Invalidated cache for ${key}`);
+  } else {
+    rewardsCache.clear();
+    programStatusCache.clear();
+    console.log('[invalidateRewardsCache] Cleared all caches');
+  }
 }
 
 // Обновление награды
-export async function updateReward(rewardId: string, updates: Partial<Reward>): Promise<boolean> {
+export async function updateReward(rewardId: string, updates: Partial<Reward>, tokenAddress?: string): Promise<boolean> {
   const dbUpdates: any = {};
   
   if (updates.name !== undefined) dbUpdates.name = updates.name;
@@ -184,11 +241,18 @@ export async function updateReward(rewardId: string, updates: Partial<Reward>): 
     return false;
   }
 
+  // Инвалидируем кеш
+  if (tokenAddress) {
+    invalidateRewardsCache(tokenAddress);
+  } else {
+    invalidateRewardsCache(); // Очищаем весь кеш если адрес неизвестен
+  }
+
   return true;
 }
 
 // Удаление награды
-export async function deleteReward(rewardId: string): Promise<boolean> {
+export async function deleteReward(rewardId: string, tokenAddress?: string): Promise<boolean> {
   const { error } = await supabase
     .from('rewards')
     .delete()
@@ -196,6 +260,13 @@ export async function deleteReward(rewardId: string): Promise<boolean> {
 
   if (error) {
     return false;
+  }
+
+  // Инвалидируем кеш
+  if (tokenAddress) {
+    invalidateRewardsCache(tokenAddress);
+  } else {
+    invalidateRewardsCache();
   }
 
   return true;
