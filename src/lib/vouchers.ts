@@ -142,65 +142,31 @@ export async function getRewardsByToken(tokenAddress: string): Promise<Reward[]>
   // Проверяем кеш наград
   const cached = rewardsCache.get(cacheKey);
   if (cached && (now - cached.timestamp) < CACHE_TTL_MS) {
-    console.log(`[getRewardsByToken] Cache hit for ${cacheKey}`);
+    console.log(`[getRewardsByToken] Cache hit for ${cacheKey}, rewards count: ${cached.data.length}`);
     return cached.data;
   }
   
   console.log(`[getRewardsByToken] Cache miss, fetching from DB for ${cacheKey}`);
   
   try {
-    // Функция таймаута
-    const timeout = <T>(promise: Promise<T>, ms: number): Promise<T> => 
-      Promise.race([
-        promise,
-        new Promise<T>((_, reject) => 
-          setTimeout(() => reject(new Error('Request timeout')), ms)
-        )
-      ]);
+    // Запрос наград - БЕЗ проверки статуса программы здесь
+    // (статус программы уже проверяется при загрузке списка программ в RewardsSelection)
+    const { data: rewardsData, error: rewardsError } = await supabase
+      .from('rewards')
+      .select('*')
+      .eq('token_address', cacheKey)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(50);
     
-    // Параллельно запрашиваем статус программы и награды с таймаутом 8 секунд
-    const [programResult, rewardsResult] = await timeout(
-      Promise.all([
-        supabase
-          .from('loyalty_programs')
-          .select('status')
-          .eq('token_address', cacheKey)
-          .in('status', ['active', 'expiring_soon'])
-          .maybeSingle(),
-        supabase
-          .from('rewards')
-          .select('*')
-          .eq('token_address', cacheKey)
-          .eq('is_active', true)
-          .order('created_at', { ascending: false })
-          .limit(50) // Ограничиваем количество наград
-      ]),
-      8000
-    );
-    
-    // Проверяем статус программы
-    if (programResult.error) {
-      console.error('Error fetching program status:', programResult.error);
-      rewardsCache.set(cacheKey, { data: [], timestamp: now });
+    if (rewardsError) {
+      console.error('[getRewardsByToken] Error fetching rewards:', rewardsError);
       return [];
     }
     
-    if (!programResult.data) {
-      console.log(`Program ${cacheKey} is not active`);
-      rewardsCache.set(cacheKey, { data: [], timestamp: now });
-      return [];
-    }
-    
-    // Кешируем статус программы
-    programStatusCache.set(cacheKey, { status: programResult.data.status, timestamp: now });
-    
-    if (rewardsResult.error) {
-      console.error('Error fetching rewards:', rewardsResult.error);
-      rewardsCache.set(cacheKey, { data: [], timestamp: now });
-      return [];
-    }
+    console.log(`[getRewardsByToken] Found ${rewardsData?.length || 0} rewards for ${cacheKey}`);
 
-    const rewards = (rewardsResult.data || []).map(r => ({
+    const rewards = (rewardsData || []).map(r => ({
       id: r.id,
       tokenAddress: r.token_address,
       merchantAddress: r.merchant_address,
@@ -218,8 +184,7 @@ export async function getRewardsByToken(tokenAddress: string): Promise<Reward[]>
     return rewards;
   } catch (error: any) {
     console.error('[getRewardsByToken] Error:', error.message || error);
-    // Кешируем пустой результат на короткое время при ошибке
-    rewardsCache.set(cacheKey, { data: [], timestamp: now - CACHE_TTL_MS + 5000 });
+    // Не кешируем ошибки - пусть повторные запросы попробуют снова
     return [];
   }
 }
