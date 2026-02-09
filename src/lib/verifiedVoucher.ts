@@ -33,6 +33,23 @@ export async function createVerifiedVoucher(
   try {
     console.log('[createVerifiedVoucher] Starting verified voucher creation:', request.transactionHash);
 
+    // Ensure we have an authenticated session and pass it explicitly.
+    // In some embedded contexts, the Functions client may not attach the auth header reliably.
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError) {
+      console.error('[createVerifiedVoucher] Failed to get session:', sessionError);
+      return { success: false, retryable: false, error: 'Authentication error. Please reconnect and try again.' };
+    }
+
+    if (!session?.access_token) {
+      console.error('[createVerifiedVoucher] No session access token available');
+      return { success: false, retryable: false, error: 'Not authenticated. Please reconnect your wallet and try again.' };
+    }
+
     // Retry a few times because Base RPC / indexers can be slightly behind on mobile.
     const maxAttempts = 3;
     const baseDelayMs = 2500;
@@ -40,7 +57,11 @@ export async function createVerifiedVoucher(
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       const { data, error } = await supabase.functions.invoke('verify-voucher', {
         body: request,
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
+
 
       if (error) {
         console.error('[createVerifiedVoucher] Edge function error:', error);

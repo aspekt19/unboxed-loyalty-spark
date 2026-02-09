@@ -254,7 +254,7 @@ export function RewardsSelection() {
         console.log('[handleVoucherCreation] Starting verified voucher creation for hash:', hash);
         const reward = availableRewards.find(r => r.id === selectedRewardId);
         const token = tokens.find(t => t.address === selectedTokenAddress);
-        
+
         if (!reward || !token) {
           console.error('[handleVoucherCreation] Reward or token not found');
           toast.error('Failed to create voucher: reward or token data missing');
@@ -263,6 +263,11 @@ export function RewardsSelection() {
 
         // Помечаем hash как обработанный сразу, чтобы избежать дублирования
         setProcessedHash(hash);
+
+        // IMPORTANT: update balances immediately after the on-chain transfer succeeds,
+        // even if voucher verification takes longer.
+        refetch();
+        window.dispatchEvent(new Event('tokenBalancesUpdated'));
 
         // Start verification UI
         const maxAttempts = 5;
@@ -274,6 +279,7 @@ export function RewardsSelection() {
           rewardName: reward.name,
           canRetry: false,
         });
+
 
         console.log('[handleVoucherCreation] Calling Edge Function for blockchain-verified voucher creation...');
         
