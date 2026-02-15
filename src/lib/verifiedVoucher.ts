@@ -25,7 +25,7 @@ interface VerifiedVoucherResponse {
 /**
  * Creates a voucher with blockchain transaction verification.
  * This function calls an Edge Function that verifies the transaction
- * on-chain before creating the voucher.
+ * onchain before creating the voucher.
  */
 export async function createVerifiedVoucher(
   request: VerifiedVoucherRequest

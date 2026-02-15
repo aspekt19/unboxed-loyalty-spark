@@ -40,7 +40,7 @@ Merchants: Ready to upgrade your loyalty program? 🛍️
 With Loyal Spark you can:
 • Deploy custom loyalty tokens
 • Mint & distribute rewards instantly
-• Track all transactions on-chain
+• Track all transactions onchain
 • Build deeper customer engagement
 
 Launch your program today 👉 [link]
@@ -75,7 +75,7 @@ Key benefits for businesses:
 • Easy deployment with no blockchain expertise needed
 • Zero platform fees
 • Increased customer engagement through growing rewards
-• Full transparency with on-chain tracking
+• Full transparency with onchain tracking
 
 For customers:
 • True ownership as ERC-20 tokens
@@ -222,7 +222,7 @@ We're excited to announce Loyal Spark - a decentralized loyalty rewards platform
 Built on BASE Network, Loyal Spark enables:
 • Merchants to deploy custom token programs
 • Customers to own, transfer, and trade their rewards
-• Full transparency through on-chain transactions
+• Full transparency through onchain transactions
 
 Traditional loyalty points? That's so 2020.
 
