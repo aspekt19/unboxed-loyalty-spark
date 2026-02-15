@@ -116,7 +116,7 @@ const Index = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
             >
-              Loyalty tokens that earn, invest and multiply on-chain. Get rewarded for purchases, save automatically, and grow your rewards in DeFi - all in one platform.
+              Loyalty tokens that earn, invest and multiply onchain. Get rewarded for purchases, save automatically, and grow your rewards in DeFi - all in one platform.
             </motion.p>
 
             <motion.div 

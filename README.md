@@ -4,7 +4,7 @@ A Web3-powered loyalty platform built on Base Mainnet, enabling merchants to cre
 
 ## Overview
 
-Loyal Spark revolutionizes traditional loyalty programs by bringing them on-chain. Merchants can deploy ERC-20 loyalty tokens, create custom reward vouchers, and manage their programs through an intuitive dashboard. Customers receive blockchain-based loyalty tokens they truly own, which can be redeemed for exclusive vouchers or traded on decentralized exchanges.
+Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain. Merchants can deploy ERC-20 loyalty tokens, create custom reward vouchers, and manage their programs through an intuitive dashboard. Customers receive blockchain-based loyalty tokens they truly own, which can be redeemed for exclusive vouchers or traded on decentralized exchanges.
 
 ### Merchant Features
 - **Deploy Loyalty Tokens**: Create custom ERC-20 loyalty tokens with unique names and symbols

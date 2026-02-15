@@ -264,7 +264,7 @@ export function RewardsSelection() {
         // Помечаем hash как обработанный сразу, чтобы избежать дублирования
         setProcessedHash(hash);
 
-        // IMPORTANT: update balances immediately after the on-chain transfer succeeds,
+        // IMPORTANT: update balances immediately after the onchain transfer succeeds,
         // even if voucher verification takes longer.
         refetch();
         window.dispatchEvent(new Event('tokenBalancesUpdated'));
