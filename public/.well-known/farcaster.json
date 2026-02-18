@@ -29,6 +29,7 @@
     "ogTitle": "Loyal Spark",
     "ogDescription": "Earn loyalty tokens, save automatically, and grow your rewards in DeFi on BASE.",
     "ogImageUrl": "https://loyalspark.online/media-kit/og-image-new.png",
+    "noindex": false,
     "webhookUrl": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/miniapp-webhook",
     "requiredChains": [
       "eip155:8453"
