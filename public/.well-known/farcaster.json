@@ -32,6 +32,11 @@
     "requiredChains": [
       "eip155:8453"
     ],
+    "noindex": false,
+    "webhookUrl": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/miniapp-webhook",
+    "requiredChains": [
+      "eip155:8453"
+    ],
     "requiredCapabilities": [
       "actions.signIn",
       "wallet.getEthereumProvider"
