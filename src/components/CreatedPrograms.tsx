@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Gift, Coins, Calendar, Check, Trash2, Loader2, Clock, AlertTriangle, Play, Pause, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Gift, Coins, Calendar, Check, Trash2, Loader2, Clock, AlertTriangle, Play, Pause, ChevronLeft, ChevronRight, CalendarPlus } from 'lucide-react';
 import { usePublicClient, useAccount } from 'wagmi';
 import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
@@ -13,6 +13,7 @@ import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
 import { ProgramStatusBadge } from './ProgramStatusBadge';
 import { ProgramControlButtons } from './ProgramControlButtons';
 import { ProgramActivationNote } from './ProgramActivationNote';
+import { ExtendProgramDialog } from './ExtendProgramDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { format, formatDistanceToNow } from 'date-fns';
 import useEmblaCarousel from 'embla-carousel-react';
@@ -772,6 +773,8 @@ function ProgramCard({
   onDeleteProgram,
   setDeleteDialogOpen,
 }: ProgramCardProps) {
+  const [extendDialogOpen, setExtendDialogOpen] = useState(false);
+
   return (
     <>
       <div
@@ -860,11 +863,34 @@ function ProgramCard({
           {program.expirationDate && (
             <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
               <Clock className="h-3 w-3" />
-              <span>Expires: {format(new Date(program.expirationDate), 'dd.MM.yyyy')} - Program becomes inactive on this date</span>
+              <span className="flex-1">Expires: {format(new Date(program.expirationDate), 'dd.MM.yyyy')}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-5 px-1.5 text-[10px] text-primary hover:text-primary"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setExtendDialogOpen(true);
+                }}
+              >
+                <CalendarPlus className="h-3 w-3 mr-0.5" />
+                Extend
+              </Button>
             </div>
           )}
         </div>
       </div>
+      
+      {program.id && program.expirationDate && program.tokenAddress && (
+        <ExtendProgramDialog
+          open={extendDialogOpen}
+          onOpenChange={setExtendDialogOpen}
+          programId={program.id}
+          programName={program.name}
+          currentExpirationDate={program.expirationDate}
+          tokenAddress={program.tokenAddress}
+        />
+      )}
       
       {program.tokenAddress && (
         <AlertDialog open={deleteDialogOpen === program.id} onOpenChange={(open) => !open && setDeleteDialogOpen(null)}>
