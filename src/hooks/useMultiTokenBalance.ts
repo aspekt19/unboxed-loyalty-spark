@@ -1,6 +1,9 @@
 import { useAccount, usePublicClient } from 'wagmi';
 import { formatUnits } from 'viem';
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { type TokenAddress, ERC20_BALANCE_ABI, txLog } from './types/transaction';
+
+const HOOK_NAME = 'MultiTokenBalance';
 
 export interface TokenInfo {
   address: string;
@@ -9,81 +12,58 @@ export interface TokenInfo {
   merchantAddress?: string;
 }
 
-const ERC20_ABI = [
-  {
-    inputs: [{ name: 'account', type: 'address' }],
-    name: 'balanceOf',
-    outputs: [{ name: '', type: 'uint256' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-] as const;
+export interface TokenBalance extends TokenInfo {
+  balance: string;
+  rawBalance: bigint;
+}
 
 export function useMultiTokenBalance(tokens: TokenInfo[]) {
   const { address } = useAccount();
   const publicClient = usePublicClient();
-  const [balances, setBalances] = useState<Array<TokenInfo & { balance: string; rawBalance: bigint }>>([]);
+  const [balances, setBalances] = useState<TokenBalance[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const isInitialLoadRef = useRef(true);
   
-  // Create a stable reference for tokens to prevent unnecessary refetches
   const tokenAddressesRef = useRef<string>('');
   const currentAddresses = tokens.map(t => t.address).sort().join(',');
 
   const fetchBalances = useCallback(async (silent = false) => {
-    console.log('useMultiTokenBalance: fetchBalances called');
-    console.log('useMultiTokenBalance: address:', address);
-    console.log('useMultiTokenBalance: publicClient:', !!publicClient);
-    console.log('useMultiTokenBalance: tokens:', tokens);
-    
     if (!address || !publicClient || tokens.length === 0) {
-      console.log('useMultiTokenBalance: Skipping fetch - missing dependencies');
       setBalances([]);
       return;
     }
 
-    // Only show loading indicator on initial load or non-silent fetches
     if (!silent && isInitialLoadRef.current) {
       setIsLoading(true);
     }
-    try {
-      const balancePromises = tokens.map(async (token) => {
-        try {
-          console.log(`useMultiTokenBalance: Fetching balance for ${token.symbol} at ${token.address}`);
-          
-          const balance = await publicClient.readContract({
-            address: token.address as `0x${string}`,
-            abi: ERC20_ABI,
-            functionName: 'balanceOf',
-            args: [address],
-          } as any);
-          
-          const formattedBalance = formatUnits(balance as bigint, 18);
-          
-          console.log(`useMultiTokenBalance: Balance for ${token.symbol}:`, formattedBalance);
-          
-          return {
-            ...token,
-            balance: formattedBalance,
-            rawBalance: balance as bigint,
-          };
-        } catch (error) {
-          console.error(`useMultiTokenBalance: Error fetching balance for ${token.symbol}:`, error);
-          return {
-            ...token,
-            balance: '0',
-            rawBalance: 0n,
-          };
-        }
-      });
 
-      const results = await Promise.all(balancePromises);
-      console.log('useMultiTokenBalance: All fetched balances:', results);
+    try {
+      const results = await Promise.all(
+        tokens.map(async (token): Promise<TokenBalance> => {
+          try {
+            const balance = await publicClient.readContract({
+              address: token.address as TokenAddress,
+              abi: ERC20_BALANCE_ABI,
+              functionName: 'balanceOf',
+              args: [address],
+            } as any);
+            
+            return {
+              ...token,
+              balance: formatUnits(balance as bigint, 18),
+              rawBalance: balance as bigint,
+            };
+          } catch (err) {
+            txLog(HOOK_NAME, 'error', `Balance fetch failed for ${token.symbol}`, err);
+            return { ...token, balance: '0', rawBalance: 0n };
+          }
+        })
+      );
+
       setBalances(results);
       isInitialLoadRef.current = false;
-    } catch (error) {
-      console.error('useMultiTokenBalance: Error fetching balances:', error);
-      // Don't clear balances on error
+    } catch (err) {
+      txLog(HOOK_NAME, 'error', 'Batch balance fetch failed', err);
     } finally {
       if (!silent || isInitialLoadRef.current) {
         setIsLoading(false);
@@ -92,27 +72,20 @@ export function useMultiTokenBalance(tokens: TokenInfo[]) {
   }, [address, publicClient, tokens]);
 
   useEffect(() => {
-    // Only fetch if token addresses actually changed
     if (currentAddresses !== tokenAddressesRef.current) {
-      console.log('useMultiTokenBalance: Token addresses changed, fetching balances');
       tokenAddressesRef.current = currentAddresses;
       fetchBalances();
     }
   }, [currentAddresses, fetchBalances]);
 
-  // Listen for balance updates
+  // Listen for balance update events
   useEffect(() => {
-    const handleBalanceUpdate = () => {
-      console.log('useMultiTokenBalance: tokenBalancesUpdated event received, refetching balances');
-      fetchBalances(true); // Silent refetch
-    };
+    const handleBalanceUpdate = () => fetchBalances(true);
 
     window.addEventListener('tokenBalancesUpdated', handleBalanceUpdate);
-    return () => {
-      window.removeEventListener('tokenBalancesUpdated', handleBalanceUpdate);
-    };
+    return () => window.removeEventListener('tokenBalancesUpdated', handleBalanceUpdate);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Remove dependencies to prevent re-subscription
+  }, []);
 
   return {
     balances,

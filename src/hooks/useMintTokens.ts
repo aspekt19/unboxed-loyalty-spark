@@ -3,8 +3,15 @@ import { CONTRACTS } from '@/config/contracts';
 import { parseUnits } from 'viem';
 import { toast } from 'sonner';
 import { encodeWithBuilderCode } from '@/config/builder-code';
+import { type ResettableTransactionResult, type TokenAddress, type WalletAddress, txLog } from './types/transaction';
 
-export function useMintTokens() {
+const HOOK_NAME = 'MintTokens';
+
+export interface MintTokensResult extends ResettableTransactionResult {
+  mintTokens: (tokenAddress: string, recipientAddress: string, amount: string) => Promise<void>;
+}
+
+export function useMintTokens(): MintTokensResult {
   const { sendTransaction, data: hash, isPending, error, reset } = useSendTransaction();
   const publicClient = usePublicClient();
 
@@ -21,18 +28,16 @@ export function useMintTokens() {
         return;
       }
 
-      // Check if minting is active
       const isMintingActive = await publicClient.readContract({
-        address: tokenAddress as `0x${string}`,
+        address: tokenAddress as TokenAddress,
         abi: CONTRACTS.LOYAL_SPARK_ERC20.abi,
         functionName: 'isMintingActive',
       } as any);
 
-      console.log('[MintTokens] Is minting active:', isMintingActive);
+      txLog(HOOK_NAME, 'debug', 'Minting active status', { isMintingActive });
 
-      // If minting is not active, enable it first
       if (!isMintingActive) {
-        console.log('[MintTokens] Minting is not active, enabling it first...');
+        txLog(HOOK_NAME, 'info', 'Minting inactive, enabling first');
         toast.info('Enabling minting for this program first...');
         
         const enableMintingData = encodeWithBuilderCode(
@@ -41,7 +46,7 @@ export function useMintTokens() {
         );
 
         sendTransaction({
-          to: tokenAddress as `0x${string}`,
+          to: tokenAddress as TokenAddress,
           data: enableMintingData,
         });
 
@@ -49,20 +54,20 @@ export function useMintTokens() {
         return;
       }
       
-      console.log('[MintTokens] Minting tokens with Builder Code attribution');
+      txLog(HOOK_NAME, 'info', 'Minting tokens', { tokenAddress, recipientAddress, amount });
       
       const mintData = encodeWithBuilderCode(
         CONTRACTS.LOYAL_SPARK_ERC20.abi,
         'mint',
-        [recipientAddress as `0x${string}`, amountInWei]
+        [recipientAddress as WalletAddress, amountInWei]
       );
 
       sendTransaction({
-        to: tokenAddress as `0x${string}`,
+        to: tokenAddress as TokenAddress,
         data: mintData,
       });
-    } catch (error) {
-      console.error('[MintTokens] Mint error:', error);
+    } catch (err) {
+      txLog(HOOK_NAME, 'error', 'Mint failed', err);
       toast.error('Failed to mint tokens');
     }
   };

@@ -2,8 +2,18 @@ import { useState, useCallback, useEffect } from 'react';
 import { useApproveTokens } from './useApproveTokens';
 import { useTransferTokens } from './useTransferTokens';
 import { toast } from 'sonner';
+import { txLog } from './types/transaction';
+
+const HOOK_NAME = 'ApproveAndTransfer';
 
 type TransferStep = 'idle' | 'approving' | 'transferring' | 'complete' | 'error';
+
+/** Delay before initiating transfer after approval confirmation (ms) */
+const POST_APPROVAL_DELAY = 500;
+
+/** Delay before resetting step state after completion/error (ms) */
+const RESET_DELAY = 1000;
+const ERROR_RESET_DELAY = 2000;
 
 export function useApproveAndTransfer() {
   const [step, setStep] = useState<TransferStep>('idle');
@@ -11,20 +21,19 @@ export function useApproveAndTransfer() {
     tokenAddress: string;
     recipientAddress: string;
     amount: string;
-    tokenAbi: any;
+    tokenAbi: readonly unknown[];
   } | null>(null);
 
   const { approveTokens, isPending: isApproving, isSuccess: approveSuccess, error: approveError } = useApproveTokens();
   const { transferTokens, isPending: isTransferring, isSuccess: transferSuccess, error: transferError } = useTransferTokens();
 
-  // Handle approve success -> trigger transfer
+  // Approval confirmed → initiate transfer
   useEffect(() => {
     if (approveSuccess && step === 'approving' && pendingTransfer) {
-      console.log('✅ Approval confirmed, starting transfer...');
+      txLog(HOOK_NAME, 'info', 'Approval confirmed, starting transfer');
       toast.success('Approval confirmed! Starting transfer...');
       setStep('transferring');
       
-      // Small delay to ensure blockchain state is updated
       setTimeout(() => {
         transferTokens(
           pendingTransfer.tokenAddress,
@@ -32,39 +41,37 @@ export function useApproveAndTransfer() {
           pendingTransfer.amount,
           pendingTransfer.tokenAbi
         );
-      }, 500);
+      }, POST_APPROVAL_DELAY);
     }
   }, [approveSuccess, step, pendingTransfer, transferTokens]);
 
-  // Handle transfer success
+  // Transfer confirmed
   useEffect(() => {
     if (transferSuccess && step === 'transferring') {
-      console.log('✅ Transfer complete!');
+      txLog(HOOK_NAME, 'info', 'Transfer complete');
       toast.success('Transfer completed successfully!');
       setStep('complete');
       setPendingTransfer(null);
-      
-      // Reset to idle after a short delay
-      setTimeout(() => setStep('idle'), 1000);
+      setTimeout(() => setStep('idle'), RESET_DELAY);
     }
   }, [transferSuccess, step]);
 
-  // Handle errors
+  // Error handling
   useEffect(() => {
     if (approveError && step === 'approving') {
-      console.error('❌ Approval failed:', approveError);
+      txLog(HOOK_NAME, 'error', 'Approval failed', approveError);
       setStep('error');
       setPendingTransfer(null);
-      setTimeout(() => setStep('idle'), 2000);
+      setTimeout(() => setStep('idle'), ERROR_RESET_DELAY);
     }
   }, [approveError, step]);
 
   useEffect(() => {
     if (transferError && step === 'transferring') {
-      console.error('❌ Transfer failed:', transferError);
+      txLog(HOOK_NAME, 'error', 'Transfer failed', transferError);
       setStep('error');
       setPendingTransfer(null);
-      setTimeout(() => setStep('idle'), 2000);
+      setTimeout(() => setStep('idle'), ERROR_RESET_DELAY);
     }
   }, [transferError, step]);
 
@@ -74,23 +81,11 @@ export function useApproveAndTransfer() {
       spenderAddress: string,
       recipientAddress: string,
       amount: string,
-      tokenAbi: any
+      tokenAbi: readonly unknown[]
     ) => {
-      console.log('🚀 Starting approve + transfer sequence');
-      console.log('Token:', tokenAddress);
-      console.log('Spender:', spenderAddress);
-      console.log('Recipient:', recipientAddress);
-      console.log('Amount:', amount);
+      txLog(HOOK_NAME, 'info', 'Starting approve + transfer', { tokenAddress, recipientAddress, amount });
 
-      // Store transfer details for after approval
-      setPendingTransfer({
-        tokenAddress,
-        recipientAddress,
-        amount,
-        tokenAbi,
-      });
-
-      // Start with approval
+      setPendingTransfer({ tokenAddress, recipientAddress, amount, tokenAbi });
       setStep('approving');
       toast.info('Step 1/2: Approving tokens...');
       approveTokens(tokenAddress, spenderAddress, tokenAbi);
@@ -98,13 +93,10 @@ export function useApproveAndTransfer() {
     [approveTokens]
   );
 
-  const isPending = step === 'approving' || step === 'transferring' || isApproving || isTransferring;
-  const isSuccess = step === 'complete';
-
   return {
     approveAndTransfer,
-    isPending,
-    isSuccess,
+    isPending: step === 'approving' || step === 'transferring' || isApproving || isTransferring,
+    isSuccess: step === 'complete',
     step,
     isApproving: step === 'approving',
     isTransferring: step === 'transferring',

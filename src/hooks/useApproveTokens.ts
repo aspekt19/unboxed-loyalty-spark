@@ -3,61 +3,54 @@ import { useSendTransaction, useWaitForTransactionReceipt, useReadContract } fro
 import { maxUint256 } from 'viem';
 import { toast } from 'sonner';
 import { encodeWithBuilderCode } from '@/config/builder-code';
+import { type TransactionResult, type TokenAddress, type WalletAddress, txLog } from './types/transaction';
 
-export function useApproveTokens() {
+const HOOK_NAME = 'ApproveTokens';
+
+export interface ApproveTokensResult extends TransactionResult {
+  approveTokens: (tokenAddress: string, spenderAddress: string, tokenAbi: readonly unknown[]) => void;
+}
+
+export function useApproveTokens(): ApproveTokensResult {
   const { sendTransaction, data: hash, isPending, error } = useSendTransaction();
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
 
-  // Логируем ошибки
   useEffect(() => {
     if (error) {
-      console.error('❌ useApproveTokens ERROR:', error);
+      txLog(HOOK_NAME, 'error', 'Approval failed', error.message);
       toast.error(`Approval failed: ${error.message}`);
     }
   }, [error]);
 
-  // Логируем изменения hash
   useEffect(() => {
     if (hash) {
-      console.log('✅ Transaction hash received:', hash);
+      txLog(HOOK_NAME, 'info', 'Transaction submitted', { hash });
       toast.success('Approval transaction submitted!');
     }
   }, [hash]);
 
-  const approveTokens = useCallback((tokenAddress: string, spenderAddress: string, tokenAbi: any) => {
-    console.log('🚀 useApproveTokens: approveTokens called');
-    console.log('useApproveTokens: tokenAddress:', tokenAddress);
-    console.log('useApproveTokens: spenderAddress:', spenderAddress);
-    console.log('[ApproveTokens] Approve with Builder Code attribution');
+  const approveTokens = useCallback((tokenAddress: string, spenderAddress: string, tokenAbi: readonly unknown[]) => {
+    txLog(HOOK_NAME, 'info', 'Initiating approval', { tokenAddress, spenderAddress });
     
     try {
       const approveData = encodeWithBuilderCode(
         tokenAbi,
         'approve',
-        [spenderAddress as `0x${string}`, maxUint256]
+        [spenderAddress as WalletAddress, maxUint256]
       );
 
       sendTransaction({
-        to: tokenAddress as `0x${string}`,
+        to: tokenAddress as TokenAddress,
         data: approveData,
       });
-      
-      console.log('useApproveTokens: sendTransaction called');
-    } catch (error) {
-      console.error('❌ useApproveTokens: Caught error:', error);
+    } catch (err) {
+      txLog(HOOK_NAME, 'error', 'Approval initiation failed', err);
       toast.error('Failed to initiate approval');
     }
   }, [sendTransaction]);
-
-  console.log('useApproveTokens hook state:', { 
-    isPending, 
-    isConfirming, 
-    hash: hash ? 'exists' : 'null',
-    error: error ? error.message : 'null'
-  });
 
   return {
     approveTokens,
@@ -72,13 +65,13 @@ export function useCheckAllowance(
   tokenAddress: string | undefined,
   ownerAddress: string | undefined,
   spenderAddress: string | undefined,
-  tokenAbi: any
+  tokenAbi: readonly unknown[]
 ) {
   return useReadContract({
-    address: tokenAddress as `0x${string}`,
+    address: tokenAddress as TokenAddress,
     abi: tokenAbi,
     functionName: 'allowance',
-    args: ownerAddress && spenderAddress ? [ownerAddress as `0x${string}`, spenderAddress as `0x${string}`] : undefined,
+    args: ownerAddress && spenderAddress ? [ownerAddress as WalletAddress, spenderAddress as WalletAddress] : undefined,
     query: {
       enabled: !!(tokenAddress && ownerAddress && spenderAddress),
     },

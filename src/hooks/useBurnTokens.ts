@@ -2,33 +2,40 @@ import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { parseUnits } from 'viem';
 import { toast } from 'sonner';
 import { encodeWithBuilderCode } from '@/config/builder-code';
+import { type TransactionResult, type TokenAddress, type WalletAddress, txLog } from './types/transaction';
 
-export function useBurnTokens() {
+const HOOK_NAME = 'BurnTokens';
+
+export interface BurnTokensResult extends TransactionResult {
+  burnTokens: (tokenAddress: string, amount: string, tokenAbi: readonly unknown[], recipientAddress?: string) => void;
+}
+
+export function useBurnTokens(): BurnTokensResult {
   const { sendTransaction, data: hash, isPending, error } = useSendTransaction();
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
 
-  const burnTokens = (tokenAddress: string, amount: string, tokenAbi: any, recipientAddress?: string) => {
+  const burnTokens = (tokenAddress: string, amount: string, tokenAbi: readonly unknown[], recipientAddress?: string) => {
     try {
       const amountInWei = parseUnits(amount, 18);
       
       if (recipientAddress) {
-        console.log('[BurnTokens] Transfer with Builder Code attribution');
+        txLog(HOOK_NAME, 'info', 'Initiating transfer (burn-via-transfer)', { tokenAddress, recipientAddress, amount });
         
         const transferData = encodeWithBuilderCode(
           tokenAbi,
           'transfer',
-          [recipientAddress as `0x${string}`, amountInWei]
+          [recipientAddress as WalletAddress, amountInWei]
         );
 
         sendTransaction({
-          to: tokenAddress as `0x${string}`,
+          to: tokenAddress as TokenAddress,
           data: transferData,
         });
       } else {
-        console.log('[BurnTokens] Burn with Builder Code attribution');
+        txLog(HOOK_NAME, 'info', 'Initiating burn', { tokenAddress, amount });
         
         const burnData = encodeWithBuilderCode(
           tokenAbi,
@@ -37,12 +44,12 @@ export function useBurnTokens() {
         );
 
         sendTransaction({
-          to: tokenAddress as `0x${string}`,
+          to: tokenAddress as TokenAddress,
           data: burnData,
         });
       }
-    } catch (error) {
-      console.error('[BurnTokens] Token transfer/burn error:', error);
+    } catch (err) {
+      txLog(HOOK_NAME, 'error', 'Token transfer/burn failed', err);
       toast.error('Failed to process tokens');
     }
   };
