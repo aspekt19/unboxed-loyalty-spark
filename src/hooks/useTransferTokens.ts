@@ -2,32 +2,39 @@ import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { parseUnits } from 'viem';
 import { toast } from 'sonner';
 import { encodeWithBuilderCode } from '@/config/builder-code';
+import { type TransactionResult, type TokenAddress, type WalletAddress, txLog } from './types/transaction';
 
-export function useTransferTokens() {
+const HOOK_NAME = 'TransferTokens';
+
+export interface TransferTokensResult extends TransactionResult {
+  transferTokens: (tokenAddress: string, recipientAddress: string, amount: string, tokenAbi: readonly unknown[]) => void;
+}
+
+export function useTransferTokens(): TransferTokensResult {
   const { sendTransaction, data: hash, isPending, error } = useSendTransaction();
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
 
-  const transferTokens = (tokenAddress: string, recipientAddress: string, amount: string, tokenAbi: any) => {
+  const transferTokens = (tokenAddress: string, recipientAddress: string, amount: string, tokenAbi: readonly unknown[]) => {
     try {
       const amountInWei = parseUnits(amount, 18);
       
-      console.log('[TransferTokens] Transfer with Builder Code attribution');
+      txLog(HOOK_NAME, 'info', 'Initiating transfer', { tokenAddress, recipientAddress, amount });
       
       const transferData = encodeWithBuilderCode(
         tokenAbi,
         'transfer',
-        [recipientAddress as `0x${string}`, amountInWei]
+        [recipientAddress as WalletAddress, amountInWei]
       );
 
       sendTransaction({
-        to: tokenAddress as `0x${string}`,
+        to: tokenAddress as TokenAddress,
         data: transferData,
       });
-    } catch (error) {
-      console.error('[TransferTokens] Transfer error:', error);
+    } catch (err) {
+      txLog(HOOK_NAME, 'error', 'Transfer failed', err);
       toast.error('Failed to transfer tokens');
     }
   };

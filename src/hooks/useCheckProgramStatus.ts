@@ -1,58 +1,50 @@
 import { useReadContract } from 'wagmi';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
+import { type TokenAddress, TOKEN_STATUS_ABI, txLog } from './types/transaction';
 
-export function useCheckProgramStatus(tokenAddress: `0x${string}` | undefined) {
+const HOOK_NAME = 'CheckProgramStatus';
+
+/** Polling interval for contract status checks (ms) */
+const STATUS_POLL_INTERVAL = 5000;
+
+export interface ProgramStatus {
+  isMintingActive: boolean;
+  isUtilityActive: boolean;
+  isPaused: boolean;
+  hasStatusErrors: boolean;
+}
+
+export function useCheckProgramStatus(tokenAddress: TokenAddress | undefined): ProgramStatus {
   const queryClient = useQueryClient();
+
+  const queryOptions = {
+    enabled: !!tokenAddress,
+    refetchInterval: STATUS_POLL_INTERVAL,
+    refetchOnMount: true as const,
+    refetchOnWindowFocus: true as const,
+    retry: 1,
+  };
 
   const { data: isMintingActive, isError: mintingError } = useReadContract({
     address: tokenAddress,
-    abi: [
-      {
-        inputs: [],
-        name: 'isMintingActive',
-        outputs: [{ name: '', type: 'bool' }],
-        stateMutability: 'view',
-        type: 'function',
-      },
-    ] as const,
+    abi: TOKEN_STATUS_ABI.isMintingActive,
     functionName: 'isMintingActive',
-    query: {
-      enabled: !!tokenAddress,
-      refetchInterval: 5000, // Уменьшили до 5 секунд для быстрого обновления
-      refetchOnMount: true, // Включаем обновление при монтировании
-      refetchOnWindowFocus: true, // Включаем обновление при фокусе
-      retry: 1,
-    },
+    query: queryOptions,
   });
 
   const { data: isUtilityActive, isError: utilityError } = useReadContract({
     address: tokenAddress,
-    abi: [
-      {
-        inputs: [],
-        name: 'isUtilityActive',
-        outputs: [{ name: '', type: 'bool' }],
-        stateMutability: 'view',
-        type: 'function',
-      },
-    ] as const,
+    abi: TOKEN_STATUS_ABI.isUtilityActive,
     functionName: 'isUtilityActive',
-    query: {
-      enabled: !!tokenAddress,
-      refetchInterval: 5000, // Уменьшили до 5 секунд для быстрого обновления
-      refetchOnMount: true, // Включаем обновление при монтировании
-      refetchOnWindowFocus: true, // Включаем обновление при фокусе
-      retry: 1,
-    },
+    query: queryOptions,
   });
 
-  // Слушаем события обновления программ для принудительного обновления кеша
+  // Invalidate cache on program update events
   useEffect(() => {
     const handleProgramUpdate = () => {
       if (tokenAddress) {
-        console.log('[DEBUG useCheckProgramStatus] Invalidating contract status cache for', tokenAddress);
-        // Инвалидируем все запросы для этого адреса
+        txLog(HOOK_NAME, 'debug', 'Invalidating status cache', { tokenAddress });
         queryClient.invalidateQueries({ 
           predicate: (query) => {
             const state = query.state;
@@ -67,26 +59,21 @@ export function useCheckProgramStatus(tokenAddress: `0x${string}` | undefined) {
     return () => window.removeEventListener('loyaltyProgramsUpdated', handleProgramUpdate);
   }, [tokenAddress, queryClient]);
 
-  // Логируем текущее состояние для отладки
   useEffect(() => {
     if (tokenAddress) {
-      console.log('[DEBUG useCheckProgramStatus] Status for', tokenAddress, {
-        isMintingActive: isMintingActive,
-        isUtilityActive: isUtilityActive,
+      txLog(HOOK_NAME, 'debug', 'Status update', {
+        tokenAddress,
+        isMintingActive,
+        isUtilityActive,
         isPaused: !(isMintingActive && isUtilityActive),
-        mintingError: mintingError ? 'ERROR' : 'OK',
-        utilityError: utilityError ? 'ERROR' : 'OK',
       });
     }
-  }, [tokenAddress, isMintingActive, isUtilityActive, mintingError, utilityError]);
-
-  // Если есть ошибки при чтении статуса, это может быть старый контракт
-  const hasErrors = mintingError || utilityError;
+  }, [tokenAddress, isMintingActive, isUtilityActive]);
 
   return {
     isMintingActive: isMintingActive ?? false,
     isUtilityActive: isUtilityActive ?? false,
     isPaused: !(isMintingActive && isUtilityActive),
-    hasStatusErrors: hasErrors,
+    hasStatusErrors: mintingError || utilityError,
   };
 }

@@ -3,6 +3,9 @@ import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
 import { useEffect, useState, useCallback } from 'react';
 import { encodeWithBuilderCode } from '@/config/builder-code';
+import { type TokenAddress, txLog } from './types/transaction';
+
+const HOOK_NAME = 'DeployToken';
 
 export function useDeployLoyaltyToken() {
   const { address } = useAccount();
@@ -19,8 +22,7 @@ export function useDeployLoyaltyToken() {
     if (isSuccess && receipt && publicClient && address && !deployedTokenAddress) {
       const extractTokenAddress = async () => {
         try {
-          const logs = receipt.logs;
-          const eventLog = logs.find((log) => {
+          const eventLog = receipt.logs.find((log) => {
             try {
               return log.address.toLowerCase() === CONTRACTS.LOYALTY_TOKEN_FACTORY.address.toLowerCase();
             } catch {
@@ -28,14 +30,14 @@ export function useDeployLoyaltyToken() {
             }
           });
 
-          if (eventLog && eventLog.topics && eventLog.topics.length > 1) {
+          if (eventLog?.topics && eventLog.topics.length > 1) {
             const tokenAddress = '0x' + eventLog.topics[1].slice(-40);
-            console.log('[DeployToken] Token created:', tokenAddress);
+            txLog(HOOK_NAME, 'info', 'Token created', { tokenAddress });
             setDeployedTokenAddress(tokenAddress);
             toast.success('Loyalty program deployed successfully!');
           }
-        } catch (error) {
-          console.error('[DeployToken] Error extracting token address:', error);
+        } catch (err) {
+          txLog(HOOK_NAME, 'error', 'Failed to extract token address', err);
           toast.error('Failed to extract token address');
         }
       };
@@ -50,11 +52,10 @@ export function useDeployLoyaltyToken() {
       return;
     }
 
-    // Reset state on new deployment
     setDeployedTokenAddress(null);
 
     try {
-      console.log('[DeployToken] Deploy with Builder Code attribution');
+      txLog(HOOK_NAME, 'info', 'Deploying token', { name, symbol });
       
       const deployData = encodeWithBuilderCode(
         CONTRACTS.LOYALTY_TOKEN_FACTORY.abi,
@@ -66,8 +67,8 @@ export function useDeployLoyaltyToken() {
         to: CONTRACTS.LOYALTY_TOKEN_FACTORY.address,
         data: deployData,
       });
-    } catch (error) {
-      console.error('[DeployToken] Deploy error:', error);
+    } catch (err) {
+      txLog(HOOK_NAME, 'error', 'Deploy failed', err);
       toast.error('Failed to create loyalty token');
     }
   }, [address, sendTransaction]);
