@@ -33,21 +33,40 @@ export async function createVerifiedVoucher(
   try {
     console.log('[createVerifiedVoucher] Starting verified voucher creation:', request.transactionHash);
 
-    // Ensure we have an authenticated session and pass it explicitly.
-    // In some embedded contexts, the Functions client may not attach the auth header reliably.
-    const {
+    // Ensure we have a valid authenticated session.
+    // getSession() returns a locally cached session that may be stale/deleted on the server.
+    // We validate with getUser() first, and if that fails, attempt a token refresh.
+    let {
       data: { session },
       error: sessionError,
     } = await supabase.auth.getSession();
 
-    if (sessionError) {
-      console.error('[createVerifiedVoucher] Failed to get session:', sessionError);
-      return { success: false, retryable: false, error: 'Authentication error. Please reconnect and try again.' };
+    if (sessionError || !session?.access_token) {
+      console.error('[createVerifiedVoucher] No local session:', sessionError);
+      return { success: false, retryable: false, error: 'Not authenticated. Please reconnect your wallet and try again.' };
     }
 
-    if (!session?.access_token) {
-      console.error('[createVerifiedVoucher] No session access token available');
-      return { success: false, retryable: false, error: 'Not authenticated. Please reconnect your wallet and try again.' };
+    // Validate that the session is still alive on the server
+    const { error: userError } = await supabase.auth.getUser(session.access_token);
+    if (userError) {
+      console.warn('[createVerifiedVoucher] Session stale, attempting refresh...', userError.message);
+      
+      // Try to refresh the session
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      
+      if (refreshError || !refreshData.session?.access_token) {
+        console.error('[createVerifiedVoucher] Session refresh failed:', refreshError);
+        // Dispatch event so the UI can trigger re-authentication
+        window.dispatchEvent(new CustomEvent('sessionExpired'));
+        return { 
+          success: false, 
+          retryable: false, 
+          error: 'Session expired. Please disconnect and reconnect your wallet to re-authenticate.' 
+        };
+      }
+      
+      session = refreshData.session;
+      console.log('[createVerifiedVoucher] Session refreshed successfully');
     }
 
     // Retry a few times because Base RPC / indexers can be slightly behind on mobile.

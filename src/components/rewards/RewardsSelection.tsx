@@ -216,9 +216,11 @@ export function RewardsSelection() {
 
   // Загрузка наград для выбранного токена - немедленно сбрасываем награду при смене программы
   useEffect(() => {
-    // Немедленно сбрасываем выбранную награду и очищаем список при смене программы
+    // Немедленно сбрасываем выбранную награду, очищаем список и предыдущие ошибки при смене программы
     setSelectedRewardId('');
     setAvailableRewards([]);
+    setFailedVoucherAttempt(null);
+    setVerificationStatus(prev => ({ ...prev, isVerifying: false, canRetry: false }));
     
     const loadRewardsForToken = async () => {
       if (selectedTokenAddress) {
