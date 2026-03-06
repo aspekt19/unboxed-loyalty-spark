@@ -227,22 +227,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
         
-        // Если есть ошибка или нет сессии, но кошелек подключен - переподключаемся
         if (error || !currentSession) {
           console.log('[AuthProvider] Session expired or invalid, reconnecting...');
           await signInWithWallet();
           return;
         }
 
-        // Проверяем не истекла ли сессия
-        const isExpired = currentSession.expires_at 
-          ? new Date(currentSession.expires_at * 1000) < new Date()
-          : false;
-        
-        if (isExpired) {
-          console.log('[AuthProvider] Session expired, reconnecting...');
-          await supabase.auth.signOut();
-          await signInWithWallet();
+        // Validate session is still alive on the server (getSession only reads local cache)
+        const { error: userError } = await supabase.auth.getUser();
+        if (userError) {
+          console.log('[AuthProvider] Server rejected session, attempting refresh...');
+          const { error: refreshError } = await supabase.auth.refreshSession();
+          if (refreshError) {
+            console.log('[AuthProvider] Refresh failed, re-authenticating...');
+            await supabase.auth.signOut();
+            await signInWithWallet();
+          }
           return;
         }
 
@@ -264,12 +264,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
+    // Listen for sessionExpired events from edge function calls
+    const handleSessionExpired = () => {
+      console.log('[AuthProvider] Session expired event received, re-authenticating...');
+      signInWithWallet();
+    };
+    window.addEventListener('sessionExpired', handleSessionExpired);
+
     // Проверяем сессию сразу при изменении кошелька
     checkSession();
 
     // Проверяем сессию каждую минуту
     const interval = setInterval(checkSession, 60000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('sessionExpired', handleSessionExpired);
+    };
   }, [isConnected, address, signInWithWallet]);
 
   useEffect(() => {
