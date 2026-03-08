@@ -1,21 +1,20 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Gift, Coins, Calendar, Check, Trash2, Loader2, Clock, AlertTriangle, Play, Pause, ChevronLeft, ChevronRight, CalendarPlus } from 'lucide-react';
-import { usePublicClient, useAccount } from 'wagmi';
+import { Gift, Check, Loader2, Clock, ChevronLeft, ChevronRight, CalendarPlus } from 'lucide-react';
+import { useAccount } from 'wagmi';
 import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
 import { useBurnAllTokens } from '@/hooks/useBurnAllTokens';
 import { useToggleProgramStatus } from '@/hooks/useToggleProgramStatus';
-import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
+import { useTokenStats } from '@/hooks/useTokenStats';
 import { ProgramStatusBadge } from './ProgramStatusBadge';
 import { ProgramControlButtons } from './ProgramControlButtons';
 import { ProgramActivationNote } from './ProgramActivationNote';
 import { ExtendProgramDialog } from './ExtendProgramDialog';
 import { supabase } from '@/integrations/supabase/client';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useFarcasterHaptics } from '@/hooks/useFarcasterHaptics';
@@ -28,7 +27,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
 interface LoyaltyProgram {
@@ -41,11 +39,16 @@ interface LoyaltyProgram {
   status?: 'active' | 'expiring_soon' | 'expired' | 'paused' | 'inactive';
 }
 
-interface TokenStats {
-  [tokenAddress: string]: {
-    totalIssued: number;
-    merchantBalance: number;
-    holdersBalance: number;
+/** Map DB row to LoyaltyProgram */
+function mapDbProgram(prog: any): LoyaltyProgram {
+  return {
+    id: prog.id,
+    name: prog.name,
+    symbol: prog.symbol,
+    timestamp: new Date(prog.created_at).getTime(),
+    tokenAddress: prog.token_address,
+    expirationDate: prog.expiration_date,
+    status: prog.status as LoyaltyProgram['status'],
   };
 }
 
@@ -54,20 +57,21 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<string | null>(null);
   const [deletingProgramId, setDeletingProgramId] = useState<string | null>(null);
-  const [tokenStats, setTokenStats] = useState<TokenStats>({});
-  const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [toggledProgram, setToggledProgram] = useState<string | null>(null);
   const [pendingOperation, setPendingOperation] = useState<{
     program: LoyaltyProgram;
     operation: 'pause' | 'activate';
     step: 'unpause' | 'minting' | 'complete';
   } | null>(null);
-  const publicClient = usePublicClient();
+
   const { address } = useAccount();
   const { burnAllTokens, isBurning, progress } = useBurnAllTokens();
   const { pauseProgram, unpauseUtility, enableMinting, isPending: isToggling, isSuccess: toggleSuccess, hash } = useToggleProgramStatus();
+  const { tokenStats, isLoadingStats } = useTokenStats(programs);
   const isMobile = useIsMobile();
-  const { selectionChanged, impactOccurred } = useFarcasterHaptics();
+  const { selectionChanged } = useFarcasterHaptics();
+  const lastProcessedHash = useRef<string | null>(null);
+
   // Embla carousel for mobile swipe
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     align: 'start',
@@ -84,7 +88,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     setCanScrollNext(emblaApi.canScrollNext());
     const newSlide = emblaApi.selectedScrollSnap();
     if (newSlide !== currentSlide) {
-      selectionChanged(); // Haptic feedback on slide change
+      selectionChanged();
     }
     setCurrentSlide(newSlide);
   }, [emblaApi, currentSlide, selectionChanged]);
@@ -99,9 +103,8 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
       emblaApi.off('reInit', onSelect);
     };
   }, [emblaApi, onSelect]);
-  const lastProcessedHash = useRef<string | null>(null);
 
-  // Очищаем программы при отключении кошелька
+  // Clear programs on wallet disconnect
   useEffect(() => {
     if (!address) {
       setPrograms([]);
@@ -109,15 +112,12 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     }
   }, [address]);
 
+  // Load programs from DB + realtime subscription
   useEffect(() => {
-    // Не загружаем программы, если кошелек не подключен
-    if (!address) {
-      return;
-    }
+    if (!address) return;
 
     const loadPrograms = async () => {
       try {
-        // Загружаем программы из БД
         const { data: dbPrograms, error } = await supabase
           .from('loyalty_programs')
           .select('*')
@@ -125,52 +125,30 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
           .order('created_at', { ascending: false });
 
         if (error) {
-          console.error('Error loading programs from DB:', error);
+          console.error('[CreatedPrograms] Load error:', error.message);
           toast.error('Failed to load programs');
           return;
         }
 
-        // Преобразуем данные из БД в формат LoyaltyProgram
-        const programs: LoyaltyProgram[] = dbPrograms.map(prog => ({
-          id: prog.id,
-          name: prog.name,
-          symbol: prog.symbol,
-          timestamp: new Date(prog.created_at).getTime(),
-          tokenAddress: prog.token_address,
-          expirationDate: prog.expiration_date,
-          status: prog.status as 'active' | 'expiring_soon' | 'expired' | 'paused' | 'inactive',
-        }));
-
-        setPrograms(programs);
-
-        // Синхронизируем с localStorage для обратной совместимости
-        localStorage.setItem('loyaltyPrograms', JSON.stringify(programs));
+        const mapped = dbPrograms.map(mapDbProgram);
+        setPrograms(mapped);
+        localStorage.setItem('loyaltyPrograms', JSON.stringify(mapped));
       } catch (error) {
-        console.error('Error in loadPrograms:', error);
+        console.error('[CreatedPrograms] Load error:', error);
       }
     };
 
     loadPrograms();
     
-    // Listen for updates from CreateLoyaltyProgram
     const handleUpdate = () => loadPrograms();
     window.addEventListener('loyaltyProgramsUpdated', handleUpdate);
 
-    // Подписка на realtime обновления
     const channel = supabase
       .channel('loyalty_programs_changes')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'loyalty_programs',
-          filter: `merchant_address=eq.${address.toLowerCase()}`,
-        },
-        () => {
-          console.log('Loyalty program changed, reloading...');
-          loadPrograms();
-        }
+        { event: '*', schema: 'public', table: 'loyalty_programs', filter: `merchant_address=eq.${address.toLowerCase()}` },
+        () => loadPrograms()
       )
       .subscribe();
 
@@ -179,171 +157,6 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
       supabase.removeChannel(channel);
     };
   }, [address]);
-
-  // Load token statistics
-  useEffect(() => {
-    if (!address) {
-      console.log('No address, skipping stats load');
-      return;
-    }
-    
-    if (!publicClient) {
-      console.log('No publicClient, skipping stats load');
-      return;
-    }
-
-    const loadTokenStats = async () => {
-      const activePrograms = programs.filter(p => p.tokenAddress);
-      console.log('Loading token stats for programs:', activePrograms.length, activePrograms);
-      
-      if (activePrograms.length === 0) {
-        console.log('No active programs with token address');
-        return;
-      }
-
-      setIsLoadingStats(true);
-      const stats: TokenStats = {};
-
-      for (const program of activePrograms) {
-        if (!program.tokenAddress) continue;
-
-        try {
-          console.log(`Fetching stats for ${program.name} (${program.tokenAddress})`);
-          
-          const currentBlock = await publicClient.getBlockNumber();
-          console.log('Current block:', currentBlock);
-          
-          const CHUNK_SIZE = 40000n; // Stay under 50k limit
-          const LOOKBACK_BLOCKS = 200000n;
-          const fromBlock = currentBlock > LOOKBACK_BLOCKS ? currentBlock - LOOKBACK_BLOCKS : 0n;
-          
-          console.log('Fetching logs from block', fromBlock, 'to', currentBlock);
-          
-          // Query in chunks to avoid "exceed maximum block range" error
-          let allLogs: any[] = [];
-          let currentChunkStart = fromBlock;
-
-          while (currentChunkStart <= currentBlock) {
-            const currentChunkEnd = currentChunkStart + CHUNK_SIZE > currentBlock 
-              ? currentBlock 
-              : currentChunkStart + CHUNK_SIZE;
-
-            console.log(`Querying chunk ${currentChunkStart} to ${currentChunkEnd}`);
-
-            try {
-              const logs = await publicClient.getLogs({
-                address: program.tokenAddress as `0x${string}`,
-                event: {
-                  type: 'event',
-                  name: 'Transfer',
-                  inputs: [
-                    { name: 'from', type: 'address', indexed: true },
-                    { name: 'to', type: 'address', indexed: true },
-                    { name: 'value', type: 'uint256', indexed: false },
-                  ],
-                },
-                args: {
-                  from: '0x0000000000000000000000000000000000000000' as `0x${string}`,
-                },
-                fromBlock: currentChunkStart,
-                toBlock: currentChunkEnd,
-              });
-
-              allLogs = [...allLogs, ...logs];
-              console.log(`Found ${logs.length} events in this chunk`);
-            } catch (chunkError) {
-              console.error(`Error querying chunk:`, chunkError);
-            }
-
-            currentChunkStart = currentChunkEnd + 1n;
-          }
-
-          console.log('Total logs received:', allLogs.length);
-
-          const totalIssued = allLogs.reduce((sum, log) => {
-            if (log.args.value) {
-              return sum + Number(log.args.value) / 1e18;
-            }
-            return sum;
-          }, 0);
-
-          console.log(`Total issued for ${program.name}:`, totalIssued);
-
-          // Получаем баланс мерчанта используя viem
-          let merchantBalance = 0;
-          try {
-            const ERC20_ABI = [
-              {
-                inputs: [{ name: 'account', type: 'address' }],
-                name: 'balanceOf',
-                outputs: [{ name: '', type: 'uint256' }],
-                stateMutability: 'view',
-                type: 'function',
-              }
-            ] as const;
-            
-            console.log('Fetching merchant balance for address:', address);
-            
-            const balance = await publicClient.readContract({
-              address: program.tokenAddress as `0x${string}`,
-              abi: ERC20_ABI,
-              functionName: 'balanceOf',
-              args: [address],
-            } as any);
-            
-            merchantBalance = Number(balance) / 1e18;
-            console.log(`Merchant balance for ${program.name}:`, merchantBalance, 'raw:', balance);
-          } catch (error) {
-            console.error('Error fetching merchant balance:', error);
-          }
-
-          // Получаем балансы всех держателей через edge function
-          let holdersBalance = 0;
-          try {
-            console.log('Fetching holders balance via edge function...');
-            const { data: holdersData, error: holdersError } = await supabase.functions.invoke('get-token-holders', {
-              body: { tokenAddress: program.tokenAddress }
-            });
-
-            console.log('Edge function response:', holdersData, holdersError);
-
-            if (holdersError) {
-              console.error('Edge function error:', holdersError);
-            } else if (holdersData?.holders) {
-              console.log('Holders data received:', holdersData);
-              holdersBalance = holdersData.holders.reduce((sum: number, holder: any) => {
-                // Исключаем баланс мерчанта из общего баланса пользователей
-                if (holder.address.toLowerCase() !== address.toLowerCase()) {
-                  return sum + parseFloat(holder.balance);
-                }
-                return sum;
-              }, 0);
-              console.log(`Users balance for ${program.name}:`, holdersBalance);
-            }
-          } catch (error) {
-            console.error('Error fetching holders:', error);
-          }
-
-          stats[program.tokenAddress] = { totalIssued, merchantBalance, holdersBalance };
-          console.log(`Stats for ${program.name}:`, stats[program.tokenAddress]);
-        } catch (error) {
-          console.error(`Error loading stats for ${program.name}:`, error);
-        }
-      }
-
-      console.log('Final token stats:', stats);
-      setTokenStats(stats);
-      setIsLoadingStats(false);
-    };
-
-    if (programs.length > 0) {
-      console.log('Programs array has items, loading stats');
-      loadTokenStats();
-    } else {
-      console.log('Programs array is empty');
-      setIsLoadingStats(false);
-    }
-  }, [programs, publicClient, address]);
 
   const handleSelectProgram = (program: LoyaltyProgram, index: number) => {
     if (!program.tokenAddress) {
@@ -358,71 +171,41 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
   const handleToggleProgram = async (program: LoyaltyProgram, shouldPause: boolean) => {
     if (!program.tokenAddress || !program.id) return;
     
-    console.log('[DEBUG] Toggle program called:', { 
-      program: program.name, 
-      tokenAddress: program.tokenAddress,
-      shouldPause 
-    });
-    
     setToggledProgram(program.tokenAddress);
     
     try {
       if (shouldPause) {
-        console.log('[DEBUG] Pausing program...');
         setPendingOperation({ program, operation: 'pause', step: 'complete' });
         await pauseProgram(program.tokenAddress as `0x${string}`);
       } else {
-        console.log('[DEBUG] Starting activation - Step 1: unpause utility...');
         setPendingOperation({ program, operation: 'activate', step: 'unpause' });
         await unpauseUtility(program.tokenAddress as `0x${string}`);
       }
-      console.log('[DEBUG] Transaction initiated successfully');
     } catch (error) {
-      console.error('[ERROR] Error toggling program:', error);
+      console.error('[CreatedPrograms] Toggle error:', error);
       toast.error('Failed to change program status');
       setToggledProgram(null);
       setPendingOperation(null);
     }
   };
 
-  // Обрабатываем успешное завершение транзакции паузы/активации
+  // Handle successful toggle transaction
   useEffect(() => {
     const handleSuccess = async () => {
-      console.log('[DEBUG] useEffect triggered:', { 
-        toggleSuccess, 
-        pendingOperation: !!pendingOperation, 
-        address: !!address,
-        step: pendingOperation?.step,
-        hash,
-        lastProcessedHash: lastProcessedHash.current
-      });
+      if (!toggleSuccess || !pendingOperation || !address || !hash) return;
+      if (lastProcessedHash.current === hash) return;
       
-      if (!toggleSuccess || !pendingOperation || !address || !hash) {
-        console.log('[DEBUG] Skipping - missing required data');
-        return;
-      }
-      
-      // Проверяем, не обработали ли мы уже эту транзакцию
-      if (lastProcessedHash.current === hash) {
-        console.log('[DEBUG] Skipping - transaction already processed');
-        return;
-      }
-      
-      // Запоминаем хэш текущей транзакции
       lastProcessedHash.current = hash;
-      
       const { program, operation, step } = pendingOperation;
       
-      // Если активация и только что выполнили unpause, теперь нужно enableMinting
+      // If activating and just completed unpause, now enable minting
       if (operation === 'activate' && step === 'unpause') {
-        console.log('[DEBUG] Step 1 complete (unpause). Starting Step 2: enable minting...');
         setPendingOperation({ program, operation: 'activate', step: 'minting' });
-        
         try {
           await enableMinting(program.tokenAddress as `0x${string}`);
-          return; // Ждем следующего успеха для обновления БД
+          return;
         } catch (error) {
-          console.error('[ERROR] Failed to enable minting:', error);
+          console.error('[CreatedPrograms] Enable minting error:', error);
           toast.error('Failed to enable minting. Please try again.');
           setToggledProgram(null);
           setPendingOperation(null);
@@ -430,17 +213,10 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
         }
       }
       
-      // Обновление БД после завершения всех шагов
+      // Update DB after all steps complete
       const isPause = operation === 'pause';
-      console.log(`[DEBUG] All steps complete, updating DB status to ${isPause ? 'paused' : 'active'}`, {
-        tokenAddress: program.tokenAddress,
-        merchantAddress: address,
-        operation,
-        step
-      });
       
       try {
-        // Обновляем статус в БД
         const { data: updateSuccess, error: programError } = await supabase.rpc(
           'update_program_status',
           {
@@ -450,23 +226,18 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
           }
         );
         
-        console.log('[DEBUG] Update program status result:', { updateSuccess, programError });
-        
         if (programError) {
-          console.error(`[ERROR] Error updating program status to ${isPause ? 'paused' : 'active'} in DB:`, programError);
+          console.error('[CreatedPrograms] Status update error:', programError.message);
           toast.error('Failed to update program status in database');
           return;
         }
         
         if (!updateSuccess) {
-          console.error('[ERROR] Failed to update program - user may not own this program');
           toast.error('Failed to update program status');
           return;
         }
         
-        console.log('[DEBUG] Program status updated successfully in DB');
-        
-        // Обновляем награды
+        // Update rewards
         const { error: rewardsError } = await supabase
           .from('rewards')
           .update({ is_active: !isPause })
@@ -474,12 +245,10 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
           .eq('merchant_address', address.toLowerCase());
         
         if (rewardsError) {
-          console.error(`[ERROR] Error ${isPause ? 'deactivating' : 'activating'} rewards:`, rewardsError);
-        } else {
-          console.log('[DEBUG] Rewards updated successfully');
+          console.error('[CreatedPrograms] Rewards update error:', rewardsError.message);
         }
         
-        // Обновляем ваучеры
+        // Update vouchers
         const { error: vouchersError } = await supabase
           .from('vouchers')
           .update({ status: isPause ? 'expired' : 'active' })
@@ -487,13 +256,10 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
           .eq('status', isPause ? 'active' : 'expired');
         
         if (vouchersError) {
-          console.error(`[ERROR] Error ${isPause ? 'deactivating' : 'reactivating'} vouchers:`, vouchersError);
-        } else {
-          console.log('[DEBUG] Vouchers updated successfully');
+          console.error('[CreatedPrograms] Vouchers update error:', vouchersError.message);
         }
         
-        // Принудительно перезагружаем программы из БД
-        console.log('[DEBUG] Reloading programs from database...');
+        // Reload programs from DB
         const { data: updatedPrograms, error: reloadError } = await supabase
           .from('loyalty_programs')
           .select('*')
@@ -501,23 +267,11 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
           .order('created_at', { ascending: false });
         
         if (!reloadError && updatedPrograms) {
-          const reloadedPrograms: LoyaltyProgram[] = updatedPrograms.map(prog => ({
-            id: prog.id,
-            name: prog.name,
-            symbol: prog.symbol,
-            timestamp: new Date(prog.created_at).getTime(),
-            tokenAddress: prog.token_address,
-            expirationDate: prog.expiration_date,
-            status: prog.status as 'active' | 'expiring_soon' | 'expired' | 'paused',
-          }));
-          
-          setPrograms(reloadedPrograms);
-          localStorage.setItem('loyaltyPrograms', JSON.stringify(reloadedPrograms));
-          console.log('[DEBUG] Programs reloaded successfully:', reloadedPrograms);
+          const reloaded = updatedPrograms.map(mapDbProgram);
+          setPrograms(reloaded);
+          localStorage.setItem('loyaltyPrograms', JSON.stringify(reloaded));
         }
         
-        // Отправляем события обновления
-        console.log('[DEBUG] Dispatching update events');
         window.dispatchEvent(new Event('rewardsUpdated'));
         window.dispatchEvent(new Event('vouchersUpdated'));
         window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
@@ -527,13 +281,10 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
             ? 'Program paused. Rewards and vouchers are now inactive.' 
             : 'Program activated successfully! Rewards and vouchers are now active.'
         );
-        
-        console.log('[DEBUG] Success handler completed');
       } catch (error) {
-        console.error('[ERROR] Error updating database:', error);
+        console.error('[CreatedPrograms] DB update error:', error);
         toast.error('Failed to update program status');
       } finally {
-        console.log('[DEBUG] Cleaning up pending operation state');
         setToggledProgram(null);
         setPendingOperation(null);
       }
@@ -549,11 +300,7 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
     setDeletingProgramId(programId);
     
     try {
-      console.log('Starting program deletion:', programId);
-      
-      // Если есть tokenAddress, деактивируем все связанные данные в БД
       if (program.tokenAddress) {
-        // 1. Если выбрано сжигание токенов, сжигаем их у всех пользователей
         if (burnTokens) {
           toast.info('Burning tokens from all users...');
           const burnSuccess = await burnAllTokens(program.tokenAddress, CONTRACTS.LOYAL_SPARK_ERC20.abi);
@@ -562,7 +309,6 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
           }
         }
         
-        // 2. Закрываем все активные ваучеры этой программы
         const { error: vouchersError } = await supabase
           .from('vouchers')
           .update({ status: 'expired' })
@@ -570,54 +316,63 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
           .eq('status', 'active');
         
         if (vouchersError) {
-          console.error('Error closing vouchers:', vouchersError);
+          console.error('[CreatedPrograms] Close vouchers error:', vouchersError.message);
         }
         
-        // Отправляем события обновления
         window.dispatchEvent(new Event('rewardsUpdated'));
         window.dispatchEvent(new Event('vouchersUpdated'));
       }
       
-      // 3. Удаляем программу из БД
-      console.log('Deleting program from DB:', programId);
       const { error: deleteError } = await supabase
         .from('loyalty_programs')
         .delete()
         .eq('id', programId);
       
       if (deleteError) {
-        console.error('Error deleting program from DB:', deleteError);
+        console.error('[CreatedPrograms] Delete error:', deleteError.message);
         toast.error('Failed to delete program from database');
         return;
       }
       
-      console.log('Program deleted successfully from DB');
-      
-      // 4. Сразу обновляем локальное состояние без ожидания realtime
       const updatedPrograms = programs.filter(p => p.id !== programId);
       setPrograms(updatedPrograms);
-      
-      // 5. Удаляем программу из localStorage
       localStorage.setItem('loyaltyPrograms', JSON.stringify(updatedPrograms));
       
-      // Очищаем выбор, если удалили выбранную программу
       if (selectedProgram === programId) {
         setSelectedProgram(null);
       }
       
       toast.success('Program closed successfully. Rewards and vouchers are now hidden.');
     } catch (error) {
-      console.error('Error closing program:', error);
+      console.error('[CreatedPrograms] Delete error:', error);
       toast.error('Failed to close program');
     } finally {
-      console.log('Resetting deletingProgramId');
       setDeletingProgramId(null);
     }
   };
 
-  if (programs.length === 0) {
-    return null;
-  }
+  if (programs.length === 0) return null;
+
+  const programCards = programs.map((program, index) => (
+    <ProgramCard
+      key={program.id || index}
+      program={program}
+      index={index}
+      selectedProgram={selectedProgram}
+      tokenStats={tokenStats}
+      isLoadingStats={isLoadingStats}
+      isToggling={isToggling}
+      toggledProgram={toggledProgram}
+      deletingProgramId={deletingProgramId}
+      isBurning={isBurning}
+      progress={progress}
+      deleteDialogOpen={deleteDialogOpen}
+      onSelectProgram={handleSelectProgram}
+      onToggleProgram={handleToggleProgram}
+      onDeleteProgram={handleDeleteProgram}
+      setDeleteDialogOpen={setDeleteDialogOpen}
+    />
+  ));
 
   return (
     <Card className="border-2 bg-gradient-to-br from-card to-muted/30">
@@ -630,15 +385,11 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
       </CardHeader>
       <CardContent>
         {isMobile ? (
-          // Mobile: Swipeable carousel
           <div className="relative">
             <div className="overflow-hidden" ref={emblaRef}>
               <div className="flex gap-3">
                 {programs.map((program, index) => (
-                  <div 
-                    key={index} 
-                    className="flex-[0_0_90%] min-w-0"
-                  >
+                  <div key={program.id || index} className="flex-[0_0_90%] min-w-0">
                     <ProgramCard
                       program={program}
                       index={index}
@@ -660,7 +411,6 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
                 ))}
               </div>
             </div>
-            {/* Carousel indicators */}
             {programs.length > 1 && (
               <div className="flex justify-center gap-1.5 mt-3">
                 {programs.map((_, index) => (
@@ -677,7 +427,6 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
                 ))}
               </div>
             )}
-            {/* Navigation arrows */}
             {programs.length > 1 && (
               <>
                 <Button
@@ -706,29 +455,9 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
             )}
           </div>
         ) : (
-          // Desktop: ScrollArea list
           <ScrollArea className="h-[350px]">
             <div className="space-y-3 pb-4 pr-4">
-              {programs.map((program, index) => (
-                <ProgramCard
-                  key={index}
-                  program={program}
-                  index={index}
-                  selectedProgram={selectedProgram}
-                  tokenStats={tokenStats}
-                  isLoadingStats={isLoadingStats}
-                  isToggling={isToggling}
-                  toggledProgram={toggledProgram}
-                  deletingProgramId={deletingProgramId}
-                  isBurning={isBurning}
-                  progress={progress}
-                  deleteDialogOpen={deleteDialogOpen}
-                  onSelectProgram={handleSelectProgram}
-                  onToggleProgram={handleToggleProgram}
-                  onDeleteProgram={handleDeleteProgram}
-                  setDeleteDialogOpen={setDeleteDialogOpen}
-                />
-              ))}
+              {programCards}
             </div>
           </ScrollArea>
         )}
@@ -737,7 +466,16 @@ export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program
   );
 }
 
-// Extracted ProgramCard component for reuse
+// ── ProgramCard (extracted sub-component) ──
+
+interface TokenStats {
+  [tokenAddress: string]: {
+    totalIssued: number;
+    merchantBalance: number;
+    holdersBalance: number;
+  };
+}
+
 interface ProgramCardProps {
   program: LoyaltyProgram;
   index: number;
