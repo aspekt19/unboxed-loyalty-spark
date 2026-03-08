@@ -18,21 +18,6 @@ export function generateVoucherCode(): string {
 
 // Создание награды в базе данных
 export async function createReward(reward: Omit<Reward, 'id' | 'createdAt'>): Promise<Reward | null> {
-  // Check current session
-  const { data: { session } } = await supabase.auth.getSession();
-  console.log('[createReward] Current session:', session ? 'exists' : 'null');
-  console.log('[createReward] User ID:', session?.user?.id);
-  
-  // Check profile
-  if (session?.user?.id) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', session.user.id)
-      .maybeSingle();
-    console.log('[createReward] Profile:', profile);
-  }
-  
   const { data, error } = await supabase
     .from('rewards')
     .insert({
@@ -47,16 +32,10 @@ export async function createReward(reward: Omit<Reward, 'id' | 'createdAt'>): Pr
     .single();
 
   if (error) {
-    console.error('Failed to create reward - Supabase error:', {
-      message: error.message,
-      details: error.details,
-      hint: error.hint,
-      code: error.code,
-    });
+    console.error('[createReward] Failed:', error.message, error.code);
     return null;
   }
 
-  // Инвалидируем кеш для этого токена
   invalidateRewardsCache(reward.tokenAddress);
 
   return {
@@ -94,27 +73,9 @@ export async function loadRewards(): Promise<Reward[]> {
   }));
 }
 
-// Загрузка наград мерчанта (БЕЗ фильтрации по статусу программы - мерчанты видят все свои награды)
-export async function getMerchantRewards(merchantAddress: string): Promise<Reward[]> {
-  const { data: allRewards, error } = await supabase
-    .from('rewards')
-    .select('*')
-    .eq('merchant_address', merchantAddress.toLowerCase())
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('Error fetching merchant rewards:', error);
-    return [];
-  }
-  
-  console.log('getMerchantRewards: Found', allRewards?.length || 0, 'total rewards');
-  
-  if (!allRewards || allRewards.length === 0) {
-    return [];
-  }
-  
-  // Мерчанты видят все свои награды независимо от статуса программы
-  return allRewards.map(r => ({
+/** Map a DB reward row to the app Reward type */
+function mapRewardRow(r: any): Reward {
+  return {
     id: r.id,
     tokenAddress: r.token_address,
     merchantAddress: r.merchant_address,
@@ -123,34 +84,62 @@ export async function getMerchantRewards(merchantAddress: string): Promise<Rewar
     cost: Number(r.cost),
     createdAt: r.created_at,
     isActive: r.is_active,
-  }));
+  };
+}
+
+/** Map a DB voucher row to the app Voucher type */
+function mapVoucherRow(v: any): Voucher {
+  return {
+    id: v.id,
+    code: v.code,
+    rewardId: v.reward_id,
+    rewardName: v.reward_name,
+    rewardDescription: v.reward_description || '',
+    tokenAddress: v.token_address,
+    tokenSymbol: v.token_symbol,
+    customerAddress: v.customer_address,
+    merchantAddress: v.merchant_address,
+    status: v.status as 'active' | 'used' | 'expired',
+    cost: Number(v.cost),
+    activatedAt: v.activated_at,
+    usedAt: v.used_at,
+  };
+}
+
+// Загрузка наград мерчанта (БЕЗ фильтрации по статусу программы)
+export async function getMerchantRewards(merchantAddress: string): Promise<Reward[]> {
+  const { data, error } = await supabase
+    .from('rewards')
+    .select('*')
+    .eq('merchant_address', merchantAddress.toLowerCase())
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('[getMerchantRewards] Error:', error.message);
+    return [];
+  }
+
+  return (data || []).map(mapRewardRow);
 }
 
 // Простой in-memory кеш для наград с TTL
 const rewardsCache = new Map<string, { data: Reward[]; timestamp: number }>();
-const CACHE_TTL_MS = 30000; // 30 секунд кеш
+const CACHE_TTL_MS = 30000;
 
-// Кеш для статусов программ (обновляется реже)
+// Кеш для статусов программ
 const programStatusCache = new Map<string, { status: string; timestamp: number }>();
-const PROGRAM_CACHE_TTL_MS = 60000; // 60 секунд для статусов
 
-// Получение наград для конкретного токена (оптимизированная версия с параллельными запросами)
+// Получение наград для конкретного токена (с кешированием)
 export async function getRewardsByToken(tokenAddress: string): Promise<Reward[]> {
   const cacheKey = tokenAddress.toLowerCase();
   const now = Date.now();
   
-  // Проверяем кеш наград
   const cached = rewardsCache.get(cacheKey);
   if (cached && (now - cached.timestamp) < CACHE_TTL_MS) {
-    console.log(`[getRewardsByToken] Cache hit for ${cacheKey}, rewards count: ${cached.data.length}`);
     return cached.data;
   }
   
-  console.log(`[getRewardsByToken] Cache miss, fetching from DB for ${cacheKey}`);
-  
   try {
-    // Запрос наград - БЕЗ проверки статуса программы здесь
-    // (статус программы уже проверяется при загрузке списка программ в RewardsSelection)
     const { data: rewardsData, error: rewardsError } = await supabase
       .from('rewards')
       .select('*')
@@ -160,46 +149,28 @@ export async function getRewardsByToken(tokenAddress: string): Promise<Reward[]>
       .limit(50);
     
     if (rewardsError) {
-      console.error('[getRewardsByToken] Error fetching rewards:', rewardsError);
+      console.error('[getRewardsByToken] Error:', rewardsError.message);
       return [];
     }
-    
-    console.log(`[getRewardsByToken] Found ${rewardsData?.length || 0} rewards for ${cacheKey}`);
 
-    const rewards = (rewardsData || []).map(r => ({
-      id: r.id,
-      tokenAddress: r.token_address,
-      merchantAddress: r.merchant_address,
-      name: r.name,
-      description: r.description || '',
-      cost: Number(r.cost),
-      createdAt: r.created_at,
-      isActive: r.is_active,
-    }));
-    
-    // Сохраняем в кеш
+    const rewards = (rewardsData || []).map(mapRewardRow);
     rewardsCache.set(cacheKey, { data: rewards, timestamp: now });
-    console.log(`[getRewardsByToken] Cached ${rewards.length} rewards for ${cacheKey}`);
-    
     return rewards;
   } catch (error: any) {
     console.error('[getRewardsByToken] Error:', error.message || error);
-    // Не кешируем ошибки - пусть повторные запросы попробуют снова
     return [];
   }
 }
 
-// Функция для инвалидации кеша (вызывать при обновлении наград)
+// Инвалидация кеша
 export function invalidateRewardsCache(tokenAddress?: string): void {
   if (tokenAddress) {
     const key = tokenAddress.toLowerCase();
     rewardsCache.delete(key);
     programStatusCache.delete(key);
-    console.log(`[invalidateRewardsCache] Invalidated cache for ${key}`);
   } else {
     rewardsCache.clear();
     programStatusCache.clear();
-    console.log('[invalidateRewardsCache] Cleared all caches');
   }
 }
 
@@ -221,13 +192,7 @@ export async function updateReward(rewardId: string, updates: Partial<Reward>, t
     return false;
   }
 
-  // Инвалидируем кеш
-  if (tokenAddress) {
-    invalidateRewardsCache(tokenAddress);
-  } else {
-    invalidateRewardsCache(); // Очищаем весь кеш если адрес неизвестен
-  }
-
+  invalidateRewardsCache(tokenAddress);
   return true;
 }
 
@@ -242,36 +207,20 @@ export async function deleteReward(rewardId: string, tokenAddress?: string): Pro
     return false;
   }
 
-  // Инвалидируем кеш
-  if (tokenAddress) {
-    invalidateRewardsCache(tokenAddress);
-  } else {
-    invalidateRewardsCache();
-  }
-
+  invalidateRewardsCache(tokenAddress);
   return true;
 }
 
 // Создание ваучера в базе данных
 export async function createVoucher(voucher: Omit<Voucher, 'id' | 'activatedAt'>): Promise<Voucher | null> {
-  console.log('[createVoucher] Starting voucher creation for:', voucher.customerAddress);
-  
-  // Проверяем текущую сессию
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
   
-  if (sessionError) {
-    console.error('[createVoucher] Session error:', sessionError);
-    return null;
-  }
-  
-  if (!session) {
+  if (sessionError || !session) {
     console.error('[createVoucher] No active session');
     return null;
   }
   
-  console.log('[createVoucher] Session exists for user:', session.user.id);
-  
-  // Проверяем, что профиль пользователя существует перед созданием ваучера
+  // Проверяем профиль пользователя
   const { data: profileCheck, error: profileError } = await supabase
     .from('profiles')
     .select('wallet_address, user_id')
@@ -279,44 +228,14 @@ export async function createVoucher(voucher: Omit<Voucher, 'id' | 'activatedAt'>
     .maybeSingle();
 
   if (profileError) {
-    console.error('[createVoucher] Error checking profile:', {
-      error: profileError,
-      code: profileError.code,
-      message: profileError.message,
-      details: profileError.details,
-    });
+    console.error('[createVoucher] Profile check error:', profileError.message);
     return null;
   }
 
   if (!profileCheck) {
-    console.error('[createVoucher] Profile not found for address:', voucher.customerAddress);
-    console.log('[createVoucher] Session user_id:', session.user.id);
-    
-    // Пытаемся найти профиль по user_id
-    const { data: profileByUserId } = await supabase
-      .from('profiles')
-      .select('wallet_address, user_id')
-      .eq('user_id', session.user.id)
-      .maybeSingle();
-    
-    console.log('[createVoucher] Profile by user_id:', profileByUserId);
-    
+    console.error('[createVoucher] Profile not found for:', voucher.customerAddress);
     return null;
   }
-
-  console.log('[createVoucher] Profile verified:', {
-    wallet: profileCheck.wallet_address,
-    user_id: profileCheck.user_id,
-    matches_session: profileCheck.user_id === session.user.id,
-  });
-
-  console.log('[createVoucher] Creating voucher with data:', {
-    code: voucher.code,
-    rewardId: voucher.rewardId,
-    customerAddress: voucher.customerAddress.toLowerCase(),
-    merchantAddress: voucher.merchantAddress.toLowerCase(),
-    cost: voucher.cost,
-  });
 
   const { data, error } = await supabase
     .from('vouchers')
@@ -337,33 +256,11 @@ export async function createVoucher(voucher: Omit<Voucher, 'id' | 'activatedAt'>
     .single();
 
   if (error) {
-    console.error('[createVoucher] Error creating voucher:', error);
-    console.error('[createVoucher] Error details:', {
-      code: error.code,
-      message: error.message,
-      details: error.details,
-      hint: error.hint,
-    });
+    console.error('[createVoucher] Insert error:', error.message, error.code);
     return null;
   }
 
-  console.log('[createVoucher] Voucher created successfully:', data.id);
-
-  return {
-    id: data.id,
-    code: data.code,
-    rewardId: data.reward_id,
-    rewardName: data.reward_name,
-    rewardDescription: data.reward_description || '',
-    tokenAddress: data.token_address,
-    tokenSymbol: data.token_symbol,
-    customerAddress: data.customer_address,
-    merchantAddress: data.merchant_address,
-    status: data.status as 'active' | 'used' | 'expired',
-    cost: Number(data.cost),
-    activatedAt: data.activated_at,
-    usedAt: data.used_at,
-  };
+  return mapVoucherRow(data);
 }
 
 // Загрузка ваучеров покупателя (фильтруем по статусу программы)
@@ -375,7 +272,7 @@ export async function getCustomerVouchers(customerAddress: string): Promise<Vouc
     .order('activated_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching customer vouchers:', error);
+    console.error('[getCustomerVouchers] Error:', error.message);
     return [];
   }
   
@@ -386,50 +283,24 @@ export async function getCustomerVouchers(customerAddress: string): Promise<Vouc
   // Проверяем статус программы для каждого ваучера
   const vouchersWithStatus = await Promise.all(
     allVouchers.map(async (voucher) => {
-      const { data: program, error: programError } = await supabase
+      const { data: program } = await supabase
         .from('loyalty_programs')
         .select('status')
         .eq('token_address', voucher.token_address.toLowerCase())
         .maybeSingle();
       
-      if (programError) {
-        console.error('Error fetching program for customer voucher:', programError);
-      }
-      
-      return {
-        ...voucher,
-        programStatus: program?.status
-      };
+      return { ...voucher, programStatus: program?.status };
     })
   );
   
-  // Возвращаем только ваучеры активных или истекающих программ
-  const activeVouchers = vouchersWithStatus.filter(v => 
-    v.programStatus === 'active' || v.programStatus === 'expiring_soon'
-  );
-  
-  return activeVouchers.map(v => ({
-    id: v.id,
-    code: v.code,
-    rewardId: v.reward_id,
-    rewardName: v.reward_name,
-    rewardDescription: v.reward_description || '',
-    tokenAddress: v.token_address,
-    tokenSymbol: v.token_symbol,
-    customerAddress: v.customer_address,
-    merchantAddress: v.merchant_address,
-    status: v.status as 'active' | 'used' | 'expired',
-    cost: Number(v.cost),
-    activatedAt: v.activated_at,
-    usedAt: v.used_at,
-  }));
+  return vouchersWithStatus
+    .filter(v => v.programStatus === 'active' || v.programStatus === 'expiring_soon')
+    .map(mapVoucherRow);
 }
 
-// Загрузка ваучеров мерчанта (БЕЗ фильтрации по статусу программы - мерчанты видят все свои ваучеры)
+// Загрузка ваучеров мерчанта (БЕЗ фильтрации по статусу программы)
 export async function getMerchantVouchers(merchantAddress: string): Promise<Voucher[]> {
   try {
-    console.log('getMerchantVouchers called for:', merchantAddress);
-    
     const { data: allVouchers, error } = await supabase
       .from('vouchers')
       .select('*')
@@ -437,34 +308,17 @@ export async function getMerchantVouchers(merchantAddress: string): Promise<Vouc
       .order('activated_at', { ascending: false });
 
     if (error) {
-      console.error('Error loading merchant vouchers:', error);
+      console.error('[getMerchantVouchers] Error:', error.message);
       throw error;
     }
-    
-    console.log('Merchant vouchers data:', allVouchers?.length || 0, 'rows');
     
     if (!allVouchers || allVouchers.length === 0) {
       return [];
     }
     
-    // Мерчанты видят все свои ваучеры независимо от статуса программы
-    return allVouchers.map(v => ({
-      id: v.id,
-      code: v.code,
-      rewardId: v.reward_id,
-      rewardName: v.reward_name,
-      rewardDescription: v.reward_description || '',
-      tokenAddress: v.token_address,
-      tokenSymbol: v.token_symbol,
-      customerAddress: v.customer_address,
-      merchantAddress: v.merchant_address,
-      status: v.status as 'active' | 'used' | 'expired',
-      cost: Number(v.cost),
-      activatedAt: v.activated_at,
-      usedAt: v.used_at,
-    }));
+    return allVouchers.map(mapVoucherRow);
   } catch (error) {
-    console.error('Failed to load merchant vouchers:', error);
+    console.error('[getMerchantVouchers] Failed:', error);
     return [];
   }
 }
@@ -484,11 +338,7 @@ export async function updateVoucherStatus(
     .update(updates)
     .eq('id', voucherId);
 
-  if (error) {
-    return false;
-  }
-
-  return true;
+  return !error;
 }
 
 // Получение награды по ID
@@ -503,14 +353,5 @@ export async function getRewardById(rewardId: string): Promise<Reward | null> {
     return null;
   }
 
-  return {
-    id: data.id,
-    tokenAddress: data.token_address,
-    merchantAddress: data.merchant_address,
-    name: data.name,
-    description: data.description || '',
-    cost: Number(data.cost),
-    createdAt: data.created_at,
-    isActive: data.is_active,
-  };
+  return mapRewardRow(data);
 }
