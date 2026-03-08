@@ -21,7 +21,7 @@ export function CreateLoyaltyProgram() {
   const { deployToken, isPending, isSuccess, deployedTokenAddress } = useDeployLoyaltyToken();
   const savedRef = useRef(false);
 
-  // Очищаем форму при отключении кошелька
+  // Clear form on wallet disconnect
   useEffect(() => {
     if (!address) {
       setProgramName('');
@@ -53,7 +53,7 @@ export function CreateLoyaltyProgram() {
       return;
     }
 
-    // Verify that user profile exists and matches wallet address
+    // Verify user profile exists and matches wallet
     try {
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session?.user) {
@@ -69,14 +69,12 @@ export function CreateLoyaltyProgram() {
         .maybeSingle();
 
       if (profileError || !profile) {
-        console.error('Profile verification failed:', profileError);
+        console.error('[CreateLoyaltyProgram] Profile verification failed:', profileError?.message);
         toast.error('Profile not found. Please reconnect your wallet.');
         return;
       }
-
-      console.log('Profile verified for program creation:', profile);
     } catch (error) {
-      console.error('Profile check error:', error);
+      console.error('[CreateLoyaltyProgram] Profile check error:', error);
       toast.error('Failed to verify profile. Please try again.');
       return;
     }
@@ -85,21 +83,17 @@ export function CreateLoyaltyProgram() {
     deployToken(programName, tokenSymbol);
   };
 
-  // Watch for success and handle post-deployment actions
+  // Save program to DB after successful deployment
   useEffect(() => {
     if (isSuccess && programName && tokenSymbol && deployedTokenAddress && expirationDate && !savedRef.current) {
-      // Сохраняем в БД со статусом 'inactive' - программу нужно будет активировать
       const saveToDatabase = async () => {
         try {
-          // Проверяем сессию перед сохранением
           const { data: session } = await supabase.auth.getSession();
           if (!session?.session?.user) {
-            console.error('No active session when saving program');
             toast.error('Session expired. Please sign in again and redeploy.');
             return;
           }
 
-          // Проверяем профиль перед сохранением
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('user_id, wallet_address')
@@ -107,24 +101,11 @@ export function CreateLoyaltyProgram() {
             .eq('user_id', session.session.user.id)
             .maybeSingle();
 
-          if (profileError) {
-            console.error('Profile check error:', profileError);
-            toast.error('Profile verification failed. Please reconnect wallet.');
-            return;
-          }
-
-          if (!profile) {
-            console.error('Profile not found for address:', address?.toLowerCase(), 'user:', session.session.user.id);
+          if (profileError || !profile) {
+            console.error('[CreateLoyaltyProgram] Profile not found for save');
             toast.error('Profile not found. Please reconnect your wallet.');
             return;
           }
-
-          console.log('Saving program with:', {
-            token_address: deployedTokenAddress.toLowerCase(),
-            merchant_address: address!.toLowerCase(),
-            profile_wallet: profile.wallet_address,
-            user_id: session.session.user.id
-          });
 
           const { error } = await supabase
             .from('loyalty_programs')
@@ -138,13 +119,7 @@ export function CreateLoyaltyProgram() {
             });
 
           if (error) {
-            console.error('Error saving program to DB:', error);
-            console.error('Error details:', {
-              code: error.code,
-              message: error.message,
-              details: error.details,
-              hint: error.hint
-            });
+            console.error('[CreateLoyaltyProgram] Save error:', error.message, error.code);
             
             if (error.code === '42501') {
               toast.error('Permission denied. Please reconnect your wallet and try again.');
@@ -158,7 +133,7 @@ export function CreateLoyaltyProgram() {
 
           toast.success(`Loyalty program "${programName}" created! Activate it to start issuing tokens.`);
           
-          // Save to localStorage для обратной совместимости
+          // localStorage for backward compatibility
           const savedPrograms = JSON.parse(localStorage.getItem('loyaltyPrograms') || '[]');
           savedPrograms.push({ 
             name: programName, 
@@ -169,17 +144,15 @@ export function CreateLoyaltyProgram() {
           });
           localStorage.setItem('loyaltyPrograms', JSON.stringify(savedPrograms));
           
-          // Clear form after a short delay to show success
           setTimeout(() => {
             setProgramName('');
             setTokenSymbol('');
             setExpirationDate(undefined);
           }, 500);
           
-          // Trigger a custom event to notify other components
           window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
         } catch (err) {
-          console.error('Unexpected error saving program:', err);
+          console.error('[CreateLoyaltyProgram] Unexpected error:', err);
           toast.error('An unexpected error occurred. Please try again.');
         }
       };

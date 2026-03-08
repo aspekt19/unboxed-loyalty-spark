@@ -38,8 +38,8 @@ export function CustomerFiltersPanel() {
   const [programs, setPrograms] = useState<TokenInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const isMobile = useIsMobile();
-  const { selectionChanged, impactOccurred } = useFarcasterHaptics();
-  // Embla carousel for mobile swipe
+  const { selectionChanged } = useFarcasterHaptics();
+
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     align: 'start',
     containScroll: 'trimSnaps',
@@ -55,7 +55,7 @@ export function CustomerFiltersPanel() {
     setCanScrollNext(emblaApi.canScrollNext());
     const newSlide = emblaApi.selectedScrollSnap();
     if (newSlide !== currentSlide) {
-      selectionChanged(); // Haptic feedback on slide change
+      selectionChanged();
     }
     setCurrentSlide(newSlide);
   }, [emblaApi, currentSlide, selectionChanged]);
@@ -73,67 +73,7 @@ export function CustomerFiltersPanel() {
 
   const { balances, isLoading: balancesLoading, refetch } = useMultiTokenBalance(programs);
 
-  // Load active programs from Supabase
-  useEffect(() => {
-    if (!address) {
-      setPrograms([]);
-      return;
-    }
-
-    loadActivePrograms();
-
-    // Subscribe to realtime updates
-    const channel = supabase
-      .channel('customer_loyalty_programs')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'loyalty_programs',
-        },
-        () => {
-          console.log('Programs updated, reloading...');
-          loadActivePrograms();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [address]);
-
-  // Listen for token balance updates
-  useEffect(() => {
-    const handleBalanceUpdate = () => {
-      console.log('tokenBalancesUpdated event received in filters, refetching balances...');
-      refetch(true); // Silent refetch
-    };
-    window.addEventListener('tokenBalancesUpdated', handleBalanceUpdate);
-    return () => window.removeEventListener('tokenBalancesUpdated', handleBalanceUpdate);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Remove refetch from deps to prevent re-subscription
-
-  // Auto-refresh balances every 5 seconds for real-time updates
-  useEffect(() => {
-    if (!address || programs.length === 0) {
-      return;
-    }
-
-    console.log('Starting auto-refresh for customer filters balances...');
-    const interval = setInterval(() => {
-      refetch(true); // Silent refetch
-    }, 5000);
-
-    return () => {
-      console.log('Stopping auto-refresh for customer filters balances');
-      clearInterval(interval);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address, programs.length]); // Remove refetch from deps to prevent re-creation
-
-  const loadActivePrograms = async () => {
+  const loadActivePrograms = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -143,26 +83,64 @@ export function CustomerFiltersPanel() {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error loading programs:', error);
+        console.error('[CustomerFiltersPanel] Error loading programs:', error.message);
         return;
       }
 
-      const programsData: TokenInfo[] = data.map((prog: LoyaltyProgram) => ({
+      setPrograms(data.map((prog: LoyaltyProgram) => ({
         address: prog.token_address,
         name: prog.name,
         symbol: prog.symbol,
         status: prog.status,
         expirationDate: prog.expiration_date,
         merchantAddress: prog.merchant_address,
-      }));
-
-      setPrograms(programsData);
+      })));
     } catch (error) {
-      console.error('Failed to load programs:', error);
+      console.error('[CustomerFiltersPanel] Failed to load programs:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  // Load active programs from Supabase
+  useEffect(() => {
+    if (!address) {
+      setPrograms([]);
+      return;
+    }
+
+    loadActivePrograms();
+
+    const channel = supabase
+      .channel('customer_loyalty_programs')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'loyalty_programs' },
+        () => loadActivePrograms()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [address, loadActivePrograms]);
+
+  // Listen for token balance updates
+  useEffect(() => {
+    const handleBalanceUpdate = () => refetch(true);
+    window.addEventListener('tokenBalancesUpdated', handleBalanceUpdate);
+    return () => window.removeEventListener('tokenBalancesUpdated', handleBalanceUpdate);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto-refresh balances every 5 seconds
+  useEffect(() => {
+    if (!address || programs.length === 0) return;
+
+    const interval = setInterval(() => refetch(true), 5000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address, programs.length]);
 
   // Filter programs with non-zero balance
   const programsWithBalance = programs.filter(program => {
@@ -170,9 +148,7 @@ export function CustomerFiltersPanel() {
     return balance && parseFloat(balance.balance) > 0;
   });
 
-  if (!address) {
-    return null;
-  }
+  if (!address) return null;
 
   return (
     <Card className="border-2 h-full flex flex-col">
@@ -198,30 +174,23 @@ export function CustomerFiltersPanel() {
           </Alert>
         ) : (
           isMobile ? (
-            // Mobile: Swipeable carousel
             <div className="relative">
               <div className="overflow-hidden" ref={emblaRef}>
                 <div className="flex gap-3">
                   {programsWithBalance.map((program) => {
                     const balance = balances.find(b => b.address === program.address);
-                    const isExpiringSoon = program.status === 'expiring_soon';
-                    
                     return (
-                      <div 
-                        key={program.address} 
-                        className="flex-[0_0_90%] min-w-0"
-                      >
+                      <div key={program.address} className="flex-[0_0_90%] min-w-0">
                         <ProgramCard
                           program={program}
                           balance={balance?.balance || '0'}
-                          isExpiringSoon={isExpiringSoon}
+                          isExpiringSoon={program.status === 'expiring_soon'}
                         />
                       </div>
                     );
                   })}
                 </div>
               </div>
-              {/* Carousel indicators */}
               {programsWithBalance.length > 1 && (
                 <div className="flex justify-center gap-1.5 mt-3">
                   {programsWithBalance.map((_, index) => (
@@ -238,7 +207,6 @@ export function CustomerFiltersPanel() {
                   ))}
                 </div>
               )}
-              {/* Navigation arrows */}
               {programsWithBalance.length > 1 && (
                 <>
                   <Button
@@ -267,19 +235,16 @@ export function CustomerFiltersPanel() {
               )}
             </div>
           ) : (
-            // Desktop: ScrollArea list
             <ScrollArea className="h-[500px]">
               <div className="space-y-3 pr-4 pb-4">
                 {programsWithBalance.map((program) => {
                   const balance = balances.find(b => b.address === program.address);
-                  const isExpiringSoon = program.status === 'expiring_soon';
-                  
                   return (
                     <ProgramCard
                       key={program.address}
                       program={program}
                       balance={balance?.balance || '0'}
-                      isExpiringSoon={isExpiringSoon}
+                      isExpiringSoon={program.status === 'expiring_soon'}
                     />
                   );
                 })}
@@ -299,9 +264,9 @@ function ProgramCard({ program, balance, isExpiringSoon }: {
 }) {
   const { isPaused } = useCheckProgramStatus(program.address as `0x${string}`);
   
-  const formatAddress = (address: string) => {
-    if (!address) return '';
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  const formatAddress = (addr: string) => {
+    if (!addr) return '';
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
   
   return (
