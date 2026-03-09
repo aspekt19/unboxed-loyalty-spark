@@ -8,7 +8,6 @@ export function useFarcasterHaptics() {
   const [isInMiniApp, setIsInMiniApp] = useState(false);
 
   useEffect(() => {
-    // Check if we're in Farcaster miniapp context
     const checkContext = async () => {
       try {
         const inMiniApp = await sdk.isInMiniApp();
@@ -25,8 +24,8 @@ export function useFarcasterHaptics() {
       if (isInMiniApp && sdk.haptics?.impactOccurred) {
         sdk.haptics.impactOccurred(style);
       }
-    } catch (error) {
-      console.log('Haptic feedback not available:', error);
+    } catch {
+      // Haptic feedback not available
     }
   }, [isInMiniApp]);
 
@@ -35,8 +34,8 @@ export function useFarcasterHaptics() {
       if (isInMiniApp && sdk.haptics?.notificationOccurred) {
         sdk.haptics.notificationOccurred(type);
       }
-    } catch (error) {
-      console.log('Haptic notification not available:', error);
+    } catch {
+      // Haptic notification not available
     }
   }, [isInMiniApp]);
 
@@ -45,8 +44,8 @@ export function useFarcasterHaptics() {
       if (isInMiniApp && sdk.haptics?.selectionChanged) {
         sdk.haptics.selectionChanged();
       }
-    } catch (error) {
-      console.log('Haptic selection not available:', error);
+    } catch {
+      // Haptic selection not available
     }
   }, [isInMiniApp]);
 

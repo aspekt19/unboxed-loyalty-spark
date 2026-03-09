@@ -38,14 +38,13 @@ export const PaymentRequestsManagement = () => {
       
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success('Payment verified successfully! Premium activated. ✅');
-      console.log('Verification result:', data);
       queryClient.invalidateQueries({ queryKey: ['payment-requests-admin'] });
       setVerifyingId(null);
     },
     onError: (error: unknown) => {
-      console.error('Error verifying payment:', error);
+      console.error('[PaymentRequests] Error verifying payment:', error);
       const message = error instanceof Error ? error.message : 'Unknown error';
       toast.error(`Failed to verify payment: ${message}`);
       setVerifyingId(null);
@@ -66,7 +65,7 @@ export const PaymentRequestsManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['payment-requests-admin'] });
     },
     onError: (error) => {
-      console.error('Rejection error:', error);
+      console.error('[PaymentRequests] Rejection error:', error);
       toast.error('Failed to reject payment');
     },
   });

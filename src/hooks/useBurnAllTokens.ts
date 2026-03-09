@@ -26,8 +26,6 @@ export function useBurnAllTokens() {
     setProgress({ current: 0, total: 0 });
 
     try {
-      // 1. Получаем список всех держателей токенов через Edge Function
-      console.log('Fetching token holders...');
       const { data, error } = await supabase.functions.invoke('get-token-holders', {
         body: {
           tokenAddress,
@@ -36,12 +34,11 @@ export function useBurnAllTokens() {
       });
 
       if (error) {
-        console.error('Error fetching holders:', error);
+        console.error('[useBurnAllTokens] Error fetching holders:', error);
         throw new Error('Failed to fetch token holders');
       }
 
       const holders: TokenHolder[] = data?.holders || [];
-      console.log(`Found ${holders.length} token holders`);
 
       if (holders.length === 0) {
         toast.info('No token holders found');
@@ -51,10 +48,7 @@ export function useBurnAllTokens() {
 
       setProgress({ current: 0, total: holders.length });
 
-      // 2. Фильтруем держателей с ненулевым балансом
       const holdersWithBalance = holders.filter(h => BigInt(h.balance) > 0n);
-      
-      console.log(`${holdersWithBalance.length} holders with non-zero balance`);
 
       if (holdersWithBalance.length === 0) {
         toast.info('No tokens to burn');
@@ -62,21 +56,17 @@ export function useBurnAllTokens() {
         return true;
       }
 
-      // 3. Сжигаем токены у всех держателей батчем
       toast.info(`Burning tokens from ${holdersWithBalance.length} users...`);
       
       let successCount = 0;
       const totalHolders = holdersWithBalance.length;
 
-      // Обрабатываем по 5 транзакций за раз для оптимизации
       const batchSize = 5;
       for (let i = 0; i < totalHolders; i += batchSize) {
         const batch = holdersWithBalance.slice(i, Math.min(i + batchSize, totalHolders));
         
         const burnPromises = batch.map(async (holder) => {
           try {
-            console.log(`Burning ${holder.balance} tokens from ${holder.address}`);
-            
             const hash = await walletClient.writeContract({
               address: tokenAddress as `0x${string}`,
               abi: tokenAbi,
@@ -87,12 +77,11 @@ export function useBurnAllTokens() {
               ],
             } as any);
 
-            // Ждем подтверждения транзакции
             await publicClient.waitForTransactionReceipt({ hash });
             
             return { success: true, address: holder.address };
           } catch (error) {
-            console.error(`Failed to burn tokens for ${holder.address}:`, error);
+            console.error(`[useBurnAllTokens] Failed to burn for ${holder.address}:`, error);
             return { success: false, address: holder.address };
           }
         });
@@ -123,7 +112,7 @@ export function useBurnAllTokens() {
       }
 
     } catch (error) {
-      console.error('Error in burnAllTokens:', error);
+      console.error('[useBurnAllTokens] Error:', error);
       toast.error('Failed to burn tokens');
       setIsBurning(false);
       setProgress({ current: 0, total: 0 });
