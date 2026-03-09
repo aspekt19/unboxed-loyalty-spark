@@ -34,15 +34,12 @@ export function IssuedTokensHistory() {
   const [programs, setPrograms] = useState<any[]>([]);
 
   useEffect(() => {
-    // Не загружаем данные пока идет авторизация
     if (authLoading) {
-      console.log('IssuedTokensHistory: Waiting for auth to complete...');
-      setIsLoading(false); // Не показываем лоадер во время ожидания авторизации
+      setIsLoading(false);
       return;
     }
 
     if (!address) {
-      console.log('IssuedTokensHistory: No address');
       setHistory([]);
       setPrograms([]);
       setIsLoading(false);
@@ -50,19 +47,13 @@ export function IssuedTokensHistory() {
     }
 
     if (!session) {
-      console.log('IssuedTokensHistory: No session, waiting...');
-      setIsLoading(true); // Показываем лоадер если кошелек есть но нет сессии
+      setIsLoading(true);
       return;
     }
 
-    console.log('IssuedTokensHistory: Loading tokens for address:', address);
     loadIssuedTokens();
 
-    // Обновляем историю когда выдаются новые токены или меняются программы
-    const handleUpdate = () => {
-      console.log('IssuedTokensHistory: Reloading history after update event');
-      loadIssuedTokens();
-    };
+    const handleUpdate = () => loadIssuedTokens();
 
     window.addEventListener('loyaltyProgramsUpdated', handleUpdate);
     window.addEventListener('tokensIssued', handleUpdate);
@@ -76,20 +67,11 @@ export function IssuedTokensHistory() {
   }, [address, session, publicClient, authLoading]);
 
   const loadIssuedTokens = async () => {
-    if (!publicClient || !address || !session) {
-      console.log('IssuedTokensHistory: Missing requirements', { 
-        hasPublicClient: !!publicClient, 
-        hasAddress: !!address, 
-        hasSession: !!session 
-      });
-      return;
-    }
+    if (!publicClient || !address || !session) return;
 
-    console.log('IssuedTokensHistory: Loading issued tokens for address:', address);
     setIsLoading(true);
     setError(null);
     
-    // Добавляем таймаут 30 секунд
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => reject(new Error('Loading timeout - please try again')), 30000);
     });
@@ -97,12 +79,10 @@ export function IssuedTokensHistory() {
     try {
       await Promise.race([
         (async () => {
-      // Загружаем программы мерчанта из БД (включая недавно истекшие за последние 30 дней)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       
       const normalizedAddress = address.toLowerCase();
-      console.log('IssuedTokensHistory: Querying programs for:', normalizedAddress);
       
       const { data: programsData, error } = await supabase
         .from('loyalty_programs')
@@ -112,17 +92,14 @@ export function IssuedTokensHistory() {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('IssuedTokensHistory: Error loading programs:', error);
+        console.error('[IssuedTokensHistory] Error loading programs:', error);
         setHistory([]);
         setPrograms([]);
         setIsLoading(false);
         return;
       }
 
-      console.log('IssuedTokensHistory: Found programs:', programsData?.length || 0);
-
       if (!programsData || programsData.length === 0) {
-        console.log('IssuedTokensHistory: No programs found for merchant');
         setHistory([]);
         setPrograms([]);
         setIsLoading(false);
@@ -135,25 +112,19 @@ export function IssuedTokensHistory() {
         tokenAddress: p.token_address,
       }));
       
-      console.log('IssuedTokensHistory: Active programs:', activePrograms);
       setPrograms(activePrograms);
 
       const allIssuedTokens: IssuedToken[] = [];
 
-      // Получаем текущий блок
       const currentBlock = await publicClient.getBlockNumber();
-      const CHUNK_SIZE = 40000n; // Stay under 50k limit
-      const LOOKBACK_BLOCKS = 200000n; // Look back ~2 weeks
+      const CHUNK_SIZE = 40000n;
+      const LOOKBACK_BLOCKS = 200000n;
       
-      // Для каждой программы получаем Transfer events (минтинг)
       for (const program of activePrograms) {
         try {
-          console.log(`IssuedTokensHistory: Fetching logs for ${program.name} (${program.tokenAddress})`);
-          
           const zeroAddress = '0x0000000000000000000000000000000000000000';
           const fromBlock = currentBlock > LOOKBACK_BLOCKS ? currentBlock - LOOKBACK_BLOCKS : 0n;
 
-          // Query in chunks to avoid "exceed maximum block range" error
           let allLogs: any[] = [];
           let currentChunkStart = fromBlock;
 
@@ -183,19 +154,15 @@ export function IssuedTokensHistory() {
 
               allLogs = [...allLogs, ...logs];
             } catch (chunkError) {
-              console.error(`Error querying chunk:`, chunkError);
+              console.error('[IssuedTokensHistory] Error querying chunk:', chunkError);
             }
 
             currentChunkStart = currentChunkEnd + 1n;
           }
 
-          console.log(`IssuedTokensHistory: Found ${allLogs.length} transfer events for ${program.name}`);
-
-          // Обрабатываем события
           for (const log of allLogs) {
             if (!log.args.to || !log.args.value) continue;
 
-            // Получаем блок для timestamp
             const block = await publicClient.getBlock({ blockHash: log.blockHash });
 
             allIssuedTokens.push({
@@ -209,18 +176,17 @@ export function IssuedTokensHistory() {
             });
           }
         } catch (error) {
-          console.error(`Error loading history for ${program.name}:`, error);
+          console.error(`[IssuedTokensHistory] Error loading history for ${program.name}:`, error);
         }
       }
 
-      // Сортируем по времени (новые сверху)
       allIssuedTokens.sort((a, b) => b.timestamp - a.timestamp);
       setHistory(allIssuedTokens);
         })(),
         timeoutPromise
       ]);
     } catch (error: any) {
-      console.error('Error loading issued tokens history:', error);
+      console.error('[IssuedTokensHistory] Error:', error);
       setError(error?.message || 'Failed to load history. Please try again.');
       setHistory([]);
       setPrograms([]);
@@ -233,15 +199,10 @@ export function IssuedTokensHistory() {
     return null;
   }
 
-  // Фильтруем историю по выбранной программе и адресу покупателя
   const filteredHistory = history.filter(item => {
-    // Фильтр по программе
     const programMatch = selectedProgramFilter === 'all' || item.tokenAddress === selectedProgramFilter;
-    
-    // Фильтр по адресу покупателя (если есть поисковый запрос)
     const customerMatch = !customerSearch || 
       item.recipient.toLowerCase().includes(customerSearch.toLowerCase().trim());
-    
     return programMatch && customerMatch;
   });
 

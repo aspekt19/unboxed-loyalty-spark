@@ -7,34 +7,22 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useState, useEffect } from 'react';
 
-// Detect if user is on mobile device
+/** Detect if user is on mobile device */
 const isMobileDevice = () => {
   if (typeof window === 'undefined') return false;
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 };
 
-// Detect if running inside Farcaster miniapp
+/** Detect if running inside Farcaster miniapp */
 const isFarcasterContext = () => {
   if (typeof window === 'undefined') return false;
   try {
-    // Здесь не используем sdk.context, чтобы не ошибиться в обычном браузере.
     const urlParams = new URLSearchParams(window.location.search);
     const hasFarcasterParam = urlParams.has('farcaster') || urlParams.has('fc');
     const isFarcasterPath = window.location.pathname.includes('/frame');
     const hasFarcasterUA = /farcaster/i.test(navigator.userAgent);
-
-    const isFarcaster = hasFarcasterParam || isFarcasterPath || hasFarcasterUA;
-    console.log('[Farcaster Detection]', {
-      isFarcaster,
-      hasFarcasterParam,
-      isFarcasterPath,
-      hasFarcasterUA,
-      pathname: window.location.pathname,
-      search: window.location.search,
-    });
-    return isFarcaster;
-  } catch (error) {
-    console.error('[Farcaster Detection Error]', error);
+    return hasFarcasterParam || isFarcasterPath || hasFarcasterUA;
+  } catch {
     return false;
   }
 };
@@ -55,47 +43,33 @@ export function WalletConnectButton() {
   useEffect(() => {
     const loadFarcasterUser = async () => {
       try {
-        console.log('[WalletButton] Attempting to load Farcaster context...');
-        
-        // Try to load Farcaster context regardless of URL checks
         const context = await sdk.context;
-        console.log('[WalletButton] SDK context loaded:', context);
-        
         if (context?.user) {
-          const userData = {
+          setFarcasterUser({
             username: context.user.username,
             displayName: context.user.displayName,
             pfpUrl: context.user.pfpUrl,
-          };
-          console.log('[WalletButton] Setting farcasterUser:', userData);
-          setFarcasterUser(userData);
-        } else {
-          console.log('[WalletButton] No user in context');
+          });
         }
-      } catch (error) {
-        console.log('[WalletButton] Not in Farcaster context or failed to load:', error);
+      } catch {
+        // Not in Farcaster context
       }
     };
-    
     loadFarcasterUser();
   }, []);
   
-  // Эффект для автоматического подключения кошелька при запуске в Farcaster
+  // Auto-connect wallet in Farcaster context
   useEffect(() => {
     if (isFarcasterContext() && !isConnected && !isManuallyDisconnected && connectors.length > 0) {
-      console.log('[WalletButton] Farcaster context detected - auto-connecting wallet');
       setTimeout(() => {
         connect({ connector: connectors[0] });
       }, 500);
     }
-  }, [connectors.length]); // Добавляем connectors.length как зависимость
+  }, [connectors.length]);
   
-  // Эффект для автоматической авторизации при reconnect в Farcaster
+  // Auto sign-in on reconnect in Farcaster
   useEffect(() => {
     if (isFarcasterContext() && isConnected && address && !isManuallyDisconnected) {
-      // Всегда пытаемся войти при подключении, даже если user уже есть
-      // Это важно для refresh устаревших сессий
-      console.log('[WalletButton] Farcaster wallet connected and not manually disconnected - signing in');
       setTimeout(() => {
         signInWithWallet();
       }, 300);
@@ -104,56 +78,27 @@ export function WalletConnectButton() {
   
   const handleDisconnect = async () => {
     try {
-      console.log('[WalletButton] handleDisconnect called');
-      console.log('[WalletButton] Current state:', { isConnected, address, user: !!user });
-      
-      // Устанавливаем флаг ручного отключения для UI
       setIsManuallyDisconnected(true);
-      
-      // Выходим из Supabase
       await signOut();
-      console.log('[WalletButton] Supabase signOut completed');
-      
-      // В Farcaster контексте кошелек нельзя отключить полностью,
-      // но мы скрываем его в UI через флаг isManuallyDisconnected
     } catch (error) {
       console.error('[WalletButton] Disconnect error:', error);
     }
   };
   
   const handleConnect = async () => {
-    console.log('[WalletButton] Connect wallet clicked');
-    
-    // Сбрасываем флаг ручного отключения
     setIsManuallyDisconnected(false);
-    
-    // Сбрасываем флаг выхода в AuthContext - это позволит автоматическому входу сработать
     resetManualSignOut();
-    
-    // Подключаем кошелек (в Farcaster контексте это быстро вернет существующее соединение)
     connect({ connector: connectors[0] });
     
-    // В Farcaster кошелек уже подключен, поэтому явно вызываем signIn
     if (isFarcasterContext() && isConnected && address) {
-      console.log('[WalletButton] Farcaster context - signing in immediately');
       setTimeout(() => {
         signInWithWallet();
       }, 300);
     }
   };
 
-  // Use simplified UI for Farcaster context (if we have Farcaster user data)
+  // Farcaster UI
   if (farcasterUser) {
-    console.log('[WalletButton] Rendering Farcaster UI with user data', { 
-      isConnected, 
-      address: address?.slice(0, 10), 
-      farcasterUser, 
-      isManuallyDisconnected,
-      displayName: farcasterUser?.displayName,
-      username: farcasterUser?.username
-    });
-    
-    // Показываем кнопку Connect если пользователь вышел вручную
     if (!isConnected || isManuallyDisconnected) {
       return (
         <button
@@ -169,10 +114,7 @@ export function WalletConnectButton() {
 
     return (
       <button
-        onClick={() => {
-          console.log('[WalletButton] Disconnect clicked in Farcaster UI');
-          handleDisconnect();
-        }}
+        onClick={handleDisconnect}
         type="button"
         className="px-4 py-2 rounded-xl font-bold bg-gradient-uds text-white hover:opacity-90 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
       >
@@ -193,7 +135,7 @@ export function WalletConnectButton() {
     );
   }
   
-  // Use RainbowKit UI for web
+  // RainbowKit UI for web
   return (
     <>
       <ConnectButton.Custom>

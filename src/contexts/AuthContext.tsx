@@ -29,38 +29,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
-      // Проверяем SDK контекст - самый надежный способ
       const hasContext = !!(sdk as any)?.context;
-      
-      // Дополнительные проверки как fallback
       const urlParams = new URLSearchParams(window.location.search);
       const hasFarcasterParam = urlParams.has('farcaster') || urlParams.has('fc');
       const isFarcasterPath = window.location.pathname.includes('/frame');
       const hasFarcasterUA = /farcaster/i.test(navigator.userAgent);
-      
       isFarcasterContext.current = hasContext || hasFarcasterParam || isFarcasterPath || hasFarcasterUA;
-      
-      console.log('[AuthProvider] Farcaster context detected:', isFarcasterContext.current, {
-        hasContext,
-        hasFarcasterParam,
-        isFarcasterPath,
-        hasFarcasterUA
-      });
-    } catch (error) {
-      console.error('[AuthProvider] Error detecting Farcaster context:', error);
+    } catch {
       isFarcasterContext.current = false;
     }
   }, []);
 
   useEffect(() => {
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
     });
 
-    // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -76,38 +62,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Проверяем флаг ручного выхода
-    if (manualSignOutRef.current) {
-      console.log('[signInWithWallet] Skipping auto sign-in due to manual sign out');
-      return;
-    }
+    if (manualSignOutRef.current) return;
 
-    // Защита от множественных одновременных вызовов
-    if (signingInRef.current) {
-      console.log('[signInWithWallet] Already signing in, skipping duplicate call');
-      return;
-    }
+    if (signingInRef.current) return;
 
     signingInRef.current = true;
     try {
-      // Проверяем, есть ли уже активная сессия с правильным профилем
       const { data: { session: existingSession }, error: sessionError } = await supabase.auth.getSession();
       
-      // Если ошибка получения сессии, очищаем и пересоздаем
       if (sessionError) {
-        console.log('[signInWithWallet] Session error, clearing:', sessionError);
         await supabase.auth.signOut();
       } else if (existingSession) {
-        // Проверяем валидность сессии
         const isExpired = existingSession.expires_at 
           ? new Date(existingSession.expires_at * 1000) < new Date()
           : false;
         
         if (isExpired) {
-          console.log('[signInWithWallet] Session expired, clearing...');
           await supabase.auth.signOut();
         } else {
-          // Проверяем, связан ли текущий пользователь с этим кошельком
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('wallet_address')
@@ -115,25 +87,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .eq('wallet_address', address.toLowerCase())
             .maybeSingle();
           
-          // Если ошибка RLS или профиль не найден - сессия устарела
           if (profileError || !profile) {
-            console.log('[signInWithWallet] Profile not accessible or mismatch, clearing session');
             await supabase.auth.signOut();
           } else {
-            console.log('[signInWithWallet] Active valid session with correct profile exists');
-            // Обновляем состояние явно, чтобы компоненты получили актуальные данные
             setSession(existingSession);
             setUser(existingSession.user);
             setIsLoading(false);
-            // Dispatch event so components know session is ready
             window.dispatchEvent(new Event('sessionReady'));
             return;
           }
         }
       }
     } catch (error) {
-      console.error('[signInWithWallet] Error checking existing session:', error);
-      // В случае любой ошибки очищаем сессию
+      console.error('[AuthProvider] Error checking existing session:', error);
       try {
         await supabase.auth.signOut();
       } catch {}
@@ -141,47 +107,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       setIsLoading(true);
-      console.log('[signInWithWallet] Starting sign in for:', address.toLowerCase());
 
-      // Sign in with Supabase using anonymous authentication
       const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
       
       if (authError) throw authError;
 
-      console.log('[signInWithWallet] Auth successful, user ID:', authData.user.id);
-
-      // Use security definer function to migrate wallet profile - returns profile data directly
       const { data: profileData, error: migrationError } = await supabase.rpc('migrate_wallet_profile', {
         p_wallet_address: address.toLowerCase(),
         p_new_user_id: authData.user.id,
       });
 
       if (migrationError) {
-        console.error('[signInWithWallet] Migration error:', migrationError);
+        console.error('[AuthProvider] Migration error:', migrationError);
         throw migrationError;
       }
 
-      // The function returns the profile directly, bypassing RLS
       const profile = profileData?.[0];
       
       if (!profile || !profile.profile_id) {
-        console.error('[signInWithWallet] Profile not returned from migration');
         throw new Error('Failed to create profile. Please disconnect and reconnect your wallet.');
       }
-
-      console.log('[signInWithWallet] Profile migrated and verified:', {
-        id: profile.profile_id,
-        user_id: profile.profile_user_id,
-        wallet_address: profile.profile_wallet_address
-      });
 
       window.dispatchEvent(new Event('profileMigrated'));
       window.dispatchEvent(new Event('sessionReady'));
       toast.success('Successfully signed in with wallet');
     } catch (error: any) {
-      console.error('[signInWithWallet] Sign in error:', error);
+      console.error('[AuthProvider] Sign in error:', error);
       
-      // Обработка ошибки лимита запросов
       if (error.status === 429 || error.code === 'over_request_rate_limit') {
         toast.error('Too many requests. Please wait a moment and try again.');
       } else {
@@ -195,10 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     try {
-      console.log('[signOut] Manual sign out initiated');
       manualSignOutRef.current = true;
-      
-      // Очищаем состояние перед выходом
       setUser(null);
       setSession(null);
       
@@ -207,46 +156,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       toast.success('Signed out successfully');
     } catch (error: any) {
-      console.error('[signOut] Error:', error);
+      console.error('[AuthProvider] Sign out error:', error);
       toast.error('Failed to sign out');
     }
   }, []);
 
   const resetManualSignOut = useCallback(() => {
-    console.log('[resetManualSignOut] Resetting manual sign out flag');
     manualSignOutRef.current = false;
   }, []);
 
-  // Проверка и обновление сессии при возвращении пользователя
+  // Check and refresh session when user returns
   useEffect(() => {
-    if (!isConnected || !address || manualSignOutRef.current) {
-      return;
-    }
+    if (!isConnected || !address || manualSignOutRef.current) return;
 
     const checkSession = async () => {
       try {
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
         
         if (error || !currentSession) {
-          console.log('[AuthProvider] Session expired or invalid, reconnecting...');
           await signInWithWallet();
           return;
         }
 
-        // Validate session is still alive on the server (getSession only reads local cache)
         const { error: userError } = await supabase.auth.getUser();
         if (userError) {
-          console.log('[AuthProvider] Server rejected session, attempting refresh...');
           const { error: refreshError } = await supabase.auth.refreshSession();
           if (refreshError) {
-            console.log('[AuthProvider] Refresh failed, re-authenticating...');
             await supabase.auth.signOut();
             await signInWithWallet();
           }
           return;
         }
 
-        // Проверяем доступность профиля (может быть RLS проблема)
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('id')
@@ -255,7 +196,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .maybeSingle();
         
         if (profileError || !profile) {
-          console.log('[AuthProvider] Profile not accessible, reconnecting...');
           await supabase.auth.signOut();
           await signInWithWallet();
         }
@@ -264,17 +204,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    // Listen for sessionExpired events from edge function calls
-    const handleSessionExpired = () => {
-      console.log('[AuthProvider] Session expired event received, re-authenticating...');
-      signInWithWallet();
-    };
+    const handleSessionExpired = () => signInWithWallet();
     window.addEventListener('sessionExpired', handleSessionExpired);
 
-    // Проверяем сессию сразу при изменении кошелька
     checkSession();
 
-    // Проверяем сессию каждую минуту
     const interval = setInterval(checkSession, 60000);
     return () => {
       clearInterval(interval);
@@ -283,29 +217,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [isConnected, address, signInWithWallet]);
 
   useEffect(() => {
-    // Автоматический вход при подключении кошелька (только если не было ручного выхода)
     if (isConnected && address && !user && !manualSignOutRef.current) {
-      console.log('[AuthProvider] Auto-signing in wallet:', address);
       signInWithWallet();
     }
     
-    // Сброс флага при отключении кошелька
     if (!isConnected && manualSignOutRef.current) {
-      console.log('[AuthProvider] Wallet disconnected, resetting flag after delay');
-      // Даем время на полное отключение перед сбросом флага
       const timer = setTimeout(() => {
         manualSignOutRef.current = false;
       }, 2000);
       return () => clearTimeout(timer);
     }
     
-    // Сброс флага manualSignOut при смене адреса кошелька на новый
     if (isConnected && address && user) {
-      const currentAddress = address.toLowerCase();
-      // Только сбрасываем если это действительно новый адрес
       const timer = setTimeout(() => {
         if (manualSignOutRef.current) {
-          console.log('[AuthProvider] Resetting flag - wallet address changed');
           manualSignOutRef.current = false;
         }
       }, 1000);
@@ -313,47 +238,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [isConnected, address, user, signInWithWallet]);
 
-  // Handle Farcaster miniapp lifecycle events - восстановление сессии при возврате
+  // Handle Farcaster miniapp lifecycle events
   useEffect(() => {
     if (!isFarcasterContext.current) return;
 
-    console.log('[AuthProvider] Setting up Farcaster lifecycle handlers');
-
     const handleVisibilityChange = async () => {
-      // Только восстанавливаем сессию при возврате, НЕ выходим при скрытии
       if (!document.hidden) {
-        console.log('[AuthProvider] Farcaster app visible - checking session');
-        
-        // Проверяем существующую сессию
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         
         if (!currentSession && isConnected && address) {
-          // Если сессии нет, но кошелек подключен - восстанавливаем
-          console.log('[AuthProvider] No session found, re-authenticating');
-          setTimeout(() => {
-            signInWithWallet();
-          }, 500);
+          setTimeout(() => signInWithWallet(), 500);
         } else if (currentSession) {
-          // Если сессия есть - обновляем состояние
-          console.log('[AuthProvider] Session exists, updating state');
           setSession(currentSession);
           setUser(currentSession.user);
         }
       }
     };
 
-    // Слушаем изменения видимости страницы
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // При фокусе окна также проверяем сессию
     const handleFocus = async () => {
       if (isConnected && address) {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         if (!currentSession) {
-          console.log('[AuthProvider] Farcaster app focused - re-authenticating');
-          setTimeout(() => {
-            signInWithWallet();
-          }, 500);
+          setTimeout(() => signInWithWallet(), 500);
         }
       }
     };
