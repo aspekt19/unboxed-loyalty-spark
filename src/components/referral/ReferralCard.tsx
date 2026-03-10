@@ -196,7 +196,7 @@ export function ReferralCard() {
     );
   }
 
-  const renderProgramCard = (program: ReferralProgram) => {
+  const renderProgramRow = (program: ReferralProgram) => {
     const isExpanded = expandedPrograms.has(program.token_address);
     
     return (
@@ -205,155 +205,82 @@ export function ReferralCard() {
         open={isExpanded}
         onOpenChange={() => toggleProgram(program.token_address)}
       >
-        <Card className="border-2 h-full">
-          <CardHeader className="pb-2">
-            <CollapsibleTrigger asChild>
-              <button className="w-full text-left hover:opacity-80 transition-opacity">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <Users className="h-5 w-5 text-primary flex-shrink-0" />
-                    <CardTitle className="text-base sm:text-lg truncate">
-                      {program.program_name}
-                    </CardTitle>
-                  </div>
-                  <ChevronDown
-                    className={`h-5 w-5 text-muted-foreground transition-transform duration-200 flex-shrink-0 ${
-                      isExpanded ? 'transform rotate-180' : ''
-                    }`}
-                  />
-                </div>
-              </button>
-            </CollapsibleTrigger>
-            <CardDescription>
-              {program.referral_count} referral{program.referral_count !== 1 ? 's' : ''}
-            </CardDescription>
-          </CardHeader>
+        <CollapsibleTrigger asChild>
+          <button className="w-full text-left hover:bg-muted/50 transition-colors rounded-lg px-3 py-2.5 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <Users className="h-4 w-4 text-primary flex-shrink-0" />
+              <span className="font-medium text-sm truncate">{program.program_name}</span>
+              <span className="text-xs text-muted-foreground flex-shrink-0">
+                {program.referral_count} ref.
+              </span>
+            </div>
+            <ChevronDown
+              className={`h-4 w-4 text-muted-foreground transition-transform duration-200 flex-shrink-0 ${
+                isExpanded ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
+        </CollapsibleTrigger>
 
-          <CollapsibleContent>
-            <CardContent className="space-y-4 pt-0">
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Your Referral Code</p>
-                <div className="flex gap-2">
-                  <Input
-                    value={program.referral_code || ''}
-                    readOnly
-                    className="font-mono text-lg"
-                  />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() =>
-                      program.referral_code &&
-                      handleCopy(program.referral_code, program.token_address)
-                    }
-                  >
-                    {copied === program.token_address ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
+        <CollapsibleContent>
+          <div className="px-3 pb-3 space-y-3">
+            <div className="flex gap-2">
+              <Input
+                value={program.referral_code || ''}
+                readOnly
+                className="font-mono text-sm h-9"
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 flex-shrink-0"
+                onClick={() =>
+                  program.referral_code &&
+                  handleCopy(program.referral_code, program.token_address)
+                }
+              >
+                {copied === program.token_address ? (
+                  <Check className="h-3.5 w-3.5" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5" />
+                )}
+              </Button>
+            </div>
+            <div className="flex gap-4 text-sm">
+              <div className="flex items-center gap-1">
+                <Gift className="h-3.5 w-3.5 text-primary" />
+                <span className="text-muted-foreground">You:</span>
+                <span className="font-semibold">{program.referrer_bonus} {program.symbol}</span>
               </div>
-
-              <div className="grid grid-cols-2 gap-4 pt-2 border-t">
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Your Bonus</p>
-                  <div className="flex items-center gap-1">
-                    <Gift className="h-4 w-4 text-primary" />
-                    <p className="font-semibold">
-                      {program.referrer_bonus} {program.symbol}
-                    </p>
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Friend Bonus</p>
-                  <div className="flex items-center gap-1">
-                    <Gift className="h-4 w-4 text-primary" />
-                    <p className="font-semibold">
-                      {program.referee_bonus} {program.symbol}
-                    </p>
-                  </div>
-                </div>
+              <div className="flex items-center gap-1">
+                <Gift className="h-3.5 w-3.5 text-primary" />
+                <span className="text-muted-foreground">Friend:</span>
+                <span className="font-semibold">{program.referee_bonus} {program.symbol}</span>
               </div>
-            </CardContent>
-          </CollapsibleContent>
-        </Card>
+            </div>
+          </div>
+        </CollapsibleContent>
       </Collapsible>
     );
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Referral Program</h2>
-          <p className="text-muted-foreground">Invite friends and earn rewards together</p>
-        </div>
-        {isMobile && programs.length > 1 && (
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-            <span>{currentSlide + 1}/{programs.length}</span>
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-primary" />
+            <CardTitle className="text-lg">Referral Program</CardTitle>
           </div>
-        )}
-      </div>
-
-      {isMobile && programs.length > 1 ? (
-        <div className="relative">
-          <Carousel
-            setApi={setCarouselApi}
-            opts={{
-              align: 'start',
-              loop: false,
-            }}
-            className="w-full"
-          >
-            <CarouselContent className="-ml-2">
-              {programs.map((program) => (
-                <CarouselItem key={program.token_address} className="pl-2 basis-[90%]">
-                  {renderProgramCard(program)}
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-          </Carousel>
-          
-          {programs.length > 1 && (
-            <div className="flex justify-center gap-2 mt-3">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-full"
-                onClick={scrollPrev}
-                disabled={currentSlide === 0}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <div className="flex items-center gap-1">
-                {programs.map((_, index) => (
-                  <div
-                    key={index}
-                    className={`h-2 w-2 rounded-full transition-colors ${
-                      index === currentSlide ? 'bg-primary' : 'bg-muted'
-                    }`}
-                  />
-                ))}
-              </div>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-full"
-                onClick={scrollNext}
-                disabled={currentSlide === programs.length - 1}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
+          <span className="text-xs text-muted-foreground">{programs.length} programs</span>
         </div>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {programs.map((program) => renderProgramCard(program))}
+        <CardDescription>Invite friends and earn rewards together</CardDescription>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="divide-y divide-border">
+          {programs.map((program) => renderProgramRow(program))}
         </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 }
