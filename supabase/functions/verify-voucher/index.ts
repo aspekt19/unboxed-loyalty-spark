@@ -90,15 +90,47 @@ Deno.serve(async (req) => {
     console.log('Verifying voucher creation for transaction:', transactionHash);
 
     // Verify the customer address matches the authenticated user's profile
-    const { data: profile, error: profileError } = await supabaseClient
+    // Try by user_id first, fallback to wallet_address (handles race conditions)
+    let profile: { wallet_address: string } | null = null;
+
+    const { data: profileById } = await supabaseClient
       .from('profiles')
       .select('wallet_address')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
-    if (profileError || !profile) {
-      console.error('Profile not found:', profileError);
-      throw new Error('User profile not found');
+    if (profileById) {
+      profile = profileById;
+    } else {
+      // Fallback: profile may exist but user_id hasn't been linked yet
+      const { data: profileByWallet } = await supabaseClient
+        .from('profiles')
+        .select('wallet_address')
+        .eq('wallet_address', customerAddress.toLowerCase())
+        .maybeSingle();
+
+      if (profileByWallet) {
+        profile = profileByWallet;
+        // Link the profile to the current user_id for future lookups
+        await supabaseClient
+          .from('profiles')
+          .update({ user_id: user.id })
+          .eq('wallet_address', customerAddress.toLowerCase());
+        console.log('Profile linked to user_id:', user.id);
+      }
+    }
+
+    if (!profile) {
+      console.warn('Profile not found for user:', user.id, 'wallet:', customerAddress);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          retryable: true,
+          retry_after_ms: 3000,
+          error: 'Profile not ready yet. Retrying...',
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     if (profile.wallet_address.toLowerCase() !== customerAddress.toLowerCase()) {
