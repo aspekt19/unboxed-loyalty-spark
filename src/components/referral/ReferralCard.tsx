@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAccount } from 'wagmi';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -277,9 +278,11 @@ export function ReferralCard() {
         <CardDescription>Invite friends and earn rewards together</CardDescription>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="divide-y divide-border">
-          {programs.map((program) => renderProgramRow(program))}
-        </div>
+        <ScrollArea className="max-h-[240px]">
+          <div className="divide-y divide-border pr-3">
+            {programs.map((program) => renderProgramRow(program))}
+          </div>
+        </ScrollArea>
       </CardContent>
     </Card>
   );
