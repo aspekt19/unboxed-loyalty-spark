@@ -278,7 +278,7 @@ export function ReferralCard() {
         <CardDescription>Invite friends and earn rewards together</CardDescription>
       </CardHeader>
       <CardContent className="pt-0">
-        <ScrollArea className="max-h-[240px]">
+        <ScrollArea className="h-[240px] overflow-hidden">
           <div className="divide-y divide-border pr-3">
             {programs.map((program) => renderProgramRow(program))}
           </div>
