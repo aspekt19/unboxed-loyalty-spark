@@ -29,10 +29,6 @@ export function CustomerPanel() {
 
   return (
     <div className="space-y-6">
-      <ReferralCodeInput />
-      
-      <ReferralCard />
-      
       <PersonalizedOffers />
       
       <CustomerTiersSection selectedProgram={selectedProgram} />
@@ -45,6 +41,10 @@ export function CustomerPanel() {
       <RewardsSelection />
       
       <MyVouchers />
+      
+      <ReferralCodeInput />
+      
+      <ReferralCard />
       
       <CustomerReviewsSection />
       
