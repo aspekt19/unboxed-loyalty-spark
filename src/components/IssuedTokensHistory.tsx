@@ -33,9 +33,8 @@ const historyRpcClient = createPublicClient({
   chain: base,
   transport: http('https://base-rpc.publicnode.com', {
     batch: false,
-    retryCount: 1,
-    retryDelay: 300,
-    timeout: 8_000,
+    retryCount: 0,
+    timeout: 6_000,
   }),
 });
 
