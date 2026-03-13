@@ -117,8 +117,8 @@ export function IssuedTokensHistory() {
       const allIssuedTokens: IssuedToken[] = [];
 
       const currentBlock = await publicClient.getBlockNumber();
-      const CHUNK_SIZE = 40000n;
-      const LOOKBACK_BLOCKS = 200000n;
+      const CHUNK_SIZE = 50000n;
+      const LOOKBACK_BLOCKS = 100000n;
       
       for (const program of activePrograms) {
         try {
