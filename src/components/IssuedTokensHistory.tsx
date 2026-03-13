@@ -68,11 +68,9 @@ export function IssuedTokensHistory() {
       return;
     }
 
-    if (!session) {
-      setIsLoading(false);
-      setError('Authentication is required to load history. Reconnect wallet if this persists.');
-      return;
-    }
+    // Don't block on missing session — the RPC queries don't need auth,
+    // only the Supabase programs query does, and it will gracefully
+    // return empty if the session is still being established.
 
     if (!hasLoadedRef.current || loadingAddressRef.current !== address.toLowerCase()) {
       loadingAddressRef.current = address.toLowerCase();
@@ -95,12 +93,6 @@ export function IssuedTokensHistory() {
 
   const loadIssuedTokens = async (silent = false) => {
     if (!address) return;
-
-    if (!session) {
-      setIsLoading(false);
-      setError('Authentication is required to load history.');
-      return;
-    }
 
     if (isFetchingRef.current) {
       pendingRefreshRef.current = true;
