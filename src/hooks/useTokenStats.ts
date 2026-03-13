@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { usePublicClient, useAccount } from 'wagmi';
-import { supabase } from '@/integrations/supabase/client';
+import { formatUnits } from 'viem';
 
 interface TokenStats {
   [tokenAddress: string]: {
@@ -15,15 +15,48 @@ interface ProgramWithToken {
   name: string;
 }
 
-const ERC20_BALANCE_ABI = [
+const ERC20_STATS_ABI = [
   {
     inputs: [{ name: 'account', type: 'address' }],
     name: 'balanceOf',
     outputs: [{ name: '', type: 'uint256' }],
     stateMutability: 'view',
     type: 'function',
-  }
+  },
+  {
+    inputs: [],
+    name: 'totalSupply',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
 ] as const;
+
+const REQUEST_TIMEOUT_MS = 12000;
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`${label} timeout`)), timeoutMs);
+
+    promise
+      .then((result) => {
+        clearTimeout(timer);
+        resolve(result);
+      })
+      .catch((error) => {
+        clearTimeout(timer);
+        reject(error);
+      });
+  });
+}
+
+function toTokenAmount(value: unknown): number {
+  try {
+    return Number(formatUnits(value as bigint, 18));
+  } catch {
+    return 0;
+  }
+}
 
 /**
  * Hook to load on-chain token statistics (total issued, merchant balance,
@@ -36,112 +69,68 @@ export function useTokenStats(programs: ProgramWithToken[]) {
   const { address } = useAccount();
 
   const loadTokenStats = useCallback(async () => {
-    if (!address || !publicClient) return;
+    if (!address || !publicClient) {
+      setIsLoadingStats(false);
+      return;
+    }
 
-    const activePrograms = programs.filter(p => p.tokenAddress);
+    const activePrograms = programs.filter((p): p is ProgramWithToken & { tokenAddress: string } => Boolean(p.tokenAddress));
     if (activePrograms.length === 0) {
+      setTokenStats({});
       setIsLoadingStats(false);
       return;
     }
 
     setIsLoadingStats(true);
-    const stats: TokenStats = {};
 
-    for (const program of activePrograms) {
-      if (!program.tokenAddress) continue;
-
-      try {
-        const currentBlock = await publicClient.getBlockNumber();
-        const CHUNK_SIZE = 40000n;
-        const LOOKBACK_BLOCKS = 200000n;
-        const fromBlock = currentBlock > LOOKBACK_BLOCKS ? currentBlock - LOOKBACK_BLOCKS : 0n;
-        
-        // Query mint events in chunks
-        let allLogs: any[] = [];
-        let currentChunkStart = fromBlock;
-
-        while (currentChunkStart <= currentBlock) {
-          const currentChunkEnd = currentChunkStart + CHUNK_SIZE > currentBlock 
-            ? currentBlock 
-            : currentChunkStart + CHUNK_SIZE;
+    try {
+      const statsEntries = await Promise.all(
+        activePrograms.map(async (program): Promise<[string, TokenStats[string]]> => {
+          const tokenAddress = program.tokenAddress;
 
           try {
-            const logs = await publicClient.getLogs({
-              address: program.tokenAddress as `0x${string}`,
-              event: {
-                type: 'event',
-                name: 'Transfer',
-                inputs: [
-                  { name: 'from', type: 'address', indexed: true },
-                  { name: 'to', type: 'address', indexed: true },
-                  { name: 'value', type: 'uint256', indexed: false },
-                ],
-              },
-              args: {
-                from: '0x0000000000000000000000000000000000000000' as `0x${string}`,
-              },
-              fromBlock: currentChunkStart,
-              toBlock: currentChunkEnd,
-            });
-            allLogs = [...allLogs, ...logs];
-          } catch (chunkError) {
-            console.error(`[useTokenStats] Chunk query error for ${program.name}:`, chunkError);
+            const [totalSupplyRaw, merchantBalanceRaw] = await Promise.all([
+              withTimeout(
+                publicClient.readContract({
+                  address: tokenAddress as `0x${string}`,
+                  abi: ERC20_STATS_ABI,
+                  functionName: 'totalSupply',
+                } as any) as Promise<unknown>,
+                REQUEST_TIMEOUT_MS,
+                `totalSupply ${program.name}`
+              ),
+              withTimeout(
+                publicClient.readContract({
+                  address: tokenAddress as `0x${string}`,
+                  abi: ERC20_STATS_ABI,
+                  functionName: 'balanceOf',
+                  args: [address],
+                } as any) as Promise<unknown>,
+                REQUEST_TIMEOUT_MS,
+                `balanceOf ${program.name}`
+              ),
+            ]);
+
+            const totalIssued = toTokenAmount(totalSupplyRaw);
+            const merchantBalance = toTokenAmount(merchantBalanceRaw);
+            const holdersBalance = Math.max(totalIssued - merchantBalance, 0);
+
+            return [tokenAddress, { totalIssued, merchantBalance, holdersBalance }];
+          } catch (error) {
+            console.error(`[useTokenStats] Error loading stats for ${program.name}:`, error);
+            return [tokenAddress, { totalIssued: 0, merchantBalance: 0, holdersBalance: 0 }];
           }
+        })
+      );
 
-          currentChunkStart = currentChunkEnd + 1n;
-        }
-
-        const totalIssued = allLogs.reduce((sum, log) => {
-          return log.args.value ? sum + Number(log.args.value) / 1e18 : sum;
-        }, 0);
-
-        // Merchant balance
-        let merchantBalance = 0;
-        try {
-          const balance = await publicClient.readContract({
-            address: program.tokenAddress as `0x${string}`,
-            abi: ERC20_BALANCE_ABI,
-            functionName: 'balanceOf',
-            args: [address],
-          } as any);
-          merchantBalance = Number(balance) / 1e18;
-        } catch (error) {
-          console.error(`[useTokenStats] Balance error for ${program.name}:`, error);
-        }
-
-        // Holders balance via edge function
-        let holdersBalance = 0;
-        try {
-          const { data: holdersData, error: holdersError } = await supabase.functions.invoke('get-token-holders', {
-            body: { tokenAddress: program.tokenAddress }
-          });
-
-          if (holdersError) {
-            console.error(`[useTokenStats] Holders error for ${program.name}:`, holdersError);
-          } else if (holdersData?.holders) {
-            holdersBalance = holdersData.holders.reduce((sum: number, holder: any) => {
-              if (holder.address.toLowerCase() !== address.toLowerCase()) {
-                return sum + parseFloat(holder.balance);
-              }
-              return sum;
-            }, 0);
-          }
-        } catch (error) {
-          console.error(`[useTokenStats] Holders fetch error for ${program.name}:`, error);
-        }
-
-        stats[program.tokenAddress] = { totalIssued, merchantBalance, holdersBalance };
-      } catch (error) {
-        console.error(`[useTokenStats] Error loading stats for ${program.name}:`, error);
-      }
+      setTokenStats(Object.fromEntries(statsEntries));
+    } finally {
+      setIsLoadingStats(false);
     }
-
-    setTokenStats(stats);
-    setIsLoadingStats(false);
   }, [programs, publicClient, address]);
 
   useEffect(() => {
-    loadTokenStats();
+    void loadTokenStats();
   }, [loadTokenStats]);
 
   return { tokenStats, isLoadingStats, reloadStats: loadTokenStats };
