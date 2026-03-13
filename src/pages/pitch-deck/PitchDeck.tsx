@@ -132,7 +132,7 @@ const PitchDeck = () => {
         { label: 'Platform', value: 'Live on BASE', icon: Zap },
         { label: 'Contracts', value: 'Deployed & Tested', icon: Shield },
         { label: 'Website', value: 'loyalspark.online', icon: Globe },
-        { label: 'Target', value: '100 SMBs Q4 2026', icon: Target },
+        { label: 'Target', value: '100 SMBs Q1 2027', icon: Target },
       ],
     },
   ];
