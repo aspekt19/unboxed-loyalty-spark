@@ -17,7 +17,6 @@ interface MintTokensDialogProps {
   onClose: () => void;
   onSubmit: (recipientAddress: string, amount: string) => void;
   isPending: boolean;
-  isFarcaster: boolean;
 }
 
 export function MintTokensDialog({ 
@@ -25,7 +24,6 @@ export function MintTokensDialog({
   onClose, 
   onSubmit, 
   isPending,
-  isFarcaster 
 }: MintTokensDialogProps) {
   const [recipientAddress, setRecipientAddress] = useState('');
   const [mintAmount, setMintAmount] = useState('');
@@ -65,18 +63,16 @@ export function MintTokensDialog({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="recipient">Customer Wallet Address</Label>
-                {isFarcaster && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowScanner(true)}
-                    className="h-8 px-2"
-                  >
-                    <QrCode className="h-4 w-4 mr-1" />
-                    Scan QR
-                  </Button>
-                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowScanner(true)}
+                  className="h-8 px-2"
+                >
+                  <QrCode className="h-4 w-4 mr-1" />
+                  Scan QR
+                </Button>
               </div>
               <Input
                 id="recipient"

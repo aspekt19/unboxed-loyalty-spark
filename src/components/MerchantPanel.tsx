@@ -34,9 +34,7 @@ export function MerchantPanel() {
   const [selectedProgram, setSelectedProgram] = useState<{ name: string; symbol: string; tokenAddress: string } | null>(null);
   const [mintDialogOpen, setMintDialogOpen] = useState(false);
   
-  // Check if we're in Farcaster environment
-  const isFarcaster = typeof document !== 'undefined' && 
-    (document.referrer.includes('warpcast.com') || document.referrer.includes('farcaster.xyz'));
+  
   
   // Always call hooks in the same order, regardless of conditions
   const { mintTokens, isPending, isSuccess, reset } = useMintTokens();
@@ -184,12 +182,11 @@ export function MerchantPanel() {
               </CardContent>
             </Card>
 
-            <MintTokensDialog
+,            <MintTokensDialog
               isOpen={mintDialogOpen}
               onClose={() => setMintDialogOpen(false)}
               onSubmit={handleMintSubmit}
               isPending={isPending}
-              isFarcaster={isFarcaster}
             />
           </TabsContent>
 
