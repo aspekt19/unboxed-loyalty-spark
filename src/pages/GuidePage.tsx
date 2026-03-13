@@ -323,6 +323,35 @@ export default function GuidePage() {
                   </ul>
                 </CardContent>
               </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <QrCode className="h-5 w-5" />
+                    Step 5: Redeem Customer Vouchers
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    When a customer wants to use their reward voucher, you can quickly verify and redeem it:
+                  </p>
+                  <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+                    <li>Go to the "Rewards" tab in your Merchant panel</li>
+                    <li>Find the "Issued Vouchers" section</li>
+                    <li>Click the "Scan QR" button to open the camera</li>
+                    <li>Scan the QR code shown on the customer's screen</li>
+                    <li>The voucher is found automatically — confirm by clicking "Mark as Used"</li>
+                    <li>Alternatively, search by voucher code manually in the search field</li>
+                  </ol>
+
+                  <Alert className="mt-4">
+                    <QrCode className="h-4 w-4" />
+                    <AlertDescription>
+                      QR scanning makes voucher redemption instant — no need to type long codes manually!
+                    </AlertDescription>
+                  </Alert>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="customers" className="space-y-6">
