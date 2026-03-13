@@ -78,6 +78,7 @@ export function MerchantPanel() {
       return;
     }
 
+    setLastMintParams({ recipient: recipientAddress.trim(), amount: amount.trim() });
     await mintTokens(selectedProgram.tokenAddress, recipientAddress, amount);
   };
 
