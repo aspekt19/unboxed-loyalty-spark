@@ -63,7 +63,7 @@ const PitchDeck = () => {
       marketData: {
         tam: { value: '$200B+', label: 'Total Available Market', description: 'Global loyalty rewards market' },
         sam: { value: '$60B', label: 'Serviceable Available Market', description: 'SMB segment (50M merchants)' },
-        share: { value: '$150M', label: 'Target Market Share (Year 1)', description: '1,000 merchants by Q2 2027' },
+        share: { value: '$150M', label: 'Target Market Share (Year 1)', description: '1,000 merchants by Q4 2027' },
       },
     },
     {
