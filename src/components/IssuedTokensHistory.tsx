@@ -44,13 +44,12 @@ const transferEvent = parseAbiItem('event Transfer(address indexed from, address
 export function IssuedTokensHistory() {
   const { address } = useAccount();
   const { session, isLoading: authLoading } = useAuth();
-  const publicClient = usePublicClient();
   const [history, setHistory] = useState<IssuedToken[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedProgramFilter, setSelectedProgramFilter] = useState<string>('all');
   const [customerSearch, setCustomerSearch] = useState<string>('');
-  const [programs, setPrograms] = useState<any[]>([]);
+  const [programs, setPrograms] = useState<ProgramOption[]>([]);
   const hasLoadedRef = useRef(false);
   const loadingAddressRef = useRef<string | null>(null);
   const isFetchingRef = useRef(false);
@@ -76,7 +75,6 @@ export function IssuedTokensHistory() {
       return;
     }
 
-    // Only load if we haven't loaded for this address yet
     if (!hasLoadedRef.current || loadingAddressRef.current !== address.toLowerCase()) {
       loadingAddressRef.current = address.toLowerCase();
       void loadIssuedTokens(false);
@@ -89,7 +87,7 @@ export function IssuedTokensHistory() {
 
     window.addEventListener('loyaltyProgramsUpdated', handleUpdate);
     window.addEventListener('tokensIssued', handleUpdate);
-    
+
     return () => {
       window.removeEventListener('loyaltyProgramsUpdated', handleUpdate);
       window.removeEventListener('tokensIssued', handleUpdate);
@@ -97,7 +95,7 @@ export function IssuedTokensHistory() {
   }, [address, session, authLoading]);
 
   const loadIssuedTokens = async (silent = false) => {
-    if (!publicClient || !address) return;
+    if (!address) return;
 
     if (!session) {
       setIsLoading(false);
@@ -115,123 +113,126 @@ export function IssuedTokensHistory() {
       setIsLoading(true);
     }
     setError(null);
-    
+
     const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error('Loading timeout - please try again')), 60000);
+      setTimeout(() => reject(new Error('Loading timeout - please try again')), 25_000);
     });
 
     try {
       await Promise.race([
         (async () => {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
-      const normalizedAddress = address.toLowerCase();
-      
-      const { data: programsData, error } = await supabase
-        .from('loyalty_programs')
-        .select('*')
-        .eq('merchant_address', normalizedAddress)
-        .or(`status.in.(active,expiring_soon,paused),and(status.eq.expired,expiration_date.gte.${thirtyDaysAgo.toISOString()})`)
-        .order('created_at', { ascending: false });
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      if (error) {
-        console.error('[IssuedTokensHistory] Error loading programs:', error);
-        setHistory([]);
-        setPrograms([]);
-        return;
-      }
+          const normalizedAddress = address.toLowerCase();
 
-      if (!programsData || programsData.length === 0) {
-        setHistory([]);
-        setPrograms([]);
-        return;
-      }
+          const { data: programsData, error: programsError } = await supabase
+            .from('loyalty_programs')
+            .select('name, symbol, token_address')
+            .eq('merchant_address', normalizedAddress)
+            .or(`status.in.(active,expiring_soon,paused),and(status.eq.expired,expiration_date.gte.${thirtyDaysAgo.toISOString()})`)
+            .order('created_at', { ascending: false });
 
-      const activePrograms = programsData.map(p => ({
-        name: p.name,
-        symbol: p.symbol,
-        tokenAddress: p.token_address,
-      }));
-      
-      setPrograms(activePrograms);
+          if (programsError) {
+            console.error('[IssuedTokensHistory] Error loading programs:', programsError);
+            throw programsError;
+          }
 
-      const allIssuedTokens: IssuedToken[] = [];
+          if (!programsData || programsData.length === 0) {
+            setHistory([]);
+            setPrograms([]);
+            return;
+          }
 
-      const currentBlock = await publicClient.getBlockNumber();
-      const CHUNK_SIZE = 50000n;
-      const LOOKBACK_BLOCKS = 100000n;
-      
-      for (const program of activePrograms) {
-        try {
-          const zeroAddress = '0x0000000000000000000000000000000000000000';
-          const fromBlock = currentBlock > LOOKBACK_BLOCKS ? currentBlock - LOOKBACK_BLOCKS : 0n;
+          const activePrograms: ProgramOption[] = programsData
+            .filter((p) => p.token_address)
+            .map((p) => ({
+              name: p.name,
+              symbol: p.symbol,
+              tokenAddress: p.token_address,
+            }));
 
-          let allLogs: any[] = [];
-          let currentChunkStart = fromBlock;
+          setPrograms(activePrograms);
 
-          while (currentChunkStart <= currentBlock) {
-            const currentChunkEnd = currentChunkStart + CHUNK_SIZE > currentBlock 
-              ? currentBlock 
-              : currentChunkStart + CHUNK_SIZE;
+          const allIssuedTokens: IssuedToken[] = [];
+          const currentBlock = await historyRpcClient.getBlockNumber();
+          const chunkSize = 20_000n;
+          const lookbackBlocks = 100_000n;
+          const zeroAddress = '0x0000000000000000000000000000000000000000' as const;
+          const fromBlock = currentBlock > lookbackBlocks ? currentBlock - lookbackBlocks : 0n;
 
+          for (const program of activePrograms) {
             try {
-              const logs = await publicClient.getLogs({
-                address: program.tokenAddress as `0x${string}`,
-                event: {
-                  type: 'event',
-                  name: 'Transfer',
-                  inputs: [
-                    { name: 'from', type: 'address', indexed: true },
-                    { name: 'to', type: 'address', indexed: true },
-                    { name: 'value', type: 'uint256', indexed: false },
-                  ],
-                },
-                args: {
-                  from: zeroAddress as `0x${string}`,
-                },
-                fromBlock: currentChunkStart,
-                toBlock: currentChunkEnd,
-              });
+              const programLogs: any[] = [];
+              let currentChunkStart = fromBlock;
 
-              allLogs = [...allLogs, ...logs];
-            } catch (chunkError) {
-              console.error('[IssuedTokensHistory] Error querying chunk:', chunkError);
+              while (currentChunkStart <= currentBlock) {
+                const currentChunkEnd =
+                  currentChunkStart + chunkSize > currentBlock ? currentBlock : currentChunkStart + chunkSize;
+
+                try {
+                  const logs = await historyRpcClient.getLogs({
+                    address: program.tokenAddress as `0x${string}`,
+                    event: transferEvent,
+                    args: { from: zeroAddress },
+                    fromBlock: currentChunkStart,
+                    toBlock: currentChunkEnd,
+                  });
+
+                  if (logs.length > 0) {
+                    programLogs.push(...logs);
+                  }
+                } catch (chunkError) {
+                  console.error('[IssuedTokensHistory] Error querying chunk:', chunkError);
+                }
+
+                currentChunkStart = currentChunkEnd + 1n;
+              }
+
+              if (programLogs.length === 0) continue;
+
+              const uniqueBlockHashes = Array.from(
+                new Set(programLogs.map((log) => log.blockHash).filter(Boolean))
+              ) as `0x${string}`[];
+
+              const blockTimestamps = new Map<string, number>();
+              await Promise.all(
+                uniqueBlockHashes.map(async (blockHash) => {
+                  try {
+                    const block = await historyRpcClient.getBlock({ blockHash });
+                    blockTimestamps.set(blockHash, Number(block.timestamp) * 1000);
+                  } catch {
+                    blockTimestamps.set(blockHash, Date.now());
+                  }
+                })
+              );
+
+              for (const log of programLogs) {
+                if (!log.args.to || !log.args.value) continue;
+
+                allIssuedTokens.push({
+                  recipient: log.args.to as string,
+                  amount: formatUnits(log.args.value as bigint, 18),
+                  tokenName: program.name,
+                  tokenSymbol: program.symbol,
+                  tokenAddress: program.tokenAddress,
+                  timestamp: blockTimestamps.get(log.blockHash as string) ?? Date.now(),
+                  transactionHash: log.transactionHash,
+                });
+              }
+            } catch (programError) {
+              console.error(`[IssuedTokensHistory] Error loading history for ${program.name}:`, programError);
             }
-
-            currentChunkStart = currentChunkEnd + 1n;
           }
 
-          for (const log of allLogs) {
-            if (!log.args.to || !log.args.value) continue;
-
-            const block = await publicClient.getBlock({ blockHash: log.blockHash });
-
-            allIssuedTokens.push({
-              recipient: log.args.to as string,
-              amount: formatUnits(log.args.value as bigint, 18),
-              tokenName: program.name,
-              tokenSymbol: program.symbol,
-              tokenAddress: program.tokenAddress,
-              timestamp: Number(block.timestamp) * 1000,
-              transactionHash: log.transactionHash,
-            });
-          }
-        } catch (error) {
-          console.error(`[IssuedTokensHistory] Error loading history for ${program.name}:`, error);
-        }
-      }
-
-      allIssuedTokens.sort((a, b) => b.timestamp - a.timestamp);
-      setHistory(allIssuedTokens);
+          allIssuedTokens.sort((a, b) => b.timestamp - a.timestamp);
+          setHistory(allIssuedTokens);
         })(),
-        timeoutPromise
+        timeoutPromise,
       ]);
-    } catch (error: any) {
-      console.error('[IssuedTokensHistory] Error:', error);
-      setError(error?.message || 'Failed to load history. Please try again.');
-      setHistory([]);
-      setPrograms([]);
+    } catch (loadError: any) {
+      console.error('[IssuedTokensHistory] Error:', loadError);
+      setError(loadError?.message || 'Failed to load history. Please try again.');
     } finally {
       isFetchingRef.current = false;
       setIsLoading(false);
