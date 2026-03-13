@@ -22,7 +22,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMintTokens } from '@/hooks/useMintTokens';
 import { useAccount } from 'wagmi';
-import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Coins, AlertCircle, Wallet, AlertTriangle } from 'lucide-react';
 import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
@@ -30,7 +29,6 @@ import { mintTokensSchema } from '@/lib/validationSchemas';
 
 export function MerchantPanel() {
   const { address } = useAccount();
-  const { session, signInWithWallet, isLoading: authLoading } = useAuth();
   const [selectedProgram, setSelectedProgram] = useState<{ name: string; symbol: string; tokenAddress: string } | null>(null);
   const [mintDialogOpen, setMintDialogOpen] = useState(false);
   
@@ -41,14 +39,6 @@ export function MerchantPanel() {
   const { isPaused, isMintingActive, isUtilityActive } = useCheckProgramStatus(
     selectedProgram?.tokenAddress as `0x${string}` | undefined
   );
-
-  // Автоматическая аутентификация при подключении кошелька
-  useEffect(() => {
-    if (address && !session && !authLoading) {
-      console.log('Auto-signing in merchant wallet...');
-      signInWithWallet();
-    }
-  }, [address, session, authLoading, signInWithWallet]);
 
   // Сбрасываем выбранную программу при отключении кошелька
   useEffect(() => {
