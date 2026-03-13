@@ -34,6 +34,8 @@ export function IssuedTokensHistory() {
   const [programs, setPrograms] = useState<any[]>([]);
   const hasLoadedRef = useRef(false);
   const loadingAddressRef = useRef<string | null>(null);
+  const isFetchingRef = useRef(false);
+  const pendingRefreshRef = useRef(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -44,6 +46,8 @@ export function IssuedTokensHistory() {
       setIsLoading(false);
       hasLoadedRef.current = false;
       loadingAddressRef.current = null;
+      isFetchingRef.current = false;
+      pendingRefreshRef.current = false;
       return;
     }
 
@@ -55,27 +59,35 @@ export function IssuedTokensHistory() {
     // Only load if we haven't loaded for this address yet
     if (!hasLoadedRef.current || loadingAddressRef.current !== address.toLowerCase()) {
       loadingAddressRef.current = address.toLowerCase();
-      loadIssuedTokens();
+      void loadIssuedTokens(false);
       hasLoadedRef.current = true;
     }
 
-    const handleUpdate = () => loadIssuedTokens();
+    const handleUpdate = () => {
+      void loadIssuedTokens(true);
+    };
 
     window.addEventListener('loyaltyProgramsUpdated', handleUpdate);
     window.addEventListener('tokensIssued', handleUpdate);
-    window.addEventListener('sessionReady', handleUpdate);
     
     return () => {
       window.removeEventListener('loyaltyProgramsUpdated', handleUpdate);
       window.removeEventListener('tokensIssued', handleUpdate);
-      window.removeEventListener('sessionReady', handleUpdate);
     };
   }, [address, session, authLoading]);
 
-  const loadIssuedTokens = async () => {
+  const loadIssuedTokens = async (silent = false) => {
     if (!publicClient || !address || !session) return;
 
-    setIsLoading(true);
+    if (isFetchingRef.current) {
+      pendingRefreshRef.current = true;
+      return;
+    }
+
+    isFetchingRef.current = true;
+    if (!silent || history.length === 0) {
+      setIsLoading(true);
+    }
     setError(null);
     
     const timeoutPromise = new Promise<never>((_, reject) => {
@@ -101,14 +113,12 @@ export function IssuedTokensHistory() {
         console.error('[IssuedTokensHistory] Error loading programs:', error);
         setHistory([]);
         setPrograms([]);
-        setIsLoading(false);
         return;
       }
 
       if (!programsData || programsData.length === 0) {
         setHistory([]);
         setPrograms([]);
-        setIsLoading(false);
         return;
       }
 
@@ -197,7 +207,13 @@ export function IssuedTokensHistory() {
       setHistory([]);
       setPrograms([]);
     } finally {
+      isFetchingRef.current = false;
       setIsLoading(false);
+
+      if (pendingRefreshRef.current) {
+        pendingRefreshRef.current = false;
+        void loadIssuedTokens(true);
+      }
     }
   };
 

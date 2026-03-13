@@ -23,6 +23,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const manualSignOutRef = useRef(false);
   const isFarcasterContext = useRef(false);
   const signingInRef = useRef(false);
+  const retryBlockedUntilRef = useRef(0);
+  const lastRateLimitToastAtRef = useRef(0);
+  const lastSignInAttemptAtRef = useRef(0);
   const { address, isConnected } = useAccount();
 
   // Detect Farcaster context on mount
@@ -62,9 +65,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (manualSignOutRef.current) return;
+    if (manualSignOutRef.current || signingInRef.current) return;
 
-    if (signingInRef.current) return;
+    const now = Date.now();
+    if (now < retryBlockedUntilRef.current) return;
+    if (now - lastSignInAttemptAtRef.current < 4000) return;
+    lastSignInAttemptAtRef.current = now;
 
     signingInRef.current = true;
     try {
@@ -128,6 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error('Failed to create profile. Please disconnect and reconnect your wallet.');
       }
 
+      retryBlockedUntilRef.current = 0;
       window.dispatchEvent(new Event('profileMigrated'));
       window.dispatchEvent(new Event('sessionReady'));
       toast.success('Successfully signed in with wallet');
@@ -135,7 +142,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('[AuthProvider] Sign in error:', error);
       
       if (error.status === 429 || error.code === 'over_request_rate_limit') {
-        toast.error('Too many requests. Please wait a moment and try again.');
+        retryBlockedUntilRef.current = Date.now() + 30000;
+        const shouldShowRateLimitToast = Date.now() - lastRateLimitToastAtRef.current > 8000;
+        if (shouldShowRateLimitToast) {
+          toast.error('Too many requests. Please wait a moment and try again.');
+          lastRateLimitToastAtRef.current = Date.now();
+        }
       } else {
         toast.error(error.message || 'Failed to sign in');
       }
