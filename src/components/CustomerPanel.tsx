@@ -30,6 +30,8 @@ export function CustomerPanel() {
 
   return (
     <div className="space-y-6">
+      <WalletQRCode />
+      
       <PersonalizedOffers />
       
       <CustomerTiersSection selectedProgram={selectedProgram} />
