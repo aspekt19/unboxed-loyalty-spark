@@ -95,7 +95,7 @@ const PitchDeck = () => {
     {
       id: 'adoption',
       title: 'Adoption Strategy',
-      subtitle: 'Path to 1,000 merchants by Q2 2027',
+      subtitle: 'Path to 1,000 merchants by Q4 2027',
       adoption: [
         { phase: 'Beta (Q3-Q4 2026)', target: '10 merchants', focus: 'Product testing & feedback' },
         { phase: 'Launch (Q1 2027)', target: '100 merchants', focus: 'Local market penetration' },
