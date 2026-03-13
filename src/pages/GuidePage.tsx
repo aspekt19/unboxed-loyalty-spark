@@ -397,9 +397,9 @@ export default function GuidePage() {
                     <li>Find a reward you want (check you have enough tokens)</li>
                     <li>Click "Activate Voucher"</li>
                     <li>Confirm the transaction in your wallet</li>
-                    <li>Your voucher will appear in "My Vouchers" tab</li>
-                    <li>Present the voucher code to the merchant to claim your reward</li>
-                    <li>Merchant will mark it as "used"</li>
+                    <li>Your voucher will appear in "My Vouchers" with a QR code</li>
+                    <li>Show the QR code to the merchant — they can scan it instantly to redeem your voucher</li>
+                    <li>Alternatively, share the voucher code text and the merchant enters it manually</li>
                   </ol>
 
                   <Alert className="mt-4">
