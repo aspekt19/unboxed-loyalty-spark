@@ -73,12 +73,14 @@ export const AutomationDashboard = () => {
       </Card>
 
       <Tabs defaultValue="rules" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="rules">Automation Rules</TabsTrigger>
-          <TabsTrigger value="create">Create Rule</TabsTrigger>
-          <TabsTrigger value="history">Trigger History</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-2">
+          <TabsList className="inline-flex w-auto min-w-full">
+            <TabsTrigger value="rules" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Rules</TabsTrigger>
+            <TabsTrigger value="create" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Create Rule</TabsTrigger>
+            <TabsTrigger value="history" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">History</TabsTrigger>
+            <TabsTrigger value="analytics" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Analytics</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="rules">
           <AutomationRulesList
