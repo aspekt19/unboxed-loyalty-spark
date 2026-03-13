@@ -65,13 +65,13 @@ export function MintTokensDialog({
                 <Label htmlFor="recipient">Customer Wallet Address</Label>
                 <Button
                   type="button"
-                  variant="ghost"
-                  size="sm"
+                  variant="outline"
+                  size="default"
                   onClick={() => setShowScanner(true)}
-                  className="h-8 px-2"
+                  className="h-9 px-3 border-primary/50 text-primary hover:bg-primary/10"
                 >
-                  <QrCode className="h-4 w-4 mr-1" />
-                  Scan QR
+                  <QrCode className="h-4 w-4 mr-1.5" />
+                  Scan QR Code
                 </Button>
               </div>
               <Input
