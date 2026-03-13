@@ -151,7 +151,7 @@ const Index = () => {
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               >
                 <div className="grayscale hover:grayscale-0 transition-smooth opacity-60 hover:opacity-100">
-                  <img src="/media-kit/logo-horizontal.png" alt="BASE" className="h-5 sm:h-6" />
+                  <img src="/media-kit/logo-horizontal.png" alt="BASE" className="h-8 sm:h-10" />
                 </div>
               </motion.div>
             </motion.div>
