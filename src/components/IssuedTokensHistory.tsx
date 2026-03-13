@@ -155,8 +155,8 @@ export function IssuedTokensHistory() {
 
           const allIssuedTokens: IssuedToken[] = [];
           const currentBlock = await historyRpcClient.getBlockNumber();
-          const chunkSize = 20_000n;
-          const lookbackBlocks = 100_000n;
+          const chunkSize = 40_000n;
+          const lookbackBlocks = 40_000n;
           const zeroAddress = '0x0000000000000000000000000000000000000000' as const;
           const fromBlock = currentBlock > lookbackBlocks ? currentBlock - lookbackBlocks : 0n;
 
