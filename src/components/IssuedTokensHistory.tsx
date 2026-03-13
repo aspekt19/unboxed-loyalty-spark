@@ -73,7 +73,7 @@ export function IssuedTokensHistory() {
     setError(null);
     
     const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error('Loading timeout - please try again')), 30000);
+      setTimeout(() => reject(new Error('Loading timeout - please try again')), 60000);
     });
 
     try {
