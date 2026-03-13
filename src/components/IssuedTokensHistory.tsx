@@ -213,7 +213,7 @@ export function IssuedTokensHistory() {
   });
 
   return (
-    <Card className="border-2 h-full flex flex-col">
+    <Card className="border-2 h-full flex flex-col min-h-[200px]">
       <CardHeader className="flex-shrink-0">
         <CardTitle className="flex items-center gap-2">
           <History className="h-5 w-5 text-primary" />
