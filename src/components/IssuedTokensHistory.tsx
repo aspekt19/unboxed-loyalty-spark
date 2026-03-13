@@ -36,15 +36,14 @@ export function IssuedTokensHistory() {
   const loadingAddressRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (authLoading) {
-      setIsLoading(false);
-      return;
-    }
+    if (authLoading) return;
 
     if (!address) {
       setHistory([]);
       setPrograms([]);
       setIsLoading(false);
+      hasLoadedRef.current = false;
+      loadingAddressRef.current = null;
       return;
     }
 
@@ -53,7 +52,12 @@ export function IssuedTokensHistory() {
       return;
     }
 
-    loadIssuedTokens();
+    // Only load if we haven't loaded for this address yet
+    if (!hasLoadedRef.current || loadingAddressRef.current !== address.toLowerCase()) {
+      loadingAddressRef.current = address.toLowerCase();
+      loadIssuedTokens();
+      hasLoadedRef.current = true;
+    }
 
     const handleUpdate = () => loadIssuedTokens();
 
@@ -66,7 +70,7 @@ export function IssuedTokensHistory() {
       window.removeEventListener('tokensIssued', handleUpdate);
       window.removeEventListener('sessionReady', handleUpdate);
     };
-  }, [address, session, publicClient, authLoading]);
+  }, [address, session, authLoading]);
 
   const loadIssuedTokens = async () => {
     if (!publicClient || !address || !session) return;
