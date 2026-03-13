@@ -166,13 +166,13 @@ export function VouchersManagement() {
             <Label htmlFor="search">Search by Code</Label>
             <Button
               type="button"
-              variant="ghost"
-              size="sm"
+              variant="outline"
+              size="default"
               onClick={() => setShowScanner(!showScanner)}
-              className="h-8 px-2"
+              className="h-9 px-3 border-primary/50 text-primary hover:bg-primary/10"
             >
-              {showScanner ? <X className="h-4 w-4 mr-1" /> : <QrCode className="h-4 w-4 mr-1" />}
-              {showScanner ? 'Close' : 'Scan QR'}
+              {showScanner ? <X className="h-4 w-4 mr-1.5" /> : <QrCode className="h-4 w-4 mr-1.5" />}
+              {showScanner ? 'Close Scanner' : 'Scan QR Code'}
             </Button>
           </div>
           
