@@ -78,6 +78,32 @@ export function VouchersManagement() {
     }
   };
 
+  const handleQrScan = (result: any) => {
+    if (result?.text) {
+      const scannedCode = result.text.trim();
+      setShowScanner(false);
+      setSearchCode(scannedCode);
+      
+      // Auto-find and offer to redeem
+      const found = vouchers.find(v => v.code === scannedCode && v.status === 'active');
+      if (found) {
+        toast.success(`Voucher found: ${found.rewardName}`, {
+          action: {
+            label: 'Mark as Used',
+            onClick: () => handleMarkAsUsed(found.id, found.code),
+          },
+        });
+      } else {
+        const usedVoucher = vouchers.find(v => v.code === scannedCode);
+        if (usedVoucher) {
+          toast.info(`Voucher already ${usedVoucher.status}`);
+        } else {
+          toast.error('Voucher not found');
+        }
+      }
+    }
+  };
+
   const filteredVouchers = searchCode
     ? vouchers.filter(v => v.code.toLowerCase().includes(searchCode.toLowerCase()))
     : vouchers;
