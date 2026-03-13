@@ -162,17 +162,46 @@ export function VouchersManagement() {
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="search">Search by Code</Label>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              id="search"
-              placeholder="LOYAL-XXXX-XXXX"
-              value={searchCode}
-              onChange={(e) => setSearchCode(e.target.value)}
-              className="pl-10"
-            />
+          <div className="flex items-center justify-between">
+            <Label htmlFor="search">Search by Code</Label>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowScanner(!showScanner)}
+              className="h-8 px-2"
+            >
+              {showScanner ? <X className="h-4 w-4 mr-1" /> : <QrCode className="h-4 w-4 mr-1" />}
+              {showScanner ? 'Close' : 'Scan QR'}
+            </Button>
           </div>
+          
+          {showScanner ? (
+            <div className="space-y-2">
+              <div className="relative aspect-square w-full max-w-[250px] mx-auto overflow-hidden rounded-lg border-2">
+                <QrReader
+                  onResult={handleQrScan}
+                  constraints={{ facingMode: 'environment' }}
+                  containerStyle={{ width: '100%', height: '100%' }}
+                  videoStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground text-center">
+                Scan customer's voucher QR code
+              </p>
+            </div>
+          ) : (
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="search"
+                placeholder="LOYAL-XXXX-XXXX"
+                value={searchCode}
+                onChange={(e) => setSearchCode(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          )}
         </div>
 
         {filteredVouchers.length === 0 ? (
