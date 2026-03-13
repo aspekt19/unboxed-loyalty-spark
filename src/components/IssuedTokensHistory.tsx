@@ -2,10 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { usePublicClient, useAccount } from 'wagmi';
+import { useAccount } from 'wagmi';
 import { History, Loader2, AlertCircle, Filter, Search } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { formatUnits } from 'viem';
+import { createPublicClient, formatUnits, http, parseAbiItem } from 'viem';
+import { base } from 'viem/chains';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -21,6 +22,24 @@ interface IssuedToken {
   timestamp: number;
   transactionHash: string;
 }
+
+interface ProgramOption {
+  name: string;
+  symbol: string;
+  tokenAddress: string;
+}
+
+const historyRpcClient = createPublicClient({
+  chain: base,
+  transport: http('https://base-rpc.publicnode.com', {
+    batch: false,
+    retryCount: 1,
+    retryDelay: 300,
+    timeout: 8_000,
+  }),
+});
+
+const transferEvent = parseAbiItem('event Transfer(address indexed from, address indexed to, uint256 value)');
 
 export function IssuedTokensHistory() {
   const { address } = useAccount();
