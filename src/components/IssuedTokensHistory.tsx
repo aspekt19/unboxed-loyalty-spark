@@ -33,9 +33,8 @@ const historyRpcClient = createPublicClient({
   chain: base,
   transport: http('https://base-rpc.publicnode.com', {
     batch: false,
-    retryCount: 1,
-    retryDelay: 300,
-    timeout: 8_000,
+    retryCount: 0,
+    timeout: 6_000,
   }),
 });
 
@@ -115,7 +114,7 @@ export function IssuedTokensHistory() {
     setError(null);
 
     const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error('Loading timeout - please try again')), 25_000);
+      setTimeout(() => reject(new Error('Loading timeout - please try again')), 15_000);
     });
 
     try {
@@ -156,8 +155,8 @@ export function IssuedTokensHistory() {
 
           const allIssuedTokens: IssuedToken[] = [];
           const currentBlock = await historyRpcClient.getBlockNumber();
-          const chunkSize = 20_000n;
-          const lookbackBlocks = 100_000n;
+          const chunkSize = 40_000n;
+          const lookbackBlocks = 40_000n;
           const zeroAddress = '0x0000000000000000000000000000000000000000' as const;
           const fromBlock = currentBlock > lookbackBlocks ? currentBlock - lookbackBlocks : 0n;
 
