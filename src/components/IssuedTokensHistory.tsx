@@ -52,7 +52,8 @@ export function IssuedTokensHistory() {
     }
 
     if (!session) {
-      setIsLoading(true);
+      setIsLoading(false);
+      setError('Authentication is required to load history. Reconnect wallet if this persists.');
       return;
     }
 
