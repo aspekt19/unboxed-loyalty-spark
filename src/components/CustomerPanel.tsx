@@ -8,6 +8,7 @@ import { PersonalizedOffers } from './marketing/PersonalizedOffers';
 import { ReferralCard } from './referral/ReferralCard';
 import { ReferralCodeInput } from './referral/ReferralCodeInput';
 import { CustomerReviewsSection } from './reviews/CustomerReviewsSection';
+import { WalletQRCode } from './WalletQRCode';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAccount } from 'wagmi';
 import { Wallet } from 'lucide-react';
@@ -29,6 +30,8 @@ export function CustomerPanel() {
 
   return (
     <div className="space-y-6">
+      <WalletQRCode />
+      
       <PersonalizedOffers />
       
       <CustomerTiersSection selectedProgram={selectedProgram} />

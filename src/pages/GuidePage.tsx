@@ -368,17 +368,17 @@ export default function GuidePage() {
                 <CardContent className="space-y-3">
                   <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
                     <li>Connect your wallet to Loyal Spark</li>
-                    <li>Navigate to Customer section</li>
-                    <li>Show your QR code (found in "My Tokens" section) to participating merchants</li>
-                    <li>The merchant will scan your code and issue tokens</li>
-                    <li>Tokens appear in your wallet instantly!</li>
+                    <li>Navigate to the Customer section</li>
+                    <li>At the top you'll see <strong>"Your QR Code"</strong> card — tap it to enlarge</li>
+                    <li>Show the QR code to a participating merchant</li>
+                    <li>The merchant will scan your code and issue tokens to your wallet</li>
+                    <li>Tokens appear in the <strong>"Your Loyalty Tokens"</strong> section instantly!</li>
                   </ol>
 
                   <div className="bg-muted p-4 rounded-lg mt-4">
                     <p className="text-sm font-medium mb-2">💡 Pro Tip:</p>
                     <p className="text-sm text-muted-foreground">
-                      Keep the QR code tab open on your phone for quick access. Some merchants may also accept your wallet
-                      address directly - you can share it safely as it's your public address.
+                      You can also copy your wallet address using the "Copy Address" button below the QR code and share it directly with a merchant.
                     </p>
                   </div>
                 </CardContent>
