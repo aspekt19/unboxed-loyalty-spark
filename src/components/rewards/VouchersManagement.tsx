@@ -4,8 +4,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Ticket, Search } from 'lucide-react';
+import { Ticket, Search, QrCode, X } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { Voucher } from '@/types/rewards';
 import { getMerchantVouchers, updateVoucherStatus } from '@/lib/vouchers';
@@ -13,6 +14,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { VoucherListItem } from './VoucherListItem';
+import { QrReader } from '@blackbox-vision/react-qr-reader';
 
 export function VouchersManagement() {
   const { address } = useAccount();
