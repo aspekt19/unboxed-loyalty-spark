@@ -91,6 +91,30 @@ export type Database = {
           },
         ]
       }
+      blockchain_sync_status: {
+        Row: {
+          id: string
+          last_synced_at: string | null
+          last_synced_block: number
+          token_address: string
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          last_synced_at?: string | null
+          last_synced_block?: number
+          token_address: string
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          last_synced_at?: string | null
+          last_synced_block?: number
+          token_address?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       customer_profiles: {
         Row: {
           created_at: string | null

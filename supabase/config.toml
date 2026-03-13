@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.verify-voucher]
 verify_jwt = true
+
+[functions.sync-mint-history]
+verify_jwt = false
