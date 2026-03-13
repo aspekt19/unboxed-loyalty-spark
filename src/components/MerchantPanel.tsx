@@ -83,19 +83,34 @@ export function MerchantPanel() {
   };
 
   useEffect(() => {
-    if (isSuccess) {
+    if (isSuccess && selectedProgram && address && lastMintParams) {
+      // Save mint to DB
+      supabase
+        .from('token_mint_history')
+        .insert({
+          merchant_address: address.toLowerCase(),
+          recipient_address: lastMintParams.recipient.toLowerCase(),
+          amount: parseFloat(lastMintParams.amount),
+          token_address: selectedProgram.tokenAddress.toLowerCase(),
+          token_name: selectedProgram.name,
+          token_symbol: selectedProgram.symbol,
+          transaction_hash: hash || null,
+        })
+        .then(({ error: insertError }) => {
+          if (insertError) console.error('[MerchantPanel] Failed to save mint history:', insertError);
+        });
+
       toast.success('Tokens minted successfully!');
       setMintDialogOpen(false);
-      // Trigger events to refresh token lists and balances on customer side
+      setLastMintParams(null);
       window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
       window.dispatchEvent(new Event('tokenBalancesUpdated'));
-      window.dispatchEvent(new Event('tokensIssued')); // Добавляем событие для обновления истории
-      // Reset the transaction state after a brief delay
+      window.dispatchEvent(new Event('tokensIssued'));
       setTimeout(() => {
         reset();
       }, 2000);
     }
-  }, [isSuccess, reset]);
+  }, [isSuccess, reset, selectedProgram, address, lastMintParams, hash]);
 
   return (
     <div className="space-y-6">
