@@ -951,6 +951,42 @@ export type Database = {
         }
         Relationships: []
       }
+      token_mint_history: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          merchant_address: string
+          recipient_address: string
+          token_address: string
+          token_name: string
+          token_symbol: string
+          transaction_hash: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          merchant_address: string
+          recipient_address: string
+          token_address: string
+          token_name: string
+          token_symbol: string
+          transaction_hash?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          merchant_address?: string
+          recipient_address?: string
+          token_address?: string
+          token_name?: string
+          token_symbol?: string
+          transaction_hash?: string | null
+        }
+        Relationships: []
+      }
       traffic_sources: {
         Row: {
           campaign_id: string | null
