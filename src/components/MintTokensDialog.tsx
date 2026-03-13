@@ -24,7 +24,6 @@ export function MintTokensDialog({
   onClose, 
   onSubmit, 
   isPending,
-  isFarcaster 
 }: MintTokensDialogProps) {
   const [recipientAddress, setRecipientAddress] = useState('');
   const [mintAmount, setMintAmount] = useState('');

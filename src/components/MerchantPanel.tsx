@@ -184,12 +184,11 @@ export function MerchantPanel() {
               </CardContent>
             </Card>
 
-            <MintTokensDialog
+,            <MintTokensDialog
               isOpen={mintDialogOpen}
               onClose={() => setMintDialogOpen(false)}
               onSubmit={handleMintSubmit}
               isPending={isPending}
-              isFarcaster={isFarcaster}
             />
           </TabsContent>
 
