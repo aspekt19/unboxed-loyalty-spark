@@ -4,8 +4,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Ticket, Search } from 'lucide-react';
+import { Ticket, Search, QrCode, X } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { Voucher } from '@/types/rewards';
 import { getMerchantVouchers, updateVoucherStatus } from '@/lib/vouchers';
@@ -13,6 +14,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { VoucherListItem } from './VoucherListItem';
+import { QrReader } from '@blackbox-vision/react-qr-reader';
 
 export function VouchersManagement() {
   const { address } = useAccount();
@@ -20,6 +22,7 @@ export function VouchersManagement() {
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [searchCode, setSearchCode] = useState('');
   const [activeTab, setActiveTab] = useState('active');
+  const [showScanner, setShowScanner] = useState(false);
 
   const loadMerchantVouchers = async () => {
     if (!address) return;
@@ -72,6 +75,32 @@ export function VouchersManagement() {
       window.dispatchEvent(new Event('vouchersUpdated'));
     } else {
       toast.error('Failed to update voucher');
+    }
+  };
+
+  const handleQrScan = (result: any) => {
+    if (result?.text) {
+      const scannedCode = result.text.trim();
+      setShowScanner(false);
+      setSearchCode(scannedCode);
+      
+      // Auto-find and offer to redeem
+      const found = vouchers.find(v => v.code === scannedCode && v.status === 'active');
+      if (found) {
+        toast.success(`Voucher found: ${found.rewardName}`, {
+          action: {
+            label: 'Mark as Used',
+            onClick: () => handleMarkAsUsed(found.id, found.code),
+          },
+        });
+      } else {
+        const usedVoucher = vouchers.find(v => v.code === scannedCode);
+        if (usedVoucher) {
+          toast.info(`Voucher already ${usedVoucher.status}`);
+        } else {
+          toast.error('Voucher not found');
+        }
+      }
     }
   };
 
@@ -133,17 +162,46 @@ export function VouchersManagement() {
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="search">Search by Code</Label>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              id="search"
-              placeholder="LOYAL-XXXX-XXXX"
-              value={searchCode}
-              onChange={(e) => setSearchCode(e.target.value)}
-              className="pl-10"
-            />
+          <div className="flex items-center justify-between">
+            <Label htmlFor="search">Search by Code</Label>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowScanner(!showScanner)}
+              className="h-8 px-2"
+            >
+              {showScanner ? <X className="h-4 w-4 mr-1" /> : <QrCode className="h-4 w-4 mr-1" />}
+              {showScanner ? 'Close' : 'Scan QR'}
+            </Button>
           </div>
+          
+          {showScanner ? (
+            <div className="space-y-2">
+              <div className="relative aspect-square w-full max-w-[250px] mx-auto overflow-hidden rounded-lg border-2">
+                <QrReader
+                  onResult={handleQrScan}
+                  constraints={{ facingMode: 'environment' }}
+                  containerStyle={{ width: '100%', height: '100%' }}
+                  videoStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground text-center">
+                Scan customer's voucher QR code
+              </p>
+            </div>
+          ) : (
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="search"
+                placeholder="LOYAL-XXXX-XXXX"
+                value={searchCode}
+                onChange={(e) => setSearchCode(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          )}
         </div>
 
         {filteredVouchers.length === 0 ? (
