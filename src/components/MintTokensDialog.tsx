@@ -17,7 +17,6 @@ interface MintTokensDialogProps {
   onClose: () => void;
   onSubmit: (recipientAddress: string, amount: string) => void;
   isPending: boolean;
-  isFarcaster: boolean;
 }
 
 export function MintTokensDialog({ 
