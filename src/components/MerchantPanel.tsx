@@ -1,5 +1,6 @@
 import { CreateLoyaltyProgram } from './CreateLoyaltyProgram';
 import { CreatedPrograms } from './CreatedPrograms';
+import { supabase } from '@/integrations/supabase/client';
 import { CreateReward } from './rewards/CreateReward';
 import { RewardsList } from './rewards/RewardsList';
 import { VouchersManagement } from './rewards/VouchersManagement';
