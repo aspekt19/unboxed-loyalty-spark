@@ -32,6 +32,8 @@ export function IssuedTokensHistory() {
   const [selectedProgramFilter, setSelectedProgramFilter] = useState<string>('all');
   const [customerSearch, setCustomerSearch] = useState<string>('');
   const [programs, setPrograms] = useState<any[]>([]);
+  const hasLoadedRef = useRef(false);
+  const loadingAddressRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (authLoading) {
