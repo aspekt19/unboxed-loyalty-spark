@@ -63,7 +63,7 @@ const PitchDeck = () => {
       marketData: {
         tam: { value: '$200B+', label: 'Total Available Market', description: 'Global loyalty rewards market' },
         sam: { value: '$60B', label: 'Serviceable Available Market', description: 'SMB segment (50M merchants)' },
-        share: { value: '$150M', label: 'Target Market Share (Year 1)', description: '1,000 merchants by Q4 2026' },
+        share: { value: '$150M', label: 'Target Market Share (Year 1)', description: '1,000 merchants by Q2 2027' },
       },
     },
     {
@@ -95,12 +95,12 @@ const PitchDeck = () => {
     {
       id: 'adoption',
       title: 'Adoption Strategy',
-      subtitle: 'Path to 1,000 merchants by Q4 2026',
+      subtitle: 'Path to 1,000 merchants by Q2 2027',
       adoption: [
-        { phase: 'Beta (Q1-Q2 2026)', target: '10 merchants', focus: 'Product testing & feedback' },
-        { phase: 'Launch (Q3 2026)', target: '100 merchants', focus: 'Local market penetration' },
-        { phase: 'Scale (Q4 2026)', target: '500 merchants', focus: 'Regional expansion' },
-        { phase: 'Growth (Q1-Q2 2027)', target: '1,000+ merchants', focus: 'National presence' },
+        { phase: 'Beta (Q3-Q4 2026)', target: '10 merchants', focus: 'Product testing & feedback' },
+        { phase: 'Launch (Q1 2027)', target: '100 merchants', focus: 'Local market penetration' },
+        { phase: 'Scale (Q2 2027)', target: '500 merchants', focus: 'Regional expansion' },
+        { phase: 'Growth (Q3-Q4 2027)', target: '1,000+ merchants', focus: 'National presence' },
       ],
     },
     {
