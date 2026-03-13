@@ -20,7 +20,7 @@ export function VouchersManagement() {
   const { address } = useAccount();
   const { session } = useAuth();
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
-  const [searchCode, setSearchCode] = '';
+  const [searchCode, setSearchCode] = useState('');
   const [activeTab, setActiveTab] = useState('active');
   const [showScanner, setShowScanner] = useState(false);
 
