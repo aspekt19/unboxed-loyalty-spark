@@ -20,8 +20,9 @@ export function VouchersManagement() {
   const { address } = useAccount();
   const { session } = useAuth();
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
-  const [searchCode, setSearchCode] = useState('');
+  const [searchCode, setSearchCode] = '';
   const [activeTab, setActiveTab] = useState('active');
+  const [showScanner, setShowScanner] = useState(false);
 
   const loadMerchantVouchers = async () => {
     if (!address) return;
