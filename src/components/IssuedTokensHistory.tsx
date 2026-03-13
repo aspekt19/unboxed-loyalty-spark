@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -32,17 +32,18 @@ export function IssuedTokensHistory() {
   const [selectedProgramFilter, setSelectedProgramFilter] = useState<string>('all');
   const [customerSearch, setCustomerSearch] = useState<string>('');
   const [programs, setPrograms] = useState<any[]>([]);
+  const hasLoadedRef = useRef(false);
+  const loadingAddressRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (authLoading) {
-      setIsLoading(false);
-      return;
-    }
+    if (authLoading) return;
 
     if (!address) {
       setHistory([]);
       setPrograms([]);
       setIsLoading(false);
+      hasLoadedRef.current = false;
+      loadingAddressRef.current = null;
       return;
     }
 
@@ -51,7 +52,12 @@ export function IssuedTokensHistory() {
       return;
     }
 
-    loadIssuedTokens();
+    // Only load if we haven't loaded for this address yet
+    if (!hasLoadedRef.current || loadingAddressRef.current !== address.toLowerCase()) {
+      loadingAddressRef.current = address.toLowerCase();
+      loadIssuedTokens();
+      hasLoadedRef.current = true;
+    }
 
     const handleUpdate = () => loadIssuedTokens();
 
@@ -64,7 +70,7 @@ export function IssuedTokensHistory() {
       window.removeEventListener('tokensIssued', handleUpdate);
       window.removeEventListener('sessionReady', handleUpdate);
     };
-  }, [address, session, publicClient, authLoading]);
+  }, [address, session, authLoading]);
 
   const loadIssuedTokens = async () => {
     if (!publicClient || !address || !session) return;
@@ -207,7 +213,7 @@ export function IssuedTokensHistory() {
   });
 
   return (
-    <Card className="border-2 h-full flex flex-col">
+    <Card className="border-2 h-full flex flex-col min-h-[200px]">
       <CardHeader className="flex-shrink-0">
         <CardTitle className="flex items-center gap-2">
           <History className="h-5 w-5 text-primary" />
