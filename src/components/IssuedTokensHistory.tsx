@@ -94,12 +94,6 @@ export function IssuedTokensHistory() {
   const loadIssuedTokens = async (silent = false) => {
     if (!address) return;
 
-    if (!session) {
-      setIsLoading(false);
-      setError('Authentication is required to load history.');
-      return;
-    }
-
     if (isFetchingRef.current) {
       pendingRefreshRef.current = true;
       return;
