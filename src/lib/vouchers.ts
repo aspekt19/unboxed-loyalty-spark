@@ -280,22 +280,7 @@ export async function getCustomerVouchers(customerAddress: string): Promise<Vouc
     return [];
   }
   
-  // Проверяем статус программы для каждого ваучера
-  const vouchersWithStatus = await Promise.all(
-    allVouchers.map(async (voucher) => {
-      const { data: program } = await supabase
-        .from('loyalty_programs')
-        .select('status')
-        .eq('token_address', voucher.token_address.toLowerCase())
-        .maybeSingle();
-      
-      return { ...voucher, programStatus: program?.status };
-    })
-  );
-  
-  return vouchersWithStatus
-    .filter(v => v.programStatus === 'active' || v.programStatus === 'expiring_soon')
-    .map(mapVoucherRow);
+  return allVouchers.map(mapVoucherRow);
 }
 
 // Загрузка ваучеров мерчанта (БЕЗ фильтрации по статусу программы)
