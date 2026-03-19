@@ -147,7 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const message = constructSiweMessage(address, nonce);
 
       // 3. Request wallet signature (user will see a signing popup)
-      const signature = await signMessageAsync({ message });
+      const signature = await signMessageAsync({ account: address, message });
 
       // 4. Verify signature on server and get session tokens
       const verifyRes = await fetch(`${supabaseUrl}/functions/v1/siwe-verify`, {
