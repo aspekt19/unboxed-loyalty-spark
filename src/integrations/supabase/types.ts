@@ -975,6 +975,24 @@ export type Database = {
         }
         Relationships: []
       }
+      siwe_nonces: {
+        Row: {
+          created_at: string
+          nonce: string
+          used: boolean
+        }
+        Insert: {
+          created_at?: string
+          nonce: string
+          used?: boolean
+        }
+        Update: {
+          created_at?: string
+          nonce?: string
+          used?: boolean
+        }
+        Relationships: []
+      }
       token_mint_history: {
         Row: {
           amount: number
