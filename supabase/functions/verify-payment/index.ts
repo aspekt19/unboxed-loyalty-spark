@@ -2,7 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 interface BasescanResponse {
@@ -25,10 +25,49 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // === AUTH CHECK ===
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Create a user-scoped client to verify the caller
+    const supabaseUserClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: userError } = await supabaseUserClient.auth.getUser();
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid or expired token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Service role client for privileged operations
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    // Get the caller's wallet address from their profile
+    const { data: callerProfile } = await supabaseClient
+      .from('profiles')
+      .select('wallet_address')
+      .eq('user_id', user.id)
+      .single();
+
+    if (!callerProfile) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Profile not found' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     const { requestId } = await req.json();
 
@@ -48,6 +87,14 @@ Deno.serve(async (req) => {
     if (fetchError || !paymentRequest) {
       console.error('Payment request not found:', fetchError);
       throw new Error('Payment request not found');
+    }
+
+    // Verify the caller owns this payment request
+    if (callerProfile.wallet_address.toLowerCase() !== paymentRequest.wallet_address.toLowerCase()) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'You can only verify your own payment requests' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     if (paymentRequest.status !== 'pending') {
