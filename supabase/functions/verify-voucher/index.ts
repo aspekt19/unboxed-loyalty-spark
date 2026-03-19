@@ -102,22 +102,22 @@ Deno.serve(async (req) => {
     if (profileById) {
       profile = profileById;
     } else {
-      // Fallback: profile may exist but user_id hasn't been linked yet
-      const { data: profileByWallet } = await supabaseClient
-        .from('profiles')
-        .select('wallet_address')
-        .eq('wallet_address', customerAddress.toLowerCase())
-        .maybeSingle();
-
-      if (profileByWallet) {
-        profile = profileByWallet;
-        // Link the profile to the current user_id for future lookups
-        await supabaseClient
-          .from('profiles')
-          .update({ user_id: user.id })
-          .eq('wallet_address', customerAddress.toLowerCase());
-        console.log('Profile linked to user_id:', user.id);
-      }
+      // Profile not found by user_id — return retryable error
+      // SECURITY: Do NOT re-link profiles by wallet address here
+      // as it allows attackers to hijack other users' profiles
+      console.warn('Profile not found by user_id:', user.id, '- waiting for profile creation');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          retryable: true,
+          retry_after_ms: 3000,
+          error: 'Profile not ready yet. Retrying...',
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 202,
+        }
+      );
     }
 
     if (!profile) {
