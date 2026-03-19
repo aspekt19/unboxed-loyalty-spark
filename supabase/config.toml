@@ -23,3 +23,9 @@ verify_jwt = true
 
 [functions.sync-mint-history]
 verify_jwt = false
+
+[functions.siwe-nonce]
+verify_jwt = false
+
+[functions.siwe-verify]
+verify_jwt = false
