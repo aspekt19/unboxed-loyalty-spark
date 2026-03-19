@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useRef } from 'react';
-import { useAccount } from 'wagmi';
+import { useAccount, useSignMessage } from 'wagmi';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
@@ -16,6 +16,22 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function constructSiweMessage(address: string, nonce: string): string {
+  const domain = window.location.host;
+  const origin = window.location.origin;
+  const issuedAt = new Date().toISOString();
+  return `${domain} wants you to sign in with your Ethereum account:
+${address}
+
+Sign in to Loyalty Platform
+
+URI: ${origin}
+Version: 1
+Chain ID: 8453
+Nonce: ${nonce}
+Issued At: ${issuedAt}`;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -27,6 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const lastRateLimitToastAtRef = useRef(0);
   const lastSignInAttemptAtRef = useRef(0);
   const { address, isConnected } = useAccount();
+  const { signMessageAsync } = useSignMessage();
 
   // Detect Farcaster context on mount
   useEffect(() => {
@@ -74,6 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     signingInRef.current = true;
     try {
+      // Check for existing valid session first
       const { data: { session: existingSession }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
@@ -111,35 +129,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch {}
     }
 
+    // No valid session — proceed with SIWE authentication
     try {
       setIsLoading(true);
 
-      const { data: authData, error: authError } = await supabase.auth.signInAnonymously();
-      
-      if (authError) throw authError;
+      // 1. Get nonce from server
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const nonceRes = await fetch(`${supabaseUrl}/functions/v1/siwe-nonce`, {
+        headers: {
+          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+      });
+      if (!nonceRes.ok) throw new Error('Failed to get nonce');
+      const { nonce } = await nonceRes.json();
 
-      const { data: profileData, error: migrationError } = await supabase.rpc('migrate_wallet_profile', {
-        p_wallet_address: address.toLowerCase(),
-        p_new_user_id: authData.user.id,
+      // 2. Construct EIP-4361 SIWE message
+      const message = constructSiweMessage(address, nonce);
+
+      // 3. Request wallet signature (user will see a signing popup)
+      const signature = await signMessageAsync({ account: address, message });
+
+      // 4. Verify signature on server and get session tokens
+      const verifyRes = await fetch(`${supabaseUrl}/functions/v1/siwe-verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ message, signature }),
       });
 
-      if (migrationError) {
-        console.error('[AuthProvider] Migration error:', migrationError);
-        throw migrationError;
+      if (!verifyRes.ok) {
+        const err = await verifyRes.json();
+        throw new Error(err.error || 'SIWE verification failed');
       }
 
-      const profile = profileData?.[0];
-      
-      if (!profile || !profile.profile_id) {
-        throw new Error('Failed to create profile. Please disconnect and reconnect your wallet.');
-      }
+      const { access_token, refresh_token } = await verifyRes.json();
+
+      // 5. Set the Supabase session with the received tokens
+      const { error: setSessionError } = await supabase.auth.setSession({
+        access_token,
+        refresh_token,
+      });
+
+      if (setSessionError) throw setSessionError;
 
       retryBlockedUntilRef.current = 0;
       window.dispatchEvent(new Event('profileMigrated'));
       window.dispatchEvent(new Event('sessionReady'));
       toast.success('Successfully signed in with wallet');
     } catch (error: any) {
-      console.error('[AuthProvider] Sign in error:', error);
+      console.error('[AuthProvider] SIWE sign in error:', error);
       
       if (error.status === 429 || error.code === 'over_request_rate_limit') {
         retryBlockedUntilRef.current = Date.now() + 30000;
@@ -148,6 +188,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           toast.error('Too many requests. Please wait a moment and try again.');
           lastRateLimitToastAtRef.current = Date.now();
         }
+      } else if (
+        error.name === 'UserRejectedRequestError' || 
+        error.message?.includes('rejected') ||
+        error.message?.includes('denied')
+      ) {
+        toast.error('Signature request was rejected');
       } else {
         toast.error(error.message || 'Failed to sign in');
       }
@@ -155,7 +201,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signingInRef.current = false;
       setIsLoading(false);
     }
-  }, [address, isConnected]);
+  }, [address, isConnected, signMessageAsync]);
 
   const signOut = useCallback(async () => {
     try {

@@ -1,0 +1,160 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { verifyMessage } from "npm:viem@2.46.0";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+};
+
+async function generateDeterministicPassword(address: string, secret: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const keyData = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', keyData, encoder.encode(address));
+  return btoa(String.fromCharCode(...new Uint8Array(sig)));
+}
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { message, signature } = await req.json();
+
+    if (!message || !signature) {
+      return new Response(JSON.stringify({ error: 'Missing message or signature' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Parse address from SIWE message (second line after header)
+    const lines = message.split('\n');
+    const addressLine = lines.find((line: string) => /^0x[a-fA-F0-9]{40}$/.test(line.trim()));
+    if (!addressLine) {
+      return new Response(JSON.stringify({ error: 'Invalid SIWE message: no address found' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const address = addressLine.trim().toLowerCase();
+
+    // Verify the cryptographic signature
+    const isValid = await verifyMessage({
+      address: address as `0x${string}`,
+      message,
+      signature: signature as `0x${string}`,
+    });
+
+    if (!isValid) {
+      return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Check Issued At timestamp (reject messages older than 5 minutes)
+    const issuedAtMatch = message.match(/Issued At: (.+)/);
+    if (issuedAtMatch) {
+      const issuedAt = new Date(issuedAtMatch[1].trim());
+      const diffMs = Date.now() - issuedAt.getTime();
+      if (diffMs > 5 * 60 * 1000 || diffMs < -60_000) {
+        return new Response(JSON.stringify({ error: 'Message expired or clock skew too large' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // Setup Supabase clients
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('SUPABASE_PUBLISHABLE_KEY')!;
+
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+    const supabaseAuth = createClient(supabaseUrl, anonKey);
+
+    const email = `${address}@wallet.siwe`;
+    const password = await generateDeterministicPassword(address, serviceRoleKey);
+
+    // Try to sign in (user may already exist from previous SIWE auth)
+    let signInResult = await supabaseAuth.auth.signInWithPassword({ email, password });
+
+    if (signInResult.error) {
+      // User doesn't exist yet — create with admin API
+      const { error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+      });
+
+      if (createError && !createError.message?.includes('already registered')) {
+        console.error('User creation error:', createError);
+        throw new Error(`Failed to create user: ${createError.message}`);
+      }
+
+      // Sign in with the newly created user
+      signInResult = await supabaseAuth.auth.signInWithPassword({ email, password });
+      if (signInResult.error) {
+        throw new Error(`Sign-in failed: ${signInResult.error.message}`);
+      }
+    }
+
+    const session = signInResult.data.session!;
+    const userId = signInResult.data.user!.id;
+
+    // Upsert profile — associates wallet address with this Supabase user
+    const { error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .upsert(
+        {
+          user_id: userId,
+          wallet_address: address,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'wallet_address' }
+      );
+
+    if (profileError) {
+      console.error('Profile upsert error:', profileError);
+      // Non-fatal: session is still valid
+    }
+
+    // Check admin wallet and assign role if applicable
+    const ADMIN_WALLET = '0xf55a2b967ddaa5049f537d8402b791901cc9d34e';
+    if (address === ADMIN_WALLET) {
+      await supabaseAdmin
+        .from('user_roles')
+        .upsert({ user_id: userId, role: 'admin' }, { onConflict: 'user_id,role' })
+        .then(({ error }) => {
+          if (error) console.error('Admin role assignment error:', error);
+        });
+    }
+
+    return new Response(
+      JSON.stringify({
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
+  } catch (error: any) {
+    console.error('SIWE verify error:', error);
+    return new Response(
+      JSON.stringify({ error: error.message || 'Verification failed' }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
+  }
+});
