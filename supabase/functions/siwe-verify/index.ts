@@ -107,7 +107,6 @@ serve(async (req) => {
       });
     }
 
-    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
     const supabaseAuth = createClient(supabaseUrl, anonKey);
 
     const email = `${address}@wallet.siwe`;
