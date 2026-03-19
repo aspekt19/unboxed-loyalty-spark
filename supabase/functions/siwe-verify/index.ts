@@ -73,10 +73,39 @@ serve(async (req) => {
       }
     }
 
+    // Extract nonce from SIWE message
+    const nonceMatch = message.match(/Nonce: (.+)/);
+    if (!nonceMatch) {
+      return new Response(JSON.stringify({ error: 'Missing nonce in message' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const nonce = nonceMatch[1].trim();
+
     // Setup Supabase clients
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('SUPABASE_PUBLISHABLE_KEY')!;
+
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+
+    // Atomically verify nonce exists, is unused, and mark it consumed
+    const { data: nonceRow, error: nonceError } = await supabaseAdmin
+      .from('siwe_nonces')
+      .update({ used: true })
+      .eq('nonce', nonce)
+      .eq('used', false)
+      .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString())
+      .select('nonce')
+      .maybeSingle();
+
+    if (nonceError || !nonceRow) {
+      return new Response(JSON.stringify({ error: 'Invalid or already used nonce' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
     const supabaseAuth = createClient(supabaseUrl, anonKey);
