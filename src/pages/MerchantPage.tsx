@@ -4,18 +4,46 @@ import { IssuedTokensHistory } from '@/components/IssuedTokensHistory';
 import { WelcomeFlow } from '@/components/onboarding/WelcomeFlow';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { PremiumStatusBadge } from '@/components/PremiumStatusBadge';
-import { Gift, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import PageTransition from '@/components/PageTransition';
+import { PullToRefresh } from '@/components/mobile/PullToRefresh';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
 
 const MerchantPage = () => {
+  const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
+
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries();
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }, [queryClient]);
+
+  const content = (
+    <>
+      <div className="mb-6">
+        <PremiumStatusBadge />
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6">
+        <aside className="hidden lg:block lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)]">
+          <IssuedTokensHistory />
+        </aside>
+        <div className="max-w-4xl">
+          <MerchantPanel />
+        </div>
+      </div>
+    </>
+  );
 
   return (
     <PageTransition>
       <WelcomeFlow userRole="merchant" />
-      <div className="min-h-screen bg-white">
-        <header className="sticky top-0 z-50 border-b border-border bg-white/80 backdrop-blur-xl">
+      <div className="min-h-screen bg-background">
+        <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
           <div className="container mx-auto px-2 sm:px-3 py-2 flex justify-between items-center gap-1.5 sm:gap-2">
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-shrink">
               <Link to="/">
@@ -42,19 +70,14 @@ const MerchantPage = () => {
           </div>
         </header>
 
-        <main className="container mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8 md:py-12 relative">
-          <div className="mb-6">
-            <PremiumStatusBadge />
-          </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6">
-            <aside className="lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)]">
-              <IssuedTokensHistory />
-            </aside>
-            <div className="max-w-4xl">
-              <MerchantPanel />
-            </div>
-          </div>
+        <main className="container mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-8 md:py-12 relative">
+          {isMobile ? (
+            <PullToRefresh onRefresh={handleRefresh}>
+              {content}
+            </PullToRefresh>
+          ) : (
+            content
+          )}
         </main>
       </div>
     </PageTransition>
