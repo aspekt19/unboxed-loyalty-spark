@@ -10,24 +10,70 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PageTransition from '@/components/PageTransition';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { initializeCleanState } from '@/lib/clearOldData';
 import { RoundUpDashboard } from '@/components/roundup/RoundUpDashboard';
 import { PremiumUpgradeDialog } from '@/components/roundup/PremiumUpgradeDialog';
 import { MarketplaceDashboard } from '@/components/marketplace/MarketplaceDashboard';
+import { BottomNavBar } from '@/components/mobile/BottomNavBar';
+import { MobileProfileTab } from '@/components/mobile/MobileProfileTab';
+import { PullToRefresh } from '@/components/mobile/PullToRefresh';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useQueryClient } from '@tanstack/react-query';
 
 const CustomerPage = () => {
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
-  // Clear old test data on first load
+  const [activeTab, setActiveTab] = useState('loyalty');
+  const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
+
   useEffect(() => {
     initializeCleanState();
   }, []);
 
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries();
+    // Small delay so user sees the refresh indicator
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }, [queryClient]);
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+  };
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'loyalty':
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6">
+            <aside className="hidden lg:block lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)]">
+              <CustomerFiltersPanel />
+            </aside>
+            <div className="max-w-4xl">
+              <CustomerPanel />
+            </div>
+          </div>
+        );
+      case 'marketplace':
+        return (
+          <div className="max-w-4xl mx-auto">
+            <MarketplaceDashboard />
+          </div>
+        );
+      case 'roundup':
+        return <RoundUpDashboard />;
+      case 'profile':
+        return <MobileProfileTab onUpgrade={() => setShowUpgradeDialog(true)} />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <PageTransition>
       <WelcomeFlow userRole="customer" />
-      <div className="min-h-screen bg-white">
-        <header className="sticky top-0 z-50 border-b border-border bg-white/80 backdrop-blur-xl">
+      <div className="min-h-screen bg-background">
+        <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
           <div className="container mx-auto px-2 sm:px-3 py-2 flex justify-between items-center gap-1.5 sm:gap-2">
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-shrink">
               <Link to="/">
@@ -54,50 +100,68 @@ const CustomerPage = () => {
           </div>
         </header>
 
-        <main className="container mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8 md:py-12 relative">
-          <div className="mb-6 space-y-4">
-            <PremiumStatusBadge />
-            <PremiumExpirationAlert onUpgrade={() => setShowUpgradeDialog(true)} />
-          </div>
-          
-          <Tabs defaultValue="loyalty" className="space-y-6">
-            <TabsList className="grid w-full max-w-2xl grid-cols-3">
-              <TabsTrigger value="loyalty" className="gap-2">
-                <Gift className="h-4 w-4" />
-                Loyalty
-              </TabsTrigger>
-              <TabsTrigger value="marketplace" className="gap-2">
-                <Store className="h-4 w-4" />
-                Exchange
-              </TabsTrigger>
-              <TabsTrigger value="roundup" className="gap-2">
-                <TrendingUp className="h-4 w-4" />
-                Invest
-              </TabsTrigger>
-            </TabsList>
+        <main className="container mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-8 md:py-12 relative">
+          {/* Desktop: show premium badges inline */}
+          {!isMobile && (
+            <div className="mb-6 space-y-4">
+              <PremiumStatusBadge />
+              <PremiumExpirationAlert onUpgrade={() => setShowUpgradeDialog(true)} />
+            </div>
+          )}
 
-            <TabsContent value="loyalty">
-              <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6">
-                <aside className="lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)]">
-                  <CustomerFiltersPanel />
-                </aside>
-                <div className="max-w-4xl">
-                  <CustomerPanel />
+          {/* Desktop: tabs at the top */}
+          {!isMobile ? (
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+              <TabsList className="grid w-full max-w-2xl grid-cols-3">
+                <TabsTrigger value="loyalty" className="gap-2">
+                  <Gift className="h-4 w-4" />
+                  Loyalty
+                </TabsTrigger>
+                <TabsTrigger value="marketplace" className="gap-2">
+                  <Store className="h-4 w-4" />
+                  Exchange
+                </TabsTrigger>
+                <TabsTrigger value="roundup" className="gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  Invest
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="loyalty">
+                <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6">
+                  <aside className="lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)]">
+                    <CustomerFiltersPanel />
+                  </aside>
+                  <div className="max-w-4xl">
+                    <CustomerPanel />
+                  </div>
                 </div>
-              </div>
-            </TabsContent>
+              </TabsContent>
 
-            <TabsContent value="marketplace">
-              <div className="max-w-4xl mx-auto">
-                <MarketplaceDashboard />
-              </div>
-            </TabsContent>
+              <TabsContent value="marketplace">
+                <div className="max-w-4xl mx-auto">
+                  <MarketplaceDashboard />
+                </div>
+              </TabsContent>
 
-            <TabsContent value="roundup">
-              <RoundUpDashboard />
-            </TabsContent>
-          </Tabs>
+              <TabsContent value="roundup">
+                <RoundUpDashboard />
+              </TabsContent>
+            </Tabs>
+          ) : (
+            /* Mobile: content driven by bottom nav */
+            <PullToRefresh onRefresh={handleRefresh}>
+              <div className="pb-24">
+                {renderContent()}
+              </div>
+            </PullToRefresh>
+          )}
         </main>
+
+        {/* Bottom Navigation for mobile */}
+        {isMobile && (
+          <BottomNavBar activeTab={activeTab} onTabChange={handleTabChange} />
+        )}
 
         <PremiumUpgradeDialog 
           open={showUpgradeDialog}
