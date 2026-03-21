@@ -101,17 +101,15 @@
       "prefix": "lsk_"
     },
     "tools": [
+      "get_platform_info",
+      "get_my_profile",
       "list_loyalty_programs",
       "list_rewards",
       "create_reward",
       "mint_loyalty_tokens",
       "get_token_balance",
       "get_program_analytics",
-      "list_marketplace_offers",
-      "get_my_profile"
-    ],
-    "resources": [
-      "loyalty://platform-info"
+      "list_marketplace_offers"
     ]
   },
   "contact": {
