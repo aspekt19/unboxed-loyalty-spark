@@ -16,6 +16,7 @@ import PitchDeck from "./pages/pitch-deck/PitchDeck";
 import GuidePage from "./pages/GuidePage";
 import InstallPage from "./pages/InstallPage";
 import PremiumPage from "./pages/PremiumPage";
+import ApiDocsPage from "./pages/ApiDocsPage";
 import NotFound from "./pages/NotFound";
 import { AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
@@ -67,6 +68,7 @@ function AnimatedRoutes() {
         <Route path="/pitch" element={<PitchDeck />} />
         <Route path="/guide" element={<GuidePage />} />
         <Route path="/install" element={<InstallPage />} />
+        <Route path="/api-docs" element={<ApiDocsPage />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
