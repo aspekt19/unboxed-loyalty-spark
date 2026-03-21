@@ -68,6 +68,7 @@ function AnimatedRoutes() {
         <Route path="/pitch" element={<PitchDeck />} />
         <Route path="/guide" element={<GuidePage />} />
         <Route path="/install" element={<InstallPage />} />
+        <Route path="/api-docs" element={<ApiDocsPage />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
