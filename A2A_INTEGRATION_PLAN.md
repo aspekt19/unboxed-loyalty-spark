@@ -1,9 +1,9 @@
-# Agent-to-Agent (A2A) Loyalty Protocol — План интеграции
+# Agent-to-Agent (A2A) Loyalty Protocol — Integration Plan
 
-## Концепция: Dual-Mode Platform (Люди + AI-агенты)
+## Concept: Dual-Mode Platform (Humans + AI Agents)
 
-Приложение остаётся единой платформой, где **люди** взаимодействуют через UI (SIWE + кошелёк),
-а **AI-агенты** — через API/MCP. Общая база данных, общие смарт-контракты, общие токены.
+The application remains a single platform where **humans** interact via UI (SIWE + wallet),
+and **AI agents** interact via API/MCP. Shared database, shared smart contracts, shared tokens.
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -11,7 +11,7 @@
 │                                                  │
 │  ┌──────────┐    ┌──────────┐    ┌──────────┐   │
 │  │  Web UI   │    │ REST API │    │MCP Server│   │
-│  │  (люди)   │    │ (агенты) │    │ (агенты) │   │
+│  │ (humans)  │    │ (agents) │    │ (agents) │   │
 │  └─────┬─────┘    └─────┬────┘    └─────┬────┘   │
 │        │                │               │        │
 │        ▼                ▼               ▼        │
@@ -31,20 +31,20 @@
 
 ---
 
-## Фаза 1: Реестр агентов и API-ключи (БД + Edge Function)
+## Phase 1: Agent Registry & API Keys (DB + Edge Function)
 
-### 1.1 Новые таблицы
+### 1.1 New Tables
 
 ```sql
--- Реестр AI-агентов
+-- AI Agent Registry
 CREATE TABLE public.agent_registry (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,                        -- "CoffeeBot Agent"
-  owner_address text NOT NULL,               -- кошелёк владельца (мерчант или пользователь)
-  agent_wallet_address text,                 -- CDP Server Wallet адрес агента
-  api_key_hash text NOT NULL,                -- bcrypt хеш API-ключа
-  api_key_prefix text NOT NULL,              -- первые 8 символов (для идентификации)
-  scopes text[] DEFAULT '{read}',            -- права: read, create_program, mint, trade, manage_rewards
+  owner_address text NOT NULL,               -- wallet of the owner (merchant or user)
+  agent_wallet_address text,                 -- CDP Server Wallet address for the agent
+  api_key_hash text NOT NULL,                -- bcrypt hash of the API key
+  api_key_prefix text NOT NULL,              -- first 8 chars (for identification)
+  scopes text[] DEFAULT '{read}',            -- permissions: read, create_program, mint, trade, manage_rewards
   is_active boolean DEFAULT true,
   rate_limit_per_minute int DEFAULT 60,
   total_requests bigint DEFAULT 0,
@@ -53,7 +53,7 @@ CREATE TABLE public.agent_registry (
   updated_at timestamptz DEFAULT now()
 );
 
--- Лог действий агентов (аудит)
+-- Agent Activity Log (audit trail)
 CREATE TABLE public.agent_activity_log (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   agent_id uuid REFERENCES agent_registry(id) ON DELETE CASCADE,
@@ -64,7 +64,7 @@ CREATE TABLE public.agent_activity_log (
   created_at timestamptz DEFAULT now()
 );
 
--- RLS: владелец видит своих агентов
+-- RLS: owners can see their own agents
 ALTER TABLE agent_registry ENABLE ROW LEVEL SECURITY;
 ALTER TABLE agent_activity_log ENABLE ROW LEVEL SECURITY;
 
@@ -81,7 +81,7 @@ CREATE POLICY "Owners can view agent activity" ON agent_activity_log
   ));
 ```
 
-### 1.2 Edge Function: Генерация API-ключа
+### 1.2 Edge Function: API Key Generation
 
 ```
 POST /functions/v1/agent-api-key
@@ -90,14 +90,14 @@ Body: { "name": "My Agent", "scopes": ["read", "mint"] }
 Response: { "api_key": "lsk_abc123...", "agent_id": "uuid" }
 ```
 
-- Генерирует случайный ключ с префиксом `lsk_`
-- Сохраняет bcrypt-хеш в `agent_registry`
-- Ключ показывается один раз, потом только `api_key_prefix`
+- Generates a random key with `lsk_` prefix
+- Stores bcrypt hash in `agent_registry`
+- Key is shown once, then only `api_key_prefix` is visible
 
-### 1.3 Middleware аутентификации агентов
+### 1.3 Agent Authentication Middleware
 
 ```typescript
-// В каждой agent-facing Edge Function:
+// In every agent-facing Edge Function:
 async function authenticateAgent(req: Request): Promise<AgentContext> {
   const apiKey = req.headers.get('x-api-key');
   if (!apiKey || !apiKey.startsWith('lsk_')) throw new Error('Invalid API key');
@@ -116,9 +116,9 @@ async function authenticateAgent(req: Request): Promise<AgentContext> {
   const valid = await bcrypt.compare(apiKey, agent.api_key_hash);
   if (!valid) throw new Error('Invalid API key');
 
-  // Rate limiting
+  // Rate limiting check
   if (agent.last_request_at) {
-    // ... проверка лимитов
+    // ... rate limit verification
   }
 
   return { agentId: agent.id, scopes: agent.scopes, walletAddress: agent.agent_wallet_address };
@@ -127,23 +127,23 @@ async function authenticateAgent(req: Request): Promise<AgentContext> {
 
 ---
 
-## Фаза 2: REST API для агентов (Edge Functions)
+## Phase 2: REST API for Agents (Edge Functions)
 
-### 2.1 Эндпоинты
+### 2.1 Endpoints
 
-| Метод | Путь | Scope | Описание |
-|-------|------|-------|----------|
-| GET | `/agent-api/programs` | `read` | Список всех активных программ лояльности |
-| GET | `/agent-api/programs/:address` | `read` | Детали программы по token_address |
-| POST | `/agent-api/programs` | `create_program` | Создать программу + deploy контракт |
-| GET | `/agent-api/rewards` | `read` | Список наград для программы |
-| POST | `/agent-api/rewards` | `manage_rewards` | Создать награду |
-| POST | `/agent-api/mint` | `mint` | Минтить токены клиенту/агенту |
-| GET | `/agent-api/balance` | `read` | Баланс токенов |
-| POST | `/agent-api/marketplace/offer` | `trade` | Создать оффер на маркетплейсе |
-| GET | `/agent-api/marketplace` | `read` | Список активных офферов |
+| Method | Path | Scope | Description |
+|--------|------|-------|-------------|
+| GET | `/agent-api/programs` | `read` | List all active loyalty programs |
+| GET | `/agent-api/programs/:address` | `read` | Program details by token_address |
+| POST | `/agent-api/programs` | `create_program` | Create program + deploy contract |
+| GET | `/agent-api/rewards` | `read` | List rewards for a program |
+| POST | `/agent-api/rewards` | `manage_rewards` | Create a reward |
+| POST | `/agent-api/mint` | `mint` | Mint tokens to a customer/agent |
+| GET | `/agent-api/balance` | `read` | Token balance |
+| POST | `/agent-api/marketplace/offer` | `trade` | Create a marketplace offer |
+| GET | `/agent-api/marketplace` | `read` | List active offers |
 
-### 2.2 Единая Edge Function с роутингом
+### 2.2 Single Edge Function with Routing
 
 ```typescript
 // supabase/functions/agent-api/index.ts
@@ -155,7 +155,7 @@ Deno.serve(async (req) => {
   const path = url.pathname.replace('/agent-api', '');
   const agent = await authenticateAgent(req);
 
-  // Роутинг
+  // Routing
   switch (true) {
     case path === '/programs' && req.method === 'GET':
       return handleListPrograms(agent);
@@ -170,10 +170,10 @@ Deno.serve(async (req) => {
 });
 ```
 
-### 2.3 Пример вызова агентом
+### 2.3 Example Agent Call
 
 ```typescript
-// Агент создаёт программу лояльности
+// Agent creates a loyalty program
 const response = await fetch('https://<project>.supabase.co/functions/v1/agent-api/programs', {
   method: 'POST',
   headers: {
@@ -190,11 +190,11 @@ const response = await fetch('https://<project>.supabase.co/functions/v1/agent-a
 
 ---
 
-## Фаза 3: MCP Server (для LLM-агентов)
+## Phase 3: MCP Server (for LLM Agents)
 
-### 3.1 MCP Server как Edge Function
+### 3.1 MCP Server as Edge Function
 
-Используем библиотеку `mcp-lite` для создания MCP-сервера:
+Using the `mcp-lite` library to create an MCP server:
 
 ```typescript
 // supabase/functions/loyalty-mcp/index.ts
@@ -206,7 +206,7 @@ const mcpServer = new McpServer({
   version: "1.0.0",
 });
 
-// Tool: Список программ лояльности
+// Tool: List loyalty programs
 mcpServer.tool({
   name: "list_loyalty_programs",
   description: "List all active loyalty programs on the platform",
@@ -225,7 +225,7 @@ mcpServer.tool({
   },
 });
 
-// Tool: Создать программу
+// Tool: Create program
 mcpServer.tool({
   name: "create_loyalty_program",
   description: "Deploy a new loyalty token program on Base L2",
@@ -239,13 +239,13 @@ mcpServer.tool({
     required: ["name", "symbol", "expiration_days"],
   },
   handler: async ({ name, symbol, expiration_days }) => {
-    // 1. Используем CDP Server Wallet для deploy
-    // 2. Сохраняем в loyalty_programs
-    // 3. Возвращаем token_address
+    // 1. Use CDP Server Wallet to deploy
+    // 2. Save to loyalty_programs
+    // 3. Return token_address
   },
 });
 
-// Tool: Минтить токены
+// Tool: Mint tokens
 mcpServer.tool({
   name: "mint_loyalty_tokens",
   description: "Mint loyalty tokens to a customer or agent wallet",
@@ -259,11 +259,11 @@ mcpServer.tool({
     required: ["token_address", "recipient", "amount"],
   },
   handler: async ({ token_address, recipient, amount }) => {
-    // CDP Server Wallet подписывает транзакцию минта
+    // CDP Server Wallet signs the mint transaction
   },
 });
 
-// Tool: Список наград
+// Tool: List rewards
 mcpServer.tool({
   name: "list_rewards",
   description: "List available rewards for a loyalty program",
@@ -284,7 +284,7 @@ mcpServer.tool({
   },
 });
 
-// Resource: информация о платформе
+// Resource: platform information
 mcpServer.resource({
   uri: "loyalty://platform-info",
   name: "Platform Information",
@@ -304,10 +304,10 @@ mcpServer.resource({
 });
 ```
 
-### 3.2 Подключение агента к MCP
+### 3.2 Connecting an Agent to MCP
 
 ```json
-// В конфиге AI-агента (Claude, GPT и т.д.)
+// In the AI agent config (Claude, GPT, etc.)
 {
   "mcpServers": {
     "loyal-spark": {
@@ -322,19 +322,19 @@ mcpServer.resource({
 
 ---
 
-## Фаза 4: CDP Server Wallet для агентов
+## Phase 4: CDP Server Wallet for Agents
 
-### 4.1 Зачем нужен CDP
+### 4.1 Why CDP is Needed
 
-Когда агент создаёт программу или минтит токены, нужна подпись транзакции.
-CDP Server Wallet решает это:
-- Приватный ключ **никогда** не покидает secure enclave Coinbase
-- Агент вызывает API → CDP подписывает → транзакция отправляется в Base
+When an agent creates a program or mints tokens, a transaction signature is required.
+CDP Server Wallet solves this:
+- Private key **never** leaves Coinbase's secure enclave
+- Agent calls API → CDP signs → transaction is sent to Base
 
-### 4.2 Интеграция
+### 4.2 Integration
 
 ```typescript
-// В Edge Function
+// In Edge Function
 import { CdpClient } from '@coinbase/cdp-sdk';
 
 const cdp = new CdpClient({
@@ -342,11 +342,11 @@ const cdp = new CdpClient({
   apiKeySecret: Deno.env.get('CDP_API_KEY_SECRET'),
 });
 
-// Создать кошелёк для нового агента
+// Create a wallet for a new agent
 async function createAgentWallet(agentId: string) {
   const account = await cdp.evm.createAccount({ name: `agent-${agentId}` });
-  
-  // Сохраняем адрес в agent_registry
+
+  // Save address to agent_registry
   await supabase
     .from('agent_registry')
     .update({ agent_wallet_address: account.address })
@@ -355,7 +355,7 @@ async function createAgentWallet(agentId: string) {
   return account.address;
 }
 
-// Подписать транзакцию минта от имени агента
+// Sign a mint transaction on behalf of an agent
 async function agentMint(agentWallet: string, tokenAddress: string, to: string, amount: bigint) {
   const txHash = await cdp.evm.sendTransaction({
     address: agentWallet,
@@ -369,90 +369,90 @@ async function agentMint(agentWallet: string, tokenAddress: string, to: string, 
     },
     network: 'base',
   });
-  
+
   return txHash;
 }
 ```
 
-### 4.3 Необходимые секреты
+### 4.3 Required Secrets
 
-| Секрет | Источник |
-|--------|---------|
+| Secret | Source |
+|--------|--------|
 | `CDP_API_KEY_ID` | Coinbase Developer Platform → API Keys |
 | `CDP_API_KEY_SECRET` | Coinbase Developer Platform → API Keys |
 
 ---
 
-## Фаза 5: UI для управления агентами (в существующем приложении)
+## Phase 5: UI for Agent Management (in the existing app)
 
-### 5.1 Новая вкладка в MerchantPage
+### 5.1 New Tab in MerchantPage
 
 ```
 Merchant Panel
-├── Programs (существующее)
-├── Rewards (существующее)
-├── CRM (существующее)
-├── 🤖 AI Agents (НОВОЕ)
-│   ├── Зарегистрировать агента
-│   ├── Управление API-ключами
-│   ├── Настройка scopes (права доступа)
-│   ├── Лог активности агентов
+├── Programs (existing)
+├── Rewards (existing)
+├── CRM (existing)
+├── 🤖 AI Agents (NEW)
+│   ├── Register an agent
+│   ├── Manage API keys
+│   ├── Configure scopes (permissions)
+│   ├── Agent activity log
 │   └── Rate limits
 ```
 
-### 5.2 Компоненты
+### 5.2 Components
 
-- `src/components/agents/AgentRegistration.tsx` — форма регистрации агента
-- `src/components/agents/AgentApiKeys.tsx` — управление ключами
-- `src/components/agents/AgentActivityLog.tsx` — журнал действий
-- `src/components/agents/AgentScopeSelector.tsx` — настройка прав
-
----
-
-## Порядок реализации
-
-### Этап 1 (MVP — 1-2 дня)
-1. ✅ Создать таблицы `agent_registry` + `agent_activity_log`
-2. ✅ Edge Function для генерации API-ключей
-3. ✅ Edge Function `agent-api` с базовыми GET эндпоинтами (list programs, rewards)
-4. ✅ UI: вкладка "AI Agents" в MerchantPage
-
-### Этап 2 (Запись через API — 1-2 дня)
-5. POST эндпоинты (create program, mint, create reward)
-6. Интеграция с существующими смарт-контрактами через серверную подпись
-7. Аудит-лог всех действий
-
-### Этап 3 (MCP Server — 1 день)
-8. MCP Server Edge Function с tools для всех операций
-9. Тестирование с MCP Inspector
-10. Документация для подключения агентов
-
-### Этап 4 (CDP Wallets — 1-2 дня)
-11. Интеграция CDP SDK
-12. Автоматическое создание кошельков для агентов
-13. Серверная подпись транзакций (mint, transfer, deploy)
-
-### Этап 5 (Продвинутые фичи)
-14. Agent-to-Agent обмен токенами через маркетплейс
-15. Автоматические правила (automation rules) через API
-16. Webhook уведомления для агентов
-17. Discovery protocol (агент может найти подходящие программы)
+- `src/components/agents/AgentRegistration.tsx` — agent registration form
+- `src/components/agents/AgentApiKeys.tsx` — key management
+- `src/components/agents/AgentActivityLog.tsx` — activity journal
+- `src/components/agents/AgentScopeSelector.tsx` — permissions configuration
 
 ---
 
-## Совместимость: Люди + Агенты
+## Implementation Order
 
-| Функция | Люди (UI) | Агенты (API/MCP) |
-|---------|-----------|------------------|
-| Аутентификация | SIWE (подпись кошельком) | API-ключ (`x-api-key`) |
-| Кошелёк | MetaMask / WalletConnect | CDP Server Wallet (MPC) |
-| Создание программы | Форма в UI → tx через browser wallet | POST `/programs` → tx через CDP |
-| Минт токенов | Форма → browser wallet подписывает | POST `/mint` → CDP подписывает |
-| Просмотр данных | React компоненты | GET эндпоинты / MCP resources |
-| Маркетплейс | UI карточки | POST `/marketplace/offer` |
-| Данные | Общая БД Supabase, одни и те же таблицы |
-| Контракты | Одни и те же смарт-контракты на Base |
-| Токены | Одни и те же ERC-20 токены |
+### Stage 1 (MVP — 1-2 days)
+1. ✅ Create tables `agent_registry` + `agent_activity_log`
+2. ✅ Edge Function for API key generation
+3. ✅ Edge Function `agent-api` with basic GET endpoints (list programs, rewards)
+4. ✅ UI: "AI Agents" tab in MerchantPage
 
-**Ключевой принцип**: API-слой — это «обёртка» над теми же операциями, что делает UI.
-Нет дублирования бизнес-логики, только новый транспортный слой.
+### Stage 2 (Write via API — 1-2 days)
+5. POST endpoints (create program, mint, create reward)
+6. Integration with existing smart contracts via server-side signing
+7. Audit log for all actions
+
+### Stage 3 (MCP Server — 1 day)
+8. MCP Server Edge Function with tools for all operations
+9. Testing with MCP Inspector
+10. Documentation for connecting agents
+
+### Stage 4 (CDP Wallets — 1-2 days)
+11. CDP SDK integration
+12. Automatic wallet creation for agents
+13. Server-side transaction signing (mint, transfer, deploy)
+
+### Stage 5 (Advanced Features)
+14. Agent-to-Agent token exchange via marketplace
+15. Automation rules via API
+16. Webhook notifications for agents
+17. Discovery protocol (agent can find suitable programs)
+
+---
+
+## Compatibility: Humans + Agents
+
+| Feature | Humans (UI) | Agents (API/MCP) |
+|---------|-------------|------------------|
+| Authentication | SIWE (wallet signature) | API key (`x-api-key`) |
+| Wallet | MetaMask / WalletConnect | CDP Server Wallet (MPC) |
+| Create program | UI form → tx via browser wallet | POST `/programs` → tx via CDP |
+| Mint tokens | Form → browser wallet signs | POST `/mint` → CDP signs |
+| View data | React components | GET endpoints / MCP resources |
+| Marketplace | UI cards | POST `/marketplace/offer` |
+| Data | Shared Supabase DB, same tables |
+| Contracts | Same smart contracts on Base |
+| Tokens | Same ERC-20 tokens |
+
+**Key principle**: The API layer is a "wrapper" around the same operations the UI performs.
+No business logic duplication — just a new transport layer.
