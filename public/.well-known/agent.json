@@ -92,6 +92,28 @@
     "token_standard": "ERC-20",
     "explorer": "https://basescan.org"
   },
+  "mcp": {
+    "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+    "transport": "streamable-http",
+    "authentication": {
+      "type": "api_key",
+      "header": "x-api-key",
+      "prefix": "lsk_"
+    },
+    "tools": [
+      "list_loyalty_programs",
+      "list_rewards",
+      "create_reward",
+      "mint_loyalty_tokens",
+      "get_token_balance",
+      "get_program_analytics",
+      "list_marketplace_offers",
+      "get_my_profile"
+    ],
+    "resources": [
+      "loyalty://platform-info"
+    ]
+  },
   "contact": {
     "website": "https://loyalspark.online",
     "docs": "https://loyalspark.online/api-docs"
