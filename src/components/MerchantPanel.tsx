@@ -213,9 +213,6 @@ export function MerchantPanel() {
           <TabsContent value="marketing" className="space-y-6 mt-6">
             <CreateCampaign />
             <CampaignList />
-          </TabsContent>
-
-          <TabsContent value="automation" className="space-y-6 mt-6">
             <AutomationDashboard />
           </TabsContent>
 
