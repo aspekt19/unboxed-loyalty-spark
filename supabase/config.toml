@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.siwe-verify]
 verify_jwt = false
+
+[functions.agent-api-key]
+verify_jwt = false

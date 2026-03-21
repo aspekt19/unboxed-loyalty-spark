@@ -235,7 +235,7 @@ export function AgentManagement() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold text-sm">{agent.name}</h3>
-                      <Badge variant={agent.is_active ? 'default' : 'secondary'} className="text-xs">
+              <Badge variant={agent.is_active ? 'default' : 'secondary'} className="text-xs">
                         {agent.is_active ? 'Active' : 'Inactive'}
                       </Badge>
                     </div>
