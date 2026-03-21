@@ -14,6 +14,98 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_activity_log: {
+        Row: {
+          action: string
+          agent_id: string
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          request_body: Json | null
+          response_body: Json | null
+          response_status: number | null
+        }
+        Insert: {
+          action: string
+          agent_id: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          request_body?: Json | null
+          response_body?: Json | null
+          response_status?: number | null
+        }
+        Update: {
+          action?: string
+          agent_id?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          request_body?: Json | null
+          response_body?: Json | null
+          response_status?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_activity_log_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agent_registry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_registry: {
+        Row: {
+          agent_wallet_address: string | null
+          api_key_hash: string
+          api_key_prefix: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          last_request_at: string | null
+          name: string
+          owner_address: string
+          rate_limit_per_minute: number | null
+          scopes: string[] | null
+          total_requests: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          agent_wallet_address?: string | null
+          api_key_hash: string
+          api_key_prefix: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_request_at?: string | null
+          name: string
+          owner_address: string
+          rate_limit_per_minute?: number | null
+          scopes?: string[] | null
+          total_requests?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          agent_wallet_address?: string | null
+          api_key_hash?: string
+          api_key_prefix?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_request_at?: string | null
+          name?: string
+          owner_address?: string
+          rate_limit_per_minute?: number | null
+          scopes?: string[] | null
+          total_requests?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       automation_rules: {
         Row: {
           action_config: Json
