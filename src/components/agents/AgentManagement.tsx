@@ -172,6 +172,7 @@ export function AgentManagement() {
                 <Cpu className="h-3.5 w-3.5" /> MCP Server <ExternalLink className="h-3 w-3" />
               </Button>
             </a>
+          </div>
         </CardContent>
       </Card>
 
