@@ -16,6 +16,7 @@ import PitchDeck from "./pages/pitch-deck/PitchDeck";
 import GuidePage from "./pages/GuidePage";
 import InstallPage from "./pages/InstallPage";
 import PremiumPage from "./pages/PremiumPage";
+import ApiDocsPage from "./pages/ApiDocsPage";
 import NotFound from "./pages/NotFound";
 import { AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
