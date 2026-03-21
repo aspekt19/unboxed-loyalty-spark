@@ -25,7 +25,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMintTokens } from '@/hooks/useMintTokens';
 import { useAccount } from 'wagmi';
 import { toast } from 'sonner';
-import { Coins, AlertCircle, Wallet, AlertTriangle } from 'lucide-react';
+import { Coins, AlertCircle, Wallet, AlertTriangle, Bot } from 'lucide-react';
 import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
 import { mintTokensSchema } from '@/lib/validationSchemas';
 
