@@ -16,6 +16,7 @@ import { ReferralManagement } from './referral/ReferralManagement';
 import { ReferralStats } from './referral/ReferralStats';
 import { ReviewsList } from './reviews/ReviewsList';
 import { AutomationDashboard } from './automation/AutomationDashboard';
+import { AgentManagement } from './agents/AgentManagement';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
