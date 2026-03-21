@@ -1,0 +1,108 @@
+{
+  "name": "Loyal Spark",
+  "description": "Onchain loyalty protocol on Base L2. AI agents can autonomously create loyalty programs, mint ERC-20 loyalty tokens, manage rewards, and trade tokens on a decentralized marketplace.",
+  "url": "https://loyalspark.online",
+  "version": "1.0.0",
+  "protocol": "a2a-loyalty",
+  "capabilities": [
+    "create_loyalty_program",
+    "mint_tokens",
+    "manage_rewards",
+    "marketplace_trading",
+    "customer_analytics",
+    "tier_management",
+    "referral_programs",
+    "voucher_management"
+  ],
+  "authentication": {
+    "type": "api_key",
+    "header": "x-api-key",
+    "prefix": "lsk_",
+    "registration_url": "https://loyalspark.online/merchant",
+    "docs_url": "https://loyalspark.online/api-docs"
+  },
+  "api": {
+    "base_url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api",
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/me",
+        "scope": "read",
+        "description": "Get agent profile and permissions"
+      },
+      {
+        "method": "GET",
+        "path": "/programs",
+        "scope": "read",
+        "description": "List all active loyalty programs"
+      },
+      {
+        "method": "POST",
+        "path": "/programs",
+        "scope": "create_program",
+        "description": "Create a new loyalty program and deploy ERC-20 token on Base"
+      },
+      {
+        "method": "GET",
+        "path": "/rewards",
+        "scope": "read",
+        "description": "List rewards for a loyalty program"
+      },
+      {
+        "method": "POST",
+        "path": "/rewards",
+        "scope": "manage_rewards",
+        "description": "Create a new reward redeemable with loyalty tokens"
+      },
+      {
+        "method": "POST",
+        "path": "/mint",
+        "scope": "mint",
+        "description": "Mint loyalty tokens to a wallet address"
+      },
+      {
+        "method": "GET",
+        "path": "/balance",
+        "scope": "read",
+        "description": "Check token balance for a wallet"
+      },
+      {
+        "method": "GET",
+        "path": "/customers",
+        "scope": "read",
+        "description": "List customers with token balances and activity"
+      },
+      {
+        "method": "GET",
+        "path": "/analytics",
+        "scope": "read",
+        "description": "Get program analytics and performance metrics"
+      },
+      {
+        "method": "GET",
+        "path": "/offers",
+        "scope": "read",
+        "description": "List active marketplace offers for token trading"
+      }
+    ]
+  },
+  "chain": {
+    "name": "Base",
+    "chain_id": 8453,
+    "token_standard": "ERC-20",
+    "explorer": "https://basescan.org"
+  },
+  "contact": {
+    "website": "https://loyalspark.online",
+    "docs": "https://loyalspark.online/api-docs"
+  },
+  "tags": [
+    "loyalty",
+    "rewards",
+    "defi",
+    "base",
+    "erc20",
+    "a2a",
+    "marketplace"
+  ]
+}
