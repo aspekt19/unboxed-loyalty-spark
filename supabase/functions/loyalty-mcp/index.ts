@@ -173,18 +173,10 @@ const transport = new StreamableHttpTransport();
 app.all("/*", async (c) => {
   const apiKey = c.req.header("x-api-key");
   
-  // Allow MCP initialize without auth (discovery)
   if (!apiKey || !apiKey.startsWith("lsk_")) {
-    // Try to parse body to check if it's an initialize request
-    try {
-      const cloned = c.req.raw.clone();
-      const body = await cloned.json();
-      if (body?.method === "initialize") {
-        (globalThis as any).__agentContext = null;
-        return await transport.handleRequest(c.req.raw, mcpServer);
-      }
-    } catch {}
-    return c.json({ error: "Missing x-api-key header with lsk_ key" }, 401);
+    // Without auth, allow request to pass through — tools will check auth themselves
+    (globalThis as any).__agentContext = null;
+    return await transport.handleRequest(c.req.raw, mcpServer);
   }
 
   const agent = await authenticateAgent(apiKey);
