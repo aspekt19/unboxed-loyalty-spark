@@ -151,6 +151,26 @@ export function AgentManagement() {
         </Alert>
       )}
 
+      {/* API Docs & Agent Card Links */}
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="pt-4 pb-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <FileText className="h-5 w-5 text-primary" />
+            <span className="text-sm font-medium">Agent Resources:</span>
+            <Link to="/api-docs">
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <FileText className="h-3.5 w-3.5" /> API Documentation <ExternalLink className="h-3 w-3" />
+              </Button>
+            </Link>
+            <a href="/.well-known/agent.json" target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <Bot className="h-3.5 w-3.5" /> Agent Card (JSON) <ExternalLink className="h-3 w-3" />
+              </Button>
+            </a>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Create Agent */}
       <Card>
         <CardHeader>
