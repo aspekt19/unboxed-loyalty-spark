@@ -503,6 +503,9 @@ const reward = await fetch(\`\${BASE}/rewards\`, {
             </CardContent>
           </Card>
 
+          {/* MCP Server */}
+          <McpServerSection />
+
           {/* Endpoints */}
           <div className="mb-8">
             <h2 className="text-lg font-bold mb-4">API Endpoints</h2>
