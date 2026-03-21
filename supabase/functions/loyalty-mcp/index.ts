@@ -55,35 +55,34 @@ const mcpServer = new McpServer({
   version: "1.0.0",
 });
 
-// Resource: Platform information
-mcpServer.resource({
-  uri: "loyalty://platform-info",
-  name: "Platform Information",
-  description: "General information about Loyal Spark loyalty protocol on Base L2",
-  handler: async () => ({
-    contents: [{
-      uri: "loyalty://platform-info",
-      mimeType: "application/json",
-      text: JSON.stringify({
-        name: "Loyal Spark",
-        description: "Onchain loyalty protocol on Base L2 for AI agents and humans",
-        chain: "Base L2",
-        chain_id: 8453,
-        token_standard: "ERC-20",
-        features: [
-          "loyalty_programs",
-          "rewards",
-          "marketplace",
-          "tiers",
-          "referrals",
-          "vouchers",
-          "analytics",
-        ],
-        api_docs: "https://loyalspark.online/api-docs",
-        agent_card: "https://loyalspark.online/.well-known/agent.json",
-      }),
-    }],
-  }),
+// Resource: Platform information (using a tool instead since mcp-lite resource API differs)
+mcpServer.tool({
+  name: "get_platform_info",
+  description: "Get general information about the Loyal Spark loyalty protocol on Base L2, including supported features, chain details, and documentation links.",
+  inputSchema: {
+    type: "object" as const,
+    properties: {},
+  },
+  handler: async () => {
+    return {
+      content: [{
+        type: "text",
+        text: JSON.stringify({
+          name: "Loyal Spark",
+          description: "Onchain loyalty protocol on Base L2 for AI agents and humans",
+          chain: "Base L2",
+          chain_id: 8453,
+          token_standard: "ERC-20",
+          features: [
+            "loyalty_programs", "rewards", "marketplace",
+            "tiers", "referrals", "vouchers", "analytics",
+          ],
+          api_docs: "https://loyalspark.online/api-docs",
+          agent_card: "https://loyalspark.online/.well-known/agent.json",
+        }),
+      }],
+    };
+  },
 });
 
 // Tool: List loyalty programs
