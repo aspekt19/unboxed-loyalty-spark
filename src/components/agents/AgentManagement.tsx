@@ -167,7 +167,11 @@ export function AgentManagement() {
                 <Bot className="h-3.5 w-3.5" /> Agent Card (JSON) <ExternalLink className="h-3 w-3" />
               </Button>
             </a>
-          </div>
+            <a href={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/loyalty-mcp`} target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <Cpu className="h-3.5 w-3.5" /> MCP Server <ExternalLink className="h-3 w-3" />
+              </Button>
+            </a>
         </CardContent>
       </Card>
 
