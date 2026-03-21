@@ -16,6 +16,7 @@ import { ReferralManagement } from './referral/ReferralManagement';
 import { ReferralStats } from './referral/ReferralStats';
 import { ReviewsList } from './reviews/ReviewsList';
 import { AutomationDashboard } from './automation/AutomationDashboard';
+import { AgentManagement } from './agents/AgentManagement';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,7 +25,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMintTokens } from '@/hooks/useMintTokens';
 import { useAccount } from 'wagmi';
 import { toast } from 'sonner';
-import { Coins, AlertCircle, Wallet, AlertTriangle } from 'lucide-react';
+import { Coins, AlertCircle, Wallet, AlertTriangle, Bot } from 'lucide-react';
 import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
 import { mintTokensSchema } from '@/lib/validationSchemas';
 
@@ -134,6 +135,10 @@ export function MerchantPanel() {
               <TabsTrigger value="automation" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Automation</TabsTrigger>
               <TabsTrigger value="referrals" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Referrals</TabsTrigger>
               <TabsTrigger value="reviews" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Reviews</TabsTrigger>
+              <TabsTrigger value="agents" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">
+                <Bot className="h-3.5 w-3.5 mr-1" />
+                AI Agents
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -235,6 +240,10 @@ export function MerchantPanel() {
                 </AlertDescription>
               </Alert>
             )}
+          </TabsContent>
+
+          <TabsContent value="agents" className="space-y-6 mt-6">
+            <AgentManagement />
           </TabsContent>
         </Tabs>
       )}
