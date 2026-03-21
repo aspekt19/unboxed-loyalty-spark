@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Copy, Check, Bot, Key, Shield, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PageTransition from '@/components/PageTransition';
+import McpServerSection from '@/components/api-docs/McpServerSection';
 
 const BASE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-api`;
 
@@ -501,6 +502,9 @@ const reward = await fetch(\`\${BASE}/rewards\`, {
               </Tabs>
             </CardContent>
           </Card>
+
+          {/* MCP Server */}
+          <McpServerSection />
 
           {/* Endpoints */}
           <div className="mb-8">
