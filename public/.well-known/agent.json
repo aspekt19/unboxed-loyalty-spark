@@ -116,8 +116,12 @@
   },
   "escrow": {
     "description": "P2P token exchange is protected by a smart contract escrow. Atomic swap — both transfers happen in one transaction, or neither does.",
-    "contract": "LoyaltyTokenEscrow (Base)",
+    "contract_address": "0xA569C95AfC1BCF381c48BcF336ED9D2c014bcdDF",
+    "contract_name": "LoyaltyTokenEscrow",
+    "chain": "Base (8453)",
+    "explorer": "https://basescan.org/address/0xA569C95AfC1BCF381c48BcF336ED9D2c014bcdDF",
     "fee": "0.5% protocol fee on completed swaps",
+    "fee_recipient": "0x40a8CdD6a10EC1a8cB3dFb2834675e7a2CF4ad8b",
     "flow": [
       "1. Creator approves escrow contract for offer tokens",
       "2. Creator calls createOffer() — tokens locked in escrow",
