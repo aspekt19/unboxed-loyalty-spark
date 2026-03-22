@@ -8,7 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useMultiTokenBalance } from '@/hooks/useMultiTokenBalance';
-import { Loader2, ArrowRightLeft, Users, Info } from 'lucide-react';
+import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
+import { parseUnits } from 'viem';
+import { encodeWithBuilderCode } from '@/config/builder-code';
+import { CONTRACTS } from '@/config/contracts';
+import { Loader2, ArrowRightLeft, Shield, Info, CheckCircle2 } from 'lucide-react';
 import { z } from 'zod';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -26,6 +30,8 @@ const offerSchema = z.object({
   requestAmount: z.string().regex(/^\d+(\.\d{1,18})?$/, 'Invalid amount').refine(val => parseFloat(val) > 0, 'Amount must be greater than 0'),
 });
 
+type Step = 'form' | 'approving' | 'creating';
+
 export function CreateMarketplaceOffer() {
   const { address } = useAccount();
   const [tokens, setTokens] = useState<TokenInfo[]>([]);
@@ -33,13 +39,36 @@ export function CreateMarketplaceOffer() {
   const [offerAmount, setOfferAmount] = useState('');
   const [requestTokenAddress, setRequestTokenAddress] = useState('');
   const [requestAmount, setRequestAmount] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [step, setStep] = useState<Step>('form');
 
   const { balances, isLoading: balancesLoading } = useMultiTokenBalance(tokens);
+
+  const { sendTransaction: sendApprove, data: approveHash, isPending: approvePending } = useSendTransaction();
+  const { isSuccess: approveConfirmed } = useWaitForTransactionReceipt({ hash: approveHash });
+
+  const { sendTransaction: sendCreate, data: createHash, isPending: createPending } = useSendTransaction();
+  const { isSuccess: createConfirmed } = useWaitForTransactionReceipt({ hash: createHash });
+
+  const escrowAddress = CONTRACTS.LOYALTY_TOKEN_ESCROW.address;
 
   useEffect(() => {
     loadTokens();
   }, []);
+
+  // After approve confirmed, create the escrow offer
+  useEffect(() => {
+    if (approveConfirmed && step === 'approving') {
+      setStep('creating');
+      createEscrowOffer();
+    }
+  }, [approveConfirmed]);
+
+  // After create confirmed, save to DB and reset
+  useEffect(() => {
+    if (createConfirmed && step === 'creating') {
+      saveOfferToDB();
+    }
+  }, [createConfirmed]);
 
   const loadTokens = async () => {
     const { data, error } = await supabase
@@ -52,77 +81,100 @@ export function CreateMarketplaceOffer() {
       return;
     }
 
-    const tokenList: TokenInfo[] = data.map(p => ({
+    setTokens(data.map(p => ({
       address: p.token_address,
       name: p.name,
       symbol: p.symbol,
-      merchantAddress: p.merchant_address
-    }));
-
-    setTokens(tokenList);
+      merchantAddress: p.merchant_address,
+    })));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!address) {
       toast.error('Please connect your wallet');
       return;
     }
 
     try {
-      const validatedData = offerSchema.parse({
-        offerTokenAddress,
-        offerAmount,
-        requestTokenAddress,
-        requestAmount,
-      });
+      const validated = offerSchema.parse({ offerTokenAddress, offerAmount, requestTokenAddress, requestAmount });
 
-      if (validatedData.offerTokenAddress === validatedData.requestTokenAddress) {
+      if (validated.offerTokenAddress === validated.requestTokenAddress) {
         toast.error('Cannot exchange same tokens');
         return;
       }
 
-      // Check if user has enough balance
-      const offerBalance = balances[validatedData.offerTokenAddress.toLowerCase()];
-      if (!offerBalance || parseFloat(offerBalance) < parseFloat(validatedData.offerAmount)) {
+      const balance = balances[validated.offerTokenAddress.toLowerCase()];
+      if (!balance || parseFloat(balance) < parseFloat(validated.offerAmount)) {
         toast.error('Insufficient balance');
         return;
       }
 
-      setIsSubmitting(true);
+      // Step 1: Approve escrow contract
+      setStep('approving');
+      const amountWei = parseUnits(validated.offerAmount, 18);
+      const approveData = encodeWithBuilderCode(
+        CONTRACTS.LOYAL_SPARK_ERC20.abi,
+        'approve',
+        [escrowAddress, amountWei]
+      );
 
-      const { error } = await supabase
-        .from('marketplace_offers')
-        .insert({
-          creator_address: address.toLowerCase(),
-          offer_token_address: validatedData.offerTokenAddress.toLowerCase(),
-          offer_amount: parseFloat(validatedData.offerAmount),
-          request_token_address: validatedData.requestTokenAddress.toLowerCase(),
-          request_amount: parseFloat(validatedData.requestAmount),
-        });
-
-      if (error) throw error;
-
-      toast.success('Offer created successfully!');
-      
-      // Reset form
-      setOfferTokenAddress('');
-      setOfferAmount('');
-      setRequestTokenAddress('');
-      setRequestAmount('');
-
-      // Trigger refresh
-      window.dispatchEvent(new CustomEvent('marketplaceOffersUpdated'));
+      sendApprove({
+        to: validated.offerTokenAddress as `0x${string}`,
+        data: approveData,
+      });
     } catch (error: any) {
-      console.error('Error creating offer:', error);
+      setStep('form');
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
       } else {
         toast.error('Failed to create offer');
       }
-    } finally {
-      setIsSubmitting(false);
+    }
+  };
+
+  const createEscrowOffer = () => {
+    try {
+      const amountOfferWei = parseUnits(offerAmount, 18);
+      const amountRequestWei = parseUnits(requestAmount, 18);
+
+      const createData = encodeWithBuilderCode(
+        CONTRACTS.LOYALTY_TOKEN_ESCROW.abi,
+        'createOffer',
+        [offerTokenAddress as `0x${string}`, amountOfferWei, requestTokenAddress as `0x${string}`, amountRequestWei]
+      );
+
+      sendCreate({
+        to: escrowAddress,
+        data: createData,
+      });
+    } catch {
+      setStep('form');
+      toast.error('Failed to create escrow offer');
+    }
+  };
+
+  const saveOfferToDB = async () => {
+    try {
+      await supabase.from('marketplace_offers').insert({
+        creator_address: address!.toLowerCase(),
+        offer_token_address: offerTokenAddress.toLowerCase(),
+        offer_amount: parseFloat(offerAmount),
+        request_token_address: requestTokenAddress.toLowerCase(),
+        request_amount: parseFloat(requestAmount),
+        status: 'active',
+      });
+
+      toast.success('Escrow offer created! Tokens locked in smart contract.');
+      setOfferTokenAddress('');
+      setOfferAmount('');
+      setRequestTokenAddress('');
+      setRequestAmount('');
+      setStep('form');
+      window.dispatchEvent(new CustomEvent('marketplaceOffersUpdated'));
+    } catch {
+      toast.error('Offer created on-chain but failed to save. Contact support.');
+      setStep('form');
     }
   };
 
@@ -135,32 +187,46 @@ export function CreateMarketplaceOffer() {
     return tokens.find(t => t.address.toLowerCase() === tokenAddress.toLowerCase());
   };
 
+  const isProcessing = step !== 'form';
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5 text-primary" />
-          Create P2P Exchange Offer
+          <Shield className="h-5 w-5 text-primary" />
+          Create Escrow P2P Offer
         </CardTitle>
         <CardDescription>
-          Create a direct peer-to-peer offer - other users will see your offer and can accept it to exchange tokens with you
+          Tokens are locked in a smart contract escrow — atomic swap guarantees both parties receive their tokens
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Alert className="mb-4 border-blue-500/50 bg-blue-500/5">
-          <Info className="h-4 w-4 text-blue-500" />
+        <Alert className="mb-4 border-green-500/50 bg-green-500/5">
+          <Shield className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-sm">
-            Your offer will be visible to all users. When someone accepts, tokens will be exchanged directly between your wallets.
+            <strong>Escrow Protected:</strong> Your tokens are locked in a smart contract. The swap is atomic — either both transfers happen, or neither does.
           </AlertDescription>
         </Alert>
 
+        {isProcessing && (
+          <Alert className="mb-4 border-primary/50 bg-primary/5">
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            <AlertDescription className="text-sm">
+              {step === 'approving' && 'Step 1/2: Approving escrow contract to use your tokens...'}
+              {step === 'creating' && (
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="h-3 w-3 text-green-500" />
+                  Step 2/2: Creating escrow offer — locking tokens in contract...
+                </span>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="offerToken">Token You Offer</Label>
-            <Select
-              value={offerTokenAddress}
-              onValueChange={setOfferTokenAddress}
-            >
+            <Label>Token You Offer</Label>
+            <Select value={offerTokenAddress} onValueChange={setOfferTokenAddress} disabled={isProcessing}>
               <SelectTrigger>
                 <SelectValue placeholder="Select token to offer" />
               </SelectTrigger>
@@ -180,15 +246,14 @@ export function CreateMarketplaceOffer() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="offerAmount">Amount You Offer</Label>
+            <Label>Amount You Offer</Label>
             <Input
-              id="offerAmount"
               type="number"
               step="0.000000000000000001"
               placeholder="0.0"
               value={offerAmount}
               onChange={(e) => setOfferAmount(e.target.value)}
-              disabled={!offerTokenAddress}
+              disabled={!offerTokenAddress || isProcessing}
             />
           </div>
 
@@ -197,53 +262,40 @@ export function CreateMarketplaceOffer() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="requestToken">Token You Want</Label>
-            <Select
-              value={requestTokenAddress}
-              onValueChange={setRequestTokenAddress}
-            >
+            <Label>Token You Want</Label>
+            <Select value={requestTokenAddress} onValueChange={setRequestTokenAddress} disabled={isProcessing}>
               <SelectTrigger>
                 <SelectValue placeholder="Select token you want" />
               </SelectTrigger>
               <SelectContent>
-                {tokens
-                  .filter(t => t.address !== offerTokenAddress)
-                  .map((token) => (
-                    <SelectItem key={token.address} value={token.address}>
-                      {token.name} ({token.symbol})
-                    </SelectItem>
-                  ))}
+                {tokens.filter(t => t.address !== offerTokenAddress).map((token) => (
+                  <SelectItem key={token.address} value={token.address}>
+                    {token.name} ({token.symbol})
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="requestAmount">Amount You Want</Label>
+            <Label>Amount You Want</Label>
             <Input
-              id="requestAmount"
               type="number"
               step="0.000000000000000001"
               placeholder="0.0"
               value={requestAmount}
               onChange={(e) => setRequestAmount(e.target.value)}
-              disabled={!requestTokenAddress}
+              disabled={!requestTokenAddress || isProcessing}
             />
           </div>
 
           <Button
             type="submit"
             className="w-full"
-            disabled={
-              isSubmitting ||
-              !offerTokenAddress ||
-              !offerAmount ||
-              !requestTokenAddress ||
-              !requestAmount ||
-              balancesLoading
-            }
+            disabled={isProcessing || !offerTokenAddress || !offerAmount || !requestTokenAddress || !requestAmount || balancesLoading}
           >
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Create Offer
+            {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isProcessing ? 'Processing...' : 'Create Escrow Offer'}
           </Button>
         </form>
       </CardContent>

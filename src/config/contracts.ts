@@ -234,6 +234,102 @@ export const CONTRACTS = {
       },
     ] as const,
   },
+  // P2P Escrow Contract
+  LOYALTY_TOKEN_ESCROW: {
+    // TODO: Deploy and update this address
+    address: '0x0000000000000000000000000000000000000000' as `0x${string}`,
+    abi: [
+      {
+        inputs: [
+          { name: 'offerToken', type: 'address' },
+          { name: 'offerAmount', type: 'uint256' },
+          { name: 'requestToken', type: 'address' },
+          { name: 'requestAmount', type: 'uint256' },
+        ],
+        name: 'createOffer',
+        outputs: [{ name: 'offerId', type: 'uint256' }],
+        stateMutability: 'nonpayable',
+        type: 'function',
+      },
+      {
+        inputs: [{ name: 'offerId', type: 'uint256' }],
+        name: 'fillOffer',
+        outputs: [],
+        stateMutability: 'nonpayable',
+        type: 'function',
+      },
+      {
+        inputs: [{ name: 'offerId', type: 'uint256' }],
+        name: 'cancelOffer',
+        outputs: [],
+        stateMutability: 'nonpayable',
+        type: 'function',
+      },
+      {
+        inputs: [{ name: 'offerId', type: 'uint256' }],
+        name: 'getOffer',
+        outputs: [
+          {
+            components: [
+              { name: 'creator', type: 'address' },
+              { name: 'offerToken', type: 'address' },
+              { name: 'offerAmount', type: 'uint256' },
+              { name: 'requestToken', type: 'address' },
+              { name: 'requestAmount', type: 'uint256' },
+              { name: 'active', type: 'bool' },
+            ],
+            name: '',
+            type: 'tuple',
+          },
+        ],
+        stateMutability: 'view',
+        type: 'function',
+      },
+      {
+        inputs: [],
+        name: 'nextOfferId',
+        outputs: [{ name: '', type: 'uint256' }],
+        stateMutability: 'view',
+        type: 'function',
+      },
+      {
+        inputs: [],
+        name: 'feeBps',
+        outputs: [{ name: '', type: 'uint256' }],
+        stateMutability: 'view',
+        type: 'function',
+      },
+      {
+        anonymous: false,
+        inputs: [
+          { indexed: true, name: 'offerId', type: 'uint256' },
+          { indexed: true, name: 'creator', type: 'address' },
+          { indexed: false, name: 'offerToken', type: 'address' },
+          { indexed: false, name: 'offerAmount', type: 'uint256' },
+          { indexed: false, name: 'requestToken', type: 'address' },
+          { indexed: false, name: 'requestAmount', type: 'uint256' },
+        ],
+        name: 'OfferCreated',
+        type: 'event',
+      },
+      {
+        anonymous: false,
+        inputs: [
+          { indexed: true, name: 'offerId', type: 'uint256' },
+          { indexed: true, name: 'accepter', type: 'address' },
+          { indexed: true, name: 'creator', type: 'address' },
+        ],
+        name: 'OfferFilled',
+        type: 'event',
+      },
+      {
+        anonymous: false,
+        inputs: [{ indexed: true, name: 'offerId', type: 'uint256' }],
+        name: 'OfferCancelled',
+        type: 'event',
+      },
+    ] as const,
+  },
 } as const;
 
 export const BASE_CHAIN_ID = 8453;
