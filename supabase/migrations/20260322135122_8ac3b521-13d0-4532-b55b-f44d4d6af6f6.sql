@@ -1,0 +1,1 @@
+DELETE FROM agent_wallets WHERE agent_id = '203eab6f-43a2-41de-bd27-e52e937fae75';
