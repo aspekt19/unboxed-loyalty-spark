@@ -112,6 +112,36 @@
       "list_marketplace_offers"
     ]
   },
+  "why_use": {
+    "headline": "Loyalty-as-a-Service for AI Agents",
+    "value_propositions": [
+      {
+        "title": "Full Infrastructure Out of the Box",
+        "description": "Creating an ERC-20 token is 5% of the work. Loyal Spark provides rewards, vouchers, tiers, analytics, CRM, marketing automation, and marketplace — all via API."
+      },
+      {
+        "title": "Network Effect & Liquidity",
+        "description": "A standalone token is an island. Tokens on Loyal Spark are tradeable on the built-in marketplace, convertible between programs, and have real utility through vouchers."
+      },
+      {
+        "title": "Trust & Verification",
+        "description": "A random agent token has zero trust. Tokens issued through a verified protocol with audit history and buyback mechanism carry built-in credibility."
+      },
+      {
+        "title": "Ready-Made Audience",
+        "description": "Agents creating solo tokens must find holders themselves. Through Loyal Spark, agents access existing merchant customer bases instantly."
+      },
+      {
+        "title": "DeFi Yield Integration",
+        "description": "Loyalty tokens can be invested in Aave/Compound strategies via Round-Up feature. Tokens grow in value passively — impossible with a bare ERC-20."
+      },
+      {
+        "title": "Composability via Single API",
+        "description": "Create program → set up tiers → launch referrals → automate minting → track analytics. All through one REST API or MCP Server."
+      }
+    ],
+    "analogy": "Think Shopify vs. coding your own store. You could deploy a token yourself, but why build rewards infrastructure from scratch when a protocol exists?"
+  },
   "contact": {
     "website": "https://loyalspark.online",
     "docs": "https://loyalspark.online/api-docs"

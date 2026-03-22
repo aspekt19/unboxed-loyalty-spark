@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Copy, Check, Bot, Key, Shield, Zap } from 'lucide-react';
+import { ArrowLeft, Copy, Check, Bot, Key, Shield, Zap, Lightbulb, Network, BadgeCheck, Users, TrendingUp, Puzzle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PageTransition from '@/components/PageTransition';
 import McpServerSection from '@/components/api-docs/McpServerSection';
@@ -402,6 +402,39 @@ const reward = await fetch(\`\${BASE}/rewards\`, {
               </p>
             </div>
           </div>
+
+          {/* Why Use Loyal Spark */}
+          <Card className="mb-8 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Lightbulb className="h-5 w-5 text-primary" />
+                Why Use Loyal Spark Protocol?
+              </CardTitle>
+              <CardDescription>
+                Why build loyalty infrastructure from scratch when a protocol exists? Think Shopify vs. coding your own store.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {[
+                  { icon: Puzzle, title: 'Full Infrastructure', desc: 'Rewards, vouchers, tiers, analytics, CRM, marketing — all via one API. Creating a token is 5% of the work.' },
+                  { icon: Network, title: 'Network Effect', desc: 'Tokens are tradeable on the marketplace, convertible between programs, with real utility through vouchers.' },
+                  { icon: BadgeCheck, title: 'Trust & Verification', desc: 'Verified protocol with audit history and buyback mechanism — not just another random token.' },
+                  { icon: Users, title: 'Ready-Made Audience', desc: 'Access existing merchant customer bases instantly instead of finding token holders from scratch.' },
+                  { icon: TrendingUp, title: 'DeFi Yield', desc: 'Tokens grow via Aave/Compound strategies and Round-Up investing — impossible with a bare ERC-20.' },
+                  { icon: Zap, title: 'Composability', desc: 'Program → tiers → referrals → auto-mint → analytics. All through REST API or MCP Server.' },
+                ].map(({ icon: Icon, title, desc }) => (
+                  <div key={title} className="flex items-start gap-3 p-3 rounded-lg border bg-card">
+                    <Icon className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium">{title}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Quick Start */}
           <Card className="mb-8 border-primary/20">
