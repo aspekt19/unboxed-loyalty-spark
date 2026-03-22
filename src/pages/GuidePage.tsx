@@ -21,7 +21,10 @@ import {
   HelpCircle,
   Percent,
   PiggyBank,
-  LineChart
+  LineChart,
+  Bot,
+  Code,
+  Key
 } from "lucide-react";
 
 export default function GuidePage() {
@@ -91,6 +94,7 @@ export default function GuidePage() {
                 <TabsTrigger value="overview" className="whitespace-nowrap">Overview</TabsTrigger>
                 <TabsTrigger value="merchants" className="whitespace-nowrap">For Merchants</TabsTrigger>
                 <TabsTrigger value="customers" className="whitespace-nowrap">For Customers</TabsTrigger>
+                <TabsTrigger value="agents" className="whitespace-nowrap">For AI Agents</TabsTrigger>
                 <TabsTrigger value="investing" className="whitespace-nowrap">Investing</TabsTrigger>
                 <TabsTrigger value="faq" className="whitespace-nowrap">FAQ</TabsTrigger>
               </TabsList>
@@ -746,6 +750,187 @@ export default function GuidePage() {
                       <strong>Security:</strong> Your funds are secured by audited smart contracts. We never have custody of your assets - you maintain full control through your wallet.
                     </AlertDescription>
                   </Alert>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="agents" className="space-y-6">
+              <Alert>
+                <Bot className="h-4 w-4" />
+                <AlertDescription>
+                  AI agents can integrate with Loyal Spark via REST API or MCP Server to autonomously manage loyalty programs, mint tokens, and more.
+                </AlertDescription>
+              </Alert>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Bot className="h-5 w-5" />
+                    What Can AI Agents Do?
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Loyal Spark is an AI-native protocol. AI agents can perform the same operations as human merchants — creating programs, minting tokens, managing rewards — all programmatically through our API.
+                  </p>
+                  <div className="grid md:grid-cols-2 gap-4 mt-4">
+                    <div className="space-y-2">
+                      <h3 className="font-semibold flex items-center gap-2">
+                        <Code className="h-4 w-4 text-primary" />
+                        REST API
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Full CRUD API with scoped permissions. Create programs, mint tokens, manage rewards, view analytics.
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="font-semibold flex items-center gap-2">
+                        <Bot className="h-4 w-4 text-primary" />
+                        MCP Server
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Connect Claude, GPT, Cursor, or any MCP-compatible LLM directly — no custom code needed.
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="font-semibold flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-primary" />
+                        Server Wallets
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Coinbase CDP MPC wallets for autonomous onchain operations. No private keys to manage.
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="font-semibold flex items-center gap-2">
+                        <Key className="h-4 w-4 text-primary" />
+                        Scoped Permissions
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Granular access control: read, mint, manage_rewards, create_program, trade.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Key className="h-5 w-5" />
+                    Step 1: Register an Agent
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+                    <li>Connect your wallet as a Merchant</li>
+                    <li>Go to the <strong>"AI Agents"</strong> tab in the Merchant Panel</li>
+                    <li>Click <strong>"Register Agent"</strong></li>
+                    <li>Enter agent name and select permissions (scopes)</li>
+                    <li>Copy your API key (<code className="bg-muted px-1 rounded">lsk_...</code>) — it's shown only once!</li>
+                    <li>Use the key in the <code className="bg-muted px-1 rounded">x-api-key</code> header for all API calls</li>
+                  </ol>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Code className="h-5 w-5" />
+                    Step 2: Make API Calls
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground mb-3">Example REST API call:</p>
+                  <pre className="bg-muted/50 border rounded-lg p-4 overflow-x-auto text-xs font-mono leading-relaxed">
+{`curl -H "x-api-key: lsk_YOUR_KEY" \\
+  https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/programs`}
+                  </pre>
+                  <p className="text-sm text-muted-foreground mt-3">Or connect via MCP (for Claude, Cursor, etc.):</p>
+                  <pre className="bg-muted/50 border rounded-lg p-4 overflow-x-auto text-xs font-mono leading-relaxed">
+{`{
+  "mcpServers": {
+    "loyal-spark": {
+      "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+      "headers": { "x-api-key": "lsk_YOUR_KEY" }
+    }
+  }
+}`}
+                  </pre>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5" />
+                    Pricing Plans
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-bold mb-1">Free</h4>
+                      <p className="text-2xl font-bold mb-2">$0</p>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li>• 100 API calls/month</li>
+                        <li>• 1 agent</li>
+                        <li>• 1% transaction fee</li>
+                      </ul>
+                    </div>
+                    <div className="border border-primary rounded-lg p-4">
+                      <h4 className="font-bold mb-1">Pro</h4>
+                      <p className="text-2xl font-bold mb-2">$29<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li>• 10,000 API calls/month</li>
+                        <li>• 5 agents</li>
+                        <li>• 0.5% transaction fee</li>
+                      </ul>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-bold mb-1">Enterprise</h4>
+                      <p className="text-2xl font-bold mb-2">$99<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li>• Unlimited API calls</li>
+                        <li>• Unlimited agents</li>
+                        <li>• 0.25% transaction fee</li>
+                      </ul>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    All payments in USDC on Base ($1 = 1 USDC). Pay on-chain — verified automatically.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ExternalLink className="h-5 w-5" />
+                    Resources
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <Button variant="outline" className="h-auto p-4 justify-start" asChild>
+                      <a href="/api-docs">
+                        <div className="text-left flex-1">
+                          <div className="font-medium mb-1">API Documentation</div>
+                          <div className="text-xs text-muted-foreground">Interactive docs with examples</div>
+                        </div>
+                        <ExternalLink className="h-4 w-4 ml-2 flex-shrink-0" />
+                      </a>
+                    </Button>
+                    <Button variant="outline" className="h-auto p-4 justify-start" asChild>
+                      <a href="/.well-known/agent.json" target="_blank" rel="noopener noreferrer">
+                        <div className="text-left flex-1">
+                          <div className="font-medium mb-1">Agent Discovery</div>
+                          <div className="text-xs text-muted-foreground">agent.json protocol specification</div>
+                        </div>
+                        <ExternalLink className="h-4 w-4 ml-2 flex-shrink-0" />
+                      </a>
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>

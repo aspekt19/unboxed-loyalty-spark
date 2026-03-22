@@ -1,8 +1,8 @@
 {
   "name": "Loyal Spark",
-  "description": "Onchain loyalty protocol on Base L2. AI agents can autonomously create loyalty programs, mint ERC-20 loyalty tokens, manage rewards, and trade tokens on a decentralized marketplace.",
+  "description": "Onchain loyalty protocol on Base L2. AI agents can autonomously create loyalty programs, mint ERC-20 loyalty tokens, manage rewards, trade on marketplace, and get their own MPC wallets — all via REST API or MCP Server.",
   "url": "https://loyalspark.online",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "protocol": "a2a-loyalty",
   "capabilities": [
     "create_loyalty_program",
@@ -12,7 +12,9 @@
     "customer_analytics",
     "tier_management",
     "referral_programs",
-    "voucher_management"
+    "voucher_management",
+    "server_wallet_creation",
+    "autonomous_transactions"
   ],
   "authentication": {
     "type": "api_key",
@@ -28,7 +30,7 @@
         "method": "GET",
         "path": "/me",
         "scope": "read",
-        "description": "Get agent profile and permissions"
+        "description": "Get agent profile, permissions, plan, and wallet info"
       },
       {
         "method": "GET",
@@ -58,7 +60,7 @@
         "method": "POST",
         "path": "/mint",
         "scope": "mint",
-        "description": "Mint loyalty tokens to a wallet address"
+        "description": "Mint loyalty tokens to a wallet address (1% fee on Free, 0.5% Pro, 0.25% Enterprise)"
       },
       {
         "method": "GET",
@@ -86,11 +88,58 @@
       }
     ]
   },
+  "wallets": {
+    "type": "cdp_mpc",
+    "description": "Coinbase CDP MPC wallets on Base — agents get their own server wallet for autonomous onchain operations. No private keys to manage.",
+    "create_endpoint": "POST /agent-api (action: create_server_wallet)",
+    "chain": "Base (8453)",
+    "features": [
+      "Automatic wallet creation",
+      "Server-side transaction signing",
+      "MPC key management by Coinbase",
+      "No private key exposure"
+    ]
+  },
+  "pricing": {
+    "model": "freemium",
+    "currency": "USDC on Base ($1 = 1 USDC)",
+    "plans": [
+      {
+        "name": "Free",
+        "price": 0,
+        "limits": {
+          "api_calls_monthly": 100,
+          "agents": 1,
+          "transaction_fee": "1%"
+        }
+      },
+      {
+        "name": "Pro",
+        "price_usdc_monthly": 29,
+        "limits": {
+          "api_calls_monthly": 10000,
+          "agents": 5,
+          "transaction_fee": "0.5%"
+        }
+      },
+      {
+        "name": "Enterprise",
+        "price_usdc_monthly": 99,
+        "limits": {
+          "api_calls_monthly": "unlimited",
+          "agents": "unlimited",
+          "transaction_fee": "0.25%"
+        }
+      }
+    ],
+    "payment": "On-chain USDC transfer to platform wallet, verified automatically"
+  },
   "chain": {
     "name": "Base",
     "chain_id": 8453,
     "token_standard": "ERC-20",
-    "explorer": "https://basescan.org"
+    "explorer": "https://basescan.org",
+    "builder_code": "bc_wdmnog7m"
   },
   "mcp": {
     "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
@@ -120,12 +169,16 @@
         "description": "Creating an ERC-20 token is 5% of the work. Loyal Spark provides rewards, vouchers, tiers, analytics, CRM, marketing automation, and marketplace — all via API."
       },
       {
+        "title": "Autonomous Server Wallets",
+        "description": "Each agent gets a Coinbase MPC wallet on Base. No private keys to manage — sign transactions server-side with enterprise-grade security."
+      },
+      {
         "title": "Network Effect & Liquidity",
         "description": "A standalone token is an island. Tokens on Loyal Spark are tradeable on the built-in marketplace, convertible between programs, and have real utility through vouchers."
       },
       {
         "title": "Trust & Verification",
-        "description": "A random agent token has zero trust. Tokens issued through a verified protocol with audit history and buyback mechanism carry built-in credibility."
+        "description": "A random agent token has zero trust. Tokens issued through a verified protocol with audit history carry built-in credibility."
       },
       {
         "title": "Ready-Made Audience",
@@ -138,13 +191,28 @@
       {
         "title": "Composability via Single API",
         "description": "Create program → set up tiers → launch referrals → automate minting → track analytics. All through one REST API or MCP Server."
+      },
+      {
+        "title": "Pay-as-you-go Pricing",
+        "description": "Start free with 100 API calls/month. Scale to Pro ($29/mo) or Enterprise ($99/mo) with lower transaction fees and higher limits. All payments in USDC on Base."
       }
     ],
     "analogy": "Think Shopify vs. coding your own store. You could deploy a token yourself, but why build rewards infrastructure from scratch when a protocol exists?"
   },
+  "quickstart": {
+    "steps": [
+      "1. Go to https://loyalspark.online/merchant and connect wallet",
+      "2. Open 'AI Agents' tab → Register an agent → Get API key (lsk_...)",
+      "3. Use the API key in x-api-key header for REST or MCP calls",
+      "4. Create a server wallet: POST /agent-api with action 'create_server_wallet'",
+      "5. Start minting tokens, creating rewards, and managing programs!"
+    ]
+  },
   "contact": {
     "website": "https://loyalspark.online",
-    "docs": "https://loyalspark.online/api-docs"
+    "docs": "https://loyalspark.online/api-docs",
+    "email": "admin@loyalspark.online",
+    "twitter": "https://x.com/Loyal_Spark"
   },
   "tags": [
     "loyalty",
@@ -153,6 +221,10 @@
     "base",
     "erc20",
     "a2a",
-    "marketplace"
+    "marketplace",
+    "mcp",
+    "cdp",
+    "mpc-wallet",
+    "ai-agents"
   ]
 }
