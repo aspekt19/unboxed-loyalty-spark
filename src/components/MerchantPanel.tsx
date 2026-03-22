@@ -241,6 +241,7 @@ export function MerchantPanel() {
 
           <TabsContent value="agents" className="space-y-6 mt-6">
             <AgentManagement />
+            <AgentBillingDashboard />
           </TabsContent>
         </Tabs>
       )}
