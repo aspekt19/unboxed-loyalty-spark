@@ -33,6 +33,12 @@ interface AgentRow {
   last_request_at: string | null;
   created_at: string;
   agent_wallet_address: string | null;
+  plan_id: string | null;
+}
+
+interface AgentWalletRow {
+  wallet_type: string;
+  wallet_address: string;
 }
 export function AgentManagement() {
   const { address } = useAccount();
@@ -52,7 +58,7 @@ export function AgentManagement() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('agent_registry')
-        .select('id, name, description, api_key_prefix, scopes, is_active, total_requests, last_request_at, created_at, agent_wallet_address')
+        .select('id, name, description, api_key_prefix, scopes, is_active, total_requests, last_request_at, created_at, agent_wallet_address, plan_id')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return (data || []) as AgentRow[];
@@ -305,7 +311,6 @@ export function AgentManagement() {
                         <Badge variant="outline" className="text-xs gap-1">
                           <Wallet className="h-3 w-3" />
                           {agent.agent_wallet_address.slice(0, 6)}...{agent.agent_wallet_address.slice(-4)}
-                          <span className="text-muted-foreground">(mock)</span>
                         </Badge>
                       ) : (
                         <Button

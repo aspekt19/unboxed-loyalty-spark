@@ -333,6 +333,66 @@ async function handleSignTransaction(d: any, agent: any, body: any) {
   });
 }
 
+async function getAgentFeePercent(d: any, agentId: string, ownerAddress: string): Promise<number> {
+  // Check if agent has a plan
+  const { data: agent } = await d
+    .from("agent_registry")
+    .select("plan_id")
+    .eq("id", agentId)
+    .single();
+
+  if (agent?.plan_id) {
+    const { data: plan } = await d
+      .from("agent_plans")
+      .select("transaction_fee_percent")
+      .eq("id", agent.plan_id)
+      .single();
+    if (plan) return plan.transaction_fee_percent;
+  }
+
+  // Default to free plan fee (1%)
+  const { data: freePlan } = await d
+    .from("agent_plans")
+    .select("transaction_fee_percent")
+    .eq("slug", "free")
+    .single();
+
+  return freePlan?.transaction_fee_percent || 1.0;
+}
+
+async function trackUsage(d: any, ownerAddress: string, mintAmount: number, feeUsdc: number) {
+  const now = new Date();
+  const periodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
+  const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0];
+
+  const { data: existing } = await d
+    .from("agent_usage")
+    .select("id, api_calls_count, mint_operations_count, mint_total_amount, fees_collected_usdc")
+    .eq("owner_address", ownerAddress.toLowerCase())
+    .eq("period_start", periodStart)
+    .single();
+
+  if (existing) {
+    await d.from("agent_usage").update({
+      api_calls_count: (existing.api_calls_count || 0) + 1,
+      mint_operations_count: (existing.mint_operations_count || 0) + 1,
+      mint_total_amount: (existing.mint_total_amount || 0) + mintAmount,
+      fees_collected_usdc: (existing.fees_collected_usdc || 0) + feeUsdc,
+      updated_at: new Date().toISOString(),
+    }).eq("id", existing.id);
+  } else {
+    await d.from("agent_usage").insert({
+      owner_address: ownerAddress.toLowerCase(),
+      period_start: periodStart,
+      period_end: periodEnd,
+      api_calls_count: 1,
+      mint_operations_count: 1,
+      mint_total_amount: mintAmount,
+      fees_collected_usdc: feeUsdc,
+    });
+  }
+}
+
 async function handleServerMint(d: any, agent: any, body: any) {
   if (!agent.scopes.includes("mint")) return jsonResponse({ error: "Scope 'mint' required" }, 403);
 
@@ -352,6 +412,11 @@ async function handleServerMint(d: any, agent: any, body: any) {
 
   if (!prog) return jsonResponse({ error: "Program not found or not owned" }, 404);
   if (prog.status !== "active") return jsonResponse({ error: `Program is ${prog.status}` }, 400);
+
+  // Calculate transaction fee
+  const feePercent = await getAgentFeePercent(d, agent.agentId, agent.ownerAddress);
+  const feeAmount = amount * (feePercent / 100);
+  const netAmount = amount; // Fee is tracked separately, full amount minted to recipient
 
   const { data: wallet } = await d
     .from("agent_wallets")
@@ -381,6 +446,7 @@ async function handleServerMint(d: any, agent: any, body: any) {
     txResult = mockSignTransaction({ to: token_address, data: mintCalldata, walletAddress: wallet.wallet_address });
   }
 
+  // Record mint history
   await d.from("token_mint_history").insert({
     merchant_address: agent.ownerAddress.toLowerCase(),
     recipient_address: recipient_address.toLowerCase(),
@@ -389,17 +455,36 @@ async function handleServerMint(d: any, agent: any, body: any) {
     transaction_hash: txResult.status === "minted_onchain" ? txResult.txHash : null,
   });
 
+  // Record transaction fee
+  await d.from("agent_fee_log").insert({
+    agent_id: agent.agentId,
+    operation: "server_mint",
+    token_address: token_address.toLowerCase(),
+    mint_amount: amount,
+    fee_percent: feePercent,
+    fee_amount: feeAmount,
+    recipient_address: recipient_address.toLowerCase(),
+  });
+
+  // Track monthly usage
+  await trackUsage(d, agent.ownerAddress, amount, feeAmount);
+
   await d.from("agent_activity_log").insert({
     agent_id: agent.agentId, action: "server_mint",
     request_body: { token_address, recipient_address, amount },
-    response_status: 200, response_body: { tx_hash: txResult.txHash, mode: wallet.wallet_type, status: txResult.status },
+    response_status: 200, response_body: { tx_hash: txResult.txHash, mode: wallet.wallet_type, status: txResult.status, fee_percent: feePercent, fee_amount: feeAmount },
   });
 
   return jsonResponse({
-    mint: { token_address, recipient: recipient_address, amount, tx_hash: txResult.txHash, signed_by: wallet.wallet_address, mode: wallet.wallet_type, status: txResult.status },
+    mint: {
+      token_address, recipient: recipient_address, amount,
+      tx_hash: txResult.txHash, signed_by: wallet.wallet_address,
+      mode: wallet.wallet_type, status: txResult.status,
+      fee: { percent: feePercent, amount: feeAmount, currency: "tokens" },
+    },
     message: txResult.status === "minted_onchain"
-      ? "✅ Tokens minted on-chain via CDP server wallet."
-      : "⚠️ Mock mint — tokens not actually minted on-chain.",
+      ? `✅ Tokens minted on-chain via CDP. Fee: ${feePercent}% (${feeAmount} tokens).`
+      : `⚠️ Mock mint. Fee tracked: ${feePercent}% (${feeAmount} tokens).`,
   });
 }
 

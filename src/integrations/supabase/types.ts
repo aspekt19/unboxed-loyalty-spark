@@ -55,6 +55,101 @@ export type Database = {
           },
         ]
       }
+      agent_fee_log: {
+        Row: {
+          agent_id: string
+          created_at: string | null
+          fee_amount: number
+          fee_percent: number
+          id: string
+          mint_amount: number
+          operation: string
+          recipient_address: string
+          token_address: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string | null
+          fee_amount: number
+          fee_percent: number
+          id?: string
+          mint_amount: number
+          operation: string
+          recipient_address: string
+          token_address: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string | null
+          fee_amount?: number
+          fee_percent?: number
+          id?: string
+          mint_amount?: number
+          operation?: string
+          recipient_address?: string
+          token_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_fee_log_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agent_registry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_plans: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          max_agents: number
+          max_api_calls_monthly: number | null
+          max_mint_amount_monthly: number | null
+          name: string
+          price_eth_monthly: number
+          price_usdc_monthly: number
+          slug: string
+          transaction_fee_percent: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_agents?: number
+          max_api_calls_monthly?: number | null
+          max_mint_amount_monthly?: number | null
+          name: string
+          price_eth_monthly?: number
+          price_usdc_monthly?: number
+          slug: string
+          transaction_fee_percent?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_agents?: number
+          max_api_calls_monthly?: number | null
+          max_mint_amount_monthly?: number | null
+          name?: string
+          price_eth_monthly?: number
+          price_usdc_monthly?: number
+          slug?: string
+          transaction_fee_percent?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       agent_registry: {
         Row: {
           agent_wallet_address: string | null
@@ -67,6 +162,7 @@ export type Database = {
           last_request_at: string | null
           name: string
           owner_address: string
+          plan_id: string | null
           rate_limit_per_minute: number | null
           scopes: string[] | null
           total_requests: number | null
@@ -83,6 +179,7 @@ export type Database = {
           last_request_at?: string | null
           name: string
           owner_address: string
+          plan_id?: string | null
           rate_limit_per_minute?: number | null
           scopes?: string[] | null
           total_requests?: number | null
@@ -99,12 +196,74 @@ export type Database = {
           last_request_at?: string | null
           name?: string
           owner_address?: string
+          plan_id?: string | null
           rate_limit_per_minute?: number | null
           scopes?: string[] | null
           total_requests?: number | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "agent_registry_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "agent_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_usage: {
+        Row: {
+          api_calls_count: number | null
+          created_at: string | null
+          fees_collected_eth: number | null
+          fees_collected_usdc: number | null
+          id: string
+          mint_operations_count: number | null
+          mint_total_amount: number | null
+          owner_address: string
+          period_end: string
+          period_start: string
+          plan_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          api_calls_count?: number | null
+          created_at?: string | null
+          fees_collected_eth?: number | null
+          fees_collected_usdc?: number | null
+          id?: string
+          mint_operations_count?: number | null
+          mint_total_amount?: number | null
+          owner_address: string
+          period_end: string
+          period_start: string
+          plan_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          api_calls_count?: number | null
+          created_at?: string | null
+          fees_collected_eth?: number | null
+          fees_collected_usdc?: number | null
+          id?: string
+          mint_operations_count?: number | null
+          mint_total_amount?: number | null
+          owner_address?: string
+          period_end?: string
+          period_start?: string
+          plan_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_usage_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "agent_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       agent_wallets: {
         Row: {
