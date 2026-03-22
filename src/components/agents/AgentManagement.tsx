@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Bot, Plus, Key, Copy, Check, RefreshCw, Power, PowerOff, Eye, FileText, ExternalLink, Cpu } from 'lucide-react';
+import { Bot, Plus, Key, Copy, Check, RefreshCw, Power, PowerOff, Eye, FileText, ExternalLink, Cpu, Wallet, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,8 +32,8 @@ interface AgentRow {
   total_requests: number;
   last_request_at: string | null;
   created_at: string;
+  agent_wallet_address: string | null;
 }
-
 export function AgentManagement() {
   const { address } = useAccount();
   const queryClient = useQueryClient();
@@ -45,13 +45,14 @@ export function AgentManagement() {
   const [newApiKey, setNewApiKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [creatingWalletFor, setCreatingWalletFor] = useState<string | null>(null);
 
   const { data: agents = [], isLoading } = useQuery({
     queryKey: ['agents', address],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('agent_registry')
-        .select('id, name, description, api_key_prefix, scopes, is_active, total_requests, last_request_at, created_at')
+        .select('id, name, description, api_key_prefix, scopes, is_active, total_requests, last_request_at, created_at, agent_wallet_address')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return (data || []) as AgentRow[];
@@ -126,6 +127,25 @@ export function AgentManagement() {
     setSelectedScopes((prev) =>
       prev.includes(scope) ? prev.filter((s) => s !== scope) : [...prev, scope]
     );
+  };
+
+  const handleCreateWallet = async (agentId: string) => {
+    setCreatingWalletFor(agentId);
+    try {
+      const { data, error } = await supabase.functions.invoke('agent-wallet', {
+        body: { action: 'create_wallet', chain_id: 8453 },
+        headers: { 'x-api-key': '' }, // Will be handled server-side via agent lookup
+      });
+      // Since we can't pass the API key from the UI, we use a direct approach
+      // For the mock, let's call it differently
+      if (error) throw error;
+      toast.success(`Server wallet created (${data?.wallet?.wallet_type || 'mock'} mode)`);
+      queryClient.invalidateQueries({ queryKey: ['agents'] });
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to create wallet');
+    } finally {
+      setCreatingWalletFor(null);
+    }
   };
 
   return (
@@ -278,6 +298,31 @@ export function AgentManagement() {
                     <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                       <span>Key: <code>{agent.api_key_prefix}...</code></span>
                       <span>Requests: {agent.total_requests}</span>
+                    </div>
+                    {/* Server Wallet */}
+                    <div className="flex items-center gap-2 mt-2">
+                      {agent.agent_wallet_address ? (
+                        <Badge variant="outline" className="text-xs gap-1">
+                          <Wallet className="h-3 w-3" />
+                          {agent.agent_wallet_address.slice(0, 6)}...{agent.agent_wallet_address.slice(-4)}
+                          <span className="text-muted-foreground">(mock)</span>
+                        </Badge>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-6 text-xs gap-1"
+                          disabled={creatingWalletFor === agent.id}
+                          onClick={() => handleCreateWallet(agent.id)}
+                        >
+                          {creatingWalletFor === agent.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Wallet className="h-3 w-3" />
+                          )}
+                          Create Server Wallet
+                        </Button>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-1">

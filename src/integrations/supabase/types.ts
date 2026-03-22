@@ -106,6 +106,47 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_wallets: {
+        Row: {
+          agent_id: string
+          chain_id: number
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          updated_at: string | null
+          wallet_address: string
+          wallet_type: string
+        }
+        Insert: {
+          agent_id: string
+          chain_id?: number
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+          wallet_address: string
+          wallet_type?: string
+        }
+        Update: {
+          agent_id?: string
+          chain_id?: number
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+          wallet_address?: string
+          wallet_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_wallets_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agent_registry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       automation_rules: {
         Row: {
           action_config: Json
