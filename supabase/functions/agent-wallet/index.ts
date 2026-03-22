@@ -71,16 +71,74 @@ async function createCdpJwt(method: string, path: string): Promise<string | null
   }
 }
 
+// Sort object keys recursively for reqHash
+function sortKeys(obj: any): any {
+  if (!obj || typeof obj !== "object") return obj;
+  if (Array.isArray(obj)) return obj.map(sortKeys);
+  return Object.keys(obj).sort().reduce((acc: any, key: string) => {
+    acc[key] = sortKeys(obj[key]);
+    return acc;
+  }, {});
+}
+
+async function createWalletAuthJwt(method: string, path: string, body?: any): Promise<string | null> {
+  const walletSecret = Deno.env.get("CDP_WALLET_SECRET");
+  if (!walletSecret) return null;
+
+  try {
+    // Wallet Secret is a PKCS#8 DER key (base64-encoded), ES256 (P-256)
+    const derBytes = Uint8Array.from(atob(walletSecret.trim()), (c) => c.charCodeAt(0));
+    const pemBody = btoa(String.fromCharCode(...derBytes));
+    const pem = `-----BEGIN PRIVATE KEY-----\n${pemBody}\n-----END PRIVATE KEY-----`;
+
+    const privateKey = await importPKCS8(pem, "ES256");
+
+    const requestUri = `${method.toUpperCase()} api.cdp.coinbase.com/platform/v2${path}`;
+    const now = Math.floor(Date.now() / 1000);
+    const jti = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+      .map((b) => b.toString(16).padStart(2, "0")).join("");
+
+    const payload: any = {
+      iat: now,
+      nbf: now,
+      jti,
+      uris: [requestUri],
+    };
+
+    // Add request body hash if present
+    if (body) {
+      const sortedBody = sortKeys(body);
+      const bodyStr = JSON.stringify(sortedBody);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(bodyStr));
+      payload.reqHash = Array.from(new Uint8Array(hashBuffer))
+        .map((b) => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    const jwt = await new SignJWT(payload)
+      .setProtectedHeader({ alg: "ES256", typ: "JWT" })
+      .sign(privateKey);
+
+    console.log(`[agent-wallet] Wallet Auth JWT created`);
+    return jwt;
+  } catch (err) {
+    console.error("[agent-wallet] Wallet Auth JWT failed:", err);
+    return null;
+  }
+}
+
 async function cdpRequest(method: string, path: string, body?: any): Promise<{ ok: boolean; data?: any; error?: string }> {
   const jwt = await createCdpJwt(method, path);
+  if (!jwt) return { ok: false, error: "CDP keys not configured" };
 
-  const walletSecret = Deno.env.get("CDP_WALLET_SECRET");
   const headers: Record<string, string> = {
     "Authorization": `Bearer ${jwt}`,
     "Content-Type": "application/json",
   };
-  if (walletSecret) {
-    headers["X-Wallet-Auth"] = walletSecret;
+
+  // Generate Wallet Auth JWT for write operations
+  const walletJwt = await createWalletAuthJwt(method, path, body);
+  if (walletJwt) {
+    headers["X-Wallet-Auth"] = walletJwt;
   }
 
   try {
@@ -97,7 +155,7 @@ async function cdpRequest(method: string, path: string, body?: any): Promise<{ o
       let errorMsg: string;
       try {
         const errData = JSON.parse(responseText);
-        errorMsg = errData.message || errData.error || `CDP API error ${res.status}`;
+        errorMsg = errData.errorMessage || errData.message || errData.error || `CDP API error ${res.status}`;
       } catch {
         errorMsg = `CDP API ${res.status}: ${responseText.substring(0, 200)}`;
       }
