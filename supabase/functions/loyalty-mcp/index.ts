@@ -32,6 +32,12 @@ function encodeMintCalldata(to: string, amount: number): string {
   return appendBuilderCode("0x40c10f19" + paddedTo + amtHex);
 }
 
+function encodeTransferCalldata(to: string, amount: number): string {
+  const paddedTo = to.toLowerCase().replace("0x", "").padStart(64, "0");
+  const amtHex = BigInt(Math.floor(amount * 1e18)).toString(16).padStart(64, "0");
+  return appendBuilderCode("0xa9059cbb" + paddedTo + amtHex);
+}
+
 async function hashApiKey(key: string): Promise<string> {
   const enc = new TextEncoder();
   const buf = await crypto.subtle.digest("SHA-256", enc.encode(key));
