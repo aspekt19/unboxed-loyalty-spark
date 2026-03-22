@@ -632,7 +632,10 @@ Deno.serve(async (req) => {
         "GET /customers?token_address=0x...": "List customers",
         "GET /vouchers?token_address=0x...&status=active": "List vouchers",
         "GET /analytics": "Get merchant analytics",
-        "GET /offers": "List marketplace offers",
+        "GET /offers": "List active P2P offers (scope: trade or read)",
+        "POST /offers": "Create a P2P escrow offer (scope: trade)",
+        "POST /accept-offer": "Accept a P2P offer (scope: trade)",
+        "POST /cancel-offer": "Cancel your P2P offer (scope: trade)",
         "GET /me": "Get agent info",
       },
     }, 404);
