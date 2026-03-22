@@ -33,6 +33,13 @@ function encodeApproveCalldata(spender: string, amount: number): string {
   return appendBuilderCode("0x095ea7b3" + paddedSpender + amtHex);
 }
 
+// Encode transfer(address,uint256) calldata with Builder Code
+function encodeTransferCalldata(to: string, amount: number): string {
+  const paddedTo = to.toLowerCase().replace("0x", "").padStart(64, "0");
+  const amtHex = BigInt(Math.floor(amount * 1e18)).toString(16).padStart(64, "0");
+  return appendBuilderCode("0xa9059cbb" + paddedTo + amtHex);
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
