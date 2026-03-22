@@ -52,7 +52,7 @@ export function AgentManagement() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('agent_registry')
-        .select('id, name, description, api_key_prefix, scopes, is_active, total_requests, last_request_at, created_at')
+        .select('id, name, description, api_key_prefix, scopes, is_active, total_requests, last_request_at, created_at, agent_wallet_address')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return (data || []) as AgentRow[];
