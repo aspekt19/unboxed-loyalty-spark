@@ -22,131 +22,49 @@ async function createCdpJwt(method: string, path: string): Promise<string | null
   const keySecret = Deno.env.get("CDP_API_KEY_SECRET");
   if (!keyId || !keySecret) return null;
 
-  const enc = new TextEncoder();
-  const b64url = (data: Uint8Array) =>
-    btoa(String.fromCharCode(...data))
-      .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-  const b64urlStr = (s: string) => b64url(enc.encode(s));
-
-  // Parse key bytes
-  let keyData = keySecret.trim()
-    .replace(/-----BEGIN[^-]*-----/g, "")
-    .replace(/-----END[^-]*-----/g, "")
-    .replace(/\s/g, "");
-  const keyBytes = Uint8Array.from(atob(keyData), (c) => c.charCodeAt(0));
-
-  // Detect key type: 64 bytes raw = Ed25519 (32 priv + 32 pub), otherwise try EC P-256
-  const isEd25519 = keyBytes.length === 64 || keyBytes.length === 32;
-  const alg = isEd25519 ? "EdDSA" : "ES256";
-
-  // Build URI for CDP v2: "METHOD api.cdp.coinbase.com/platform/v2/path"
-  const requestUri = `${method.toUpperCase()} api.cdp.coinbase.com/platform/v2${path}`;
-
-  const header = { alg, kid: keyId, typ: "JWT", nonce: crypto.randomUUID() };
-  const now = Math.floor(Date.now() / 1000);
-  const payload = {
-    sub: keyId,
-    iss: "cdp",
-    aud: ["cdp_service"],
-    nbf: now,
-    exp: now + 120,
-    uri: requestUri,
-  };
-
-  const headerB64 = b64urlStr(JSON.stringify(header));
-  const payloadB64 = b64urlStr(JSON.stringify(payload));
-  const signingInput = `${headerB64}.${payloadB64}`;
-
   try {
-    let cryptoKey: CryptoKey;
-    let signature: ArrayBuffer;
+    // Decode the Ed25519 private key from base64
+    const decoded = Uint8Array.from(atob(keySecret.trim()), (c) => c.charCodeAt(0));
+    console.log(`[agent-wallet] Key decoded, length: ${decoded.length} bytes`);
 
-    if (isEd25519) {
-      // Ed25519: first 32 bytes = private key seed
-      const privKeyBytes = keyBytes.slice(0, 32);
+    // Ed25519 keys are 64 bytes (32 seed + 32 public)
+    const seed = decoded.slice(0, 32);
 
-      // PKCS#8 DER envelope for Ed25519 private key
-      const ed25519Pkcs8Prefix = new Uint8Array([
-        0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06,
-        0x03, 0x2b, 0x65, 0x70, 0x04, 0x22, 0x04, 0x20,
-      ]);
-      const pkcs8Key = new Uint8Array(ed25519Pkcs8Prefix.length + 32);
-      pkcs8Key.set(ed25519Pkcs8Prefix);
-      pkcs8Key.set(privKeyBytes, ed25519Pkcs8Prefix.length);
+    // Build PEM from raw seed via PKCS#8 DER
+    const ed25519Pkcs8Prefix = new Uint8Array([
+      0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06,
+      0x03, 0x2b, 0x65, 0x70, 0x04, 0x22, 0x04, 0x20,
+    ]);
+    const pkcs8Der = new Uint8Array(ed25519Pkcs8Prefix.length + 32);
+    pkcs8Der.set(ed25519Pkcs8Prefix);
+    pkcs8Der.set(seed, ed25519Pkcs8Prefix.length);
 
-      cryptoKey = await crypto.subtle.importKey(
-        "pkcs8", pkcs8Key,
-        { name: "Ed25519" },
-        false, ["sign"]
-      );
+    const pemBody = btoa(String.fromCharCode(...pkcs8Der));
+    const pem = `-----BEGIN PRIVATE KEY-----\n${pemBody}\n-----END PRIVATE KEY-----`;
 
-      signature = await crypto.subtle.sign(
-        "Ed25519",
-        cryptoKey,
-        enc.encode(signingInput)
-      );
+    const privateKey = await importPKCS8(pem, "EdDSA");
 
-      const sigB64 = b64url(new Uint8Array(signature));
-      console.log("[agent-wallet] CDP JWT created (Ed25519), header:", JSON.stringify(header), "payload:", JSON.stringify(payload));
-      return `${signingInput}.${sigB64}`;
-    } else {
-      // EC P-256 (ES256)
-      try {
-        cryptoKey = await crypto.subtle.importKey(
-          "pkcs8", keyBytes,
-          { name: "ECDSA", namedCurve: "P-256" },
-          false, ["sign"]
-        );
-      } catch {
-        const rawKey = keyBytes.length > 32 ? keyBytes.slice(0, 32) : keyBytes;
-        const pkcs8Prefix = new Uint8Array([
-          0x30, 0x41, 0x02, 0x01, 0x00,
-          0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01,
-          0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07,
-          0x04, 0x27, 0x30, 0x25, 0x02, 0x01, 0x01, 0x04, 0x20,
-        ]);
-        const pkcs8Key = new Uint8Array(pkcs8Prefix.length + 32);
-        pkcs8Key.set(pkcs8Prefix);
-        pkcs8Key.set(rawKey, pkcs8Prefix.length);
+    const requestUri = `${method.toUpperCase()} api.cdp.coinbase.com/platform/v2${path}`;
 
-        cryptoKey = await crypto.subtle.importKey(
-          "pkcs8", pkcs8Key,
-          { name: "ECDSA", namedCurve: "P-256" },
-          false, ["sign"]
-        );
-      }
+    const jwt = await new SignJWT({
+      sub: keyId,
+      iss: "cdp",
+      aud: ["cdp_service"],
+      uri: requestUri,
+    })
+      .setProtectedHeader({
+        alg: "EdDSA",
+        kid: keyId,
+        typ: "JWT",
+        nonce: crypto.randomUUID(),
+      })
+      .setIssuedAt()
+      .setNotBefore(Math.floor(Date.now() / 1000))
+      .setExpirationTime("2m")
+      .sign(privateKey);
 
-      signature = await crypto.subtle.sign(
-        { name: "ECDSA", hash: "SHA-256" },
-        cryptoKey,
-        enc.encode(signingInput)
-      );
-
-      // Convert DER to raw r||s
-      const sigArray = new Uint8Array(signature);
-      let r: Uint8Array, s: Uint8Array;
-      if (sigArray[0] === 0x30) {
-        let offset = 2;
-        const rLen = sigArray[offset + 1];
-        r = sigArray.slice(offset + 2, offset + 2 + rLen);
-        offset = offset + 2 + rLen;
-        const sLen = sigArray[offset + 1];
-        s = sigArray.slice(offset + 2, offset + 2 + sLen);
-        if (r.length > 32) r = r.slice(r.length - 32);
-        if (s.length > 32) s = s.slice(s.length - 32);
-        if (r.length < 32) { const t = new Uint8Array(32); t.set(r, 32 - r.length); r = t; }
-        if (s.length < 32) { const t = new Uint8Array(32); t.set(s, 32 - s.length); s = t; }
-      } else {
-        r = sigArray.slice(0, 32);
-        s = sigArray.slice(32, 64);
-      }
-      const rawSig = new Uint8Array(64);
-      rawSig.set(r, 0);
-      rawSig.set(s, 32);
-
-      console.log("[agent-wallet] CDP JWT created (ES256)");
-      return `${signingInput}.${b64url(rawSig)}`;
-    }
+    console.log(`[agent-wallet] CDP JWT created (jose/EdDSA), uri: ${requestUri}`);
+    return jwt;
   } catch (err) {
     console.error("[agent-wallet] JWT creation failed:", err);
     return null;
