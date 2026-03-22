@@ -1,5 +1,38 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// --- Builder Code for Base attribution (base.dev analytics) ---
+const BUILDER_CODE = "bc_wdmnog7m";
+
+function getBuilderCodeSuffix(): string {
+  try {
+    const codeBytes = new TextEncoder().encode(BUILDER_CODE);
+    return Array.from(codeBytes).map(b => b.toString(16).padStart(2, "0")).join("");
+  } catch {
+    return "";
+  }
+}
+
+const BUILDER_SUFFIX = getBuilderCodeSuffix();
+
+function appendBuilderCode(calldata: string): string {
+  if (!BUILDER_SUFFIX) return calldata;
+  return calldata + BUILDER_SUFFIX;
+}
+
+// Encode mint(address,uint256) calldata with Builder Code
+function encodeMintCalldata(to: string, amount: number): string {
+  const paddedTo = to.toLowerCase().replace("0x", "").padStart(64, "0");
+  const amtHex = BigInt(Math.floor(amount * 1e18)).toString(16).padStart(64, "0");
+  return appendBuilderCode("0x40c10f19" + paddedTo + amtHex);
+}
+
+// Encode approve(address,uint256) calldata with Builder Code
+function encodeApproveCalldata(spender: string, amount: number): string {
+  const paddedSpender = spender.toLowerCase().replace("0x", "").padStart(64, "0");
+  const amtHex = BigInt(Math.floor(amount * 1e18)).toString(16).padStart(64, "0");
+  return appendBuilderCode("0x095ea7b3" + paddedSpender + amtHex);
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
