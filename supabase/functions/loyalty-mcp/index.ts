@@ -9,6 +9,29 @@ const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 function db() { return createClient(supabaseUrl, supabaseServiceKey); }
 
+// --- Builder Code for Base attribution ---
+const BUILDER_CODE = "bc_wdmnog7m";
+
+function getBuilderCodeSuffix(): string {
+  try {
+    const codeBytes = new TextEncoder().encode(BUILDER_CODE);
+    return Array.from(codeBytes).map(b => b.toString(16).padStart(2, "0")).join("");
+  } catch { return ""; }
+}
+
+const BUILDER_SUFFIX = getBuilderCodeSuffix();
+
+function appendBuilderCode(calldata: string): string {
+  if (!BUILDER_SUFFIX) return calldata;
+  return calldata + BUILDER_SUFFIX;
+}
+
+function encodeMintCalldata(to: string, amount: number): string {
+  const paddedTo = to.toLowerCase().replace("0x", "").padStart(64, "0");
+  const amtHex = BigInt(Math.floor(amount * 1e18)).toString(16).padStart(64, "0");
+  return appendBuilderCode("0x40c10f19" + paddedTo + amtHex);
+}
+
 async function hashApiKey(key: string): Promise<string> {
   const enc = new TextEncoder();
   const buf = await crypto.subtle.digest("SHA-256", enc.encode(key));
