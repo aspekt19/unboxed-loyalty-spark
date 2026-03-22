@@ -333,11 +333,14 @@ Deno.serve(async (req) => {
       await logActivity(serviceClient, agent.agentId, "mint_tokens", body, 201, { mint_id: mintRecord.id }, ip);
       return jsonResponse({
         mint: mintRecord,
-        message: "Mint intent recorded. To complete on-chain, call the smart contract mint function with the provided parameters.",
+        message: "Mint intent recorded. To complete on-chain, send the provided calldata to the token contract.",
         contract: {
           token_address,
           function: "mint(address,uint256)",
           params: [recipient_address, amount],
+          calldata: encodeMintCalldata(recipient_address, amount),
+          chain: "Base (8453)",
+          builder_code: BUILDER_CODE,
         },
       }, 201);
     }
