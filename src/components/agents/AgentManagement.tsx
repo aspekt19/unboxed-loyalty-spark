@@ -311,7 +311,6 @@ export function AgentManagement() {
                         <Badge variant="outline" className="text-xs gap-1">
                           <Wallet className="h-3 w-3" />
                           {agent.agent_wallet_address.slice(0, 6)}...{agent.agent_wallet_address.slice(-4)}
-                          <span className="text-muted-foreground">(mock)</span>
                         </Badge>
                       ) : (
                         <Button
