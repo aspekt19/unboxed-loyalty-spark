@@ -83,9 +83,47 @@
       {
         "method": "GET",
         "path": "/offers",
-        "scope": "read",
-        "description": "List active marketplace offers for token trading"
+        "scope": "trade",
+        "description": "List active P2P escrow offers for token trading"
+      },
+      {
+        "method": "POST",
+        "path": "/offers",
+        "scope": "trade",
+        "description": "Create a new P2P escrow offer. Returns escrow contract calldata for atomic swap.",
+        "body": {
+          "offer_token_address": "0x...",
+          "offer_amount": 100,
+          "request_token_address": "0x...",
+          "request_amount": 50
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/accept-offer",
+        "scope": "trade",
+        "description": "Accept a P2P offer. Returns escrow contract calldata for fillOffer.",
+        "body": { "offer_id": "uuid" }
+      },
+      {
+        "method": "POST",
+        "path": "/cancel-offer",
+        "scope": "trade",
+        "description": "Cancel your own P2P offer. Returns escrow contract calldata for cancelOffer.",
+        "body": { "offer_id": "uuid" }
       }
+    ]
+  },
+  "escrow": {
+    "description": "P2P token exchange is protected by a smart contract escrow. Atomic swap — both transfers happen in one transaction, or neither does.",
+    "contract": "LoyaltyTokenEscrow (Base)",
+    "fee": "0.5% protocol fee on completed swaps",
+    "flow": [
+      "1. Creator approves escrow contract for offer tokens",
+      "2. Creator calls createOffer() — tokens locked in escrow",
+      "3. Accepter approves escrow contract for request tokens",
+      "4. Accepter calls fillOffer() — atomic swap executes",
+      "Alternative: Creator calls cancelOffer() — tokens returned"
     ]
   },
   "wallets": {
