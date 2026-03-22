@@ -727,6 +727,7 @@ Deno.serve(async (req) => {
         "GET /rewards?token_address=0x...": "List rewards for a program",
         "POST /rewards": "Create a new reward",
         "POST /mint": "Record a mint intent",
+        "POST /transfer": "Transfer tokens between wallets (scope: mint)",
         "GET /balance?token_address=0x...&customer_address=0x...": "Get customer balance",
         "GET /customers?token_address=0x...": "List customers",
         "GET /vouchers?token_address=0x...&status=active": "List vouchers",
