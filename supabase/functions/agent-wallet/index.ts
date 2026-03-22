@@ -86,7 +86,7 @@ async function createCdpJwt(method: string, path: string): Promise<string | null
       );
 
       const sigB64 = b64url(new Uint8Array(signature));
-      console.log("[agent-wallet] CDP JWT created (Ed25519)");
+      console.log("[agent-wallet] CDP JWT created (Ed25519), header:", JSON.stringify(header), "payload:", JSON.stringify(payload));
       return `${signingInput}.${sigB64}`;
     } else {
       // EC P-256 (ES256)
