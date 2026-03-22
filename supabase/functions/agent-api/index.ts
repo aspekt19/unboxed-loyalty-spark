@@ -550,6 +550,7 @@ Deno.serve(async (req) => {
           function: "createOffer(address,uint256,address,uint256)",
           params: [offer_token_address, offer_amount, request_token_address, request_amount],
           note: "First approve the escrow contract for offer_amount of offer_token, then call createOffer.",
+          builder_code: BUILDER_CODE,
         },
       }, 201);
     }
