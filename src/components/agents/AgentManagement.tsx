@@ -32,8 +32,8 @@ interface AgentRow {
   total_requests: number;
   last_request_at: string | null;
   created_at: string;
+  agent_wallet_address: string | null;
 }
-
 export function AgentManagement() {
   const { address } = useAccount();
   const queryClient = useQueryClient();
