@@ -177,8 +177,9 @@ async function handleCreateWallet(d: any, agent: any, body: any) {
   let walletType: string;
 
   // Try CDP REST API
+  const walletName = `agent-${agent.agentId.substring(0, 8)}`.toLowerCase().replace(/[^a-z0-9-]/g, "").substring(0, 36);
   const cdpResult = await cdpRequest("POST", "/evm/accounts", {
-    name: `loyalty-agent-${agent.name}-${agent.agentId.substring(0, 8)}`,
+    name: walletName,
   });
 
   if (cdpResult.ok && cdpResult.data?.address) {
