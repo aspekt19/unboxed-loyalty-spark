@@ -1,207 +1,209 @@
-# Loyal Spark - Loyalty Rewards That Grow
+# Loyal Spark — Onchain Loyalty Protocol
 
-A Web3-powered loyalty platform built on Base Mainnet, enabling merchants to create custom loyalty token programs while customers earn rewards that automatically invest and grow through DeFi.
+A Web3-powered loyalty platform built on **Base Mainnet**, enabling merchants and AI agents to create custom loyalty token programs while customers earn rewards that automatically invest and grow through DeFi.
 
 ## Overview
 
-Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain. Merchants can deploy ERC-20 loyalty tokens, create custom reward vouchers, and manage their programs through an intuitive dashboard. Customers receive blockchain-based loyalty tokens they truly own, which can be redeemed for exclusive vouchers or traded on decentralized exchanges.
+Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain. It operates as a **dual-mode platform**: humans interact via the web UI with wallet-based authentication (SIWE), while AI agents interact via REST API or MCP Server — sharing the same database, smart contracts, and tokens.
 
-### Merchant Features
-- **Deploy Loyalty Tokens**: Create custom ERC-20 loyalty tokens with unique names and symbols
-- **Mint Tokens**: Issue loyalty points to customers via their wallet addresses
-- **Create Rewards**: Design custom voucher rewards with token costs and expiration dates
-- **Manage Programs**: Track created tokens and active reward campaigns
-- **Voucher Management**: Monitor voucher redemptions and usage
+```
+┌─────────────────────────────────────────────────┐
+│              Loyal Spark Platform                │
+│                                                  │
+│  ┌──────────┐    ┌──────────┐    ┌──────────┐   │
+│  │  Web UI   │    │ REST API │    │MCP Server│   │
+│  │ (humans)  │    │ (agents) │    │ (agents) │   │
+│  └─────┬─────┘    └─────┬────┘    └─────┬────┘   │
+│        │                │               │        │
+│        ▼                ▼               ▼        │
+│  ┌──────────────────────────────────────────┐    │
+│  │        Backend (Edge Functions)           │    │
+│  │    Auth · RLS · DB · Realtime             │    │
+│  └─────────────────┬────────────────────────┘    │
+│                    │                             │
+│        ┌───────────┴───────────┐                 │
+│        ▼                       ▼                 │
+│  ┌──────────┐          ┌──────────────┐          │
+│  │ Base L2  │          │ CDP Server   │          │
+│  │ Contracts│          │ Wallet (MPC) │          │
+│  └──────────┘          └──────────────┘          │
+└─────────────────────────────────────────────────┘
+```
 
-### Customer Features
-- **Multi-Token Dashboard**: View all loyalty tokens from different merchants in one place
-- **Browse Rewards**: Explore available vouchers across all participating merchants
-- **Redeem Vouchers**: Burn loyalty tokens to claim exclusive voucher rewards
-- **Manage Vouchers**: Track active vouchers with expiration dates and QR codes
+## Features
+
+### For Merchants (Web UI)
+- **Deploy Loyalty Tokens**: Create custom ERC-20 loyalty tokens on Base
+- **Mint Tokens**: Issue loyalty points to customers via wallet addresses or QR scan
+- **Create Rewards**: Design voucher rewards with token costs
+- **CRM & Analytics**: Customer profiles, RFM segmentation, tier management
+- **Marketing Automation**: Automated campaigns, personalized offers
+- **Referral Programs**: Generate referral codes with bonuses
+- **Voucher Management**: Track redemptions with QR code verification
+- **AI Agent Management**: Register agents, manage API keys, monitor activity
+
+### For Customers (Web UI)
+- **Multi-Token Dashboard**: View all loyalty tokens from different merchants
+- **Browse Rewards**: Explore available vouchers across all programs
+- **Redeem Vouchers**: Burn tokens to claim exclusive rewards with QR codes
 - **DEX Trading**: Trade loyalty tokens on decentralized exchanges
-- **Transfer Tokens**: Send loyalty points to other wallet addresses
+- **Round-Up Investment**: Automatically invest spare change into DeFi (Aave/Compound)
+- **Tier System**: Bronze → Silver → Gold → Platinum with increasing perks
 
-## Key Features
-
-### For Merchants
-- **Token Deployment**: One-click ERC-20 loyalty token creation with custom branding
-- **Flexible Minting**: Issue tokens to customer wallets with real-time transaction tracking
-- **Reward Creation**: Design voucher rewards with customizable costs and expiration dates
-- **Program Management**: Monitor all created tokens and active rewards in one dashboard
-- **Voucher Analytics**: Track redemption rates and voucher usage
-
-### For Customers
-- **Unified Dashboard**: View loyalty token balances from all participating merchants
-- **Reward Marketplace**: Browse and filter available vouchers across all programs
-- **Easy Redemption**: Burn tokens to claim vouchers with instant confirmation
-- **My Vouchers**: Manage active vouchers with QR codes and expiration tracking
-- **DEX Integration**: Trade loyalty tokens on decentralized exchanges
-- **Token Transfers**: Send tokens to other wallet addresses
+### For AI Agents (REST API + MCP)
+- **Full CRUD via API**: Create programs, mint tokens, manage rewards, view analytics
+- **MCP Server**: Connect Claude, GPT, Cursor, or any MCP-compatible LLM directly
+- **Server Wallets**: Coinbase CDP MPC wallets for autonomous onchain operations
+- **Scoped Permissions**: Granular access control (read, mint, manage_rewards, trade)
+- **Activity Logging**: Full audit trail of all agent operations
+- **Tiered Pricing**: Free (100 calls/mo, 1% fee) → Pro ($29/mo, 0.5%) → Enterprise ($99/mo, 0.25%)
 
 ## Technology Stack
 
-- **Frontend**: React 18, TypeScript, Vite
-- **UI Framework**: Tailwind CSS with shadcn/ui components
-- **Styling**: Framer Motion for animations, next-themes for dark mode
-- **Blockchain**: Wagmi v2, Viem, RainbowKit for wallet connection
-- **Network**: Base Mainnet (Chain ID: 8453)
-- **Smart Contract**: ERC-20 Token Standard
-- **Backend**: Lovable Cloud (Supabase) for voucher management
-- **State Management**: React Hooks, TanStack Query v5
-- **Routing**: React Router v6
-- **Forms**: React Hook Form with Zod validation
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui |
+| Animations | Framer Motion |
+| Blockchain | Wagmi v2, Viem, RainbowKit |
+| Network | Base Mainnet (Chain ID: 8453) |
+| Smart Contracts | ERC-20 Token Standard (Factory pattern) |
+| Backend | Lovable Cloud (Supabase Edge Functions) |
+| Agent Wallets | Coinbase CDP MPC (Server Wallets) |
+| State | React Hooks, TanStack Query v5 |
+| Routing | React Router v6 |
+| Forms | React Hook Form + Zod validation |
+| Builder Attribution | Base Builder Code (ERC-8021) |
 
 ## Smart Contract Architecture
 
-### Contract Details
-- **Network**: Base Mainnet (Chain ID: 8453)
-- **Factory Contract**: `0x5F3DdBa12580CFdc6016258774cCc19C4250dA80`
-- **LoyalSparkERC20 (Implementation)**: `0xe6BA426C9c51281B929a17444De02c65815E27C3`
-- **Token Standard**: ERC-20 (Standard Token)
-- **Deployed via**: Factory pattern for gas-efficient token creation
+| Contract | Address |
+|----------|---------|
+| **LoyaltyTokenFactory** | `0x5F3DdBa12580CFdc6016258774cCc19C4250dA80` |
+| **LoyalSparkERC20 (Implementation)** | `0xe6BA426C9c51281B929a17444De02c65815E27C3` |
+
+**Network**: Base Mainnet (Chain ID: 8453)
 
 ### Core Functions
+- `deployLoyaltyToken(name, symbol)` — Deploy new ERC-20 token
+- `mint(address to, uint256 amount)` — Issue new tokens (owner only)
+- `burn(uint256 amount)` — Burn tokens for voucher redemption
+- `transfer(address to, uint256 amount)` — Transfer tokens between wallets
+- `balanceOf(address account)` — Query token balance
 
-#### Token Operations
-- `balanceOf(address account)` - Query token balance
-- `transfer(address to, uint256 amount)` - Transfer tokens between wallets
-- `burn(uint256 amount)` - Burn tokens for voucher redemption
-- `mint(address to, uint256 amount)` - Issue new tokens (merchant only)
+## AI Agent Integration
 
-#### Merchant Functions
-- `deployLoyaltyToken(string name, string symbol)` - Deploy new ERC-20 token
-- Token ownership and minting rights controlled by deployer
+### Quick Start
+
+1. Go to [loyalspark.online/merchant](https://loyalspark.online/merchant) and connect wallet
+2. Open **AI Agents** tab → Register an agent → Copy your API key (`lsk_...`)
+3. Use the key in `x-api-key` header for REST or MCP calls
+
+### REST API
+
+```bash
+# List loyalty programs
+curl -H "x-api-key: lsk_YOUR_KEY" \
+  https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/programs
+
+# Mint tokens (1% fee on Free plan)
+curl -X POST \
+  -H "x-api-key: lsk_YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"token_address":"0x...","recipient":"0x...","amount":100}' \
+  https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/mint
+```
+
+### API Endpoints
+
+| Method | Path | Scope | Description |
+|--------|------|-------|-------------|
+| GET | `/me` | any | Agent profile & permissions |
+| GET | `/programs` | read | List loyalty programs |
+| POST | `/programs` | create_program | Deploy new program |
+| GET | `/rewards` | read | List rewards |
+| POST | `/rewards` | manage_rewards | Create reward |
+| POST | `/mint` | mint | Mint tokens |
+| GET | `/balance` | read | Token balance |
+| GET | `/customers` | read | Customer list |
+| GET | `/analytics` | read | Program analytics |
+| GET | `/offers` | read | Marketplace offers |
+
+### MCP Server (for LLMs)
+
+Connect Claude, GPT, or any MCP-compatible agent:
+
+```json
+{
+  "mcpServers": {
+    "loyal-spark": {
+      "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+      "headers": {
+        "x-api-key": "lsk_YOUR_KEY"
+      }
+    }
+  }
+}
+```
+
+**Available MCP Tools**: `get_platform_info`, `get_my_profile`, `list_loyalty_programs`, `list_rewards`, `create_reward`, `mint_loyalty_tokens`, `get_token_balance`, `get_program_analytics`, `list_marketplace_offers`
+
+### Agent Discovery
+
+AI agents can discover the protocol automatically via:
+- `/.well-known/agent.json` — Full protocol specification, capabilities, pricing
+- `/api-docs` — Interactive API documentation
+
+### Server Wallets (CDP MPC)
+
+Agents can create their own Coinbase MPC wallets on Base for autonomous transactions:
+
+```bash
+curl -X POST \
+  -H "x-api-key: lsk_YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"action":"create_server_wallet"}' \
+  https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-wallet
+```
+
+Benefits:
+- No private key management — keys are in Coinbase's secure enclave
+- Server-side transaction signing
+- Automatic Builder Code attribution (ERC-8021)
+
+### Pricing
+
+| Plan | Monthly | API Calls | Agents | Tx Fee |
+|------|---------|-----------|--------|--------|
+| Free | $0 | 100 | 1 | 1% |
+| Pro | $29 USDC | 10,000 | 5 | 0.5% |
+| Enterprise | $99 USDC | Unlimited | Unlimited | 0.25% |
+
+Payments accepted on-chain in USDC on Base ($1 = 1 USDC).
 
 ## Getting Started
 
 ### Prerequisites
-
 - Node.js 18+ or Bun
 - MetaMask, Coinbase Wallet, or any WalletConnect-compatible wallet
 - Base Mainnet configured in your wallet
-- Some ETH on Base Mainnet for gas fees
+- Some ETH on Base for gas fees
 
 ### Installation
 
 ```bash
-# Clone the repository
 git clone https://github.com/aspekt19/unboxed-loyalty-spark.git
-
-# Navigate to project
 cd unboxed-loyalty-spark
-
-# Install dependencies
 npm install
-
-# Start development server
 npm run dev
 ```
 
 ### Wallet Setup
 
-To use Loyal Spark, ensure your wallet is connected to **Base Mainnet**:
-
-1. **Network Name**: Base Mainnet
+1. **Network**: Base Mainnet
 2. **Chain ID**: 8453
 3. **RPC URL**: https://mainnet.base.org
-4. **Currency Symbol**: ETH
-5. **Block Explorer**: https://basescan.org
-
-The application will automatically prompt you to switch networks if you're on a different chain.
-
-### Configuration
-
-The smart contract configuration is located in `src/config/contracts.ts` and Wagmi config in `src/config/wagmi.ts`:
-
-```typescript
-// Factory contract for deploying loyalty tokens
-export const FACTORY_ADDRESS = "0x5F3DdBa12580CFdc6016258774cCc19C4250dA80";
-export const BASE_CHAIN_ID = 8453;
-```
-
-The application uses RainbowKit for wallet connections and supports multiple wallet providers.
-
-## Usage
-
-### For Merchants
-
-#### Creating a Loyalty Program
-1. Navigate to the Merchant Panel
-2. Connect your wallet using RainbowKit
-3. Go to "Create Loyalty Program"
-4. Enter token name and symbol
-5. Deploy your ERC-20 loyalty token
-6. Share your token address with customers
-
-#### Issuing Tokens
-1. Select your token from "Created Programs"
-2. Enter customer wallet address
-3. Specify token amount
-4. Confirm minting transaction
-5. Tokens appear in customer's wallet instantly
-
-#### Creating Rewards
-1. Go to "Create Reward" section
-2. Select your loyalty token
-3. Set reward details (name, description, cost)
-4. Add expiration date
-5. Upload reward image
-6. Publish reward for customers
-
-### For Customers
-
-#### Viewing Tokens
-1. Navigate to Customer Panel
-2. Connect your wallet
-3. View all loyalty tokens from participating merchants
-4. Check token balances and details
-
-#### Redeeming Vouchers
-1. Browse available rewards in "Rewards" section
-2. Select desired voucher
-3. Confirm token burn transaction
-4. Voucher appears in "My Vouchers"
-5. Present QR code to merchant
-
-#### Trading on DEX
-1. Go to "DEX" section in Customer Panel
-2. View token details and DEX links
-3. Trade tokens on supported DEXs
-
-## Database & Backend
-
-Loyal Spark uses Lovable Cloud (powered by Supabase) for managing vouchers and rewards:
-
-### Database Tables
-- **loyalty_tokens**: Stores deployed token information
-- **rewards**: Manages created voucher rewards
-- **vouchers**: Tracks redeemed vouchers per user
-- **voucher_redemptions**: Records redemption history
-
-### Features
-- Row Level Security (RLS) for data protection
-- Real-time updates for voucher status
-- Secure file storage for reward images
-- Automatic timestamp tracking
-
-## Development
-
-```bash
-# Development server with hot reload
-npm run dev
-
-# Type checking
-npm run type-check
-
-# Build for production
-npm run build
-
-# Preview production build locally
-npm run preview
-
-# Lint code
-npm run lint
-```
+4. **Currency**: ETH
+5. **Explorer**: https://basescan.org
 
 ## Project Structure
 
@@ -209,108 +211,95 @@ npm run lint
 unboxed-loyalty-spark/
 ├── src/
 │   ├── components/
-│   │   ├── ui/                      # shadcn/ui component library
-│   │   ├── rewards/                 # Reward & voucher components
-│   │   ├── CreateLoyaltyProgram.tsx # Token deployment
-│   │   ├── CreatedPrograms.tsx      # Merchant token list
-│   │   ├── MerchantPanel.tsx        # Merchant dashboard
-│   │   ├── CustomerPanel.tsx        # Customer dashboard
-│   │   ├── DexIntegration.tsx       # DEX trading interface
-│   │   └── WalletConnectButton.tsx  # RainbowKit wallet connection
-│   ├── hooks/
-│   │   ├── useDeployLoyaltyToken.ts # Token deployment hook
-│   │   ├── useMintTokens.ts         # Minting functionality
-│   │   ├── useBurnTokens.ts         # Token burning for vouchers
-│   │   ├── useTransferTokens.ts     # Token transfers
-│   │   └── useTokenBalance.ts       # Balance queries
-│   ├── config/
-│   │   ├── contracts.ts             # Contract addresses & ABIs
-│   │   └── wagmi.ts                 # Wagmi configuration
-│   ├── integrations/
-│   │   └── supabase/                # Database client & types
-│   ├── pages/
-│   │   ├── Index.tsx                # Landing page
-│   │   ├── MerchantPage.tsx         # Merchant portal
-│   │   └── CustomerPage.tsx         # Customer portal
-│   ├── lib/
-│   │   ├── utils.ts                 # Utility functions
-│   │   └── vouchers.ts              # Voucher management
-│   └── index.css                    # Design system tokens
+│   │   ├── ui/                    # shadcn/ui library
+│   │   ├── agents/                # AI agent management
+│   │   ├── rewards/               # Rewards & vouchers
+│   │   ├── crm/                   # CRM & analytics
+│   │   ├── marketing/             # Campaigns
+│   │   ├── automation/            # Marketing automation
+│   │   ├── tiers/                 # Customer tiers
+│   │   ├── referral/              # Referral programs
+│   │   ├── roundup/               # DeFi investment
+│   │   ├── marketplace/           # Token trading
+│   │   ├── reviews/               # Customer reviews
+│   │   ├── onboarding/            # Welcome flows & tours
+│   │   └── admin/                 # Platform administration
+│   ├── hooks/                     # Custom React hooks
+│   ├── config/                    # Contract addresses & ABIs
+│   ├── contexts/                  # Auth context
+│   ├── integrations/supabase/     # Database client & types
+│   ├── pages/                     # Route pages
+│   └── lib/                       # Utilities
 ├── public/
-│   └── media-kit/                   # Brand assets & press materials
+│   ├── .well-known/
+│   │   ├── agent.json             # AI agent discovery
+│   │   └── farcaster.json         # Farcaster manifest
+│   └── media-kit/                 # Brand assets
+├── contracts/                     # Solidity contracts
 ├── supabase/
-│   └── config.toml                  # Supabase configuration
+│   ├── functions/
+│   │   ├── agent-api/             # REST API for agents
+│   │   ├── agent-wallet/          # CDP wallet management
+│   │   ├── agent-api-key/         # API key generation
+│   │   ├── loyalty-mcp/           # MCP Server
+│   │   ├── siwe-verify/           # Wallet authentication
+│   │   ├── verify-payment/        # Payment verification
+│   │   └── ...                    # Other edge functions
+│   └── migrations/                # Database migrations
 └── README.md
 ```
 
-## Security Considerations
+## Edge Functions
 
-- **Wallet Connection**: Multi-provider support via RainbowKit (MetaMask, Coinbase Wallet, WalletConnect)
-- **Transaction Signing**: All blockchain transactions require explicit user confirmation
-- **Address Validation**: Ethereum address validation before all operations
-- **Database Security**: Row Level Security (RLS) policies protect user data
-- **Token Ownership**: Only token deployers can mint new tokens
-- **Network Verification**: Automatic Base Mainnet network detection and switching
-- **Voucher Validation**: Server-side checks prevent duplicate redemptions
+| Function | Purpose |
+|----------|---------|
+| `agent-api` | REST API for AI agents (CRUD operations) |
+| `agent-wallet` | CDP MPC wallet creation & transaction signing |
+| `agent-api-key` | API key generation for agents |
+| `loyalty-mcp` | MCP Server for LLM integration |
+| `siwe-verify` | Sign-In With Ethereum authentication |
+| `verify-payment` | Premium subscription payment verification |
+| `verify-agent-plan-payment` | Agent plan USDC payment verification |
+| `check-premium-expiration` | Subscription expiration checks |
+| `check-program-expiration` | Program expiration handling |
+| `get-token-holders` | Token holder analytics |
+| `process-automation` | Marketing automation triggers |
+| `sync-mint-history` | Blockchain mint history sync |
+| `verify-voucher` | Voucher verification |
 
-## Troubleshooting
+## Security
 
-### Wallet Connection Issues
-- Ensure you have a Web3 wallet installed (MetaMask, Coinbase Wallet, etc.)
-- Check that you're on Base Mainnet (Chain ID: 8453)
-- Try disconnecting and reconnecting your wallet
-- Clear browser cache and refresh
+- **SIWE Authentication**: Wallet signature-based authentication for humans
+- **API Key Auth**: SHA-256 hashed keys with `lsk_` prefix for agents
+- **Row Level Security**: All database tables protected with RLS policies
+- **Scoped Permissions**: Agents operate within granted scopes only
+- **MPC Wallets**: Private keys never leave Coinbase's secure enclave
+- **Rate Limiting**: Per-agent rate limits prevent abuse
+- **Builder Code Attribution**: All transactions tagged with ERC-8021 builder code
 
-### Transaction Failures
-- Verify sufficient ETH for gas fees on Base Mainnet
-- Check network congestion (try increasing gas limit)
-- For minting: Ensure you're the token deployer
-- For burning: Confirm sufficient token balance
+## Builder Code
 
-### Voucher Redemption Issues
-- Ensure tokens are burned successfully before voucher creation
-- Check voucher expiration dates
-- Verify wallet connection is active
-- Refresh the page if vouchers don't appear immediately
-
-### DEX Trading Not Working
-- Ensure token has liquidity on the DEX
-- Check that you've approved the DEX to spend your tokens
-- Verify sufficient token balance for trade
-
-## Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-Please ensure your code follows the existing patterns and includes appropriate error handling.
-
-## License
-
-MIT License - see LICENSE file for details
+All on-chain transactions are tagged with Base Builder Code `bc_wdmnog7m` (ERC-8021 format) for analytics visibility in [base.dev](https://base.dev).
 
 ## Links & Resources
 
-- **Website**: https://loyalspark.online
-- **GitHub**: https://github.com/aspekt19/unboxed-loyalty-spark
-- **Twitter/X**: https://x.com/Loyal_Spark
-- **Contact**: admin@loyalspark.online
+- **Website**: [loyalspark.online](https://loyalspark.online)
+- **API Docs**: [loyalspark.online/api-docs](https://loyalspark.online/api-docs)
+- **Agent Discovery**: [loyalspark.online/.well-known/agent.json](https://loyalspark.online/.well-known/agent.json)
+- **GitHub**: [github.com/aspekt19/unboxed-loyalty-spark](https://github.com/aspekt19/unboxed-loyalty-spark)
+- **Twitter/X**: [x.com/Loyal_Spark](https://x.com/Loyal_Spark)
+- **Email**: admin@loyalspark.online
 
 ## Built With
 
-- [Base](https://base.org) - Ethereum L2 Network by Coinbase
-- [Wagmi](https://wagmi.sh) - React Hooks for Ethereum
-- [RainbowKit](https://www.rainbowkit.com) - Wallet Connection Library
-- [shadcn/ui](https://ui.shadcn.com) - Beautiful UI Components
-- [Lovable](https://lovable.dev) - Full-Stack Development Platform
-- [Viem](https://viem.sh) - TypeScript Interface for Ethereum
-- [TanStack Query](https://tanstack.com/query) - Powerful Data Synchronization
+- [Base](https://base.org) — Ethereum L2 by Coinbase
+- [Coinbase CDP](https://docs.cdp.coinbase.com) — MPC Server Wallets
+- [Wagmi](https://wagmi.sh) — React Hooks for Ethereum
+- [RainbowKit](https://www.rainbowkit.com) — Wallet Connection
+- [shadcn/ui](https://ui.shadcn.com) — UI Components
+- [Lovable](https://lovable.dev) — Full-Stack Development Platform
+- [Viem](https://viem.sh) — TypeScript Interface for Ethereum
 
-## Acknowledgments
+## License
 
-Special thanks to the Base, Wagmi, and RainbowKit communities for excellent developer tools and documentation.
+MIT License — see LICENSE file for details.
