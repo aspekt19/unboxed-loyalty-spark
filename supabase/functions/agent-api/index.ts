@@ -1,5 +1,38 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// --- Builder Code for Base attribution (base.dev analytics) ---
+const BUILDER_CODE = "bc_wdmnog7m";
+
+function getBuilderCodeSuffix(): string {
+  try {
+    const codeBytes = new TextEncoder().encode(BUILDER_CODE);
+    return Array.from(codeBytes).map(b => b.toString(16).padStart(2, "0")).join("");
+  } catch {
+    return "";
+  }
+}
+
+const BUILDER_SUFFIX = getBuilderCodeSuffix();
+
+function appendBuilderCode(calldata: string): string {
+  if (!BUILDER_SUFFIX) return calldata;
+  return calldata + BUILDER_SUFFIX;
+}
+
+// Encode mint(address,uint256) calldata with Builder Code
+function encodeMintCalldata(to: string, amount: number): string {
+  const paddedTo = to.toLowerCase().replace("0x", "").padStart(64, "0");
+  const amtHex = BigInt(Math.floor(amount * 1e18)).toString(16).padStart(64, "0");
+  return appendBuilderCode("0x40c10f19" + paddedTo + amtHex);
+}
+
+// Encode approve(address,uint256) calldata with Builder Code
+function encodeApproveCalldata(spender: string, amount: number): string {
+  const paddedSpender = spender.toLowerCase().replace("0x", "").padStart(64, "0");
+  const amtHex = BigInt(Math.floor(amount * 1e18)).toString(16).padStart(64, "0");
+  return appendBuilderCode("0x095ea7b3" + paddedSpender + amtHex);
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -300,11 +333,14 @@ Deno.serve(async (req) => {
       await logActivity(serviceClient, agent.agentId, "mint_tokens", body, 201, { mint_id: mintRecord.id }, ip);
       return jsonResponse({
         mint: mintRecord,
-        message: "Mint intent recorded. To complete on-chain, call the smart contract mint function with the provided parameters.",
+        message: "Mint intent recorded. To complete on-chain, send the provided calldata to the token contract.",
         contract: {
           token_address,
           function: "mint(address,uint256)",
           params: [recipient_address, amount],
+          calldata: encodeMintCalldata(recipient_address, amount),
+          chain: "Base (8453)",
+          builder_code: BUILDER_CODE,
         },
       }, 201);
     }
@@ -514,6 +550,7 @@ Deno.serve(async (req) => {
           function: "createOffer(address,uint256,address,uint256)",
           params: [offer_token_address, offer_amount, request_token_address, request_amount],
           note: "First approve the escrow contract for offer_amount of offer_token, then call createOffer.",
+          builder_code: BUILDER_CODE,
         },
       }, 201);
     }

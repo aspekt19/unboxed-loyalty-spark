@@ -9,6 +9,29 @@ const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 function db() { return createClient(supabaseUrl, supabaseServiceKey); }
 
+// --- Builder Code for Base attribution ---
+const BUILDER_CODE = "bc_wdmnog7m";
+
+function getBuilderCodeSuffix(): string {
+  try {
+    const codeBytes = new TextEncoder().encode(BUILDER_CODE);
+    return Array.from(codeBytes).map(b => b.toString(16).padStart(2, "0")).join("");
+  } catch { return ""; }
+}
+
+const BUILDER_SUFFIX = getBuilderCodeSuffix();
+
+function appendBuilderCode(calldata: string): string {
+  if (!BUILDER_SUFFIX) return calldata;
+  return calldata + BUILDER_SUFFIX;
+}
+
+function encodeMintCalldata(to: string, amount: number): string {
+  const paddedTo = to.toLowerCase().replace("0x", "").padStart(64, "0");
+  const amtHex = BigInt(Math.floor(amount * 1e18)).toString(16).padStart(64, "0");
+  return appendBuilderCode("0x40c10f19" + paddedTo + amtHex);
+}
+
 async function hashApiKey(key: string): Promise<string> {
   const enc = new TextEncoder();
   const buf = await crypto.subtle.digest("SHA-256", enc.encode(key));
@@ -92,7 +115,7 @@ function createMcpServer() {
     if (prog.status !== "active") return { content: [{ type: "text", text: JSON.stringify({ error: `Program is ${prog.status}` }) }] };
     const { data: mint, error } = await d.from("token_mint_history").insert({ merchant_address: agent.ownerAddress.toLowerCase(), recipient_address: params.recipient.toLowerCase(), amount: params.amount, token_address: params.token_address.toLowerCase(), token_name: prog.name, token_symbol: prog.symbol }).select("id,amount,recipient_address,token_address,created_at").single();
     if (error) return { content: [{ type: "text", text: JSON.stringify({ error: error.message }) }] };
-    return { content: [{ type: "text", text: JSON.stringify({ mint, contract_call: { to: params.token_address, function: "mint(address,uint256)", args: [params.recipient, params.amount], chain: "Base (8453)" } }) }] };
+    return { content: [{ type: "text", text: JSON.stringify({ mint, contract_call: { to: params.token_address, function: "mint(address,uint256)", args: [params.recipient, params.amount], calldata: encodeMintCalldata(params.recipient, params.amount), chain: "Base (8453)", builder_code: BUILDER_CODE } }) }] };
   });
 
   // Get balance
