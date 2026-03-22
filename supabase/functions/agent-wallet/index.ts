@@ -14,6 +14,31 @@ function db() {
   return createClient(supabaseUrl, supabaseServiceKey);
 }
 
+// --- Builder Code for Base attribution (base.dev analytics) ---
+const BUILDER_CODE = "bc_wdmnog7m";
+
+// Generate ERC-8021 data suffix for Builder Code
+function getBuilderCodeSuffix(): string {
+  try {
+    // ERC-8021 format: 0x<referrer_address_or_code_hash>
+    // For builder codes, we use the raw code bytes padded
+    const codeBytes = new TextEncoder().encode(BUILDER_CODE);
+    const hex = Array.from(codeBytes).map(b => b.toString(16).padStart(2, "0")).join("");
+    // Standard ERC-8021 suffix format
+    return hex;
+  } catch {
+    return "";
+  }
+}
+
+const BUILDER_SUFFIX = getBuilderCodeSuffix();
+
+// Append builder code suffix to any calldata
+function appendBuilderCode(calldata: string): string {
+  if (!BUILDER_SUFFIX) return calldata;
+  return calldata + BUILDER_SUFFIX;
+}
+
 // --- CDP REST API helpers (no heavy SDK) ---
 const CDP_API_BASE = "https://api.cdp.coinbase.com/platform/v2";
 
