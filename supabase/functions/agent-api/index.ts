@@ -650,6 +650,61 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ==================== TRANSFER ====================
+    if (resource === "transfer" && req.method === "POST") {
+      if (!hasScope(agent, "mint")) {
+        await logActivity(serviceClient, agent.agentId, "transfer_tokens", body, 403, { error: "Insufficient scope" }, ip);
+        return jsonResponse({ error: "Scope 'mint' required for transfers" }, 403);
+      }
+
+      const { token_address, from_address, to_address, amount } = body;
+      if (!token_address || !to_address || !amount) {
+        return jsonResponse({ error: "Missing required fields: token_address, to_address, amount" }, 400);
+      }
+
+      if (typeof amount !== "number" || amount <= 0 || amount > 1000000000) {
+        return jsonResponse({ error: "Amount must be a positive number up to 1,000,000,000" }, 400);
+      }
+
+      if (!/^0x[a-fA-F0-9]{40}$/.test(to_address)) {
+        return jsonResponse({ error: "Invalid to_address format" }, 400);
+      }
+
+      if (!/^0x[a-fA-F0-9]{40}$/.test(token_address)) {
+        return jsonResponse({ error: "Invalid token_address format" }, 400);
+      }
+
+      // Verify the merchant owns this program
+      const { data: program } = await serviceClient
+        .from("loyalty_programs")
+        .select("id, name, symbol, status")
+        .eq("token_address", token_address.toLowerCase())
+        .eq("merchant_address", agent.ownerAddress)
+        .single();
+
+      if (!program) {
+        await logActivity(serviceClient, agent.agentId, "transfer_tokens", body, 404, { error: "Program not found" }, ip);
+        return jsonResponse({ error: "Loyalty program not found or not owned by you" }, 404);
+      }
+
+      if (program.status !== "active") {
+        return jsonResponse({ error: `Program is ${program.status}. Must be 'active' to transfer.` }, 400);
+      }
+
+      await logActivity(serviceClient, agent.agentId, "transfer_tokens", body, 200, { token_address, to_address, amount }, ip);
+      return jsonResponse({
+        message: "Transfer intent recorded. Send the provided calldata to execute on-chain.",
+        contract: {
+          token_address,
+          function: "transfer(address,uint256)",
+          params: [to_address, amount],
+          calldata: encodeTransferCalldata(to_address, amount),
+          chain: "Base (8453)",
+          builder_code: BUILDER_CODE,
+        },
+      });
+    }
+
     // ==================== AGENT INFO ====================
     if (resource === "me" && req.method === "GET") {
       await logActivity(serviceClient, agent.agentId, "get_me", {}, 200, { name: agent.name }, ip);
