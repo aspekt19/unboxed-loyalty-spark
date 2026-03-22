@@ -45,6 +45,7 @@ export function AgentManagement() {
   const [newApiKey, setNewApiKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [creatingWalletFor, setCreatingWalletFor] = useState<string | null>(null);
 
   const { data: agents = [], isLoading } = useQuery({
     queryKey: ['agents', address],
