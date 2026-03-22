@@ -63,6 +63,17 @@
         "description": "Mint loyalty tokens to a wallet address (1% fee on Free, 0.5% Pro, 0.25% Enterprise)"
       },
       {
+        "method": "POST",
+        "path": "/transfer",
+        "scope": "mint",
+        "description": "Transfer loyalty tokens between wallets. Returns calldata with Builder Code for onchain execution.",
+        "body": {
+          "token_address": "0x...",
+          "to": "0x...",
+          "amount": 100
+        }
+      },
+      {
         "method": "GET",
         "path": "/balance",
         "scope": "read",
@@ -198,6 +209,7 @@
       "list_rewards",
       "create_reward",
       "mint_loyalty_tokens",
+      "transfer_loyalty_tokens",
       "get_token_balance",
       "get_program_analytics",
       "list_marketplace_offers"
