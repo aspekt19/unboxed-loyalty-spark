@@ -32,6 +32,12 @@ function encodeMintCalldata(to: string, amount: number): string {
   return appendBuilderCode("0x40c10f19" + paddedTo + amtHex);
 }
 
+function encodeTransferCalldata(to: string, amount: number): string {
+  const paddedTo = to.toLowerCase().replace("0x", "").padStart(64, "0");
+  const amtHex = BigInt(Math.floor(amount * 1e18)).toString(16).padStart(64, "0");
+  return appendBuilderCode("0xa9059cbb" + paddedTo + amtHex);
+}
+
 async function hashApiKey(key: string): Promise<string> {
   const enc = new TextEncoder();
   const buf = await crypto.subtle.digest("SHA-256", enc.encode(key));
@@ -116,6 +122,19 @@ function createMcpServer() {
     const { data: mint, error } = await d.from("token_mint_history").insert({ merchant_address: agent.ownerAddress.toLowerCase(), recipient_address: params.recipient.toLowerCase(), amount: params.amount, token_address: params.token_address.toLowerCase(), token_name: prog.name, token_symbol: prog.symbol }).select("id,amount,recipient_address,token_address,created_at").single();
     if (error) return { content: [{ type: "text", text: JSON.stringify({ error: error.message }) }] };
     return { content: [{ type: "text", text: JSON.stringify({ mint, contract_call: { to: params.token_address, function: "mint(address,uint256)", args: [params.recipient, params.amount], calldata: encodeMintCalldata(params.recipient, params.amount), chain: "Base (8453)", builder_code: BUILDER_CODE } }) }] };
+  });
+
+  // Transfer tokens
+  server.tool("transfer_loyalty_tokens", "Get calldata to transfer loyalty tokens between wallets (requires mint scope)", { token_address: { type: "string", description: "Token contract address (0x...)" }, to: { type: "string", description: "Recipient wallet (0x...)" }, amount: { type: "number", description: "Tokens to transfer" } }, async (params: any) => {
+    const agent = (globalThis as any).__agentCtx;
+    if (!agent) return { content: [{ type: "text", text: '{"error":"Not authenticated"}' }] };
+    if (!agent.scopes.includes("mint")) return { content: [{ type: "text", text: '{"error":"Scope mint required"}' }] };
+    if (!/^0x[a-fA-F0-9]{40}$/.test(params.to)) return { content: [{ type: "text", text: '{"error":"Invalid recipient address"}' }] };
+    const d = db();
+    const { data: prog } = await d.from("loyalty_programs").select("id,name,status").eq("token_address", params.token_address.toLowerCase()).eq("merchant_address", agent.ownerAddress).single();
+    if (!prog) return { content: [{ type: "text", text: '{"error":"Program not found or not owned by you"}' }] };
+    if (prog.status !== "active") return { content: [{ type: "text", text: JSON.stringify({ error: `Program is ${prog.status}` }) }] };
+    return { content: [{ type: "text", text: JSON.stringify({ contract_call: { to: params.token_address, function: "transfer(address,uint256)", args: [params.to, params.amount], calldata: encodeTransferCalldata(params.to, params.amount), chain: "Base (8453)", builder_code: BUILDER_CODE } }) }] };
   });
 
   // Get balance
