@@ -21,7 +21,10 @@ import {
   HelpCircle,
   Percent,
   PiggyBank,
-  LineChart
+  LineChart,
+  Bot,
+  Code,
+  Key
 } from "lucide-react";
 
 export default function GuidePage() {
