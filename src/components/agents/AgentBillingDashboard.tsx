@@ -1,12 +1,21 @@
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CreditCard, TrendingUp, Zap, ArrowUpRight, Receipt, BarChart3 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { CreditCard, TrendingUp, Zap, ArrowUpRight, Receipt, BarChart3, Copy, Check, ExternalLink, Loader2, Settings } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAccount } from 'wagmi';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+
+// USDC on Base
+const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 
 interface AgentPlan {
   id: string;
@@ -43,6 +52,12 @@ interface FeeLogEntry {
 
 export function AgentBillingDashboard() {
   const { address } = useAccount();
+  const queryClient = useQueryClient();
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<AgentPlan | null>(null);
+  const [txHash, setTxHash] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
 
   const { data: plans = [] } = useQuery({
     queryKey: ['agent-plans'],
@@ -86,7 +101,34 @@ export function AgentBillingDashboard() {
     enabled: !!address,
   });
 
-  const currentPlanSlug = 'free'; // TODO: derive from agent_registry.plan_id
+  const { data: paymentInfo } = useQuery({
+    queryKey: ['agent-payment-info'],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke('verify-agent-plan-payment', {
+        body: { action: 'get_payment_info' },
+      });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: activeSub } = useQuery({
+    queryKey: ['agent-plan-subscription', address],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('agent_plan_subscriptions')
+        .select('*, agent_plans(*)')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      if (error && error.code !== 'PGRST116') return null;
+      return data;
+    },
+    enabled: !!address,
+  });
+
+  const currentPlanSlug = activeSub ? (activeSub as any).agent_plans?.slug : 'free';
   const currentPlan = plans.find(p => p.slug === currentPlanSlug) || plans[0];
 
   const apiCallsUsed = usage?.api_calls_count || 0;
@@ -96,6 +138,52 @@ export function AgentBillingDashboard() {
   const mintUsed = usage?.mint_total_amount || 0;
   const mintLimit = currentPlan?.max_mint_amount_monthly;
   const mintPercent = mintLimit ? Math.min((mintUsed / mintLimit) * 100, 100) : 0;
+
+  const subscriptionWallet = paymentInfo?.subscription_wallet;
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(label);
+    setTimeout(() => setCopied(null), 2000);
+    toast.success(`${label} copied`);
+  };
+
+  const handleUpgradeClick = (plan: AgentPlan) => {
+    setSelectedPlan(plan);
+    setTxHash('');
+    setUpgradeDialogOpen(true);
+  };
+
+  const handleVerifyPayment = async () => {
+    if (!txHash.trim() || !selectedPlan || !address) return;
+    setIsVerifying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-agent-plan-payment', {
+        body: {
+          action: 'verify_payment',
+          transaction_hash: txHash.trim(),
+          plan_slug: selectedPlan.slug,
+          owner_address: address,
+        },
+      });
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      if (data.verified) {
+        toast.success(data.message);
+        setUpgradeDialogOpen(false);
+        queryClient.invalidateQueries({ queryKey: ['agent-plan-subscription'] });
+        queryClient.invalidateQueries({ queryKey: ['agents'] });
+      } else {
+        toast.info(data.message);
+        setUpgradeDialogOpen(false);
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Verification failed');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -122,13 +210,14 @@ export function AgentBillingDashboard() {
                   <Zap className="h-4 w-4 text-primary" />
                 </div>
                 <p className="text-2xl font-bold">{apiCallsUsed.toLocaleString()}</p>
-                {apiCallsLimit && (
+                {apiCallsLimit ? (
                   <>
                     <p className="text-xs text-muted-foreground">of {apiCallsLimit.toLocaleString()}/mo</p>
                     <Progress value={apiCallsPercent} className="mt-2 h-1.5" />
                   </>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Unlimited</p>
                 )}
-                {!apiCallsLimit && <p className="text-xs text-muted-foreground">Unlimited</p>}
               </CardContent>
             </Card>
             <Card>
@@ -138,13 +227,14 @@ export function AgentBillingDashboard() {
                   <TrendingUp className="h-4 w-4 text-primary" />
                 </div>
                 <p className="text-2xl font-bold">{mintUsed.toLocaleString()}</p>
-                {mintLimit && (
+                {mintLimit ? (
                   <>
                     <p className="text-xs text-muted-foreground">of {mintLimit.toLocaleString()}/mo</p>
                     <Progress value={mintPercent} className="mt-2 h-1.5" />
                   </>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Unlimited</p>
                 )}
-                {!mintLimit && <p className="text-xs text-muted-foreground">Unlimited</p>}
               </CardContent>
             </Card>
             <Card>
@@ -168,10 +258,20 @@ export function AgentBillingDashboard() {
                 <div>
                   <Badge className="text-sm">{currentPlan?.name || 'Free'}</Badge>
                   <p className="text-xs text-muted-foreground mt-1">{currentPlan?.description}</p>
+                  {activeSub?.expires_at && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Expires: {new Date(activeSub.expires_at).toLocaleDateString()}
+                    </p>
+                  )}
                 </div>
-                <Button variant="outline" size="sm" className="gap-1">
-                  <ArrowUpRight className="h-3.5 w-3.5" /> Upgrade
-                </Button>
+                {currentPlanSlug === 'free' && (
+                  <Button variant="outline" size="sm" className="gap-1" onClick={() => {
+                    const proPlan = plans.find(p => p.slug === 'pro');
+                    if (proPlan) handleUpgradeClick(proPlan);
+                  }}>
+                    <ArrowUpRight className="h-3.5 w-3.5" /> Upgrade
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -179,9 +279,16 @@ export function AgentBillingDashboard() {
 
         {/* PLANS TAB */}
         <TabsContent value="plans" className="space-y-4">
+          <Alert>
+            <Settings className="h-4 w-4" />
+            <AlertDescription>
+              Plans are paid in <strong>USDC</strong> on <strong>Base</strong> network. $1 = 1 USDC.
+            </AlertDescription>
+          </Alert>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {plans.map((plan) => {
               const isCurrent = plan.slug === currentPlanSlug;
+              const isDowngrade = plan.price_usdc_monthly < (currentPlan?.price_usdc_monthly || 0);
               return (
                 <Card key={plan.id} className={isCurrent ? 'border-primary ring-1 ring-primary' : ''}>
                   <CardHeader>
@@ -194,7 +301,7 @@ export function AgentBillingDashboard() {
                   <CardContent className="space-y-4">
                     <div>
                       <span className="text-3xl font-bold">${plan.price_usdc_monthly}</span>
-                      <span className="text-sm text-muted-foreground">/mo</span>
+                      <span className="text-sm text-muted-foreground">/mo USDC</span>
                     </div>
                     <div className="space-y-2 text-sm">
                       {(plan.features as string[])?.map((f, i) => (
@@ -207,9 +314,10 @@ export function AgentBillingDashboard() {
                     <Button
                       className="w-full"
                       variant={isCurrent ? 'secondary' : 'default'}
-                      disabled={isCurrent}
+                      disabled={isCurrent || plan.price_usdc_monthly === 0}
+                      onClick={() => handleUpgradeClick(plan)}
                     >
-                      {isCurrent ? 'Current Plan' : plan.price_usdc_monthly === 0 ? 'Downgrade' : 'Upgrade'}
+                      {isCurrent ? 'Current Plan' : isDowngrade ? 'Contact Support' : plan.price_usdc_monthly === 0 ? 'Free' : `Upgrade — $${plan.price_usdc_monthly} USDC`}
                     </Button>
                   </CardContent>
                 </Card>
@@ -250,6 +358,99 @@ export function AgentBillingDashboard() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* UPGRADE DIALOG */}
+      <Dialog open={upgradeDialogOpen} onOpenChange={setUpgradeDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Upgrade to {selectedPlan?.name}</DialogTitle>
+            <DialogDescription>
+              Send {selectedPlan?.price_usdc_monthly} USDC on Base to activate your plan
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Step 1: Send USDC */}
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold">Step 1: Send USDC on Base</Label>
+              
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Amount</Label>
+                <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
+                  <span className="font-mono font-bold text-lg">{selectedPlan?.price_usdc_monthly} USDC</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Send to (subscription wallet)</Label>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 p-2 bg-muted rounded text-xs break-all font-mono">
+                    {subscriptionWallet || 'Loading...'}
+                  </code>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0"
+                    onClick={() => subscriptionWallet && copyToClipboard(subscriptionWallet, 'Wallet')}
+                  >
+                    {copied === 'Wallet' ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">USDC Contract (Base)</Label>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 p-2 bg-muted rounded text-xs break-all font-mono">
+                    {USDC_BASE}
+                  </code>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0"
+                    onClick={() => copyToClipboard(USDC_BASE, 'USDC')}
+                  >
+                    {copied === 'USDC' ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+
+              <a
+                href={`https://basescan.org/address/${subscriptionWallet}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+              >
+                View on BaseScan <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+
+            {/* Step 2: Verify */}
+            <div className="space-y-3 border-t pt-4">
+              <Label className="text-sm font-semibold">Step 2: Paste transaction hash</Label>
+              <Input
+                value={txHash}
+                onChange={(e) => setTxHash(e.target.value)}
+                placeholder="0x..."
+                className="font-mono text-xs"
+              />
+              <Button
+                onClick={handleVerifyPayment}
+                disabled={!txHash.trim() || isVerifying}
+                className="w-full"
+              >
+                {isVerifying ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Verifying on-chain...
+                  </>
+                ) : (
+                  'Verify Payment & Activate Plan'
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
