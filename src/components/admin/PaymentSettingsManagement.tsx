@@ -5,12 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Wallet, DollarSign } from 'lucide-react';
+import { Wallet, DollarSign, Bot } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const PaymentSettingsManagement = () => {
   const queryClient = useQueryClient();
   const [walletAddress, setWalletAddress] = useState('');
+  const [subscriptionWallet, setSubscriptionWallet] = useState('');
   const [usdcPrice, setUsdcPrice] = useState('');
 
   const { data: settings, isLoading } = useQuery({
@@ -24,6 +25,7 @@ export const PaymentSettingsManagement = () => {
       if (error) throw error;
       
       setWalletAddress(data.admin_wallet_address);
+      setSubscriptionWallet((data as any).subscription_wallet_address || '');
       setUsdcPrice(data.usdc_price.toString());
       
       return data;
@@ -36,9 +38,10 @@ export const PaymentSettingsManagement = () => {
         .from('payment_settings')
         .update({
           admin_wallet_address: walletAddress,
+          subscription_wallet_address: subscriptionWallet,
           usdc_price: parseFloat(usdcPrice),
           updated_at: new Date().toISOString(),
-        })
+        } as any)
         .eq('id', settings?.id);
 
       if (error) throw error;
@@ -47,6 +50,7 @@ export const PaymentSettingsManagement = () => {
       toast.success('Payment settings updated successfully!');
       queryClient.invalidateQueries({ queryKey: ['payment-settings-admin'] });
       queryClient.invalidateQueries({ queryKey: ['payment-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['agent-payment-info'] });
     },
     onError: (error) => {
       console.error('Update error:', error);
@@ -63,14 +67,14 @@ export const PaymentSettingsManagement = () => {
       <CardHeader>
         <CardTitle>Payment Settings</CardTitle>
         <CardDescription>
-          Configure the wallet address and pricing for premium subscriptions
+          Configure wallet addresses and pricing for premium and agent subscriptions
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
           <Label htmlFor="wallet" className="flex items-center gap-2">
             <Wallet className="h-4 w-4" />
-            Admin Wallet Address
+            Admin Wallet (fee collection)
           </Label>
           <Input
             id="wallet"
@@ -80,7 +84,24 @@ export const PaymentSettingsManagement = () => {
             className="font-mono text-sm"
           />
           <p className="text-xs text-muted-foreground">
-            Users will send payments to this address for premium access
+            Receives on-chain transaction fees from agent mints
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="sub-wallet" className="flex items-center gap-2">
+            <Bot className="h-4 w-4" />
+            Subscription Wallet (plan payments)
+          </Label>
+          <Input
+            id="sub-wallet"
+            placeholder="0x..."
+            value={subscriptionWallet}
+            onChange={(e) => setSubscriptionWallet(e.target.value)}
+            className="font-mono text-sm"
+          />
+          <p className="text-xs text-muted-foreground">
+            Receives USDC payments for agent Pro/Enterprise plans
           </p>
         </div>
 
@@ -99,7 +120,7 @@ export const PaymentSettingsManagement = () => {
             onChange={(e) => setUsdcPrice(e.target.value)}
           />
           <p className="text-xs text-muted-foreground">
-            Monthly subscription price in USDC
+            Monthly subscription price in USDC for premium access
           </p>
         </div>
 
