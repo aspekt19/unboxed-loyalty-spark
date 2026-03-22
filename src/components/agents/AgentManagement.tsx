@@ -33,6 +33,12 @@ interface AgentRow {
   last_request_at: string | null;
   created_at: string;
   agent_wallet_address: string | null;
+  plan_id: string | null;
+}
+
+interface AgentWalletRow {
+  wallet_type: string;
+  wallet_address: string;
 }
 export function AgentManagement() {
   const { address } = useAccount();
