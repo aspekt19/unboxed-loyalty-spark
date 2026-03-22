@@ -237,7 +237,7 @@ export const CONTRACTS = {
   // P2P Escrow Contract
   LOYALTY_TOKEN_ESCROW: {
     // TODO: Deploy and update this address
-    address: '0x0000000000000000000000000000000000000000' as `0x${string}`,
+    address: '0xA569C95AfC1BCF381c48BcF336ED9D2c014bcdDF' as `0x${string}`,
     abi: [
       {
         inputs: [
