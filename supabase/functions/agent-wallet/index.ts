@@ -14,6 +14,31 @@ function db() {
   return createClient(supabaseUrl, supabaseServiceKey);
 }
 
+// --- Builder Code for Base attribution (base.dev analytics) ---
+const BUILDER_CODE = "bc_wdmnog7m";
+
+// Generate ERC-8021 data suffix for Builder Code
+function getBuilderCodeSuffix(): string {
+  try {
+    // ERC-8021 format: 0x<referrer_address_or_code_hash>
+    // For builder codes, we use the raw code bytes padded
+    const codeBytes = new TextEncoder().encode(BUILDER_CODE);
+    const hex = Array.from(codeBytes).map(b => b.toString(16).padStart(2, "0")).join("");
+    // Standard ERC-8021 suffix format
+    return hex;
+  } catch {
+    return "";
+  }
+}
+
+const BUILDER_SUFFIX = getBuilderCodeSuffix();
+
+// Append builder code suffix to any calldata
+function appendBuilderCode(calldata: string): string {
+  if (!BUILDER_SUFFIX) return calldata;
+  return calldata + BUILDER_SUFFIX;
+}
+
 // --- CDP REST API helpers (no heavy SDK) ---
 const CDP_API_BASE = "https://api.cdp.coinbase.com/platform/v2";
 
@@ -307,8 +332,10 @@ async function handleSignTransaction(d: any, agent: any, body: any) {
   let result: { txHash: string; status: string };
 
   if (wallet.wallet_type === "cdp_mpc") {
+    // Append Builder Code for base.dev attribution
+    const taggedTxData = appendBuilderCode(txData);
     const cdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/sign/transaction`, {
-      transaction: txData,
+      transaction: taggedTxData,
       network: "base",
     });
     if (cdpResult.ok) {
@@ -426,11 +453,11 @@ async function handleServerMint(d: any, agent: any, body: any) {
 
   if (!wallet) return jsonResponse({ error: "No wallet. Use action: create_wallet first." }, 404);
 
-  // Build calldata for recipient mint
+  // Build calldata for recipient mint (with Builder Code suffix for base.dev)
   const buildMintCalldata = (to: string, amt: number) => {
     const paddedTo = to.toLowerCase().replace("0x", "").padStart(64, "0");
     const amtHex = BigInt(Math.floor(amt * 1e18)).toString(16).padStart(64, "0");
-    return "0x40c10f19" + paddedTo + amtHex;
+    return appendBuilderCode("0x40c10f19" + paddedTo + amtHex);
   };
 
   const recipientCalldata = buildMintCalldata(recipient_address, amount);

@@ -99,6 +99,53 @@ export type Database = {
           },
         ]
       }
+      agent_plan_subscriptions: {
+        Row: {
+          amount_usdc: number
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          owner_address: string
+          paid_at: string | null
+          plan_id: string
+          status: string
+          transaction_hash: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount_usdc: number
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          owner_address: string
+          paid_at?: string | null
+          plan_id: string
+          status?: string
+          transaction_hash?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount_usdc?: number
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          owner_address?: string
+          paid_at?: string | null
+          plan_id?: string
+          status?: string
+          transaction_hash?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_plan_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "agent_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_plans: {
         Row: {
           created_at: string | null
@@ -766,6 +813,7 @@ export type Database = {
           admin_wallet_address: string
           created_at: string | null
           id: string
+          subscription_wallet_address: string | null
           updated_at: string | null
           usdc_price: number
         }
@@ -773,6 +821,7 @@ export type Database = {
           admin_wallet_address: string
           created_at?: string | null
           id?: string
+          subscription_wallet_address?: string | null
           updated_at?: string | null
           usdc_price?: number
         }
@@ -780,6 +829,7 @@ export type Database = {
           admin_wallet_address?: string
           created_at?: string | null
           id?: string
+          subscription_wallet_address?: string | null
           updated_at?: string | null
           usdc_price?: number
         }
