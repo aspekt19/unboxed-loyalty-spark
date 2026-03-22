@@ -4,143 +4,126 @@
 
 ---
 
-### Loyal Spark Launches Revolutionary Blockchain-Based Loyalty Platform with Automated DeFi Investing
+### Loyal Spark Launches AI-Native Loyalty-as-a-Service Protocol on Base
 
-**Transforming Traditional Loyalty Programs Through Web3 Technology and Smart Investing**
+**First Dual-Mode Loyalty Platform for Humans and Autonomous AI Agents**
 
 ---
 
-Loyal Spark, an innovative loyalty platform, announces its official launch on the BASE Network, bringing a new era of customer rewards that combines true ownership, automated investing, and tradeable value. The platform uniquely merges loyalty rewards with DeFi, enabling customers to earn tokens that automatically grow through yield-generating strategies.
+Loyal Spark, the onchain loyalty platform on Base L2, has launched full AI agent support, becoming the first **Loyalty-as-a-Service protocol** designed for both humans and autonomous AI agents.
 
-#### The Problem with Traditional Loyalty Programs
+#### What's New
 
-Traditional loyalty programs lock customers into siloed ecosystems where points expire, can't be transferred, and hold little real value. For merchants, these programs are expensive to maintain and offer limited insights into customer behavior. Moreover, earned points sit idle, never growing in value.
+- **REST API** — Full programmatic access to create loyalty programs, mint ERC-20 tokens, manage rewards, and trade on marketplace
+- **MCP Server** — 9 specialized tools for LLM-based agents (compatible with Claude, GPT, and any MCP client)
+- **CDP MPC Wallets** — Each AI agent gets a Coinbase-managed server wallet for autonomous onchain operations
+- **Atomic P2P Escrow** — Smart contract-protected token swaps via LoyaltyTokenEscrow with 0.5% protocol fee
+- **Tiered Pricing** — Free (100 calls/mo, 1% fee), Pro ($29 USDC/mo, 0.5% fee), Enterprise ($99 USDC/mo, 0.25% fee)
+
+#### Why It Matters
+
+As AI agents proliferate, they need financial infrastructure. Deploying a standalone ERC-20 token gives an agent a currency but no ecosystem. Loyal Spark provides the complete stack: rewards, vouchers, tiers, analytics, CRM, marketing automation, and a liquid marketplace — all accessible via a single API call.
+
+Think **"Shopify for loyalty programs"** — but built for AI agents.
+
+#### The Problem with Solo Tokens
+
+❌ No rewards infrastructure  
+❌ No marketplace or liquidity  
+❌ No trust or audit history  
+❌ No existing user base  
+❌ No DeFi yield integration  
 
 #### The Loyal Spark Solution
 
-Loyal Spark leverages blockchain technology and DeFi to create a win-win scenario for both merchants and customers:
+✅ Full-stack loyalty infrastructure via API  
+✅ Built-in P2P marketplace with escrow  
+✅ Protocol-level trust and verification  
+✅ Access to existing merchant customer bases  
+✅ DeFi yield through Aave/Compound strategies  
+✅ Autonomous server wallets (Coinbase CDP MPC)  
+
+#### Architecture
+
+- **Dual-mode**: Human UI (PWA/SIWE) + AI API (REST/MCP)
+- **Proxy pattern** for gas-efficient token deployment via factory
+- **Builder Code** integration (bc_wdmnog7m) for Base ecosystem analytics
+- All transactions tracked on-chain on Base L2
+
+#### Smart Contracts (Base Mainnet)
+
+| Contract | Address |
+|----------|---------|
+| LoyaltyTokenFactory | `0x5F3DdBa12580CFdc6016258774cCc19C4250dA80` |
+| LoyalSparkERC20 (impl) | `0xe6BA426C9c51281B929a17444De02c65815E27C3` |
+| LoyaltyTokenEscrow (P2P) | `0xA569C95AfC1BCF381c48BcF336ED9D2c014bcdDF` |
+| RoundUpVault | `0x9102ada6805DB9100CaE03448B23f2b2668EcFe8` |
+| AaveConservativeStrategy | `0xe067a4c3b684f68C3Cbcc63d541414f6cC3fA5B3` |
+| LendingPlusStrategy | `0x930E6a11d25822115c5Cc76dFb202dE762CdC8Ab` |
+
+#### For Human Users
+
+Loyal Spark continues to serve merchants and customers through its Progressive Web App:
 
 **For Merchants:**
-- **Zero Platform Fees**: Deploy custom loyalty tokens without ongoing costs
-- **Complete Control**: Manage token supply through intuitive mint and burn mechanics
-- **Enhanced Engagement**: Offer rewards that customers actually want to earn and hold
-- **Blockchain Transparency**: Track all transactions onchain for complete visibility
+- Deploy custom ERC-20 loyalty tokens with one click
+- Manage rewards, vouchers, tiers, and referral programs
+- CRM with RFM segmentation and marketing automation
+- Real-time analytics dashboard
 
 **For Customers:**
-- **True Ownership**: Your rewards are yours – stored in your wallet, not a company database
-- **Automatic Growth**: Loyalty tokens can be invested in DeFi strategies that generate yield
-- **Round-Up Savings**: Every transaction rounds up, automatically investing spare change
-- **Multiple Yield Strategies**: Choose between conservative (Aave) or premium (Compound) strategies
-- **Tradeable Tokens**: Exchange rewards between loyalty programs or trade on DEXs
-- **Never Expire**: Blockchain-based tokens don't have expiration dates
-- **Transparent Value**: Always know exactly what your rewards are worth
+- True ownership of loyalty tokens in personal wallets
+- Redeem tokens for vouchers and exclusive rewards
+- Trade tokens on P2P marketplace with escrow protection
+- Invest via Round-Up with DeFi yield strategies
 
-#### Built on BASE Network
+#### Getting Started for AI Agents
 
-Loyal Spark chose BASE Network for its:
-- Low transaction costs making micro-rewards feasible
-- Fast confirmation times for instant reward distribution
-- Ethereum security with Layer 2 efficiency
-- Growing ecosystem of DeFi applications
+1. Visit https://loyalspark.online/merchant and connect wallet
+2. Open "AI Agents" tab → Register an agent → Get API key (lsk_...)
+3. Use the API key in `x-api-key` header for REST or MCP calls
+4. Create a server wallet for autonomous onchain operations
+5. Start minting tokens, creating rewards, and managing programs!
 
-#### Key Features
+#### Links
 
-**Merchant Dashboard:**
-- One-click loyalty token deployment (ERC-20 standard)
-- Flexible token minting and burning controls
-- Create custom voucher rewards with expiration dates
-- Track all program activity in real-time
+- **Website**: https://loyalspark.online
+- **API Docs**: https://loyalspark.online/api-docs
+- **Agent Card**: https://loyalspark.online/.well-known/agent.json
+- **MCP Server**: Available for Claude, GPT, and any MCP client
+- **Twitter/X**: https://x.com/Loyal_Spark
 
-**Customer Experience:**
-- Simple wallet connection via RainbowKit
-- View all loyalty tokens across participating merchants
-- Redeem tokens for exclusive vouchers and rewards
-- Trade tokens on decentralized exchanges
+#### Contact
 
-#### Technical Innovation
-
-Loyal Spark smart contracts are built with security and efficiency in mind:
-- ERC-20 token standard for maximum compatibility
-- Immutable ownership and supply tracking
-- Gas-optimized transactions on BASE Network
-- Open-source and auditable code
-
-#### Target Market
-
-**Primary Audience:**
-- Small to medium-sized businesses looking to build customer loyalty
-- E-commerce merchants seeking competitive advantages
-- Crypto-savvy consumers who value ownership and transparency
-- Forward-thinking brands embracing Web3 technology
-
-#### Vision for the Future
-
-Loyalty programs haven't evolved in decades. We're not just digitizing points – we're fundamentally reimagining what customer loyalty means in a Web3 world. With Loyal Spark, rewards become real assets that customers truly own and control.
-
-The platform aims to:
-- Build a network effect where loyalty tokens gain interoperability
-- Enable cross-merchant reward redemption
-- Create a marketplace for loyalty token trading
-- Establish new standards for transparent, customer-first loyalty programs
-
-#### Availability
-
-Loyal Spark is now live and available for merchants and customers to use. The platform is accessible at https://loyalspark.online and supports all BASE Network compatible wallets. Additionally, the platform is available as a Farcaster miniapp at https://farcaster.xyz/miniapps/ZYPERQSHz8gn/loyal-spark for seamless integration with the Farcaster ecosystem.
-
-#### About Loyal Spark
-
-Loyal Spark is a decentralized loyalty rewards platform built on the BASE Network, enabling merchants to create blockchain-based loyalty programs while giving customers true ownership of their rewards. Founded in 2025, the company is committed to bringing Web3 innovation to mainstream customer engagement.
-
----
-
-### Contact Information
-
-**Media Inquiries:**
-Email: admin@loyalspark.online
-Website: https://loyalspark.online
-
-
-**Follow Us:**
-- Twitter/X: https://x.com/Loyal_Spark
+**Media Inquiries:** admin@loyalspark.online
 
 ---
 
 ### Quick Facts
 
-- **Platform:** BASE Network (Ethereum Layer 2)
-- **Token Standard:** ERC-20
-- **Target Users:** Merchants and crypto-savvy consumers
-- **Key Benefit:** True ownership of loyalty rewards
-- **Smart Contract:** Open-source and auditable
-- **Transaction Fees:** Minimal (BASE Network gas fees only)
+- **Platform:** Base Network (Ethereum Layer 2)
+- **Token Standard:** ERC-20 (proxy pattern)
+- **AI Integration:** REST API + MCP Server + CDP MPC Wallets
+- **P2P Trading:** Atomic swaps via escrow smart contract
+- **DeFi Yield:** Aave & Compound strategies via Round-Up
+- **Pricing:** Free / Pro ($29/mo) / Enterprise ($99/mo) in USDC
 
 ---
 
 ### Boilerplate
 
-**Short Version (50 words):**
-Loyal Spark is a loyalty platform on the BASE Network that combines rewards with automated DeFi investing. Merchants create blockchain-based loyalty tokens while customers earn rewards that automatically grow through yield strategies. Round-up savings invest spare change, transforming loyalty programs into wealth-building tools.
+**Short (50 words):**
+Loyal Spark is a Loyalty-as-a-Service protocol on Base L2 for both humans and AI agents. Merchants create ERC-20 loyalty programs, customers earn and trade tokens with escrow protection, and AI agents operate autonomously via REST API and MCP Server with Coinbase CDP wallets.
 
-**Medium Version (100 words):**
-Loyal Spark revolutionizes customer loyalty by merging onchain rewards with automated investing. Built on BASE Network, our platform enables merchants to deploy custom ERC-20 loyalty tokens with zero platform fees. Customers receive rewards they truly own—stored in wallets, tradeable on DEXs, and invested in DeFi strategies that generate yield. Our unique Round-Up feature automatically invests spare change from every transaction into Aave or Compound protocols. Unlike traditional loyalty programs where points sit idle, Loyal Spark rewards actively grow, creating a transparent, valuable ecosystem that benefits both merchants and customers. Built on BASE Network, our platform enables merchants to deploy custom ERC-20 loyalty tokens with zero platform fees. Customers receive rewards they truly own—stored in wallets, tradeable on DEXs, and invested in DeFi strategies that generate yield. Our unique Round-Up feature automatically invests spare change from every transaction into Aave or Compound protocols. Unlike traditional loyalty programs where points sit idle, Loyal Spark rewards actively grow, creating a transparent, valuable ecosystem that benefits both merchants and customers.
-
-**Long Version (150 words):**
-Loyal Spark is reimagining loyalty rewards by combining blockchain technology with DeFi investing. Built on BASE Network, we enable merchants to deploy custom ERC-20 loyalty tokens with complete control and zero platform fees. But we go further: customers don't just earn rewards—they watch them grow. Our automated Round-Up feature invests spare change from every transaction into curated DeFi strategies (Aave Conservative or Compound Lending Plus), generating passive yield on loyalty tokens. Customers own their rewards in their wallets, can trade them on DEXs, redeem for exclusive vouchers, or let them compound in DeFi. This creates a win-win: merchants gain engaged customers who value holding tokens, while customers build wealth through everyday purchases. We're bridging Web2 loyalty with Web3 ownership and DeFi yields, making loyalty programs that actually work for you.
-
-**Long Version (150 words):**
-Loyal Spark is transforming the $200 billion loyalty program industry by bringing customer rewards onto the blockchain. Built on BASE Network, our platform enables merchants of all sizes to deploy custom ERC-20 loyalty tokens without platform fees or technical complexity. Through an intuitive dashboard, merchants can mint tokens, create rewards, and track program performance in real-time. For customers, Loyal Spark offers something traditional programs never could: true ownership. Rewards are stored in personal wallets, can be traded on decentralized exchanges, and never expire. By leveraging blockchain transparency and BASE Network's low transaction costs, we're making loyalty programs more fair, valuable, and engaging for everyone. Whether you're a small business building customer relationships or a consumer tired of worthless points, Loyal Spark brings loyalty rewards into the Web3 era.
+**Medium (100 words):**
+Loyal Spark is the first dual-mode loyalty protocol on Base, serving both human users through a PWA and AI agents through a REST API and MCP Server. Merchants deploy custom ERC-20 loyalty tokens via a gas-efficient proxy factory, manage rewards and tiers, and leverage CRM with RFM segmentation. Customers own tokens in their wallets, trade on a P2P marketplace protected by an escrow smart contract, and invest via DeFi yield strategies. AI agents get Coinbase CDP MPC wallets for autonomous operations. Pricing is crypto-native: Free, Pro ($29/mo USDC), or Enterprise ($99/mo USDC) with decreasing transaction fees.
 
 ---
 
 ### Hashtags
 
-Primary: #LoyalSpark #Web3Loyalty #BlockchainRewards #BASENetwork
-
-Secondary: #DeFi #CryptoRewards #LoyaltyPrograms #Web3 #CustomerLoyalty
-
----
-
-**### END ###**
+Primary: #LoyalSpark #Web3Loyalty #AIAgents #Base #MCP
+Secondary: #DeFi #A2A #LoyaltyAsAService #CryptoRewards #ERC20
 
 ---
 
