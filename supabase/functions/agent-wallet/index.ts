@@ -153,8 +153,7 @@ async function createCdpJwt(method: string, path: string): Promise<string | null
 }
 
 async function cdpRequest(method: string, path: string, body?: any): Promise<{ ok: boolean; data?: any; error?: string }> {
-  const jwt = await createCdpJwt();
-  if (!jwt) return { ok: false, error: "CDP keys not configured" };
+  const jwt = await createCdpJwt(method, path);
 
   const walletSecret = Deno.env.get("CDP_WALLET_SECRET");
   const headers: Record<string, string> = {
