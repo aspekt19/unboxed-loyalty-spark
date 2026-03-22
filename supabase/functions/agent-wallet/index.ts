@@ -21,8 +21,24 @@ async function createCdpJwt(): Promise<string | null> {
   const keySecret = Deno.env.get("CDP_API_KEY_SECRET");
   if (!keyId || !keySecret) return null;
 
-  // Build JWT header + payload
-  const header = { alg: "ES256", kid: keyId, typ: "JWT" };
+  const enc = new TextEncoder();
+  const b64url = (data: Uint8Array) =>
+    btoa(String.fromCharCode(...data))
+      .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const b64urlStr = (s: string) => b64url(enc.encode(s));
+
+  // Parse key bytes
+  let keyData = keySecret.trim()
+    .replace(/-----BEGIN[^-]*-----/g, "")
+    .replace(/-----END[^-]*-----/g, "")
+    .replace(/\s/g, "");
+  const keyBytes = Uint8Array.from(atob(keyData), (c) => c.charCodeAt(0));
+
+  // Detect key type: 64 bytes raw = Ed25519 (32 priv + 32 pub), otherwise try EC P-256
+  const isEd25519 = keyBytes.length === 64 || keyBytes.length === 32;
+  const alg = isEd25519 ? "EdDSA" : "ES256";
+
+  const header = { alg, kid: keyId, typ: "JWT", nonce: crypto.randomUUID() };
   const now = Math.floor(Date.now() / 1000);
   const payload = {
     sub: keyId,
@@ -33,75 +49,100 @@ async function createCdpJwt(): Promise<string | null> {
     uris: ["*"],
   };
 
-  const enc = new TextEncoder();
-  const b64url = (data: Uint8Array) =>
-    btoa(String.fromCharCode(...data))
-      .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-  const b64urlStr = (s: string) => b64url(enc.encode(s));
-
   const headerB64 = b64urlStr(JSON.stringify(header));
   const payloadB64 = b64urlStr(JSON.stringify(payload));
   const signingInput = `${headerB64}.${payloadB64}`;
 
   try {
-    // Parse EC private key from PEM/base64
-    let keyData = keySecret.trim();
-    // Remove PEM headers if present
-    keyData = keyData
-      .replace(/-----BEGIN EC PRIVATE KEY-----/g, "")
-      .replace(/-----END EC PRIVATE KEY-----/g, "")
-      .replace(/-----BEGIN PRIVATE KEY-----/g, "")
-      .replace(/-----END PRIVATE KEY-----/g, "")
-      .replace(/\s/g, "");
+    let cryptoKey: CryptoKey;
+    let signature: ArrayBuffer;
 
-    const keyBytes = Uint8Array.from(atob(keyData), (c) => c.charCodeAt(0));
+    if (isEd25519) {
+      // Ed25519: first 32 bytes = private key seed
+      const privKeyBytes = keyBytes.slice(0, 32);
 
-    const cryptoKey = await crypto.subtle.importKey(
-      "pkcs8",
-      keyBytes,
-      { name: "ECDSA", namedCurve: "P-256" },
-      false,
-      ["sign"]
-    );
+      // PKCS#8 DER envelope for Ed25519 private key
+      const ed25519Pkcs8Prefix = new Uint8Array([
+        0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06,
+        0x03, 0x2b, 0x65, 0x70, 0x04, 0x22, 0x04, 0x20,
+      ]);
+      const pkcs8Key = new Uint8Array(ed25519Pkcs8Prefix.length + 32);
+      pkcs8Key.set(ed25519Pkcs8Prefix);
+      pkcs8Key.set(privKeyBytes, ed25519Pkcs8Prefix.length);
 
-    const signature = await crypto.subtle.sign(
-      { name: "ECDSA", hash: "SHA-256" },
-      cryptoKey,
-      enc.encode(signingInput)
-    );
+      cryptoKey = await crypto.subtle.importKey(
+        "pkcs8", pkcs8Key,
+        { name: "Ed25519" },
+        false, ["sign"]
+      );
 
-    // Convert DER signature to raw r||s format for JWT
-    const sigArray = new Uint8Array(signature);
-    let r: Uint8Array, s: Uint8Array;
+      signature = await crypto.subtle.sign(
+        "Ed25519",
+        cryptoKey,
+        enc.encode(signingInput)
+      );
 
-    if (sigArray[0] === 0x30) {
-      // DER encoded
-      let offset = 2;
-      const rLen = sigArray[offset + 1];
-      const rStart = offset + 2;
-      r = sigArray.slice(rStart, rStart + rLen);
-      offset = rStart + rLen;
-      const sLen = sigArray[offset + 1];
-      const sStart = offset + 2;
-      s = sigArray.slice(sStart, sStart + sLen);
-
-      // Remove leading zeros
-      if (r.length > 32) r = r.slice(r.length - 32);
-      if (s.length > 32) s = s.slice(s.length - 32);
-      // Pad to 32 bytes
-      if (r.length < 32) { const tmp = new Uint8Array(32); tmp.set(r, 32 - r.length); r = tmp; }
-      if (s.length < 32) { const tmp = new Uint8Array(32); tmp.set(s, 32 - s.length); s = tmp; }
+      const sigB64 = b64url(new Uint8Array(signature));
+      console.log("[agent-wallet] CDP JWT created (Ed25519)");
+      return `${signingInput}.${sigB64}`;
     } else {
-      // Already raw
-      r = sigArray.slice(0, 32);
-      s = sigArray.slice(32, 64);
+      // EC P-256 (ES256)
+      try {
+        cryptoKey = await crypto.subtle.importKey(
+          "pkcs8", keyBytes,
+          { name: "ECDSA", namedCurve: "P-256" },
+          false, ["sign"]
+        );
+      } catch {
+        const rawKey = keyBytes.length > 32 ? keyBytes.slice(0, 32) : keyBytes;
+        const pkcs8Prefix = new Uint8Array([
+          0x30, 0x41, 0x02, 0x01, 0x00,
+          0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01,
+          0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07,
+          0x04, 0x27, 0x30, 0x25, 0x02, 0x01, 0x01, 0x04, 0x20,
+        ]);
+        const pkcs8Key = new Uint8Array(pkcs8Prefix.length + 32);
+        pkcs8Key.set(pkcs8Prefix);
+        pkcs8Key.set(rawKey, pkcs8Prefix.length);
+
+        cryptoKey = await crypto.subtle.importKey(
+          "pkcs8", pkcs8Key,
+          { name: "ECDSA", namedCurve: "P-256" },
+          false, ["sign"]
+        );
+      }
+
+      signature = await crypto.subtle.sign(
+        { name: "ECDSA", hash: "SHA-256" },
+        cryptoKey,
+        enc.encode(signingInput)
+      );
+
+      // Convert DER to raw r||s
+      const sigArray = new Uint8Array(signature);
+      let r: Uint8Array, s: Uint8Array;
+      if (sigArray[0] === 0x30) {
+        let offset = 2;
+        const rLen = sigArray[offset + 1];
+        r = sigArray.slice(offset + 2, offset + 2 + rLen);
+        offset = offset + 2 + rLen;
+        const sLen = sigArray[offset + 1];
+        s = sigArray.slice(offset + 2, offset + 2 + sLen);
+        if (r.length > 32) r = r.slice(r.length - 32);
+        if (s.length > 32) s = s.slice(s.length - 32);
+        if (r.length < 32) { const t = new Uint8Array(32); t.set(r, 32 - r.length); r = t; }
+        if (s.length < 32) { const t = new Uint8Array(32); t.set(s, 32 - s.length); s = t; }
+      } else {
+        r = sigArray.slice(0, 32);
+        s = sigArray.slice(32, 64);
+      }
+      const rawSig = new Uint8Array(64);
+      rawSig.set(r, 0);
+      rawSig.set(s, 32);
+
+      console.log("[agent-wallet] CDP JWT created (ES256)");
+      return `${signingInput}.${b64url(rawSig)}`;
     }
-
-    const rawSig = new Uint8Array(64);
-    rawSig.set(r, 0);
-    rawSig.set(s, 32);
-
-    return `${signingInput}.${b64url(rawSig)}`;
   } catch (err) {
     console.error("[agent-wallet] JWT creation failed:", err);
     return null;
@@ -127,11 +168,22 @@ async function cdpRequest(method: string, path: string, body?: any): Promise<{ o
       headers,
       body: body ? JSON.stringify(body) : undefined,
     });
-    const data = await res.json();
+
+    const responseText = await res.text();
+    console.log(`[agent-wallet] CDP API ${method} ${path} => ${res.status}: ${responseText.substring(0, 500)}`);
+
     if (!res.ok) {
-      console.error(`[agent-wallet] CDP API ${res.status}:`, JSON.stringify(data));
-      return { ok: false, error: data.message || `CDP API error ${res.status}` };
+      let errorMsg: string;
+      try {
+        const errData = JSON.parse(responseText);
+        errorMsg = errData.message || errData.error || `CDP API error ${res.status}`;
+      } catch {
+        errorMsg = `CDP API ${res.status}: ${responseText.substring(0, 200)}`;
+      }
+      return { ok: false, error: errorMsg };
     }
+
+    const data = JSON.parse(responseText);
     return { ok: true, data };
   } catch (err: any) {
     console.error("[agent-wallet] CDP request failed:", err.message);
