@@ -155,9 +155,12 @@ serve(async (req) => {
       // Non-fatal: session is still valid
     }
 
-    // Check admin wallet and assign role if applicable
-    const ADMIN_WALLET = '0xf55a2b967ddaa5049f537d8402b791901cc9d34e';
-    if (address === ADMIN_WALLET) {
+    // Check admin wallets and assign role if applicable
+    const ADMIN_WALLETS = [
+      '0x5cc0aa9ed773f413f81f78a62f2e94109ce26205',
+      '0x40a8cdd6a10ec1a8cb3dfb2834675e7a2cf4ad8b',
+    ];
+    if (ADMIN_WALLETS.includes(address)) {
       await supabaseAdmin
         .from('user_roles')
         .upsert({ user_id: userId, role: 'admin' }, { onConflict: 'user_id,role' })
