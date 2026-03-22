@@ -332,8 +332,10 @@ async function handleSignTransaction(d: any, agent: any, body: any) {
   let result: { txHash: string; status: string };
 
   if (wallet.wallet_type === "cdp_mpc") {
+    // Append Builder Code for base.dev attribution
+    const taggedTxData = appendBuilderCode(txData);
     const cdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/sign/transaction`, {
-      transaction: txData,
+      transaction: taggedTxData,
       network: "base",
     });
     if (cdpResult.ok) {
