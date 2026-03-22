@@ -396,6 +396,8 @@ async function trackUsage(d: any, ownerAddress: string, mintAmount: number, feeU
 async function handleServerMint(d: any, agent: any, body: any) {
   if (!agent.scopes.includes("mint")) return jsonResponse({ error: "Scope 'mint' required" }, 403);
 
+  const PLATFORM_FEE_WALLET = "0x5cc0Aa9ed773F413f81f78a62F2e94109CE26205";
+
   const { token_address, recipient_address, amount } = body;
   if (!token_address || !recipient_address || !amount) {
     return jsonResponse({ error: "Missing: token_address, recipient_address, amount" }, 400);
@@ -416,7 +418,6 @@ async function handleServerMint(d: any, agent: any, body: any) {
   // Calculate transaction fee
   const feePercent = await getAgentFeePercent(d, agent.agentId, agent.ownerAddress);
   const feeAmount = amount * (feePercent / 100);
-  const netAmount = amount; // Fee is tracked separately, full amount minted to recipient
 
   const { data: wallet } = await d
     .from("agent_wallets")
@@ -425,28 +426,52 @@ async function handleServerMint(d: any, agent: any, body: any) {
 
   if (!wallet) return jsonResponse({ error: "No wallet. Use action: create_wallet first." }, 404);
 
-  const paddedRecipient = recipient_address.toLowerCase().replace("0x", "").padStart(64, "0");
-  const amountHex = BigInt(Math.floor(amount * 1e18)).toString(16).padStart(64, "0");
-  const mintCalldata = "0x40c10f19" + paddedRecipient + amountHex;
+  // Build calldata for recipient mint
+  const buildMintCalldata = (to: string, amt: number) => {
+    const paddedTo = to.toLowerCase().replace("0x", "").padStart(64, "0");
+    const amtHex = BigInt(Math.floor(amt * 1e18)).toString(16).padStart(64, "0");
+    return "0x40c10f19" + paddedTo + amtHex;
+  };
+
+  const recipientCalldata = buildMintCalldata(recipient_address, amount);
 
   let txResult: { txHash: string; status: string };
+  let feeTxResult: { txHash: string; status: string } | null = null;
 
   if (wallet.wallet_type === "cdp_mpc") {
+    // 1. Mint tokens to recipient
     const cdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/sign/transaction`, {
-      transaction: mintCalldata,
+      transaction: recipientCalldata,
       network: "base",
     });
     if (cdpResult.ok) {
       txResult = { txHash: cdpResult.data.transactionHash || cdpResult.data.hash || "0x_pending", status: "minted_onchain" };
     } else {
-      txResult = mockSignTransaction({ to: token_address, data: mintCalldata, walletAddress: wallet.wallet_address });
+      txResult = mockSignTransaction({ to: token_address, data: recipientCalldata, walletAddress: wallet.wallet_address });
       txResult.status = "cdp_error_mock_fallback";
     }
+
+    // 2. Mint fee tokens to platform wallet (separate tx)
+    if (feeAmount > 0) {
+      const feeCalldata = buildMintCalldata(PLATFORM_FEE_WALLET, feeAmount);
+      const feeCdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/sign/transaction`, {
+        transaction: feeCalldata,
+        network: "base",
+      });
+      if (feeCdpResult.ok) {
+        feeTxResult = { txHash: feeCdpResult.data.transactionHash || feeCdpResult.data.hash || "0x_fee_pending", status: "fee_minted_onchain" };
+      } else {
+        feeTxResult = { txHash: "0x_fee_mock", status: "fee_mock" };
+      }
+    }
   } else {
-    txResult = mockSignTransaction({ to: token_address, data: mintCalldata, walletAddress: wallet.wallet_address });
+    txResult = mockSignTransaction({ to: token_address, data: recipientCalldata, walletAddress: wallet.wallet_address });
+    if (feeAmount > 0) {
+      feeTxResult = { txHash: "0x_fee_mock", status: "fee_mock" };
+    }
   }
 
-  // Record mint history
+  // Record mint history for recipient
   await d.from("token_mint_history").insert({
     merchant_address: agent.ownerAddress.toLowerCase(),
     recipient_address: recipient_address.toLowerCase(),
@@ -455,7 +480,18 @@ async function handleServerMint(d: any, agent: any, body: any) {
     transaction_hash: txResult.status === "minted_onchain" ? txResult.txHash : null,
   });
 
-  // Record transaction fee
+  // Record fee mint in history
+  if (feeAmount > 0) {
+    await d.from("token_mint_history").insert({
+      merchant_address: agent.ownerAddress.toLowerCase(),
+      recipient_address: PLATFORM_FEE_WALLET.toLowerCase(),
+      amount: feeAmount, token_address: token_address.toLowerCase(),
+      token_name: prog.name, token_symbol: prog.symbol,
+      transaction_hash: feeTxResult?.status === "fee_minted_onchain" ? feeTxResult.txHash : null,
+    });
+  }
+
+  // Record transaction fee log
   await d.from("agent_fee_log").insert({
     agent_id: agent.agentId,
     operation: "server_mint",
@@ -472,7 +508,12 @@ async function handleServerMint(d: any, agent: any, body: any) {
   await d.from("agent_activity_log").insert({
     agent_id: agent.agentId, action: "server_mint",
     request_body: { token_address, recipient_address, amount },
-    response_status: 200, response_body: { tx_hash: txResult.txHash, mode: wallet.wallet_type, status: txResult.status, fee_percent: feePercent, fee_amount: feeAmount },
+    response_status: 200, response_body: {
+      tx_hash: txResult.txHash, fee_tx_hash: feeTxResult?.txHash,
+      mode: wallet.wallet_type, status: txResult.status,
+      fee_percent: feePercent, fee_amount: feeAmount,
+      fee_recipient: PLATFORM_FEE_WALLET,
+    },
   });
 
   return jsonResponse({
@@ -480,11 +521,16 @@ async function handleServerMint(d: any, agent: any, body: any) {
       token_address, recipient: recipient_address, amount,
       tx_hash: txResult.txHash, signed_by: wallet.wallet_address,
       mode: wallet.wallet_type, status: txResult.status,
-      fee: { percent: feePercent, amount: feeAmount, currency: "tokens" },
+      fee: {
+        percent: feePercent, amount: feeAmount, currency: "tokens",
+        recipient: PLATFORM_FEE_WALLET,
+        tx_hash: feeTxResult?.txHash || null,
+        status: feeTxResult?.status || null,
+      },
     },
     message: txResult.status === "minted_onchain"
-      ? `✅ Tokens minted on-chain via CDP. Fee: ${feePercent}% (${feeAmount} tokens).`
-      : `⚠️ Mock mint. Fee tracked: ${feePercent}% (${feeAmount} tokens).`,
+      ? `✅ ${amount} tokens minted to recipient. Fee: ${feeAmount.toFixed(2)} tokens (${feePercent}%) minted to platform.`
+      : `⚠️ Mock mint. Fee tracked: ${feePercent}% (${feeAmount.toFixed(2)} tokens).`,
   });
 }
 
