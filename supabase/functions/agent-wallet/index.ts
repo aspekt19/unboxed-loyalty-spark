@@ -44,25 +44,46 @@ async function createCdpJwt(): Promise<string | null> {
   const signingInput = `${headerB64}.${payloadB64}`;
 
   try {
-    // Parse EC private key from PEM/base64
+    // Parse EC private key — handle PEM, PKCS#8 DER, or raw key bytes
     let keyData = keySecret.trim();
-    // Remove PEM headers if present
     keyData = keyData
-      .replace(/-----BEGIN EC PRIVATE KEY-----/g, "")
-      .replace(/-----END EC PRIVATE KEY-----/g, "")
-      .replace(/-----BEGIN PRIVATE KEY-----/g, "")
-      .replace(/-----END PRIVATE KEY-----/g, "")
+      .replace(/-----BEGIN[^-]*-----/g, "")
+      .replace(/-----END[^-]*-----/g, "")
       .replace(/\s/g, "");
 
     const keyBytes = Uint8Array.from(atob(keyData), (c) => c.charCodeAt(0));
 
-    const cryptoKey = await crypto.subtle.importKey(
-      "pkcs8",
-      keyBytes,
-      { name: "ECDSA", namedCurve: "P-256" },
-      false,
-      ["sign"]
-    );
+    let cryptoKey: CryptoKey;
+
+    try {
+      // Try PKCS#8 first
+      cryptoKey = await crypto.subtle.importKey(
+        "pkcs8", keyBytes,
+        { name: "ECDSA", namedCurve: "P-256" },
+        false, ["sign"]
+      );
+    } catch {
+      // Raw key — wrap first 32 bytes in PKCS#8 DER envelope for P-256
+      const rawKey = keyBytes.length > 32 ? keyBytes.slice(0, 32) : keyBytes;
+      
+      // PKCS#8 ASN.1 wrapper for EC P-256 private key
+      const pkcs8Prefix = new Uint8Array([
+        0x30, 0x41, 0x02, 0x01, 0x00,
+        0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01,
+        0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07,
+        0x04, 0x27, 0x30, 0x25, 0x02, 0x01, 0x01, 0x04, 0x20,
+      ]);
+
+      const pkcs8Key = new Uint8Array(pkcs8Prefix.length + 32);
+      pkcs8Key.set(pkcs8Prefix);
+      pkcs8Key.set(rawKey, pkcs8Prefix.length);
+
+      cryptoKey = await crypto.subtle.importKey(
+        "pkcs8", pkcs8Key,
+        { name: "ECDSA", namedCurve: "P-256" },
+        false, ["sign"]
+      );
+    }
 
     const signature = await crypto.subtle.sign(
       { name: "ECDSA", hash: "SHA-256" },
@@ -70,12 +91,11 @@ async function createCdpJwt(): Promise<string | null> {
       enc.encode(signingInput)
     );
 
-    // Convert DER signature to raw r||s format for JWT
+    // Convert DER signature to raw r||s (64 bytes) for JWT ES256
     const sigArray = new Uint8Array(signature);
     let r: Uint8Array, s: Uint8Array;
 
     if (sigArray[0] === 0x30) {
-      // DER encoded
       let offset = 2;
       const rLen = sigArray[offset + 1];
       const rStart = offset + 2;
@@ -84,15 +104,11 @@ async function createCdpJwt(): Promise<string | null> {
       const sLen = sigArray[offset + 1];
       const sStart = offset + 2;
       s = sigArray.slice(sStart, sStart + sLen);
-
-      // Remove leading zeros
       if (r.length > 32) r = r.slice(r.length - 32);
       if (s.length > 32) s = s.slice(s.length - 32);
-      // Pad to 32 bytes
       if (r.length < 32) { const tmp = new Uint8Array(32); tmp.set(r, 32 - r.length); r = tmp; }
       if (s.length < 32) { const tmp = new Uint8Array(32); tmp.set(s, 32 - s.length); s = tmp; }
     } else {
-      // Already raw
       r = sigArray.slice(0, 32);
       s = sigArray.slice(32, 64);
     }
@@ -101,6 +117,7 @@ async function createCdpJwt(): Promise<string | null> {
     rawSig.set(r, 0);
     rawSig.set(s, 32);
 
+    console.log("[agent-wallet] CDP JWT created successfully");
     return `${signingInput}.${b64url(rawSig)}`;
   } catch (err) {
     console.error("[agent-wallet] JWT creation failed:", err);
