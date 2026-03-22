@@ -16,7 +16,7 @@ function db() {
 // --- CDP REST API helpers (no heavy SDK) ---
 const CDP_API_BASE = "https://api.cdp.coinbase.com/platform/v2";
 
-async function createCdpJwt(): Promise<string | null> {
+async function createCdpJwt(method: string, path: string): Promise<string | null> {
   const keyId = Deno.env.get("CDP_API_KEY_ID");
   const keySecret = Deno.env.get("CDP_API_KEY_SECRET");
   if (!keyId || !keySecret) return null;
@@ -38,6 +38,9 @@ async function createCdpJwt(): Promise<string | null> {
   const isEd25519 = keyBytes.length === 64 || keyBytes.length === 32;
   const alg = isEd25519 ? "EdDSA" : "ES256";
 
+  // Build URI for CDP v2: "METHOD api.cdp.coinbase.com/platform/v2/path"
+  const requestUri = `${method.toUpperCase()} api.cdp.coinbase.com/platform/v2${path}`;
+
   const header = { alg, kid: keyId, typ: "JWT", nonce: crypto.randomUUID() };
   const now = Math.floor(Date.now() / 1000);
   const payload = {
@@ -46,7 +49,7 @@ async function createCdpJwt(): Promise<string | null> {
     aud: ["cdp_service"],
     nbf: now,
     exp: now + 120,
-    uris: ["*"],
+    uri: requestUri,
   };
 
   const headerB64 = b64urlStr(JSON.stringify(header));
