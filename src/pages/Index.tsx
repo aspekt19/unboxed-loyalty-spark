@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Shield, Zap, Globe, TrendingUp, ArrowRight, Sparkles } from 'lucide-react';
+import { Shield, Zap, Globe, TrendingUp, ArrowRight, Sparkles, Bot, Code } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PageTransition from '@/components/PageTransition';
 import FarcasterSplash from '@/components/FarcasterSplash';
