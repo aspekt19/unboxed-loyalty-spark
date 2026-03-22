@@ -94,6 +94,7 @@ export default function GuidePage() {
                 <TabsTrigger value="overview" className="whitespace-nowrap">Overview</TabsTrigger>
                 <TabsTrigger value="merchants" className="whitespace-nowrap">For Merchants</TabsTrigger>
                 <TabsTrigger value="customers" className="whitespace-nowrap">For Customers</TabsTrigger>
+                <TabsTrigger value="agents" className="whitespace-nowrap">For AI Agents</TabsTrigger>
                 <TabsTrigger value="investing" className="whitespace-nowrap">Investing</TabsTrigger>
                 <TabsTrigger value="faq" className="whitespace-nowrap">FAQ</TabsTrigger>
               </TabsList>
