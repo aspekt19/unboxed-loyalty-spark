@@ -168,11 +168,22 @@ async function cdpRequest(method: string, path: string, body?: any): Promise<{ o
       headers,
       body: body ? JSON.stringify(body) : undefined,
     });
-    const data = await res.json();
+
+    const responseText = await res.text();
+    console.log(`[agent-wallet] CDP API ${method} ${path} => ${res.status}: ${responseText.substring(0, 500)}`);
+
     if (!res.ok) {
-      console.error(`[agent-wallet] CDP API ${res.status}:`, JSON.stringify(data));
-      return { ok: false, error: data.message || `CDP API error ${res.status}` };
+      let errorMsg: string;
+      try {
+        const errData = JSON.parse(responseText);
+        errorMsg = errData.message || errData.error || `CDP API error ${res.status}`;
+      } catch {
+        errorMsg = `CDP API ${res.status}: ${responseText.substring(0, 200)}`;
+      }
+      return { ok: false, error: errorMsg };
     }
+
+    const data = JSON.parse(responseText);
     return { ok: true, data };
   } catch (err: any) {
     console.error("[agent-wallet] CDP request failed:", err.message);
