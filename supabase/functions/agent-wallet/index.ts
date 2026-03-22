@@ -451,11 +451,11 @@ async function handleServerMint(d: any, agent: any, body: any) {
 
   if (!wallet) return jsonResponse({ error: "No wallet. Use action: create_wallet first." }, 404);
 
-  // Build calldata for recipient mint
+  // Build calldata for recipient mint (with Builder Code suffix for base.dev)
   const buildMintCalldata = (to: string, amt: number) => {
     const paddedTo = to.toLowerCase().replace("0x", "").padStart(64, "0");
     const amtHex = BigInt(Math.floor(amt * 1e18)).toString(16).padStart(64, "0");
-    return "0x40c10f19" + paddedTo + amtHex;
+    return appendBuilderCode("0x40c10f19" + paddedTo + amtHex);
   };
 
   const recipientCalldata = buildMintCalldata(recipient_address, amount);
