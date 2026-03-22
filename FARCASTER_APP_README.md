@@ -1,269 +1,113 @@
-# Loyal Spark Farcaster Application
+# Loyal Spark — Farcaster Mini App
 
-A decentralized loyalty program application integrated with Farcaster, built on blockchain technology.
+A decentralized loyalty program integrated with Farcaster, built on Base Mainnet blockchain.
 
 ## Overview
 
-Loyal Spark Farcaster App enables merchants and customers to participate in a tokenized loyalty ecosystem through the Farcaster social network. Users can authenticate with their Farcaster account and choose their role (merchant or customer) to access relevant features.
+Loyal Spark Farcaster App enables merchants and customers to participate in a tokenized loyalty ecosystem through the Farcaster social network. The platform operates in **dual mode**: humans use the UI with wallet authentication, while AI agents integrate via REST API or MCP Server.
 
 ## Features
 
 ### For Merchants
-- **Create Loyalty Programs**: Deploy ERC-20 loyalty tokens on the blockchain
+- **Create Loyalty Programs**: Deploy ERC-20 loyalty tokens on Base
 - **Issue Tokens**: Reward customers with loyalty tokens
 - **Manage Rewards**: Create and manage reward vouchers
-- **Track Programs**: Monitor token distribution and program status
-- **Set Expiration**: Configure program end dates with automatic token burning
+- **CRM & Analytics**: Customer profiles, RFM segmentation, tier management
+- **Marketing Automation**: Automated campaigns and personalized offers
+- **AI Agent Management**: Register AI agents, manage API keys, monitor activity
+- **Set Expiration**: Configure program end dates with automatic handling
 
 ### For Customers
 - **Collect Tokens**: Receive loyalty tokens from merchants
-- **View Portfolio**: Track all collected loyalty tokens in one place
+- **View Portfolio**: Track all loyalty tokens in one dashboard
 - **Redeem Rewards**: Exchange tokens for merchant vouchers
 - **Trade on DEX**: Swap tokens on decentralized exchanges
-- **Manage Vouchers**: View and use redeemed vouchers
+- **Round-Up Investment**: Grow rewards through DeFi strategies
+
+### For AI Agents
+- **REST API**: Full CRUD operations with scoped permissions
+- **MCP Server**: Direct integration with Claude, GPT, Cursor
+- **Server Wallets**: Coinbase CDP MPC wallets for autonomous operations
+- **Tiered Plans**: Free → Pro ($29/mo) → Enterprise ($99/mo) in USDC
 
 ## Technology Stack
 
 - **Frontend**: React 18 + TypeScript + Vite
 - **Styling**: Tailwind CSS with custom design system
-- **Blockchain**: Wagmi + Viem + RainbowKit for Web3 integration
-- **Authentication**: Farcaster Auth Kit + Supabase
-- **Backend**: Lovable Cloud (Supabase)
-- **State Management**: React Query (TanStack Query)
-- **Routing**: React Router v6
+- **Blockchain**: Wagmi + Viem + RainbowKit
+- **Authentication**: Farcaster Auth Kit + SIWE
+- **Backend**: Lovable Cloud
+- **Agent Wallets**: Coinbase CDP MPC
+- **State**: React Query (TanStack Query)
 - **UI Components**: Radix UI + shadcn/ui
 
-## Architecture
+## Smart Contracts
 
-### Smart Contracts
-- **LoyaltyTokenFactory**: Deploys individual loyalty token contracts
-- **LoyalSparkERC20**: ERC-20 compliant loyalty tokens with merchant controls
+| Contract | Address |
+|----------|---------|
+| **LoyaltyTokenFactory** | `0x5F3DdBa12580CFdc6016258774cCc19C4250dA80` |
+| **LoyalSparkERC20** | `0xe6BA426C9c51281B929a17444De02c65815E27C3` |
+| **Network** | Base Mainnet (Chain ID: 8453) |
 
-### Database Schema
-- **profiles**: User profiles with wallet addresses and role selection
-- **loyalty_programs**: Merchant-created loyalty programs
-- **issued_tokens**: Token issuance history
-- **rewards**: Merchant-defined rewards catalog
-- **vouchers**: Customer-redeemed reward vouchers
-
-### Key Components
-
-#### Authentication Flow
-1. User connects wallet (RainbowKit)
-2. User signs authentication message for Farcaster
-3. Session created in Supabase
-4. Profile synced with wallet address
-
-#### Role Selection
-1. Authenticated users see role selector
-2. Choice saved to `profiles.role` in database
-3. Role determines UI and available features
-4. Users can switch roles anytime
-
-## Setup Instructions
+## Setup
 
 ### Prerequisites
 - Node.js 18+ or Bun
-- A wallet (MetaMask, Rainbow, etc.)
+- Web3 wallet (MetaMask, Rainbow, etc.)
 - Farcaster account
 
 ### Installation
 
-1. **Clone the repository**
 ```bash
 git clone <repository-url>
 cd loyal-spark-farcaster
-```
-
-2. **Install dependencies**
-```bash
 npm install
-# or
-bun install
+npm run dev
 ```
 
-3. **Environment Setup**
+### Environment
 
-The project uses Lovable Cloud for backend services. Environment variables are automatically configured:
+Environment variables are automatically configured via Lovable Cloud:
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_PUBLISHABLE_KEY`
 - `VITE_SUPABASE_PROJECT_ID`
 
-For blockchain configuration, see `src/config/wagmi.ts`.
+## AI Agent Quick Start
 
-4. **Run development server**
+1. Connect wallet → Open **AI Agents** tab → Register agent → Get API key (`lsk_...`)
+2. Use REST API or MCP Server with the key in `x-api-key` header
+3. Optionally create a server wallet for autonomous onchain operations
+
 ```bash
-npm run dev
-# or
-bun dev
+# Example: List programs
+curl -H "x-api-key: lsk_YOUR_KEY" \
+  https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/programs
 ```
 
-5. **Build for production**
-```bash
-npm run build
-# or
-bun build
-```
-
-## Creating a Separate Repository
-
-### Option 1: Using Lovable GitHub Integration (Recommended)
-
-1. **Connect to GitHub**
-   - In Lovable editor: Click "GitHub" → "Connect to GitHub"
-   - Authorize the Lovable GitHub App
-   - Select your GitHub account/organization
-
-2. **Create Repository**
-   - Click "Create Repository"
-   - Choose repository name (e.g., `loyal-spark-farcaster`)
-   - Repository will be created with all current code
-
-3. **Automatic Sync**
-   - Changes in Lovable automatically push to GitHub
-   - Changes pushed to GitHub automatically sync to Lovable
-   - Two-way sync happens in real-time
-
-### Option 2: Manual Export
-
-1. **Export from Lovable**
-   - Download project as ZIP
-   - Extract to local directory
-
-2. **Create GitHub Repository**
-   - Go to GitHub.com
-   - Create new repository
-   - Clone to local machine
-
-3. **Copy Files**
-   - Copy all files from extracted ZIP
-   - Commit and push to GitHub
-
-## Smart Contract Deployment
-
-The application uses pre-deployed smart contracts on **BASE Network**:
-
-- **LoyaltyTokenFactory**: `0x5F3DdBa12580CFdc6016258774cCc19C4250dA80`
-- **LoyalSparkERC20 (Implementation)**: `0xe6BA426C9c51281B929a17444De02c65815E27C3`
-- **Network**: BASE (Chain ID: 8453)
-
-Contract addresses are configured in `src/config/contracts.ts`.
-
-## Usage Guide
-
-### For Merchants
-
-1. **Connect Wallet** - Use RainbowKit to connect your wallet
-2. **Authenticate** - Sign in with your Farcaster account
-3. **Select Role** - Choose "Merchant" role
-4. **Create Program** - Deploy a new loyalty token contract
-5. **Issue Tokens** - Send tokens to customer wallet addresses
-6. **Create Rewards** - Define reward vouchers customers can redeem
-
-### For Customers
-
-1. **Connect Wallet** - Use RainbowKit to connect your wallet
-2. **Authenticate** - Sign in with your Farcaster account
-3. **Select Role** - Choose "Customer" role
-4. **View Tokens** - See all loyalty tokens in your wallet
-5. **Redeem Rewards** - Exchange tokens for vouchers
-6. **Trade Tokens** - Swap tokens on the DEX integration
-
-## Database Migrations
-
-Database schema is managed through Supabase migrations in `supabase/migrations/`.
-
-Key tables:
-- `profiles`: User data with role selection
-- `loyalty_programs`: Merchant programs
-- `issued_tokens`: Token distribution history
-- `rewards`: Available rewards
-- `vouchers`: Redeemed vouchers
-
-Row Level Security (RLS) policies ensure data privacy:
-- Users can only see their own data
-- Merchants can manage their programs
-- Customers can view public rewards
+See [API Documentation](https://loyalspark.online/api-docs) and [Agent Discovery](https://loyalspark.online/.well-known/agent.json) for full details.
 
 ## Edge Functions
 
-Located in `supabase/functions/`:
+| Function | Purpose |
+|----------|---------|
+| `agent-api` | REST API for AI agents |
+| `agent-wallet` | CDP MPC wallet management |
+| `loyalty-mcp` | MCP Server for LLMs |
+| `siwe-verify` | Wallet authentication |
+| `check-program-expiration` | Program expiration handling |
+| `verify-agent-plan-payment` | USDC payment verification |
 
-- **check-program-expiration**: Automated program expiration handling
-- **get-token-holders**: Retrieve token holder analytics
+## Builder Code
 
-## Configuration Files
-
-- `vite.config.ts`: Vite build configuration
-- `tailwind.config.ts`: Design system configuration
-- `src/config/wagmi.ts`: Blockchain network configuration
-- `src/config/contracts.ts`: Smart contract addresses
-- `supabase/config.toml`: Backend configuration (auto-generated)
-
-## Design System
-
-The application uses a custom design system with semantic tokens:
-
-- Colors defined in `src/index.css`
-- Theme configured in `tailwind.config.ts`
-- All components use semantic tokens (no hardcoded colors)
-- Supports light/dark mode
-
-## Security
-
-- **RLS Policies**: All database tables protected with Row Level Security
-- **Wallet Authentication**: Signature-based authentication
-- **Smart Contract Auditing**: Review contracts before deployment
-- **Environment Variables**: Sensitive data never committed to repository
-
-## Troubleshooting
-
-### Wallet Connection Issues
-- Ensure wallet extension is installed and unlocked
-- Check network selection in wallet
-- Try refreshing the page
-
-### Transaction Failures
-- Verify sufficient gas in wallet
-- Check contract addresses in configuration
-- Ensure correct network selection
-
-### Authentication Errors
-- Clear browser cache and localStorage
-- Reconnect wallet
-- Check Supabase connection
-
-## Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
-
-## License
-
-MIT License - see LICENSE file for details
-
-## Support
-
-- **Email**: admin@loyalspark.online
-- **Documentation**: See README files in `/public/media-kit/`
-- **Smart Contracts**: See `README_LOYALTY_TOKEN_FACTORY.md` and `README_LOYAL_SPARK_ERC20.md`
-- **Tokenomics**: See `src/pages/pitch-deck/TOKENOMICS.md`
-
-## Roadmap
-
-- [ ] Mobile app with Capacitor
-- [ ] Multi-chain support
-- [ ] Advanced DEX features
-- [ ] Merchant analytics dashboard
-- [ ] Customer reward recommendations
-- [ ] Social features integration with Farcaster
+All transactions tagged with Base Builder Code `bc_wdmnog7m` (ERC-8021) for [base.dev](https://base.dev) analytics.
 
 ## Links
 
-- [Lovable Documentation](https://docs.lovable.dev)
-- [Farcaster Auth Kit](https://docs.farcaster.xyz/auth-kit/)
-- [Wagmi Documentation](https://wagmi.sh)
-- [Supabase Documentation](https://supabase.com/docs)
+- **Website**: [loyalspark.online](https://loyalspark.online)
+- **API Docs**: [loyalspark.online/api-docs](https://loyalspark.online/api-docs)
+- **Twitter/X**: [x.com/Loyal_Spark](https://x.com/Loyal_Spark)
+- **Email**: admin@loyalspark.online
+
+## License
+
+MIT License — see LICENSE file for details.
