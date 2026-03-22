@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { SignJWT, importPKCS8 } from "https://deno.land/x/jose@v5.2.4/index.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
