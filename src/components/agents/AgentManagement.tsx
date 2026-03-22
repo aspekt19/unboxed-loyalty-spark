@@ -299,6 +299,31 @@ export function AgentManagement() {
                       <span>Key: <code>{agent.api_key_prefix}...</code></span>
                       <span>Requests: {agent.total_requests}</span>
                     </div>
+                    {/* Server Wallet */}
+                    <div className="flex items-center gap-2 mt-2">
+                      {agent.agent_wallet_address ? (
+                        <Badge variant="outline" className="text-xs gap-1">
+                          <Wallet className="h-3 w-3" />
+                          {agent.agent_wallet_address.slice(0, 6)}...{agent.agent_wallet_address.slice(-4)}
+                          <span className="text-muted-foreground">(mock)</span>
+                        </Badge>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-6 text-xs gap-1"
+                          disabled={creatingWalletFor === agent.id}
+                          onClick={() => handleCreateWallet(agent.id)}
+                        >
+                          {creatingWalletFor === agent.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Wallet className="h-3 w-3" />
+                          )}
+                          Create Server Wallet
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-1">
                     <Button
