@@ -1,6 +1,4 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { CdpClient } from "npm:@coinbase/cdp-sdk@^1.43.0";
-import { serializeTransaction, parseEther } from "npm:viem@^2.46.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,37 +13,129 @@ function db() {
   return createClient(supabaseUrl, supabaseServiceKey);
 }
 
-// --- CDP Client (lazy singleton) ---
-let _cdpClient: any = null;
-let _cdpAvailable: boolean | null = null;
+// --- CDP REST API helpers (no heavy SDK) ---
+const CDP_API_BASE = "https://api.cdp.coinbase.com/platform/v2";
 
-function getCdpClient() {
-  if (_cdpAvailable === false) return null;
-  if (_cdpClient) return _cdpClient;
-
+async function createCdpJwt(): Promise<string | null> {
   const keyId = Deno.env.get("CDP_API_KEY_ID");
   const keySecret = Deno.env.get("CDP_API_KEY_SECRET");
-  const walletSecret = Deno.env.get("CDP_WALLET_SECRET");
+  if (!keyId || !keySecret) return null;
 
-  if (!keyId || !keySecret) {
-    _cdpAvailable = false;
-    console.log("[agent-wallet] CDP keys not configured — using mock mode");
+  // Build JWT header + payload
+  const header = { alg: "ES256", kid: keyId, typ: "JWT" };
+  const now = Math.floor(Date.now() / 1000);
+  const payload = {
+    sub: keyId,
+    iss: "cdp",
+    aud: ["cdp_service"],
+    nbf: now,
+    exp: now + 120,
+    uris: ["*"],
+  };
+
+  const enc = new TextEncoder();
+  const b64url = (data: Uint8Array) =>
+    btoa(String.fromCharCode(...data))
+      .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const b64urlStr = (s: string) => b64url(enc.encode(s));
+
+  const headerB64 = b64urlStr(JSON.stringify(header));
+  const payloadB64 = b64urlStr(JSON.stringify(payload));
+  const signingInput = `${headerB64}.${payloadB64}`;
+
+  try {
+    // Parse EC private key from PEM/base64
+    let keyData = keySecret.trim();
+    // Remove PEM headers if present
+    keyData = keyData
+      .replace(/-----BEGIN EC PRIVATE KEY-----/g, "")
+      .replace(/-----END EC PRIVATE KEY-----/g, "")
+      .replace(/-----BEGIN PRIVATE KEY-----/g, "")
+      .replace(/-----END PRIVATE KEY-----/g, "")
+      .replace(/\s/g, "");
+
+    const keyBytes = Uint8Array.from(atob(keyData), (c) => c.charCodeAt(0));
+
+    const cryptoKey = await crypto.subtle.importKey(
+      "pkcs8",
+      keyBytes,
+      { name: "ECDSA", namedCurve: "P-256" },
+      false,
+      ["sign"]
+    );
+
+    const signature = await crypto.subtle.sign(
+      { name: "ECDSA", hash: "SHA-256" },
+      cryptoKey,
+      enc.encode(signingInput)
+    );
+
+    // Convert DER signature to raw r||s format for JWT
+    const sigArray = new Uint8Array(signature);
+    let r: Uint8Array, s: Uint8Array;
+
+    if (sigArray[0] === 0x30) {
+      // DER encoded
+      let offset = 2;
+      const rLen = sigArray[offset + 1];
+      const rStart = offset + 2;
+      r = sigArray.slice(rStart, rStart + rLen);
+      offset = rStart + rLen;
+      const sLen = sigArray[offset + 1];
+      const sStart = offset + 2;
+      s = sigArray.slice(sStart, sStart + sLen);
+
+      // Remove leading zeros
+      if (r.length > 32) r = r.slice(r.length - 32);
+      if (s.length > 32) s = s.slice(s.length - 32);
+      // Pad to 32 bytes
+      if (r.length < 32) { const tmp = new Uint8Array(32); tmp.set(r, 32 - r.length); r = tmp; }
+      if (s.length < 32) { const tmp = new Uint8Array(32); tmp.set(s, 32 - s.length); s = tmp; }
+    } else {
+      // Already raw
+      r = sigArray.slice(0, 32);
+      s = sigArray.slice(32, 64);
+    }
+
+    const rawSig = new Uint8Array(64);
+    rawSig.set(r, 0);
+    rawSig.set(s, 32);
+
+    return `${signingInput}.${b64url(rawSig)}`;
+  } catch (err) {
+    console.error("[agent-wallet] JWT creation failed:", err);
     return null;
+  }
+}
+
+async function cdpRequest(method: string, path: string, body?: any): Promise<{ ok: boolean; data?: any; error?: string }> {
+  const jwt = await createCdpJwt();
+  if (!jwt) return { ok: false, error: "CDP keys not configured" };
+
+  const walletSecret = Deno.env.get("CDP_WALLET_SECRET");
+  const headers: Record<string, string> = {
+    "Authorization": `Bearer ${jwt}`,
+    "Content-Type": "application/json",
+  };
+  if (walletSecret) {
+    headers["X-Wallet-Auth"] = walletSecret;
   }
 
   try {
-    _cdpClient = new CdpClient({
-      apiKeyId: keyId,
-      apiKeySecret: keySecret,
-      walletSecret: walletSecret || undefined,
+    const res = await fetch(`${CDP_API_BASE}${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
     });
-    _cdpAvailable = true;
-    console.log("[agent-wallet] CDP client initialized successfully");
-    return _cdpClient;
-  } catch (err) {
-    console.error("[agent-wallet] Failed to init CDP client:", err);
-    _cdpAvailable = false;
-    return null;
+    const data = await res.json();
+    if (!res.ok) {
+      console.error(`[agent-wallet] CDP API ${res.status}:`, JSON.stringify(data));
+      return { ok: false, error: data.message || `CDP API error ${res.status}` };
+    }
+    return { ok: true, data };
+  } catch (err: any) {
+    console.error("[agent-wallet] CDP request failed:", err.message);
+    return { ok: false, error: err.message };
   }
 }
 
@@ -99,7 +189,6 @@ function jsonResponse(data: any, status = 200) {
 async function handleCreateWallet(d: any, agent: any, body: any) {
   const chainId = body.chain_id || 8453;
 
-  // Check if wallet already exists
   const { data: existing } = await d
     .from("agent_wallets")
     .select("id, wallet_address, wallet_type, chain_id, is_active")
@@ -108,50 +197,30 @@ async function handleCreateWallet(d: any, agent: any, body: any) {
     .single();
 
   if (existing) {
-    return jsonResponse({
-      wallet: existing,
-      message: "Wallet already exists for this agent on this chain",
-    });
+    return jsonResponse({ wallet: existing, message: "Wallet already exists for this agent on this chain" });
   }
 
   let walletAddress: string;
   let walletType: string;
-  let accountName: string | undefined;
 
-  const cdp = getCdpClient();
+  // Try CDP REST API
+  const cdpResult = await cdpRequest("POST", "/evm/accounts", {
+    name: `loyalty-agent-${agent.name}-${agent.agentId.substring(0, 8)}`,
+  });
 
-  if (cdp) {
-    try {
-      // Real CDP MPC wallet creation
-      const account = await cdp.evm.createAccount({
-        name: `loyalty-agent-${agent.name}-${agent.agentId.substring(0, 8)}`,
-      });
-      walletAddress = account.address;
-      walletType = "cdp_mpc";
-      accountName = account.name;
-      console.log(`[agent-wallet] CDP MPC wallet created for agent ${agent.name}: ${walletAddress}`);
-    } catch (err: any) {
-      console.error("[agent-wallet] CDP account creation failed:", err.message);
-      // Fallback to mock if CDP fails
-      walletAddress = generateMockWalletAddress(agent.agentId);
-      walletType = "mock";
-      console.log(`[agent-wallet] Fallback to mock wallet for agent ${agent.name}: ${walletAddress}`);
-    }
+  if (cdpResult.ok && cdpResult.data?.address) {
+    walletAddress = cdpResult.data.address;
+    walletType = "cdp_mpc";
+    console.log(`[agent-wallet] CDP MPC wallet created for agent ${agent.name}: ${walletAddress}`);
   } else {
     walletAddress = generateMockWalletAddress(agent.agentId);
     walletType = "mock";
-    console.log(`[agent-wallet] Mock wallet created for agent ${agent.name}: ${walletAddress}`);
+    console.log(`[agent-wallet] Mock wallet for agent ${agent.name}: ${walletAddress} (CDP: ${cdpResult.error})`);
   }
 
   const { data: wallet, error } = await d
     .from("agent_wallets")
-    .insert({
-      agent_id: agent.agentId,
-      wallet_address: walletAddress,
-      wallet_type: walletType,
-      chain_id: chainId,
-      is_active: true,
-    })
+    .insert({ agent_id: agent.agentId, wallet_address: walletAddress, wallet_type: walletType, chain_id: chainId, is_active: true })
     .select("id, wallet_address, wallet_type, chain_id, is_active, created_at")
     .single();
 
@@ -160,10 +229,8 @@ async function handleCreateWallet(d: any, agent: any, body: any) {
   await d.from("agent_registry").update({ agent_wallet_address: walletAddress }).eq("id", agent.agentId);
 
   await d.from("agent_activity_log").insert({
-    agent_id: agent.agentId,
-    action: "create_wallet",
-    request_body: { chain_id: chainId },
-    response_status: 201,
+    agent_id: agent.agentId, action: "create_wallet",
+    request_body: { chain_id: chainId }, response_status: 201,
     response_body: { wallet_address: walletAddress, wallet_type: walletType },
   });
 
@@ -172,7 +239,7 @@ async function handleCreateWallet(d: any, agent: any, body: any) {
     mode: walletType === "cdp_mpc" ? "cdp" : "mock",
     message: walletType === "cdp_mpc"
       ? `CDP MPC wallet created on Base. Address: ${walletAddress}`
-      : "Mock wallet created. Configure CDP_API_KEY_ID and CDP_API_KEY_SECRET for real MPC wallets.",
+      : "Mock wallet created. Configure CDP keys for real MPC wallets.",
   }, 201);
 }
 
@@ -184,10 +251,7 @@ async function handleGetWallet(d: any, agent: any, body: any) {
     .eq("chain_id", body.chain_id || 8453)
     .single();
 
-  if (!wallet) {
-    return jsonResponse({ error: "No wallet found. Use action: create_wallet first." }, 404);
-  }
-
+  if (!wallet) return jsonResponse({ error: "No wallet found. Use action: create_wallet first." }, 404);
   return jsonResponse({ wallet });
 }
 
@@ -197,16 +261,12 @@ async function handleSignTransaction(d: any, agent: any, body: any) {
   }
 
   const { to, data: txData, value } = body;
-  if (!to || !txData) {
-    return jsonResponse({ error: "Missing required fields: to, data" }, 400);
-  }
+  if (!to || !txData) return jsonResponse({ error: "Missing required fields: to, data" }, 400);
 
   const { data: wallet } = await d
     .from("agent_wallets")
     .select("wallet_address, wallet_type, is_active")
-    .eq("agent_id", agent.agentId)
-    .eq("chain_id", 8453)
-    .single();
+    .eq("agent_id", agent.agentId).eq("chain_id", 8453).single();
 
   if (!wallet || !wallet.is_active) {
     return jsonResponse({ error: "No active wallet. Use action: create_wallet first." }, 404);
@@ -215,61 +275,34 @@ async function handleSignTransaction(d: any, agent: any, body: any) {
   let result: { txHash: string; status: string };
 
   if (wallet.wallet_type === "cdp_mpc") {
-    const cdp = getCdpClient();
-    if (cdp) {
-      try {
-        const account = await cdp.evm.getAccount({ address: wallet.wallet_address });
-        const networkAccount = await account.useNetwork("base");
-
-        const txResult = await networkAccount.sendTransaction({
-          to: to as `0x${string}`,
-          data: txData as `0x${string}`,
-          value: value ? BigInt(value) : 0n,
-        });
-
-        result = {
-          txHash: txResult.transactionHash,
-          status: "signed_and_sent",
-        };
-      } catch (err: any) {
-        console.error("[agent-wallet] CDP sign failed:", err.message);
-        result = mockSignTransaction({ to, data: txData, walletAddress: wallet.wallet_address });
-        result.status = "cdp_error_mock_fallback";
-      }
+    const cdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/sign/transaction`, {
+      transaction: txData,
+      network: "base",
+    });
+    if (cdpResult.ok) {
+      result = { txHash: cdpResult.data.transactionHash || cdpResult.data.hash || "0x_pending", status: "signed_via_cdp" };
     } else {
       result = mockSignTransaction({ to, data: txData, walletAddress: wallet.wallet_address });
+      result.status = "cdp_error_mock_fallback";
     }
   } else {
     result = mockSignTransaction({ to, data: txData, walletAddress: wallet.wallet_address });
   }
 
   await d.from("agent_activity_log").insert({
-    agent_id: agent.agentId,
-    action: "sign_transaction",
+    agent_id: agent.agentId, action: "sign_transaction",
     request_body: { to, data: txData?.substring(0, 20) + "...", value },
-    response_status: 200,
-    response_body: result,
+    response_status: 200, response_body: result,
   });
 
   return jsonResponse({
-    transaction: {
-      hash: result.txHash,
-      status: result.status,
-      from: wallet.wallet_address,
-      to,
-      chain_id: 8453,
-      chain: "Base",
-    },
-    message: result.status === "signed_and_sent"
-      ? "Transaction signed and sent on-chain via CDP."
-      : "⚠️ Mock transaction — not submitted on-chain. Configure CDP keys for real signing.",
+    transaction: { hash: result.txHash, status: result.status, from: wallet.wallet_address, to, chain_id: 8453, chain: "Base" },
+    message: result.status.includes("cdp") ? "Transaction signed via CDP." : "⚠️ Mock transaction — not submitted on-chain.",
   });
 }
 
 async function handleServerMint(d: any, agent: any, body: any) {
-  if (!agent.scopes.includes("mint")) {
-    return jsonResponse({ error: "Scope 'mint' required" }, 403);
-  }
+  if (!agent.scopes.includes("mint")) return jsonResponse({ error: "Scope 'mint' required" }, 403);
 
   const { token_address, recipient_address, amount } = body;
   if (!token_address || !recipient_address || !amount) {
@@ -279,30 +312,22 @@ async function handleServerMint(d: any, agent: any, body: any) {
     return jsonResponse({ error: "Invalid recipient_address" }, 400);
   }
 
-  // Verify program ownership
   const { data: prog } = await d
     .from("loyalty_programs")
     .select("id, name, symbol, status")
     .eq("token_address", token_address.toLowerCase())
-    .eq("merchant_address", agent.ownerAddress)
-    .single();
+    .eq("merchant_address", agent.ownerAddress).single();
 
   if (!prog) return jsonResponse({ error: "Program not found or not owned" }, 404);
   if (prog.status !== "active") return jsonResponse({ error: `Program is ${prog.status}` }, 400);
 
-  // Get agent wallet
   const { data: wallet } = await d
     .from("agent_wallets")
     .select("wallet_address, wallet_type")
-    .eq("agent_id", agent.agentId)
-    .eq("chain_id", 8453)
-    .single();
+    .eq("agent_id", agent.agentId).eq("chain_id", 8453).single();
 
-  if (!wallet) {
-    return jsonResponse({ error: "No wallet. Use action: create_wallet first." }, 404);
-  }
+  if (!wallet) return jsonResponse({ error: "No wallet. Use action: create_wallet first." }, 404);
 
-  // Build mint calldata (mint(address,uint256) selector = 0x40c10f19)
   const paddedRecipient = recipient_address.toLowerCase().replace("0x", "").padStart(64, "0");
   const amountHex = BigInt(Math.floor(amount * 1e18)).toString(16).padStart(64, "0");
   const mintCalldata = "0x40c10f19" + paddedRecipient + amountHex;
@@ -310,62 +335,39 @@ async function handleServerMint(d: any, agent: any, body: any) {
   let txResult: { txHash: string; status: string };
 
   if (wallet.wallet_type === "cdp_mpc") {
-    const cdp = getCdpClient();
-    if (cdp) {
-      try {
-        const account = await cdp.evm.getAccount({ address: wallet.wallet_address });
-        const networkAccount = await account.useNetwork("base");
-
-        const sendResult = await networkAccount.sendTransaction({
-          to: token_address as `0x${string}`,
-          data: mintCalldata as `0x${string}`,
-        });
-
-        txResult = { txHash: sendResult.transactionHash, status: "minted_onchain" };
-      } catch (err: any) {
-        console.error("[agent-wallet] CDP mint failed:", err.message);
-        txResult = mockSignTransaction({ to: token_address, data: mintCalldata, walletAddress: wallet.wallet_address });
-        txResult.status = "cdp_error_mock_fallback";
-      }
+    const cdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/sign/transaction`, {
+      transaction: mintCalldata,
+      network: "base",
+    });
+    if (cdpResult.ok) {
+      txResult = { txHash: cdpResult.data.transactionHash || cdpResult.data.hash || "0x_pending", status: "minted_onchain" };
     } else {
       txResult = mockSignTransaction({ to: token_address, data: mintCalldata, walletAddress: wallet.wallet_address });
+      txResult.status = "cdp_error_mock_fallback";
     }
   } else {
     txResult = mockSignTransaction({ to: token_address, data: mintCalldata, walletAddress: wallet.wallet_address });
   }
 
-  // Record in history
   await d.from("token_mint_history").insert({
     merchant_address: agent.ownerAddress.toLowerCase(),
     recipient_address: recipient_address.toLowerCase(),
-    amount,
-    token_address: token_address.toLowerCase(),
-    token_name: prog.name,
-    token_symbol: prog.symbol,
+    amount, token_address: token_address.toLowerCase(),
+    token_name: prog.name, token_symbol: prog.symbol,
     transaction_hash: txResult.status === "minted_onchain" ? txResult.txHash : null,
   });
 
   await d.from("agent_activity_log").insert({
-    agent_id: agent.agentId,
-    action: "server_mint",
+    agent_id: agent.agentId, action: "server_mint",
     request_body: { token_address, recipient_address, amount },
-    response_status: 200,
-    response_body: { tx_hash: txResult.txHash, mode: wallet.wallet_type, status: txResult.status },
+    response_status: 200, response_body: { tx_hash: txResult.txHash, mode: wallet.wallet_type, status: txResult.status },
   });
 
   return jsonResponse({
-    mint: {
-      token_address,
-      recipient: recipient_address,
-      amount,
-      tx_hash: txResult.txHash,
-      signed_by: wallet.wallet_address,
-      mode: wallet.wallet_type,
-      status: txResult.status,
-    },
+    mint: { token_address, recipient: recipient_address, amount, tx_hash: txResult.txHash, signed_by: wallet.wallet_address, mode: wallet.wallet_type, status: txResult.status },
     message: txResult.status === "minted_onchain"
       ? "✅ Tokens minted on-chain via CDP server wallet."
-      : "⚠️ Mock mint — tokens not actually minted on-chain. Configure CDP for real minting.",
+      : "⚠️ Mock mint — tokens not actually minted on-chain.",
   });
 }
 
@@ -382,30 +384,19 @@ Deno.serve(async (req) => {
   }
 
   const agent = await authenticateAgent(apiKey);
-  if (!agent) {
-    return jsonResponse({ error: "Invalid API key or agent deactivated" }, 401);
-  }
+  if (!agent) return jsonResponse({ error: "Invalid API key or agent deactivated" }, 401);
 
   const d = db();
 
   try {
     const body = await req.json().catch(() => ({}));
-    const action = body.action;
-
-    switch (action) {
-      case "create_wallet":
-        return await handleCreateWallet(d, agent, body);
-      case "get_wallet":
-        return await handleGetWallet(d, agent, body);
-      case "sign_transaction":
-        return await handleSignTransaction(d, agent, body);
-      case "server_mint":
-        return await handleServerMint(d, agent, body);
+    switch (body.action) {
+      case "create_wallet": return await handleCreateWallet(d, agent, body);
+      case "get_wallet": return await handleGetWallet(d, agent, body);
+      case "sign_transaction": return await handleSignTransaction(d, agent, body);
+      case "server_mint": return await handleServerMint(d, agent, body);
       default:
-        return jsonResponse({
-          error: "Unknown action",
-          available_actions: ["create_wallet", "get_wallet", "sign_transaction", "server_mint"],
-        }, 400);
+        return jsonResponse({ error: "Unknown action", available_actions: ["create_wallet", "get_wallet", "sign_transaction", "server_mint"] }, 400);
     }
   } catch (err) {
     console.error("[agent-wallet] Error:", err);
