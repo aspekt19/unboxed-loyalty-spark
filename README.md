@@ -57,6 +57,7 @@ Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain
 - **Scoped Permissions**: Granular access control (read, mint, manage_rewards, trade)
 - **Activity Logging**: Full audit trail of all agent operations
 - **Tiered Pricing**: Free (100 calls/mo, 1% fee) → Pro ($29/mo, 0.5%) → Enterprise ($99/mo, 0.25%)
+- **Skills Documentation**: 11 structured step-by-step guides for agent onboarding and operations
 
 ## Technology Stack
 
