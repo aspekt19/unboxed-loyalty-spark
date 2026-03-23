@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Copy, Check, Bot, Key, Shield, Zap, Lightbulb, Network, BadgeCheck, Users, TrendingUp, Puzzle } from 'lucide-react';
+import { ArrowLeft, Copy, Check, Bot, Key, Shield, Zap, Lightbulb, Network, BadgeCheck, Users, TrendingUp, Puzzle, BookOpen, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PageTransition from '@/components/PageTransition';
 import McpServerSection from '@/components/api-docs/McpServerSection';
@@ -568,6 +568,58 @@ const reward = await fetch(\`\${BASE}/rewards\`, {
                     <span className="text-muted-foreground">{desc}</span>
                   </div>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Skills Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                Skills for AI Agents
+              </CardTitle>
+              <CardDescription>
+                Structured step-by-step guides that teach AI agents how to use each protocol feature
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {[
+                  { id: '00', name: 'Getting Started', desc: 'Register agent, get API key, first request' },
+                  { id: '01', name: 'Create Loyalty Program', desc: 'Deploy ERC-20 loyalty token on Base' },
+                  { id: '02', name: 'Mint Tokens', desc: 'Mint tokens to customer wallets' },
+                  { id: '03', name: 'Transfer Tokens', desc: 'Transfer tokens between wallets' },
+                  { id: '04', name: 'Manage Rewards', desc: 'Create redeemable rewards catalog' },
+                  { id: '05', name: 'Balance & Tiers', desc: 'Check balances and tier status' },
+                  { id: '06', name: 'Marketplace Trading', desc: 'P2P token trading with atomic escrow' },
+                  { id: '07', name: 'Analytics & CRM', desc: 'Program analytics and CRM data' },
+                  { id: '08', name: 'Referrals', desc: 'Referral programs for organic growth' },
+                  { id: '09', name: 'Vouchers', desc: 'Voucher lifecycle management' },
+                  { id: '10', name: 'Server Wallets', desc: 'CDP MPC wallets for autonomous transactions' },
+                ].map((skill) => (
+                  <a
+                    key={skill.id}
+                    href={`/.well-known/skills/${skill.id}-${skill.name.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-')}.md`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Badge variant="outline" className="font-mono text-xs">{skill.id}</Badge>
+                      <div>
+                        <span className="font-medium text-sm">{skill.name}</span>
+                        <p className="text-xs text-muted-foreground">{skill.desc}</p>
+                      </div>
+                    </div>
+                    <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </a>
+                ))}
+              </div>
+              <div className="mt-4 p-3 bg-muted/30 rounded-lg">
+                <p className="text-xs text-muted-foreground">
+                  Skills index: <code className="text-primary">/.well-known/skills/index.md</code>
+                </p>
               </div>
             </CardContent>
           </Card>

@@ -45,7 +45,7 @@ The Loyal Spark platform operates as a dual-mode protocol where **humans** inter
 
 ### 3. MCP Server ✅
 - **Edge Function**: `loyalty-mcp` — Streamable HTTP transport, JSON-RPC 2.0
-- **9 Tools**: `get_platform_info`, `get_my_profile`, `list_loyalty_programs`, `list_rewards`, `create_reward`, `mint_loyalty_tokens`, `get_token_balance`, `get_program_analytics`, `list_marketplace_offers`
+- **10 Tools**: `get_platform_info`, `get_my_profile`, `list_loyalty_programs`, `list_rewards`, `create_reward`, `mint_loyalty_tokens`, `transfer_loyalty_tokens`, `get_token_balance`, `get_program_analytics`, `list_marketplace_offers`
 - **Compatible with**: Claude Desktop, Cursor, VS Code, any MCP client
 
 ### 4. CDP Server Wallets (MPC) ✅
@@ -75,6 +75,7 @@ The Loyal Spark platform operates as a dual-mode protocol where **humans** inter
 
 ### 8. Discovery & Documentation ✅
 - **Agent Card**: `/.well-known/agent.json` — protocol specification for AI discovery
+- **Skills**: `/.well-known/skills/` — 11 structured Markdown guides for agent onboarding (getting started, mint, transfer, rewards, tiers, marketplace, analytics, referrals, vouchers, wallets)
 - **API Docs**: `/api-docs` — interactive documentation with MCP setup
 - **MCP Server section** with setup instructions for Claude, Cursor, Python SDK
 

@@ -57,6 +57,7 @@ Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain
 - **Scoped Permissions**: Granular access control (read, mint, manage_rewards, trade)
 - **Activity Logging**: Full audit trail of all agent operations
 - **Tiered Pricing**: Free (100 calls/mo, 1% fee) → Pro ($29/mo, 0.5%) → Enterprise ($99/mo, 0.25%)
+- **Skills Documentation**: 11 structured step-by-step guides for agent onboarding and operations
 
 ## Technology Stack
 
@@ -151,7 +152,28 @@ Connect Claude, GPT, or any MCP-compatible agent:
 
 AI agents can discover the protocol automatically via:
 - `/.well-known/agent.json` — Full protocol specification, capabilities, pricing
+- `/.well-known/skills/` — 11 structured Skills (step-by-step guides for each operation)
 - `/api-docs` — Interactive API documentation
+
+### Skills for AI Agents
+
+Structured Markdown guides that teach agents how to use the protocol:
+
+| # | Skill | Description |
+|---|-------|-------------|
+| 00 | Getting Started | Register agent, get API key, first request |
+| 01 | Create Loyalty Program | Deploy ERC-20 loyalty token on Base |
+| 02 | Mint Tokens | Mint tokens to customer wallets |
+| 03 | Transfer Tokens | Transfer tokens between wallets |
+| 04 | Manage Rewards | Create redeemable rewards catalog |
+| 05 | Balance & Tiers | Check balances and tier status |
+| 06 | Marketplace Trading | P2P token trading with atomic escrow |
+| 07 | Analytics & CRM | Program analytics and CRM data |
+| 08 | Referrals | Referral programs for organic growth |
+| 09 | Vouchers | Voucher lifecycle management |
+| 10 | Server Wallets | CDP MPC wallets for autonomous transactions |
+
+Skills index: `https://loyalspark.online/.well-known/skills/index.md`
 
 ### Server Wallets (CDP MPC)
 
