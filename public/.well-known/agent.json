@@ -215,6 +215,23 @@
       "list_marketplace_offers"
     ]
   },
+  "skills": {
+    "url": "https://loyalspark.online/.well-known/skills/index.md",
+    "format": "markdown",
+    "list": [
+      {"id": "getting-started", "file": "00-getting-started.md", "description": "Register agent, get API key, first request"},
+      {"id": "create-program", "file": "01-create-loyalty-program.md", "description": "Deploy ERC-20 loyalty token on Base"},
+      {"id": "mint-tokens", "file": "02-mint-tokens.md", "description": "Mint loyalty tokens to customer wallets"},
+      {"id": "transfer-tokens", "file": "03-transfer-tokens.md", "description": "Transfer tokens between wallets"},
+      {"id": "manage-rewards", "file": "04-manage-rewards.md", "description": "Create redeemable rewards catalog"},
+      {"id": "balance-tiers", "file": "05-balance-and-tiers.md", "description": "Check balances and tier status"},
+      {"id": "marketplace", "file": "06-marketplace-trading.md", "description": "P2P token trading with atomic escrow"},
+      {"id": "analytics", "file": "07-analytics-crm.md", "description": "Program analytics and CRM data"},
+      {"id": "referrals", "file": "08-referrals.md", "description": "Referral programs for organic growth"},
+      {"id": "vouchers", "file": "09-vouchers.md", "description": "Voucher lifecycle management"},
+      {"id": "server-wallets", "file": "10-server-wallets.md", "description": "CDP MPC wallets for autonomous transactions"}
+    ]
+  },
   "why_use": {
     "headline": "Loyalty-as-a-Service for AI Agents",
     "value_propositions": [
