@@ -198,6 +198,11 @@ export function AgentManagement() {
                 <Cpu className="h-3.5 w-3.5" /> MCP Server <ExternalLink className="h-3 w-3" />
               </Button>
             </a>
+            <a href="/.well-known/skills/index.md" target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <BookOpen className="h-3.5 w-3.5" /> Agent Skills <ExternalLink className="h-3 w-3" />
+              </Button>
+            </a>
           </div>
         </CardContent>
       </Card>
