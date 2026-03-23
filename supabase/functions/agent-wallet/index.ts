@@ -561,6 +561,60 @@ async function handleServerMint(d: any, agent: any, body: any) {
   });
 }
 
+// --- JWT (session) auth for UI-based wallet creation ---
+async function authenticateViaJwt(req: Request) {
+  const authHeader = req.headers.get("authorization");
+  if (!authHeader?.startsWith("Bearer ")) return null;
+
+  const token = authHeader.replace("Bearer ", "");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
+  if (!anonKey) return null;
+
+  const userClient = createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+
+  const { data: { user }, error } = await userClient.auth.getUser();
+  if (error || !user) return null;
+
+  return { userId: user.id, userClient };
+}
+
+async function handleUiCreateWallet(d: any, userId: string, body: any) {
+  const agentId = body.agent_id;
+  if (!agentId) return jsonResponse({ error: "Missing agent_id" }, 400);
+
+  // Verify the user owns this agent
+  const { data: profile } = await d
+    .from("profiles")
+    .select("wallet_address")
+    .eq("user_id", userId)
+    .single();
+
+  if (!profile) return jsonResponse({ error: "Profile not found" }, 404);
+
+  const { data: agentRow } = await d
+    .from("agent_registry")
+    .select("id, name, owner_address, scopes, is_active")
+    .eq("id", agentId)
+    .single();
+
+  if (!agentRow || agentRow.owner_address.toLowerCase() !== profile.wallet_address.toLowerCase()) {
+    return jsonResponse({ error: "Agent not found or not owned by you" }, 403);
+  }
+
+  if (!agentRow.is_active) return jsonResponse({ error: "Agent is inactive" }, 400);
+
+  const agent = {
+    agentId: agentRow.id,
+    ownerAddress: agentRow.owner_address,
+    scopes: agentRow.scopes || ["read"],
+    name: agentRow.name,
+  };
+
+  return await handleCreateWallet(d, agent, body);
+}
+
 // ==================== MAIN HANDLER ====================
 
 Deno.serve(async (req) => {
@@ -569,27 +623,43 @@ Deno.serve(async (req) => {
   }
 
   const apiKey = req.headers.get("x-api-key");
-  if (!apiKey || !apiKey.startsWith("lsk_")) {
-    return jsonResponse({ error: "Missing or invalid API key. Use x-api-key header." }, 401);
-  }
-
-  const agent = await authenticateAgent(apiKey);
-  if (!agent) return jsonResponse({ error: "Invalid API key or agent deactivated" }, 401);
-
   const d = db();
 
-  try {
-    const body = await req.json().catch(() => ({}));
-    switch (body.action) {
-      case "create_wallet": return await handleCreateWallet(d, agent, body);
-      case "get_wallet": return await handleGetWallet(d, agent, body);
-      case "sign_transaction": return await handleSignTransaction(d, agent, body);
-      case "server_mint": return await handleServerMint(d, agent, body);
-      default:
-        return jsonResponse({ error: "Unknown action", available_actions: ["create_wallet", "get_wallet", "sign_transaction", "server_mint"] }, 400);
+  // Path 1: API key auth (for agents)
+  if (apiKey && apiKey.startsWith("lsk_")) {
+    const agent = await authenticateAgent(apiKey);
+    if (!agent) return jsonResponse({ error: "Invalid API key or agent deactivated" }, 401);
+
+    try {
+      const body = await req.json().catch(() => ({}));
+      switch (body.action) {
+        case "create_wallet": return await handleCreateWallet(d, agent, body);
+        case "get_wallet": return await handleGetWallet(d, agent, body);
+        case "sign_transaction": return await handleSignTransaction(d, agent, body);
+        case "server_mint": return await handleServerMint(d, agent, body);
+        default:
+          return jsonResponse({ error: "Unknown action", available_actions: ["create_wallet", "get_wallet", "sign_transaction", "server_mint"] }, 400);
+      }
+    } catch (err) {
+      console.error("[agent-wallet] Error:", err);
+      return jsonResponse({ error: "Internal server error" }, 500);
     }
-  } catch (err) {
-    console.error("[agent-wallet] Error:", err);
-    return jsonResponse({ error: "Internal server error" }, 500);
   }
+
+  // Path 2: JWT auth (for UI)
+  const jwtAuth = await authenticateViaJwt(req);
+  if (jwtAuth) {
+    try {
+      const body = await req.json().catch(() => ({}));
+      if (body.action === "create_wallet") {
+        return await handleUiCreateWallet(d, jwtAuth.userId, body);
+      }
+      return jsonResponse({ error: "Only create_wallet is available via UI auth" }, 400);
+    } catch (err) {
+      console.error("[agent-wallet] UI auth error:", err);
+      return jsonResponse({ error: "Internal server error" }, 500);
+    }
+  }
+
+  return jsonResponse({ error: "Missing or invalid authentication. Use x-api-key header or Bearer token." }, 401);
 });
