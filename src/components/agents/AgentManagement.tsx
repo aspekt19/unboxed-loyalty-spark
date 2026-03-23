@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Bot, Plus, Key, Copy, Check, RefreshCw, Power, PowerOff, Eye, FileText, ExternalLink, Cpu, Wallet, Loader2 } from 'lucide-react';
+import { Bot, Plus, Key, Copy, Check, RefreshCw, Power, PowerOff, Eye, FileText, ExternalLink, Cpu, Wallet, Loader2, BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -196,6 +196,11 @@ export function AgentManagement() {
             <a href={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/loyalty-mcp`} target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm" className="gap-1.5">
                 <Cpu className="h-3.5 w-3.5" /> MCP Server <ExternalLink className="h-3 w-3" />
+              </Button>
+            </a>
+            <a href="/.well-known/skills/index.md" target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <BookOpen className="h-3.5 w-3.5" /> Agent Skills <ExternalLink className="h-3 w-3" />
               </Button>
             </a>
           </div>
