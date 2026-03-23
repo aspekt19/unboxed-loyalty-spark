@@ -139,12 +139,10 @@ export function AgentManagement() {
     setCreatingWalletFor(agentId);
     try {
       const { data, error } = await supabase.functions.invoke('agent-wallet', {
-        body: { action: 'create_wallet', chain_id: 8453 },
-        headers: { 'x-api-key': '' }, // Will be handled server-side via agent lookup
+        body: { action: 'create_wallet', agent_id: agentId, chain_id: 8453 },
       });
-      // Since we can't pass the API key from the UI, we use a direct approach
-      // For the mock, let's call it differently
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       toast.success(`Server wallet created (${data?.wallet?.wallet_type || 'mock'} mode)`);
       queryClient.invalidateQueries({ queryKey: ['agents'] });
     } catch (err: any) {
