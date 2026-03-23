@@ -911,12 +911,21 @@ export default function GuidePage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid md:grid-cols-3 gap-4">
                     <Button variant="outline" className="h-auto p-4 justify-start" asChild>
                       <a href="/api-docs">
                         <div className="text-left flex-1">
                           <div className="font-medium mb-1">API Documentation</div>
                           <div className="text-xs text-muted-foreground">Interactive docs with examples</div>
+                        </div>
+                        <ExternalLink className="h-4 w-4 ml-2 flex-shrink-0" />
+                      </a>
+                    </Button>
+                    <Button variant="outline" className="h-auto p-4 justify-start" asChild>
+                      <a href="/.well-known/skills/index.md" target="_blank" rel="noopener noreferrer">
+                        <div className="text-left flex-1">
+                          <div className="font-medium mb-1">Agent Skills</div>
+                          <div className="text-xs text-muted-foreground">11 step-by-step guides for agents</div>
                         </div>
                         <ExternalLink className="h-4 w-4 ml-2 flex-shrink-0" />
                       </a>
