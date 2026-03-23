@@ -6,6 +6,7 @@
   "name": "Loyal Spark Loyalty Protocol",
   "description": "MCP server for onchain loyalty protocol on Base L2. AI agents can mint ERC-20 loyalty tokens, manage rewards, trade on marketplace, and get analytics — all via MCP tools.",
   "repository": "https://github.com/aspekt19/unboxed-loyalty-spark",
+  "license": "MIT",
   "homepage": "https://loyalspark.online",
   "tags": [
     "loyalty",
