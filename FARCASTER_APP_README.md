@@ -28,6 +28,7 @@ Loyal Spark Farcaster App enables merchants and customers to participate in a to
 - **REST API**: Full CRUD operations with scoped permissions
 - **MCP Server**: Direct integration with Claude, GPT, Cursor
 - **Server Wallets**: Coinbase CDP MPC wallets for autonomous operations
+- **Skills**: 11 structured step-by-step guides at `/.well-known/skills/`
 - **Tiered Plans**: Free → Pro ($29/mo) → Enterprise ($99/mo) in USDC
 
 ## Technology Stack
