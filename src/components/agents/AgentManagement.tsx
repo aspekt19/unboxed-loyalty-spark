@@ -116,6 +116,24 @@ export function AgentManagement() {
     }
   };
 
+  const handleDelete = async (agentId: string, agentName: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('agent-api-key', {
+        body: { action: 'delete', agent_id: agentId },
+      });
+      if (error) throw error;
+      toast.success(`Agent "${agentName}" deleted`);
+      queryClient.invalidateQueries({ queryKey: ['agents'] });
+    } catch {
+      toast.error('Failed to delete agent');
+    }
+  };
+
+  const copyWalletAddress = (address: string) => {
+    navigator.clipboard.writeText(address);
+    toast.success('Wallet address copied!');
+  };
+
   const handleRegenerate = async (agentId: string) => {
     try {
       const { data, error } = await supabase.functions.invoke('agent-api-key', {
