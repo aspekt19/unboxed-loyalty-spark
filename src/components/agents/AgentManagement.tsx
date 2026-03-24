@@ -239,17 +239,18 @@ export function AgentManagement() {
       {/* Create Agent */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Bot className="h-5 w-5 text-primary" />
+          <div className="flex items-start sm:items-center justify-between gap-2">
+            <div className="min-w-0">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <Bot className="h-5 w-5 text-primary flex-shrink-0" />
                 AI Agents
               </CardTitle>
-              <CardDescription>Register AI agents that can interact with your loyalty programs via API</CardDescription>
+              <CardDescription className="text-xs sm:text-sm mt-1">Register AI agents for API access</CardDescription>
             </div>
-            <Button onClick={() => setShowCreate(!showCreate)} size="sm">
+            <Button onClick={() => setShowCreate(!showCreate)} size="sm" className="flex-shrink-0">
               <Plus className="h-4 w-4 mr-1" />
-              New Agent
+              <span className="hidden sm:inline">New Agent</span>
+              <span className="sm:hidden">New</span>
             </Button>
           </div>
         </CardHeader>
