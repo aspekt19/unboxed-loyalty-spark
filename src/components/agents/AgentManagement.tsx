@@ -207,27 +207,29 @@ export function AgentManagement() {
       {/* API Docs & Agent Card Links */}
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="pt-4 pb-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <FileText className="h-5 w-5 text-primary" />
+          <div className="flex items-center gap-2 mb-2">
+            <FileText className="h-5 w-5 text-primary flex-shrink-0" />
             <span className="text-sm font-medium">Agent Resources:</span>
+          </div>
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
             <Link to="/api-docs">
-              <Button variant="outline" size="sm" className="gap-1.5">
-                <FileText className="h-3.5 w-3.5" /> API Documentation <ExternalLink className="h-3 w-3" />
+              <Button variant="outline" size="sm" className="gap-1 w-full sm:w-auto text-xs sm:text-sm">
+                <FileText className="h-3.5 w-3.5 flex-shrink-0" /> <span className="truncate">API Docs</span> <ExternalLink className="h-3 w-3 flex-shrink-0" />
               </Button>
             </Link>
             <a href="/.well-known/agent.json" target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" size="sm" className="gap-1.5">
-                <Bot className="h-3.5 w-3.5" /> Agent Card (JSON) <ExternalLink className="h-3 w-3" />
+              <Button variant="outline" size="sm" className="gap-1 w-full sm:w-auto text-xs sm:text-sm">
+                <Bot className="h-3.5 w-3.5 flex-shrink-0" /> <span className="truncate">Agent Card</span> <ExternalLink className="h-3 w-3 flex-shrink-0" />
               </Button>
             </a>
             <a href={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/loyalty-mcp`} target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" size="sm" className="gap-1.5">
-                <Cpu className="h-3.5 w-3.5" /> MCP Server <ExternalLink className="h-3 w-3" />
+              <Button variant="outline" size="sm" className="gap-1 w-full sm:w-auto text-xs sm:text-sm">
+                <Cpu className="h-3.5 w-3.5 flex-shrink-0" /> <span className="truncate">MCP Server</span> <ExternalLink className="h-3 w-3 flex-shrink-0" />
               </Button>
             </a>
             <a href="/.well-known/skills/index.md" target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" size="sm" className="gap-1.5">
-                <BookOpen className="h-3.5 w-3.5" /> Agent Skills <ExternalLink className="h-3 w-3" />
+              <Button variant="outline" size="sm" className="gap-1 w-full sm:w-auto text-xs sm:text-sm">
+                <BookOpen className="h-3.5 w-3.5 flex-shrink-0" /> <span className="truncate">Skills</span> <ExternalLink className="h-3 w-3 flex-shrink-0" />
               </Button>
             </a>
           </div>
