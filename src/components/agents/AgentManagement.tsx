@@ -6,7 +6,18 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Bot, Plus, Key, Copy, Check, RefreshCw, Power, PowerOff, Eye, FileText, ExternalLink, Cpu, Wallet, Loader2, BookOpen } from 'lucide-react';
+import { Bot, Plus, Key, Copy, Check, RefreshCw, Power, PowerOff, Eye, FileText, ExternalLink, Cpu, Wallet, Loader2, BookOpen, Trash2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -103,6 +114,24 @@ export function AgentManagement() {
     } catch {
       toast.error('Failed to deactivate agent');
     }
+  };
+
+  const handleDelete = async (agentId: string, agentName: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('agent-api-key', {
+        body: { action: 'delete', agent_id: agentId },
+      });
+      if (error) throw error;
+      toast.success(`Agent "${agentName}" deleted`);
+      queryClient.invalidateQueries({ queryKey: ['agents'] });
+    } catch {
+      toast.error('Failed to delete agent');
+    }
+  };
+
+  const copyWalletAddress = (address: string) => {
+    navigator.clipboard.writeText(address);
+    toast.success('Wallet address copied!');
   };
 
   const handleRegenerate = async (agentId: string) => {
@@ -311,9 +340,15 @@ export function AgentManagement() {
                     {/* Server Wallet */}
                     <div className="flex items-center gap-2 mt-2">
                       {agent.agent_wallet_address ? (
-                        <Badge variant="outline" className="text-xs gap-1">
+                        <Badge
+                          variant="outline"
+                          className="text-xs gap-1 cursor-pointer hover:bg-muted transition-colors"
+                          onClick={() => copyWalletAddress(agent.agent_wallet_address!)}
+                          title="Click to copy full address"
+                        >
                           <Wallet className="h-3 w-3" />
                           {agent.agent_wallet_address.slice(0, 6)}...{agent.agent_wallet_address.slice(-4)}
+                          <Copy className="h-2.5 w-2.5 ml-0.5" />
                         </Badge>
                       ) : (
                         <Button
@@ -362,6 +397,35 @@ export function AgentManagement() {
                     >
                       <PowerOff className="h-4 w-4 text-destructive" />
                     </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          title="Delete agent"
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete agent "{agent.name}"?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently delete the agent, its API key, server wallet, and all activity logs. This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDelete(agent.id, agent.name)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
                 {selectedAgentId === agent.id && (
