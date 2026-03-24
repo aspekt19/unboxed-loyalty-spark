@@ -340,9 +340,15 @@ export function AgentManagement() {
                     {/* Server Wallet */}
                     <div className="flex items-center gap-2 mt-2">
                       {agent.agent_wallet_address ? (
-                        <Badge variant="outline" className="text-xs gap-1">
+                        <Badge
+                          variant="outline"
+                          className="text-xs gap-1 cursor-pointer hover:bg-muted transition-colors"
+                          onClick={() => copyWalletAddress(agent.agent_wallet_address!)}
+                          title="Click to copy full address"
+                        >
                           <Wallet className="h-3 w-3" />
                           {agent.agent_wallet_address.slice(0, 6)}...{agent.agent_wallet_address.slice(-4)}
+                          <Copy className="h-2.5 w-2.5 ml-0.5" />
                         </Badge>
                       ) : (
                         <Button
