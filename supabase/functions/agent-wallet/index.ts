@@ -581,8 +581,7 @@ async function authenticateViaJwt(req: Request) {
 }
 
 async function handleUiCreateWallet(d: any, userId: string, body: any) {
-  const agentId = body.agent_id;
-  if (!agentId) return jsonResponse({ error: "Missing agent_id" }, 400);
+  let agentId = body.agent_id as string | undefined;
 
   // Verify the user owns this agent
   const { data: profile } = await d
@@ -592,6 +591,27 @@ async function handleUiCreateWallet(d: any, userId: string, body: any) {
     .single();
 
   if (!profile) return jsonResponse({ error: "Profile not found" }, 404);
+
+  // Backward compatibility: older UI builds did not send agent_id
+  if (!agentId) {
+    const { data: ownedAgents } = await d
+      .from("agent_registry")
+      .select("id")
+      .eq("owner_address", profile.wallet_address)
+      .eq("is_active", true)
+      .order("created_at", { ascending: false })
+      .limit(2);
+
+    if (!ownedAgents || ownedAgents.length === 0) {
+      return jsonResponse({ error: "No active agents found for your account" }, 404);
+    }
+
+    if (ownedAgents.length > 1) {
+      return jsonResponse({ error: "Missing agent_id. Please refresh the dashboard and try again." }, 400);
+    }
+
+    agentId = ownedAgents[0].id;
+  }
 
   const { data: agentRow } = await d
     .from("agent_registry")
