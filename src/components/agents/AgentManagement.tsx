@@ -6,7 +6,18 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Bot, Plus, Key, Copy, Check, RefreshCw, Power, PowerOff, Eye, FileText, ExternalLink, Cpu, Wallet, Loader2, BookOpen } from 'lucide-react';
+import { Bot, Plus, Key, Copy, Check, RefreshCw, Power, PowerOff, Eye, FileText, ExternalLink, Cpu, Wallet, Loader2, BookOpen, Trash2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';

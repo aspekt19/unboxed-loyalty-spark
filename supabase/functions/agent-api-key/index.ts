@@ -226,6 +226,64 @@ Deno.serve(async (req) => {
       );
     }
 
+    if (action === "delete") {
+      const { agent_id } = params;
+      if (!agent_id) {
+        return new Response(JSON.stringify({ error: "Missing agent_id" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: profile } = await serviceClient
+        .from("profiles")
+        .select("wallet_address")
+        .eq("user_id", user.id)
+        .single();
+
+      if (!profile) {
+        return new Response(JSON.stringify({ error: "Profile not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Delete related records first
+      await serviceClient
+        .from("agent_activity_log")
+        .delete()
+        .eq("agent_id", agent_id);
+
+      await serviceClient
+        .from("agent_wallets")
+        .delete()
+        .eq("agent_id", agent_id);
+
+      await serviceClient
+        .from("agent_fee_log")
+        .delete()
+        .eq("agent_id", agent_id);
+
+      // Delete the agent itself
+      const { error: deleteError } = await serviceClient
+        .from("agent_registry")
+        .delete()
+        .eq("id", agent_id)
+        .eq("owner_address", profile.wallet_address);
+
+      if (deleteError) {
+        console.error("Delete error:", deleteError);
+        return new Response(JSON.stringify({ error: "Failed to delete agent" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(JSON.stringify({ error: "Unknown action" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
