@@ -38,6 +38,37 @@ function encodeTransferCalldata(to: string, amount: number): string {
   return appendBuilderCode("0xa9059cbb" + paddedTo + amtHex);
 }
 
+// Contract addresses
+const FACTORY_ADDRESS = "0x5F3DdBa12580CFdc6016258774cCc19C4250dA80";
+
+const SELECTORS = {
+  createLoyaltyToken: "0x800e675c",
+  unpauseUtility: "0x5073766d",
+  enableMinting: "0xe797ec1b",
+  pauseUtility: "0xe7911074",
+  disableMinting: "0x7e5cd5c1",
+};
+
+function encodeCreateLoyaltyTokenCalldata(name: string, symbol: string, merchantAddress: string): string {
+  const paddedAddr = merchantAddress.toLowerCase().replace("0x", "").padStart(64, "0");
+  const nameBytes = new TextEncoder().encode(name);
+  const symbolBytes = new TextEncoder().encode(symbol);
+  const nameHex = Array.from(nameBytes).map(b => b.toString(16).padStart(2, "0")).join("");
+  const symbolHex = Array.from(symbolBytes).map(b => b.toString(16).padStart(2, "0")).join("");
+  const namePadded = nameHex.padEnd(Math.ceil(nameHex.length / 64) * 64, "0");
+  const symbolPadded = symbolHex.padEnd(Math.ceil(symbolHex.length / 64) * 64, "0");
+  const nameDataLen = 32 + namePadded.length / 2;
+  const nameOffset = (96).toString(16).padStart(64, "0");
+  const symbolOffset = (96 + nameDataLen).toString(16).padStart(64, "0");
+  const nameLenHex = nameBytes.length.toString(16).padStart(64, "0");
+  const symbolLenHex = symbolBytes.length.toString(16).padStart(64, "0");
+  return appendBuilderCode(SELECTORS.createLoyaltyToken + nameOffset + symbolOffset + paddedAddr + nameLenHex + namePadded + symbolLenHex + symbolPadded);
+}
+
+function encodeNoArgCalldata(selector: string): string {
+  return appendBuilderCode(selector);
+}
+
 async function hashApiKey(key: string): Promise<string> {
   const enc = new TextEncoder();
   const buf = await crypto.subtle.digest("SHA-256", enc.encode(key));
@@ -84,6 +115,69 @@ function createMcpServer() {
     const { data, error } = await q;
     if (error) return { content: [{ type: "text", text: JSON.stringify({ error: error.message }) }] };
     return { content: [{ type: "text", text: JSON.stringify({ programs: data || [] }) }] };
+  });
+
+  // Create program (get deploy calldata)
+  server.tool("create_loyalty_program", "Get factory calldata to deploy a new ERC-20 loyalty token on Base (requires mint scope)", { name: { type: "string", description: "Program name (e.g. Coffee Rewards)" }, symbol: { type: "string", description: "Token symbol, 2-5 chars (e.g. COFFEE)" }, expiration_days: { type: "number", description: "Program duration in days (default: 365)" } }, async (params: any) => {
+    const agent = (globalThis as any).__agentCtx;
+    if (!agent) return { content: [{ type: "text", text: '{"error":"Not authenticated"}' }] };
+    if (!agent.scopes.includes("mint") && !agent.scopes.includes("create_program")) return { content: [{ type: "text", text: '{"error":"Scope mint or create_program required"}' }] };
+    const days = params.expiration_days || 365;
+    const calldata = encodeCreateLoyaltyTokenCalldata(params.name, params.symbol.toUpperCase(), agent.ownerAddress);
+    return { content: [{ type: "text", text: JSON.stringify({
+      message: "Execute factory tx, then call register_loyalty_program with the deployed token_address.",
+      contract_call: { to: FACTORY_ADDRESS, function: "createLoyaltyToken(string,string,address)", params: [params.name, params.symbol.toUpperCase(), agent.ownerAddress], calldata, chain: "Base (8453)", builder_code: BUILDER_CODE },
+      program_details: { name: params.name, symbol: params.symbol.toUpperCase(), expiration_days: days },
+    }) }] };
+  });
+
+  // Register program (after on-chain deploy)
+  server.tool("register_loyalty_program", "Register a deployed token as a loyalty program in the database", { name: { type: "string", description: "Program name" }, symbol: { type: "string", description: "Token symbol" }, token_address: { type: "string", description: "Deployed token contract address (0x...)" }, expiration_days: { type: "number", description: "Program duration in days (default: 365)" } }, async (params: any) => {
+    const agent = (globalThis as any).__agentCtx;
+    if (!agent) return { content: [{ type: "text", text: '{"error":"Not authenticated"}' }] };
+    if (!agent.scopes.includes("mint") && !agent.scopes.includes("create_program")) return { content: [{ type: "text", text: '{"error":"Scope mint or create_program required"}' }] };
+    if (!/^0x[a-fA-F0-9]{40}$/.test(params.token_address)) return { content: [{ type: "text", text: '{"error":"Invalid token_address"}' }] };
+    const d = db();
+    const { data: existing } = await d.from("loyalty_programs").select("id").eq("token_address", params.token_address.toLowerCase()).single();
+    if (existing) return { content: [{ type: "text", text: '{"error":"Program already registered"}' }] };
+    const days = params.expiration_days || 365;
+    const expDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+    const { data: program, error } = await d.from("loyalty_programs").insert({ name: params.name.trim(), symbol: params.symbol.toUpperCase().trim(), token_address: params.token_address.toLowerCase(), merchant_address: agent.ownerAddress, status: "inactive", expiration_date: expDate }).select("id,name,symbol,token_address,status,expiration_date,created_at").single();
+    if (error) return { content: [{ type: "text", text: JSON.stringify({ error: error.message }) }] };
+    return { content: [{ type: "text", text: JSON.stringify({ program, message: "Program registered as inactive. Call activate_loyalty_program next." }) }] };
+  });
+
+  // Activate program (get unpause + enableMinting calldata)
+  server.tool("activate_loyalty_program", "Get activation calldata (unpauseUtility + enableMinting) for an inactive program", { token_address: { type: "string", description: "Token contract address (0x...)" } }, async (params: any) => {
+    const agent = (globalThis as any).__agentCtx;
+    if (!agent) return { content: [{ type: "text", text: '{"error":"Not authenticated"}' }] };
+    if (!agent.scopes.includes("mint") && !agent.scopes.includes("create_program")) return { content: [{ type: "text", text: '{"error":"Scope mint or create_program required"}' }] };
+    const d = db();
+    const { data: prog } = await d.from("loyalty_programs").select("id,name,symbol,status").eq("token_address", params.token_address.toLowerCase()).eq("merchant_address", agent.ownerAddress).single();
+    if (!prog) return { content: [{ type: "text", text: '{"error":"Program not found"}' }] };
+    if (prog.status === "active") return { content: [{ type: "text", text: JSON.stringify({ message: "Already active", program: prog }) }] };
+    return { content: [{ type: "text", text: JSON.stringify({
+      message: "Execute 2 transactions in order, then call update_program_status to set status to 'active'.",
+      transactions: [
+        { step: 1, description: "Unpause utility", contract_call: { to: params.token_address, function: "unpauseUtility()", calldata: encodeNoArgCalldata(SELECTORS.unpauseUtility), chain: "Base (8453)", builder_code: BUILDER_CODE } },
+        { step: 2, description: "Enable minting", contract_call: { to: params.token_address, function: "enableMinting()", calldata: encodeNoArgCalldata(SELECTORS.enableMinting), chain: "Base (8453)", builder_code: BUILDER_CODE } },
+      ],
+    }) }] };
+  });
+
+  // Update program status
+  server.tool("update_program_status", "Update program status in database after on-chain activation/pause", { token_address: { type: "string", description: "Token contract address" }, status: { type: "string", description: "New status: active, paused, or inactive" } }, async (params: any) => {
+    const agent = (globalThis as any).__agentCtx;
+    if (!agent) return { content: [{ type: "text", text: '{"error":"Not authenticated"}' }] };
+    if (!agent.scopes.includes("mint") && !agent.scopes.includes("create_program")) return { content: [{ type: "text", text: '{"error":"Scope mint or create_program required"}' }] };
+    const validStatuses = ["active", "paused", "inactive"];
+    if (!validStatuses.includes(params.status)) return { content: [{ type: "text", text: `{"error":"Invalid status. Use: ${validStatuses.join(", ")}"}` }] };
+    const d = db();
+    const { data: prog } = await d.from("loyalty_programs").select("id,name,status").eq("token_address", params.token_address.toLowerCase()).eq("merchant_address", agent.ownerAddress).single();
+    if (!prog) return { content: [{ type: "text", text: '{"error":"Program not found"}' }] };
+    const { error } = await d.from("loyalty_programs").update({ status: params.status, updated_at: new Date().toISOString() }).eq("token_address", params.token_address.toLowerCase()).eq("merchant_address", agent.ownerAddress);
+    if (error) return { content: [{ type: "text", text: JSON.stringify({ error: error.message }) }] };
+    return { content: [{ type: "text", text: JSON.stringify({ message: `Status updated from '${prog.status}' to '${params.status}'`, program: { id: prog.id, name: prog.name, new_status: params.status } }) }] };
   });
 
   // List rewards
