@@ -230,8 +230,234 @@ Deno.serve(async (req) => {
       return jsonResponse({ programs: programs || [] });
     }
 
+    // ==================== CREATE PROGRAM ====================
+    if (resource === "programs" && req.method === "POST") {
+      if (!hasScope(agent, "mint") && !hasScope(agent, "create_program")) {
+        await logActivity(serviceClient, agent.agentId, "create_program", body, 403, { error: "Insufficient scope" }, ip);
+        return jsonResponse({ error: "Scope 'mint' or 'create_program' required" }, 403);
+      }
+
+      const { name, symbol, expiration_days } = body;
+      if (!name || !symbol) {
+        return jsonResponse({ error: "Missing required fields: name, symbol" }, 400);
+      }
+
+      if (typeof name !== "string" || name.length > 50) {
+        return jsonResponse({ error: "Name must be a string under 50 characters" }, 400);
+      }
+
+      if (typeof symbol !== "string" || symbol.length < 2 || symbol.length > 5) {
+        return jsonResponse({ error: "Symbol must be 2-5 characters" }, 400);
+      }
+
+      const days = expiration_days && typeof expiration_days === "number" ? expiration_days : 365;
+      const expirationDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+
+      // Return calldata for deploying token via factory
+      const calldata = encodeCreateLoyaltyTokenCalldata(name, symbol.toUpperCase(), agent.ownerAddress);
+
+      await logActivity(serviceClient, agent.agentId, "create_program", body, 200, { name, symbol }, ip);
+      return jsonResponse({
+        message: "Execute the factory transaction to deploy your loyalty token. After deployment, register the token_address with POST /register-program.",
+        program_details: {
+          name,
+          symbol: symbol.toUpperCase(),
+          merchant_address: agent.ownerAddress,
+          expiration_days: days,
+          expiration_date: expirationDate,
+        },
+        contract_call: {
+          to: FACTORY_ADDRESS,
+          function: "createLoyaltyToken(string,string,address)",
+          params: [name, symbol.toUpperCase(), agent.ownerAddress],
+          calldata,
+          chain: "Base (8453)",
+          builder_code: BUILDER_CODE,
+          note: "After tx confirmation, extract the token_address from the LoyaltyTokenCreated event (topic[1]) and call POST /register-program.",
+        },
+      });
+    }
+
+    // ==================== REGISTER PROGRAM (after on-chain deploy) ====================
+    if (resource === "register-program" && req.method === "POST") {
+      if (!hasScope(agent, "mint") && !hasScope(agent, "create_program")) {
+        await logActivity(serviceClient, agent.agentId, "register_program", body, 403, { error: "Insufficient scope" }, ip);
+        return jsonResponse({ error: "Scope 'mint' or 'create_program' required" }, 403);
+      }
+
+      const { name, symbol, token_address, expiration_days } = body;
+      if (!name || !symbol || !token_address) {
+        return jsonResponse({ error: "Missing required fields: name, symbol, token_address" }, 400);
+      }
+
+      if (!/^0x[a-fA-F0-9]{40}$/.test(token_address)) {
+        return jsonResponse({ error: "Invalid token_address format" }, 400);
+      }
+
+      // Check if program already exists
+      const { data: existing } = await serviceClient
+        .from("loyalty_programs")
+        .select("id")
+        .eq("token_address", token_address.toLowerCase())
+        .single();
+
+      if (existing) {
+        return jsonResponse({ error: "Program with this token_address already registered" }, 409);
+      }
+
+      const days = expiration_days && typeof expiration_days === "number" ? expiration_days : 365;
+      const expirationDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+
+      const { data: program, error } = await serviceClient
+        .from("loyalty_programs")
+        .insert({
+          name: name.trim(),
+          symbol: symbol.toUpperCase().trim(),
+          token_address: token_address.toLowerCase(),
+          merchant_address: agent.ownerAddress,
+          status: "inactive",
+          expiration_date: expirationDate,
+        })
+        .select("id, name, symbol, token_address, status, expiration_date, created_at")
+        .single();
+
+      if (error) {
+        await logActivity(serviceClient, agent.agentId, "register_program", body, 500, { error: error.message }, ip);
+        return jsonResponse({ error: "Failed to register program" }, 500);
+      }
+
+      await logActivity(serviceClient, agent.agentId, "register_program", body, 201, { program_id: program.id }, ip);
+      return jsonResponse({
+        program,
+        message: "Program registered with status 'inactive'. Call POST /activate-program to get activation calldata (unpauseUtility + enableMinting).",
+        next_step: "POST /activate-program with { token_address }",
+      }, 201);
+    }
+
+    // ==================== ACTIVATE PROGRAM ====================
+    if (resource === "activate-program" && req.method === "POST") {
+      if (!hasScope(agent, "mint") && !hasScope(agent, "create_program")) {
+        await logActivity(serviceClient, agent.agentId, "activate_program", body, 403, { error: "Insufficient scope" }, ip);
+        return jsonResponse({ error: "Scope 'mint' or 'create_program' required" }, 403);
+      }
+
+      const { token_address } = body;
+      if (!token_address || !/^0x[a-fA-F0-9]{40}$/.test(token_address)) {
+        return jsonResponse({ error: "Missing or invalid token_address" }, 400);
+      }
+
+      // Verify ownership
+      const { data: program } = await serviceClient
+        .from("loyalty_programs")
+        .select("id, name, symbol, status")
+        .eq("token_address", token_address.toLowerCase())
+        .eq("merchant_address", agent.ownerAddress)
+        .single();
+
+      if (!program) {
+        await logActivity(serviceClient, agent.agentId, "activate_program", body, 404, { error: "Program not found" }, ip);
+        return jsonResponse({ error: "Program not found or not owned by you" }, 404);
+      }
+
+      if (program.status === "active") {
+        return jsonResponse({ message: "Program is already active", program });
+      }
+
+      await logActivity(serviceClient, agent.agentId, "activate_program", body, 200, { token_address }, ip);
+      return jsonResponse({
+        message: "Activation requires 2 on-chain transactions. Execute them in order.",
+        program: { id: program.id, name: program.name, symbol: program.symbol, status: program.status },
+        transactions: [
+          {
+            step: 1,
+            description: "Unpause utility (enable transfers and burns)",
+            contract_call: {
+              to: token_address,
+              function: "unpauseUtility()",
+              calldata: encodeNoArgCalldata(SELECTORS.unpauseUtility),
+              chain: "Base (8453)",
+              builder_code: BUILDER_CODE,
+            },
+          },
+          {
+            step: 2,
+            description: "Enable minting (allow new tokens to be created)",
+            contract_call: {
+              to: token_address,
+              function: "enableMinting()",
+              calldata: encodeNoArgCalldata(SELECTORS.enableMinting),
+              chain: "Base (8453)",
+              builder_code: BUILDER_CODE,
+            },
+          },
+        ],
+        after_activation: "POST /program-status with { token_address, status: 'active' } to update the database status.",
+      });
+    }
+
+    // ==================== UPDATE PROGRAM STATUS ====================
+    if (resource === "program-status" && req.method === "POST") {
+      if (!hasScope(agent, "mint") && !hasScope(agent, "create_program")) {
+        await logActivity(serviceClient, agent.agentId, "update_program_status", body, 403, { error: "Insufficient scope" }, ip);
+        return jsonResponse({ error: "Scope 'mint' or 'create_program' required" }, 403);
+      }
+
+      const { token_address, status } = body;
+      if (!token_address || !status) {
+        return jsonResponse({ error: "Missing required fields: token_address, status" }, 400);
+      }
+
+      const validStatuses = ["active", "paused", "inactive"];
+      if (!validStatuses.includes(status)) {
+        return jsonResponse({ error: `Invalid status. Must be one of: ${validStatuses.join(", ")}` }, 400);
+      }
+
+      if (!/^0x[a-fA-F0-9]{40}$/.test(token_address)) {
+        return jsonResponse({ error: "Invalid token_address format" }, 400);
+      }
+
+      // Verify ownership
+      const { data: program } = await serviceClient
+        .from("loyalty_programs")
+        .select("id, name, status")
+        .eq("token_address", token_address.toLowerCase())
+        .eq("merchant_address", agent.ownerAddress)
+        .single();
+
+      if (!program) {
+        await logActivity(serviceClient, agent.agentId, "update_program_status", body, 404, { error: "Program not found" }, ip);
+        return jsonResponse({ error: "Program not found or not owned by you" }, 404);
+      }
+
+      const { error } = await serviceClient
+        .from("loyalty_programs")
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq("token_address", token_address.toLowerCase())
+        .eq("merchant_address", agent.ownerAddress);
+
+      if (error) {
+        await logActivity(serviceClient, agent.agentId, "update_program_status", body, 500, { error: error.message }, ip);
+        return jsonResponse({ error: "Failed to update status" }, 500);
+      }
+
+      // If pausing, also provide calldata for on-chain pause
+      let onchain_calls = null;
+      if (status === "paused") {
+        onchain_calls = [
+          { function: "pauseUtility()", calldata: encodeNoArgCalldata(SELECTORS.pauseUtility) },
+          { function: "disableMinting()", calldata: encodeNoArgCalldata(SELECTORS.disableMinting) },
+        ];
+      }
+
+      await logActivity(serviceClient, agent.agentId, "update_program_status", body, 200, { token_address, old_status: program.status, new_status: status }, ip);
+      return jsonResponse({
+        message: `Program status updated from '${program.status}' to '${status}'`,
+        program: { id: program.id, name: program.name, previous_status: program.status, new_status: status },
+        ...(onchain_calls ? { onchain_calls, note: "Execute these transactions to pause the program on-chain as well." } : {}),
+      });
+    }
+
     // ==================== REWARDS ====================
-    if (resource === "rewards" && req.method === "GET") {
       if (!hasScope(agent, "read")) {
         await logActivity(serviceClient, agent.agentId, "get_rewards", {}, 403, { error: "Insufficient scope" }, ip);
         return jsonResponse({ error: "Scope 'read' required" }, 403);
