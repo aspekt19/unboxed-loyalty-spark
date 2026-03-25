@@ -458,6 +458,7 @@ Deno.serve(async (req) => {
     }
 
     // ==================== REWARDS ====================
+    if (resource === "rewards" && req.method === "GET") {
       if (!hasScope(agent, "read")) {
         await logActivity(serviceClient, agent.agentId, "get_rewards", {}, 403, { error: "Insufficient scope" }, ip);
         return jsonResponse({ error: "Scope 'read' required" }, 403);
