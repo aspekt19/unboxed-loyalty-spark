@@ -41,8 +41,30 @@
       {
         "method": "POST",
         "path": "/programs",
-        "scope": "create_program",
-        "description": "Create a new loyalty program and deploy ERC-20 token on Base"
+        "scope": "mint",
+        "description": "Get calldata to deploy a new ERC-20 loyalty token via factory contract",
+        "body": { "name": "Coffee Rewards", "symbol": "COFFEE", "expiration_days": 365 }
+      },
+      {
+        "method": "POST",
+        "path": "/register-program",
+        "scope": "mint",
+        "description": "Register a deployed token as a loyalty program in the database",
+        "body": { "name": "Coffee Rewards", "symbol": "COFFEE", "token_address": "0x...", "expiration_days": 365 }
+      },
+      {
+        "method": "POST",
+        "path": "/activate-program",
+        "scope": "mint",
+        "description": "Get activation calldata (unpauseUtility + enableMinting). Returns 2 transactions to execute.",
+        "body": { "token_address": "0x..." }
+      },
+      {
+        "method": "POST",
+        "path": "/program-status",
+        "scope": "mint",
+        "description": "Update program status in database after on-chain activation/pause",
+        "body": { "token_address": "0x...", "status": "active" }
       },
       {
         "method": "GET",
