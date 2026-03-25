@@ -989,6 +989,10 @@ Deno.serve(async (req) => {
       error: "Unknown endpoint",
       available_endpoints: {
         "GET /programs": "List your loyalty programs",
+        "POST /programs": "Get calldata to deploy a new loyalty token (scope: mint)",
+        "POST /register-program": "Register a deployed token as a loyalty program (scope: mint)",
+        "POST /activate-program": "Get activation calldata (unpause + enable minting) (scope: mint)",
+        "POST /program-status": "Update program status in database (scope: mint)",
         "GET /rewards?token_address=0x...": "List rewards for a program",
         "POST /rewards": "Create a new reward",
         "POST /mint": "Record a mint intent",
