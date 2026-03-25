@@ -38,6 +38,37 @@ function encodeTransferCalldata(to: string, amount: number): string {
   return appendBuilderCode("0xa9059cbb" + paddedTo + amtHex);
 }
 
+// Contract addresses
+const FACTORY_ADDRESS = "0x5F3DdBa12580CFdc6016258774cCc19C4250dA80";
+
+const SELECTORS = {
+  createLoyaltyToken: "0x800e675c",
+  unpauseUtility: "0x5073766d",
+  enableMinting: "0xe797ec1b",
+  pauseUtility: "0xe7911074",
+  disableMinting: "0x7e5cd5c1",
+};
+
+function encodeCreateLoyaltyTokenCalldata(name: string, symbol: string, merchantAddress: string): string {
+  const paddedAddr = merchantAddress.toLowerCase().replace("0x", "").padStart(64, "0");
+  const nameBytes = new TextEncoder().encode(name);
+  const symbolBytes = new TextEncoder().encode(symbol);
+  const nameHex = Array.from(nameBytes).map(b => b.toString(16).padStart(2, "0")).join("");
+  const symbolHex = Array.from(symbolBytes).map(b => b.toString(16).padStart(2, "0")).join("");
+  const namePadded = nameHex.padEnd(Math.ceil(nameHex.length / 64) * 64, "0");
+  const symbolPadded = symbolHex.padEnd(Math.ceil(symbolHex.length / 64) * 64, "0");
+  const nameDataLen = 32 + namePadded.length / 2;
+  const nameOffset = (96).toString(16).padStart(64, "0");
+  const symbolOffset = (96 + nameDataLen).toString(16).padStart(64, "0");
+  const nameLenHex = nameBytes.length.toString(16).padStart(64, "0");
+  const symbolLenHex = symbolBytes.length.toString(16).padStart(64, "0");
+  return appendBuilderCode(SELECTORS.createLoyaltyToken + nameOffset + symbolOffset + paddedAddr + nameLenHex + namePadded + symbolLenHex + symbolPadded);
+}
+
+function encodeNoArgCalldata(selector: string): string {
+  return appendBuilderCode(selector);
+}
+
 async function hashApiKey(key: string): Promise<string> {
   const enc = new TextEncoder();
   const buf = await crypto.subtle.digest("SHA-256", enc.encode(key));
