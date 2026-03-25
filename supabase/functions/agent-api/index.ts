@@ -40,6 +40,45 @@ function encodeTransferCalldata(to: string, amount: number): string {
   return appendBuilderCode("0xa9059cbb" + paddedTo + amtHex);
 }
 
+// Contract addresses
+const FACTORY_ADDRESS = "0x5F3DdBa12580CFdc6016258774cCc19C4250dA80";
+
+// Function selectors (precomputed keccak256 first 4 bytes)
+const SELECTORS = {
+  createLoyaltyToken: "0x800e675c", // createLoyaltyToken(string,string,address)
+  unpauseUtility: "0x5073766d",     // unpauseUtility()
+  enableMinting: "0xe797ec1b",      // enableMinting()
+  pauseUtility: "0xe7911074",       // pauseUtility()
+  disableMinting: "0x7e5cd5c1",     // disableMinting()
+};
+
+// Encode createLoyaltyToken(string,string,address) calldata
+function encodeCreateLoyaltyTokenCalldata(name: string, symbol: string, merchantAddress: string): string {
+  const paddedAddr = merchantAddress.toLowerCase().replace("0x", "").padStart(64, "0");
+  // ABI encode: 3 params with 2 dynamic (string) and 1 static (address)
+  // Layout: offset_name(32) + offset_symbol(32) + address(32) + name_data + symbol_data
+  const nameBytes = new TextEncoder().encode(name);
+  const symbolBytes = new TextEncoder().encode(symbol);
+  const nameHex = Array.from(nameBytes).map(b => b.toString(16).padStart(2, "0")).join("");
+  const symbolHex = Array.from(symbolBytes).map(b => b.toString(16).padStart(2, "0")).join("");
+  // Pad to 32-byte boundary
+  const namePadded = nameHex.padEnd(Math.ceil(nameHex.length / 64) * 64, "0");
+  const symbolPadded = symbolHex.padEnd(Math.ceil(symbolHex.length / 64) * 64, "0");
+  // Offsets: name starts at byte 96 (3*32), symbol starts after name data
+  const nameDataLen = 32 + namePadded.length / 2; // length word + padded data
+  const nameOffset = (96).toString(16).padStart(64, "0"); // 0x60
+  const symbolOffset = (96 + nameDataLen).toString(16).padStart(64, "0");
+  const nameLenHex = nameBytes.length.toString(16).padStart(64, "0");
+  const symbolLenHex = symbolBytes.length.toString(16).padStart(64, "0");
+  const calldata = SELECTORS.createLoyaltyToken + nameOffset + symbolOffset + paddedAddr + nameLenHex + namePadded + symbolLenHex + symbolPadded;
+  return appendBuilderCode(calldata);
+}
+
+// Encode no-argument function calldata
+function encodeNoArgCalldata(selector: string): string {
+  return appendBuilderCode(selector);
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
