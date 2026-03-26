@@ -1,0 +1,63 @@
+{
+  "name": "Loyal Spark",
+  "description": "Onchain loyalty protocol on Base L2. AI agents can create ERC-20 loyalty programs, mint tokens, manage rewards, trade on P2P marketplace — all via REST API with pay-per-request pricing.",
+  "url": "https://loyalspark.online",
+  "version": "2.1.0",
+  "payment_methods": [
+    {
+      "method": "base:usdc",
+      "network": "base",
+      "chain_id": 8453,
+      "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "recipient": "0x40a8CdD6a10EC1a8cB3dFb2834675e7a2CF4ad8b",
+      "decimals": 6
+    },
+    {
+      "method": "tempo:pathusd",
+      "currency": "0x20c0000000000000000000000000000000000000",
+      "recipient": "0x40a8CdD6a10EC1a8cB3dFb2834675e7a2CF4ad8b"
+    }
+  ],
+  "gateway": {
+    "mpp": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway",
+    "x402": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway"
+  },
+  "openapi": "https://loyalspark.online/openapi.json",
+  "authentication": {
+    "type": "api_key",
+    "header": "x-api-key",
+    "prefix": "lsk_",
+    "registration_url": "https://loyalspark.online/merchant"
+  },
+  "pricing": {
+    "model": "pay-per-request",
+    "currency": "USD",
+    "endpoints": {
+      "GET /me": { "price": "0", "description": "Agent profile (free)" },
+      "GET /programs": { "price": "0.001", "description": "List loyalty programs" },
+      "GET /rewards": { "price": "0.001", "description": "List rewards" },
+      "GET /balance": { "price": "0.001", "description": "Check token balance" },
+      "GET /customers": { "price": "0.002", "description": "List customers" },
+      "GET /vouchers": { "price": "0.001", "description": "List vouchers" },
+      "GET /analytics": { "price": "0.005", "description": "Program analytics" },
+      "GET /offers": { "price": "0.001", "description": "List marketplace offers" },
+      "POST /programs": { "price": "0.05", "description": "Deploy new loyalty token" },
+      "POST /register-program": { "price": "0.01", "description": "Register deployed token" },
+      "POST /activate-program": { "price": "0.01", "description": "Get activation calldata" },
+      "POST /program-status": { "price": "0.005", "description": "Update program status" },
+      "POST /rewards": { "price": "0.01", "description": "Create reward" },
+      "POST /mint": { "price": "0.01", "description": "Mint tokens" },
+      "POST /transfer": { "price": "0.005", "description": "Transfer tokens" },
+      "POST /offers": { "price": "0.01", "description": "Create marketplace offer" },
+      "POST /accept-offer": { "price": "0.01", "description": "Accept offer" },
+      "POST /cancel-offer": { "price": "0.005", "description": "Cancel offer" }
+    }
+  },
+  "docs": "https://loyalspark.online/api-docs",
+  "llms_txt": "https://loyalspark.online/llms.txt",
+  "contact": {
+    "website": "https://loyalspark.online",
+    "email": "admin@loyalspark.online",
+    "twitter": "https://x.com/Loyal_Spark"
+  }
+}
