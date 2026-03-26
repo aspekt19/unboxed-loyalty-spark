@@ -276,6 +276,43 @@
       "4. Payment is handled automatically via 402 challenge/credential flow"
     ]
   },
+  "x402": {
+    "description": "Coinbase x402 Payment Protocol — pay per API request with USDC on Base. Native HTTP 402 flow with on-chain settlement.",
+    "gateway_url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway",
+    "currency": "USDC on Base",
+    "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "network": "base",
+    "chain_id": 8453,
+    "facilitator": "https://facilitator.x402.org",
+    "protocol_spec": "https://github.com/coinbase/x402",
+    "how_to_use": [
+      "1. Install x402 client: npm install @x402/fetch @x402/evm",
+      "2. Make request to x402-gateway — get 402 with PAYMENT-REQUIRED header",
+      "3. Sign USDC payment on Base using x402 client SDK",
+      "4. Retry request with X-PAYMENT header containing signed payload",
+      "5. Gateway verifies via Coinbase facilitator, settles USDC, returns data"
+    ],
+    "prices_usd": {
+      "GET /me": "free",
+      "GET /programs": "0.001",
+      "GET /rewards": "0.001",
+      "GET /balance": "0.001",
+      "GET /customers": "0.002",
+      "GET /vouchers": "0.001",
+      "GET /analytics": "0.005",
+      "GET /offers": "0.001",
+      "POST /programs": "0.05",
+      "POST /register-program": "0.01",
+      "POST /activate-program": "0.01",
+      "POST /program-status": "0.005",
+      "POST /rewards": "0.01",
+      "POST /mint": "0.01",
+      "POST /transfer": "0.005",
+      "POST /offers": "0.01",
+      "POST /accept-offer": "0.01",
+      "POST /cancel-offer": "0.005"
+    }
+  },
   "skills": {
     "url": "https://loyalspark.online/.well-known/skills/index.md",
     "format": "markdown",
