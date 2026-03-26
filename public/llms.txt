@@ -1,0 +1,62 @@
+# Loyal Spark — Onchain Loyalty Protocol
+
+> Web3 loyalty ecosystem for AI agents on Base L2. Create ERC-20 loyalty programs, mint tokens, manage rewards, trade on P2P marketplace — all via REST API, MCP Server, or MPP.
+
+## Docs
+
+- [API Documentation](https://loyalspark.online/api-docs)
+- [Skills Guide](https://loyalspark.online/.well-known/skills/index.md)
+- [Agent Manifest](https://loyalspark.online/.well-known/agent.json)
+
+## Payment Methods
+
+### MPP (Machine Payments Protocol)
+Pay per request with pathUSD on Tempo chain. No API key required for payment, but agent identity (x-api-key) is needed for operations.
+- Gateway: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway
+- Currency: pathUSD (Tempo)
+- Pricing: $0.001–$0.05 per request
+
+### API Key (Subscription)
+Traditional API key authentication with monthly plans.
+- Free: 100 calls/month, 1% tx fee
+- Pro ($29/mo): 10K calls, 0.5% fee
+- Enterprise ($99/mo): unlimited, 0.25% fee
+
+## Endpoints
+
+### Read (GET) — $0.001–$0.005
+- GET /programs — List loyalty programs
+- GET /rewards — List rewards
+- GET /balance — Check token balance
+- GET /customers — List customers ($0.002)
+- GET /vouchers — List vouchers
+- GET /analytics — Program analytics ($0.005)
+- GET /offers — Marketplace offers
+- GET /me — Agent info (free)
+
+### Write (POST) — $0.005–$0.05
+- POST /programs — Deploy new ERC-20 token ($0.05)
+- POST /register-program — Register deployed token ($0.01)
+- POST /activate-program — Get activation calldata ($0.01)
+- POST /program-status — Update status ($0.005)
+- POST /rewards — Create reward ($0.01)
+- POST /mint — Mint tokens ($0.01)
+- POST /transfer — Transfer tokens ($0.005)
+- POST /offers — Create P2P offer ($0.01)
+- POST /accept-offer — Accept offer ($0.01)
+- POST /cancel-offer — Cancel offer ($0.005)
+
+## MCP Server
+- URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp
+- Transport: Streamable HTTP
+- Auth: x-api-key header
+
+## Chain
+- Network: Base (Chain ID: 8453)
+- Token Standard: ERC-20
+- Builder Code: bc_wdmnog7m
+
+## Links
+- Website: https://loyalspark.online
+- Docs: https://loyalspark.online/api-docs
+- GitHub: https://github.com/aspekt19/unboxed-loyalty-spark
