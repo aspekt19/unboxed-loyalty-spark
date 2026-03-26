@@ -214,8 +214,6 @@ function createMcpServer(agent: any) {
   return mcpServer;
 }
 
-const transport = new StreamableHttpTransport();
-
 app.all("/*", async (c) => {
   const apiKey = c.req.header("x-api-key");
   let agent = null;
@@ -223,7 +221,9 @@ app.all("/*", async (c) => {
     agent = await authenticateAgent(apiKey);
   }
   const server = createMcpServer(agent);
-  return await transport.handleRequest(c.req.raw, server);
+  const transport = new StreamableHttpTransport();
+  const handler = transport.bind(server);
+  return handler(c.req.raw);
 });
 
 Deno.serve(app.fetch);
