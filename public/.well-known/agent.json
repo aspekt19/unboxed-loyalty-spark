@@ -207,7 +207,33 @@
         }
       }
     ],
-    "payment": "On-chain USDC transfer to platform wallet, verified automatically"
+    "payment": "On-chain USDC transfer to platform wallet, verified automatically",
+    "pay_per_request": {
+      "protocol": "MPP (Machine Payments Protocol)",
+      "gateway_url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway",
+      "currency": "pathUSD on Tempo",
+      "description": "Pay per API call without a subscription. Uses HTTP 402 Payment Required flow.",
+      "prices_usd": {
+        "GET /me": "free",
+        "GET /programs": "0.001",
+        "GET /rewards": "0.001",
+        "GET /balance": "0.001",
+        "GET /customers": "0.002",
+        "GET /vouchers": "0.001",
+        "GET /analytics": "0.005",
+        "GET /offers": "0.001",
+        "POST /programs": "0.05",
+        "POST /register-program": "0.01",
+        "POST /activate-program": "0.01",
+        "POST /program-status": "0.005",
+        "POST /rewards": "0.01",
+        "POST /mint": "0.01",
+        "POST /transfer": "0.005",
+        "POST /offers": "0.01",
+        "POST /accept-offer": "0.01",
+        "POST /cancel-offer": "0.005"
+      }
+    }
   },
   "chain": {
     "name": "Base",
