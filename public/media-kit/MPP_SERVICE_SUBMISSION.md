@@ -1,73 +1,182 @@
-# How to Add Loyal Spark to mpp.dev Service Catalog (+ x402 Support)
+# How to Add Loyal Spark to mpp.dev Service Catalog
 
 ## Prerequisites
 - GitHub account
-- Working MPP gateway endpoint
+- Working MPP gateway endpoint (verified ✅)
+- Your service must be **live and accepting payments** via MPP
 
-## Steps
+## Step-by-Step Instructions
 
 ### 1. Fork the Repository
-Go to https://github.com/tempoxyz/mpp and fork it.
+Go to https://github.com/tempoxyz/mpp and click **Fork**.
 
-### 2. Add Service Entry
-Edit `schemas/services.ts` (or the appropriate registry file) and add:
+### 2. Clone Your Fork
+```bash
+git clone https://github.com/YOUR_USERNAME/mpp.git
+cd mpp
+pnpm install
+```
+
+### 3. Edit `schemas/services.ts`
+
+Add the following entry to the `services` array (place alphabetically among existing services):
 
 ```typescript
+// ── Loyal Spark ─────────────────────────────────────────────────────────
 {
   id: "loyal-spark",
   name: "Loyal Spark",
   url: "https://loyalspark.online",
   serviceUrl: "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway",
-  description: "Onchain loyalty protocol for AI agents — create ERC-20 programs, mint tokens, manage rewards, and trade on P2P marketplace. All on Base L2.",
-  category: "Blockchain",
-  docs: "https://loyalspark.online/llms.txt",
-  website: "https://loyalspark.online",
-}
+  description: "Onchain loyalty protocol for AI agents — create ERC-20 programs, mint tokens, manage rewards, trade on P2P marketplace, and get autonomous MPC wallets. All on Base L2.",
+  categories: ["blockchain"] as Category[],
+  integration: "first-party" as Integration,
+  tags: [
+    "loyalty",
+    "rewards",
+    "erc20",
+    "base",
+    "defi",
+    "marketplace",
+    "mcp",
+    "ai-agents",
+    "mpc-wallet",
+  ],
+  docs: {
+    homepage: "https://loyalspark.online/api-docs",
+    llmsTxt: "https://loyalspark.online/llms.txt",
+  },
+  provider: { name: "Loyal Spark", url: "https://loyalspark.online" },
+  realm: "bzxmejzssxjazswgwqqs.supabase.co",
+  intent: "charge" as Intent,
+  payment: TEMPO_PAYMENT,
+  endpoints: [
+    // Read endpoints
+    { route: "GET /me", desc: "Get agent profile, permissions, plan, and wallet info" },
+    { route: "GET /programs", desc: "List all active loyalty programs", amount: "1000" },
+    { route: "GET /rewards", desc: "List rewards for a loyalty program", amount: "1000" },
+    { route: "GET /balance", desc: "Check token balance and tier info", amount: "1000" },
+    { route: "GET /customers", desc: "List customers with token balances", amount: "2000" },
+    { route: "GET /vouchers", desc: "List vouchers with filters", amount: "1000" },
+    { route: "GET /analytics", desc: "Get program analytics and metrics", amount: "5000" },
+    { route: "GET /offers", desc: "List active P2P marketplace offers", amount: "1000" },
+    // Write endpoints
+    { route: "POST /programs", desc: "Deploy new ERC-20 loyalty token via factory", amount: "50000" },
+    { route: "POST /register-program", desc: "Register deployed token as loyalty program", amount: "10000" },
+    { route: "POST /activate-program", desc: "Get activation calldata (unpause + enableMinting)", amount: "10000" },
+    { route: "POST /program-status", desc: "Update program status after on-chain action", amount: "5000" },
+    { route: "POST /rewards", desc: "Create a new reward for a program", amount: "10000" },
+    { route: "POST /mint", desc: "Mint loyalty tokens to a wallet address", amount: "10000" },
+    { route: "POST /transfer", desc: "Transfer loyalty tokens between wallets", amount: "5000" },
+    { route: "POST /offers", desc: "Create P2P escrow offer for token trading", amount: "10000" },
+    { route: "POST /accept-offer", desc: "Accept a P2P offer (atomic escrow swap)", amount: "10000" },
+    { route: "POST /cancel-offer", desc: "Cancel your own P2P offer", amount: "5000" },
+  ],
+},
 ```
 
-### 3. Create Pull Request
-- Title: `feat: add Loyal Spark — onchain loyalty protocol for AI agents`
-- Description:
-```
-Loyal Spark is a Web3 loyalty ecosystem on Base L2 that enables AI agents to autonomously create ERC-20 loyalty programs, mint tokens, manage rewards, and trade on a P2P marketplace.
+> **Note on `amount` field**: Values are in base units with 6 decimals (USDC standard).
+> - `"1000"` = $0.001
+> - `"5000"` = $0.005
+> - `"10000"` = $0.01
+> - `"50000"` = $0.05
+> - Free endpoints (like GET /me) have no `amount` field.
 
-- Gateway URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway
-- Payment: pathUSD on Tempo
-- Docs: https://loyalspark.online/llms.txt
-- Agent manifest: https://loyalspark.online/.well-known/agent.json
-- 18 API endpoints with per-request pricing ($0.001–$0.05)
-- Also supports MCP Server for tool-based integration
-```
+### 4. Verify Your Changes
 
-### 4. Test with mppx CLI
-Before submitting PR, verify the gateway works:
 ```bash
-npx mppx account create
-npx mppx https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway/programs -H "x-api-key: YOUR_KEY"
+pnpm check:types   # Types must pass
+pnpm build          # Build must succeed
 ```
 
-### 5. Register on MPPScan (Optional)
-Visit MPPScan to register the endpoint for instant discoverability by agents, even before the PR is merged.
+### 5. Register on MPPScan (Recommended)
+
+Before submitting your PR, register on [MPPScan](https://www.mppscan.com/register) by Merit Systems. This makes your service discoverable by agents immediately, even before the PR is merged.
+
+### 6. Test the Gateway
+
+Verify the gateway works before submitting:
+
+```bash
+# Install mppx CLI
+npm install -g mppx
+
+# Create a Tempo wallet
+mppx account create
+
+# Test free endpoint
+mppx https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway/me \
+  -H "x-api-key: YOUR_KEY"
+
+# Test paid endpoint (will trigger 402 → auto-pay → response)
+mppx https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway/programs \
+  -H "x-api-key: YOUR_KEY"
+```
+
+### 7. Create Pull Request
+
+**Title:**
+```
+feat: add Loyal Spark — onchain loyalty protocol for AI agents
+```
+
+**Description:**
+```markdown
+Loyal Spark is a Web3 loyalty ecosystem on Base L2 that enables AI agents to
+autonomously create ERC-20 loyalty programs, mint tokens, manage rewards,
+and trade on a P2P marketplace.
+
+## Checklist
+
+- [x] Service is **live and accepting payments** via MPP
+- [x] Entry added to `schemas/services.ts`
+- [x] Types pass: `pnpm check:types`
+- [x] Build succeeds: `pnpm build`
+- [x] Registered on MPPScan
+
+## Service Details
+
+- **Gateway URL**: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway
+- **Payment**: pathUSD on Tempo (TEMPO_PAYMENT)
+- **Integration**: First-party (we run the gateway directly)
+- **Category**: Blockchain
+- **18 API endpoints** with per-request pricing ($0.001–$0.05)
+- **Also supports**: x402 (Coinbase), MCP Server, REST API with subscriptions
+
+## Links
+
+- Website: https://loyalspark.online
+- Docs: https://loyalspark.online/api-docs
+- llms.txt: https://loyalspark.online/llms.txt
+- Agent Manifest: https://loyalspark.online/.well-known/agent.json
+- GitHub: https://github.com/aspekt19/unboxed-loyalty-spark
+```
+
+### 8. Wait for Review
+
+The Tempo team reviews PRs for quality and novelty. They prioritize services that are:
+- **High quality** — live, functional, well-documented
+- **Novel** — not duplicating existing services in the catalog
 
 ## Pricing Summary
 
-| Endpoint | Method | Price (USD) |
-|---|---|---|
-| /me | GET | Free |
-| /programs | GET | $0.001 |
-| /rewards | GET | $0.001 |
-| /balance | GET | $0.001 |
-| /customers | GET | $0.002 |
-| /vouchers | GET | $0.001 |
-| /analytics | GET | $0.005 |
-| /offers | GET | $0.001 |
-| /programs | POST | $0.05 |
-| /register-program | POST | $0.01 |
-| /activate-program | POST | $0.01 |
-| /program-status | POST | $0.005 |
-| /rewards | POST | $0.01 |
-| /mint | POST | $0.01 |
-| /transfer | POST | $0.005 |
-| /offers | POST | $0.01 |
-| /accept-offer | POST | $0.01 |
-| /cancel-offer | POST | $0.005 |
+| Endpoint | Method | Price (USD) | Amount (base units) |
+|---|---|---|---|
+| /me | GET | Free | — |
+| /programs | GET | $0.001 | 1000 |
+| /rewards | GET | $0.001 | 1000 |
+| /balance | GET | $0.001 | 1000 |
+| /customers | GET | $0.002 | 2000 |
+| /vouchers | GET | $0.001 | 1000 |
+| /analytics | GET | $0.005 | 5000 |
+| /offers | GET | $0.001 | 1000 |
+| /programs | POST | $0.05 | 50000 |
+| /register-program | POST | $0.01 | 10000 |
+| /activate-program | POST | $0.01 | 10000 |
+| /program-status | POST | $0.005 | 5000 |
+| /rewards | POST | $0.01 | 10000 |
+| /mint | POST | $0.01 | 10000 |
+| /transfer | POST | $0.005 | 5000 |
+| /offers | POST | $0.01 | 10000 |
+| /accept-offer | POST | $0.01 | 10000 |
+| /cancel-offer | POST | $0.005 | 5000 |
