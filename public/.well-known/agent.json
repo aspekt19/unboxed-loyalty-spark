@@ -263,6 +263,19 @@
       "list_marketplace_offers"
     ]
   },
+  "mpp": {
+    "description": "Machine Payments Protocol — pay per API request with HTTP 402 flow. No subscription needed.",
+    "gateway_url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway",
+    "currency": "pathUSD on Tempo",
+    "protocol_spec": "https://mpp.dev",
+    "llms_txt": "https://loyalspark.online/llms.txt",
+    "how_to_use": [
+      "1. Install mppx: npm install -g mppx",
+      "2. Create account: mppx account create",
+      "3. Make paid request: mppx https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway/programs -H 'x-api-key: lsk_YOUR_KEY'",
+      "4. Payment is handled automatically via 402 challenge/credential flow"
+    ]
+  },
   "skills": {
     "url": "https://loyalspark.online/.well-known/skills/index.md",
     "format": "markdown",
