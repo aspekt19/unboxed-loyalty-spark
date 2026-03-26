@@ -241,6 +241,17 @@ Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
     const resource = getResourceFromUrl(url);
+
+    // Serve OpenAPI discovery spec for MPPScan
+    if (resource === "openapi.json" && req.method === "GET") {
+      const baseUrl = `${url.protocol}//${url.host}${url.pathname.replace(/\/openapi\.json$/, "")}`;
+      const spec = buildOpenApiSpec(baseUrl);
+      return new Response(JSON.stringify(spec, null, 2), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const price = getPrice(req.method, resource);
 
     // Unknown endpoint — proxy as-is, let agent-api return 404
