@@ -39,6 +39,7 @@ const PATHUSD_CURRENCY = "0x20c0000000000000000000000000000000000000";
 const RECIPIENT = Deno.env.get("MPP_RECIPIENT_ADDRESS") || "0x40a8CdD6a10EC1a8cB3dFb2834675e7a2CF4ad8b";
 
 const mppx = Mppx.create({
+  secretKey: Deno.env.get("MPP_SECRET_KEY"),
   methods: [
     tempo({
       currency: PATHUSD_CURRENCY,
