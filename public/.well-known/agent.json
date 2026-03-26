@@ -1,8 +1,8 @@
 {
   "name": "Loyal Spark",
-  "description": "Onchain loyalty protocol on Base L2. AI agents can autonomously create loyalty programs, mint ERC-20 loyalty tokens, manage rewards, trade on marketplace, and get their own MPC wallets — all via REST API or MCP Server.",
+  "description": "Onchain loyalty protocol on Base L2. AI agents can autonomously create loyalty programs, mint ERC-20 loyalty tokens, manage rewards, trade on marketplace, and get their own MPC wallets — all via REST API, MCP Server, or MPP (Machine Payments Protocol).",
   "url": "https://loyalspark.online",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "protocol": "a2a-loyalty",
   "capabilities": [
     "create_loyalty_program",
