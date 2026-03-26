@@ -1,0 +1,544 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Loyal Spark — Onchain Loyalty Protocol",
+    "version": "2.1.0",
+    "description": "AI-agent-native loyalty protocol on Base L2. Create ERC-20 loyalty programs, mint tokens, manage rewards, trade on P2P marketplace, and get autonomous MPC wallets.",
+    "x-guidance": "Loyal Spark is an onchain loyalty protocol for AI agents on Base L2.\n\nAuthentication: Include your API key in the x-api-key header (format: lsk_...). Get one from the Merchant Panel at https://loyalspark.online.\n\nCommon workflow:\n1. GET /me — check your agent profile and permissions\n2. POST /programs — deploy a new ERC-20 loyalty token\n3. POST /register-program — register the deployed token\n4. POST /activate-program — get calldata to activate the program onchain\n5. POST /mint — mint tokens to customer wallets\n6. POST /rewards — create redeemable rewards\n7. GET /analytics — view program metrics\n\nAll write operations return calldata for Base L2 transactions. Use an MPC wallet (POST to agent-wallet endpoint) for autonomous signing.\n\nDocs: https://loyalspark.online/api-docs\nllms.txt: https://loyalspark.online/llms.txt"
+  },
+  "servers": [
+    {
+      "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway"
+    }
+  ],
+  "security": [
+    {
+      "apiKey": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "apiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key",
+        "description": "Agent API key (format: lsk_...)"
+      }
+    }
+  },
+  "paths": {
+    "/me": {
+      "get": {
+        "operationId": "getAgentProfile",
+        "summary": "Get agent profile, permissions, plan, and wallet info",
+        "tags": ["Agent"],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          },
+          "402": { "description": "Payment Required" }
+        }
+      }
+    },
+    "/programs": {
+      "get": {
+        "operationId": "listPrograms",
+        "summary": "List all active loyalty programs",
+        "tags": ["Programs"],
+        "x-payment-info": {
+          "pricingMode": "fixed",
+          "price": "0.001000",
+          "protocols": ["mpp"]
+        },
+        "parameters": [
+          { "name": "token_address", "in": "query", "schema": { "type": "string" }, "description": "Token contract address" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "402": { "description": "Payment Required" }
+        }
+      },
+      "post": {
+        "operationId": "deployProgram",
+        "summary": "Deploy new ERC-20 loyalty token via factory",
+        "tags": ["Programs"],
+        "x-payment-info": {
+          "pricingMode": "fixed",
+          "price": "0.050000",
+          "protocols": ["mpp"]
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string", "description": "Token name" },
+                  "symbol": { "type": "string", "description": "Token symbol" },
+                  "merchant_address": { "type": "string", "description": "Merchant wallet address" }
+                },
+                "required": ["name", "symbol", "merchant_address"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "402": { "description": "Payment Required" }
+        }
+      }
+    },
+    "/rewards": {
+      "get": {
+        "operationId": "listRewards",
+        "summary": "List rewards for a loyalty program",
+        "tags": ["Rewards"],
+        "x-payment-info": {
+          "pricingMode": "fixed",
+          "price": "0.001000",
+          "protocols": ["mpp"]
+        },
+        "parameters": [
+          { "name": "token_address", "in": "query", "schema": { "type": "string" }, "description": "Token contract address" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "402": { "description": "Payment Required" }
+        }
+      },
+      "post": {
+        "operationId": "createReward",
+        "summary": "Create a new reward for a program",
+        "tags": ["Rewards"],
+        "x-payment-info": {
+          "pricingMode": "fixed",
+          "price": "0.010000",
+          "protocols": ["mpp"]
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token_address": { "type": "string" },
+                  "name": { "type": "string" },
+                  "description": { "type": "string" },
+                  "cost": { "type": "number" }
+                },
+                "required": ["token_address", "name", "cost"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "402": { "description": "Payment Required" }
+        }
+      }
+    },
+    "/balance": {
+      "get": {
+        "operationId": "getBalance",
+        "summary": "Check token balance and tier info",
+        "tags": ["Tokens"],
+        "x-payment-info": {
+          "pricingMode": "fixed",
+          "price": "0.001000",
+          "protocols": ["mpp"]
+        },
+        "parameters": [
+          { "name": "token_address", "in": "query", "schema": { "type": "string" }, "description": "Token contract address" },
+          { "name": "wallet_address", "in": "query", "schema": { "type": "string" }, "description": "Wallet to check" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "402": { "description": "Payment Required" }
+        }
+      }
+    },
+    "/customers": {
+      "get": {
+        "operationId": "listCustomers",
+        "summary": "List customers with token balances",
+        "tags": ["CRM"],
+        "x-payment-info": {
+          "pricingMode": "fixed",
+          "price": "0.002000",
+          "protocols": ["mpp"]
+        },
+        "parameters": [
+          { "name": "token_address", "in": "query", "schema": { "type": "string" }, "description": "Token contract address" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "402": { "description": "Payment Required" }
+        }
+      }
+    },
+    "/vouchers": {
+      "get": {
+        "operationId": "listVouchers",
+        "summary": "List vouchers with filters",
+        "tags": ["Vouchers"],
+        "x-payment-info": {
+          "pricingMode": "fixed",
+          "price": "0.001000",
+          "protocols": ["mpp"]
+        },
+        "parameters": [
+          { "name": "token_address", "in": "query", "schema": { "type": "string" }, "description": "Token contract address" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "402": { "description": "Payment Required" }
+        }
+      }
+    },
+    "/analytics": {
+      "get": {
+        "operationId": "getAnalytics",
+        "summary": "Get program analytics and metrics",
+        "tags": ["Analytics"],
+        "x-payment-info": {
+          "pricingMode": "fixed",
+          "price": "0.005000",
+          "protocols": ["mpp"]
+        },
+        "parameters": [
+          { "name": "token_address", "in": "query", "schema": { "type": "string" }, "description": "Token contract address" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "402": { "description": "Payment Required" }
+        }
+      }
+    },
+    "/offers": {
+      "get": {
+        "operationId": "listOffers",
+        "summary": "List active P2P marketplace offers",
+        "tags": ["Marketplace"],
+        "x-payment-info": {
+          "pricingMode": "fixed",
+          "price": "0.001000",
+          "protocols": ["mpp"]
+        },
+        "parameters": [
+          { "name": "token_address", "in": "query", "schema": { "type": "string" }, "description": "Token contract address" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "402": { "description": "Payment Required" }
+        }
+      },
+      "post": {
+        "operationId": "createOffer",
+        "summary": "Create P2P escrow offer for token trading",
+        "tags": ["Marketplace"],
+        "x-payment-info": {
+          "pricingMode": "fixed",
+          "price": "0.010000",
+          "protocols": ["mpp"]
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "offer_token_address": { "type": "string" },
+                  "offer_amount": { "type": "number" },
+                  "request_token_address": { "type": "string" },
+                  "request_amount": { "type": "number" }
+                },
+                "required": ["offer_token_address", "offer_amount", "request_token_address", "request_amount"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "402": { "description": "Payment Required" }
+        }
+      }
+    },
+    "/register-program": {
+      "post": {
+        "operationId": "registerProgram",
+        "summary": "Register deployed token as loyalty program",
+        "tags": ["Programs"],
+        "x-payment-info": {
+          "pricingMode": "fixed",
+          "price": "0.010000",
+          "protocols": ["mpp"]
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token_address": { "type": "string" },
+                  "name": { "type": "string" },
+                  "symbol": { "type": "string" },
+                  "merchant_address": { "type": "string" }
+                },
+                "required": ["token_address", "name", "symbol", "merchant_address"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "402": { "description": "Payment Required" }
+        }
+      }
+    },
+    "/activate-program": {
+      "post": {
+        "operationId": "activateProgram",
+        "summary": "Get activation calldata (unpause + enableMinting)",
+        "tags": ["Programs"],
+        "x-payment-info": {
+          "pricingMode": "fixed",
+          "price": "0.010000",
+          "protocols": ["mpp"]
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token_address": { "type": "string" }
+                },
+                "required": ["token_address"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "402": { "description": "Payment Required" }
+        }
+      }
+    },
+    "/program-status": {
+      "post": {
+        "operationId": "updateProgramStatus",
+        "summary": "Update program status after on-chain action",
+        "tags": ["Programs"],
+        "x-payment-info": {
+          "pricingMode": "fixed",
+          "price": "0.005000",
+          "protocols": ["mpp"]
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token_address": { "type": "string" },
+                  "status": { "type": "string", "enum": ["active", "paused"] }
+                },
+                "required": ["token_address", "status"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "402": { "description": "Payment Required" }
+        }
+      }
+    },
+    "/mint": {
+      "post": {
+        "operationId": "mintTokens",
+        "summary": "Mint loyalty tokens to a wallet address",
+        "tags": ["Tokens"],
+        "x-payment-info": {
+          "pricingMode": "fixed",
+          "price": "0.010000",
+          "protocols": ["mpp"]
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token_address": { "type": "string" },
+                  "to": { "type": "string", "description": "Recipient wallet" },
+                  "amount": { "type": "number" }
+                },
+                "required": ["token_address", "to", "amount"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "402": { "description": "Payment Required" }
+        }
+      }
+    },
+    "/transfer": {
+      "post": {
+        "operationId": "transferTokens",
+        "summary": "Transfer loyalty tokens between wallets",
+        "tags": ["Tokens"],
+        "x-payment-info": {
+          "pricingMode": "fixed",
+          "price": "0.005000",
+          "protocols": ["mpp"]
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token_address": { "type": "string" },
+                  "to": { "type": "string" },
+                  "amount": { "type": "number" }
+                },
+                "required": ["token_address", "to", "amount"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "402": { "description": "Payment Required" }
+        }
+      }
+    },
+    "/accept-offer": {
+      "post": {
+        "operationId": "acceptOffer",
+        "summary": "Accept a P2P offer (atomic escrow swap)",
+        "tags": ["Marketplace"],
+        "x-payment-info": {
+          "pricingMode": "fixed",
+          "price": "0.010000",
+          "protocols": ["mpp"]
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "offer_id": { "type": "string" }
+                },
+                "required": ["offer_id"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "402": { "description": "Payment Required" }
+        }
+      }
+    },
+    "/cancel-offer": {
+      "post": {
+        "operationId": "cancelOffer",
+        "summary": "Cancel your own P2P offer",
+        "tags": ["Marketplace"],
+        "x-payment-info": {
+          "pricingMode": "fixed",
+          "price": "0.005000",
+          "protocols": ["mpp"]
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "offer_id": { "type": "string" }
+                },
+                "required": ["offer_id"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "402": { "description": "Payment Required" }
+        }
+      }
+    }
+  }
+}
