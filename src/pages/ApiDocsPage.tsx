@@ -7,6 +7,7 @@ import { ArrowLeft, Copy, Check, Bot, Key, Shield, Zap, Lightbulb, Network, Badg
 import { useNavigate } from 'react-router-dom';
 import PageTransition from '@/components/PageTransition';
 import McpServerSection from '@/components/api-docs/McpServerSection';
+import MppSection from '@/components/api-docs/MppSection';
 
 const BASE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-api`;
 
