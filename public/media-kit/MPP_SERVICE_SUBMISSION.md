@@ -1,4 +1,4 @@
-# How to Add Loyal Spark to mpp.dev Service Catalog
+# How to Add Loyal Spark to mpp.dev Service Catalog (+ x402 Support)
 
 ## Prerequisites
 - GitHub account

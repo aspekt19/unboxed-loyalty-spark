@@ -65,6 +65,13 @@ Traditional API key authentication with monthly plans.
 - Token Standard: ERC-20
 - Builder Code: bc_wdmnog7m
 
+## x402 Gateway (Coinbase)
+- URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway
+- Currency: USDC on Base
+- Facilitator: https://facilitator.x402.org
+- SDK: @x402/fetch, @x402/evm
+- Spec: https://github.com/coinbase/x402
+
 ## Links
 - Website: https://loyalspark.online
 - Docs: https://loyalspark.online/api-docs
