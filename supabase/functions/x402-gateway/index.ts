@@ -85,7 +85,8 @@ function buildPaymentRequired(price: string, resource: string): Response {
     },
   };
 
-  const encoded = btoa(JSON.stringify(paymentRequirements));
+  const jsonStr = JSON.stringify(paymentRequirements);
+  const encoded = btoa(Array.from(new TextEncoder().encode(jsonStr), (b) => String.fromCharCode(b)).join(""));
 
   const headers = new Headers(corsHeaders);
   headers.set("Content-Type", "application/json");
