@@ -1,7 +1,9 @@
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-api-key, payment-signature",
+    "authorization, x-client-info, apikey, content-type, x-api-key, payment-signature, x-payment",
+  "Access-Control-Expose-Headers":
+    "X-Payment-Required, X-Payment-Response, X-Payment-Protocol, X-Payment-TxHash, X-Payment-Error",
 };
 
 // USDC on Base
