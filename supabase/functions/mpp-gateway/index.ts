@@ -4,6 +4,8 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-api-key, x-mpp-payment",
+  "Access-Control-Expose-Headers":
+    "X-MPP-Resource, X-MPP-Price-USD, X-MPP-Paid, X-MPP-Protocol, X-Payment-Required",
 };
 
 // --- Per-request pricing (USD) ---
