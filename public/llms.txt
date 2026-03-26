@@ -14,7 +14,16 @@
 Pay per request with pathUSD on Tempo chain. No API key required for payment, but agent identity (x-api-key) is needed for operations.
 - Gateway: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway
 - Currency: pathUSD (Tempo)
+- SDK: mppx (npm install -g mppx)
 - Pricing: $0.001–$0.05 per request
+
+### x402 (Coinbase Payment Protocol)
+Pay per request with USDC on Base. Native HTTP 402 flow with on-chain settlement via Coinbase facilitator.
+- Gateway: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway
+- Currency: USDC on Base (0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
+- Facilitator: https://facilitator.x402.org
+- SDK: @x402/fetch, @x402/evm
+- Pricing: Same as MPP ($0.001–$0.05 per request)
 
 ### API Key (Subscription)
 Traditional API key authentication with monthly plans.
