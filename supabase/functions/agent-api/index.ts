@@ -142,6 +142,64 @@ async function authenticateAgent(
   };
 }
 
+// Resolve merchant address: either ownerAddress or CDP wallet if use_agent_wallet is true
+async function resolveAgentMerchantAddress(
+  serviceClient: any,
+  agent: AgentContext,
+  useAgentWallet?: boolean
+): Promise<string> {
+  if (!useAgentWallet) return agent.ownerAddress;
+
+  const { data: wallet } = await serviceClient
+    .from("agent_wallets")
+    .select("wallet_address")
+    .eq("agent_id", agent.agentId)
+    .eq("chain_id", 8453)
+    .eq("is_active", true)
+    .single();
+
+  if (!wallet) return agent.ownerAddress;
+  return wallet.wallet_address;
+}
+
+// Check program ownership: merchant can be either ownerAddress or agent's CDP wallet
+async function findAgentProgram(
+  serviceClient: any,
+  agent: AgentContext,
+  tokenAddress: string,
+  selectFields: string = "id, name, symbol, status"
+) {
+  // Try ownerAddress first
+  const { data: program } = await serviceClient
+    .from("loyalty_programs")
+    .select(selectFields)
+    .eq("token_address", tokenAddress.toLowerCase())
+    .eq("merchant_address", agent.ownerAddress)
+    .single();
+
+  if (program) return program;
+
+  // Try agent's CDP wallet address
+  const { data: wallet } = await serviceClient
+    .from("agent_wallets")
+    .select("wallet_address")
+    .eq("agent_id", agent.agentId)
+    .eq("chain_id", 8453)
+    .eq("is_active", true)
+    .single();
+
+  if (!wallet) return null;
+
+  const { data: walletProgram } = await serviceClient
+    .from("loyalty_programs")
+    .select(selectFields)
+    .eq("token_address", tokenAddress.toLowerCase())
+    .eq("merchant_address", wallet.wallet_address)
+    .single();
+
+  return walletProgram || null;
+}
+
 function hasScope(agent: AgentContext, scope: string): boolean {
   return agent.scopes.includes(scope);
 }
@@ -214,10 +272,22 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Scope 'read' required" }, 403);
       }
 
+      // Get programs owned by ownerAddress OR agent's CDP wallet
+      const { data: wallet } = await serviceClient
+        .from("agent_wallets")
+        .select("wallet_address")
+        .eq("agent_id", agent.agentId)
+        .eq("chain_id", 8453)
+        .eq("is_active", true)
+        .single();
+
+      const merchantAddresses = [agent.ownerAddress];
+      if (wallet?.wallet_address) merchantAddresses.push(wallet.wallet_address);
+
       const { data: programs, error } = await serviceClient
         .from("loyalty_programs")
-        .select("id, name, symbol, token_address, status, expiration_date, created_at")
-        .eq("merchant_address", agent.ownerAddress)
+        .select("id, name, symbol, token_address, status, expiration_date, created_at, merchant_address")
+        .in("merchant_address", merchantAddresses)
         .neq("status", "expired")
         .order("created_at", { ascending: false });
 
@@ -237,7 +307,7 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Scope 'mint' or 'create_program' required" }, 403);
       }
 
-      const { name, symbol, expiration_days } = body;
+      const { name, symbol, expiration_days, use_agent_wallet } = body;
       if (!name || !symbol) {
         return jsonResponse({ error: "Missing required fields: name, symbol" }, 400);
       }
@@ -253,27 +323,30 @@ Deno.serve(async (req) => {
       const days = expiration_days && typeof expiration_days === "number" ? expiration_days : 365;
       const expirationDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 
-      // Return calldata for deploying token via factory
-      const calldata = encodeCreateLoyaltyTokenCalldata(name, symbol.toUpperCase(), agent.ownerAddress);
+      // Resolve merchant address: ownerAddress or CDP wallet
+      const merchantAddress = await resolveAgentMerchantAddress(serviceClient, agent, use_agent_wallet);
 
-      await logActivity(serviceClient, agent.agentId, "create_program", body, 200, { name, symbol }, ip);
+      // Return calldata for deploying token via factory
+      const calldata = encodeCreateLoyaltyTokenCalldata(name, symbol.toUpperCase(), merchantAddress);
+
+      await logActivity(serviceClient, agent.agentId, "create_program", body, 200, { name, symbol, merchant: merchantAddress }, ip);
       return jsonResponse({
         message: "Execute the factory transaction to deploy your loyalty token. After deployment, register the token_address with POST /register-program.",
         program_details: {
           name,
           symbol: symbol.toUpperCase(),
-          merchant_address: agent.ownerAddress,
+          merchant_address: merchantAddress,
           expiration_days: days,
           expiration_date: expirationDate,
         },
         contract_call: {
           to: FACTORY_ADDRESS,
           function: "createLoyaltyToken(string,string,address)",
-          params: [name, symbol.toUpperCase(), agent.ownerAddress],
+          params: [name, symbol.toUpperCase(), merchantAddress],
           calldata,
           chain: "Base (8453)",
           builder_code: BUILDER_CODE,
-          note: "After tx confirmation, extract the token_address from the LoyaltyTokenCreated event (topic[1]) and call POST /register-program.",
+          note: "After tx confirmation, use GET /tx-receipt?tx_hash=0x... to extract the token_address, then call POST /register-program.",
         },
       });
     }
@@ -285,7 +358,7 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Scope 'mint' or 'create_program' required" }, 403);
       }
 
-      const { name, symbol, token_address, expiration_days } = body;
+      const { name, symbol, token_address, expiration_days, use_agent_wallet } = body;
       if (!name || !symbol || !token_address) {
         return jsonResponse({ error: "Missing required fields: name, symbol, token_address" }, 400);
       }
@@ -308,13 +381,15 @@ Deno.serve(async (req) => {
       const days = expiration_days && typeof expiration_days === "number" ? expiration_days : 365;
       const expirationDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 
+      const merchantAddress = await resolveAgentMerchantAddress(serviceClient, agent, use_agent_wallet);
+
       const { data: program, error } = await serviceClient
         .from("loyalty_programs")
         .insert({
           name: name.trim(),
           symbol: symbol.toUpperCase().trim(),
           token_address: token_address.toLowerCase(),
-          merchant_address: agent.ownerAddress,
+          merchant_address: merchantAddress,
           status: "inactive",
           expiration_date: expirationDate,
         })
@@ -346,13 +421,8 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Missing or invalid token_address" }, 400);
       }
 
-      // Verify ownership
-      const { data: program } = await serviceClient
-        .from("loyalty_programs")
-        .select("id, name, symbol, status")
-        .eq("token_address", token_address.toLowerCase())
-        .eq("merchant_address", agent.ownerAddress)
-        .single();
+      // Verify ownership (supports both ownerAddress and CDP wallet)
+      const program = await findAgentProgram(serviceClient, agent, token_address, "id, name, symbol, status");
 
       if (!program) {
         await logActivity(serviceClient, agent.agentId, "activate_program", body, 404, { error: "Program not found" }, ip);
@@ -416,13 +486,8 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Invalid token_address format" }, 400);
       }
 
-      // Verify ownership
-      const { data: program } = await serviceClient
-        .from("loyalty_programs")
-        .select("id, name, status")
-        .eq("token_address", token_address.toLowerCase())
-        .eq("merchant_address", agent.ownerAddress)
-        .single();
+      // Verify ownership (supports both ownerAddress and CDP wallet)
+      const program = await findAgentProgram(serviceClient, agent, token_address, "id, name, status, merchant_address");
 
       if (!program) {
         await logActivity(serviceClient, agent.agentId, "update_program_status", body, 404, { error: "Program not found" }, ip);
@@ -433,7 +498,7 @@ Deno.serve(async (req) => {
         .from("loyalty_programs")
         .update({ status, updated_at: new Date().toISOString() })
         .eq("token_address", token_address.toLowerCase())
-        .eq("merchant_address", agent.ownerAddress);
+        .eq("merchant_address", program.merchant_address);
 
       if (error) {
         await logActivity(serviceClient, agent.agentId, "update_program_status", body, 500, { error: error.message }, ip);
@@ -504,13 +569,8 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Name must be a string under 100 characters" }, 400);
       }
 
-      // Verify the merchant owns this program
-      const { data: program } = await serviceClient
-        .from("loyalty_programs")
-        .select("id")
-        .eq("token_address", token_address.toLowerCase())
-        .eq("merchant_address", agent.ownerAddress)
-        .single();
+      // Verify the merchant owns this program (supports CDP wallet)
+      const program = await findAgentProgram(serviceClient, agent, token_address, "id, merchant_address");
 
       if (!program) {
         await logActivity(serviceClient, agent.agentId, "create_reward", body, 404, { error: "Program not found" }, ip);
@@ -524,7 +584,7 @@ Deno.serve(async (req) => {
           description: description?.trim() || null,
           cost,
           token_address: token_address.toLowerCase(),
-          merchant_address: agent.ownerAddress,
+          merchant_address: program.merchant_address,
           is_active: true,
         })
         .select("id, name, description, cost, token_address, is_active, created_at")
@@ -563,13 +623,8 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Invalid token_address format" }, 400);
       }
 
-      // Verify the merchant owns this program
-      const { data: program } = await serviceClient
-        .from("loyalty_programs")
-        .select("id, name, symbol, status")
-        .eq("token_address", token_address.toLowerCase())
-        .eq("merchant_address", agent.ownerAddress)
-        .single();
+      // Verify the merchant owns this program (supports CDP wallet)
+      const program = await findAgentProgram(serviceClient, agent, token_address, "id, name, symbol, status, merchant_address");
 
       if (!program) {
         await logActivity(serviceClient, agent.agentId, "mint_tokens", body, 404, { error: "Program not found" }, ip);
@@ -582,18 +637,16 @@ Deno.serve(async (req) => {
       }
 
       // Record mint intent in history
-      // Note: actual on-chain minting requires a wallet transaction. 
-      // This records the intent and returns instructions for the agent to execute on-chain.
       const { data: mintRecord, error: mintError } = await serviceClient
         .from("token_mint_history")
         .insert({
-          merchant_address: agent.ownerAddress.toLowerCase(),
+          merchant_address: program.merchant_address.toLowerCase(),
           recipient_address: recipient_address.toLowerCase(),
           amount,
           token_address: token_address.toLowerCase(),
           token_name: program.name,
           token_symbol: program.symbol,
-          transaction_hash: null, // Will be updated after on-chain tx
+          transaction_hash: null,
         })
         .select("id, amount, recipient_address, token_address, created_at")
         .single();
@@ -940,13 +993,8 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Invalid token_address format" }, 400);
       }
 
-      // Verify the merchant owns this program
-      const { data: program } = await serviceClient
-        .from("loyalty_programs")
-        .select("id, name, symbol, status")
-        .eq("token_address", token_address.toLowerCase())
-        .eq("merchant_address", agent.ownerAddress)
-        .single();
+      // Verify the merchant owns this program (supports CDP wallet)
+      const program = await findAgentProgram(serviceClient, agent, token_address, "id, name, symbol, status");
 
       if (!program) {
         await logActivity(serviceClient, agent.agentId, "transfer_tokens", body, 404, { error: "Program not found" }, ip);
@@ -984,29 +1032,84 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ==================== TX RECEIPT (extract token_address from deploy tx) ====================
+    if (resource === "tx-receipt" && req.method === "GET") {
+      const txHash = url.searchParams.get("tx_hash");
+      if (!txHash || !/^0x[a-fA-F0-9]{64}$/.test(txHash)) {
+        return jsonResponse({ error: "Missing or invalid tx_hash query param" }, 400);
+      }
+
+      const basescanKey = Deno.env.get("BASESCAN_API_KEY") || "";
+      const receiptUrl = `https://api.basescan.org/api?module=proxy&action=eth_getTransactionReceipt&txhash=${txHash}&apikey=${basescanKey}`;
+
+      try {
+        const res = await fetch(receiptUrl);
+        const data = await res.json();
+        if (!data.result || !data.result.logs) {
+          return jsonResponse({ error: "Transaction not found or not yet confirmed", tx_hash: txHash }, 404);
+        }
+
+        const receipt = data.result;
+
+        // LoyaltyTokenCreated event topic: keccak256("LoyaltyTokenCreated(address,address,string,string)")
+        // The token address is typically in topic[1] or the first log's address
+        const factoryLogs = receipt.logs.filter(
+          (log: any) => log.address?.toLowerCase() === FACTORY_ADDRESS.toLowerCase()
+        );
+
+        let tokenAddress = null;
+        if (factoryLogs.length > 0) {
+          // Token address is in topic[1] (indexed param)
+          const topic1 = factoryLogs[0].topics?.[1];
+          if (topic1) {
+            tokenAddress = "0x" + topic1.slice(26); // Remove 24 leading zeros from 32-byte topic
+          }
+        }
+
+        // Also check for contract creation in logs (proxy deploy)
+        if (!tokenAddress && receipt.logs.length > 0) {
+          // The first log often comes from the newly deployed proxy
+          tokenAddress = receipt.logs[0].address;
+        }
+
+        await logActivity(serviceClient, agent.agentId, "tx_receipt", { tx_hash: txHash }, 200, { token_address: tokenAddress }, ip);
+        return jsonResponse({
+          tx_hash: txHash,
+          status: receipt.status === "0x1" ? "success" : "failed",
+          token_address: tokenAddress,
+          block_number: parseInt(receipt.blockNumber, 16),
+          gas_used: parseInt(receipt.gasUsed, 16),
+          logs_count: receipt.logs.length,
+        });
+      } catch (err: any) {
+        return jsonResponse({ error: "Failed to fetch receipt: " + err.message }, 500);
+      }
+    }
+
     // ==================== UNKNOWN ROUTE ====================
     await logActivity(serviceClient, agent.agentId, "unknown", { resource, method: req.method }, 404, { error: "Not found" }, ip);
     return jsonResponse({
       error: "Unknown endpoint",
       available_endpoints: {
-        "GET /programs": "List your loyalty programs",
-        "POST /programs": "Get calldata to deploy a new loyalty token (scope: mint)",
-        "POST /register-program": "Register a deployed token as a loyalty program (scope: mint)",
-        "POST /activate-program": "Get activation calldata (unpause + enable minting) (scope: mint)",
-        "POST /program-status": "Update program status in database (scope: mint)",
+        "GET /programs": "List your loyalty programs (supports CDP wallet programs)",
+        "POST /programs": "Get calldata to deploy a new loyalty token (use_agent_wallet: true for CDP)",
+        "POST /register-program": "Register a deployed token (use_agent_wallet: true for CDP)",
+        "POST /activate-program": "Get activation calldata (supports CDP wallet programs)",
+        "POST /program-status": "Update program status in database",
         "GET /rewards?token_address=0x...": "List rewards for a program",
         "POST /rewards": "Create a new reward",
-        "POST /mint": "Record a mint intent",
-        "POST /transfer": "Transfer tokens between wallets (scope: mint)",
+        "POST /mint": "Record a mint intent (supports CDP wallet programs)",
+        "POST /transfer": "Transfer tokens between wallets",
         "GET /balance?token_address=0x...&customer_address=0x...": "Get customer balance",
         "GET /customers?token_address=0x...": "List customers",
         "GET /vouchers?token_address=0x...&status=active": "List vouchers",
         "GET /analytics": "Get merchant analytics",
-        "GET /offers": "List active P2P offers (scope: trade or read)",
-        "POST /offers": "Create a P2P escrow offer (scope: trade)",
-        "POST /accept-offer": "Accept a P2P offer (scope: trade)",
-        "POST /cancel-offer": "Cancel your P2P offer (scope: trade)",
+        "GET /offers": "List active P2P offers",
+        "POST /offers": "Create a P2P escrow offer",
+        "POST /accept-offer": "Accept a P2P offer",
+        "POST /cancel-offer": "Cancel your P2P offer",
         "GET /me": "Get agent info",
+        "GET /tx-receipt?tx_hash=0x...": "Extract token_address from deploy transaction",
       },
     }, 404);
 
