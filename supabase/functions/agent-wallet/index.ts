@@ -17,21 +17,10 @@ function db() {
 // --- Builder Code for Base attribution (base.dev analytics) ---
 const BUILDER_CODE = "bc_wdmnog7m";
 
-// Generate ERC-8021 data suffix for Builder Code
-function getBuilderCodeSuffix(): string {
-  try {
-    // ERC-8021 format: 0x<referrer_address_or_code_hash>
-    // For builder codes, we use the raw code bytes padded
-    const codeBytes = new TextEncoder().encode(BUILDER_CODE);
-    const hex = Array.from(codeBytes).map(b => b.toString(16).padStart(2, "0")).join("");
-    // Standard ERC-8021 suffix format
-    return hex;
-  } catch {
-    return "";
-  }
-}
-
-const BUILDER_SUFFIX = getBuilderCodeSuffix();
+// ERC-8021 data suffix — pre-computed from ox/erc8021 Attribution.toDataSuffix({ codes: ['bc_wdmnog7m'] })
+// This is the CORRECT format that base.dev analytics recognizes.
+// Raw ASCII-only encoding does NOT work — the trailer bytes (0b 00 80 21 ...) are required by ERC-8021.
+const BUILDER_SUFFIX = "62635f77646d6e6f67376d0b0080218021802180218021802180218021";
 
 // Append builder code suffix to any calldata
 function appendBuilderCode(calldata: string): string {

@@ -3,16 +3,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // --- Builder Code for Base attribution (base.dev analytics) ---
 const BUILDER_CODE = "bc_wdmnog7m";
 
-function getBuilderCodeSuffix(): string {
-  try {
-    const codeBytes = new TextEncoder().encode(BUILDER_CODE);
-    return Array.from(codeBytes).map(b => b.toString(16).padStart(2, "0")).join("");
-  } catch {
-    return "";
-  }
-}
-
-const BUILDER_SUFFIX = getBuilderCodeSuffix();
+// ERC-8021 data suffix — pre-computed from ox/erc8021 Attribution.toDataSuffix({ codes: ['bc_wdmnog7m'] })
+// This is the CORRECT format that base.dev analytics recognizes.
+// Raw ASCII-only encoding does NOT work — the trailer bytes are required by ERC-8021.
+const BUILDER_SUFFIX = "62635f77646d6e6f67376d0b0080218021802180218021802180218021";
 
 function appendBuilderCode(calldata: string): string {
   if (!BUILDER_SUFFIX) return calldata;
