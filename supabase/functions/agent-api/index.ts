@@ -623,13 +623,8 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Invalid token_address format" }, 400);
       }
 
-      // Verify the merchant owns this program
-      const { data: program } = await serviceClient
-        .from("loyalty_programs")
-        .select("id, name, symbol, status")
-        .eq("token_address", token_address.toLowerCase())
-        .eq("merchant_address", agent.ownerAddress)
-        .single();
+      // Verify the merchant owns this program (supports CDP wallet)
+      const program = await findAgentProgram(serviceClient, agent, token_address, "id, name, symbol, status, merchant_address");
 
       if (!program) {
         await logActivity(serviceClient, agent.agentId, "mint_tokens", body, 404, { error: "Program not found" }, ip);
@@ -642,18 +637,16 @@ Deno.serve(async (req) => {
       }
 
       // Record mint intent in history
-      // Note: actual on-chain minting requires a wallet transaction. 
-      // This records the intent and returns instructions for the agent to execute on-chain.
       const { data: mintRecord, error: mintError } = await serviceClient
         .from("token_mint_history")
         .insert({
-          merchant_address: agent.ownerAddress.toLowerCase(),
+          merchant_address: program.merchant_address.toLowerCase(),
           recipient_address: recipient_address.toLowerCase(),
           amount,
           token_address: token_address.toLowerCase(),
           token_name: program.name,
           token_symbol: program.symbol,
-          transaction_hash: null, // Will be updated after on-chain tx
+          transaction_hash: null,
         })
         .select("id, amount, recipient_address, token_address, created_at")
         .single();
