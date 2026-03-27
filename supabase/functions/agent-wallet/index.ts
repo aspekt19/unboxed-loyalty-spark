@@ -502,11 +502,33 @@ async function handleServerMint(d: any, agent: any, body: any) {
     return jsonResponse({ error: "Invalid recipient_address" }, 400);
   }
 
-  const { data: prog } = await d
+  // Check ownership: try ownerAddress first, then agent's CDP wallet
+  let prog = null;
+  const { data: prog1 } = await d
     .from("loyalty_programs")
-    .select("id, name, symbol, status")
+    .select("id, name, symbol, status, merchant_address")
     .eq("token_address", token_address.toLowerCase())
     .eq("merchant_address", agent.ownerAddress).single();
+  prog = prog1;
+
+  if (!prog) {
+    // Try agent's CDP wallet address
+    const { data: wallet } = await d
+      .from("agent_wallets")
+      .select("wallet_address")
+      .eq("agent_id", agent.agentId)
+      .eq("chain_id", 8453)
+      .eq("is_active", true)
+      .single();
+    if (wallet) {
+      const { data: prog2 } = await d
+        .from("loyalty_programs")
+        .select("id, name, symbol, status, merchant_address")
+        .eq("token_address", token_address.toLowerCase())
+        .eq("merchant_address", wallet.wallet_address).single();
+      prog = prog2;
+    }
+  }
 
   if (!prog) return jsonResponse({ error: "Program not found or not owned" }, 404);
   if (prog.status !== "active") return jsonResponse({ error: `Program is ${prog.status}` }, 400);
