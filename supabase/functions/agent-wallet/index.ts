@@ -39,6 +39,74 @@ function appendBuilderCode(calldata: string): string {
   return calldata + BUILDER_SUFFIX;
 }
 
+// --- RLP encoder for EIP-1559 transactions ---
+type RLPInput = Uint8Array | RLPInput[];
+
+function rlpEncodeLength(len: number, offset: number): Uint8Array {
+  if (len < 56) return new Uint8Array([len + offset]);
+  const hexLen = len.toString(16);
+  const lenBytes = hexToBytes(hexLen.length % 2 ? "0" + hexLen : hexLen);
+  return new Uint8Array([offset + 55 + lenBytes.length, ...lenBytes]);
+}
+
+function rlpEncode(input: RLPInput): Uint8Array {
+  if (input instanceof Uint8Array) {
+    if (input.length === 1 && input[0] < 0x80) return input;
+    return new Uint8Array([...rlpEncodeLength(input.length, 0x80), ...input]);
+  }
+  // It's an array — encode as list
+  const parts: Uint8Array[] = [];
+  for (const item of input) {
+    parts.push(rlpEncode(item));
+  }
+  const totalLen = parts.reduce((sum, p) => sum + p.length, 0);
+  const prefix = rlpEncodeLength(totalLen, 0xc0);
+  const result = new Uint8Array(prefix.length + totalLen);
+  result.set(prefix, 0);
+  let offset = prefix.length;
+  for (const p of parts) {
+    result.set(p, offset);
+    offset += p.length;
+  }
+  return result;
+}
+
+function hexToBytes(hex: string): Uint8Array {
+  const clean = hex.startsWith("0x") ? hex.slice(2) : hex;
+  if (clean.length === 0) return new Uint8Array();
+  const padded = clean.length % 2 ? "0" + clean : clean;
+  const bytes = new Uint8Array(padded.length / 2);
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = parseInt(padded.substring(i * 2, i * 2 + 2), 16);
+  }
+  return bytes;
+}
+
+function bytesToHex(bytes: Uint8Array): string {
+  return "0x" + Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+function encodeUnsignedEIP1559(to: string, data: string, value: string = "0x0"): string {
+  // EIP-1559: 0x02 || rlp([chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gasLimit, to, value, data, accessList])
+  // CDP handles nonce, gas — set to 0
+  const chainId = hexToBytes("0x2105"); // 8453 = Base
+  const nonce = new Uint8Array(); // 0
+  const maxPriorityFeePerGas = new Uint8Array(); // 0 — CDP fills
+  const maxFeePerGas = new Uint8Array(); // 0 — CDP fills
+  const gasLimit = new Uint8Array(); // 0 — CDP fills
+  const toBytes = hexToBytes(to);
+  const valBytes = value === "0x0" || value === "0" ? new Uint8Array() : hexToBytes(value);
+  const dataBytes = hexToBytes(data);
+  const accessList: RLPInput[] = []; // empty list → encodes as 0xc0
+
+  const payload = rlpEncode([chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gasLimit, toBytes, valBytes, dataBytes, accessList]);
+  // Prefix with 0x02 for EIP-1559
+  const result = new Uint8Array([0x02, ...payload]);
+  const hex = bytesToHex(result);
+  console.log(`[agent-wallet] RLP EIP-1559 tx encoded: ${hex.substring(0, 40)}... (${hex.length} chars)`);
+  return hex;
+}
+
 // --- CDP REST API helpers (no heavy SDK) ---
 const CDP_API_BASE = "https://api.cdp.coinbase.com/platform/v2";
 
@@ -334,12 +402,13 @@ async function handleSignTransaction(d: any, agent: any, body: any) {
   if (wallet.wallet_type === "cdp_mpc") {
     // Append Builder Code for base.dev attribution
     const taggedTxData = appendBuilderCode(txData);
-    const cdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/sign/transaction`, {
-      transaction: taggedTxData,
+    const rlpTx = encodeUnsignedEIP1559(to, taggedTxData, value ? `0x${BigInt(value).toString(16)}` : "0x0");
+    const cdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/send/transaction`, {
+      transaction: rlpTx,
       network: "base",
     });
     if (cdpResult.ok) {
-      result = { txHash: cdpResult.data.transactionHash || cdpResult.data.hash || "0x_pending", status: "signed_via_cdp" };
+      result = { txHash: cdpResult.data.transactionHash || cdpResult.data.hash || "0x_pending", status: "sent_via_cdp" };
     } else {
       result = mockSignTransaction({ to, data: txData, walletAddress: wallet.wallet_address });
       result.status = "cdp_error_mock_fallback";
@@ -356,7 +425,7 @@ async function handleSignTransaction(d: any, agent: any, body: any) {
 
   return jsonResponse({
     transaction: { hash: result.txHash, status: result.status, from: wallet.wallet_address, to, chain_id: 8453, chain: "Base" },
-    message: result.status.includes("cdp") ? "Transaction signed via CDP." : "⚠️ Mock transaction — not submitted on-chain.",
+    message: result.status.includes("cdp") || result.status.includes("sent") ? "Transaction sent via CDP." : "⚠️ Mock transaction — not submitted on-chain.",
   });
 }
 
@@ -466,9 +535,10 @@ async function handleServerMint(d: any, agent: any, body: any) {
   let feeTxResult: { txHash: string; status: string } | null = null;
 
   if (wallet.wallet_type === "cdp_mpc") {
-    // 1. Mint tokens to recipient
-    const cdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/sign/transaction`, {
-      transaction: recipientCalldata,
+    // 1. Mint tokens to recipient via CDP send/transaction
+    const rlpMintTx = encodeUnsignedEIP1559(token_address, recipientCalldata);
+    const cdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/send/transaction`, {
+      transaction: rlpMintTx,
       network: "base",
     });
     if (cdpResult.ok) {
@@ -481,8 +551,9 @@ async function handleServerMint(d: any, agent: any, body: any) {
     // 2. Mint fee tokens to platform wallet (separate tx)
     if (feeAmount > 0) {
       const feeCalldata = buildMintCalldata(PLATFORM_FEE_WALLET, feeAmount);
-      const feeCdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/sign/transaction`, {
-        transaction: feeCalldata,
+      const rlpFeeTx = encodeUnsignedEIP1559(token_address, feeCalldata);
+      const feeCdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/send/transaction`, {
+        transaction: rlpFeeTx,
         network: "base",
       });
       if (feeCdpResult.ok) {
