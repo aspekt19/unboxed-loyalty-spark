@@ -334,12 +334,16 @@ async function handleSignTransaction(d: any, agent: any, body: any) {
   if (wallet.wallet_type === "cdp_mpc") {
     // Append Builder Code for base.dev attribution
     const taggedTxData = appendBuilderCode(txData);
-    const cdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/sign/transaction`, {
-      transaction: taggedTxData,
+    const cdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/send/transaction`, {
+      transaction: {
+        to,
+        data: taggedTxData,
+        value: value ? `0x${BigInt(value).toString(16)}` : "0x0",
+      },
       network: "base",
     });
     if (cdpResult.ok) {
-      result = { txHash: cdpResult.data.transactionHash || cdpResult.data.hash || "0x_pending", status: "signed_via_cdp" };
+      result = { txHash: cdpResult.data.transactionHash || cdpResult.data.hash || "0x_pending", status: "sent_via_cdp" };
     } else {
       result = mockSignTransaction({ to, data: txData, walletAddress: wallet.wallet_address });
       result.status = "cdp_error_mock_fallback";
