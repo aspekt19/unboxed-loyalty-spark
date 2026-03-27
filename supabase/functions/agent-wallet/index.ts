@@ -39,6 +39,59 @@ function appendBuilderCode(calldata: string): string {
   return calldata + BUILDER_SUFFIX;
 }
 
+// --- RLP encoder for EIP-1559 transactions ---
+function rlpEncodeLength(len: number, offset: number): Uint8Array {
+  if (len < 56) return new Uint8Array([len + offset]);
+  const hexLen = len.toString(16);
+  const lenBytes = hexToBytes(hexLen.length % 2 ? "0" + hexLen : hexLen);
+  return new Uint8Array([offset + 55 + lenBytes.length, ...lenBytes]);
+}
+
+function rlpEncode(input: Uint8Array | Uint8Array[]): Uint8Array {
+  if (input instanceof Uint8Array) {
+    if (input.length === 1 && input[0] < 0x80) return input;
+    return new Uint8Array([...rlpEncodeLength(input.length, 0x80), ...input]);
+  }
+  const encoded = input.map(i => rlpEncode(i));
+  const totalLen = encoded.reduce((sum, e) => sum + e.length, 0);
+  const result = new Uint8Array([...rlpEncodeLength(totalLen, 0xc0), ...encoded.reduce((acc, e) => new Uint8Array([...acc, ...e]), new Uint8Array())]);
+  return result;
+}
+
+function hexToBytes(hex: string): Uint8Array {
+  const clean = hex.startsWith("0x") ? hex.slice(2) : hex;
+  if (clean.length === 0) return new Uint8Array();
+  const padded = clean.length % 2 ? "0" + clean : clean;
+  const bytes = new Uint8Array(padded.length / 2);
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = parseInt(padded.substring(i * 2, i * 2 + 2), 16);
+  }
+  return bytes;
+}
+
+function bytesToHex(bytes: Uint8Array): string {
+  return "0x" + Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+function encodeUnsignedEIP1559(to: string, data: string, value: string = "0x0"): string {
+  // EIP-1559: 0x02 || rlp([chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gasLimit, to, value, data, accessList])
+  // CDP handles nonce, gas — set to 0
+  const chainId = hexToBytes("0x2105"); // 8453 = Base
+  const nonce = new Uint8Array(); // 0
+  const maxPriorityFeePerGas = new Uint8Array(); // 0 — CDP fills
+  const maxFeePerGas = new Uint8Array(); // 0 — CDP fills
+  const gasLimit = new Uint8Array(); // 0 — CDP fills
+  const toBytes = hexToBytes(to);
+  const valBytes = value === "0x0" || value === "0" ? new Uint8Array() : hexToBytes(value);
+  const dataBytes = hexToBytes(data);
+  const accessList: Uint8Array[] = []; // empty list
+
+  const payload = rlpEncode([chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gasLimit, toBytes, valBytes, dataBytes, new Uint8Array()]);
+  // Prefix with 0x02 for EIP-1559
+  const result = new Uint8Array([0x02, ...payload]);
+  return bytesToHex(result);
+}
+
 // --- CDP REST API helpers (no heavy SDK) ---
 const CDP_API_BASE = "https://api.cdp.coinbase.com/platform/v2";
 
