@@ -993,13 +993,8 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Invalid token_address format" }, 400);
       }
 
-      // Verify the merchant owns this program
-      const { data: program } = await serviceClient
-        .from("loyalty_programs")
-        .select("id, name, symbol, status")
-        .eq("token_address", token_address.toLowerCase())
-        .eq("merchant_address", agent.ownerAddress)
-        .single();
+      // Verify the merchant owns this program (supports CDP wallet)
+      const program = await findAgentProgram(serviceClient, agent, token_address, "id, name, symbol, status");
 
       if (!program) {
         await logActivity(serviceClient, agent.agentId, "transfer_tokens", body, 404, { error: "Program not found" }, ip);
