@@ -40,22 +40,30 @@ const PATHUSD_CURRENCY = "0x20c0000000000000000000000000000000000000";
 const USDC_TEMPO = "0x20C000000000000000000000b9537d11c60E8b50";
 
 // Settlement account from private key (required by mppx@0.4.11+)
-const recipientKey = Deno.env.get("MPP_RECIPIENT_PRIVATE_KEY") as `0x${string}`;
-const account = privateKeyToAccount(recipientKey);
-
-const mppx = Mppx.create({
-  secretKey: Deno.env.get("MPP_SECRET_KEY"),
-  methods: [
-    tempo({
-      currency: PATHUSD_CURRENCY,
-      account,
-    }),
-    tempo({
-      currency: USDC_TEMPO,
-      account,
-    }),
-  ],
-});
+let mppx: ReturnType<typeof Mppx.create> | null = null;
+try {
+  let recipientKey = Deno.env.get("MPP_RECIPIENT_PRIVATE_KEY") || "";
+  // Normalize: ensure 0x prefix
+  if (recipientKey && !recipientKey.startsWith("0x")) {
+    recipientKey = "0x" + recipientKey;
+  }
+  const account = privateKeyToAccount(recipientKey as `0x${string}`);
+  mppx = Mppx.create({
+    secretKey: Deno.env.get("MPP_SECRET_KEY"),
+    methods: [
+      tempo({
+        currency: PATHUSD_CURRENCY,
+        account,
+      }),
+      tempo({
+        currency: USDC_TEMPO,
+        account,
+      }),
+    ],
+  });
+} catch (err) {
+  console.error("MPP init error (will run in passthrough mode):", err);
+}
 
 // --- OpenAPI Discovery Spec for MPPScan ---
 function buildOpenApiSpec(baseUrl: string): object {
