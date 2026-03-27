@@ -521,12 +521,9 @@ async function handleServerMint(d: any, agent: any, body: any) {
 
   if (wallet.wallet_type === "cdp_mpc") {
     // 1. Mint tokens to recipient via CDP send/transaction
+    const rlpMintTx = encodeUnsignedEIP1559(token_address, recipientCalldata);
     const cdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/send/transaction`, {
-      transaction: {
-        to: token_address,
-        data: recipientCalldata,
-        value: "0x0",
-      },
+      transaction: rlpMintTx,
       network: "base",
     });
     if (cdpResult.ok) {
@@ -539,12 +536,9 @@ async function handleServerMint(d: any, agent: any, body: any) {
     // 2. Mint fee tokens to platform wallet (separate tx)
     if (feeAmount > 0) {
       const feeCalldata = buildMintCalldata(PLATFORM_FEE_WALLET, feeAmount);
+      const rlpFeeTx = encodeUnsignedEIP1559(token_address, feeCalldata);
       const feeCdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/send/transaction`, {
-        transaction: {
-          to: token_address,
-          data: feeCalldata,
-          value: "0x0",
-        },
+        transaction: rlpFeeTx,
         network: "base",
       });
       if (feeCdpResult.ok) {
