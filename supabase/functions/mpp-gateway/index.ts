@@ -272,12 +272,6 @@ Deno.serve(async (req) => {
     }
 
     // Paid endpoint — run MPP 402 flow
-    if (!mppx) {
-      return new Response(
-        JSON.stringify({ error: "MPP gateway not configured", message: "Settlement account not available" }),
-        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
     const response = await mppx.charge({ amount: price })(req);
 
     if (response.status === 402) {
