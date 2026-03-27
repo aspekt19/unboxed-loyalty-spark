@@ -132,16 +132,15 @@ and trade on a P2P marketplace.
 - [x] Entry added to `schemas/services.ts`
 - [x] Types pass: `pnpm check:types`
 - [x] Build succeeds: `pnpm build`
-- [x] Registered on MPPScan
 
 ## Service Details
 
 - **Gateway URL**: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway
-- **Payment**: pathUSD on Tempo (TEMPO_PAYMENT)
+- **Payment**: USDC on Tempo (TEMPO_PAYMENT)
 - **Integration**: First-party (we run the gateway directly)
 - **Category**: Blockchain
 - **18 API endpoints** with per-request pricing ($0.001–$0.05)
-- **Also supports**: x402 (Coinbase), MCP Server, REST API with subscriptions
+- **Also supports**: x402 (Coinbase/Base USDC), MCP Server, REST API with subscriptions
 
 ## Links
 
