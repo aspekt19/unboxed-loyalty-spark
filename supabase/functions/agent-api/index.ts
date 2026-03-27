@@ -409,13 +409,8 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Missing or invalid token_address" }, 400);
       }
 
-      // Verify ownership
-      const { data: program } = await serviceClient
-        .from("loyalty_programs")
-        .select("id, name, symbol, status")
-        .eq("token_address", token_address.toLowerCase())
-        .eq("merchant_address", agent.ownerAddress)
-        .single();
+      // Verify ownership (supports both ownerAddress and CDP wallet)
+      const program = await findAgentProgram(serviceClient, agent, token_address, "id, name, symbol, status");
 
       if (!program) {
         await logActivity(serviceClient, agent.agentId, "activate_program", body, 404, { error: "Program not found" }, ip);
