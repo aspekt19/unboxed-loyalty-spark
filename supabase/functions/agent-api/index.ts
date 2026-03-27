@@ -295,7 +295,7 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Scope 'mint' or 'create_program' required" }, 403);
       }
 
-      const { name, symbol, expiration_days } = body;
+      const { name, symbol, expiration_days, use_agent_wallet } = body;
       if (!name || !symbol) {
         return jsonResponse({ error: "Missing required fields: name, symbol" }, 400);
       }
@@ -311,27 +311,30 @@ Deno.serve(async (req) => {
       const days = expiration_days && typeof expiration_days === "number" ? expiration_days : 365;
       const expirationDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 
-      // Return calldata for deploying token via factory
-      const calldata = encodeCreateLoyaltyTokenCalldata(name, symbol.toUpperCase(), agent.ownerAddress);
+      // Resolve merchant address: ownerAddress or CDP wallet
+      const merchantAddress = await resolveAgentMerchantAddress(serviceClient, agent, use_agent_wallet);
 
-      await logActivity(serviceClient, agent.agentId, "create_program", body, 200, { name, symbol }, ip);
+      // Return calldata for deploying token via factory
+      const calldata = encodeCreateLoyaltyTokenCalldata(name, symbol.toUpperCase(), merchantAddress);
+
+      await logActivity(serviceClient, agent.agentId, "create_program", body, 200, { name, symbol, merchant: merchantAddress }, ip);
       return jsonResponse({
         message: "Execute the factory transaction to deploy your loyalty token. After deployment, register the token_address with POST /register-program.",
         program_details: {
           name,
           symbol: symbol.toUpperCase(),
-          merchant_address: agent.ownerAddress,
+          merchant_address: merchantAddress,
           expiration_days: days,
           expiration_date: expirationDate,
         },
         contract_call: {
           to: FACTORY_ADDRESS,
           function: "createLoyaltyToken(string,string,address)",
-          params: [name, symbol.toUpperCase(), agent.ownerAddress],
+          params: [name, symbol.toUpperCase(), merchantAddress],
           calldata,
           chain: "Base (8453)",
           builder_code: BUILDER_CODE,
-          note: "After tx confirmation, extract the token_address from the LoyaltyTokenCreated event (topic[1]) and call POST /register-program.",
+          note: "After tx confirmation, use GET /tx-receipt?tx_hash=0x... to extract the token_address, then call POST /register-program.",
         },
       });
     }
