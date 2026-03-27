@@ -346,7 +346,7 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Scope 'mint' or 'create_program' required" }, 403);
       }
 
-      const { name, symbol, token_address, expiration_days } = body;
+      const { name, symbol, token_address, expiration_days, use_agent_wallet } = body;
       if (!name || !symbol || !token_address) {
         return jsonResponse({ error: "Missing required fields: name, symbol, token_address" }, 400);
       }
@@ -369,13 +369,15 @@ Deno.serve(async (req) => {
       const days = expiration_days && typeof expiration_days === "number" ? expiration_days : 365;
       const expirationDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 
+      const merchantAddress = await resolveAgentMerchantAddress(serviceClient, agent, use_agent_wallet);
+
       const { data: program, error } = await serviceClient
         .from("loyalty_programs")
         .insert({
           name: name.trim(),
           symbol: symbol.toUpperCase().trim(),
           token_address: token_address.toLowerCase(),
-          merchant_address: agent.ownerAddress,
+          merchant_address: merchantAddress,
           status: "inactive",
           expiration_date: expirationDate,
         })
