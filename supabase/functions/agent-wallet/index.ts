@@ -360,7 +360,7 @@ async function handleSignTransaction(d: any, agent: any, body: any) {
 
   return jsonResponse({
     transaction: { hash: result.txHash, status: result.status, from: wallet.wallet_address, to, chain_id: 8453, chain: "Base" },
-    message: result.status.includes("cdp") ? "Transaction signed via CDP." : "⚠️ Mock transaction — not submitted on-chain.",
+    message: result.status.includes("cdp") || result.status.includes("sent") ? "Transaction sent via CDP." : "⚠️ Mock transaction — not submitted on-chain.",
   });
 }
 
