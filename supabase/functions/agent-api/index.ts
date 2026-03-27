@@ -272,10 +272,22 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Scope 'read' required" }, 403);
       }
 
+      // Get programs owned by ownerAddress OR agent's CDP wallet
+      const { data: wallet } = await serviceClient
+        .from("agent_wallets")
+        .select("wallet_address")
+        .eq("agent_id", agent.agentId)
+        .eq("chain_id", 8453)
+        .eq("is_active", true)
+        .single();
+
+      const merchantAddresses = [agent.ownerAddress];
+      if (wallet?.wallet_address) merchantAddresses.push(wallet.wallet_address);
+
       const { data: programs, error } = await serviceClient
         .from("loyalty_programs")
-        .select("id, name, symbol, token_address, status, expiration_date, created_at")
-        .eq("merchant_address", agent.ownerAddress)
+        .select("id, name, symbol, token_address, status, expiration_date, created_at, merchant_address")
+        .in("merchant_address", merchantAddresses)
         .neq("status", "expired")
         .order("created_at", { ascending: false });
 
