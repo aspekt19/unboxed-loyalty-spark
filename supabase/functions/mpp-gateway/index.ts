@@ -272,7 +272,29 @@ Deno.serve(async (req) => {
     }
 
     // Paid endpoint — run MPP 402 flow
-    const response = await mppx.charge({ amount: price })(req);
+    const chargeFn = mppx.charge || Object.getPrototypeOf(mppx)?.charge;
+    if (!chargeFn) {
+      // Fallback: manual 402 challenge without mppx SDK
+      const headers = new Headers(corsHeaders);
+      headers.set("Content-Type", "application/json");
+      headers.set("X-MPP-Resource", resource);
+      headers.set("X-MPP-Price-USD", price);
+      return new Response(
+        JSON.stringify({
+          status: 402,
+          message: "Payment required",
+          resource: `/${resource}`,
+          price_usd: price,
+          payment_methods: [
+            { method: "tempo:pathusd", currency: PATHUSD_CURRENCY, recipient: RECIPIENT },
+            { method: "tempo:usdc", currency: USDC_TEMPO, recipient: RECIPIENT },
+          ],
+        }),
+        { status: 402, headers }
+      );
+    }
+
+    const response = await chargeFn.call(mppx, { amount: price })(req);
 
     if (response.status === 402) {
       // No payment: return 402 challenge with pricing info
