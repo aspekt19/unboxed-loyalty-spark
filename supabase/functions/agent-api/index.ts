@@ -486,13 +486,8 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Invalid token_address format" }, 400);
       }
 
-      // Verify ownership
-      const { data: program } = await serviceClient
-        .from("loyalty_programs")
-        .select("id, name, status")
-        .eq("token_address", token_address.toLowerCase())
-        .eq("merchant_address", agent.ownerAddress)
-        .single();
+      // Verify ownership (supports both ownerAddress and CDP wallet)
+      const program = await findAgentProgram(serviceClient, agent, token_address, "id, name, status, merchant_address");
 
       if (!program) {
         await logActivity(serviceClient, agent.agentId, "update_program_status", body, 404, { error: "Program not found" }, ip);
@@ -503,7 +498,7 @@ Deno.serve(async (req) => {
         .from("loyalty_programs")
         .update({ status, updated_at: new Date().toISOString() })
         .eq("token_address", token_address.toLowerCase())
-        .eq("merchant_address", agent.ownerAddress);
+        .eq("merchant_address", program.merchant_address);
 
       if (error) {
         await logActivity(serviceClient, agent.agentId, "update_program_status", body, 500, { error: error.message }, ip);
