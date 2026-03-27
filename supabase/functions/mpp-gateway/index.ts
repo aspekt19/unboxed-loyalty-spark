@@ -39,20 +39,20 @@ const PRICING: Record<string, Record<string, string>> = {
 const PATHUSD_CURRENCY = "0x20c0000000000000000000000000000000000000";
 const USDC_TEMPO = "0x20C000000000000000000000b9537d11c60E8b50";
 
-// Settlement account from private key
+// Settlement account from private key (required by mppx@0.4.11+)
 const recipientKey = Deno.env.get("MPP_RECIPIENT_PRIVATE_KEY") as `0x${string}`;
-const account = recipientKey ? privateKeyToAccount(recipientKey) : undefined;
+const account = privateKeyToAccount(recipientKey);
 
 const mppx = Mppx.create({
   secretKey: Deno.env.get("MPP_SECRET_KEY"),
   methods: [
     tempo({
       currency: PATHUSD_CURRENCY,
-      ...(account ? { account } : { recipient: "0x40a8CdD6a10EC1a8cB3dFb2834675e7a2CF4ad8b" as `0x${string}` }),
+      account,
     }),
     tempo({
       currency: USDC_TEMPO,
-      ...(account ? { account } : { recipient: "0x40a8CdD6a10EC1a8cB3dFb2834675e7a2CF4ad8b" as `0x${string}` }),
+      account,
     }),
   ],
 });
