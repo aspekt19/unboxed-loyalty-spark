@@ -142,6 +142,64 @@ async function authenticateAgent(
   };
 }
 
+// Resolve merchant address: either ownerAddress or CDP wallet if use_agent_wallet is true
+async function resolveAgentMerchantAddress(
+  serviceClient: any,
+  agent: AgentContext,
+  useAgentWallet?: boolean
+): Promise<string> {
+  if (!useAgentWallet) return agent.ownerAddress;
+
+  const { data: wallet } = await serviceClient
+    .from("agent_wallets")
+    .select("wallet_address")
+    .eq("agent_id", agent.agentId)
+    .eq("chain_id", 8453)
+    .eq("is_active", true)
+    .single();
+
+  if (!wallet) return agent.ownerAddress;
+  return wallet.wallet_address;
+}
+
+// Check program ownership: merchant can be either ownerAddress or agent's CDP wallet
+async function findAgentProgram(
+  serviceClient: any,
+  agent: AgentContext,
+  tokenAddress: string,
+  selectFields: string = "id, name, symbol, status"
+) {
+  // Try ownerAddress first
+  const { data: program } = await serviceClient
+    .from("loyalty_programs")
+    .select(selectFields)
+    .eq("token_address", tokenAddress.toLowerCase())
+    .eq("merchant_address", agent.ownerAddress)
+    .single();
+
+  if (program) return program;
+
+  // Try agent's CDP wallet address
+  const { data: wallet } = await serviceClient
+    .from("agent_wallets")
+    .select("wallet_address")
+    .eq("agent_id", agent.agentId)
+    .eq("chain_id", 8453)
+    .eq("is_active", true)
+    .single();
+
+  if (!wallet) return null;
+
+  const { data: walletProgram } = await serviceClient
+    .from("loyalty_programs")
+    .select(selectFields)
+    .eq("token_address", tokenAddress.toLowerCase())
+    .eq("merchant_address", wallet.wallet_address)
+    .single();
+
+  return walletProgram || null;
+}
+
 function hasScope(agent: AgentContext, scope: string): boolean {
   return agent.scopes.includes(scope);
 }
