@@ -1,4 +1,5 @@
 import { Mppx, tempo } from "npm:mppx@^0.4.7/server";
+import { privateKeyToAccount } from "npm:viem@^2.46.0/accounts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -38,19 +39,20 @@ const PRICING: Record<string, Record<string, string>> = {
 const PATHUSD_CURRENCY = "0x20c0000000000000000000000000000000000000";
 const USDC_TEMPO = "0x20C000000000000000000000b9537d11c60E8b50";
 
-// Platform recipient address
-const RECIPIENT = Deno.env.get("MPP_RECIPIENT_ADDRESS") || "0x40a8CdD6a10EC1a8cB3dFb2834675e7a2CF4ad8b";
+// Settlement account from private key
+const recipientKey = Deno.env.get("MPP_RECIPIENT_PRIVATE_KEY") as `0x${string}`;
+const account = recipientKey ? privateKeyToAccount(recipientKey) : undefined;
 
 const mppx = Mppx.create({
   secretKey: Deno.env.get("MPP_SECRET_KEY"),
   methods: [
     tempo({
       currency: PATHUSD_CURRENCY,
-      recipient: RECIPIENT as `0x${string}`,
+      ...(account ? { account } : { recipient: "0x40a8CdD6a10EC1a8cB3dFb2834675e7a2CF4ad8b" as `0x${string}` }),
     }),
     tempo({
       currency: USDC_TEMPO,
-      recipient: RECIPIENT as `0x${string}`,
+      ...(account ? { account } : { recipient: "0x40a8CdD6a10EC1a8cB3dFb2834675e7a2CF4ad8b" as `0x${string}` }),
     }),
   ],
 });
