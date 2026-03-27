@@ -569,13 +569,8 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Name must be a string under 100 characters" }, 400);
       }
 
-      // Verify the merchant owns this program
-      const { data: program } = await serviceClient
-        .from("loyalty_programs")
-        .select("id")
-        .eq("token_address", token_address.toLowerCase())
-        .eq("merchant_address", agent.ownerAddress)
-        .single();
+      // Verify the merchant owns this program (supports CDP wallet)
+      const program = await findAgentProgram(serviceClient, agent, token_address, "id, merchant_address");
 
       if (!program) {
         await logActivity(serviceClient, agent.agentId, "create_reward", body, 404, { error: "Program not found" }, ip);
@@ -589,7 +584,7 @@ Deno.serve(async (req) => {
           description: description?.trim() || null,
           cost,
           token_address: token_address.toLowerCase(),
-          merchant_address: agent.ownerAddress,
+          merchant_address: program.merchant_address,
           is_active: true,
         })
         .select("id, name, description, cost, token_address, is_active, created_at")
