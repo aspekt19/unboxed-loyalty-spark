@@ -40,6 +40,8 @@ function appendBuilderCode(calldata: string): string {
 }
 
 // --- RLP encoder for EIP-1559 transactions ---
+type RLPInput = Uint8Array | RLPInput[];
+
 function rlpEncodeLength(len: number, offset: number): Uint8Array {
   if (len < 56) return new Uint8Array([len + offset]);
   const hexLen = len.toString(16);
@@ -47,14 +49,25 @@ function rlpEncodeLength(len: number, offset: number): Uint8Array {
   return new Uint8Array([offset + 55 + lenBytes.length, ...lenBytes]);
 }
 
-function rlpEncode(input: Uint8Array | Uint8Array[]): Uint8Array {
+function rlpEncode(input: RLPInput): Uint8Array {
   if (input instanceof Uint8Array) {
     if (input.length === 1 && input[0] < 0x80) return input;
     return new Uint8Array([...rlpEncodeLength(input.length, 0x80), ...input]);
   }
-  const encoded = input.map(i => rlpEncode(i));
-  const totalLen = encoded.reduce((sum, e) => sum + e.length, 0);
-  const result = new Uint8Array([...rlpEncodeLength(totalLen, 0xc0), ...encoded.reduce((acc, e) => new Uint8Array([...acc, ...e]), new Uint8Array())]);
+  // It's an array — encode as list
+  const parts: Uint8Array[] = [];
+  for (const item of input) {
+    parts.push(rlpEncode(item));
+  }
+  const totalLen = parts.reduce((sum, p) => sum + p.length, 0);
+  const prefix = rlpEncodeLength(totalLen, 0xc0);
+  const result = new Uint8Array(prefix.length + totalLen);
+  result.set(prefix, 0);
+  let offset = prefix.length;
+  for (const p of parts) {
+    result.set(p, offset);
+    offset += p.length;
+  }
   return result;
 }
 
@@ -84,12 +97,14 @@ function encodeUnsignedEIP1559(to: string, data: string, value: string = "0x0"):
   const toBytes = hexToBytes(to);
   const valBytes = value === "0x0" || value === "0" ? new Uint8Array() : hexToBytes(value);
   const dataBytes = hexToBytes(data);
-  const accessList: Uint8Array[] = []; // empty list
+  const accessList: RLPInput[] = []; // empty list → encodes as 0xc0
 
-  const payload = rlpEncode([chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gasLimit, toBytes, valBytes, dataBytes, new Uint8Array()]);
+  const payload = rlpEncode([chainId, nonce, maxPriorityFeePerGas, maxFeePerGas, gasLimit, toBytes, valBytes, dataBytes, accessList]);
   // Prefix with 0x02 for EIP-1559
   const result = new Uint8Array([0x02, ...payload]);
-  return bytesToHex(result);
+  const hex = bytesToHex(result);
+  console.log(`[agent-wallet] RLP EIP-1559 tx encoded: ${hex.substring(0, 40)}... (${hex.length} chars)`);
+  return hex;
 }
 
 // --- CDP REST API helpers (no heavy SDK) ---
