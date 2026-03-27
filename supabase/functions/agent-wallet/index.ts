@@ -470,9 +470,13 @@ async function handleServerMint(d: any, agent: any, body: any) {
   let feeTxResult: { txHash: string; status: string } | null = null;
 
   if (wallet.wallet_type === "cdp_mpc") {
-    // 1. Mint tokens to recipient
-    const cdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/sign/transaction`, {
-      transaction: recipientCalldata,
+    // 1. Mint tokens to recipient via CDP send/transaction
+    const cdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/send/transaction`, {
+      transaction: {
+        to: token_address,
+        data: recipientCalldata,
+        value: "0x0",
+      },
       network: "base",
     });
     if (cdpResult.ok) {
@@ -485,8 +489,12 @@ async function handleServerMint(d: any, agent: any, body: any) {
     // 2. Mint fee tokens to platform wallet (separate tx)
     if (feeAmount > 0) {
       const feeCalldata = buildMintCalldata(PLATFORM_FEE_WALLET, feeAmount);
-      const feeCdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/sign/transaction`, {
-        transaction: feeCalldata,
+      const feeCdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/send/transaction`, {
+        transaction: {
+          to: token_address,
+          data: feeCalldata,
+          value: "0x0",
+        },
         network: "base",
       });
       if (feeCdpResult.ok) {
