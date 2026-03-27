@@ -387,12 +387,9 @@ async function handleSignTransaction(d: any, agent: any, body: any) {
   if (wallet.wallet_type === "cdp_mpc") {
     // Append Builder Code for base.dev attribution
     const taggedTxData = appendBuilderCode(txData);
+    const rlpTx = encodeUnsignedEIP1559(to, taggedTxData, value ? `0x${BigInt(value).toString(16)}` : "0x0");
     const cdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/send/transaction`, {
-      transaction: {
-        to,
-        data: taggedTxData,
-        value: value ? `0x${BigInt(value).toString(16)}` : "0x0",
-      },
+      transaction: rlpTx,
       network: "base",
     });
     if (cdpResult.ok) {
