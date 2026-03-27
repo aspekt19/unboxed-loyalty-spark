@@ -1032,29 +1032,84 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ==================== TX RECEIPT (extract token_address from deploy tx) ====================
+    if (resource === "tx-receipt" && req.method === "GET") {
+      const txHash = url.searchParams.get("tx_hash");
+      if (!txHash || !/^0x[a-fA-F0-9]{64}$/.test(txHash)) {
+        return jsonResponse({ error: "Missing or invalid tx_hash query param" }, 400);
+      }
+
+      const basescanKey = Deno.env.get("BASESCAN_API_KEY") || "";
+      const receiptUrl = `https://api.basescan.org/api?module=proxy&action=eth_getTransactionReceipt&txhash=${txHash}&apikey=${basescanKey}`;
+
+      try {
+        const res = await fetch(receiptUrl);
+        const data = await res.json();
+        if (!data.result || !data.result.logs) {
+          return jsonResponse({ error: "Transaction not found or not yet confirmed", tx_hash: txHash }, 404);
+        }
+
+        const receipt = data.result;
+
+        // LoyaltyTokenCreated event topic: keccak256("LoyaltyTokenCreated(address,address,string,string)")
+        // The token address is typically in topic[1] or the first log's address
+        const factoryLogs = receipt.logs.filter(
+          (log: any) => log.address?.toLowerCase() === FACTORY_ADDRESS.toLowerCase()
+        );
+
+        let tokenAddress = null;
+        if (factoryLogs.length > 0) {
+          // Token address is in topic[1] (indexed param)
+          const topic1 = factoryLogs[0].topics?.[1];
+          if (topic1) {
+            tokenAddress = "0x" + topic1.slice(26); // Remove 24 leading zeros from 32-byte topic
+          }
+        }
+
+        // Also check for contract creation in logs (proxy deploy)
+        if (!tokenAddress && receipt.logs.length > 0) {
+          // The first log often comes from the newly deployed proxy
+          tokenAddress = receipt.logs[0].address;
+        }
+
+        await logActivity(serviceClient, agent.agentId, "tx_receipt", { tx_hash: txHash }, 200, { token_address: tokenAddress }, ip);
+        return jsonResponse({
+          tx_hash: txHash,
+          status: receipt.status === "0x1" ? "success" : "failed",
+          token_address: tokenAddress,
+          block_number: parseInt(receipt.blockNumber, 16),
+          gas_used: parseInt(receipt.gasUsed, 16),
+          logs_count: receipt.logs.length,
+        });
+      } catch (err: any) {
+        return jsonResponse({ error: "Failed to fetch receipt: " + err.message }, 500);
+      }
+    }
+
     // ==================== UNKNOWN ROUTE ====================
     await logActivity(serviceClient, agent.agentId, "unknown", { resource, method: req.method }, 404, { error: "Not found" }, ip);
     return jsonResponse({
       error: "Unknown endpoint",
       available_endpoints: {
-        "GET /programs": "List your loyalty programs",
-        "POST /programs": "Get calldata to deploy a new loyalty token (scope: mint)",
-        "POST /register-program": "Register a deployed token as a loyalty program (scope: mint)",
-        "POST /activate-program": "Get activation calldata (unpause + enable minting) (scope: mint)",
-        "POST /program-status": "Update program status in database (scope: mint)",
+        "GET /programs": "List your loyalty programs (supports CDP wallet programs)",
+        "POST /programs": "Get calldata to deploy a new loyalty token (use_agent_wallet: true for CDP)",
+        "POST /register-program": "Register a deployed token (use_agent_wallet: true for CDP)",
+        "POST /activate-program": "Get activation calldata (supports CDP wallet programs)",
+        "POST /program-status": "Update program status in database",
         "GET /rewards?token_address=0x...": "List rewards for a program",
         "POST /rewards": "Create a new reward",
-        "POST /mint": "Record a mint intent",
-        "POST /transfer": "Transfer tokens between wallets (scope: mint)",
+        "POST /mint": "Record a mint intent (supports CDP wallet programs)",
+        "POST /transfer": "Transfer tokens between wallets",
         "GET /balance?token_address=0x...&customer_address=0x...": "Get customer balance",
         "GET /customers?token_address=0x...": "List customers",
         "GET /vouchers?token_address=0x...&status=active": "List vouchers",
         "GET /analytics": "Get merchant analytics",
-        "GET /offers": "List active P2P offers (scope: trade or read)",
-        "POST /offers": "Create a P2P escrow offer (scope: trade)",
-        "POST /accept-offer": "Accept a P2P offer (scope: trade)",
-        "POST /cancel-offer": "Cancel your P2P offer (scope: trade)",
+        "GET /offers": "List active P2P offers",
+        "POST /offers": "Create a P2P escrow offer",
+        "POST /accept-offer": "Accept a P2P offer",
+        "POST /cancel-offer": "Cancel your P2P offer",
         "GET /me": "Get agent info",
+        "GET /tx-receipt?tx_hash=0x...": "Extract token_address from deploy transaction",
       },
     }, 404);
 
