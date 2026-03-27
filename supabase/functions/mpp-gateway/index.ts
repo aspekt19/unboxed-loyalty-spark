@@ -34,8 +34,9 @@ const PRICING: Record<string, Record<string, string>> = {
   },
 };
 
-// pathUSD on Tempo
+// Tempo currencies
 const PATHUSD_CURRENCY = "0x20c0000000000000000000000000000000000000";
+const USDC_TEMPO = "0x20C000000000000000000000b9537d11c60E8b50";
 
 // Platform recipient address
 const RECIPIENT = Deno.env.get("MPP_RECIPIENT_ADDRESS") || "0x40a8CdD6a10EC1a8cB3dFb2834675e7a2CF4ad8b";
@@ -45,6 +46,10 @@ const mppx = Mppx.create({
   methods: [
     tempo({
       currency: PATHUSD_CURRENCY,
+      recipient: RECIPIENT as `0x${string}`,
+    }),
+    tempo({
+      currency: USDC_TEMPO,
       recipient: RECIPIENT as `0x${string}`,
     }),
   ],
