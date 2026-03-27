@@ -1,5 +1,4 @@
-import { Mppx, tempo } from "npm:mppx@^0.4.7/server";
-import { privateKeyToAccount } from "npm:viem@^2.46.0/accounts";
+import { Mppx, tempo } from "npm:mppx@0.4.7/server";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,31 +38,22 @@ const PRICING: Record<string, Record<string, string>> = {
 const PATHUSD_CURRENCY = "0x20c0000000000000000000000000000000000000";
 const USDC_TEMPO = "0x20C000000000000000000000b9537d11c60E8b50";
 
-// Settlement account from private key (required by mppx@0.4.11+)
-let mppx: ReturnType<typeof Mppx.create> | null = null;
-try {
-  let recipientKey = Deno.env.get("MPP_RECIPIENT_PRIVATE_KEY") || "";
-  // Normalize: ensure 0x prefix
-  if (recipientKey && !recipientKey.startsWith("0x")) {
-    recipientKey = "0x" + recipientKey;
-  }
-  const account = privateKeyToAccount(recipientKey as `0x${string}`);
-  mppx = Mppx.create({
-    secretKey: Deno.env.get("MPP_SECRET_KEY"),
-    methods: [
-      tempo({
-        currency: PATHUSD_CURRENCY,
-        account,
-      }),
-      tempo({
-        currency: USDC_TEMPO,
-        account,
-      }),
-    ],
-  });
-} catch (err) {
-  console.error("MPP init error (will run in passthrough mode):", err);
-}
+// Platform recipient address
+const RECIPIENT = (Deno.env.get("MPP_RECIPIENT_ADDRESS") || "0x40a8CdD6a10EC1a8cB3dFb2834675e7a2CF4ad8b") as `0x${string}`;
+
+const mppx = Mppx.create({
+  secretKey: Deno.env.get("MPP_SECRET_KEY"),
+  methods: [
+    tempo({
+      currency: PATHUSD_CURRENCY,
+      recipient: RECIPIENT,
+    }),
+    tempo({
+      currency: USDC_TEMPO,
+      recipient: RECIPIENT,
+    }),
+  ],
+});
 
 // --- OpenAPI Discovery Spec for MPPScan ---
 function buildOpenApiSpec(baseUrl: string): object {
@@ -282,13 +272,29 @@ Deno.serve(async (req) => {
     }
 
     // Paid endpoint — run MPP 402 flow
-    if (!mppx) {
+    const chargeFn = mppx.charge || Object.getPrototypeOf(mppx)?.charge;
+    if (!chargeFn) {
+      // Fallback: manual 402 challenge without mppx SDK
+      const headers = new Headers(corsHeaders);
+      headers.set("Content-Type", "application/json");
+      headers.set("X-MPP-Resource", resource);
+      headers.set("X-MPP-Price-USD", price);
       return new Response(
-        JSON.stringify({ error: "MPP gateway not configured", message: "Settlement account not available" }),
-        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({
+          status: 402,
+          message: "Payment required",
+          resource: `/${resource}`,
+          price_usd: price,
+          payment_methods: [
+            { method: "tempo:pathusd", currency: PATHUSD_CURRENCY, recipient: RECIPIENT },
+            { method: "tempo:usdc", currency: USDC_TEMPO, recipient: RECIPIENT },
+          ],
+        }),
+        { status: 402, headers }
       );
     }
-    const response = await mppx.charge({ amount: price })(req);
+
+    const response = await chargeFn.call(mppx, { amount: price })(req);
 
     if (response.status === 402) {
       // No payment: return 402 challenge with pricing info
