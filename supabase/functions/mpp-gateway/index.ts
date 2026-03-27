@@ -1,4 +1,4 @@
-import { Mppx, tempo } from "npm:mppx@0.4.8/server";
+import { Mppx, tempo } from "npm:mppx@0.4.7/server";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
