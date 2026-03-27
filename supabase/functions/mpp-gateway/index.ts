@@ -1,5 +1,4 @@
-import { Mppx, tempo } from "npm:mppx@^0.4.7/server";
-import { privateKeyToAccount } from "npm:viem@^2.46.0/accounts";
+import { Mppx, tempo } from "npm:mppx@0.4.8/server";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,31 +38,22 @@ const PRICING: Record<string, Record<string, string>> = {
 const PATHUSD_CURRENCY = "0x20c0000000000000000000000000000000000000";
 const USDC_TEMPO = "0x20C000000000000000000000b9537d11c60E8b50";
 
-// Settlement account from private key (required by mppx@0.4.11+)
-let mppx: ReturnType<typeof Mppx.create> | null = null;
-try {
-  let recipientKey = Deno.env.get("MPP_RECIPIENT_PRIVATE_KEY") || "";
-  // Normalize: ensure 0x prefix
-  if (recipientKey && !recipientKey.startsWith("0x")) {
-    recipientKey = "0x" + recipientKey;
-  }
-  const account = privateKeyToAccount(recipientKey as `0x${string}`);
-  mppx = Mppx.create({
-    secretKey: Deno.env.get("MPP_SECRET_KEY"),
-    methods: [
-      tempo({
-        currency: PATHUSD_CURRENCY,
-        account,
-      }),
-      tempo({
-        currency: USDC_TEMPO,
-        account,
-      }),
-    ],
-  });
-} catch (err) {
-  console.error("MPP init error (will run in passthrough mode):", err);
-}
+// Platform recipient address
+const RECIPIENT = (Deno.env.get("MPP_RECIPIENT_ADDRESS") || "0x40a8CdD6a10EC1a8cB3dFb2834675e7a2CF4ad8b") as `0x${string}`;
+
+const mppx = Mppx.create({
+  secretKey: Deno.env.get("MPP_SECRET_KEY"),
+  methods: [
+    tempo({
+      currency: PATHUSD_CURRENCY,
+      recipient: RECIPIENT,
+    }),
+    tempo({
+      currency: USDC_TEMPO,
+      recipient: RECIPIENT,
+    }),
+  ],
+});
 
 // --- OpenAPI Discovery Spec for MPPScan ---
 function buildOpenApiSpec(baseUrl: string): object {
