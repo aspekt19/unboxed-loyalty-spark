@@ -9,6 +9,43 @@ import { useState, useEffect } from 'react';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { motion } from 'framer-motion';
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "name": "Loyal Spark",
+      "url": "https://loyalspark.online",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "description": "Loyalty tokens that earn, invest and multiply onchain. Get rewarded for purchases, save automatically, and grow your rewards in DeFi.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "creator": {
+        "@type": "Organization",
+        "name": "Loyal Spark",
+        "url": "https://loyalspark.online",
+        "sameAs": ["https://x.com/Loyal_Spark"]
+      }
+    },
+    {
+      "@type": "WebAPI",
+      "name": "Loyal Spark API",
+      "url": "https://loyalspark.online/api-docs",
+      "documentation": "https://loyalspark.online/openapi.json",
+      "description": "REST API and MCP Server for AI agents to create loyalty programs, mint tokens, and manage rewards on BASE network."
+    },
+    {
+      "@type": "WebSite",
+      "name": "Loyal Spark",
+      "url": "https://loyalspark.online"
+    }
+  ]
+};
+
 const Index = () => {
   const [isFarcaster, setIsFarcaster] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
@@ -38,6 +75,7 @@ const Index = () => {
 
   return (
     <PageTransition>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="min-h-screen bg-gradient-hero">
         <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl transition-smooth">
           <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 flex justify-between items-center">
