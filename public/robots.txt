@@ -1,14 +1,69 @@
+# Loyal Spark — Onchain Loyalty Protocol for AI Agents
+# https://loyalspark.online
+
+# Major search engines
 User-agent: Googlebot
 Allow: /
 
 User-agent: Bingbot
 Allow: /
 
+# Social media crawlers
 User-agent: Twitterbot
 Allow: /
 
 User-agent: facebookexternalhit
 Allow: /
 
+# AI/LLM Crawlers — explicitly allowed
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Anthropic-AI
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Gemini
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# Default: allow all
 User-agent: *
 Allow: /
+
+# Sitemap
+Sitemap: https://loyalspark.online/sitemap.xml
+
+# AI Discovery
+# LLMs: https://loyalspark.online/llms.txt
+# Agent Manifest: https://loyalspark.online/.well-known/agent.json
+# OpenAPI: https://loyalspark.online/openapi.json
+# MCP Server: https://loyalspark.online/.well-known/skills/index.md
