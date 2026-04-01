@@ -328,6 +328,10 @@ const Index = () => {
 
           <PaymentHandshake />
 
+          <TrustSecurity />
+
+          <UseCases />
+
           <section className="py-12 sm:py-16 md:py-24 bg-gradient-subtle">
             <div className="max-w-4xl mx-auto px-4">
               <motion.div 
