@@ -88,9 +88,9 @@ export const InvestmentStrategies = () => {
                     <strategy.icon className={`h-5 w-5 ${strategy.color}`} />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-semibold">{strategy.name}</h4>
-                      <Badge variant={strategy.badgeVariant} className="text-xs">
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                      <h4 className="font-semibold text-sm sm:text-base">{strategy.name}</h4>
+                      <Badge variant={strategy.badgeVariant} className="text-xs shrink-0">
                         {strategy.premium && <Crown className="h-3 w-3 mr-1" />}
                         {strategy.badge}
                       </Badge>
