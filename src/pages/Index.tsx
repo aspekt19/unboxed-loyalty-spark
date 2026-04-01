@@ -8,6 +8,7 @@ import { AdminLink } from '@/components/AdminLink';
 import { useState, useEffect } from 'react';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { motion } from 'framer-motion';
+import PaymentHandshake from '@/components/landing/PaymentHandshake';
 
 const jsonLd = {
   "@context": "https://schema.org",
