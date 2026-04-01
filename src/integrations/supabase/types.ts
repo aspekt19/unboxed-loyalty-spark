@@ -770,7 +770,6 @@ export type Database = {
           clicked: boolean | null
           created_at: string | null
           customer_address: string
-          customer_email: string | null
           delivered_at: string | null
           id: string
           opened_at: string | null
@@ -781,7 +780,6 @@ export type Database = {
           clicked?: boolean | null
           created_at?: string | null
           customer_address: string
-          customer_email?: string | null
           delivered_at?: string | null
           id?: string
           opened_at?: string | null
@@ -792,7 +790,6 @@ export type Database = {
           clicked?: boolean | null
           created_at?: string | null
           customer_address?: string
-          customer_email?: string | null
           delivered_at?: string | null
           id?: string
           opened_at?: string | null
