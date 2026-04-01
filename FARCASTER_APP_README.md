@@ -158,7 +158,7 @@ See [API Documentation](https://loyalspark.online/api-docs) for full details.
 
 | Function | Purpose |
 |----------|---------|
-| `agent-api` | REST API for AI agents (19 endpoints) |
+| `agent-api` | REST API for AI agents (18 endpoints) |
 | `agent-api-key` | API key generation |
 | `agent-wallet` | CDP MPC wallet management |
 | `loyalty-mcp` | MCP Server for LLMs (14 tools) |
