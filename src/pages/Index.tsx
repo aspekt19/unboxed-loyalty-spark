@@ -9,6 +9,8 @@ import { useState, useEffect } from 'react';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { motion } from 'framer-motion';
 import PaymentHandshake from '@/components/landing/PaymentHandshake';
+import TrustSecurity from '@/components/landing/TrustSecurity';
+import UseCases from '@/components/landing/UseCases';
 
 const jsonLd = {
   "@context": "https://schema.org",
