@@ -303,6 +303,40 @@ unboxed-loyalty-spark/
 
 All on-chain transactions are tagged with Base Builder Code `bc_wdmnog7m` (ERC-8021 format) for analytics visibility in [base.dev](https://base.dev).
 
+## For AI Agents
+
+Loyal Spark is a **machine-payment-native** API. AI agents can discover, authenticate, and pay for API calls without human intervention.
+
+### Discovery Endpoints
+
+| Resource | URL | Purpose |
+|----------|-----|---------|
+| Agent Manifest | [/.well-known/agent.json](https://loyalspark.online/.well-known/agent.json) | Full protocol spec, capabilities, pricing |
+| MPP Manifest | [/.well-known/mpp.json](https://loyalspark.online/.well-known/mpp.json) | Machine Payment Protocol manifest |
+| OpenAPI Spec | [/openapi.json](https://loyalspark.online/openapi.json) | OpenAPI 3.1.0 with x-payment-info |
+| Skills Library | [/.well-known/skills/](https://loyalspark.online/.well-known/skills/index.md) | 11 step-by-step guides for agents |
+| LLMs.txt | [/llms.txt](https://loyalspark.online/llms.txt) | Protocol summary for LLM crawlers |
+| Prompt Guide | [PROMPT_GUIDE.md](./PROMPT_GUIDE.md) | Ready-to-use system prompts |
+
+### Payment Gateways (No API Key Needed)
+
+Agents can pay per request using onchain micropayments:
+
+| Protocol | Network | Asset | Gateway |
+|----------|---------|-------|---------|
+| **x402** | Base | USDC | `https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway` |
+| **MPP** | Tempo | pathUSD / USDC | `https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway` |
+
+Pricing: **$0.001–$0.005** per read · **$0.005–$0.05** per write · HTTP 402 challenge/response flow.
+
+### Catalogues & Registries
+
+- **[mpp.dev](https://mpp.dev)** — Machine Payment Protocol registry (PR #474)
+- **[mppscan.com](https://mppscan.com)** — MPP service scanner (indexed via OpenAPI)
+- **[glama.ai](https://glama.ai)** — MCP server directory
+- **[mcp.so](https://mcp.so)** — MCP server registry
+- **[smithery.ai](https://smithery.ai)** — MCP marketplace
+
 ## Links & Resources
 
 - **Website**: [loyalspark.online](https://loyalspark.online)
