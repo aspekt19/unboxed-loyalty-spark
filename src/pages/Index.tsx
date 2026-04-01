@@ -9,6 +9,8 @@ import { useState, useEffect } from 'react';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { motion } from 'framer-motion';
 import PaymentHandshake from '@/components/landing/PaymentHandshake';
+import TrustSecurity from '@/components/landing/TrustSecurity';
+import UseCases from '@/components/landing/UseCases';
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -325,6 +327,10 @@ const Index = () => {
           </section>
 
           <PaymentHandshake />
+
+          <TrustSecurity />
+
+          <UseCases />
 
           <section className="py-12 sm:py-16 md:py-24 bg-gradient-subtle">
             <div className="max-w-4xl mx-auto px-4">
