@@ -1326,6 +1326,8 @@ Deno.serve(async (req) => {
         "GET /balance?token_address=0x...&customer_address=0x...": "Get customer balance",
         "GET /customers?token_address=0x...": "List customers",
         "GET /vouchers?token_address=0x...&status=active": "List vouchers",
+        "POST /redeem-reward": "Redeem a reward: verify token transfer tx and create voucher",
+        "POST /vouchers/use": "Mark a voucher as used (by code or id)",
         "GET /analytics": "Get merchant analytics",
         "GET /offers": "List active P2P offers",
         "POST /offers": "Create a P2P escrow offer",
