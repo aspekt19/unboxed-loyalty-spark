@@ -104,7 +104,31 @@ Or by voucher ID:
 { "voucher_id": "uuid-of-voucher" }
 ```
 
-### Step 5: View Vouchers
+### Step 5: Check Voucher Status (Public — No API Key)
+Anyone (customer, agent, or third party) can check a voucher's status:
+
+```bash
+curl "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/vouchers/status?code=LOYAL-AB12-CD34-EF56-GH78"
+```
+
+Response:
+```json
+{
+  "voucher": {
+    "id": "uuid",
+    "code": "LOYAL-AB12-CD34-EF56-GH78",
+    "reward_name": "Free Coffee",
+    "status": "active",
+    "cost": 50,
+    "token_symbol": "COFFEE",
+    "merchant_address": "0x...",
+    "activated_at": "2026-04-02T...",
+    "used_at": null
+  }
+}
+```
+
+### Step 6: View Vouchers (Merchant)
 Query vouchers for your program:
 
 ```bash
