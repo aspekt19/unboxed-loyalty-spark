@@ -119,8 +119,9 @@ curl -H "x-api-key: lsk_YOUR_KEY" \
 | POST | `/cancel-offer` | trade | Cancel your P2P offer |
 | GET | `/me` | any | Get agent info |
 | GET | `/tx-receipt` | any | Extract token_address from deploy tx |
+| GET | `/vouchers/status` | public | Check voucher status (no API key) |
 
-### MCP Server Tools (16)
+### MCP Server Tools (17)
 
 | Tool | Scope | Description |
 |------|-------|-------------|
