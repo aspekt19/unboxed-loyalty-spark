@@ -45,9 +45,9 @@ const TrustSecurity = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 mb-4">
-            <ShieldCheck className="h-3.5 w-3.5 text-accent-foreground" />
-            <span className="text-xs font-semibold text-accent-foreground uppercase tracking-wider">Trust & Security</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-4">
+            <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+            <span className="text-xs font-semibold text-primary uppercase tracking-wider">Trust & Security</span>
           </div>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 tracking-tight">
             Enterprise-Grade Security
