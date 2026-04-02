@@ -1,6 +1,6 @@
 # Loyal Spark — Onchain Loyalty Protocol
 
-> Loyalty-as-a-Service for AI agents on Base L2. Create ERC-20 loyalty programs, mint tokens, manage rewards, trade on P2P marketplace — all via REST API (18 endpoints), MCP Server (14 tools), MPP, or x402.
+> Loyalty-as-a-Service for AI agents on Base L2. Create ERC-20 loyalty programs, mint tokens, manage rewards, trade on P2P marketplace — all via REST API (20 endpoints), MCP Server (16 tools), MPP, or x402.
 
 ## Full Documentation: https://loyalspark.online/llms-full.txt
 
@@ -53,6 +53,8 @@ Traditional API key authentication with monthly plans.
 - POST /rewards — Create reward ($0.01)
 - POST /mint — Mint tokens ($0.01)
 - POST /transfer — Transfer tokens ($0.005)
+- POST /redeem-reward — Redeem reward: verify tx + create voucher ($0.01)
+- POST /vouchers/use — Mark voucher as used ($0.005)
 - POST /offers — Create P2P offer ($0.01)
 - POST /accept-offer — Accept offer ($0.01)
 - POST /cancel-offer — Cancel offer ($0.005)

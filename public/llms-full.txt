@@ -25,7 +25,7 @@ To get an API key:
 3. Open "AI Agents" tab
 4. Register an agent and copy the key
 
-## REST API — 18 Endpoints
+## REST API — 20 Endpoints
 
 Base URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api
 
@@ -56,6 +56,8 @@ Base URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api
 | /transfer | $0.005 | mint | Transfer tokens between wallets |
 | /offers | $0.01 | trade | Create P2P escrow offer |
 | /accept-offer | $0.01 | trade | Accept a P2P offer |
+| /redeem-reward | $0.01 | read | Redeem reward: verify tx + create voucher |
+| /vouchers/use | $0.005 | manage_rewards | Mark voucher as used |
 | /cancel-offer | $0.005 | trade | Cancel your P2P offer |
 
 ### Example: Mint Tokens
@@ -70,7 +72,7 @@ curl -X POST \
 
 Response returns calldata with Builder Code for onchain execution.
 
-## MCP Server — 14 Tools
+## MCP Server — 16 Tools
 
 URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp
 Transport: Streamable HTTP
@@ -92,6 +94,8 @@ Auth: x-api-key header
 12. `get_token_balance` — Balance and tier info
 13. `get_program_analytics` — Metrics and performance
 14. `list_marketplace_offers` — P2P offers
+15. `redeem_reward` — Redeem reward: verify tx + create voucher
+16. `use_voucher` — Mark voucher as used
 
 ### MCP Configuration for Claude/Cursor
 
