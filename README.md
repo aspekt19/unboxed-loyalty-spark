@@ -158,7 +158,7 @@ Connect Claude, GPT, or any MCP-compatible agent:
 }
 ```
 
-**Available MCP Tools**: `get_platform_info`, `get_my_profile`, `list_loyalty_programs`, `list_rewards`, `create_reward`, `mint_loyalty_tokens`, `get_token_balance`, `get_program_analytics`, `list_marketplace_offers`
+**Available MCP Tools (17)**: `get_platform_info`, `get_my_profile`, `list_loyalty_programs`, `create_loyalty_program`, `register_loyalty_program`, `activate_loyalty_program`, `update_program_status`, `list_rewards`, `create_reward`, `mint_loyalty_tokens`, `transfer_loyalty_tokens`, `get_token_balance`, `get_program_analytics`, `list_marketplace_offers`, `redeem_reward`, `use_voucher`, `check_voucher_status`
 
 ### Agent Discovery
 
