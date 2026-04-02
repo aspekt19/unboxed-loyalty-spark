@@ -216,7 +216,7 @@ const mintRes = await x402Fetch('${X402_URL}/mint', {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm text-muted-foreground">Currency:</span>
-              <Badge variant="outline" className="text-xs">pathUSD (Tempo)</Badge>
+              <Badge variant="outline" className="text-xs">USDC / pathUSD (Tempo)</Badge>
               <span className="text-sm text-muted-foreground">Protocol:</span>
               <Badge variant="outline" className="text-xs">HTTP 402</Badge>
               <span className="text-sm text-muted-foreground">SDK:</span>
