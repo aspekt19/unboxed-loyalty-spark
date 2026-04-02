@@ -414,6 +414,69 @@ const ENDPOINTS: Endpoint[] = [
   ]
 }`,
   },
+  {
+    method: 'POST',
+    path: '/offers',
+    description: 'Create a new P2P escrow offer for token trading. Returns escrow contract calldata for atomic swap.',
+    scope: 'trade',
+    params: [
+      { name: 'offer_token_address', type: 'string', required: true, description: 'Token you are offering' },
+      { name: 'offer_amount', type: 'number', required: true, description: 'Amount of tokens to offer' },
+      { name: 'request_token_address', type: 'string', required: true, description: 'Token you want in return' },
+      { name: 'request_amount', type: 'number', required: true, description: 'Amount of tokens requested' },
+    ],
+    exampleRequest: `{
+  "offer_token_address": "0xabc...",
+  "offer_amount": 100,
+  "request_token_address": "0xdef...",
+  "request_amount": 50
+}`,
+    exampleResponse: `{
+  "offer": { "id": "uuid", "status": "active" },
+  "calldata": { "to": "0xA569...", "data": "0x..." }
+}`,
+  },
+  {
+    method: 'POST',
+    path: '/accept-offer',
+    description: 'Accept a P2P offer. Returns escrow contract calldata for fillOffer (atomic swap).',
+    scope: 'trade',
+    params: [
+      { name: 'offer_id', type: 'string', required: true, description: 'UUID of the offer to accept' },
+    ],
+    exampleRequest: `{ "offer_id": "uuid-of-offer" }`,
+    exampleResponse: `{
+  "calldata": { "to": "0xA569...", "data": "0x..." },
+  "message": "Send this transaction to fill the offer"
+}`,
+  },
+  {
+    method: 'POST',
+    path: '/cancel-offer',
+    description: 'Cancel your own P2P offer. Returns escrow contract calldata for cancelOffer.',
+    scope: 'trade',
+    params: [
+      { name: 'offer_id', type: 'string', required: true, description: 'UUID of the offer to cancel' },
+    ],
+    exampleRequest: `{ "offer_id": "uuid-of-offer" }`,
+    exampleResponse: `{
+  "calldata": { "to": "0xA569...", "data": "0x..." },
+  "message": "Send this transaction to cancel the offer"
+}`,
+  },
+  {
+    method: 'GET',
+    path: '/tx-receipt',
+    description: 'Extract token_address from a deploy transaction hash. Useful after deploying a new token to get the contract address.',
+    scope: 'any',
+    queryParams: [
+      { name: 'tx_hash', type: 'string', required: true, description: 'Transaction hash from token deployment' },
+    ],
+    exampleResponse: `{
+  "token_address": "0x1234...abcd",
+  "block_number": 12345678
+}`,
+  },
 ];
 
 const methodColors: Record<string, string> = {
