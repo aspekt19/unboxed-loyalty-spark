@@ -211,6 +211,101 @@ function createMcpServer(agent: any) {
     },
   });
 
+  mcpServer.tool("redeem_reward", {
+    description: "Redeem a reward by providing a verified token transfer transaction hash. Creates a voucher for the customer.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        reward_id: { type: "string", description: "UUID of the reward to redeem" },
+        customer_address: { type: "string", description: "Wallet address of the customer who transferred tokens" },
+        transaction_hash: { type: "string", description: "On-chain tx hash of the token transfer from customer to merchant" },
+      },
+      required: ["reward_id", "customer_address", "transaction_hash"],
+    },
+    handler: async ({ reward_id, customer_address, transaction_hash }: any) => {
+      const err = authGuard(["read"]);
+      if (err) return T(err);
+      const d = db();
+
+      const { data: reward } = await d.from("rewards").select("*").eq("id", reward_id).single();
+      if (!reward) return T(JSON.stringify({ error: "Reward not found" }));
+      if (reward.merchant_address.toLowerCase() !== agent.ownerAddress.toLowerCase()) return T(JSON.stringify({ error: "Reward not owned by you" }));
+      if (!reward.is_active) return T(JSON.stringify({ error: "Reward is inactive" }));
+
+      const { data: dup } = await d.from("vouchers").select("id").eq("transaction_hash", transaction_hash).maybeSingle();
+      if (dup) return T(JSON.stringify({ error: "Voucher already exists for this transaction" }));
+
+      // Verify tx on Base RPC
+      const rpcUrl = "https://base-rpc.publicnode.com";
+      const txHash = transaction_hash.startsWith("0x") ? transaction_hash : `0x${transaction_hash}`;
+      let receipt: any = null;
+      for (let i = 0; i < 5; i++) {
+        const r = await fetch(rpcUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_getTransactionReceipt", params: [txHash] }) });
+        const j = (await r.json()) as any;
+        receipt = j?.result;
+        if (receipt) break;
+        await new Promise(r => setTimeout(r, 2500));
+      }
+      if (!receipt) return T(JSON.stringify({ error: "Transaction not confirmed yet", retryable: true }));
+      if (receipt.status && receipt.status !== "0x1") return T(JSON.stringify({ error: "Transaction failed on-chain" }));
+
+      const ERC20 = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+      const logs = Array.isArray(receipt.logs) ? receipt.logs : [];
+      const ok = logs.some((l: any) => {
+        const t = l?.topics || [];
+        if ((l?.address || "").toLowerCase() !== reward.token_address.toLowerCase()) return false;
+        if (t[0]?.toLowerCase() !== ERC20 || t.length < 3) return false;
+        return `0x${t[1].slice(-40)}`.toLowerCase() === customer_address.toLowerCase() && `0x${t[2].slice(-40)}`.toLowerCase() === agent.ownerAddress.toLowerCase();
+      });
+      if (!ok) return T(JSON.stringify({ error: "Token transfer not verified in tx logs" }));
+
+      const { data: prog } = await d.from("loyalty_programs").select("symbol").eq("token_address", reward.token_address.toLowerCase()).maybeSingle();
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      const code = "LOYAL-" + Array.from({ length: 4 }, () => Array.from({ length: 4 }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join("")).join("-");
+
+      const { data: voucher, error: ve } = await d.from("vouchers").insert({
+        code, reward_id: reward.id, reward_name: reward.name, reward_description: reward.description,
+        token_address: reward.token_address.toLowerCase(), token_symbol: prog?.symbol || "TOKEN",
+        customer_address: customer_address.toLowerCase(), merchant_address: agent.ownerAddress.toLowerCase(),
+        status: "active", cost: reward.cost, transaction_hash,
+      }).select().single();
+      if (ve) return T(JSON.stringify({ error: ve.message }));
+
+      return T(JSON.stringify({ voucher: { id: voucher.id, code: voucher.code, reward_name: voucher.reward_name, cost: voucher.cost, status: "active" } }));
+    },
+  });
+
+  mcpServer.tool("use_voucher", {
+    description: "Mark a voucher as used (redeemed by customer at merchant). Merchant-only operation.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        voucher_code: { type: "string", description: "Voucher code (e.g. LOYAL-XXXX-XXXX-XXXX-XXXX)" },
+        voucher_id: { type: "string", description: "Voucher UUID (alternative to code)" },
+      },
+    },
+    handler: async ({ voucher_code, voucher_id }: any) => {
+      const err = authGuard(["manage_rewards"]);
+      if (err) return T(err);
+      if (!voucher_code && !voucher_id) return T(JSON.stringify({ error: "Provide voucher_code or voucher_id" }));
+
+      const d = db();
+      let q = d.from("vouchers").select("*").eq("merchant_address", agent.ownerAddress.toLowerCase());
+      if (voucher_code) q = q.eq("code", voucher_code);
+      else q = q.eq("id", voucher_id);
+
+      const { data: v } = await q.maybeSingle();
+      if (!v) return T(JSON.stringify({ error: "Voucher not found" }));
+      if (v.status === "used") return T(JSON.stringify({ error: "Already used", used_at: v.used_at }));
+      if (v.status !== "active") return T(JSON.stringify({ error: `Not active (status: ${v.status})` }));
+
+      const { error: ue } = await d.from("vouchers").update({ status: "used", used_at: new Date().toISOString() }).eq("id", v.id);
+      if (ue) return T(JSON.stringify({ error: ue.message }));
+
+      return T(JSON.stringify({ success: true, voucher: { id: v.id, code: v.code, reward_name: v.reward_name, customer_address: v.customer_address, status: "used" } }));
+    },
+  });
+
   return mcpServer;
 }
 
