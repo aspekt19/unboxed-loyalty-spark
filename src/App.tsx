@@ -31,6 +31,9 @@ const queryClient = new QueryClient();
 function AnimatedRoutes() {
   const location = useLocation();
 
+  // Dynamic canonical + meta per route
+  usePageMeta();
+
   // SDK ready is called in FarcasterSplash component when content is loaded
 
   // Автоматическая миграция данных из localStorage в БД при каждой загрузке
