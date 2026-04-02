@@ -527,10 +527,18 @@ Deno.serve(async (req) => {
       }
 
       const tokenAddress = url.searchParams.get("token_address");
+      // Resolve merchant address (supports CDP wallet)
+      const rewardsWallet = await resolveAgentMerchantAddress(serviceClient, agent, true);
       let query = serviceClient
         .from("rewards")
-        .select("id, name, description, cost, is_active, token_address, created_at")
-        .eq("merchant_address", agent.ownerAddress);
+        .select("id, name, description, cost, is_active, token_address, created_at");
+
+      // Check both ownerAddress and CDP wallet
+      if (rewardsWallet.toLowerCase() !== agent.ownerAddress.toLowerCase()) {
+        query = query.or(`merchant_address.eq.${agent.ownerAddress.toLowerCase()},merchant_address.eq.${rewardsWallet.toLowerCase()}`);
+      } else {
+        query = query.eq("merchant_address", agent.ownerAddress);
+      }
 
       if (tokenAddress) {
         query = query.eq("token_address", tokenAddress.toLowerCase());
