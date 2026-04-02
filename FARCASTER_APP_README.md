@@ -28,7 +28,7 @@ Loyal Spark Farcaster App enables merchants and customers to participate in a to
 - **Referral Programs**: Earn bonuses by referring friends
 
 ### For AI Agents
-- **REST API**: 21 endpoints with scoped permissions
+- **REST API**: 22 endpoints with scoped permissions
 - **MCP Server**: 17 tools — direct integration with Claude, GPT, Cursor via Streamable HTTP
 - **MPP Gateway**: Pay-per-request with pathUSD on Tempo chain
 - **x402 Gateway**: Pay-per-request with USDC on Base (Coinbase protocol)
@@ -94,7 +94,7 @@ curl -H "x-api-key: lsk_YOUR_KEY" \
   https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/programs
 ```
 
-### REST API Endpoints (20)
+### REST API Endpoints (22)
 
 | Method | Endpoint | Scope | Description |
 |--------|----------|-------|-------------|
@@ -119,8 +119,9 @@ curl -H "x-api-key: lsk_YOUR_KEY" \
 | POST | `/cancel-offer` | trade | Cancel your P2P offer |
 | GET | `/me` | any | Get agent info |
 | GET | `/tx-receipt` | any | Extract token_address from deploy tx |
+| GET | `/vouchers/status` | public | Check voucher status (no API key) |
 
-### MCP Server Tools (16)
+### MCP Server Tools (17)
 
 | Tool | Scope | Description |
 |------|-------|-------------|
@@ -140,6 +141,7 @@ curl -H "x-api-key: lsk_YOUR_KEY" \
 | `list_marketplace_offers` | any | P2P offers |
 | `redeem_reward` | read | Redeem reward → create voucher |
 | `use_voucher` | manage_rewards | Mark voucher as used |
+| `check_voucher_status` | public | Check voucher status (no API key) |
 
 ### Payment Gateways
 
@@ -163,7 +165,7 @@ See [API Documentation](https://loyalspark.online/api-docs) for full details.
 
 | Function | Purpose |
 |----------|---------|
-| `agent-api` | REST API for AI agents (21 endpoints) |
+| `agent-api` | REST API for AI agents (22 endpoints) |
 | `agent-api-key` | API key generation |
 | `agent-wallet` | CDP MPC wallet management |
 | `loyalty-mcp` | MCP Server for LLMs (17 tools) |

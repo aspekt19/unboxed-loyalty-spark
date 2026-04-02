@@ -57,6 +57,93 @@ const ENDPOINTS: Endpoint[] = [
 }`,
   },
   {
+    method: 'POST',
+    path: '/programs',
+    description: 'Get calldata to deploy a new ERC-20 loyalty token via factory contract. Returns transaction data for on-chain execution.',
+    scope: 'create_program',
+    params: [
+      { name: 'name', type: 'string', required: true, description: 'Token name (e.g. Coffee Rewards)' },
+      { name: 'symbol', type: 'string', required: true, description: 'Token symbol (e.g. COFFEE)' },
+      { name: 'expiration_days', type: 'number', required: false, description: 'Program duration in days (default 365)' },
+    ],
+    exampleRequest: `{
+  "name": "Coffee Rewards",
+  "symbol": "COFFEE",
+  "expiration_days": 365
+}`,
+    exampleResponse: `{
+  "calldata": {
+    "to": "0x5F3DdBa12580CFdc6016258774cCc19C4250dA80",
+    "data": "0x...",
+    "value": "0"
+  },
+  "message": "Send this transaction to deploy your loyalty token"
+}`,
+  },
+  {
+    method: 'POST',
+    path: '/register-program',
+    description: 'Register a deployed token as a loyalty program in the database after on-chain deployment.',
+    scope: 'create_program',
+    params: [
+      { name: 'name', type: 'string', required: true, description: 'Program name' },
+      { name: 'symbol', type: 'string', required: true, description: 'Token symbol' },
+      { name: 'token_address', type: 'string', required: true, description: 'Deployed token contract address' },
+      { name: 'expiration_days', type: 'number', required: false, description: 'Program duration in days' },
+    ],
+    exampleRequest: `{
+  "name": "Coffee Rewards",
+  "symbol": "COFFEE",
+  "token_address": "0x1234...abcd",
+  "expiration_days": 365
+}`,
+    exampleResponse: `{
+  "program": {
+    "id": "uuid",
+    "name": "Coffee Rewards",
+    "symbol": "COFFEE",
+    "token_address": "0x1234...abcd",
+    "status": "pending"
+  }
+}`,
+  },
+  {
+    method: 'POST',
+    path: '/activate-program',
+    description: 'Get activation calldata (unpauseUtility + enableMinting). Returns 2 transactions to execute on-chain.',
+    scope: 'create_program',
+    params: [
+      { name: 'token_address', type: 'string', required: true, description: 'Token contract address to activate' },
+    ],
+    exampleRequest: `{
+  "token_address": "0x1234...abcd"
+}`,
+    exampleResponse: `{
+  "transactions": [
+    { "to": "0x...", "data": "0x...", "description": "unpauseUtility" },
+    { "to": "0x...", "data": "0x...", "description": "enableMinting" }
+  ]
+}`,
+  },
+  {
+    method: 'POST',
+    path: '/program-status',
+    description: 'Update program status in database after on-chain activation or pause.',
+    scope: 'create_program',
+    params: [
+      { name: 'token_address', type: 'string', required: true, description: 'Token contract address' },
+      { name: 'status', type: 'string', required: true, description: 'New status: "active" or "paused"' },
+    ],
+    exampleRequest: `{
+  "token_address": "0x1234...abcd",
+  "status": "active"
+}`,
+    exampleResponse: `{
+  "success": true,
+  "message": "Program status updated to active"
+}`,
+  },
+  {
     method: 'GET',
     path: '/rewards',
     description: 'List rewards for a specific program',
@@ -132,6 +219,30 @@ const ENDPOINTS: Endpoint[] = [
     "function": "mint(address,uint256)",
     "params": ["0xabcd...1234", 500]
   }
+}`,
+  },
+  {
+    method: 'POST',
+    path: '/transfer',
+    description: 'Transfer loyalty tokens between wallets. Returns calldata with Builder Code for on-chain execution.',
+    scope: 'mint',
+    params: [
+      { name: 'token_address', type: 'string', required: true, description: 'Program token address (0x...)' },
+      { name: 'to', type: 'string', required: true, description: 'Recipient wallet address (0x...)' },
+      { name: 'amount', type: 'number', required: true, description: 'Number of tokens to transfer' },
+    ],
+    exampleRequest: `{
+  "token_address": "0x1234...abcd",
+  "to": "0xabcd...1234",
+  "amount": 100
+}`,
+    exampleResponse: `{
+  "calldata": {
+    "to": "0x1234...abcd",
+    "data": "0x...",
+    "value": "0"
+  },
+  "message": "Send this transaction to transfer tokens"
 }`,
   },
   {
@@ -301,6 +412,69 @@ const ENDPOINTS: Endpoint[] = [
       "status": "active"
     }
   ]
+}`,
+  },
+  {
+    method: 'POST',
+    path: '/offers',
+    description: 'Create a new P2P escrow offer for token trading. Returns escrow contract calldata for atomic swap.',
+    scope: 'trade',
+    params: [
+      { name: 'offer_token_address', type: 'string', required: true, description: 'Token you are offering' },
+      { name: 'offer_amount', type: 'number', required: true, description: 'Amount of tokens to offer' },
+      { name: 'request_token_address', type: 'string', required: true, description: 'Token you want in return' },
+      { name: 'request_amount', type: 'number', required: true, description: 'Amount of tokens requested' },
+    ],
+    exampleRequest: `{
+  "offer_token_address": "0xabc...",
+  "offer_amount": 100,
+  "request_token_address": "0xdef...",
+  "request_amount": 50
+}`,
+    exampleResponse: `{
+  "offer": { "id": "uuid", "status": "active" },
+  "calldata": { "to": "0xA569...", "data": "0x..." }
+}`,
+  },
+  {
+    method: 'POST',
+    path: '/accept-offer',
+    description: 'Accept a P2P offer. Returns escrow contract calldata for fillOffer (atomic swap).',
+    scope: 'trade',
+    params: [
+      { name: 'offer_id', type: 'string', required: true, description: 'UUID of the offer to accept' },
+    ],
+    exampleRequest: `{ "offer_id": "uuid-of-offer" }`,
+    exampleResponse: `{
+  "calldata": { "to": "0xA569...", "data": "0x..." },
+  "message": "Send this transaction to fill the offer"
+}`,
+  },
+  {
+    method: 'POST',
+    path: '/cancel-offer',
+    description: 'Cancel your own P2P offer. Returns escrow contract calldata for cancelOffer.',
+    scope: 'trade',
+    params: [
+      { name: 'offer_id', type: 'string', required: true, description: 'UUID of the offer to cancel' },
+    ],
+    exampleRequest: `{ "offer_id": "uuid-of-offer" }`,
+    exampleResponse: `{
+  "calldata": { "to": "0xA569...", "data": "0x..." },
+  "message": "Send this transaction to cancel the offer"
+}`,
+  },
+  {
+    method: 'GET',
+    path: '/tx-receipt',
+    description: 'Extract token_address from a deploy transaction hash. Useful after deploying a new token to get the contract address.',
+    scope: 'any',
+    queryParams: [
+      { name: 'tx_hash', type: 'string', required: true, description: 'Transaction hash from token deployment' },
+    ],
+    exampleResponse: `{
+  "token_address": "0x1234...abcd",
+  "block_number": 12345678
 }`,
   },
 ];

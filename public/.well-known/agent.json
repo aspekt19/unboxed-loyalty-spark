@@ -115,10 +115,37 @@
       },
       {
         "method": "GET",
+        "path": "/vouchers",
+        "scope": "read",
+        "description": "List vouchers with optional filters (token_address, status, limit)"
+      },
+      {
+        "method": "GET",
         "path": "/vouchers/status",
         "scope": "none (public)",
         "description": "Check voucher status by code or ID. No API key required.",
         "query_params": { "code": "LOYAL-XXXX-XXXX-XXXX-XXXX" }
+      },
+      {
+        "method": "POST",
+        "path": "/redeem-reward",
+        "scope": "read",
+        "description": "Redeem a reward: verify on-chain token transfer tx and create a voucher",
+        "body": { "reward_id": "uuid", "customer_address": "0x...", "transaction_hash": "0x..." }
+      },
+      {
+        "method": "POST",
+        "path": "/vouchers/use",
+        "scope": "manage_rewards",
+        "description": "Mark a voucher as used (redeemed by customer). Merchant-only.",
+        "body": { "voucher_code": "LOYAL-XXXX-XXXX-XXXX-XXXX" }
+      },
+      {
+        "method": "GET",
+        "path": "/tx-receipt",
+        "scope": "any",
+        "description": "Extract token_address from a deploy transaction hash",
+        "query_params": { "tx_hash": "0x..." }
       },
       {
         "method": "GET",
@@ -264,6 +291,10 @@
       "get_platform_info",
       "get_my_profile",
       "list_loyalty_programs",
+      "create_loyalty_program",
+      "register_loyalty_program",
+      "activate_loyalty_program",
+      "update_program_status",
       "list_rewards",
       "create_reward",
       "mint_loyalty_tokens",
