@@ -518,14 +518,14 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
   return (
     <Card className="overflow-hidden">
       <button
-        className="w-full text-left p-4 flex items-center gap-3 hover:bg-muted/30 transition-colors"
+        className="w-full text-left p-3 sm:p-4 flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 hover:bg-muted/30 transition-colors"
         onClick={() => setExpanded(!expanded)}
       >
-        <Badge variant="outline" className={`${methodColors[endpoint.method]} font-mono text-xs px-2 py-0.5`}>
+        <Badge variant="outline" className={`${methodColors[endpoint.method]} font-mono text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 shrink-0`}>
           {endpoint.method}
         </Badge>
-        <code className="text-sm font-mono flex-1">{endpoint.path}</code>
-        <Badge variant="secondary" className="text-xs">{endpoint.scope}</Badge>
+        <code className="text-xs sm:text-sm font-mono flex-1 break-all">{endpoint.path}</code>
+        <Badge variant="secondary" className="text-[10px] sm:text-xs shrink-0">{endpoint.scope}</Badge>
       </button>
 
       {expanded && (
