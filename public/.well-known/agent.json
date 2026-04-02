@@ -227,6 +227,7 @@
         "GET /balance": "0.001",
         "GET /customers": "0.002",
         "GET /vouchers": "0.001",
+        "GET /vouchers/status": "0 (free, public)",
         "GET /analytics": "0.005",
         "GET /offers": "0.001",
         "POST /programs": "0.05",
