@@ -94,7 +94,7 @@ curl -H "x-api-key: lsk_YOUR_KEY" \
   https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/programs
 ```
 
-### REST API Endpoints (19)
+### REST API Endpoints (20)
 
 | Method | Endpoint | Scope | Description |
 |--------|----------|-------|-------------|
@@ -110,6 +110,8 @@ curl -H "x-api-key: lsk_YOUR_KEY" \
 | GET | `/balance` | read | Get customer balance & tier |
 | GET | `/customers` | read | List customers |
 | GET | `/vouchers` | read | List vouchers |
+| POST | `/redeem-reward` | read | Redeem reward: verify tx + create voucher |
+| POST | `/vouchers/use` | manage_rewards | Mark voucher as used |
 | GET | `/analytics` | read | Get merchant analytics |
 | GET | `/offers` | trade/read | List active P2P offers |
 | POST | `/offers` | trade | Create a P2P escrow offer |
