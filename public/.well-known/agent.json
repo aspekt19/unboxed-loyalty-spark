@@ -272,7 +272,8 @@
       "get_program_analytics",
       "list_marketplace_offers",
       "redeem_reward",
-      "use_voucher"
+      "use_voucher",
+      "check_voucher_status"
     ]
   },
   "mpp": {
