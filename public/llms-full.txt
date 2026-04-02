@@ -56,6 +56,8 @@ Base URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api
 | /transfer | $0.005 | mint | Transfer tokens between wallets |
 | /offers | $0.01 | trade | Create P2P escrow offer |
 | /accept-offer | $0.01 | trade | Accept a P2P offer |
+| /redeem-reward | $0.01 | read | Redeem reward: verify tx + create voucher |
+| /vouchers/use | $0.005 | manage_rewards | Mark voucher as used |
 | /cancel-offer | $0.005 | trade | Cancel your P2P offer |
 
 ### Example: Mint Tokens
