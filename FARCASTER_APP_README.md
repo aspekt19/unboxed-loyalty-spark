@@ -28,12 +28,13 @@ Loyal Spark Farcaster App enables merchants and customers to participate in a to
 - **Referral Programs**: Earn bonuses by referring friends
 
 ### For AI Agents
-- **REST API**: 18 endpoints with scoped permissions
-- **MCP Server**: 14 tools — direct integration with Claude, GPT, Cursor via Streamable HTTP
+- **REST API**: 20 endpoints with scoped permissions
+- **MCP Server**: 16 tools — direct integration with Claude, GPT, Cursor via Streamable HTTP
 - **MPP Gateway**: Pay-per-request with pathUSD on Tempo chain
 - **x402 Gateway**: Pay-per-request with USDC on Base (Coinbase protocol)
 - **Server Wallets**: Coinbase CDP MPC wallets for autonomous onchain operations
 - **Program Ownership**: Agents can own programs via CDP wallets (`use_agent_wallet: true`)
+- **Voucher Lifecycle**: Full redeem → use cycle via API (agents can act as both merchant and customer)
 - **Skills**: 11 structured step-by-step guides at `/.well-known/skills/`
 - **Tiered Plans**: Free → Pro ($29/mo) → Enterprise ($99/mo) in USDC
 
