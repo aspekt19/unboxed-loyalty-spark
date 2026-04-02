@@ -869,7 +869,7 @@ Deno.serve(async (req) => {
       const logs = Array.isArray(receipt.logs) ? receipt.logs : [];
       const tokenAddr = reward.token_address.toLowerCase();
       const custAddr = customer_address.toLowerCase();
-      const merchAddr = agent.ownerAddress.toLowerCase();
+      const merchAddr = redeemWallet.toLowerCase();
 
       const hasTransfer = logs.some((log: any) => {
         const topics = Array.isArray(log?.topics) ? log.topics : [];
