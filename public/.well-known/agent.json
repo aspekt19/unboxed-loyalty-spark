@@ -312,6 +312,8 @@
       "POST /rewards": "0.01",
       "POST /mint": "0.01",
       "POST /transfer": "0.005",
+      "POST /redeem-reward": "0.01",
+      "POST /vouchers/use": "0.005",
       "POST /offers": "0.01",
       "POST /accept-offer": "0.01",
       "POST /cancel-offer": "0.005"

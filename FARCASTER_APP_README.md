@@ -163,10 +163,10 @@ See [API Documentation](https://loyalspark.online/api-docs) for full details.
 
 | Function | Purpose |
 |----------|---------|
-| `agent-api` | REST API for AI agents (18 endpoints) |
+| `agent-api` | REST API for AI agents (20 endpoints) |
 | `agent-api-key` | API key generation |
 | `agent-wallet` | CDP MPC wallet management |
-| `loyalty-mcp` | MCP Server for LLMs (14 tools) |
+| `loyalty-mcp` | MCP Server for LLMs (16 tools) |
 | `mpp-gateway` | MPP pay-per-request gateway |
 | `x402-gateway` | x402/Coinbase pay-per-request gateway |
 | `siwe-nonce` | SIWE nonce generation |
