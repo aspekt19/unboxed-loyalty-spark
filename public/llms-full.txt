@@ -97,6 +97,7 @@ Auth: x-api-key header
 14. `list_marketplace_offers` — P2P offers
 15. `redeem_reward` — Redeem reward: verify tx + create voucher
 16. `use_voucher` — Mark voucher as used
+17. `check_voucher_status` — Public voucher status lookup (no API key)
 
 ### MCP Configuration for Claude/Cursor
 
