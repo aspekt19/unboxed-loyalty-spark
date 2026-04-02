@@ -115,6 +115,13 @@
       },
       {
         "method": "GET",
+        "path": "/vouchers/status",
+        "scope": "none (public)",
+        "description": "Check voucher status by code or ID. No API key required.",
+        "query_params": { "code": "LOYAL-XXXX-XXXX-XXXX-XXXX" }
+      },
+      {
+        "method": "GET",
         "path": "/offers",
         "scope": "trade",
         "description": "List active P2P escrow offers for token trading"
