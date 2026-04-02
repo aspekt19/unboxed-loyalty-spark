@@ -146,6 +146,7 @@ From analytics, monitor:
 The same functionality is available via MCP:
 - `redeem_reward` — Create a voucher from a verified token transfer
 - `use_voucher` — Mark a voucher as used
+- `check_voucher_status` — Check voucher status (public, no key needed)
 - `list_vouchers` — Query vouchers by status
 
 ## Best Practices
