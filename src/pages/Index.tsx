@@ -405,7 +405,7 @@ const Index = () => {
                 whileHover={{ y: -5 }}
               >
                 <motion.h2 
-                  className="text-2xl sm:text-3xl md:text-5xl font-bold mb-4 sm:mb-5 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary"
+                  className="text-2xl sm:text-3xl md:text-5xl font-bold mb-4 sm:mb-5 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary pb-1 overflow-visible"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
