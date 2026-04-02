@@ -51,7 +51,7 @@ curl -X POST \
   -H "Content-Type: application/json" \
   -d '{
     "token_address": "0xTokenAddress",
-    "to": "0xMerchantAddress",
+    "to_address": "0xMerchantAddress",
     "amount": 50
   }'
 ```
