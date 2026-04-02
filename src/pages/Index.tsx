@@ -186,6 +186,9 @@ const Index = () => {
                   <img src="/media-kit/logo-horizontal.png" alt="BASE" className="h-10 sm:h-14" />
                 </div>
               </motion.div>
+              <div className="mt-4 sm:mt-6 inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-primary/10 border border-primary/20">
+                <span className="text-[10px] sm:text-xs font-semibold text-primary uppercase tracking-wider">Built on BASE Network</span>
+              </div>
             </motion.div>
           </section>
 
