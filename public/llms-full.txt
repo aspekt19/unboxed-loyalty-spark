@@ -72,7 +72,7 @@ curl -X POST \
 
 Response returns calldata with Builder Code for onchain execution.
 
-## MCP Server — 14 Tools
+## MCP Server — 16 Tools
 
 URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp
 Transport: Streamable HTTP
