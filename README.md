@@ -114,20 +114,32 @@ curl -X POST \
   https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/mint
 ```
 
-### API Endpoints
+### API Endpoints (21 total)
 
 | Method | Path | Scope | Description |
 |--------|------|-------|-------------|
 | GET | `/me` | any | Agent profile & permissions |
 | GET | `/programs` | read | List loyalty programs |
-| POST | `/programs` | create_program | Deploy new program |
+| POST | `/programs` | create_program | Deploy new ERC-20 token |
+| POST | `/register-program` | create_program | Register deployed token |
+| POST | `/activate-program` | create_program | Get activation calldata |
+| POST | `/program-status` | create_program | Update program status |
 | GET | `/rewards` | read | List rewards |
 | POST | `/rewards` | manage_rewards | Create reward |
 | POST | `/mint` | mint | Mint tokens |
-| GET | `/balance` | read | Token balance |
+| POST | `/transfer` | mint | Transfer tokens |
+| GET | `/balance` | read | Token balance & tier |
 | GET | `/customers` | read | Customer list |
+| GET | `/vouchers` | read | List vouchers |
+| GET | `/vouchers/status` | public | Check voucher status (no API key) |
+| POST | `/redeem-reward` | read | Redeem reward → create voucher |
+| POST | `/vouchers/use` | manage_rewards | Mark voucher as used |
 | GET | `/analytics` | read | Program analytics |
 | GET | `/offers` | read | Marketplace offers |
+| POST | `/offers` | trade | Create P2P offer |
+| POST | `/accept-offer` | trade | Accept P2P offer |
+| POST | `/cancel-offer` | trade | Cancel P2P offer |
+| GET | `/tx-receipt` | any | Extract token_address from tx |
 
 ### MCP Server (for LLMs)
 
