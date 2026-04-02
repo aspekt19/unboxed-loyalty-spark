@@ -46,7 +46,11 @@ const PRICING: Record<string, Record<string, string>> = {
 
 function getResourceFromUrl(url: URL): string {
   const path = url.pathname.split("/").filter(Boolean);
-  return path[path.length - 1] || "";
+  // Find "x402-gateway" index and extract resource + sub-resource
+  const gwIdx = path.indexOf("x402-gateway");
+  const resource = path[gwIdx + 1] || path[path.length - 1] || "";
+  const subResource = path[gwIdx + 2] || "";
+  return subResource ? `${resource}/${subResource}` : resource;
 }
 
 function getPrice(method: string, resource: string): string | null {
