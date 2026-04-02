@@ -114,7 +114,7 @@ curl -X POST \
   https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/mint
 ```
 
-### API Endpoints (21 total)
+### API Endpoints (22 total)
 
 | Method | Path | Scope | Description |
 |--------|------|-------|-------------|
