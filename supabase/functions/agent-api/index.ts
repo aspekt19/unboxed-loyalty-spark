@@ -901,7 +901,7 @@ Deno.serve(async (req) => {
           token_address: reward.token_address.toLowerCase(),
           token_symbol: program?.symbol || "TOKEN",
           customer_address: customer_address.toLowerCase(),
-          merchant_address: agent.ownerAddress.toLowerCase(),
+          merchant_address: redeemWallet.toLowerCase(),
           status: "active",
           cost: reward.cost,
           transaction_hash,
