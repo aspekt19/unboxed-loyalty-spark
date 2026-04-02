@@ -535,13 +535,13 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
           {endpoint.queryParams && (
             <div>
               <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Query Parameters</h4>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 {endpoint.queryParams.map((p) => (
-                  <div key={p.name} className="flex items-center gap-2 text-sm">
-                    <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{p.name}</code>
-                    <span className="text-xs text-muted-foreground">{p.type}</span>
-                    {p.required && <Badge variant="destructive" className="text-[10px] px-1 py-0">required</Badge>}
-                    <span className="text-xs text-muted-foreground">— {p.description}</span>
+                  <div key={p.name} className="flex flex-wrap items-start gap-1.5 sm:gap-2 text-sm">
+                    <code className="text-[10px] sm:text-xs bg-muted px-1.5 py-0.5 rounded shrink-0">{p.name}</code>
+                    <span className="text-[10px] sm:text-xs text-muted-foreground shrink-0">{p.type}</span>
+                    {p.required && <Badge variant="destructive" className="text-[10px] px-1 py-0 shrink-0">required</Badge>}
+                    <span className="text-[10px] sm:text-xs text-muted-foreground">— {p.description}</span>
                   </div>
                 ))}
               </div>
