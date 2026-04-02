@@ -28,7 +28,7 @@ Loyal Spark Farcaster App enables merchants and customers to participate in a to
 - **Referral Programs**: Earn bonuses by referring friends
 
 ### For AI Agents
-- **REST API**: 21 endpoints with scoped permissions
+- **REST API**: 22 endpoints with scoped permissions
 - **MCP Server**: 17 tools — direct integration with Claude, GPT, Cursor via Streamable HTTP
 - **MPP Gateway**: Pay-per-request with pathUSD on Tempo chain
 - **x402 Gateway**: Pay-per-request with USDC on Base (Coinbase protocol)
