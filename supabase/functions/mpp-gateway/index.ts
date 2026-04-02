@@ -148,6 +148,20 @@ function buildOpenApiSpec(baseUrl: string): object {
         content: { "application/json": { schema: { type: "object", properties: { offer_id: { type: "string" } }, required: ["offer_id"] } } },
       },
     },
+    {
+      path: "/redeem-reward", method: "post", operationId: "redeemReward", summary: "Redeem a reward by providing a verified token transfer tx hash. Creates a voucher.", price: "0.010000", tags: ["Vouchers"],
+      requestBody: {
+        required: true,
+        content: { "application/json": { schema: { type: "object", properties: { reward_id: { type: "string" }, customer_address: { type: "string" }, transaction_hash: { type: "string" } }, required: ["reward_id", "customer_address", "transaction_hash"] } } },
+      },
+    },
+    {
+      path: "/vouchers/use", method: "post", operationId: "useVoucher", summary: "Mark a voucher as used (by code or id)", price: "0.005000", tags: ["Vouchers"],
+      requestBody: {
+        required: true,
+        content: { "application/json": { schema: { type: "object", properties: { voucher_code: { type: "string" }, voucher_id: { type: "string" } } } } },
+      },
+    },
   ];
 
   const paths: Record<string, Record<string, object>> = {};
