@@ -120,7 +120,7 @@ curl -H "x-api-key: lsk_YOUR_KEY" \
 | GET | `/me` | any | Get agent info |
 | GET | `/tx-receipt` | any | Extract token_address from deploy tx |
 
-### MCP Server Tools (14)
+### MCP Server Tools (16)
 
 | Tool | Scope | Description |
 |------|-------|-------------|
@@ -138,6 +138,8 @@ curl -H "x-api-key: lsk_YOUR_KEY" \
 | `get_token_balance` | read | Balance & tier info |
 | `get_program_analytics` | read | Analytics metrics |
 | `list_marketplace_offers` | any | P2P offers |
+| `redeem_reward` | read | Redeem reward → create voucher |
+| `use_voucher` | manage_rewards | Mark voucher as used |
 
 ### Payment Gateways
 
