@@ -760,10 +760,17 @@ Deno.serve(async (req) => {
       const status = url.searchParams.get("status");
       const limit = Math.min(parseInt(url.searchParams.get("limit") || "50"), 100);
 
+      // Supports CDP wallet
+      const vouchersWallet = await resolveAgentMerchantAddress(serviceClient, agent, true);
       let query = serviceClient
         .from("vouchers")
-        .select("id, code, reward_name, cost, status, customer_address, activated_at, used_at")
-        .eq("merchant_address", agent.ownerAddress);
+        .select("id, code, reward_name, cost, status, customer_address, activated_at, used_at");
+
+      if (vouchersWallet.toLowerCase() !== agent.ownerAddress.toLowerCase()) {
+        query = query.or(`merchant_address.eq.${agent.ownerAddress.toLowerCase()},merchant_address.eq.${vouchersWallet.toLowerCase()}`);
+      } else {
+        query = query.eq("merchant_address", agent.ownerAddress);
+      }
 
       if (tokenAddress) query = query.eq("token_address", tokenAddress.toLowerCase());
       if (status) query = query.eq("status", status);
