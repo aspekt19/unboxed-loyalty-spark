@@ -537,6 +537,7 @@
             "content": { "application/json": { "schema": { "type": "object" } } }
           },
           "402": { "description": "Payment Required" }
+        }
       }
     },
     "/vouchers/status": {
