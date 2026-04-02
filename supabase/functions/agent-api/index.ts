@@ -250,9 +250,12 @@ Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
     const path = url.pathname.split("/").filter(Boolean);
-    // Path format: /agent-api/{resource}
+    // Path format: /agent-api/{resource} or /agent-api/{resource}/{subResource}
     // The function name is already stripped by Supabase, so we parse the remaining path
-    const resource = path[path.length - 1] || "";
+    // Find the index after "agent-api" segment
+    const apiIdx = path.indexOf("agent-api");
+    const resource = path[apiIdx + 1] || path[path.length - 1] || "";
+    const subResource = path[apiIdx + 2] || "";
 
     let body: any = {};
     if (req.method === "POST" || req.method === "PUT" || req.method === "PATCH") {
