@@ -216,7 +216,7 @@ const mintRes = await x402Fetch('${X402_URL}/mint', {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm text-muted-foreground">Currency:</span>
-              <Badge variant="outline" className="text-xs">pathUSD (Tempo)</Badge>
+              <Badge variant="outline" className="text-xs">USDC / pathUSD (Tempo)</Badge>
               <span className="text-sm text-muted-foreground">Protocol:</span>
               <Badge variant="outline" className="text-xs">HTTP 402</Badge>
               <span className="text-sm text-muted-foreground">SDK:</span>
@@ -317,7 +317,7 @@ const mintRes = await x402Fetch('${X402_URL}/mint', {
           <div className="p-3 rounded-lg bg-muted/50 border">
             <p className="text-sm font-medium mb-1">⚡ MPP (Tempo)</p>
             <ul className="text-xs text-muted-foreground space-y-1">
-              <li>• pathUSD on Tempo chain</li>
+              <li>• USDC & pathUSD on Tempo chain</li>
               <li>• Listed in mpp.dev catalog (80+ services)</li>
               <li>• mppx CLI for quick testing</li>
               <li>• Best for: agents in MPP ecosystem</li>
