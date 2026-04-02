@@ -94,7 +94,7 @@ curl -H "x-api-key: lsk_YOUR_KEY" \
   https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/programs
 ```
 
-### REST API Endpoints (20)
+### REST API Endpoints (22)
 
 | Method | Endpoint | Scope | Description |
 |--------|----------|-------|-------------|
