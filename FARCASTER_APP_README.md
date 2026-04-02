@@ -30,7 +30,7 @@ Loyal Spark Farcaster App enables merchants and customers to participate in a to
 ### For AI Agents
 - **REST API**: 22 endpoints with scoped permissions
 - **MCP Server**: 17 tools — direct integration with Claude, GPT, Cursor via Streamable HTTP
-- **MPP Gateway**: Pay-per-request with pathUSD on Tempo chain
+- **MPP Gateway**: Pay-per-request with USDC/pathUSD on Tempo chain
 - **x402 Gateway**: Pay-per-request with USDC on Base (Coinbase protocol)
 - **Server Wallets**: Coinbase CDP MPC wallets for autonomous onchain operations
 - **Program Ownership**: Agents can own programs via CDP wallets (`use_agent_wallet: true`)
@@ -147,7 +147,7 @@ curl -H "x-api-key: lsk_YOUR_KEY" \
 
 | Gateway | Currency | Pricing |
 |---------|----------|---------|
-| **MPP** (Machine Payments Protocol) | pathUSD on Tempo | $0.001–$0.05/request |
+| **MPP** (Machine Payments Protocol) | USDC / pathUSD on Tempo | $0.001–$0.05/request |
 | **x402** (Coinbase) | USDC on Base | $0.001–$0.05/request |
 | **API Key** (subscription) | USDC monthly | Free / $29 / $99 |
 

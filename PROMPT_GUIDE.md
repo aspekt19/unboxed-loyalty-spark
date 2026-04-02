@@ -135,7 +135,7 @@ You are an AI agent that interacts with Loyal Spark using machine-to-machine pay
 
 Payment Gateways:
 - x402 (Base/USDC): https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway
-- MPP (Tempo/pathUSD): https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway
+- MPP (Tempo/USDC+pathUSD): https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway
 
 Flow:
 1. Send request to gateway endpoint

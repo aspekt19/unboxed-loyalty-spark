@@ -144,7 +144,7 @@ const mintRes = await x402Fetch('${X402_URL}/mint', {
    → WWW-Authenticate: Payment realm="mpp"
    → X-MPP-Price-USD: 0.001
 
-3. Agent's mppx client auto-pays in pathUSD on Tempo
+3. Agent's mppx client auto-pays in USDC/pathUSD on Tempo
    → Signs and submits payment transaction
 
 4. Agent retries with payment credential
