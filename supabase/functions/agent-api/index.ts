@@ -952,11 +952,17 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Required: voucher_code or voucher_id" }, 400);
       }
 
-      // Find the voucher
+      // Find the voucher (supports CDP wallet)
+      const useWallet = await resolveAgentMerchantAddress(serviceClient, agent, true);
       let voucherQuery = serviceClient
         .from("vouchers")
-        .select("*")
-        .eq("merchant_address", agent.ownerAddress.toLowerCase());
+        .select("*");
+
+      if (useWallet.toLowerCase() !== agent.ownerAddress.toLowerCase()) {
+        voucherQuery = voucherQuery.or(`merchant_address.eq.${agent.ownerAddress.toLowerCase()},merchant_address.eq.${useWallet.toLowerCase()}`);
+      } else {
+        voucherQuery = voucherQuery.eq("merchant_address", agent.ownerAddress.toLowerCase());
+      }
 
       if (voucher_code) {
         voucherQuery = voucherQuery.eq("code", voucher_code);
