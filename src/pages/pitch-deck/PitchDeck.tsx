@@ -303,42 +303,42 @@ const PitchDeck = () => {
 
                   {/* Product Slide */}
                   {slide.id === 'product' && (
-                    <div className="space-y-8">
+                    <div className="space-y-4 sm:space-y-8">
                       <div>
-                        <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                        <div className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                           Slide {index + 1}
                         </div>
-                        <h2 className="text-5xl font-bold text-foreground mb-2">{slide.title}</h2>
-                        <p className="text-xl text-muted-foreground">{slide.subtitle}</p>
+                        <h2 className="text-2xl xxs:text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-2">{slide.title}</h2>
+                        <p className="text-base xxs:text-lg sm:text-xl text-muted-foreground">{slide.subtitle}</p>
                       </div>
-                      <div className="grid md:grid-cols-2 gap-8">
-                        <div className="p-8 rounded-xl border border-border bg-card">
-                          <h3 className="text-2xl font-bold text-foreground mb-6">For Merchants</h3>
-                          <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
+                        <div className="p-4 sm:p-6 md:p-8 rounded-xl border border-border bg-card">
+                          <h3 className="text-lg xxs:text-xl sm:text-2xl font-bold text-foreground mb-4 sm:mb-6">For Merchants</h3>
+                          <div className="space-y-3 sm:space-y-4">
                             {slide.productFlow?.merchant.map((step, i) => (
-                              <div key={i} className="flex items-start gap-4">
-                                <div className="h-10 w-10 rounded-lg bg-foreground flex items-center justify-center flex-shrink-0">
-                                  <step.icon className="h-5 w-5 text-background" />
+                              <div key={i} className="flex items-start gap-3 sm:gap-4">
+                                <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-foreground flex items-center justify-center flex-shrink-0">
+                                  <step.icon className="h-4 w-4 sm:h-5 sm:w-5 text-background" />
                                 </div>
                                 <div>
-                                  <div className="font-bold text-foreground mb-1">{step.step}</div>
-                                  <div className="text-sm text-muted-foreground">{step.description}</div>
+                                  <div className="text-sm sm:text-base font-bold text-foreground mb-1">{step.step}</div>
+                                  <div className="text-xs sm:text-sm text-muted-foreground">{step.description}</div>
                                 </div>
                               </div>
                             ))}
                           </div>
                         </div>
-                        <div className="p-8 rounded-xl border border-border bg-card">
-                          <h3 className="text-2xl font-bold text-foreground mb-6">For Customers</h3>
-                          <div className="space-y-4">
+                        <div className="p-4 sm:p-6 md:p-8 rounded-xl border border-border bg-card">
+                          <h3 className="text-lg xxs:text-xl sm:text-2xl font-bold text-foreground mb-4 sm:mb-6">For Customers</h3>
+                          <div className="space-y-3 sm:space-y-4">
                             {slide.productFlow?.customer.map((step, i) => (
-                              <div key={i} className="flex items-start gap-4">
-                                <div className="h-10 w-10 rounded-lg bg-foreground flex items-center justify-center flex-shrink-0">
-                                  <step.icon className="h-5 w-5 text-background" />
+                              <div key={i} className="flex items-start gap-3 sm:gap-4">
+                                <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-foreground flex items-center justify-center flex-shrink-0">
+                                  <step.icon className="h-4 w-4 sm:h-5 sm:w-5 text-background" />
                                 </div>
                                 <div>
-                                  <div className="font-bold text-foreground mb-1">{step.step}</div>
-                                  <div className="text-sm text-muted-foreground">{step.description}</div>
+                                  <div className="text-sm sm:text-base font-bold text-foreground mb-1">{step.step}</div>
+                                  <div className="text-xs sm:text-sm text-muted-foreground">{step.description}</div>
                                 </div>
                               </div>
                             ))}
@@ -350,24 +350,24 @@ const PitchDeck = () => {
 
                   {/* Business Model Slide */}
                   {slide.id === 'business-model' && (
-                    <div className="space-y-8">
+                    <div className="space-y-4 sm:space-y-8">
                       <div>
-                        <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                        <div className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                           Slide {index + 1}
                         </div>
-                        <h2 className="text-5xl font-bold text-foreground">{slide.title}</h2>
+                        <h2 className="text-2xl xxs:text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">{slide.title}</h2>
                       </div>
-                      <div className="space-y-4">
+                      <div className="space-y-3 sm:space-y-4">
                         {slide.revenue?.map((item, i) => (
-                          <div key={i} className="flex items-start gap-6 p-8 rounded-xl border border-border bg-secondary/30">
-                            <div className="h-14 w-14 rounded-lg bg-foreground flex items-center justify-center flex-shrink-0">
-                              <item.icon className="h-7 w-7 text-background" />
+                          <div key={i} className="flex items-start gap-3 sm:gap-6 p-4 sm:p-6 md:p-8 rounded-xl border border-border bg-secondary/30">
+                            <div className="h-10 w-10 sm:h-14 sm:w-14 rounded-lg bg-foreground flex items-center justify-center flex-shrink-0">
+                              <item.icon className="h-5 w-5 sm:h-7 sm:w-7 text-background" />
                             </div>
                             <div className="flex-1">
-                              <div className="text-2xl font-bold text-foreground mb-2">
+                              <div className="text-base xxs:text-lg sm:text-2xl font-bold text-foreground mb-1 sm:mb-2">
                                 {item.source}
                               </div>
-                              <div className="text-base text-muted-foreground">
+                              <div className="text-xs xxs:text-sm sm:text-base text-muted-foreground">
                                 {item.detail}
                               </div>
                             </div>
@@ -379,22 +379,22 @@ const PitchDeck = () => {
 
                   {/* Adoption Strategy Slide */}
                   {slide.id === 'adoption' && (
-                    <div className="space-y-8">
+                    <div className="space-y-4 sm:space-y-8">
                       <div>
-                        <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                        <div className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                           Slide {index + 1}
                         </div>
-                        <h2 className="text-4xl font-bold text-foreground mb-2">{slide.title}</h2>
-                        <p className="text-xl text-muted-foreground">{slide.subtitle}</p>
+                        <h2 className="text-2xl xxs:text-3xl sm:text-4xl font-bold text-foreground mb-2">{slide.title}</h2>
+                        <p className="text-base xxs:text-lg sm:text-xl text-muted-foreground">{slide.subtitle}</p>
                       </div>
-                      <div className="space-y-4">
+                      <div className="space-y-3 sm:space-y-4">
                         {slide.adoption?.map((item, i) => (
-                          <div key={i} className="flex items-center gap-6 p-6 rounded-xl border border-border bg-card">
+                          <div key={i} className="flex items-center gap-3 sm:gap-6 p-4 sm:p-6 rounded-xl border border-border bg-card">
                             <div className="flex-1">
-                              <div className="text-xl font-bold text-foreground mb-2">
+                              <div className="text-sm xxs:text-base sm:text-xl font-bold text-foreground mb-1 sm:mb-2">
                                 {item.phase}
                               </div>
-                              <div className="text-base text-muted-foreground">
+                              <div className="text-xs xxs:text-sm sm:text-base text-muted-foreground">
                                 Target: <span className="font-semibold text-foreground">{item.target}</span> | {item.focus}
                               </div>
                             </div>

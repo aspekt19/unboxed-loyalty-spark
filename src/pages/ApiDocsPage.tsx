@@ -518,14 +518,14 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
   return (
     <Card className="overflow-hidden">
       <button
-        className="w-full text-left p-4 flex items-center gap-3 hover:bg-muted/30 transition-colors"
+        className="w-full text-left p-3 sm:p-4 flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 hover:bg-muted/30 transition-colors"
         onClick={() => setExpanded(!expanded)}
       >
-        <Badge variant="outline" className={`${methodColors[endpoint.method]} font-mono text-xs px-2 py-0.5`}>
+        <Badge variant="outline" className={`${methodColors[endpoint.method]} font-mono text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 shrink-0`}>
           {endpoint.method}
         </Badge>
-        <code className="text-sm font-mono flex-1">{endpoint.path}</code>
-        <Badge variant="secondary" className="text-xs">{endpoint.scope}</Badge>
+        <code className="text-xs sm:text-sm font-mono flex-1 break-all">{endpoint.path}</code>
+        <Badge variant="secondary" className="text-[10px] sm:text-xs shrink-0">{endpoint.scope}</Badge>
       </button>
 
       {expanded && (
@@ -535,13 +535,13 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
           {endpoint.queryParams && (
             <div>
               <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Query Parameters</h4>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 {endpoint.queryParams.map((p) => (
-                  <div key={p.name} className="flex items-center gap-2 text-sm">
-                    <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{p.name}</code>
-                    <span className="text-xs text-muted-foreground">{p.type}</span>
-                    {p.required && <Badge variant="destructive" className="text-[10px] px-1 py-0">required</Badge>}
-                    <span className="text-xs text-muted-foreground">— {p.description}</span>
+                  <div key={p.name} className="flex flex-wrap items-start gap-1.5 sm:gap-2 text-sm">
+                    <code className="text-[10px] sm:text-xs bg-muted px-1.5 py-0.5 rounded shrink-0">{p.name}</code>
+                    <span className="text-[10px] sm:text-xs text-muted-foreground shrink-0">{p.type}</span>
+                    {p.required && <Badge variant="destructive" className="text-[10px] px-1 py-0 shrink-0">required</Badge>}
+                    <span className="text-[10px] sm:text-xs text-muted-foreground">— {p.description}</span>
                   </div>
                 ))}
               </div>
@@ -551,13 +551,13 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
           {endpoint.params && (
             <div>
               <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Body Parameters</h4>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 {endpoint.params.map((p) => (
-                  <div key={p.name} className="flex items-center gap-2 text-sm">
-                    <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{p.name}</code>
-                    <span className="text-xs text-muted-foreground">{p.type}</span>
-                    {p.required && <Badge variant="destructive" className="text-[10px] px-1 py-0">required</Badge>}
-                    <span className="text-xs text-muted-foreground">— {p.description}</span>
+                  <div key={p.name} className="flex flex-wrap items-start gap-1.5 sm:gap-2 text-sm">
+                    <code className="text-[10px] sm:text-xs bg-muted px-1.5 py-0.5 rounded shrink-0">{p.name}</code>
+                    <span className="text-[10px] sm:text-xs text-muted-foreground shrink-0">{p.type}</span>
+                    {p.required && <Badge variant="destructive" className="text-[10px] px-1 py-0 shrink-0">required</Badge>}
+                    <span className="text-[10px] sm:text-xs text-muted-foreground">— {p.description}</span>
                   </div>
                 ))}
               </div>
