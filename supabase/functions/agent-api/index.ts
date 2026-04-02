@@ -805,8 +805,10 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Reward not found" }, 404);
       }
 
-      // Verify the reward belongs to the agent's merchant
-      if (reward.merchant_address.toLowerCase() !== agent.ownerAddress.toLowerCase()) {
+      // Verify the reward belongs to the agent's merchant (supports CDP wallet)
+      const redeemWallet = await resolveAgentMerchantAddress(serviceClient, agent, true);
+      const rewardMerchant = reward.merchant_address.toLowerCase();
+      if (rewardMerchant !== agent.ownerAddress.toLowerCase() && rewardMerchant !== redeemWallet.toLowerCase()) {
         await logActivity(serviceClient, agent.agentId, "redeem_reward", body, 403, { error: "Reward not owned" }, ip);
         return jsonResponse({ error: "Reward does not belong to your program" }, 403);
       }
