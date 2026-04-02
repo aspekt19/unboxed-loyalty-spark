@@ -229,6 +229,8 @@
         "POST /rewards": "0.01",
         "POST /mint": "0.01",
         "POST /transfer": "0.005",
+        "POST /redeem-reward": "0.01",
+        "POST /vouchers/use": "0.005",
         "POST /offers": "0.01",
         "POST /accept-offer": "0.01",
         "POST /cancel-offer": "0.005"
@@ -260,7 +262,9 @@
       "transfer_loyalty_tokens",
       "get_token_balance",
       "get_program_analytics",
-      "list_marketplace_offers"
+      "list_marketplace_offers",
+      "redeem_reward",
+      "use_voucher"
     ]
   },
   "mpp": {
@@ -308,6 +312,8 @@
       "POST /rewards": "0.01",
       "POST /mint": "0.01",
       "POST /transfer": "0.005",
+      "POST /redeem-reward": "0.01",
+      "POST /vouchers/use": "0.005",
       "POST /offers": "0.01",
       "POST /accept-offer": "0.01",
       "POST /cancel-offer": "0.005"

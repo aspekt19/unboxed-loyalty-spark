@@ -28,12 +28,13 @@ Loyal Spark Farcaster App enables merchants and customers to participate in a to
 - **Referral Programs**: Earn bonuses by referring friends
 
 ### For AI Agents
-- **REST API**: 18 endpoints with scoped permissions
-- **MCP Server**: 14 tools — direct integration with Claude, GPT, Cursor via Streamable HTTP
+- **REST API**: 20 endpoints with scoped permissions
+- **MCP Server**: 16 tools — direct integration with Claude, GPT, Cursor via Streamable HTTP
 - **MPP Gateway**: Pay-per-request with pathUSD on Tempo chain
 - **x402 Gateway**: Pay-per-request with USDC on Base (Coinbase protocol)
 - **Server Wallets**: Coinbase CDP MPC wallets for autonomous onchain operations
 - **Program Ownership**: Agents can own programs via CDP wallets (`use_agent_wallet: true`)
+- **Voucher Lifecycle**: Full redeem → use cycle via API (agents can act as both merchant and customer)
 - **Skills**: 11 structured step-by-step guides at `/.well-known/skills/`
 - **Tiered Plans**: Free → Pro ($29/mo) → Enterprise ($99/mo) in USDC
 
@@ -93,7 +94,7 @@ curl -H "x-api-key: lsk_YOUR_KEY" \
   https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/programs
 ```
 
-### REST API Endpoints (19)
+### REST API Endpoints (20)
 
 | Method | Endpoint | Scope | Description |
 |--------|----------|-------|-------------|
@@ -109,6 +110,8 @@ curl -H "x-api-key: lsk_YOUR_KEY" \
 | GET | `/balance` | read | Get customer balance & tier |
 | GET | `/customers` | read | List customers |
 | GET | `/vouchers` | read | List vouchers |
+| POST | `/redeem-reward` | read | Redeem reward: verify tx + create voucher |
+| POST | `/vouchers/use` | manage_rewards | Mark voucher as used |
 | GET | `/analytics` | read | Get merchant analytics |
 | GET | `/offers` | trade/read | List active P2P offers |
 | POST | `/offers` | trade | Create a P2P escrow offer |
@@ -117,7 +120,7 @@ curl -H "x-api-key: lsk_YOUR_KEY" \
 | GET | `/me` | any | Get agent info |
 | GET | `/tx-receipt` | any | Extract token_address from deploy tx |
 
-### MCP Server Tools (14)
+### MCP Server Tools (16)
 
 | Tool | Scope | Description |
 |------|-------|-------------|
@@ -135,6 +138,8 @@ curl -H "x-api-key: lsk_YOUR_KEY" \
 | `get_token_balance` | read | Balance & tier info |
 | `get_program_analytics` | read | Analytics metrics |
 | `list_marketplace_offers` | any | P2P offers |
+| `redeem_reward` | read | Redeem reward → create voucher |
+| `use_voucher` | manage_rewards | Mark voucher as used |
 
 ### Payment Gateways
 
@@ -158,10 +163,10 @@ See [API Documentation](https://loyalspark.online/api-docs) for full details.
 
 | Function | Purpose |
 |----------|---------|
-| `agent-api` | REST API for AI agents (18 endpoints) |
+| `agent-api` | REST API for AI agents (20 endpoints) |
 | `agent-api-key` | API key generation |
 | `agent-wallet` | CDP MPC wallet management |
-| `loyalty-mcp` | MCP Server for LLMs (14 tools) |
+| `loyalty-mcp` | MCP Server for LLMs (16 tools) |
 | `mpp-gateway` | MPP pay-per-request gateway |
 | `x402-gateway` | x402/Coinbase pay-per-request gateway |
 | `siwe-nonce` | SIWE nonce generation |

@@ -192,6 +192,58 @@ const ENDPOINTS: Endpoint[] = [
 }`,
   },
   {
+    method: 'POST',
+    path: '/redeem-reward',
+    description: 'Redeem a reward by providing a verified token transfer transaction hash. Verifies the on-chain transfer and creates a voucher for the customer.',
+    scope: 'read',
+    params: [
+      { name: 'reward_id', type: 'string', required: true, description: 'UUID of the reward to redeem' },
+      { name: 'customer_address', type: 'string', required: true, description: 'Wallet address of the customer who transferred tokens' },
+      { name: 'transaction_hash', type: 'string', required: true, description: 'On-chain tx hash of the token transfer from customer to merchant' },
+    ],
+    exampleRequest: `{
+  "reward_id": "uuid-of-reward",
+  "customer_address": "0xCustomer...",
+  "transaction_hash": "0xTxHash..."
+}`,
+    exampleResponse: `{
+  "voucher": {
+    "id": "uuid",
+    "code": "LOYAL-AB12-CD34-EF56-GH78",
+    "reward_name": "Free Coffee",
+    "cost": 100,
+    "status": "active",
+    "activated_at": "2026-04-02T...",
+    "transaction_hash": "0x..."
+  }
+}`,
+  },
+  {
+    method: 'POST',
+    path: '/vouchers/use',
+    description: 'Mark a voucher as used (redeemed by customer). Merchant-only operation.',
+    scope: 'manage_rewards',
+    params: [
+      { name: 'voucher_code', type: 'string', required: false, description: 'Voucher code (e.g. LOYAL-XXXX-XXXX-XXXX-XXXX)' },
+      { name: 'voucher_id', type: 'string', required: false, description: 'Voucher UUID (alternative to code)' },
+    ],
+    exampleRequest: `{
+  "voucher_code": "LOYAL-AB12-CD34-EF56-GH78"
+}`,
+    exampleResponse: `{
+  "success": true,
+  "voucher": {
+    "id": "uuid",
+    "code": "LOYAL-AB12-CD34-EF56-GH78",
+    "reward_name": "Free Coffee",
+    "customer_address": "0x...",
+    "cost": 100,
+    "status": "used",
+    "used_at": "2026-04-02T..."
+  }
+}`,
+  },
+  {
     method: 'GET',
     path: '/analytics',
     description: 'Get merchant analytics overview',

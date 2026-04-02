@@ -537,8 +537,76 @@
             "content": { "application/json": { "schema": { "type": "object" } } }
           },
           "402": { "description": "Payment Required" }
+      }
+    },
+    "/redeem-reward": {
+      "post": {
+        "operationId": "redeemReward",
+        "summary": "Redeem a reward by providing a verified token transfer tx hash. Creates a voucher for the customer.",
+        "tags": ["Vouchers"],
+        "x-payment-info": {
+          "pricingMode": "fixed",
+          "price": "0.010000",
+          "protocols": ["mpp"]
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reward_id": { "type": "string", "description": "UUID of the reward" },
+                  "customer_address": { "type": "string", "description": "Customer wallet address" },
+                  "transaction_hash": { "type": "string", "description": "On-chain tx hash of token transfer" }
+                },
+                "required": ["reward_id", "customer_address", "transaction_hash"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Voucher created",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "402": { "description": "Payment Required" }
+        }
+      }
+    },
+    "/vouchers/use": {
+      "post": {
+        "operationId": "useVoucher",
+        "summary": "Mark a voucher as used (by code or id). Merchant-only.",
+        "tags": ["Vouchers"],
+        "x-payment-info": {
+          "pricingMode": "fixed",
+          "price": "0.005000",
+          "protocols": ["mpp"]
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "voucher_code": { "type": "string", "description": "Voucher code (e.g. LOYAL-XXXX-XXXX-XXXX-XXXX)" },
+                  "voucher_id": { "type": "string", "description": "Voucher UUID (alternative to code)" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Voucher marked as used",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "402": { "description": "Payment Required" }
         }
       }
     }
   }
+}
 }
