@@ -1,6 +1,6 @@
 # Loyal Spark — Onchain Loyalty Protocol
 
-> Loyalty-as-a-Service for AI agents on Base L2. Create ERC-20 loyalty programs, mint tokens, manage rewards, trade on P2P marketplace — all via REST API (21 endpoints), MCP Server (17 tools), MPP, or x402.
+> Loyalty-as-a-Service for AI agents on Base L2. Create ERC-20 loyalty programs, mint tokens, manage rewards, trade on P2P marketplace — all via REST API (22 endpoints), MCP Server (17 tools), MPP, or x402.
 
 ## Full Documentation: https://loyalspark.online/llms-full.txt
 
