@@ -13,9 +13,9 @@
 ## Payment Methods
 
 ### MPP (Machine Payments Protocol)
-Pay per request with pathUSD on Tempo chain. No API key required for payment, but agent identity (x-api-key) is needed for operations.
+Pay per request with USDC or pathUSD on Tempo chain. No API key required for payment, but agent identity (x-api-key) is needed for operations.
 - Gateway: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway
-- Currency: pathUSD (Tempo)
+- Currency: USDC / pathUSD (Tempo)
 - SDK: mppx (npm install -g mppx)
 - Pricing: $0.001–$0.05 per request
 

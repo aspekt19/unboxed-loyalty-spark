@@ -147,7 +147,7 @@ curl -H "x-api-key: lsk_YOUR_KEY" \
 
 | Gateway | Currency | Pricing |
 |---------|----------|---------|
-| **MPP** (Machine Payments Protocol) | pathUSD on Tempo | $0.001–$0.05/request |
+| **MPP** (Machine Payments Protocol) | USDC / pathUSD on Tempo | $0.001–$0.05/request |
 | **x402** (Coinbase) | USDC on Base | $0.001–$0.05/request |
 | **API Key** (subscription) | USDC monthly | Free / $29 / $99 |
 

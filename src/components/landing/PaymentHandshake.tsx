@@ -109,7 +109,7 @@ const PaymentHandshake = () => {
               <div className="flex justify-between"><span className="text-muted-foreground">P2P trade</span><span className="font-mono text-foreground">$0.01</span></div>
             </div>
           </div>
-          <p className="text-[10px] text-muted-foreground mt-3">Paid in USDC on Base (x402) or pathUSD on Tempo (MPP). Sub-cent costs per call.</p>
+          <p className="text-[10px] text-muted-foreground mt-3">Paid in USDC on Base (x402) or USDC/pathUSD on Tempo (MPP). Sub-cent costs per call.</p>
         </motion.div>
       </div>
     </section>
