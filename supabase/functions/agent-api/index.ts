@@ -768,6 +768,232 @@ Deno.serve(async (req) => {
       return jsonResponse({ vouchers: vouchers || [] });
     }
 
+    // ==================== REDEEM REWARD (Agent as customer) ====================
+    if (resource === "redeem-reward" && req.method === "POST") {
+      if (!hasScope(agent, "read")) {
+        await logActivity(serviceClient, agent.agentId, "redeem_reward", body, 403, { error: "Insufficient scope" }, ip);
+        return jsonResponse({ error: "Scope 'read' required" }, 403);
+      }
+
+      const { reward_id, customer_address, transaction_hash } = body;
+
+      if (!reward_id || !customer_address || !transaction_hash) {
+        await logActivity(serviceClient, agent.agentId, "redeem_reward", body, 400, { error: "Missing fields" }, ip);
+        return jsonResponse({ error: "Required: reward_id, customer_address, transaction_hash" }, 400);
+      }
+
+      // Get the reward details
+      const { data: reward, error: rewardError } = await serviceClient
+        .from("rewards")
+        .select("*")
+        .eq("id", reward_id)
+        .single();
+
+      if (rewardError || !reward) {
+        await logActivity(serviceClient, agent.agentId, "redeem_reward", body, 404, { error: "Reward not found" }, ip);
+        return jsonResponse({ error: "Reward not found" }, 404);
+      }
+
+      // Verify the reward belongs to the agent's merchant
+      if (reward.merchant_address.toLowerCase() !== agent.ownerAddress.toLowerCase()) {
+        await logActivity(serviceClient, agent.agentId, "redeem_reward", body, 403, { error: "Reward not owned" }, ip);
+        return jsonResponse({ error: "Reward does not belong to your program" }, 403);
+      }
+
+      if (!reward.is_active) {
+        await logActivity(serviceClient, agent.agentId, "redeem_reward", body, 400, { error: "Reward inactive" }, ip);
+        return jsonResponse({ error: "Reward is not active" }, 400);
+      }
+
+      // Check for duplicate transaction hash (prevent replay)
+      const { data: existingVoucher } = await serviceClient
+        .from("vouchers")
+        .select("id")
+        .eq("transaction_hash", transaction_hash)
+        .maybeSingle();
+
+      if (existingVoucher) {
+        await logActivity(serviceClient, agent.agentId, "redeem_reward", body, 409, { error: "Duplicate tx" }, ip);
+        return jsonResponse({ error: "Voucher already created for this transaction" }, 409);
+      }
+
+      // Get the loyalty program for token_symbol
+      const { data: program } = await serviceClient
+        .from("loyalty_programs")
+        .select("symbol")
+        .eq("token_address", reward.token_address.toLowerCase())
+        .maybeSingle();
+
+      // Verify the transaction on blockchain via Base RPC
+      const rpcUrl = "https://base-rpc.publicnode.com";
+      const normalizedTxHash = transaction_hash.startsWith("0x") ? transaction_hash : `0x${transaction_hash}`;
+
+      let receipt: any = null;
+      for (let attempt = 1; attempt <= 5; attempt++) {
+        const resp = await fetch(rpcUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_getTransactionReceipt", params: [normalizedTxHash] }),
+        });
+        const data = (await resp.json()) as any;
+        receipt = data?.result ?? null;
+        if (receipt) break;
+        if (attempt < 5) await new Promise((r) => setTimeout(r, 2500));
+      }
+
+      if (!receipt) {
+        await logActivity(serviceClient, agent.agentId, "redeem_reward", body, 202, { error: "Tx not confirmed yet" }, ip);
+        return jsonResponse({ success: false, retryable: true, retry_after_ms: 3000, error: "Transaction not confirmed yet. Retry later." }, 200);
+      }
+
+      if (receipt.status && receipt.status !== "0x1") {
+        await logActivity(serviceClient, agent.agentId, "redeem_reward", body, 400, { error: "Tx failed onchain" }, ip);
+        return jsonResponse({ error: "Transaction failed on blockchain" }, 400);
+      }
+
+      // Verify ERC-20 Transfer log: customer → merchant
+      const ERC20_TRANSFER = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+      const logs = Array.isArray(receipt.logs) ? receipt.logs : [];
+      const tokenAddr = reward.token_address.toLowerCase();
+      const custAddr = customer_address.toLowerCase();
+      const merchAddr = agent.ownerAddress.toLowerCase();
+
+      const hasTransfer = logs.some((log: any) => {
+        const topics = Array.isArray(log?.topics) ? log.topics : [];
+        if ((log?.address || "").toLowerCase() !== tokenAddr) return false;
+        if (topics[0]?.toLowerCase() !== ERC20_TRANSFER || topics.length < 3) return false;
+        const from = `0x${topics[1].slice(-40)}`.toLowerCase();
+        const to = `0x${topics[2].slice(-40)}`.toLowerCase();
+        return from === custAddr && to === merchAddr;
+      });
+
+      if (!hasTransfer) {
+        await logActivity(serviceClient, agent.agentId, "redeem_reward", body, 400, { error: "Transfer not verified" }, ip);
+        return jsonResponse({ error: "Could not verify token transfer from customer to merchant in transaction logs" }, 400);
+      }
+
+      // Generate voucher code
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      const code = "LOYAL-" + Array.from({ length: 4 }, () =>
+        Array.from({ length: 4 }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join("")
+      ).join("-");
+
+      const { data: voucher, error: voucherError } = await serviceClient
+        .from("vouchers")
+        .insert({
+          code,
+          reward_id: reward.id,
+          reward_name: reward.name,
+          reward_description: reward.description,
+          token_address: reward.token_address.toLowerCase(),
+          token_symbol: program?.symbol || "TOKEN",
+          customer_address: customer_address.toLowerCase(),
+          merchant_address: agent.ownerAddress.toLowerCase(),
+          status: "active",
+          cost: reward.cost,
+          transaction_hash,
+        })
+        .select()
+        .single();
+
+      if (voucherError) {
+        await logActivity(serviceClient, agent.agentId, "redeem_reward", body, 500, { error: voucherError.message }, ip);
+        return jsonResponse({ error: "Failed to create voucher" }, 500);
+      }
+
+      // Record customer transaction
+      await serviceClient.from("customer_transactions").insert({
+        customer_address: customer_address.toLowerCase(),
+        token_address: reward.token_address.toLowerCase(),
+        merchant_address: agent.ownerAddress.toLowerCase(),
+        transaction_type: "redemption",
+        amount: reward.cost,
+        voucher_id: voucher.id,
+      });
+
+      await logActivity(serviceClient, agent.agentId, "redeem_reward", body, 201, { voucher_id: voucher.id, code: voucher.code }, ip);
+      return jsonResponse({
+        voucher: {
+          id: voucher.id,
+          code: voucher.code,
+          reward_name: voucher.reward_name,
+          cost: voucher.cost,
+          status: voucher.status,
+          activated_at: voucher.activated_at,
+          transaction_hash: voucher.transaction_hash,
+        },
+      }, 201);
+    }
+
+    // ==================== USE VOUCHER (Merchant marks as used) ====================
+    if (resource === "vouchers" && subResource === "use" && req.method === "POST") {
+      if (!hasScope(agent, "manage_rewards")) {
+        await logActivity(serviceClient, agent.agentId, "use_voucher", body, 403, { error: "Insufficient scope" }, ip);
+        return jsonResponse({ error: "Scope 'manage_rewards' required" }, 403);
+      }
+
+      const { voucher_code, voucher_id } = body;
+
+      if (!voucher_code && !voucher_id) {
+        await logActivity(serviceClient, agent.agentId, "use_voucher", body, 400, { error: "Missing identifier" }, ip);
+        return jsonResponse({ error: "Required: voucher_code or voucher_id" }, 400);
+      }
+
+      // Find the voucher
+      let voucherQuery = serviceClient
+        .from("vouchers")
+        .select("*")
+        .eq("merchant_address", agent.ownerAddress.toLowerCase());
+
+      if (voucher_code) {
+        voucherQuery = voucherQuery.eq("code", voucher_code);
+      } else {
+        voucherQuery = voucherQuery.eq("id", voucher_id);
+      }
+
+      const { data: voucher, error: findError } = await voucherQuery.maybeSingle();
+
+      if (findError || !voucher) {
+        await logActivity(serviceClient, agent.agentId, "use_voucher", body, 404, { error: "Voucher not found" }, ip);
+        return jsonResponse({ error: "Voucher not found or does not belong to your program" }, 404);
+      }
+
+      if (voucher.status === "used") {
+        await logActivity(serviceClient, agent.agentId, "use_voucher", body, 400, { error: "Already used" }, ip);
+        return jsonResponse({ error: "Voucher already used", used_at: voucher.used_at }, 400);
+      }
+
+      if (voucher.status !== "active") {
+        await logActivity(serviceClient, agent.agentId, "use_voucher", body, 400, { error: `Status: ${voucher.status}` }, ip);
+        return jsonResponse({ error: `Voucher is not active (status: ${voucher.status})` }, 400);
+      }
+
+      // Mark as used
+      const { error: updateError } = await serviceClient
+        .from("vouchers")
+        .update({ status: "used", used_at: new Date().toISOString() })
+        .eq("id", voucher.id);
+
+      if (updateError) {
+        await logActivity(serviceClient, agent.agentId, "use_voucher", body, 500, { error: updateError.message }, ip);
+        return jsonResponse({ error: "Failed to update voucher" }, 500);
+      }
+
+      await logActivity(serviceClient, agent.agentId, "use_voucher", body, 200, { voucher_id: voucher.id }, ip);
+      return jsonResponse({
+        success: true,
+        voucher: {
+          id: voucher.id,
+          code: voucher.code,
+          reward_name: voucher.reward_name,
+          customer_address: voucher.customer_address,
+          cost: voucher.cost,
+          status: "used",
+          used_at: new Date().toISOString(),
+        },
+      });
+    }
+
     // ==================== ANALYTICS ====================
     if (resource === "analytics" && req.method === "GET") {
       if (!hasScope(agent, "read")) {
