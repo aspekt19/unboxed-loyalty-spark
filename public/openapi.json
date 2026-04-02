@@ -629,7 +629,22 @@
           "402": { "description": "Payment Required" }
         }
       }
+    },
+    "/tx-receipt": {
+      "get": {
+        "operationId": "getTxReceipt",
+        "summary": "Extract token_address from a deploy transaction hash",
+        "tags": ["Agent"],
+        "parameters": [
+          { "name": "tx_hash", "in": "query", "schema": { "type": "string" }, "description": "Transaction hash from token deployment" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token address extracted from tx logs",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
     }
   }
-}
 }
