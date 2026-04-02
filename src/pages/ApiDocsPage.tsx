@@ -222,6 +222,30 @@ const ENDPOINTS: Endpoint[] = [
 }`,
   },
   {
+    method: 'POST',
+    path: '/transfer',
+    description: 'Transfer loyalty tokens between wallets. Returns calldata with Builder Code for on-chain execution.',
+    scope: 'mint',
+    params: [
+      { name: 'token_address', type: 'string', required: true, description: 'Program token address (0x...)' },
+      { name: 'to', type: 'string', required: true, description: 'Recipient wallet address (0x...)' },
+      { name: 'amount', type: 'number', required: true, description: 'Number of tokens to transfer' },
+    ],
+    exampleRequest: `{
+  "token_address": "0x1234...abcd",
+  "to": "0xabcd...1234",
+  "amount": 100
+}`,
+    exampleResponse: `{
+  "calldata": {
+    "to": "0x1234...abcd",
+    "data": "0x...",
+    "value": "0"
+  },
+  "message": "Send this transaction to transfer tokens"
+}`,
+  },
+  {
     method: 'GET',
     path: '/balance',
     description: 'Get a customer\'s token balance and tier information',
