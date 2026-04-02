@@ -17,6 +17,7 @@ const PRICING: Record<string, Record<string, string>> = {
     balance: "0.001",
     customers: "0.002",
     vouchers: "0.001",
+    "vouchers/status": "0",
     analytics: "0.005",
     offers: "0.001",
   },

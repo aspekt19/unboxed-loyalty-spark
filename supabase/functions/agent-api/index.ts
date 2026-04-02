@@ -233,6 +233,58 @@ Deno.serve(async (req) => {
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
 
+  // ==================== PUBLIC ENDPOINTS (no API key required) ====================
+  {
+    const url = new URL(req.url);
+    const pubPath = url.pathname.split("/").filter(Boolean);
+    const pubApiIdx = pubPath.indexOf("agent-api");
+    const pubResource = pubPath[pubApiIdx + 1] || pubPath[pubPath.length - 1] || "";
+    const pubSubResource = pubPath[pubApiIdx + 2] || "";
+
+    // GET /vouchers/status?code=LOYAL-XXXX — public voucher status check
+    if (pubResource === "vouchers" && pubSubResource === "status" && req.method === "GET") {
+      const code = url.searchParams.get("code");
+      const voucherId = url.searchParams.get("voucher_id");
+
+      if (!code && !voucherId) {
+        return jsonResponse({ error: "Required: code or voucher_id query parameter" }, 400);
+      }
+
+      let query = serviceClient
+        .from("vouchers")
+        .select("id, code, reward_name, reward_description, cost, status, token_address, token_symbol, merchant_address, activated_at, used_at");
+
+      if (code) {
+        query = query.eq("code", code);
+      } else {
+        query = query.eq("id", voucherId);
+      }
+
+      const { data: voucher, error } = await query.maybeSingle();
+
+      if (error || !voucher) {
+        return jsonResponse({ error: "Voucher not found" }, 404);
+      }
+
+      // Return public-safe fields (no customer_address for privacy)
+      return jsonResponse({
+        voucher: {
+          id: voucher.id,
+          code: voucher.code,
+          reward_name: voucher.reward_name,
+          reward_description: voucher.reward_description,
+          cost: voucher.cost,
+          status: voucher.status,
+          token_address: voucher.token_address,
+          token_symbol: voucher.token_symbol,
+          merchant_address: voucher.merchant_address,
+          activated_at: voucher.activated_at,
+          used_at: voucher.used_at,
+        },
+      });
+    }
+  }
+
   // Extract API key from header
   const apiKey = req.headers.get("x-api-key");
   if (!apiKey || !apiKey.startsWith("lsk_")) {
@@ -1337,27 +1389,28 @@ Deno.serve(async (req) => {
     return jsonResponse({
       error: "Unknown endpoint",
       available_endpoints: {
-        "GET /programs": "List your loyalty programs (supports CDP wallet programs)",
-        "POST /programs": "Get calldata to deploy a new loyalty token (use_agent_wallet: true for CDP)",
-        "POST /register-program": "Register a deployed token (use_agent_wallet: true for CDP)",
-        "POST /activate-program": "Get activation calldata (supports CDP wallet programs)",
-        "POST /program-status": "Update program status in database",
-        "GET /rewards?token_address=0x...": "List rewards for a program",
-        "POST /rewards": "Create a new reward",
-        "POST /mint": "Record a mint intent (supports CDP wallet programs)",
-        "POST /transfer": "Transfer tokens between wallets",
-        "GET /balance?token_address=0x...&customer_address=0x...": "Get customer balance",
-        "GET /customers?token_address=0x...": "List customers",
-        "GET /vouchers?token_address=0x...&status=active": "List vouchers",
-        "POST /redeem-reward": "Redeem a reward: verify token transfer tx and create voucher",
-        "POST /vouchers/use": "Mark a voucher as used (by code or id)",
-        "GET /analytics": "Get merchant analytics",
-        "GET /offers": "List active P2P offers",
-        "POST /offers": "Create a P2P escrow offer",
-        "POST /accept-offer": "Accept a P2P offer",
-        "POST /cancel-offer": "Cancel your P2P offer",
-        "GET /me": "Get agent info",
-        "GET /tx-receipt?tx_hash=0x...": "Extract token_address from deploy transaction",
+      "GET /programs": "List your loyalty programs (supports CDP wallet programs)",
+      "POST /programs": "Get calldata to deploy a new loyalty token (use_agent_wallet: true for CDP)",
+      "POST /register-program": "Register a deployed token (use_agent_wallet: true for CDP)",
+      "POST /activate-program": "Get activation calldata (supports CDP wallet programs)",
+      "POST /program-status": "Update program status in database",
+      "GET /rewards?token_address=0x...": "List rewards for a program",
+      "POST /rewards": "Create a new reward",
+      "POST /mint": "Record a mint intent (supports CDP wallet programs)",
+      "POST /transfer": "Transfer tokens between wallets",
+      "GET /balance?token_address=0x...&customer_address=0x...": "Get customer balance",
+      "GET /customers?token_address=0x...": "List customers",
+      "GET /vouchers?token_address=0x...&status=active": "List vouchers",
+      "GET /vouchers/status?code=LOYAL-XXXX": "Check voucher status (public, no API key needed)",
+      "POST /redeem-reward": "Redeem a reward: verify token transfer tx and create voucher",
+      "POST /vouchers/use": "Mark a voucher as used (by code or id)",
+      "GET /analytics": "Get merchant analytics",
+      "GET /offers": "List active P2P offers",
+      "POST /offers": "Create a P2P escrow offer",
+      "POST /accept-offer": "Accept a P2P offer",
+      "POST /cancel-offer": "Cancel your P2P offer",
+      "GET /me": "Get agent info",
+      "GET /tx-receipt?tx_hash=0x...": "Extract token_address from deploy transaction",
       },
     }, 404);
 

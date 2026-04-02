@@ -39,6 +39,7 @@ Base URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api
 | /balance?token_address=0x...&wallet_address=0x... | $0.001 | Token balance and tier |
 | /customers?token_address=0x... | $0.002 | Customer list with balances |
 | /vouchers?token_address=0x... | $0.001 | Voucher list |
+| /vouchers/status?code=LOYAL-XXXX | free | Public voucher status check (no API key) |
 | /analytics?token_address=0x... | $0.005 | Program metrics |
 | /offers | $0.001 | Active P2P marketplace offers |
 | /tx-receipt?tx_hash=0x... | free | Extract token_address from deploy tx |
@@ -96,6 +97,7 @@ Auth: x-api-key header
 14. `list_marketplace_offers` — P2P offers
 15. `redeem_reward` — Redeem reward: verify tx + create voucher
 16. `use_voucher` — Mark voucher as used
+17. `check_voucher_status` — Public voucher status lookup (no API key)
 
 ### MCP Configuration for Claude/Cursor
 

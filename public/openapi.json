@@ -539,6 +539,29 @@
           "402": { "description": "Payment Required" }
       }
     },
+    "/vouchers/status": {
+      "get": {
+        "operationId": "checkVoucherStatus",
+        "summary": "Check voucher status by code or ID. Public — no API key required.",
+        "tags": ["Vouchers"],
+        "x-payment-info": {
+          "pricingMode": "free",
+          "price": "0",
+          "protocols": ["mpp"]
+        },
+        "parameters": [
+          { "name": "code", "in": "query", "schema": { "type": "string" }, "description": "Voucher code (e.g. LOYAL-XXXX-XXXX-XXXX-XXXX)" },
+          { "name": "voucher_id", "in": "query", "schema": { "type": "string" }, "description": "Voucher UUID (alternative to code)" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Voucher details",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "404": { "description": "Voucher not found" }
+        }
+      }
+    },
     "/redeem-reward": {
       "post": {
         "operationId": "redeemReward",

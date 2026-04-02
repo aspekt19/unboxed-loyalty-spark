@@ -306,6 +306,30 @@ function createMcpServer(agent: any) {
     },
   });
 
+  mcpServer.tool("check_voucher_status", {
+    description: "Check voucher status by code or ID. Public endpoint — no API key or authentication required.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        code: { type: "string", description: "Voucher code (e.g. LOYAL-XXXX-XXXX-XXXX-XXXX)" },
+        voucher_id: { type: "string", description: "Voucher UUID (alternative to code)" },
+      },
+    },
+    handler: async ({ code, voucher_id }: any) => {
+      if (!code && !voucher_id) return T(JSON.stringify({ error: "Provide code or voucher_id" }));
+
+      const d = db();
+      let q = d.from("vouchers").select("id, code, reward_name, reward_description, cost, status, token_address, token_symbol, merchant_address, activated_at, used_at");
+      if (code) q = q.eq("code", code);
+      else q = q.eq("id", voucher_id);
+
+      const { data: v, error: e } = await q.maybeSingle();
+      if (e || !v) return T(JSON.stringify({ error: "Voucher not found" }));
+
+      return T(JSON.stringify({ voucher: v }));
+    },
+  });
+
   return mcpServer;
 }
 
