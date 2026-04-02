@@ -21,6 +21,7 @@ import NotFound from "./pages/NotFound";
 import { AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
 import { migrateAllData } from "./lib/migrateLocalStorageData";
+import { usePageMeta } from "./hooks/usePageMeta";
 import { AuthProvider } from "./contexts/AuthContext";
 import { sdk } from "@farcaster/miniapp-sdk";
 import { ThemeProvider } from "next-themes";
@@ -29,6 +30,9 @@ const queryClient = new QueryClient();
 
 function AnimatedRoutes() {
   const location = useLocation();
+
+  // Dynamic canonical + meta per route
+  usePageMeta();
 
   // SDK ready is called in FarcasterSplash component when content is loaded
 
