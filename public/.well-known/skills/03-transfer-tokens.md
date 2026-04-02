@@ -30,7 +30,7 @@ curl -X POST \
   -H "Content-Type: application/json" \
   -d '{
     "token_address": "0xYourTokenAddress",
-    "to": "0xRecipientWallet",
+    "to_address": "0xRecipientWallet",
     "amount": 50
   }'
 ```
