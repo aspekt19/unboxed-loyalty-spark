@@ -141,6 +141,7 @@ curl -H "x-api-key: lsk_YOUR_KEY" \
 | `list_marketplace_offers` | any | P2P offers |
 | `redeem_reward` | read | Redeem reward → create voucher |
 | `use_voucher` | manage_rewards | Mark voucher as used |
+| `check_voucher_status` | public | Check voucher status (no API key) |
 
 ### Payment Gateways
 
