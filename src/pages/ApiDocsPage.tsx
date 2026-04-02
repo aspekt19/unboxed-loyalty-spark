@@ -57,6 +57,93 @@ const ENDPOINTS: Endpoint[] = [
 }`,
   },
   {
+    method: 'POST',
+    path: '/programs',
+    description: 'Get calldata to deploy a new ERC-20 loyalty token via factory contract. Returns transaction data for on-chain execution.',
+    scope: 'create_program',
+    params: [
+      { name: 'name', type: 'string', required: true, description: 'Token name (e.g. Coffee Rewards)' },
+      { name: 'symbol', type: 'string', required: true, description: 'Token symbol (e.g. COFFEE)' },
+      { name: 'expiration_days', type: 'number', required: false, description: 'Program duration in days (default 365)' },
+    ],
+    exampleRequest: `{
+  "name": "Coffee Rewards",
+  "symbol": "COFFEE",
+  "expiration_days": 365
+}`,
+    exampleResponse: `{
+  "calldata": {
+    "to": "0x5F3DdBa12580CFdc6016258774cCc19C4250dA80",
+    "data": "0x...",
+    "value": "0"
+  },
+  "message": "Send this transaction to deploy your loyalty token"
+}`,
+  },
+  {
+    method: 'POST',
+    path: '/register-program',
+    description: 'Register a deployed token as a loyalty program in the database after on-chain deployment.',
+    scope: 'create_program',
+    params: [
+      { name: 'name', type: 'string', required: true, description: 'Program name' },
+      { name: 'symbol', type: 'string', required: true, description: 'Token symbol' },
+      { name: 'token_address', type: 'string', required: true, description: 'Deployed token contract address' },
+      { name: 'expiration_days', type: 'number', required: false, description: 'Program duration in days' },
+    ],
+    exampleRequest: `{
+  "name": "Coffee Rewards",
+  "symbol": "COFFEE",
+  "token_address": "0x1234...abcd",
+  "expiration_days": 365
+}`,
+    exampleResponse: `{
+  "program": {
+    "id": "uuid",
+    "name": "Coffee Rewards",
+    "symbol": "COFFEE",
+    "token_address": "0x1234...abcd",
+    "status": "pending"
+  }
+}`,
+  },
+  {
+    method: 'POST',
+    path: '/activate-program',
+    description: 'Get activation calldata (unpauseUtility + enableMinting). Returns 2 transactions to execute on-chain.',
+    scope: 'create_program',
+    params: [
+      { name: 'token_address', type: 'string', required: true, description: 'Token contract address to activate' },
+    ],
+    exampleRequest: `{
+  "token_address": "0x1234...abcd"
+}`,
+    exampleResponse: `{
+  "transactions": [
+    { "to": "0x...", "data": "0x...", "description": "unpauseUtility" },
+    { "to": "0x...", "data": "0x...", "description": "enableMinting" }
+  ]
+}`,
+  },
+  {
+    method: 'POST',
+    path: '/program-status',
+    description: 'Update program status in database after on-chain activation or pause.',
+    scope: 'create_program',
+    params: [
+      { name: 'token_address', type: 'string', required: true, description: 'Token contract address' },
+      { name: 'status', type: 'string', required: true, description: 'New status: "active" or "paused"' },
+    ],
+    exampleRequest: `{
+  "token_address": "0x1234...abcd",
+  "status": "active"
+}`,
+    exampleResponse: `{
+  "success": true,
+  "message": "Program status updated to active"
+}`,
+  },
+  {
     method: 'GET',
     path: '/rewards',
     description: 'List rewards for a specific program',
