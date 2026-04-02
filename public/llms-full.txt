@@ -94,6 +94,8 @@ Auth: x-api-key header
 12. `get_token_balance` — Balance and tier info
 13. `get_program_analytics` — Metrics and performance
 14. `list_marketplace_offers` — P2P offers
+15. `redeem_reward` — Redeem reward: verify tx + create voucher
+16. `use_voucher` — Mark voucher as used
 
 ### MCP Configuration for Claude/Cursor
 

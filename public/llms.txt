@@ -53,6 +53,8 @@ Traditional API key authentication with monthly plans.
 - POST /rewards — Create reward ($0.01)
 - POST /mint — Mint tokens ($0.01)
 - POST /transfer — Transfer tokens ($0.005)
+- POST /redeem-reward — Redeem reward: verify tx + create voucher ($0.01)
+- POST /vouchers/use — Mark voucher as used ($0.005)
 - POST /offers — Create P2P offer ($0.01)
 - POST /accept-offer — Accept offer ($0.01)
 - POST /cancel-offer — Cancel offer ($0.005)
