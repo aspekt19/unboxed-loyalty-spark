@@ -233,6 +233,58 @@ Deno.serve(async (req) => {
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
 
+  // ==================== PUBLIC ENDPOINTS (no API key required) ====================
+  {
+    const url = new URL(req.url);
+    const pubPath = url.pathname.split("/").filter(Boolean);
+    const pubApiIdx = pubPath.indexOf("agent-api");
+    const pubResource = pubPath[pubApiIdx + 1] || pubPath[pubPath.length - 1] || "";
+    const pubSubResource = pubPath[pubApiIdx + 2] || "";
+
+    // GET /vouchers/status?code=LOYAL-XXXX — public voucher status check
+    if (pubResource === "vouchers" && pubSubResource === "status" && req.method === "GET") {
+      const code = url.searchParams.get("code");
+      const voucherId = url.searchParams.get("voucher_id");
+
+      if (!code && !voucherId) {
+        return jsonResponse({ error: "Required: code or voucher_id query parameter" }, 400);
+      }
+
+      let query = serviceClient
+        .from("vouchers")
+        .select("id, code, reward_name, reward_description, cost, status, token_address, token_symbol, merchant_address, activated_at, used_at");
+
+      if (code) {
+        query = query.eq("code", code);
+      } else {
+        query = query.eq("id", voucherId);
+      }
+
+      const { data: voucher, error } = await query.maybeSingle();
+
+      if (error || !voucher) {
+        return jsonResponse({ error: "Voucher not found" }, 404);
+      }
+
+      // Return public-safe fields (no customer_address for privacy)
+      return jsonResponse({
+        voucher: {
+          id: voucher.id,
+          code: voucher.code,
+          reward_name: voucher.reward_name,
+          reward_description: voucher.reward_description,
+          cost: voucher.cost,
+          status: voucher.status,
+          token_address: voucher.token_address,
+          token_symbol: voucher.token_symbol,
+          merchant_address: voucher.merchant_address,
+          activated_at: voucher.activated_at,
+          used_at: voucher.used_at,
+        },
+      });
+    }
+  }
+
   // Extract API key from header
   const apiKey = req.headers.get("x-api-key");
   if (!apiKey || !apiKey.startsWith("lsk_")) {
