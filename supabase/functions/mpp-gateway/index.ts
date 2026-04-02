@@ -233,7 +233,10 @@ llms.txt: https://loyalspark.online/llms.txt`,
 
 function getResourceFromUrl(url: URL): string {
   const path = url.pathname.split("/").filter(Boolean);
-  return path[path.length - 1] || "";
+  const gwIdx = path.indexOf("mpp-gateway");
+  const resource = path[gwIdx + 1] || path[path.length - 1] || "";
+  const subResource = path[gwIdx + 2] || "";
+  return subResource ? `${resource}/${subResource}` : resource;
 }
 
 function getPrice(method: string, resource: string): string | null {
