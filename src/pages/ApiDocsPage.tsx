@@ -245,6 +245,30 @@ const ENDPOINTS: Endpoint[] = [
   },
   {
     method: 'GET',
+    path: '/vouchers/status',
+    description: 'Check voucher status by code or ID. Public endpoint — no API key required. Useful for customers to verify their voucher.',
+    scope: 'none (public)',
+    params: [
+      { name: 'code', type: 'string (query)', required: false, description: 'Voucher code (e.g. LOYAL-XXXX-XXXX-XXXX-XXXX)' },
+      { name: 'voucher_id', type: 'string (query)', required: false, description: 'Voucher UUID (alternative to code)' },
+    ],
+    exampleRequest: `GET /vouchers/status?code=LOYAL-AB12-CD34-EF56-GH78`,
+    exampleResponse: `{
+  "voucher": {
+    "id": "uuid",
+    "code": "LOYAL-AB12-CD34-EF56-GH78",
+    "reward_name": "Free Coffee",
+    "cost": 100,
+    "status": "active",
+    "token_symbol": "COFFEE",
+    "merchant_address": "0x...",
+    "activated_at": "2026-04-02T...",
+    "used_at": null
+  }
+}`,
+  },
+  {
+    method: 'GET',
     path: '/analytics',
     description: 'Get merchant analytics overview',
     scope: 'read',
