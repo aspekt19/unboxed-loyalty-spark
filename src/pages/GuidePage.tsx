@@ -74,9 +74,9 @@ export default function GuidePage() {
             </Card>
             <Card className="hover:border-primary transition-colors cursor-pointer">
               <CardHeader>
-                <Video className="h-8 w-8 text-primary mb-2" />
-                <CardTitle className="text-lg">Video Tutorials</CardTitle>
-                <CardDescription>Watch step-by-step guides</CardDescription>
+                <Video className="h-6 w-6 sm:h-8 sm:w-8 text-primary mb-1 sm:mb-2" />
+                <CardTitle className="text-sm sm:text-lg">Video Tutorials</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Watch step-by-step guides</CardDescription>
               </CardHeader>
             </Card>
             <Card className="hover:border-primary transition-colors cursor-pointer">
