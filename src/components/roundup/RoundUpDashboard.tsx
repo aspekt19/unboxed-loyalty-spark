@@ -55,7 +55,7 @@ export const RoundUpDashboard = () => {
         <div>
           <h2 className="text-2xl font-bold">Round-Up Investment</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Automatically invest your spare change into DeFi strategies
+            Put your spare change to work. Every transaction rounds up to the nearest whole number, and the difference is automatically invested into DeFi yield strategies on Base.
           </p>
         </div>
         <Button onClick={() => setShowDepositDialog(true)} className="w-full sm:w-auto">
