@@ -64,16 +64,16 @@ export const RoundUpDashboard = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {stats.map((stat) => (
-          <Card key={stat.label} className="p-6">
-            <div className="flex items-center gap-3">
-              <div className={`p-3 rounded-lg ${stat.bgColor}`}>
-                <stat.icon className={`h-5 w-5 ${stat.color}`} />
+          <Card key={stat.label} className="p-3 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+              <div className={`p-2 sm:p-3 rounded-lg ${stat.bgColor}`}>
+                <stat.icon className={`h-4 w-4 sm:h-5 sm:w-5 ${stat.color}`} />
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-                <p className="text-lg font-bold">{stat.value}</p>
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-sm text-muted-foreground truncate">{stat.label}</p>
+                <p className="text-sm sm:text-lg font-bold truncate">{stat.value}</p>
               </div>
             </div>
           </Card>

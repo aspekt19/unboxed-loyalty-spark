@@ -69,10 +69,10 @@ const InstallPage = () => {
               <div className="inline-flex p-4 rounded-2xl bg-gradient-primary shadow-glow">
                 <Smartphone className="h-12 w-12 text-white" />
               </div>
-              <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+              <h1 className="text-2xl sm:text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent pb-1">
                 Установите Loyal Spark
               </h1>
-              <p className="text-lg text-muted-foreground max-w-lg mx-auto">
+              <p className="text-sm sm:text-lg text-muted-foreground max-w-lg mx-auto">
                 Установите приложение на домашний экран для быстрого доступа и работы в офлайн режиме
               </p>
             </div>

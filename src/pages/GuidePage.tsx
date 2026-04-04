@@ -48,42 +48,42 @@ export default function GuidePage() {
         <main className="container max-w-6xl mx-auto p-4 md:p-8 space-y-8">
           {/* Header */}
           <div className="text-center space-y-2">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent pb-1">
               How Loyal Spark Works
             </h1>
-            <p className="text-xl text-muted-foreground">
+            <p className="text-sm sm:text-base md:text-xl text-muted-foreground">
               Your complete guide to blockchain-powered loyalty
             </p>
           </div>
 
           {/* Quick Links */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             <Card className="hover:border-primary transition-colors cursor-pointer">
               <CardHeader>
-                <BookOpen className="h-8 w-8 text-primary mb-2" />
-                <CardTitle className="text-lg">Getting Started</CardTitle>
-                <CardDescription>Learn the basics in 5 minutes</CardDescription>
+                <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-primary mb-1 sm:mb-2" />
+                <CardTitle className="text-sm sm:text-lg">Getting Started</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Learn the basics in 5 minutes</CardDescription>
               </CardHeader>
             </Card>
             <Card className="hover:border-primary transition-colors cursor-pointer">
               <CardHeader>
-                <PiggyBank className="h-8 w-8 text-primary mb-2" />
-                <CardTitle className="text-lg">Investing Guide</CardTitle>
-                <CardDescription>Grow rewards with DeFi</CardDescription>
+                <PiggyBank className="h-6 w-6 sm:h-8 sm:w-8 text-primary mb-1 sm:mb-2" />
+                <CardTitle className="text-sm sm:text-lg">Investing Guide</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Grow rewards with DeFi</CardDescription>
               </CardHeader>
             </Card>
             <Card className="hover:border-primary transition-colors cursor-pointer">
               <CardHeader>
-                <Video className="h-8 w-8 text-primary mb-2" />
-                <CardTitle className="text-lg">Video Tutorials</CardTitle>
-                <CardDescription>Watch step-by-step guides</CardDescription>
+                <Video className="h-6 w-6 sm:h-8 sm:w-8 text-primary mb-1 sm:mb-2" />
+                <CardTitle className="text-sm sm:text-lg">Video Tutorials</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Watch step-by-step guides</CardDescription>
               </CardHeader>
             </Card>
             <Card className="hover:border-primary transition-colors cursor-pointer">
               <CardHeader>
-                <HelpCircle className="h-8 w-8 text-primary mb-2" />
-                <CardTitle className="text-lg">FAQ</CardTitle>
-                <CardDescription>Common questions answered</CardDescription>
+                <HelpCircle className="h-6 w-6 sm:h-8 sm:w-8 text-primary mb-1 sm:mb-2" />
+                <CardTitle className="text-sm sm:text-lg">FAQ</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Common questions answered</CardDescription>
               </CardHeader>
             </Card>
           </div>

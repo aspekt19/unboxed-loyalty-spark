@@ -637,18 +637,18 @@ const reward = await fetch(\`\${BASE}/rewards\`, {
   return (
     <PageTransition>
       <div className="min-h-screen bg-background">
-        <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
           {/* Header */}
-          <div className="flex items-center gap-3 mb-8">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-              <ArrowLeft className="h-5 w-5" />
+          <div className="flex items-start gap-2 sm:gap-3 mb-6 sm:mb-8">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="h-8 w-8 sm:h-10 sm:w-10 shrink-0 mt-0.5">
+              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
-            <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2">
-                <Bot className="h-6 w-6 text-primary" />
-                Agent API Documentation
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-2xl font-bold flex items-center gap-2">
+                <Bot className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" />
+                <span className="truncate">Agent API Documentation</span>
               </h1>
-              <p className="text-muted-foreground text-sm">
+              <p className="text-muted-foreground text-xs sm:text-sm">
                 REST API for AI agents to interact with Loyal Spark loyalty programs
               </p>
             </div>
