@@ -67,9 +67,9 @@ export default function GuidePage() {
             </Card>
             <Card className="hover:border-primary transition-colors cursor-pointer">
               <CardHeader>
-                <PiggyBank className="h-8 w-8 text-primary mb-2" />
-                <CardTitle className="text-lg">Investing Guide</CardTitle>
-                <CardDescription>Grow rewards with DeFi</CardDescription>
+                <PiggyBank className="h-6 w-6 sm:h-8 sm:w-8 text-primary mb-1 sm:mb-2" />
+                <CardTitle className="text-sm sm:text-lg">Investing Guide</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Grow rewards with DeFi</CardDescription>
               </CardHeader>
             </Card>
             <Card className="hover:border-primary transition-colors cursor-pointer">
