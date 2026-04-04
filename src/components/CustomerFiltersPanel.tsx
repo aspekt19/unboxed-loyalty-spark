@@ -157,7 +157,7 @@ export function CustomerFiltersPanel() {
           <Gift className="h-5 w-5 text-primary" />
           Loyalty Programs
         </CardTitle>
-        <CardDescription>Your loyalty programs overview</CardDescription>
+        <CardDescription>Each merchant issues their own token. Your balance never expires unless you use it.</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden flex flex-col">
         {isLoading || balancesLoading ? (
