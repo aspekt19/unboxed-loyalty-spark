@@ -81,9 +81,9 @@ export default function GuidePage() {
             </Card>
             <Card className="hover:border-primary transition-colors cursor-pointer">
               <CardHeader>
-                <HelpCircle className="h-8 w-8 text-primary mb-2" />
-                <CardTitle className="text-lg">FAQ</CardTitle>
-                <CardDescription>Common questions answered</CardDescription>
+                <HelpCircle className="h-6 w-6 sm:h-8 sm:w-8 text-primary mb-1 sm:mb-2" />
+                <CardTitle className="text-sm sm:text-lg">FAQ</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Common questions answered</CardDescription>
               </CardHeader>
             </Card>
           </div>
