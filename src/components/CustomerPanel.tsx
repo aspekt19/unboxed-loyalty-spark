@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { TokenList } from './TokenList';
-import { DexIntegration } from './DexIntegration';
 import { RewardsSelection } from './rewards/RewardsSelection';
 import { MyVouchers } from './rewards/MyVouchers';
 import { CustomerTiersSection } from './tiers/CustomerTiersSection';
@@ -30,19 +29,23 @@ export function CustomerPanel() {
 
   return (
     <div className="space-y-6">
+      {/* Step 1: Show QR - primary action */}
       <WalletQRCode />
       
       <PersonalizedOffers />
       
       <CustomerTiersSection selectedProgram={selectedProgram} />
       
+      {/* Step 2: View earned tokens by merchant */}
       <TokenList 
         selectedProgram={selectedProgram}
         onProgramSelect={setSelectedProgram}
       />
       
+      {/* Step 3: Activate a reward */}
       <RewardsSelection />
       
+      {/* Step 4: View activated vouchers */}
       <MyVouchers />
       
       <ReferralCodeInput />
@@ -50,8 +53,6 @@ export function CustomerPanel() {
       <ReferralCard />
       
       <CustomerReviewsSection />
-      
-      <DexIntegration />
     </div>
   );
 }

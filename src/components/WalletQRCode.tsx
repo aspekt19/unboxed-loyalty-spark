@@ -35,7 +35,7 @@ export function WalletQRCode() {
           Your QR Code
         </CardTitle>
         <CardDescription className="text-xs">
-          Show this to merchants to receive loyalty tokens
+          Show this at checkout. Merchant scans, you earn loyalty tokens.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-3">

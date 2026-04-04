@@ -392,11 +392,7 @@ export function TokenList({ selectedProgram, onProgramSelect }: TokenListProps) 
           <div>
             <CardTitle>Your Loyalty Tokens</CardTitle>
             <CardDescription>
-              {walletAddress ? (
-                <>Manage tokens from different merchants - Connected: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</>
-              ) : (
-                <>Please connect your wallet to view your tokens</>
-              )}
+              Each merchant issues their own token. Tap to view tier status.
             </CardDescription>
           </div>
           {isMobile && tokensWithBalance.length > 1 && (

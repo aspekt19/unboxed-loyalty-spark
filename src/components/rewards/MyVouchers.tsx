@@ -85,7 +85,7 @@ export function MyVouchers() {
           <Ticket className="h-5 w-5 text-primary" />
           My Vouchers
         </CardTitle>
-        <CardDescription>Your activated reward vouchers</CardDescription>
+        <CardDescription>Activated rewards become vouchers you can redeem in-store or online.</CardDescription>
       </CardHeader>
       <CardContent>
         {vouchers.length === 0 ? (
