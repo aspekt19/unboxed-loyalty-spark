@@ -48,10 +48,10 @@ export default function GuidePage() {
         <main className="container max-w-6xl mx-auto p-4 md:p-8 space-y-8">
           {/* Header */}
           <div className="text-center space-y-2">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent pb-1">
               How Loyal Spark Works
             </h1>
-            <p className="text-xl text-muted-foreground">
+            <p className="text-sm sm:text-base md:text-xl text-muted-foreground">
               Your complete guide to blockchain-powered loyalty
             </p>
           </div>
