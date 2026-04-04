@@ -303,7 +303,7 @@ export function RewardsSelection() {
           <Ticket className="h-5 w-5 text-primary" />
           Activate Reward
         </CardTitle>
-        <CardDescription>Choose a reward and activate your voucher</CardDescription>
+        <CardDescription>Spend your loyalty tokens to unlock rewards and get a redeemable voucher.</CardDescription>
       </CardHeader>
       <CardContent>
         {tokensWithBalance.length === 0 ? (

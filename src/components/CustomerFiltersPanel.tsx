@@ -157,13 +157,16 @@ export function CustomerFiltersPanel() {
           <Gift className="h-5 w-5 text-primary" />
           Loyalty Programs
         </CardTitle>
-        <CardDescription>Your loyalty programs overview</CardDescription>
+        <CardDescription>Each merchant issues their own token. Your balance never expires unless you use it.</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden flex flex-col">
         {isLoading || balancesLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <span className="ml-2 text-sm text-muted-foreground">Loading...</span>
+          <div className="space-y-3 py-4">
+            <div className="space-y-2">
+              <div className="h-20 rounded-lg bg-muted animate-pulse" />
+              <div className="h-20 rounded-lg bg-muted animate-pulse" />
+            </div>
+            <p className="text-xs text-center text-muted-foreground">Fetching your programs on Base...</p>
           </div>
         ) : programsWithBalance.length === 0 ? (
           <Alert>

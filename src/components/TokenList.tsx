@@ -392,11 +392,7 @@ export function TokenList({ selectedProgram, onProgramSelect }: TokenListProps) 
           <div>
             <CardTitle>Your Loyalty Tokens</CardTitle>
             <CardDescription>
-              {walletAddress ? (
-                <>Manage tokens from different merchants - Connected: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</>
-              ) : (
-                <>Please connect your wallet to view your tokens</>
-              )}
+              Each merchant issues their own token. Tap to view tier status.
             </CardDescription>
           </div>
           {isMobile && tokensWithBalance.length > 1 && (
@@ -416,9 +412,10 @@ export function TokenList({ selectedProgram, onProgramSelect }: TokenListProps) 
         )}
         
         {walletAddress && (isLoading || isLoadingTokens) && (
-          <div className="flex flex-col items-center justify-center py-8 gap-2">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Loading tokens...</p>
+          <div className="space-y-3 py-4">
+            <div className="h-24 rounded-lg bg-muted animate-pulse" />
+            <div className="h-24 rounded-lg bg-muted animate-pulse" />
+            <p className="text-xs text-center text-muted-foreground">Fetching your tokens on Base...</p>
           </div>
         )}
         
