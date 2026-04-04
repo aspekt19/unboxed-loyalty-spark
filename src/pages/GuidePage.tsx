@@ -57,7 +57,7 @@ export default function GuidePage() {
           </div>
 
           {/* Quick Links */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             <Card className="hover:border-primary transition-colors cursor-pointer">
               <CardHeader>
                 <BookOpen className="h-8 w-8 text-primary mb-2" />
