@@ -232,13 +232,13 @@ npm install
 npm run dev
 ```
 
-### Wallet Setup
+### Sign In Options
 
-1. **Network**: Base Mainnet
-2. **Chain ID**: 8453
-3. **RPC URL**: https://mainnet.base.org
-4. **Currency**: ETH
-5. **Explorer**: https://basescan.org
+- **Email / Passkey** (recommended): Click "Sign In" and use Coinbase Smart Wallet — a wallet is created automatically, no crypto knowledge needed
+- **Coinbase Wallet / MetaMask / WalletConnect**: Traditional Web3 wallet connection
+- **Farcaster**: Auto-connects inside Warpcast miniapp
+
+**Network**: Base Mainnet (Chain ID: 8453) | **RPC**: https://mainnet.base.org | **Explorer**: https://basescan.org
 
 ## Project Structure
 
