@@ -21,7 +21,7 @@ export function CustomerPanel() {
       <Alert>
         <Wallet className="h-4 w-4" />
         <AlertDescription>
-          Please connect your wallet to access the customer panel
+          Please sign in to access your rewards and loyalty balance
         </AlertDescription>
       </Alert>
     );
