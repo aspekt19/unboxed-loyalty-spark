@@ -8,9 +8,17 @@ import { AdminLink } from '@/components/AdminLink';
 import { useState, useEffect } from 'react';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { motion } from 'framer-motion';
+import HowItWorks from '@/components/landing/HowItWorks';
+import DualBenefits from '@/components/landing/DualBenefits';
+import OnchainSimple from '@/components/landing/OnchainSimple';
 import PaymentHandshake from '@/components/landing/PaymentHandshake';
 import TrustSecurity from '@/components/landing/TrustSecurity';
 import UseCases from '@/components/landing/UseCases';
+import LandingHero from '@/components/landing/LandingHero';
+import LandingFeatures from '@/components/landing/LandingFeatures';
+import LandingAgents from '@/components/landing/LandingAgents';
+import LandingRoundUp from '@/components/landing/LandingRoundUp';
+import LandingCTA from '@/components/landing/LandingCTA';
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -98,346 +106,38 @@ const Index = () => {
         </header>
 
         <main className="container mx-auto px-4 sm:px-6 relative overflow-hidden">
-          {/* Animated background elements */}
-          <motion.div 
-            className="absolute top-0 left-0 w-full h-full pointer-events-none"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1 }}
-          >
-            <motion.div 
-              className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl"
-              animate={{ 
-                scale: [1, 1.2, 1],
-                opacity: [0.3, 0.5, 0.3]
-              }}
-              transition={{ 
-                duration: 8,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            />
-            <motion.div 
-              className="absolute top-40 right-10 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl"
-              animate={{ 
-                scale: [1.2, 1, 1.2],
-                opacity: [0.3, 0.5, 0.3]
-              }}
-              transition={{ 
-                duration: 10,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            />
-          </motion.div>
+          {/* Hero */}
+          <LandingHero />
 
-          <section className="pt-12 pb-12 sm:pt-20 sm:pb-16 md:pt-32 md:pb-24 text-center relative">
-            
-            <motion.h1 
-              className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-bold mb-4 sm:mb-6 leading-[1.15] tracking-tight text-balance px-4 sm:px-6 pb-2 bg-clip-text text-transparent bg-gradient-to-r from-foreground via-primary to-foreground overflow-visible"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-            >
-              Earn rewards. Watch them grow.
-            </motion.h1>
-            
-            <motion.p 
-              className="text-sm sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-8 sm:mb-12 px-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-            >
-              Loyalty tokens that earn, invest and multiply onchain. Get rewarded for purchases, save automatically, and grow your rewards in DeFi - all in one platform.
-            </motion.p>
+          {/* 1. How it works — user-facing, simple */}
+          <HowItWorks />
 
-            <motion.div 
-              className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-            >
-              <Link to="/app" className="w-full sm:w-auto">
-                <Button size="lg" variant="uds" className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 text-sm sm:text-base font-semibold group">
-                  Launch App
-                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
-              <Link to="/pitch" className="w-full sm:w-auto">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 text-sm sm:text-base font-semibold">
-                  Learn more
-                </Button>
-              </Link>
-            </motion.div>
+          {/* 2. For customers / For businesses */}
+          <DualBenefits />
 
-            <motion.div 
-              className="mt-16 sm:mt-24"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.8 }}
-            >
-              <p className="text-[10px] sm:text-xs text-muted-foreground mb-4 sm:mb-6 uppercase tracking-wider font-medium">Powered by</p>
-              <motion.div 
-                className="flex flex-wrap items-center justify-center gap-4 sm:gap-8"
-                animate={{ y: [0, -5, 0] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              >
-                <div className="grayscale hover:grayscale-0 transition-smooth opacity-60 hover:opacity-100">
-                  <img src="/media-kit/logo-horizontal.png" alt="BASE" className="h-10 sm:h-14" />
-                </div>
-              </motion.div>
-              <div className="mt-4 sm:mt-6 inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-primary/10 border border-primary/20">
-                <span className="text-[10px] sm:text-xs font-semibold text-primary uppercase tracking-wider">Built on BASE Network</span>
-              </div>
-            </motion.div>
-          </section>
+          {/* 3. Onchain, but simple */}
+          <OnchainSimple />
 
-          <section className="py-12 sm:py-16 md:py-24">
-            <div className="max-w-5xl mx-auto px-4">
-              <motion.h2 
-                className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-12 sm:mb-16 tracking-tight"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
-              >
-                Why Loyal Spark?
-              </motion.h2>
-              
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8 md:gap-12">
-                {[
-                  { icon: Shield, title: 'Secure', description: 'Smart contract based security', delay: 0 },
-                  { icon: Zap, title: 'Fast', description: 'Instant transactions on BASE', delay: 0.1 },
-                  { icon: Globe, title: 'Decentralized', description: 'True ownership of rewards', delay: 0.2 },
-                  { icon: TrendingUp, title: 'Tradeable', description: 'Exchange on any DEX', delay: 0.3 },
-                  { icon: Bot, title: 'AI-Ready', description: 'REST API & MCP for AI agents', delay: 0.4 },
-                  { icon: Code, title: 'Composable', description: 'Build on top of the protocol', delay: 0.5 }
-                ].map((feature) => (
-                  <motion.div 
-                    key={feature.title} 
-                    className="text-center group hover-lift"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.4, delay: feature.delay }}
-                    whileHover={{ y: -5 }}
-                  >
-                    <motion.div 
-                      className="mx-auto h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-gradient-primary flex items-center justify-center mb-4 sm:mb-5 shadow-glow"
-                      whileHover={{ scale: 1.1, rotate: 5 }}
-                      transition={{ type: "spring", stiffness: 300 }}
-                    >
-                      <feature.icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-                    </motion.div>
-                    <h3 className="text-sm sm:text-base font-bold text-foreground mb-2">{feature.title}</h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </section>
+          {/* 4. Why Loyal Spark — feature grid */}
+          <LandingFeatures />
 
-          {/* AI Agents Section */}
-          <section className="py-12 sm:py-16 md:py-24 bg-gradient-subtle">
-            <div className="max-w-4xl mx-auto px-4">
-              <motion.div 
-                className="text-center mb-12"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
-              >
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-4">
-                  <Bot className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-xs font-semibold text-primary uppercase tracking-wider">AI-Native Protocol</span>
-                </div>
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 tracking-tight">
-                  Built for AI Agents
-                </h2>
-                <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
-                  AI agents can autonomously create loyalty programs, mint tokens, manage rewards, and operate their own wallets — all via REST API or MCP Server.
-                </p>
-              </motion.div>
+          {/* 5. Round-Up Investment */}
+          <LandingRoundUp />
 
-              <div className="grid md:grid-cols-3 gap-6">
-                <motion.div 
-                  className="bg-gradient-card rounded-xl p-6 border border-border/50 hover-lift"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: 0.1 }}
-                >
-                  <Code className="h-8 w-8 text-primary mb-3" />
-                  <h3 className="font-bold mb-2">REST API</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Full CRUD API with scoped permissions. Create programs, mint tokens, manage rewards — all with a single API key.
-                  </p>
-                </motion.div>
+          {/* 6. AI Agents Section — for developers/advanced users */}
+          <LandingAgents />
 
-                <motion.div 
-                  className="bg-gradient-card rounded-xl p-6 border border-border/50 hover-lift"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                >
-                  <Bot className="h-8 w-8 text-primary mb-3" />
-                  <h3 className="font-bold mb-2">MCP Server</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Connect Claude, GPT, Cursor, or any MCP-compatible LLM directly. No custom code needed.
-                  </p>
-                </motion.div>
-
-                <motion.div 
-                  className="bg-gradient-card rounded-xl p-6 border border-border/50 hover-lift"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: 0.3 }}
-                >
-                  <Shield className="h-8 w-8 text-primary mb-3" />
-                  <h3 className="font-bold mb-2">MPC Wallets</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Coinbase CDP server wallets for autonomous onchain operations. No private keys to manage.
-                  </p>
-                </motion.div>
-              </div>
-
-              <motion.div 
-                className="mt-8 text-center"
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-              >
-                <Link to="/api-docs">
-                  <Button variant="outline" className="font-semibold">
-                    View API Documentation
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-              </motion.div>
-            </div>
-          </section>
-
+          {/* 7. Machine Payments */}
           <PaymentHandshake />
 
+          {/* 8. Trust & Security */}
           <TrustSecurity />
 
+          {/* 9. Use Cases */}
           <UseCases />
 
-          <section className="py-12 sm:py-16 md:py-24 bg-gradient-subtle">
-            <div className="max-w-4xl mx-auto px-4">
-              <motion.div 
-                className="text-center mb-12"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
-              >
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 tracking-tight">
-                  Round-Up Investment
-                </h2>
-                <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
-                  Automatically invest your spare change into DeFi strategies. Every transaction rounds up and grows your portfolio.
-                </p>
-              </motion.div>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                <motion.div 
-                  className="bg-gradient-card rounded-xl p-6 border border-border/50 hover-lift"
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: 0.1 }}
-                  whileHover={{ y: -5 }}
-                >
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-3 rounded-lg bg-purple-500/10">
-                      <Shield className="h-6 w-6 text-purple-500" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold">Aave Conservative</h3>
-                      <p className="text-sm text-muted-foreground">Free • 3-5% APY</p>
-                    </div>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Lower risk strategy using Aave V3 protocol. Perfect for steady, passive income generation.
-                  </p>
-                </motion.div>
-
-                <motion.div 
-                  className="bg-gradient-card rounded-xl p-6 border border-primary/30 hover-lift relative overflow-hidden"
-                  initial={{ opacity: 0, x: 20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                  whileHover={{ y: -5 }}
-                >
-                  <div className="absolute top-2 right-2">
-                    <span className="px-2 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold">Premium</span>
-                  </div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-3 rounded-lg bg-orange-500/10">
-                      <TrendingUp className="h-6 w-6 text-orange-500" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold">Compound Lending Plus</h3>
-                      <p className="text-sm text-muted-foreground">$10/mo • 6-10% APY</p>
-                    </div>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Higher yields with Compound V3. Maximize returns with premium DeFi strategies.
-                  </p>
-                </motion.div>
-              </div>
-            </div>
-          </section>
-
-          <section className="py-12 sm:py-16 md:py-24">
-            <div className="max-w-3xl mx-auto text-center px-4">
-              <motion.div 
-                className="bg-gradient-card rounded-2xl p-8 sm:p-12 shadow-large border border-border/50"
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
-                whileHover={{ y: -5 }}
-              >
-                <motion.h2 
-                  className="text-2xl sm:text-3xl md:text-5xl font-bold mb-4 sm:mb-5 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary pb-1 overflow-visible"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                >
-                  Ready to get started?
-                </motion.h2>
-                <motion.p 
-                  className="text-sm sm:text-base md:text-lg text-muted-foreground mb-6 sm:mb-8 max-w-xl mx-auto"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: 0.3 }}
-                >
-                  Join the future of loyalty rewards today and experience the power of blockchain technology.
-                </motion.p>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: 0.4 }}
-                >
-                  <Link to="/app" className="inline-block w-full sm:w-auto">
-                    <Button size="xl" variant="uds" className="w-full sm:w-auto font-semibold group shadow-glow">
-                      Launch App Now
-                      <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                  </Link>
-                </motion.div>
-              </motion.div>
-            </div>
-          </section>
+          {/* 10. Final CTA */}
+          <LandingCTA />
         </main>
 
         <footer className="border-t border-border/50 py-6 sm:py-8 mt-12 sm:mt-16 bg-background/50 backdrop-blur-sm">
