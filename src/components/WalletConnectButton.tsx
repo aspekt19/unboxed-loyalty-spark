@@ -1,5 +1,5 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { Wallet, Smartphone } from 'lucide-react';
+import { LogIn, Smartphone, User } from 'lucide-react';
 import { useDisconnect, useConnect, useAccount } from 'wagmi';
 import { useAuth } from '@/contexts/AuthContext';
 import { sdk } from '@farcaster/miniapp-sdk';
@@ -25,6 +25,14 @@ const isFarcasterContext = () => {
   } catch {
     return false;
   }
+};
+
+/** Format display name: show short address or ENS */
+const formatDisplayName = (displayName: string) => {
+  // If it looks like an ENS name, show it as-is
+  if (displayName.includes('.')) return displayName;
+  // If it's a hex address, it's already shortened by RainbowKit
+  return displayName;
 };
 
 export function WalletConnectButton() {
@@ -104,10 +112,10 @@ export function WalletConnectButton() {
         <button
           onClick={handleConnect}
           type="button"
-          className="px-5 py-2.5 rounded-lg font-semibold text-background bg-foreground hover:bg-foreground/90 transition-all duration-200 flex items-center gap-2"
+          className="px-5 py-2.5 rounded-lg font-semibold bg-gradient-uds text-white hover:opacity-90 transition-all duration-200 flex items-center gap-2"
         >
-          <Wallet className="h-4 w-4" />
-          <span>Connect Wallet</span>
+          <LogIn className="h-4 w-4" />
+          <span>Sign In</span>
         </button>
       );
     }
@@ -177,8 +185,8 @@ export function WalletConnectButton() {
                       type="button"
                       className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg font-semibold bg-gradient-uds text-white hover:opacity-90 shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9"
                     >
-                      <Wallet className="h-3 w-3 sm:h-4 sm:w-4" />
-                      <span>Connect</span>
+                      <LogIn className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span>Sign In</span>
                     </button>
                   );
                 }
@@ -213,17 +221,15 @@ export function WalletConnectButton() {
                           )}
                         </div>
                       )}
-                      <span className="text-foreground text-xs font-semibold">
-                        {chain.name}
-                      </span>
                     </button>
 
                     <button
                       onClick={openAccountModal}
                       type="button"
-                      className="px-4 py-1.5 rounded-lg font-bold bg-uds-purple text-white hover:bg-uds-purple-light shadow-md hover:shadow-lg transition-all duration-200"
+                      className="px-3 py-1.5 rounded-lg font-bold bg-uds-purple text-white hover:bg-uds-purple-light shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-1.5"
                     >
-                      <span className="text-xs">{account.displayName}</span>
+                      <User className="h-3 w-3" />
+                      <span className="text-xs">{formatDisplayName(account.displayName)}</span>
                     </button>
                   </div>
                 );
@@ -236,30 +242,48 @@ export function WalletConnectButton() {
       <Dialog open={isMobileWalletDialogOpen} onOpenChange={setIsMobileWalletDialogOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Connect wallet</DialogTitle>
+            <DialogTitle>Sign in to Loyal Spark</DialogTitle>
             <DialogDescription>
-              Choose a wallet installed on your phone or use WalletConnect.
+              Sign in with email, passkey, or your existing wallet. No crypto experience needed.
             </DialogDescription>
           </DialogHeader>
 
           <div className="mt-4 space-y-2">
-            {connectors.map((connector) => (
-              <button
-                key={connector.id}
-                type="button"
-                onClick={async () => {
-                  try {
-                    await connect({ connector });
-                    setIsMobileWalletDialogOpen(false);
-                  } catch (error) {
-                    console.error('[WalletButton] Mobile wallet connect error', error);
-                  }
-                }}
-                className="w-full px-3 py-2 rounded-lg border border-primary/30 flex items-center justify-between text-sm font-medium hover:bg-uds-lavender hover:border-primary transition-colors"
-              >
-                <span>{connector.name}</span>
-              </button>
-            ))}
+            {connectors.map((connector) => {
+              // Friendly names for connectors
+              const friendlyName = connector.name === 'Coinbase Wallet' 
+                ? 'Continue with Email or Passkey'
+                : connector.name === 'WalletConnect'
+                ? 'Use WalletConnect'
+                : connector.name;
+
+              const isRecommended = connector.name === 'Coinbase Wallet';
+
+              return (
+                <button
+                  key={connector.id}
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await connect({ connector });
+                      setIsMobileWalletDialogOpen(false);
+                    } catch (error) {
+                      console.error('[WalletButton] Mobile wallet connect error', error);
+                    }
+                  }}
+                  className={`w-full px-3 py-3 rounded-lg border flex items-center justify-between text-sm font-medium transition-colors ${
+                    isRecommended 
+                      ? 'border-primary bg-primary/5 hover:bg-primary/10' 
+                      : 'border-border hover:bg-muted'
+                  }`}
+                >
+                  <span>{friendlyName}</span>
+                  {isRecommended && (
+                    <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">Recommended</span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </DialogContent>
       </Dialog>

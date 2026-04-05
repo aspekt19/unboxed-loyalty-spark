@@ -1,5 +1,5 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit';
-import { metaMaskWallet, walletConnectWallet, injectedWallet } from '@rainbow-me/rainbowkit/wallets';
+import { coinbaseWallet, metaMaskWallet, walletConnectWallet, injectedWallet } from '@rainbow-me/rainbowkit/wallets';
 import { createConfig } from 'wagmi';
 import { base } from 'wagmi/chains';
 import { http } from 'viem';
@@ -9,8 +9,6 @@ import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
 const isFarcasterContext = () => {
   if (typeof window === 'undefined') return false;
   try {
-    // Use only URL, path and user-agent hints here. SDK context detection is done
-    // later inside components where we can safely await it.
     const urlParams = new URLSearchParams(window.location.search);
     const hasFarcasterParam = urlParams.has('farcaster') || urlParams.has('fc');
     const isFarcasterPath = window.location.pathname.includes('/frame');
@@ -46,7 +44,14 @@ export const config = isFarcasterContext()
       },
       wallets: [
         {
-          groupName: 'Popular',
+          groupName: 'Recommended',
+          wallets: [
+            // Coinbase Smart Wallet first — supports email/passkey sign-in
+            coinbaseWallet,
+          ],
+        },
+        {
+          groupName: 'Other wallets',
           wallets: [metaMaskWallet, walletConnectWallet, injectedWallet],
         },
       ],
