@@ -237,8 +237,8 @@ export default function GuidePage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-                    <li>Connect your wallet and navigate to the Merchant section</li>
-                    <li>Go to the "Programs" tab and click "Create Loyalty Program"</li>
+                    <li>Sign in with email, passkey, or connect your wallet</li>
+                    <li>Navigate to the Merchant section</li>
                     <li>Enter your token details:
                       <ul className="list-disc list-inside ml-6 mt-1">
                         <li>Token Name (e.g., "Coffee Shop Rewards")</li>
