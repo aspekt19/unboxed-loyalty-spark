@@ -32,12 +32,12 @@ export const BlockchainFAQ = () => {
           </AccordionItem>
 
           <AccordionItem value="what-is-wallet">
-            <AccordionTrigger>What is a Web3 wallet?</AccordionTrigger>
+            <AccordionTrigger>Do I need a crypto wallet?</AccordionTrigger>
             <AccordionContent className="text-muted-foreground">
-              A Web3 wallet (like MetaMask or Coinbase Wallet) is your digital identity and storage
-              for blockchain assets. It's similar to a regular wallet, but for digital tokens.
-              Unlike traditional loyalty accounts, you control your wallet directly - no company
-              can freeze or take away your tokens.
+              No! You can sign in with just your email or a passkey. A secure wallet is created
+              for you automatically behind the scenes via Coinbase Smart Wallet. If you already
+              have a Web3 wallet (like MetaMask or Coinbase Wallet), you can use that too.
+              Either way, you control your rewards directly.
             </AccordionContent>
           </AccordionItem>
 
