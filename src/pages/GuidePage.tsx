@@ -362,7 +362,7 @@ export default function GuidePage() {
               <Alert>
                 <Wallet className="h-4 w-4" />
                 <AlertDescription>
-                  You'll need a Web3 wallet (MetaMask or Coinbase Wallet) to get started. Install it from your browser's extension store.
+                  Click "Sign In" to get started. You can use email or passkey (no crypto knowledge needed), or connect an existing wallet like MetaMask or Coinbase Wallet.
                 </AlertDescription>
               </Alert>
 
