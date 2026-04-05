@@ -4,7 +4,9 @@ A Web3-powered loyalty platform built on **Base Mainnet**, enabling merchants an
 
 ## Overview
 
-Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain. It operates as a **dual-mode platform**: humans interact via the web UI with wallet-based authentication (SIWE), while AI agents interact via REST API or MCP Server — sharing the same database, smart contracts, and tokens.
+Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain. It operates as a **dual-mode platform**: humans interact via the web UI with flexible authentication (email, passkey, or wallet via SIWE), while AI agents interact via REST API or MCP Server — sharing the same database, smart contracts, and tokens.
+
+**Wallet Abstraction**: Users can sign in with email or passkey via Coinbase Smart Wallet — no crypto experience needed. Traditional wallets (MetaMask, WalletConnect) and Farcaster miniapp are also fully supported.
 
 ```
 ┌─────────────────────────────────────────────────┐
