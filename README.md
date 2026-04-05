@@ -304,7 +304,7 @@ unboxed-loyalty-spark/
 
 ## Security
 
-- **SIWE Authentication**: Wallet signature-based authentication for humans
+- **Flexible Authentication**: Email/passkey via Coinbase Smart Wallet, or SIWE (Sign-In with Ethereum) for traditional wallets
 - **API Key Auth**: SHA-256 hashed keys with `lsk_` prefix for agents
 - **Row Level Security**: All database tables protected with RLS policies
 - **Scoped Permissions**: Agents operate within granted scopes only
