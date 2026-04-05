@@ -67,7 +67,7 @@ Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain
 |-------|-----------|
 | Frontend | React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui |
 | Animations | Framer Motion |
-| Blockchain | Wagmi v2, Viem, RainbowKit |
+| Blockchain | Wagmi v2, Viem, RainbowKit (Coinbase Smart Wallet) |
 | Network | Base Mainnet (Chain ID: 8453) |
 | Smart Contracts | ERC-20 Token Standard (Factory pattern) |
 | Backend | Lovable Cloud (Supabase Edge Functions) |
