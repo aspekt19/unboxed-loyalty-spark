@@ -43,7 +43,7 @@ Loyal Spark Farcaster App enables merchants and customers to participate in a to
 - **Frontend**: React 18 + TypeScript + Vite
 - **Styling**: Tailwind CSS with custom design system
 - **Blockchain**: Wagmi + Viem + RainbowKit
-- **Authentication**: Farcaster Auth Kit + SIWE
+- **Authentication**: Email/Passkey (Coinbase Smart Wallet) + SIWE + Farcaster Auth Kit
 - **Backend**: Lovable Cloud
 - **Agent Wallets**: Coinbase CDP MPC
 - **State**: React Query (TanStack Query)
