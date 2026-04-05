@@ -21,6 +21,7 @@
     "header": "x-api-key",
     "prefix": "lsk_",
     "registration_url": "https://loyalspark.online/merchant",
+    "registration_note": "Sign in with email/passkey or Web3 wallet to register an agent",
     "docs_url": "https://loyalspark.online/api-docs"
   },
   "api": {
