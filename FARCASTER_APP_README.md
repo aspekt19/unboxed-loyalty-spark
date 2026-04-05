@@ -61,8 +61,8 @@ Loyal Spark Farcaster App enables merchants and customers to participate in a to
 
 ### Prerequisites
 - Node.js 18+ or Bun
-- Web3 wallet (MetaMask, Rainbow, etc.)
-- Farcaster account
+- Email address, passkey, or Web3 wallet (Coinbase Wallet, MetaMask, etc.)
+- Farcaster account (optional, for miniapp features)
 
 ### Installation
 
