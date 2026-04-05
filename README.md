@@ -220,9 +220,8 @@ Payments accepted on-chain in USDC on Base ($1 = 1 USDC).
 
 ### Prerequisites
 - Node.js 18+ or Bun
-- MetaMask, Coinbase Wallet, or any WalletConnect-compatible wallet
-- Base Mainnet configured in your wallet
-- Some ETH on Base for gas fees
+- An email address, passkey, or Web3 wallet (Coinbase Wallet, MetaMask, WalletConnect)
+- Some ETH on Base for gas fees (merchants only)
 
 ### Installation
 
