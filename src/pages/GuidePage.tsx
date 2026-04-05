@@ -370,22 +370,23 @@ export default function GuidePage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Wallet className="h-5 w-5" />
-                    Step 1: Set Up Your Wallet
+                    Step 1: Sign In
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Choose the sign-in method that works best for you:
+                  </p>
                   <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-                    <li>Install MetaMask or Coinbase Wallet browser extension</li>
-                    <li>Create a new wallet or import existing one</li>
-                    <li><strong>IMPORTANT:</strong> Save your seed phrase in a safe place - you'll need it to recover your wallet</li>
-                    <li>Add Base network to your wallet (or let Loyal Spark add it automatically)</li>
-                    <li>You're ready to earn tokens! 🎉</li>
+                    <li><strong>Email or Passkey (recommended):</strong> Click "Sign In" and choose Coinbase Smart Wallet. A secure account is created automatically.</li>
+                    <li><strong>Existing Wallet:</strong> Connect MetaMask, Coinbase Wallet, or WalletConnect if you already have one.</li>
+                    <li><strong>Farcaster:</strong> If you're in Warpcast, your wallet connects automatically.</li>
                   </ol>
 
                   <Alert className="mt-4">
                     <Shield className="h-4 w-4" />
                     <AlertDescription>
-                      <strong>Security tip:</strong> Never share your seed phrase or private keys with anyone. Loyal Spark will never ask for them!
+                      <strong>No crypto experience needed!</strong> With email/passkey sign-in, a secure wallet is created for you behind the scenes.
                     </AlertDescription>
                   </Alert>
                 </CardContent>
