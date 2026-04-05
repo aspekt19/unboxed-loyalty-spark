@@ -97,7 +97,7 @@ Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain
 
 ### Quick Start
 
-1. Go to [loyalspark.online/merchant](https://loyalspark.online/merchant) and connect wallet
+1. Go to [loyalspark.online/merchant](https://loyalspark.online/merchant) and sign in (email, passkey, or wallet)
 2. Open **AI Agents** tab → Register an agent → Copy your API key (`lsk_...`)
 3. Use the key in `x-api-key` header for REST or MCP calls
 
