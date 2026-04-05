@@ -1,6 +1,6 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Shield, Wallet } from 'lucide-react';
+import { Shield, LogIn } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAccount, useConnect } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
@@ -10,10 +10,7 @@ import { sdk } from '@farcaster/miniapp-sdk';
 const isFarcasterContext = () => {
   if (typeof window === 'undefined') return false;
   try {
-    // Проверяем SDK контекст - самый надежный способ
     const hasContext = !!(sdk as any)?.context;
-    
-    // Дополнительные проверки как fallback
     const urlParams = new URLSearchParams(window.location.search);
     const hasFarcasterParam = urlParams.has('farcaster') || urlParams.has('fc');
     const isFarcasterPath = window.location.pathname.includes('/frame');
@@ -30,18 +27,16 @@ export function AuthPrompt() {
   const { isConnected } = useAccount();
   const { connect, connectors } = useConnect();
 
-  // Не показываем промпт если идет загрузка, пользователь авторизован, 
-  // или кошелёк подключен (авто-авторизация в процессе)
   if (isLoading || user || isConnected) return null;
 
   return (
     <Alert className="mb-6 border-2 border-primary/20 bg-primary/5">
       <Shield className="h-5 w-5 text-primary" />
-      <AlertTitle className="text-lg font-semibold mb-2">Authentication Required</AlertTitle>
+      <AlertTitle className="text-lg font-semibold mb-2">Sign in to continue</AlertTitle>
       <AlertDescription className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          To ensure secure access to your rewards and protect against unauthorized modifications, 
-          please authenticate with your wallet.
+          Sign in to access your rewards, track your loyalty balance, and redeem perks. 
+          You can use email, passkey, or an existing wallet.
         </p>
         <div className="flex gap-2">
           {!isConnected ? (
@@ -50,8 +45,8 @@ export function AuthPrompt() {
                 onClick={() => connect({ connector: connectors[0] })}
                 className="gap-2"
               >
-                <Wallet className="h-4 w-4" />
-                Connect Wallet
+                <LogIn className="h-4 w-4" />
+                Sign In
               </Button>
             ) : (
               <ConnectButton />
@@ -62,8 +57,8 @@ export function AuthPrompt() {
               disabled={isLoading}
               className="gap-2"
             >
-              <Wallet className="h-4 w-4" />
-              {isLoading ? 'Signing in...' : 'Sign in with Wallet'}
+              <LogIn className="h-4 w-4" />
+              {isLoading ? 'Signing in...' : 'Continue'}
             </Button>
           )}
         </div>
