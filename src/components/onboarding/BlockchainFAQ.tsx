@@ -92,9 +92,9 @@ export const BlockchainFAQ = () => {
               cryptography - the same technology that secures cryptocurrencies worth trillions of
               dollars. Only you have access to your wallet and tokens. However, remember:
               <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>Keep your wallet password/seed phrase safe</li>
+                <li>If using a traditional wallet, keep your password/seed phrase safe</li>
                 <li>Never share your private keys with anyone</li>
-                <li>Use reputable wallets like MetaMask or Coinbase Wallet</li>
+                <li>Email/passkey accounts are secured by Coinbase Smart Wallet</li>
               </ul>
             </AccordionContent>
           </AccordionItem>

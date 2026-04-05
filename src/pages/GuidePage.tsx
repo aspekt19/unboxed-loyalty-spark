@@ -401,7 +401,7 @@ export default function GuidePage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-                    <li>Connect your wallet to Loyal Spark</li>
+                    <li>Sign in to Loyal Spark</li>
                     <li>Navigate to the Customer section</li>
                     <li>At the top you'll see <strong>"Your QR Code"</strong> card — tap it to enlarge</li>
                     <li>Show the QR code to a participating merchant</li>

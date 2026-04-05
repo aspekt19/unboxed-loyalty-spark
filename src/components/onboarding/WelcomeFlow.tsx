@@ -55,15 +55,15 @@ const merchantSteps = [
 const customerSteps = [
   {
     title: "Welcome to Loyal Spark! 🎉",
-    description: "Earn real crypto rewards from your favorite businesses.",
+    description: "Earn real rewards from your favorite businesses.",
     icon: Wallet,
-    content: "Your loyalty tokens are real digital assets that you truly own - stored in your Web3 wallet.",
+    content: "Your loyalty rewards are real digital assets that you truly own. No crypto experience needed to get started!",
   },
   {
-    title: "Connect Your Wallet",
-    description: "Use MetaMask, Coinbase Wallet, or WalletConnect to get started.",
+    title: "Sign In Easily",
+    description: "Use email, passkey, or an existing wallet to get started.",
     icon: Shield,
-    content: "Your wallet is your identity. Connect once and access all loyalty programs with the same address.",
+    content: "Sign in with your email or passkey and a secure account is created automatically. You can also use MetaMask or Coinbase Wallet if you prefer.",
   },
   {
     title: "Earn Loyalty Tokens",
