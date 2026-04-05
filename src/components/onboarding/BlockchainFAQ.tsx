@@ -32,12 +32,12 @@ export const BlockchainFAQ = () => {
           </AccordionItem>
 
           <AccordionItem value="what-is-wallet">
-            <AccordionTrigger>What is a Web3 wallet?</AccordionTrigger>
+            <AccordionTrigger>Do I need a crypto wallet?</AccordionTrigger>
             <AccordionContent className="text-muted-foreground">
-              A Web3 wallet (like MetaMask or Coinbase Wallet) is your digital identity and storage
-              for blockchain assets. It's similar to a regular wallet, but for digital tokens.
-              Unlike traditional loyalty accounts, you control your wallet directly - no company
-              can freeze or take away your tokens.
+              No! You can sign in with just your email or a passkey. A secure wallet is created
+              for you automatically behind the scenes via Coinbase Smart Wallet. If you already
+              have a Web3 wallet (like MetaMask or Coinbase Wallet), you can use that too.
+              Either way, you control your rewards directly.
             </AccordionContent>
           </AccordionItem>
 
@@ -70,16 +70,16 @@ export const BlockchainFAQ = () => {
             <AccordionContent className="text-muted-foreground">
               <strong>For Customers:</strong>
               <ol className="list-decimal list-inside mt-2 space-y-1">
-                <li>Install a Web3 wallet (MetaMask or Coinbase Wallet)</li>
-                <li>Connect your wallet to Loyal Spark</li>
+                <li>Click "Sign In" (use email, passkey, or an existing wallet)</li>
+                <li>Choose "I'm a Shopper"</li>
                 <li>Show your QR code to merchants to earn tokens</li>
                 <li>Browse rewards and redeem with your tokens</li>
               </ol>
               <strong className="block mt-4">For Merchants:</strong>
               <ol className="list-decimal list-inside mt-2 space-y-1">
-                <li>Connect your wallet</li>
+                <li>Sign in with email, passkey, or wallet</li>
+                <li>Choose "I'm a Business"</li>
                 <li>Create your loyalty program and deploy your token</li>
-                <li>Create rewards that customers can redeem</li>
                 <li>Scan customer QR codes to issue tokens</li>
               </ol>
             </AccordionContent>
@@ -92,9 +92,9 @@ export const BlockchainFAQ = () => {
               cryptography - the same technology that secures cryptocurrencies worth trillions of
               dollars. Only you have access to your wallet and tokens. However, remember:
               <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>Keep your wallet password/seed phrase safe</li>
+                <li>If using a traditional wallet, keep your password/seed phrase safe</li>
                 <li>Never share your private keys with anyone</li>
-                <li>Use reputable wallets like MetaMask or Coinbase Wallet</li>
+                <li>Email/passkey accounts are secured by Coinbase Smart Wallet</li>
               </ul>
             </AccordionContent>
           </AccordionItem>

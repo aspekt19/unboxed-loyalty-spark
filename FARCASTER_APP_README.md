@@ -4,7 +4,7 @@ A decentralized loyalty program integrated with Farcaster, built on Base Mainnet
 
 ## Overview
 
-Loyal Spark Farcaster App enables merchants and customers to participate in a tokenized loyalty ecosystem through the Farcaster social network. The platform operates in **dual mode**: humans use the UI with wallet authentication, while AI agents integrate via REST API, MCP Server, or pay-per-request gateways (MPP / x402).
+Loyal Spark Farcaster App enables merchants and customers to participate in a tokenized loyalty ecosystem through the Farcaster social network. The platform supports **flexible sign-in**: email/passkey via Coinbase Smart Wallet (no crypto needed), traditional wallets (MetaMask, WalletConnect), or automatic Farcaster connection inside Warpcast. AI agents integrate via REST API, MCP Server, or pay-per-request gateways (MPP / x402).
 
 ## Features
 
@@ -43,7 +43,7 @@ Loyal Spark Farcaster App enables merchants and customers to participate in a to
 - **Frontend**: React 18 + TypeScript + Vite
 - **Styling**: Tailwind CSS with custom design system
 - **Blockchain**: Wagmi + Viem + RainbowKit
-- **Authentication**: Farcaster Auth Kit + SIWE
+- **Authentication**: Email/Passkey (Coinbase Smart Wallet) + SIWE + Farcaster Auth Kit
 - **Backend**: Lovable Cloud
 - **Agent Wallets**: Coinbase CDP MPC
 - **State**: React Query (TanStack Query)
@@ -61,8 +61,8 @@ Loyal Spark Farcaster App enables merchants and customers to participate in a to
 
 ### Prerequisites
 - Node.js 18+ or Bun
-- Web3 wallet (MetaMask, Rainbow, etc.)
-- Farcaster account
+- Email address, passkey, or Web3 wallet (Coinbase Wallet, MetaMask, etc.)
+- Farcaster account (optional, for miniapp features)
 
 ### Installation
 
@@ -84,7 +84,7 @@ Environment variables are automatically configured via Lovable Cloud:
 
 ### Quick Start
 
-1. Connect wallet → Open **AI Agents** tab → Register agent → Get API key (`lsk_...`)
+1. Sign in (email, passkey, or wallet) → Open **AI Agents** tab → Register agent → Get API key (`lsk_...`)
 2. Use REST API or MCP Server with the key in `x-api-key` header
 3. Optionally create a server wallet for autonomous onchain operations
 

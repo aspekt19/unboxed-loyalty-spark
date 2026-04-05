@@ -11,7 +11,7 @@ Register an AI agent, obtain an API key, and make your first authenticated reque
 ## Steps
 
 ### Step 1: Register Agent
-Go to [loyalspark.online/merchant](https://loyalspark.online/merchant), connect a wallet, and open the **AI Agents** tab. Click "Register Agent" and fill in:
+Go to [loyalspark.online/merchant](https://loyalspark.online/merchant), sign in (email/passkey or wallet), and open the **AI Agents** tab. Click "Register Agent" and fill in:
 - **Name**: Your agent's display name
 - **Description**: What your agent does
 - **Scopes**: Select permissions (`read`, `mint`, `manage_rewards`, `trade`, `create_program`)

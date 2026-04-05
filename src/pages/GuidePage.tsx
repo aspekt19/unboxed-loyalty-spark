@@ -224,7 +224,7 @@ export default function GuidePage() {
               <Alert>
                 <Wallet className="h-4 w-4" />
                 <AlertDescription>
-                  First, make sure you have a Web3 wallet installed (MetaMask or Coinbase Wallet) and connected to Base network.
+                  Click "Sign In" to get started. You can use email, passkey, or connect a Web3 wallet like MetaMask or Coinbase Wallet.
                 </AlertDescription>
               </Alert>
 
@@ -237,8 +237,8 @@ export default function GuidePage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-                    <li>Connect your wallet and navigate to the Merchant section</li>
-                    <li>Go to the "Programs" tab and click "Create Loyalty Program"</li>
+                    <li>Sign in with email, passkey, or connect your wallet</li>
+                    <li>Navigate to the Merchant section</li>
                     <li>Enter your token details:
                       <ul className="list-disc list-inside ml-6 mt-1">
                         <li>Token Name (e.g., "Coffee Shop Rewards")</li>
@@ -362,7 +362,7 @@ export default function GuidePage() {
               <Alert>
                 <Wallet className="h-4 w-4" />
                 <AlertDescription>
-                  You'll need a Web3 wallet (MetaMask or Coinbase Wallet) to get started. Install it from your browser's extension store.
+                  Click "Sign In" to get started. You can use email or passkey (no crypto knowledge needed), or connect an existing wallet like MetaMask or Coinbase Wallet.
                 </AlertDescription>
               </Alert>
 
@@ -370,22 +370,23 @@ export default function GuidePage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Wallet className="h-5 w-5" />
-                    Step 1: Set Up Your Wallet
+                    Step 1: Sign In
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Choose the sign-in method that works best for you:
+                  </p>
                   <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-                    <li>Install MetaMask or Coinbase Wallet browser extension</li>
-                    <li>Create a new wallet or import existing one</li>
-                    <li><strong>IMPORTANT:</strong> Save your seed phrase in a safe place - you'll need it to recover your wallet</li>
-                    <li>Add Base network to your wallet (or let Loyal Spark add it automatically)</li>
-                    <li>You're ready to earn tokens! 🎉</li>
+                    <li><strong>Email or Passkey (recommended):</strong> Click "Sign In" and choose Coinbase Smart Wallet. A secure account is created automatically.</li>
+                    <li><strong>Existing Wallet:</strong> Connect MetaMask, Coinbase Wallet, or WalletConnect if you already have one.</li>
+                    <li><strong>Farcaster:</strong> If you're in Warpcast, your wallet connects automatically.</li>
                   </ol>
 
                   <Alert className="mt-4">
                     <Shield className="h-4 w-4" />
                     <AlertDescription>
-                      <strong>Security tip:</strong> Never share your seed phrase or private keys with anyone. Loyal Spark will never ask for them!
+                      <strong>No crypto experience needed!</strong> With email/passkey sign-in, a secure wallet is created for you behind the scenes.
                     </AlertDescription>
                   </Alert>
                 </CardContent>
@@ -400,7 +401,7 @@ export default function GuidePage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-                    <li>Connect your wallet to Loyal Spark</li>
+                    <li>Sign in to Loyal Spark</li>
                     <li>Navigate to the Customer section</li>
                     <li>At the top you'll see <strong>"Your QR Code"</strong> card — tap it to enlarge</li>
                     <li>Show the QR code to a participating merchant</li>

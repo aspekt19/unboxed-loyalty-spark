@@ -191,7 +191,7 @@ The MCP server exposes the same operations as the REST API via standard MCP tool
 ## Getting an API Key
 
 1. Visit [loyalspark.online/merchant](https://loyalspark.online/merchant)
-2. Connect your wallet (Base network)
+2. Sign in with email/passkey or connect your wallet (Base network)
 3. Navigate to **AI Agents** tab
 4. Click **Register New Agent**
 5. Copy your `lsk_...` API key (shown only once)

@@ -4,7 +4,9 @@ A Web3-powered loyalty platform built on **Base Mainnet**, enabling merchants an
 
 ## Overview
 
-Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain. It operates as a **dual-mode platform**: humans interact via the web UI with wallet-based authentication (SIWE), while AI agents interact via REST API or MCP Server — sharing the same database, smart contracts, and tokens.
+Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain. It operates as a **dual-mode platform**: humans interact via the web UI with flexible authentication (email, passkey, or wallet via SIWE), while AI agents interact via REST API or MCP Server — sharing the same database, smart contracts, and tokens.
+
+**Wallet Abstraction**: Users can sign in with email or passkey via Coinbase Smart Wallet — no crypto experience needed. Traditional wallets (MetaMask, WalletConnect) and Farcaster miniapp are also fully supported.
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -65,7 +67,7 @@ Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain
 |-------|-----------|
 | Frontend | React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui |
 | Animations | Framer Motion |
-| Blockchain | Wagmi v2, Viem, RainbowKit |
+| Blockchain | Wagmi v2, Viem, RainbowKit (Coinbase Smart Wallet) |
 | Network | Base Mainnet (Chain ID: 8453) |
 | Smart Contracts | ERC-20 Token Standard (Factory pattern) |
 | Backend | Lovable Cloud (Supabase Edge Functions) |
@@ -95,7 +97,7 @@ Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain
 
 ### Quick Start
 
-1. Go to [loyalspark.online/merchant](https://loyalspark.online/merchant) and connect wallet
+1. Go to [loyalspark.online/merchant](https://loyalspark.online/merchant) and sign in (email, passkey, or wallet)
 2. Open **AI Agents** tab → Register an agent → Copy your API key (`lsk_...`)
 3. Use the key in `x-api-key` header for REST or MCP calls
 
@@ -218,9 +220,8 @@ Payments accepted on-chain in USDC on Base ($1 = 1 USDC).
 
 ### Prerequisites
 - Node.js 18+ or Bun
-- MetaMask, Coinbase Wallet, or any WalletConnect-compatible wallet
-- Base Mainnet configured in your wallet
-- Some ETH on Base for gas fees
+- An email address, passkey, or Web3 wallet (Coinbase Wallet, MetaMask, WalletConnect)
+- Some ETH on Base for gas fees (merchants only)
 
 ### Installation
 
@@ -231,13 +232,13 @@ npm install
 npm run dev
 ```
 
-### Wallet Setup
+### Sign In Options
 
-1. **Network**: Base Mainnet
-2. **Chain ID**: 8453
-3. **RPC URL**: https://mainnet.base.org
-4. **Currency**: ETH
-5. **Explorer**: https://basescan.org
+- **Email / Passkey** (recommended): Click "Sign In" and use Coinbase Smart Wallet — a wallet is created automatically, no crypto knowledge needed
+- **Coinbase Wallet / MetaMask / WalletConnect**: Traditional Web3 wallet connection
+- **Farcaster**: Auto-connects inside Warpcast miniapp
+
+**Network**: Base Mainnet (Chain ID: 8453) | **RPC**: https://mainnet.base.org | **Explorer**: https://basescan.org
 
 ## Project Structure
 
@@ -303,7 +304,7 @@ unboxed-loyalty-spark/
 
 ## Security
 
-- **SIWE Authentication**: Wallet signature-based authentication for humans
+- **Flexible Authentication**: Email/passkey via Coinbase Smart Wallet, or SIWE (Sign-In with Ethereum) for traditional wallets
 - **API Key Auth**: SHA-256 hashed keys with `lsk_` prefix for agents
 - **Row Level Security**: All database tables protected with RLS policies
 - **Scoped Permissions**: Agents operate within granted scopes only
