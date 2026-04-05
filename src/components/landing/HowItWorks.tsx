@@ -52,8 +52,8 @@ const HowItWorks = () => {
               transition={{ duration: 0.5, delay: index * 0.15 }}
             >
               {/* Step number */}
-              <div className="mx-auto mb-4 relative">
-                <div className="h-16 w-16 rounded-2xl bg-gradient-primary flex items-center justify-center mx-auto shadow-glow">
+              <div className="mx-auto mb-4 relative w-16">
+                <div className="h-16 w-16 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-glow">
                   <item.icon className="h-7 w-7 text-white" />
                 </div>
                 <span className="absolute -top-2 -right-2 h-7 w-7 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shadow-md">
