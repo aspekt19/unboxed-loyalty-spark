@@ -224,7 +224,7 @@ export default function GuidePage() {
               <Alert>
                 <Wallet className="h-4 w-4" />
                 <AlertDescription>
-                  First, make sure you have a Web3 wallet installed (MetaMask or Coinbase Wallet) and connected to Base network.
+                  Click "Sign In" to get started. You can use email, passkey, or connect a Web3 wallet like MetaMask or Coinbase Wallet.
                 </AlertDescription>
               </Alert>
 
