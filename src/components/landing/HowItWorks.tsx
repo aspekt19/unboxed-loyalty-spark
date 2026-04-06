@@ -5,20 +5,20 @@ const steps = [
   {
     icon: QrCode,
     step: '1',
-    title: 'Scan & Earn',
-    description: 'Show your QR code at checkout. The merchant scans it and sends loyalty tokens straight to your wallet — no app downloads, no sign-up forms.',
+    title: 'Sign In & Get Your QR',
+    description: 'Create an account with email or wallet in seconds. You get a personal QR code — show it at checkout so the merchant can identify you.',
   },
   {
     icon: Coins,
     step: '2',
-    title: 'Auto-Save',
-    description: 'Every transaction can automatically round up and set aside spare change. Your rewards grow in the background without you lifting a finger.',
+    title: 'Earn Tokens',
+    description: 'After each purchase the merchant sends loyalty tokens to your account. Collect them from different shops — all in one place.',
   },
   {
     icon: TrendingUp,
     step: '3',
-    title: 'Grow in DeFi',
-    description: 'Put your idle loyalty tokens to work. Earn yield through trusted DeFi strategies on Base — your points finally act like real assets.',
+    title: 'Spend on Rewards',
+    description: 'Browse available rewards, exchange your tokens for discounts, free products or exclusive offers. Show the voucher code at your next visit — done.',
   },
 ];
 
