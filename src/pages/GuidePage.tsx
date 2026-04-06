@@ -395,6 +395,85 @@ export default function GuidePage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
+                    <Key className="h-5 w-5" />
+                    What is a Wallet Address?
+                  </CardTitle>
+                  <CardDescription>Your unique ID in the loyalty system</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    A wallet address is your unique identifier in Loyal Spark — like an account number in a bank, but for loyalty tokens. 
+                    It looks like a long string of letters and numbers starting with <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">0x</code>, 
+                    for example: <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono break-all">0x5c12...6205</code>.
+                  </p>
+
+                  <div className="space-y-3">
+                    <div className="flex gap-3">
+                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                        1
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-sm mb-0.5">How is it created?</h4>
+                        <p className="text-sm text-muted-foreground">
+                          When you sign in with email or passkey, a secure wallet is created for you automatically by Coinbase. 
+                          You don't need to install any apps or know anything about crypto — it just works.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                        2
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-sm mb-0.5">What is it used for?</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Your address is where merchants send loyalty tokens when you make a purchase. 
+                          It's also encoded in the QR code that you show at checkout. Think of it as your "loyalty card number".
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                        3
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-sm mb-0.5">Where can I see it?</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Your wallet address is displayed under the QR code in the <strong>Loyalty</strong> tab. 
+                          You can also tap the copy button next to it to share it with a merchant directly.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                        4
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-sm mb-0.5">Is it safe to share?</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Yes! Your wallet address is like a public email address — anyone can send tokens to it, but only you can spend them. 
+                          Sharing your address or QR code only allows others to <em>send</em> you tokens, not take anything from your wallet.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Alert className="mt-2">
+                    <Shield className="h-4 w-4" />
+                    <AlertDescription>
+                      <strong>Your wallet is secured by Coinbase.</strong> Your private keys are protected with multi-party computation (MPC) technology — 
+                      no single party (including Coinbase or Loyal Spark) can access your funds without your authorization.
+                    </AlertDescription>
+                  </Alert>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
                     <Coins className="h-5 w-5" />
                     Step 2: Earn Loyalty Tokens
                   </CardTitle>

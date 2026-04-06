@@ -27,6 +27,8 @@ export function WalletQRCode() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const shortAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
+
   return (
     <Card className="border-2 border-dashed border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10">
       <CardHeader className="pb-3">
@@ -80,10 +82,17 @@ export function WalletQRCode() {
           </DialogContent>
         </Dialog>
 
-        <Button variant="outline" size="sm" onClick={handleCopy} className="gap-2 text-xs">
-          {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-          {copied ? 'Copied!' : 'Copy Address'}
-        </Button>
+        {/* Visible wallet address */}
+        <div className="w-full bg-background/80 rounded-lg border px-3 py-2 flex items-center gap-2">
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] text-muted-foreground mb-0.5">Your wallet address</p>
+            <p className="text-xs font-mono text-foreground truncate sm:hidden">{shortAddress}</p>
+            <p className="text-xs font-mono text-foreground break-all hidden sm:block">{address}</p>
+          </div>
+          <Button variant="ghost" size="icon" onClick={handleCopy} className="h-7 w-7 flex-shrink-0">
+            {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
