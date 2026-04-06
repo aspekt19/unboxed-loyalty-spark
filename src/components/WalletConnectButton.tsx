@@ -249,7 +249,11 @@ export function WalletConnectButton() {
           </DialogHeader>
 
           <div className="mt-4 space-y-2">
-            {connectors.map((connector) => {
+            {connectors
+              .filter((connector, index, self) =>
+                self.findIndex((c) => c.name === connector.name) === index
+              )
+              .map((connector) => {
               // Friendly names for connectors
               const friendlyName = connector.name === 'Coinbase Wallet' 
                 ? 'Continue with Email or Passkey'
