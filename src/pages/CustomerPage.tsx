@@ -78,11 +78,13 @@ const CustomerPage = () => {
         <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
           <div className="container mx-auto px-2 sm:px-3 py-2 flex justify-between items-center gap-1.5 sm:gap-2">
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-shrink">
-              <Link to="/">
-                <Button variant="ghost" size="icon" className="hover:bg-secondary h-7 w-7 sm:h-8 sm:w-8">
-                  <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                </Button>
-              </Link>
+              {!isNativeMode && (
+                <Link to="/">
+                  <Button variant="ghost" size="icon" className="hover:bg-secondary h-7 w-7 sm:h-8 sm:w-8">
+                    <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  </Button>
+                </Link>
+              )}
               <img 
                 src="/new-favicon.png" 
                 alt="Loyal Spark" 
