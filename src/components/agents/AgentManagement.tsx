@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Bot, Plus, Key, Copy, Check, RefreshCw, Power, PowerOff, Eye, FileText, ExternalLink, Cpu, Wallet, Loader2, BookOpen, Trash2 } from 'lucide-react';
 import {
   AlertDialog,
@@ -96,6 +97,7 @@ export function AgentManagement() {
       setName('');
       setDescription('');
       setSelectedScopes(['read']);
+      setShowCreate(false);
     } catch (err: any) {
       toast.error(err.message || 'Failed to create agent');
     } finally {
@@ -183,26 +185,33 @@ export function AgentManagement() {
 
   return (
     <div className="space-y-6">
-      {/* New API Key Alert */}
-      {newApiKey && (
-        <Alert className="border-primary bg-primary/5">
-          <Key className="h-4 w-4" />
-          <AlertDescription className="space-y-3">
-            <p className="font-semibold">⚠️ Save your API key now — it won't be shown again!</p>
+      {/* API Key Dialog - impossible to miss */}
+      <Dialog open={!!newApiKey} onOpenChange={(open) => { if (!open) setNewApiKey(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Key className="h-5 w-5 text-primary" />
+              Save Your API Key
+            </DialogTitle>
+            <DialogDescription>
+              This key will only be shown once. Copy it now and store it securely.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <code className="flex-1 p-2 bg-muted rounded text-xs break-all font-mono">
+              <code className="flex-1 p-3 bg-muted rounded-md text-xs break-all font-mono border">
                 {newApiKey}
               </code>
               <Button variant="outline" size="icon" onClick={copyKey}>
                 {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
               </Button>
             </div>
-            <Button variant="secondary" size="sm" onClick={() => setNewApiKey(null)}>
-              I've saved it
+            <Button className="w-full" onClick={() => setNewApiKey(null)}>
+              I've saved the key
             </Button>
-          </AlertDescription>
-        </Alert>
-      )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* API Docs & Agent Card Links */}
       <Card className="border-primary/20 bg-primary/5">
