@@ -2,10 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAccount } from 'wagmi';
 import { toast } from 'sonner';
+import { useAdminStatus } from './useAdminStatus';
 
 export const usePremiumStatus = () => {
   const { address } = useAccount();
   const queryClient = useQueryClient();
+  const { isAdmin } = useAdminStatus();
 
   const { data: premiumStatus, isLoading } = useQuery({
     queryKey: ['premium-status', address],
@@ -74,9 +76,12 @@ export const usePremiumStatus = () => {
     },
   });
 
-  const isPremium = premiumStatus?.subscription_status === 'active' && 
-                   premiumStatus?.is_active === true &&
-                   (!premiumStatus?.expires_at || new Date(premiumStatus.expires_at) > new Date());
+  // Admins always have full premium access without any restrictions
+  const isPremium = isAdmin || (
+    premiumStatus?.subscription_status === 'active' && 
+    premiumStatus?.is_active === true &&
+    (!premiumStatus?.expires_at || new Date(premiumStatus.expires_at) > new Date())
+  );
 
   return {
     isPremium,
