@@ -26,6 +26,8 @@ const CustomerPage = () => {
   const [activeTab, setActiveTab] = useState('loyalty');
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
+  const location = useLocation();
+  const isNativeMode = location.pathname.startsWith('/native/');
 
   useEffect(() => {
     initializeCleanState();
