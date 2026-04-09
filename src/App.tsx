@@ -75,6 +75,9 @@ function AnimatedRoutes() {
         <Route path="/guide" element={<GuidePage />} />
         <Route path="/install" element={<InstallPage />} />
         <Route path="/api-docs" element={<ApiDocsPage />} />
+        {/* Native app entry points (Capacitor) */}
+        <Route path="/native/shopper" element={<NativeShopperPage />} />
+        <Route path="/native/business" element={<NativeBusinessPage />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
