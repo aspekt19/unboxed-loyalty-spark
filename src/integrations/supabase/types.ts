@@ -259,6 +259,51 @@ export type Database = {
           },
         ]
       }
+      agent_reports: {
+        Row: {
+          action_items: Json | null
+          agent_name: string
+          agent_role: string
+          content: string
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          priority: string | null
+          report_type: string
+          reviewed_at: string | null
+          status: string | null
+          title: string
+        }
+        Insert: {
+          action_items?: Json | null
+          agent_name: string
+          agent_role: string
+          content: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          priority?: string | null
+          report_type: string
+          reviewed_at?: string | null
+          status?: string | null
+          title: string
+        }
+        Update: {
+          action_items?: Json | null
+          agent_name?: string
+          agent_role?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          priority?: string | null
+          report_type?: string
+          reviewed_at?: string | null
+          status?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       agent_usage: {
         Row: {
           api_calls_count: number | null

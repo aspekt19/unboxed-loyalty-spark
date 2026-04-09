@@ -848,10 +848,113 @@ echo "5. Зарегистрируй в OpenServ → Agent Management → Add Age
 
 ---
 
+## 10. 🔄 Developer Bridge — Обратная связь с Lovable
+
+Все агенты могут отправлять отчёты и рекомендации разработчику (Lovable) через endpoint `agent-reports`.
+
+### Как это работает
+
+```
+OpenServ Agents ──POST──> agent-reports (Edge Function) ──> agent_reports (DB)
+                                                               │
+User в Lovable: "Проверь что агенты нашли" ──> Lovable читает ──┘
+                                                               │
+Lovable реализует рекомендации ──> коммит в проект ────────────┘
+```
+
+### Capability `send_to_developer` (добавь в каждого агента)
+
+```typescript
+// Добавь в КАЖДОГО агента после остальных capabilities
+const REPORTS_URL = process.env.LOYAL_SPARK_REPORTS_URL
+  || "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-reports";
+
+agent.addCapability({
+  name: "send_to_developer",
+  description: "Отправить отчёт или рекомендацию разработчику (Lovable) для реализации",
+  schema: z.object({
+    report_type: z.enum([
+      "seo_audit",       // результат SEO-аудита
+      "growth_idea",     // маркетинговая идея
+      "data_report",     // аналитический отчёт
+      "anomaly",         // обнаруженная аномалия
+      "task",            // конкретная задача на разработку
+      "recommendation",  // общая рекомендация
+      "weekly_report",   // еженедельный отчёт
+    ]),
+    title: z.string().describe("Заголовок отчёта"),
+    content: z.string().describe("Детальное содержание: что нашёл, что рекомендуешь"),
+    priority: z.enum(["low", "medium", "high", "critical"]).default("medium"),
+    action_items: z.array(z.string()).optional().describe("Конкретные задачи для разработчика"),
+  }),
+  async run({ args }) {
+    try {
+      const res = await fetch(REPORTS_URL, {
+        method: "POST",
+        headers: {
+          "x-api-key": process.env.LOYAL_SPARK_API_KEY!,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          agent_role: "AGENT_ROLE_HERE", // замени на ceo/seo/growth/data
+          report_type: args.report_type,
+          title: args.title,
+          content: args.content,
+          priority: args.priority,
+          action_items: args.action_items || [],
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        return `✅ Отчёт "${args.title}" отправлен разработчику (ID: ${data.report_id}). Приоритет: ${args.priority}.`;
+      }
+      return `❌ Ошибка отправки: ${data.error}`;
+    } catch (error) {
+      return `❌ Не удалось отправить отчёт: ${error}`;
+    }
+  },
+});
+```
+
+### API эндпоинты для agent-reports
+
+| Метод | Описание | Авторизация |
+|-------|----------|-------------|
+| `POST /agent-reports` | Отправить отчёт | `x-api-key: lsk_*` |
+| `GET /agent-reports?status=new&limit=20` | Прочитать отчёты | JWT или API key |
+| `PATCH /agent-reports` | Обновить статус отчёта | JWT (authenticated) |
+
+### Статусы отчётов
+
+- `new` — только поступил, ждёт ревью
+- `reviewed` — разработчик прочитал
+- `in_progress` — разработчик работает над задачей
+- `done` — реализовано
+- `dismissed` — отклонено
+
+### Пример использования в чате с Lovable
+
+```
+Ты: "Проверь что агенты нашли"
+Lovable: читает GET /agent-reports?status=new → показывает список
+Ты: "Реализуй рекомендацию #3 от SEO-агента"
+Lovable: реализует → PATCH статус на done
+```
+
+### Добавь в .env каждого агента
+
+```env
+LOYAL_SPARK_REPORTS_URL=https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-reports
+```
+
+---
+
 ## Дорожная карта
 
 - [x] Фаза 1: CEO Agent с реальными метриками
+- [x] Фаза 1.5: Developer Bridge (agent-reports)
 - [ ] Фаза 2: SEO + Growth с аудитом и контентом
 - [ ] Фаза 3: Data Analyst с еженедельными отчётами
-- [ ] Фаза 4: Workflow CEO→SEO→Growth в OpenServ
+- [ ] Фаза 4: Workflow CEO→SEO→Growth→Developer в OpenServ
 - [ ] Фаза 5: Деплой на Railway + мониторинг
