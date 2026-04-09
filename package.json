@@ -12,6 +12,10 @@
   },
   "dependencies": {
     "@blackbox-vision/react-qr-reader": "^5.0.0",
+    "@capacitor/android": "^8.3.0",
+    "@capacitor/cli": "^8.3.0",
+    "@capacitor/core": "^8.3.0",
+    "@capacitor/ios": "^8.3.0",
     "@farcaster/auth-kit": "^0.8.1",
     "@farcaster/core": "^0.18.9",
     "@farcaster/frame-sdk": "^0.1.12",
