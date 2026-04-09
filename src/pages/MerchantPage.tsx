@@ -16,6 +16,8 @@ import { useCallback } from 'react';
 const MerchantPage = () => {
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
+  const location = useLocation();
+  const isNativeMode = location.pathname.startsWith('/native/');
 
   const handleRefresh = useCallback(async () => {
     await queryClient.invalidateQueries();
