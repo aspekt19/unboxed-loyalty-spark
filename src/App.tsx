@@ -18,6 +18,8 @@ import InstallPage from "./pages/InstallPage";
 import PremiumPage from "./pages/PremiumPage";
 import ApiDocsPage from "./pages/ApiDocsPage";
 import NotFound from "./pages/NotFound";
+import NativeShopperPage from "./pages/NativeShopperPage";
+import NativeBusinessPage from "./pages/NativeBusinessPage";
 import { AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
 import { migrateAllData } from "./lib/migrateLocalStorageData";
