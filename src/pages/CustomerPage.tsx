@@ -6,7 +6,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { PremiumStatusBadge } from '@/components/PremiumStatusBadge';
 import { PremiumExpirationAlert } from '@/components/PremiumExpirationAlert';
 import { Gift, ArrowLeft, TrendingUp, Store } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PageTransition from '@/components/PageTransition';
