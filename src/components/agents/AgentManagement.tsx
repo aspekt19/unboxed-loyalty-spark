@@ -97,6 +97,7 @@ export function AgentManagement() {
       setName('');
       setDescription('');
       setSelectedScopes(['read']);
+      setShowCreate(false);
     } catch (err: any) {
       toast.error(err.message || 'Failed to create agent');
     } finally {
