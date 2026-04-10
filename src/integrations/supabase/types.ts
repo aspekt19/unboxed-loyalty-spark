@@ -1590,6 +1590,10 @@ export type Database = {
         Args: { p_request_id: string; p_wallet_address: string }
         Returns: boolean
       }
+      cancel_stale_marketplace_offers: {
+        Args: { p_max_age_days?: number }
+        Returns: number
+      }
       check_expiring_subscriptions: { Args: never; Returns: undefined }
       check_program_expiration: { Args: never; Returns: undefined }
       generate_referral_code: {

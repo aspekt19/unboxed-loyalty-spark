@@ -28,8 +28,18 @@ import {
 } from "lucide-react";
 
 export default function GuidePage() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://loyalspark.online/" },
+      { "@type": "ListItem", "position": 2, "name": "Guide", "item": "https://loyalspark.online/guide" }
+    ]
+  };
+
   return (
     <PageTransition>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="min-h-screen bg-background">
         <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
           <div className="container mx-auto px-4 py-3 flex items-center gap-4">
