@@ -120,14 +120,39 @@ function createMcpServer(agent: any) {
   });
 
   mcpServer.tool("list_rewards", {
-    description: "List rewards for a loyalty program by token_address",
+    description: "List rewards for a loyalty program by token_address. Includes redemption metrics (total vouchers issued, redeemed, and last-30-day counts) for each reward.",
     inputSchema: { type: "object" as const, properties: { token_address: { type: "string", description: "Token contract address (0x...)" } }, required: ["token_address"] },
     handler: async ({ token_address }: any) => {
       const err = authGuard(["read"]);
       if (err) return T(err);
-      const { data, error } = await db().from("rewards").select("id,name,description,cost,is_active,created_at").eq("token_address", token_address.toLowerCase()).eq("merchant_address", agent.ownerAddress);
+      const d = db();
+      const ta = token_address.toLowerCase();
+      const { data: rewards, error } = await d.from("rewards").select("id,name,description,cost,is_active,created_at").eq("token_address", ta).eq("merchant_address", agent.ownerAddress);
       if (error) return T(JSON.stringify({ error: error.message }));
-      return T(JSON.stringify({ rewards: data || [] }));
+      if (!rewards || rewards.length === 0) return T(JSON.stringify({ rewards: [] }));
+
+      // Fetch voucher counts per reward for redemption metrics
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
+      const rewardIds = rewards.map((r: any) => r.id);
+      const { data: vouchers } = await d.from("vouchers").select("reward_id,status,activated_at").in("reward_id", rewardIds);
+
+      const metrics: Record<string, { total: number; redeemed: number; last_30d: number }> = {};
+      for (const rid of rewardIds) metrics[rid] = { total: 0, redeemed: 0, last_30d: 0 };
+      if (vouchers) {
+        for (const v of vouchers) {
+          const m = metrics[v.reward_id];
+          if (!m) continue;
+          m.total++;
+          if (v.status === "used") m.redeemed++;
+          if (v.activated_at >= thirtyDaysAgo) m.last_30d++;
+        }
+      }
+
+      const enriched = rewards.map((r: any) => ({
+        ...r,
+        redemption_metrics: metrics[r.id] || { total: 0, redeemed: 0, last_30d: 0 },
+      }));
+      return T(JSON.stringify({ rewards: enriched }));
     },
   });
 

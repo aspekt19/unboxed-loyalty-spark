@@ -302,10 +302,19 @@
       "transfer_loyalty_tokens",
       "get_token_balance",
       "get_program_analytics",
+      "get_platform_stats",
       "list_marketplace_offers",
+      "cancel_stale_offers",
       "redeem_reward",
       "use_voucher",
-      "check_voucher_status"
+      "check_voucher_status",
+      "create_personalized_offer",
+      "update_reward_status",
+      "export_customers",
+      "send_report",
+      "list_my_reports",
+      "update_report_status",
+      "delete_report"
     ]
   },
   "mpp": {
