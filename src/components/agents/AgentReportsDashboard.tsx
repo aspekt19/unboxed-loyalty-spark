@@ -5,8 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
-import { FileText, CheckCircle, Clock, AlertTriangle, Eye, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
+import { FileText, CheckCircle, Clock, AlertTriangle, Eye, ChevronDown, ChevronUp, RefreshCw, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Json } from '@/integrations/supabase/types';
 
@@ -25,13 +26,6 @@ interface AgentReport {
   reviewed_at: string | null;
 }
 
-const priorityConfig: Record<string, { color: string; icon: typeof AlertTriangle }> = {
-  critical: { color: 'destructive', icon: AlertTriangle },
-  high: { color: 'destructive', icon: AlertTriangle },
-  medium: { color: 'default', icon: Clock },
-  low: { color: 'secondary', icon: Clock },
-};
-
 const statusConfig: Record<string, string> = {
   new: 'default',
   reviewed: 'secondary',
@@ -43,6 +37,8 @@ const statusConfig: Record<string, string> = {
 export function AgentReportsDashboard() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isDeleting, setIsDeleting] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: reports = [], isLoading, refetch } = useQuery({
@@ -78,6 +74,80 @@ export function AgentReportsDashboard() {
     }
   };
 
+  const deleteReport = async (reportId: string) => {
+    try {
+      const { error } = await supabase
+        .from('agent_reports')
+        .delete()
+        .eq('id', reportId);
+      if (error) throw error;
+      toast.success('Report deleted');
+      if (expandedId === reportId) setExpandedId(null);
+      selectedIds.delete(reportId);
+      setSelectedIds(new Set(selectedIds));
+      queryClient.invalidateQueries({ queryKey: ['agent-reports'] });
+    } catch {
+      toast.error('Failed to delete report');
+    }
+  };
+
+  const deleteSelected = async () => {
+    if (selectedIds.size === 0) return;
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('agent_reports')
+        .delete()
+        .in('id', Array.from(selectedIds));
+      if (error) throw error;
+      toast.success(`${selectedIds.size} report(s) deleted`);
+      setSelectedIds(new Set());
+      setExpandedId(null);
+      queryClient.invalidateQueries({ queryKey: ['agent-reports'] });
+    } catch {
+      toast.error('Failed to delete reports');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const deleteAllVisible = async () => {
+    if (reports.length === 0) return;
+    setIsDeleting(true);
+    try {
+      const ids = reports.map(r => r.id);
+      const { error } = await supabase
+        .from('agent_reports')
+        .delete()
+        .in('id', ids);
+      if (error) throw error;
+      toast.success(`${ids.length} report(s) deleted`);
+      setSelectedIds(new Set());
+      setExpandedId(null);
+      queryClient.invalidateQueries({ queryKey: ['agent-reports'] });
+    } catch {
+      toast.error('Failed to delete reports');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const toggleSelect = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedIds(next);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === reports.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(reports.map(r => r.id)));
+    }
+  };
+
   const roleColors: Record<string, string> = {
     ceo: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
     seo: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
@@ -96,14 +166,60 @@ export function AgentReportsDashboard() {
               <CardDescription>Reports from your AI agent team</CardDescription>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
-            <RefreshCw className="h-4 w-4 mr-1" />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            {selectedIds.size > 0 && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" disabled={isDeleting}>
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Delete ({selectedIds.size})
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete selected reports?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete {selectedIds.size} selected report(s). This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={deleteSelected}>Delete</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            {reports.length > 0 && selectedIds.size === 0 && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm" disabled={isDeleting}>
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Clear All
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete all visible reports?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete all {reports.length} report(s) currently shown. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={deleteAllVisible}>Delete All</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Refresh
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
-        <Tabs value={statusFilter} onValueChange={setStatusFilter}>
+        <Tabs value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setSelectedIds(new Set()); }}>
           <TabsList className="mb-4">
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="new">New</TabsTrigger>
@@ -111,6 +227,17 @@ export function AgentReportsDashboard() {
             <TabsTrigger value="in_progress">In Progress</TabsTrigger>
             <TabsTrigger value="done">Done</TabsTrigger>
           </TabsList>
+
+          {reports.length > 0 && (
+            <div className="flex items-center gap-2 mb-3">
+              <Button variant="ghost" size="sm" onClick={toggleSelectAll} className="text-xs h-7">
+                {selectedIds.size === reports.length ? 'Deselect All' : 'Select All'}
+              </Button>
+              {selectedIds.size > 0 && (
+                <span className="text-xs text-muted-foreground">{selectedIds.size} selected</span>
+              )}
+            </div>
+          )}
 
           <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
             {isLoading ? (
@@ -126,35 +253,45 @@ export function AgentReportsDashboard() {
             ) : (
               reports.map((report) => {
                 const isExpanded = expandedId === report.id;
+                const isSelected = selectedIds.has(report.id);
                 const actionItems = Array.isArray(report.action_items) ? report.action_items as string[] : [];
 
                 return (
                   <div
                     key={report.id}
-                    className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
+                    className={`border rounded-lg p-4 transition-colors ${isSelected ? 'bg-primary/5 border-primary/30' : 'hover:bg-muted/50'}`}
                   >
                     <div
                       className="flex items-start justify-between cursor-pointer"
                       onClick={() => setExpandedId(isExpanded ? null : report.id)}
                     >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${roleColors[report.agent_role.toLowerCase()] || 'bg-muted text-muted-foreground'}`}>
-                            {report.agent_role}
-                          </span>
-                          <Badge variant="outline" className="text-xs">
-                            {report.report_type.replace(/_/g, ' ')}
-                          </Badge>
-                          {report.priority && (
-                            <Badge variant={report.priority === 'critical' || report.priority === 'high' ? 'destructive' : 'secondary'} className="text-xs">
-                              {report.priority}
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => {}}
+                          onClick={(e) => toggleSelect(report.id, e)}
+                          className="mt-1 h-4 w-4 rounded border-border cursor-pointer accent-primary"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${roleColors[report.agent_role.toLowerCase()] || 'bg-muted text-muted-foreground'}`}>
+                              {report.agent_role}
+                            </span>
+                            <Badge variant="outline" className="text-xs">
+                              {report.report_type.replace(/_/g, ' ')}
                             </Badge>
-                          )}
+                            {report.priority && (
+                              <Badge variant={report.priority === 'critical' || report.priority === 'high' ? 'destructive' : 'secondary'} className="text-xs">
+                                {report.priority}
+                              </Badge>
+                            )}
+                          </div>
+                          <h4 className="font-medium text-sm truncate">{report.title}</h4>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {report.agent_name} · {report.created_at ? format(new Date(report.created_at), 'MMM d, HH:mm') : ''}
+                          </p>
                         </div>
-                        <h4 className="font-medium text-sm truncate">{report.title}</h4>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {report.agent_name} · {report.created_at ? format(new Date(report.created_at), 'MMM d, HH:mm') : ''}
-                        </p>
                       </div>
                       <div className="flex items-center gap-2 ml-2">
                         <Badge variant={(statusConfig[report.status || 'new'] || 'default') as any} className="text-xs">
@@ -165,7 +302,7 @@ export function AgentReportsDashboard() {
                     </div>
 
                     {isExpanded && (
-                      <div className="mt-4 space-y-3 border-t pt-3">
+                      <div className="mt-4 space-y-3 border-t pt-3 ml-7">
                         <div className="prose prose-sm dark:prose-invert max-w-none">
                           <p className="text-sm whitespace-pre-wrap">{report.content}</p>
                         </div>
@@ -197,6 +334,25 @@ export function AgentReportsDashboard() {
                               <CheckCircle className="h-3 w-3 mr-1" /> Done
                             </Button>
                           )}
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive">
+                                <Trash2 className="h-3 w-3 mr-1" /> Delete
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete this report?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  "{report.title}" will be permanently deleted.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => deleteReport(report.id)}>Delete</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </div>
                     )}
