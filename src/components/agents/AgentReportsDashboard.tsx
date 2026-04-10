@@ -112,7 +112,7 @@ export function AgentReportsDashboard() {
             <TabsTrigger value="done">Done</TabsTrigger>
           </TabsList>
 
-          <div className="space-y-3">
+          <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
             {isLoading ? (
               <p className="text-sm text-muted-foreground text-center py-8">Loading reports...</p>
             ) : reports.length === 0 ? (

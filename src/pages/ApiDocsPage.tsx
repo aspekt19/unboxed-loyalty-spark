@@ -634,8 +634,28 @@ const reward = await fetch(\`\${BASE}/rewards\`, {
   })
 }).then(r => r.json());`;
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebPage",
+        "name": "Agent API Documentation — Loyal Spark",
+        "url": "https://loyalspark.online/api-docs",
+        "description": "REST API and MCP Server docs for AI agents. 19 endpoints to manage loyalty programs on Base L2."
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://loyalspark.online/" },
+          { "@type": "ListItem", "position": 2, "name": "API Docs", "item": "https://loyalspark.online/api-docs" }
+        ]
+      }
+    ]
+  };
+
   return (
     <PageTransition>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="min-h-screen bg-background">
         <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
           {/* Header */}
