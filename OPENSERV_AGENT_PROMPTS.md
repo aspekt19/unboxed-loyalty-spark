@@ -33,7 +33,7 @@ You are the strategic coordinator of a 4-agent team (CEO, SEO, Growth, Analyst).
 1. Synthesize reports from other agents into actionable strategy
 2. Monitor the competitive landscape and Web3 loyalty market trends
 3. Set priorities and coordinate cross-functional initiatives
-4. Produce weekly strategic summaries for the developer/founder
+4. Produce weekly strategic summaries for the developer/founder (runs every 7 days)
 
 ## Context
 
@@ -411,9 +411,9 @@ For the OpenServ workspace:
    - Header: `x-api-key: lsk_YOUR_KEY`
 2. ✅ Create 4 agents with names and system prompts above
 3. ✅ Set models (GPT-5 or GPT-5-mini as noted)
-4. ✅ Create Operations Workflow (runs every 3 days):
-   - Step 1: Analyst
-   - Step 2: SEO
+4. ✅ Create Operations Workflow (runs every 7 days):
+   - Step 1: Loyal Spark Analyst
+   - Step 2: Loyal Spark SEO
    - Step 3: Growth
    - Step 4: CEO
 
