@@ -185,6 +185,22 @@ export function AgentManagement() {
     }
   };
 
+  const handleRename = async (agentId: string) => {
+    if (!editNameValue.trim()) return;
+    try {
+      const { data, error } = await supabase.functions.invoke('agent-api-key', {
+        body: { action: 'rename', agent_id: agentId, new_name: editNameValue.trim() },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success('Agent renamed');
+      queryClient.invalidateQueries({ queryKey: ['agents'] });
+      setEditingNameId(null);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to rename');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* API Key Dialog - impossible to miss */}
