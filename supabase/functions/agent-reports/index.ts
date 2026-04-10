@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
       const hash = await hashApiKey(apiKey);
       const { data: agent } = await serviceClient
         .from("agent_registry")
-        .select("id, name")
+        .select("id, name, owner_address")
         .eq("api_key_hash", hash)
         .eq("is_active", true)
         .single();
@@ -139,6 +139,7 @@ Deno.serve(async (req) => {
           priority: validPriorities.includes(priority) ? priority : "medium",
           action_items: action_items || [],
           metadata: metadata || {},
+          owner_address: agent.owner_address,
         })
         .select("id, created_at")
         .single();
