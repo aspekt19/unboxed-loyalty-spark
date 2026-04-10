@@ -68,8 +68,11 @@ Target users: Small-to-medium merchants (cafes, shops, e-commerce) and AI agent 
 - `update_reward_status` — Activate or deactivate rewards in the catalog
 - `create_reward` — Add new rewards to a program
 
-**Reporting tool:**
+**Report management tools:**
 - `send_report` — Submit reports to the developer dashboard
+- `list_my_reports` — List your previously submitted reports, filter by status (new/reviewed/done)
+- `update_report_status` — Mark a report as 'reviewed' or 'done' when action items are completed
+- `delete_report` — Delete reports that are no longer relevant
 
 ## Workflow
 
