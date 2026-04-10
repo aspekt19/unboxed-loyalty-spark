@@ -7,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Bot, Plus, Key, Copy, Check, RefreshCw, Power, PowerOff, Eye, FileText, ExternalLink, Cpu, Wallet, Loader2, BookOpen, Trash2 } from 'lucide-react';
+import { Bot, Plus, Key, Copy, Check, RefreshCw, Power, PowerOff, Eye, FileText, ExternalLink, Cpu, Wallet, Loader2, BookOpen, Trash2, Pencil } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,6 +64,8 @@ export function AgentManagement() {
   const [copied, setCopied] = useState(false);
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [creatingWalletFor, setCreatingWalletFor] = useState<string | null>(null);
+  const [editingNameId, setEditingNameId] = useState<string | null>(null);
+  const [editNameValue, setEditNameValue] = useState('');
 
   const { data: agents = [], isLoading } = useQuery({
     queryKey: ['agents', address],
