@@ -725,6 +725,51 @@ function createMcpServer(agent: any) {
     },
   });
 
+  mcpServer.tool("export_customers", {
+    description: "Export customer data for a specific loyalty program. Returns wallet addresses, voucher stats, balances, and tier info. Use for analytics, segmentation, and personalized offers.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        token_address: { type: "string", description: "Token address of the loyalty program" },
+      },
+      required: ["token_address"],
+    },
+    handler: async ({ token_address }: any) => {
+      const err = authGuard(["read"]);
+      if (err) return T(err);
+      const d = db();
+      // Verify ownership
+      const { data: program } = await d.from("loyalty_programs").select("id").eq("token_address", token_address).ilike("merchant_address", agent.ownerAddress).single();
+      if (!program) return T('{"error":"Program not found or not owned by you"}');
+
+      // Get voucher data
+      const { data: vouchers } = await d.from("vouchers").select("customer_address, activated_at, status, cost").eq("token_address", token_address).eq("merchant_address", agent.ownerAddress);
+
+      const customerMap = new Map<string, any>();
+      for (const v of vouchers || []) {
+        const c = customerMap.get(v.customer_address) || { wallet: v.customer_address, vouchers_total: 0, vouchers_used: 0, tokens_spent: 0, first_activity: v.activated_at, last_activity: v.activated_at };
+        c.vouchers_total++;
+        if (v.status === "used") c.vouchers_used++;
+        c.tokens_spent += v.cost || 0;
+        if (v.activated_at < c.first_activity) c.first_activity = v.activated_at;
+        if (v.activated_at > c.last_activity) c.last_activity = v.activated_at;
+        customerMap.set(v.customer_address, c);
+      }
+
+      const wallets = Array.from(customerMap.keys());
+      const { data: tiers } = await d.from("customer_tier_status").select("customer_address, current_balance, current_tier_id").eq("token_address", token_address).in("customer_address", wallets.length ? wallets : ["__none__"]);
+      const { data: tierDefs } = await d.from("customer_tiers").select("id, tier_name").eq("token_address", token_address);
+      const tierNameMap = new Map((tierDefs || []).map((t: any) => [t.id, t.tier_name]));
+
+      const customers = Array.from(customerMap.values()).map((c: any) => {
+        const ts = (tiers || []).find((t: any) => t.customer_address === c.wallet);
+        return { ...c, current_balance: ts?.current_balance || 0, tier: ts?.current_tier_id ? tierNameMap.get(ts.current_tier_id) || "Unknown" : "None" };
+      }).sort((a: any, b: any) => b.tokens_spent - a.tokens_spent);
+
+      return T(JSON.stringify({ token_address, total_customers: customers.length, customers }));
+    },
+  });
+
   return mcpServer;
 }
 
