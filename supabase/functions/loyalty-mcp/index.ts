@@ -444,6 +444,152 @@ function createMcpServer(agent: any) {
     },
   });
 
+  // ── ACTION TOOLS ──────────────────────────────────────────────
+
+  mcpServer.tool("cancel_stale_offers", {
+    description: "Cancel marketplace offers that have been active for more than N days with no completions. Admin-only action tool.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        max_age_days: { type: "number", description: "Cancel offers older than this many days (default: 14)" },
+      },
+    },
+    handler: async ({ max_age_days }: any) => {
+      const err = authGuard(["read"]);
+      if (err) return T(err);
+      if (!ADMIN_ADDRESSES.includes(agent.ownerAddress.toLowerCase())) {
+        return T(JSON.stringify({ error: "Admin-only action" }));
+      }
+      const days = max_age_days || 14;
+      const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+      const d = db();
+
+      // Find stale offers
+      const { data: stale } = await d.from("marketplace_offers")
+        .select("id, creator_address, offer_token_address, offer_amount, created_at")
+        .eq("status", "active")
+        .lt("created_at", cutoff);
+
+      if (!stale || stale.length === 0) {
+        return T(JSON.stringify({ message: "No stale offers found", cancelled: 0 }));
+      }
+
+      // Cancel them
+      const ids = stale.map((o: any) => o.id);
+      const { error: updateErr } = await d.from("marketplace_offers")
+        .update({ status: "cancelled", updated_at: new Date().toISOString() })
+        .in("id", ids);
+
+      if (updateErr) return T(JSON.stringify({ error: updateErr.message }));
+
+      // Log activity
+      await d.from("agent_activity_log").insert({
+        agent_id: agent.agentId,
+        action: "cancel_stale_offers",
+        request_body: { max_age_days: days, cancelled_ids: ids },
+        response_status: 200,
+      });
+
+      return T(JSON.stringify({
+        message: `Cancelled ${ids.length} stale offer(s) older than ${days} days`,
+        cancelled: ids.length,
+        offer_ids: ids,
+      }));
+    },
+  });
+
+  mcpServer.tool("create_personalized_offer", {
+    description: "Create a personalized offer for a specific customer. Use when analytics reveal engagement patterns (e.g., inactive customers, high-value segments).",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        token_address: { type: "string", description: "Token contract address" },
+        customer_address: { type: "string", description: "Customer wallet address" },
+        title: { type: "string", description: "Offer title (e.g., 'Welcome back! 20% bonus tokens')" },
+        description: { type: "string", description: "Offer description" },
+        bonus_tokens: { type: "number", description: "Bonus tokens to award" },
+        discount_percentage: { type: "number", description: "Discount percentage (0-100)" },
+        valid_days: { type: "number", description: "How many days the offer is valid (default: 7)" },
+      },
+      required: ["token_address", "customer_address", "title"],
+    },
+    handler: async ({ token_address, customer_address, title, description, bonus_tokens, discount_percentage, valid_days }: any) => {
+      const err = authGuard(["manage_rewards"]);
+      if (err) return T(err);
+      const d = db();
+
+      // Verify program ownership
+      const { data: prog } = await d.from("loyalty_programs")
+        .select("id,merchant_address")
+        .eq("token_address", token_address.toLowerCase())
+        .eq("merchant_address", agent.ownerAddress)
+        .single();
+      if (!prog) return T(JSON.stringify({ error: "Program not found or not owned by you" }));
+
+      const days = valid_days || 7;
+      const validUntil = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+
+      const { data: offer, error: insertErr } = await d.from("personalized_offers").insert({
+        token_address: token_address.toLowerCase(),
+        customer_address: customer_address.toLowerCase(),
+        merchant_address: agent.ownerAddress.toLowerCase(),
+        title: String(title).substring(0, 200),
+        description: description ? String(description).substring(0, 500) : null,
+        bonus_tokens: bonus_tokens || null,
+        discount_percentage: discount_percentage || null,
+        valid_until: validUntil,
+        is_active: true,
+      }).select("id, title, customer_address, bonus_tokens, discount_percentage, valid_until").single();
+
+      if (insertErr) return T(JSON.stringify({ error: insertErr.message }));
+
+      // Log activity
+      await d.from("agent_activity_log").insert({
+        agent_id: agent.agentId,
+        action: "create_personalized_offer",
+        request_body: { token_address, customer_address, title },
+        response_status: 201,
+      });
+
+      return T(JSON.stringify({ offer, message: "Personalized offer created" }));
+    },
+  });
+
+  mcpServer.tool("update_reward_status", {
+    description: "Activate or deactivate a reward in the catalog. Use to manage reward availability based on analytics.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        reward_id: { type: "string", description: "UUID of the reward" },
+        is_active: { type: "boolean", description: "true to activate, false to deactivate" },
+      },
+      required: ["reward_id", "is_active"],
+    },
+    handler: async ({ reward_id, is_active }: any) => {
+      const err = authGuard(["manage_rewards"]);
+      if (err) return T(err);
+      const d = db();
+
+      const { data: reward } = await d.from("rewards")
+        .select("id, name, merchant_address")
+        .eq("id", reward_id)
+        .single();
+      if (!reward) return T(JSON.stringify({ error: "Reward not found" }));
+      if (reward.merchant_address.toLowerCase() !== agent.ownerAddress.toLowerCase()) {
+        return T(JSON.stringify({ error: "Not your reward" }));
+      }
+
+      const { error: updateErr } = await d.from("rewards")
+        .update({ is_active, updated_at: new Date().toISOString() })
+        .eq("id", reward_id);
+      if (updateErr) return T(JSON.stringify({ error: updateErr.message }));
+
+      return T(JSON.stringify({ message: `Reward '${reward.name}' ${is_active ? "activated" : "deactivated"}` }));
+    },
+  });
+
+  // ── REPORTING ──────────────────────────────────────────────
+
   mcpServer.tool("send_report", {
     description: "Send a report to the developer/owner. Use this to submit SEO audits, growth ideas, data reports, anomalies, recommendations, or weekly summaries. The report will appear in the merchant's Agent Reports dashboard.",
     inputSchema: {
