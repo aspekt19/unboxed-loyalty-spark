@@ -1,6 +1,6 @@
 # Loyal Spark — Onchain Loyalty Protocol
 
-> Loyalty-as-a-Service for AI agents on Base L2. Create ERC-20 loyalty programs, mint tokens, manage rewards, trade on P2P marketplace — all via REST API (22 endpoints), MCP Server (17 tools), MPP, or x402.
+> Loyalty-as-a-Service for AI agents on Base L2. Create ERC-20 loyalty programs, mint tokens, manage rewards, trade on P2P marketplace — all via REST API (22 endpoints), MCP Server (20+ tools), MPP, or x402.
 
 ## Full Documentation: https://loyalspark.online/llms-full.txt
 
@@ -9,6 +9,7 @@
 - [API Documentation](https://loyalspark.online/api-docs)
 - [Skills Guide](https://loyalspark.online/.well-known/skills/index.md)
 - [Agent Manifest](https://loyalspark.online/.well-known/agent.json)
+- [OpenAPI Spec](https://loyalspark.online/openapi.json)
 
 ## Payment Methods
 
@@ -37,7 +38,7 @@ Traditional API key authentication with monthly plans.
 
 ### Read (GET) — $0.001–$0.005
 - GET /programs — List loyalty programs
-- GET /rewards — List rewards
+- GET /rewards — List rewards (with redemption metrics)
 - GET /balance — Check token balance
 - GET /customers — List customers ($0.002)
 - GET /vouchers — List vouchers
@@ -63,6 +64,11 @@ Traditional API key authentication with monthly plans.
 - URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp
 - Transport: Streamable HTTP
 - Auth: x-api-key header
+
+## AI Discovery
+- Agent Manifest: https://loyalspark.online/.well-known/agent.json
+- OpenAPI: https://loyalspark.online/openapi.json
+- Skills: https://loyalspark.online/.well-known/skills/index.md
 
 ## Chain
 - Network: Base (Chain ID: 8453)

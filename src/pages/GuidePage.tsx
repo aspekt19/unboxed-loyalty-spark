@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 
 export default function GuidePage() {
-  const jsonLd = {
+  const breadcrumbJsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
@@ -37,9 +37,37 @@ export default function GuidePage() {
     ]
   };
 
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is Loyal Spark?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Loyal Spark is an onchain loyalty protocol on Base L2 that lets merchants deploy branded ERC-20 loyalty tokens, manage rewards catalogs, customer tiers, and P2P marketplace trading — all via REST API, MCP Server, or payment gateways." }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I create a loyalty program?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Connect your wallet on the Merchant page, fill in your program name and token symbol, and deploy your ERC-20 loyalty token on Base in one click. The token is yours — fully onchain and composable." }
+      },
+      {
+        "@type": "Question",
+        "name": "Do customers need a crypto wallet?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Customers can sign in with email, passkey, or any Web3 wallet. No prior crypto experience is needed — Loyal Spark abstracts the blockchain complexity." }
+      },
+      {
+        "@type": "Question",
+        "name": "How do AI agents integrate with Loyal Spark?",
+        "acceptedAnswer": { "@type": "Answer", "text": "AI agents can use the REST API (22 endpoints), MCP Server (20+ tools), or pay-per-request gateways (x402, MPP). Register an agent on the Merchant page, get an API key (lsk_...), and start automating loyalty operations." }
+      }
+    ]
+  };
+
   return (
     <PageTransition>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <div className="min-h-screen bg-background">
         <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
           <div className="container mx-auto px-4 py-3 flex items-center gap-4">
