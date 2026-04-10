@@ -348,8 +348,26 @@ export function AgentManagement() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-semibold text-sm">{agent.name}</h3>
-              <Badge variant={agent.is_active ? 'default' : 'secondary'} className="text-xs">
+                      {editingNameId === agent.id ? (
+                        <div className="flex items-center gap-1">
+                          <Input
+                            value={editNameValue}
+                            onChange={(e) => setEditNameValue(e.target.value)}
+                            className="h-7 text-sm w-40"
+                            maxLength={100}
+                            onKeyDown={(e) => { if (e.key === 'Enter') handleRename(agent.id); if (e.key === 'Escape') setEditingNameId(null); }}
+                            autoFocus
+                          />
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRename(agent.id)}>
+                            <Check className="h-3.5 w-3.5 text-green-500" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <h3 className="font-semibold text-sm cursor-pointer hover:text-primary transition-colors" onClick={() => { setEditingNameId(agent.id); setEditNameValue(agent.name); }} title="Click to rename">
+                          {agent.name}
+                        </h3>
+                      )}
+                      <Badge variant={agent.is_active ? 'default' : 'secondary'} className="text-xs">
                         {agent.is_active ? 'Active' : 'Inactive'}
                       </Badge>
                     </div>
