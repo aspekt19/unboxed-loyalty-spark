@@ -41,6 +41,7 @@ const MCP_TOOLS = [
   { name: 'transfer_loyalty_tokens', desc: 'Transfer tokens between wallets', scope: 'mint' },
   { name: 'get_token_balance', desc: 'Customer balance and tier info', scope: 'read' },
   { name: 'get_program_analytics', desc: 'Program performance metrics', scope: 'read' },
+  { name: 'get_platform_stats', desc: 'Global platform statistics (admin-only)', scope: 'read (admin)' },
   { name: 'list_marketplace_offers', desc: 'Active token trading offers', scope: 'trade' },
 ];
 
