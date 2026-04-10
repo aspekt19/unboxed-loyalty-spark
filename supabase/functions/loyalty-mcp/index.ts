@@ -345,58 +345,98 @@ function createMcpServer(agent: any) {
         return T(JSON.stringify({ error: "Access denied. This tool is restricted to platform admin agents." }));
       }
       const d = db();
-      const [programs, vouchers, mints, marketplace, rewards] = await Promise.all([
-        d.from("loyalty_programs").select("id,status", { count: "exact" }),
-        d.from("vouchers").select("id,status", { count: "exact" }),
-        d.from("token_mint_history").select("amount"),
-        d.from("marketplace_offers").select("id,status", { count: "exact" }),
-        d.from("rewards").select("id,is_active", { count: "exact" }),
+
+      // Use separate count queries with filters to avoid the 1000-row default limit.
+      // Previously, we fetched rows and filtered in JS — this broke when tables exceeded 1000 rows.
+      const [
+        programsTotal, programsActive, programsPaused, programsExpired,
+        vouchersTotal, vouchersActive, vouchersUsed,
+        mintsCount, mintSum,
+        marketTotal, marketActive, marketCompleted,
+        rewardsTotal, rewardsActive,
+        agentCount,
+      ] = await Promise.all([
+        d.from("loyalty_programs").select("*", { count: "exact", head: true }),
+        d.from("loyalty_programs").select("*", { count: "exact", head: true }).eq("status", "active"),
+        d.from("loyalty_programs").select("*", { count: "exact", head: true }).eq("status", "paused"),
+        d.from("loyalty_programs").select("*", { count: "exact", head: true }).eq("status", "expired"),
+        d.from("vouchers").select("*", { count: "exact", head: true }),
+        d.from("vouchers").select("*", { count: "exact", head: true }).eq("status", "active"),
+        d.from("vouchers").select("*", { count: "exact", head: true }).eq("status", "used"),
+        d.from("token_mint_history").select("*", { count: "exact", head: true }),
+        // Sum total minted via fetching amounts in pages
+        (async () => {
+          let total = 0;
+          let from = 0;
+          const pageSize = 1000;
+          while (true) {
+            const { data } = await d.from("token_mint_history").select("amount").range(from, from + pageSize - 1);
+            if (!data || data.length === 0) break;
+            total += data.reduce((s: number, m: any) => s + (m.amount || 0), 0);
+            if (data.length < pageSize) break;
+            from += pageSize;
+          }
+          return total;
+        })(),
+        d.from("marketplace_offers").select("*", { count: "exact", head: true }),
+        d.from("marketplace_offers").select("*", { count: "exact", head: true }).eq("status", "active"),
+        d.from("marketplace_offers").select("*", { count: "exact", head: true }).eq("status", "completed"),
+        d.from("rewards").select("*", { count: "exact", head: true }),
+        d.from("rewards").select("*", { count: "exact", head: true }).eq("is_active", true),
+        d.from("agent_registry").select("*", { count: "exact", head: true }).eq("is_active", true),
       ]);
 
-      const programData = programs.data || [];
-      const voucherData = vouchers.data || [];
-      const mintData = mints.data || [];
-      const marketData = marketplace.data || [];
+      // Unique merchants — paginate through loyalty_programs
+      const merchantSet = new Set<string>();
+      let mFrom = 0;
+      while (true) {
+        const { data } = await d.from("loyalty_programs").select("merchant_address").range(mFrom, mFrom + 999);
+        if (!data || data.length === 0) break;
+        data.forEach((p: any) => merchantSet.add(p.merchant_address.toLowerCase()));
+        if (data.length < 1000) break;
+        mFrom += 1000;
+      }
 
-      const totalMinted = mintData.reduce((sum: number, m: any) => sum + (m.amount || 0), 0);
-      const uniqueMerchants = new Set(programData.map(() => "counted")).size; // need merchant_address
-
-      // Get unique merchants and customers counts
-      const [merchantCount, customerCount, agentCount] = await Promise.all([
-        d.from("loyalty_programs").select("merchant_address").then(r => new Set((r.data || []).map((p: any) => p.merchant_address.toLowerCase())).size),
-        d.from("vouchers").select("customer_address").then(r => new Set((r.data || []).map((v: any) => v.customer_address.toLowerCase())).size),
-        d.from("agent_registry").select("id", { count: "exact" }).eq("is_active", true),
-      ]);
+      // Unique customers — paginate through vouchers
+      const customerSet = new Set<string>();
+      let cFrom = 0;
+      while (true) {
+        const { data } = await d.from("vouchers").select("customer_address").range(cFrom, cFrom + 999);
+        if (!data || data.length === 0) break;
+        data.forEach((v: any) => customerSet.add(v.customer_address.toLowerCase()));
+        if (data.length < 1000) break;
+        cFrom += 1000;
+      }
 
       return T(JSON.stringify({
         platform_stats: {
           programs: {
-            total: programs.count || programData.length,
-            active: programData.filter((p: any) => p.status === "active").length,
-            paused: programData.filter((p: any) => p.status === "paused").length,
-            expired: programData.filter((p: any) => p.status === "expired").length,
+            total: programsTotal.count || 0,
+            active: programsActive.count || 0,
+            paused: programsPaused.count || 0,
+            expired: programsExpired.count || 0,
           },
           vouchers: {
-            total: vouchers.count || voucherData.length,
-            active: voucherData.filter((v: any) => v.status === "active").length,
-            used: voucherData.filter((v: any) => v.status === "used").length,
+            total: vouchersTotal.count || 0,
+            active: vouchersActive.count || 0,
+            used: vouchersUsed.count || 0,
           },
           minting: {
-            total_operations: mintData.length,
-            total_tokens_minted: totalMinted,
+            total_operations: mintsCount.count || 0,
+            total_tokens_minted: mintSum,
           },
           marketplace: {
-            total_offers: marketplace.count || marketData.length,
-            active_offers: marketData.filter((o: any) => o.status === "active").length,
-            completed: marketData.filter((o: any) => o.status === "completed").length,
+            total_offers: marketTotal.count || 0,
+            active_offers: marketActive.count || 0,
+            completed: marketCompleted.count || 0,
           },
           rewards: {
-            total: rewards.count || 0,
-            active: (rewards.data || []).filter((r: any) => r.is_active).length,
+            total: rewardsTotal.count || 0,
+            active: rewardsActive.count || 0,
           },
           users: {
-            unique_merchants: merchantCount,
-            unique_customers: customerCount,
+            unique_merchants: merchantSet.size,
+            unique_customers: customerSet.size,
             active_agents: agentCount.count || 0,
           },
         },
