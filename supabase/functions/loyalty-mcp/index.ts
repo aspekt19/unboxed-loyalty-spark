@@ -330,6 +330,65 @@ function createMcpServer(agent: any) {
     },
   });
 
+  mcpServer.tool("send_report", {
+    description: "Send a report to the developer/owner. Use this to submit SEO audits, growth ideas, data reports, anomalies, recommendations, or weekly summaries. The report will appear in the merchant's Agent Reports dashboard.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        agent_role: { type: "string", description: "Your role: ceo, seo, growth, or analyst" },
+        report_type: { type: "string", description: "Type: seo_audit, growth_idea, data_report, anomaly, task, recommendation, or weekly_report" },
+        title: { type: "string", description: "Report title (max 500 chars)" },
+        content: { type: "string", description: "Report body text (max 10000 chars)" },
+        priority: { type: "string", description: "Priority: low, medium, high, or critical" },
+        action_items: { type: "array", items: { type: "string" }, description: "List of suggested action items" },
+      },
+      required: ["agent_role", "report_type", "title", "content"],
+    },
+    handler: async ({ agent_role, report_type, title, content, priority, action_items }: any) => {
+      const err = authGuard();
+      if (err) return T(err);
+
+      const validTypes = ["seo_audit", "growth_idea", "data_report", "anomaly", "task", "recommendation", "weekly_report"];
+      const validPriorities = ["low", "medium", "high", "critical"];
+
+      const d = db();
+      const { data: report, error: insertError } = await d
+        .from("agent_reports")
+        .insert({
+          agent_name: agent.name,
+          agent_role: agent_role,
+          report_type: validTypes.includes(report_type) ? report_type : "recommendation",
+          title: String(title).substring(0, 500),
+          content: String(content).substring(0, 10000),
+          priority: validPriorities.includes(priority) ? priority : "medium",
+          action_items: Array.isArray(action_items) ? action_items : [],
+          metadata: {},
+          owner_address: agent.ownerAddress,
+        })
+        .select("id, created_at")
+        .single();
+
+      if (insertError) {
+        console.error("Report insert error:", insertError);
+        return T(JSON.stringify({ error: "Failed to submit report" }));
+      }
+
+      // Log activity
+      await d.from("agent_activity_log").insert({
+        agent_id: agent.agentId,
+        action: `report:${report_type}`,
+        request_body: { title, priority },
+        response_status: 201,
+      });
+
+      return T(JSON.stringify({
+        success: true,
+        report_id: report.id,
+        message: "Report submitted successfully. It will appear in the developer's Agent Reports dashboard.",
+      }));
+    },
+  });
+
   return mcpServer;
 }
 
