@@ -226,6 +226,26 @@ Deno.serve(async (req) => {
       );
     }
 
+    if (action === "rename") {
+      const { agent_id, new_name } = params;
+      if (!agent_id || !new_name || typeof new_name !== "string" || new_name.trim().length === 0 || new_name.length > 100) {
+        return new Response(JSON.stringify({ error: "Invalid agent_id or new_name" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: profile } = await serviceClient.from("profiles").select("wallet_address").eq("user_id", user.id).single();
+      if (!profile) {
+        return new Response(JSON.stringify({ error: "Profile not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const { error: updateError } = await serviceClient.from("agent_registry")
+        .update({ name: new_name.trim(), updated_at: new Date().toISOString() })
+        .eq("id", agent_id).eq("owner_address", profile.wallet_address);
+      if (updateError) {
+        return new Response(JSON.stringify({ error: "Failed to rename agent" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      return new Response(JSON.stringify({ success: true, name: new_name.trim() }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     if (action === "delete") {
       const { agent_id } = params;
       if (!agent_id) {
