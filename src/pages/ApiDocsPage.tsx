@@ -477,6 +477,32 @@ const ENDPOINTS: Endpoint[] = [
   "block_number": 12345678
 }`,
   },
+  {
+    method: 'GET',
+    path: '/export-customers',
+    description: 'Export enriched customer data (vouchers, balances, tiers) for a loyalty program. Supports JSON and CSV formats for segmentation and analytics.',
+    scope: 'read',
+    queryParams: [
+      { name: 'token_address', type: 'string', required: true, description: 'Program token address' },
+      { name: 'format', type: 'string', required: false, description: 'Response format: "json" (default) or "csv"' },
+    ],
+    exampleResponse: `{
+  "token_address": "0x1234...abcd",
+  "total_customers": 3,
+  "customers": [
+    {
+      "wallet": "0xabc...",
+      "vouchers_total": 5,
+      "vouchers_used": 3,
+      "tokens_spent": 500,
+      "current_balance": 250,
+      "tier": "Gold",
+      "first_activity": "2026-01-15T...",
+      "last_activity": "2026-04-01T..."
+    }
+  ]
+}`,
+  },
 ];
 
 const methodColors: Record<string, string> = {
