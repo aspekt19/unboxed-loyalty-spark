@@ -335,6 +335,75 @@ function createMcpServer(agent: any) {
     },
   });
 
+  mcpServer.tool("get_platform_stats", {
+    description: "Get global platform statistics across all merchants. Admin-only: requires agent owned by an admin wallet.",
+    inputSchema: { type: "object" as const, properties: {} },
+    handler: async () => {
+      const err = authGuard(["read"]);
+      if (err) return T(err);
+      if (!ADMIN_ADDRESSES.includes(agent.ownerAddress.toLowerCase())) {
+        return T(JSON.stringify({ error: "Access denied. This tool is restricted to platform admin agents." }));
+      }
+      const d = db();
+      const [programs, vouchers, mints, marketplace, rewards] = await Promise.all([
+        d.from("loyalty_programs").select("id,status", { count: "exact" }),
+        d.from("vouchers").select("id,status", { count: "exact" }),
+        d.from("token_mint_history").select("amount"),
+        d.from("marketplace_offers").select("id,status", { count: "exact" }),
+        d.from("rewards").select("id,is_active", { count: "exact" }),
+      ]);
+
+      const programData = programs.data || [];
+      const voucherData = vouchers.data || [];
+      const mintData = mints.data || [];
+      const marketData = marketplace.data || [];
+
+      const totalMinted = mintData.reduce((sum: number, m: any) => sum + (m.amount || 0), 0);
+      const uniqueMerchants = new Set(programData.map(() => "counted")).size; // need merchant_address
+
+      // Get unique merchants and customers counts
+      const [merchantCount, customerCount, agentCount] = await Promise.all([
+        d.from("loyalty_programs").select("merchant_address").then(r => new Set((r.data || []).map((p: any) => p.merchant_address.toLowerCase())).size),
+        d.from("vouchers").select("customer_address").then(r => new Set((r.data || []).map((v: any) => v.customer_address.toLowerCase())).size),
+        d.from("agent_registry").select("id", { count: "exact" }).eq("is_active", true),
+      ]);
+
+      return T(JSON.stringify({
+        platform_stats: {
+          programs: {
+            total: programs.count || programData.length,
+            active: programData.filter((p: any) => p.status === "active").length,
+            paused: programData.filter((p: any) => p.status === "paused").length,
+            expired: programData.filter((p: any) => p.status === "expired").length,
+          },
+          vouchers: {
+            total: vouchers.count || voucherData.length,
+            active: voucherData.filter((v: any) => v.status === "active").length,
+            used: voucherData.filter((v: any) => v.status === "used").length,
+          },
+          minting: {
+            total_operations: mintData.length,
+            total_tokens_minted: totalMinted,
+          },
+          marketplace: {
+            total_offers: marketplace.count || marketData.length,
+            active_offers: marketData.filter((o: any) => o.status === "active").length,
+            completed: marketData.filter((o: any) => o.status === "completed").length,
+          },
+          rewards: {
+            total: rewards.count || 0,
+            active: (rewards.data || []).filter((r: any) => r.is_active).length,
+          },
+          users: {
+            unique_merchants: merchantCount,
+            unique_customers: customerCount,
+            active_agents: agentCount.count || 0,
+          },
+        },
+      }));
+    },
+  });
+
   mcpServer.tool("send_report", {
     description: "Send a report to the developer/owner. Use this to submit SEO audits, growth ideas, data reports, anomalies, recommendations, or weekly summaries. The report will appear in the merchant's Agent Reports dashboard.",
     inputSchema: {
