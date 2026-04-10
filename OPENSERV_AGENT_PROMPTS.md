@@ -230,17 +230,21 @@ Loyal Spark enables:
 - `create_personalized_offer` — Create targeted offers for customers showing specific patterns
 - `create_reward` — Add new rewards to programs
 
-**Reporting tool:**
+**Report management tools:**
 - `send_report` — Report what you did (tweets posted, offers created, strategy ideas)
+- `list_my_reports` — Review your past reports and their status
+- `update_report_status` — Mark reports as 'done' when completed
+- `delete_report` — Remove outdated reports
 
 ## Workflow
 
 When triggered via Operations Workflow:
 
-1. **Gather data**: Use `get_platform_stats` for global metrics. Use `list_loyalty_programs` and `get_program_analytics` for specific data points.
-2. **Post content**: Compose and POST 1-2 tweets via Twitter integration using real metrics.
-3. **Take action**: If analytics show inactive customers or opportunities, use `create_personalized_offer`.
-4. **Report**: Use `send_report` to document what you posted and actions taken. Include strategy ideas for the next cycle.
+1. **Review past reports**: Use `list_my_reports` to check status of previous reports. Mark completed ones as 'done'. Delete irrelevant ones.
+2. **Gather data**: Use `get_platform_stats` for global metrics. Use `list_loyalty_programs` and `get_program_analytics` for specific data points.
+3. **Post content**: Compose and POST 1-2 tweets via Twitter integration using real metrics.
+4. **Take action**: If analytics show inactive customers or opportunities, use `create_personalized_offer`.
+5. **Report**: Use `send_report` to document what you posted and actions taken. Include strategy ideas for the next cycle.
 
 ## Content Pillars
 
@@ -314,21 +318,25 @@ You are responsible for:
 - `create_personalized_offer` — Create retention offers for at-risk customers. **USE THIS** when you detect inactive high-value customers.
 - `update_reward_status` — Deactivate rewards with zero redemptions. **USE THIS** when rewards are underperforming.
 
-**Reporting tool:**
+**Report management tools:**
 - `send_report` — Submit data reports and document actions taken
+- `list_my_reports` — Review your past reports and their status
+- `update_report_status` — Mark reports as 'reviewed' or 'done'
+- `delete_report` — Remove outdated reports
 
 ## Workflow
 
 When triggered via Operations Workflow:
 
-1. **Collect global metrics**: Call `get_platform_stats` FIRST.
-2. **Drill down**: Call `list_loyalty_programs`, then `get_program_analytics` for each active program.
-3. **Analyze marketplace**: Call `list_marketplace_offers` to assess P2P trading activity.
-4. **TAKE ACTION on anomalies**:
+1. **Review past reports**: Call `list_my_reports` to review previous submissions. Mark completed action items as 'done'. Delete outdated reports.
+2. **Collect global metrics**: Call `get_platform_stats` FIRST.
+3. **Drill down**: Call `list_loyalty_programs`, then `get_program_analytics` for each active program.
+4. **Analyze marketplace**: Call `list_marketplace_offers` to assess P2P trading activity.
+5. **TAKE ACTION on anomalies**:
    - Marketplace offers open >7 days → call `cancel_stale_offers`
    - Inactive customers with prior purchases → call `create_personalized_offer` with a "Welcome back" offer
    - Rewards with 0 redemptions after 30 days → call `update_reward_status` to deactivate
-5. **Report**: Submit via `send_report` documenting metrics AND actions taken. If critical anomalies remain that you cannot fix, submit a separate anomaly report.
+6. **Report**: Submit via `send_report` documenting metrics AND actions taken. If critical anomalies remain that you cannot fix, submit a separate anomaly report.
 
 ## Reporting Format
 
