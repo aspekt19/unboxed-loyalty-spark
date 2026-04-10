@@ -649,6 +649,82 @@ function createMcpServer(agent: any) {
     },
   });
 
+  // ── REPORT MANAGEMENT ──────────────────────────────────────
+
+  mcpServer.tool("list_my_reports", {
+    description: "List your previously submitted reports. Allows reviewing past reports, checking status (new/reviewed/done), and identifying what still needs attention.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        status: { type: "string", description: "Filter by status: new, reviewed, done (optional)" },
+        limit: { type: "number", description: "Max results 1-50 (default: 20)" },
+      },
+    },
+    handler: async ({ status, limit }: any) => {
+      const err = authGuard();
+      if (err) return T(err);
+      const d = db();
+      let q = d.from("agent_reports")
+        .select("id, title, report_type, agent_role, priority, status, created_at, reviewed_at")
+        .eq("owner_address", agent.ownerAddress)
+        .order("created_at", { ascending: false })
+        .limit(Math.min(limit || 20, 50));
+      if (status) q = q.eq("status", status);
+      const { data, error: qErr } = await q;
+      if (qErr) return T(JSON.stringify({ error: qErr.message }));
+      return T(JSON.stringify({ reports: data || [] }));
+    },
+  });
+
+  mcpServer.tool("update_report_status", {
+    description: "Update report status to 'reviewed' or 'done'. Use 'done' when the action items have been completed. Use 'reviewed' to acknowledge a report.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        report_id: { type: "string", description: "UUID of the report" },
+        status: { type: "string", description: "New status: reviewed or done" },
+      },
+      required: ["report_id", "status"],
+    },
+    handler: async ({ report_id, status }: any) => {
+      const err = authGuard();
+      if (err) return T(err);
+      const validStatuses = ["reviewed", "done"];
+      if (!validStatuses.includes(status)) return T(`{"error":"Invalid status. Use: ${validStatuses.join(", ")}"}`);
+      const d = db();
+      const { data: report } = await d.from("agent_reports").select("id, title, owner_address").eq("id", report_id).single();
+      if (!report) return T('{"error":"Report not found"}');
+      if (report.owner_address?.toLowerCase() !== agent.ownerAddress.toLowerCase()) return T('{"error":"Not your report"}');
+      const { error: updateErr } = await d.from("agent_reports")
+        .update({ status, reviewed_at: new Date().toISOString() })
+        .eq("id", report_id);
+      if (updateErr) return T(JSON.stringify({ error: updateErr.message }));
+      return T(JSON.stringify({ message: `Report '${report.title}' marked as ${status}` }));
+    },
+  });
+
+  mcpServer.tool("delete_report", {
+    description: "Delete a report that is no longer relevant. Use to clean up outdated or irrelevant reports.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        report_id: { type: "string", description: "UUID of the report to delete" },
+      },
+      required: ["report_id"],
+    },
+    handler: async ({ report_id }: any) => {
+      const err = authGuard();
+      if (err) return T(err);
+      const d = db();
+      const { data: report } = await d.from("agent_reports").select("id, title, owner_address").eq("id", report_id).single();
+      if (!report) return T('{"error":"Report not found"}');
+      if (report.owner_address?.toLowerCase() !== agent.ownerAddress.toLowerCase()) return T('{"error":"Not your report"}');
+      const { error: delErr } = await d.from("agent_reports").delete().eq("id", report_id);
+      if (delErr) return T(JSON.stringify({ error: delErr.message }));
+      return T(JSON.stringify({ message: `Report '${report.title}' deleted` }));
+    },
+  });
+
   return mcpServer;
 }
 

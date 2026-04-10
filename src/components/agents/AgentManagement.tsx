@@ -7,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Bot, Plus, Key, Copy, Check, RefreshCw, Power, PowerOff, Eye, FileText, ExternalLink, Cpu, Wallet, Loader2, BookOpen, Trash2 } from 'lucide-react';
+import { Bot, Plus, Key, Copy, Check, RefreshCw, Power, PowerOff, Eye, FileText, ExternalLink, Cpu, Wallet, Loader2, BookOpen, Trash2, Pencil } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,6 +64,8 @@ export function AgentManagement() {
   const [copied, setCopied] = useState(false);
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [creatingWalletFor, setCreatingWalletFor] = useState<string | null>(null);
+  const [editingNameId, setEditingNameId] = useState<string | null>(null);
+  const [editNameValue, setEditNameValue] = useState('');
 
   const { data: agents = [], isLoading } = useQuery({
     queryKey: ['agents', address],
@@ -180,6 +182,22 @@ export function AgentManagement() {
       toast.error(err.message || 'Failed to create wallet');
     } finally {
       setCreatingWalletFor(null);
+    }
+  };
+
+  const handleRename = async (agentId: string) => {
+    if (!editNameValue.trim()) return;
+    try {
+      const { data, error } = await supabase.functions.invoke('agent-api-key', {
+        body: { action: 'rename', agent_id: agentId, new_name: editNameValue.trim() },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success('Agent renamed');
+      queryClient.invalidateQueries({ queryKey: ['agents'] });
+      setEditingNameId(null);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to rename');
     }
   };
 
@@ -330,8 +348,26 @@ export function AgentManagement() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-semibold text-sm">{agent.name}</h3>
-              <Badge variant={agent.is_active ? 'default' : 'secondary'} className="text-xs">
+                      {editingNameId === agent.id ? (
+                        <div className="flex items-center gap-1">
+                          <Input
+                            value={editNameValue}
+                            onChange={(e) => setEditNameValue(e.target.value)}
+                            className="h-7 text-sm w-40"
+                            maxLength={100}
+                            onKeyDown={(e) => { if (e.key === 'Enter') handleRename(agent.id); if (e.key === 'Escape') setEditingNameId(null); }}
+                            autoFocus
+                          />
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRename(agent.id)}>
+                            <Check className="h-3.5 w-3.5 text-green-500" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <h3 className="font-semibold text-sm cursor-pointer hover:text-primary transition-colors" onClick={() => { setEditingNameId(agent.id); setEditNameValue(agent.name); }} title="Click to rename">
+                          {agent.name}
+                        </h3>
+                      )}
+                      <Badge variant={agent.is_active ? 'default' : 'secondary'} className="text-xs">
                         {agent.is_active ? 'Active' : 'Inactive'}
                       </Badge>
                     </div>
