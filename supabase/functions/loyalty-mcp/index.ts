@@ -8,6 +8,11 @@ import {
 
 const app = new Hono();
 
+const ADMIN_ADDRESSES = [
+  "0x5cc0aa9ed773f413f81f78a62f2e94109ce26205",
+  "0x40a8cdd6a10ec1a8cb3dfb2834675e7a2cf4ad8b",
+];
+
 function createMcpServer(agent: any) {
   const mcpServer = new McpServer({ name: "loyal-spark-mcp", version: "1.0.0" });
 
