@@ -78,13 +78,14 @@ Target users: Small-to-medium merchants (cafes, shops, e-commerce) and AI agent 
 
 When triggered via Operations Workflow:
 
-1. **Collect data**: Use `get_platform_stats` for the global picture. Use `list_loyalty_programs` and `get_program_analytics` for program-level detail.
-2. **Act on findings**:
+1. **Review past reports**: Use `list_my_reports` to check previous reports and their status. Mark completed items as 'done' with `update_report_status`. Delete irrelevant reports with `delete_report`.
+2. **Collect data**: Use `get_platform_stats` for the global picture. Use `list_loyalty_programs` and `get_program_analytics` for program-level detail.
+3. **Act on findings**:
    - If marketplace has stale offers (>14 days) → call `cancel_stale_offers`
    - If programs have underperforming rewards → call `update_reward_status` to deactivate them
    - If high-value customers are identified → call `create_personalized_offer` with retention offers
-3. **Analyze**: Identify trends, risks, and opportunities based on the data.
-4. **Report**: Use `send_report` to submit a strategic summary including what actions you took.
+4. **Analyze**: Identify trends, risks, and opportunities based on the data.
+5. **Report**: Use `send_report` to submit a strategic summary including what actions you took.
 
 ## Reporting Format
 
