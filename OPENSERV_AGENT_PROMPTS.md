@@ -154,11 +154,18 @@ You are responsible for:
 ## Already Implemented (do NOT re-report these)
 
 The following items have already been implemented by the developer. Do NOT include them as action items or issues:
-- ✅ JSON-LD Organization + WebSite schema on landing page
+- ✅ JSON-LD Organization + WebSite + SoftwareApplication + WebAPI schema on landing page
 - ✅ BreadcrumbList JSON-LD on /api-docs, /guide, /pitch-deck
+- ✅ FAQPage JSON-LD on /guide
 - ✅ Canonical tags via usePageMeta on all routes
-- ✅ Sitemap updated with correct lastmod dates
+- ✅ OG and Twitter Card meta tags updated per route via usePageMeta
+- ✅ Sitemap updated with correct lastmod dates and OpenAPI/agent.json entries
 - ✅ Meta author and twitter:site tags in index.html
+- ✅ llms.txt references agent.json, OpenAPI, and Skills
+- ✅ agent.json MCP tools list updated (26 tools including reporting and admin tools)
+- ✅ robots.txt allows all crawlers and references sitemap.xml
+- ✅ Marketplace count "discrepancy" is expected behavior (total includes all statuses; list shows active only)
+- ✅ list_rewards now includes per-reward redemption metrics (total, redeemed, last_30d)
 
 Focus your audits on NEW issues only. If a previously reported item is now fixed, mark it as 'done' using `update_report_status`.
 
