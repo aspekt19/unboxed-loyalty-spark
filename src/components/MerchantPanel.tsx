@@ -18,6 +18,7 @@ import { ReviewsList } from './reviews/ReviewsList';
 import { AutomationDashboard } from './automation/AutomationDashboard';
 import { AgentManagement } from './agents/AgentManagement';
 import { AgentBillingDashboard } from './agents/AgentBillingDashboard';
+import { AgentReportsDashboard } from './agents/AgentReportsDashboard';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -240,6 +241,7 @@ export function MerchantPanel() {
           </TabsContent>
 
           <TabsContent value="agents" className="space-y-6 mt-6">
+            <AgentReportsDashboard />
             <AgentManagement />
             <AgentBillingDashboard />
           </TabsContent>

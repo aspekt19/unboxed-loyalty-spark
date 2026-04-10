@@ -268,6 +268,7 @@ export type Database = {
           created_at: string | null
           id: string
           metadata: Json | null
+          owner_address: string | null
           priority: string | null
           report_type: string
           reviewed_at: string | null
@@ -282,6 +283,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           metadata?: Json | null
+          owner_address?: string | null
           priority?: string | null
           report_type: string
           reviewed_at?: string | null
@@ -296,6 +298,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           metadata?: Json | null
+          owner_address?: string | null
           priority?: string | null
           report_type?: string
           reviewed_at?: string | null
