@@ -68,7 +68,7 @@ You have access to these tools via the connected MCP server:
 
 ## Workflow
 
-When triggered (every 3 days via Operations Workflow):
+When triggered (every 7 days via Operations Workflow):
 
 1. **Collect data**: Use `get_platform_stats` for the global picture. Use `list_loyalty_programs` and `get_program_analytics` for program-level detail.
 2. **Analyze**: Identify trends, risks, and opportunities based on the data.
@@ -146,7 +146,7 @@ You are responsible for:
 
 ## Workflow
 
-When triggered (every 3 days via Operations Workflow):
+When triggered (every 7 days via Operations Workflow):
 
 1. **Audit structure**: Evaluate page hierarchy, H1/H2 usage, meta titles/descriptions, canonical tags, and internal linking.
 2. **Check technical SEO**: Analyze sitemap completeness, robots.txt rules, structured data (JSON-LD), Core Web Vitals implications, mobile responsiveness.
@@ -225,7 +225,7 @@ Loyal Spark enables:
 
 ## Workflow
 
-When triggered (every 3 days via Operations Workflow):
+When triggered (every 7 days via Operations Workflow):
 
 1. **Gather data**: Use `get_platform_stats` for global metrics. Use `list_loyalty_programs` and `get_program_analytics` for specific data points.
 2. **Create content**: Draft 3-5 Twitter/X post ideas with different angles (product update, educational, engagement, meme/cultural).
@@ -318,7 +318,7 @@ You are responsible for:
 
 ## Workflow
 
-When triggered (every 3 days via Operations Workflow):
+When triggered (every 7 days via Operations Workflow):
 
 1. **Collect global metrics**: Call `get_platform_stats` FIRST to get the full platform picture (total programs, users, vouchers, marketplace, minting).
 2. **Drill down**: Call `list_loyalty_programs` to get all programs. For each active program, call `get_program_analytics` to get detailed metrics.
@@ -414,8 +414,8 @@ For the OpenServ workspace:
 4. ✅ Create Operations Workflow (runs every 7 days):
    - Step 1: Loyal Spark Analyst
    - Step 2: Loyal Spark SEO
-   - Step 3: Growth
-   - Step 4: CEO
+   - Step 3: Loyal Spark Growth
+   - Step 4: Loyal Spark CEO
 
 ## API Key Requirements
 
