@@ -45,6 +45,17 @@ const LandingCTA = () => {
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
+            <div className="flex gap-4 justify-center mt-4">
+              <Link to="/guide" className="text-sm text-muted-foreground hover:text-primary transition-colors underline underline-offset-4">
+                Getting Started Guide
+              </Link>
+              <Link to="/api-docs" className="text-sm text-muted-foreground hover:text-primary transition-colors underline underline-offset-4">
+                API Documentation
+              </Link>
+              <Link to="/premium" className="text-sm text-muted-foreground hover:text-primary transition-colors underline underline-offset-4">
+                Premium Plans
+              </Link>
+            </div>
           </motion.div>
         </motion.div>
       </div>
