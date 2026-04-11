@@ -37,6 +37,9 @@ function encodeTransferCalldata(to: string, amount: number): string {
 // Contract addresses
 const FACTORY_ADDRESS = "0x5F3DdBa12580CFdc6016258774cCc19C4250dA80";
 
+/** Platform wallet that receives mint fee (loyalty tokens), same as agent-wallet server mint */
+const PLATFORM_FEE_WALLET = "0x5cc0Aa9ed773F413f81f78a62F2e94109CE26205";
+
 // Function selectors (precomputed keccak256 first 4 bytes)
 const SELECTORS = {
   createLoyaltyToken: "0x800e675c", // createLoyaltyToken(string,string,address)
@@ -192,6 +195,35 @@ async function findAgentProgram(
     .single();
 
   return walletProgram || null;
+}
+
+async function getAgentFeePercent(
+  serviceClient: any,
+  agentId: string,
+  _ownerAddress: string
+): Promise<number> {
+  const { data: agentRow } = await serviceClient
+    .from("agent_registry")
+    .select("plan_id")
+    .eq("id", agentId)
+    .single();
+
+  if (agentRow?.plan_id) {
+    const { data: plan } = await serviceClient
+      .from("agent_plans")
+      .select("transaction_fee_percent")
+      .eq("id", agentRow.plan_id)
+      .single();
+    if (plan) return plan.transaction_fee_percent;
+  }
+
+  const { data: freePlan } = await serviceClient
+    .from("agent_plans")
+    .select("transaction_fee_percent")
+    .eq("slug", "free")
+    .single();
+
+  return freePlan?.transaction_fee_percent || 1.0;
 }
 
 function hasScope(agent: AgentContext, scope: string): boolean {
@@ -693,6 +725,11 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: `Program is ${program.status}. Must be 'active' to mint.` }, 400);
       }
 
+      const feePercent = await getAgentFeePercent(serviceClient, agent.agentId, agent.ownerAddress);
+      const feeAmount = amount * (feePercent / 100);
+      const recipientCalldata = encodeMintCalldata(recipient_address, amount);
+      const feeCalldata = encodeMintCalldata(PLATFORM_FEE_WALLET, feeAmount);
+
       // Record mint intent in history
       const { data: mintRecord, error: mintError } = await serviceClient
         .from("token_mint_history")
@@ -713,15 +750,24 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Failed to record mint" }, 500);
       }
 
-      await logActivity(serviceClient, agent.agentId, "mint_tokens", body, 201, { mint_id: mintRecord.id }, ip);
+      await logActivity(serviceClient, agent.agentId, "mint_tokens", body, 201, {
+        mint_id: mintRecord.id,
+        fee_amount: feeAmount,
+      }, ip);
       return jsonResponse({
         mint: mintRecord,
-        message: "Mint intent recorded. To complete on-chain, send the provided calldata to the token contract.",
+        fee_percent: feePercent,
+        fee_amount: feeAmount,
+        fee_wallet: PLATFORM_FEE_WALLET,
+        recipient_calldata: recipientCalldata,
+        fee_calldata: feeCalldata,
+        message:
+          "Mint intent recorded. To complete on-chain, send recipient_calldata and fee_calldata to the token contract (two transactions).",
         contract: {
           token_address,
           function: "mint(address,uint256)",
-          params: [recipient_address, amount],
-          calldata: encodeMintCalldata(recipient_address, amount),
+          recipient_params: [recipient_address, amount],
+          fee_params: [PLATFORM_FEE_WALLET, feeAmount],
           chain: "Base (8453)",
           builder_code: BUILDER_CODE,
         },
@@ -1396,7 +1442,7 @@ Deno.serve(async (req) => {
       "POST /program-status": "Update program status in database",
       "GET /rewards?token_address=0x...": "List rewards for a program",
       "POST /rewards": "Create a new reward",
-      "POST /mint": "Record a mint intent (supports CDP wallet programs)",
+      "POST /mint": "Record mint intent; returns recipient + platform fee calldata (two txs)",
       "POST /transfer": "Transfer tokens between wallets",
       "GET /balance?token_address=0x...&customer_address=0x...": "Get customer balance",
       "GET /customers?token_address=0x...": "List customers",
