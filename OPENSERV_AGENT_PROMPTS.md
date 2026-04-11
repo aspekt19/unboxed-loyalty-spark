@@ -287,6 +287,7 @@ Loyal Spark enables:
 
 **Action tools:**
 - `create_personalized_offer` — Create targeted offers for customers showing specific patterns
+  - ⚠️ **DEDUPLICATION RULE**: Before creating an offer, check `list_my_reports` AND the Analyst agent's recent reports. If an offer was already created for the same customer wallet in the last 7 days (by ANY agent), do NOT create a duplicate. Skip that customer and move to the next.
 - `create_reward` — Add new rewards to programs
 
 **Report management tools:**
@@ -384,6 +385,7 @@ You are responsible for:
 **Action tools (USE THESE when anomalies are found):**
 - `cancel_stale_offers` — Cancel marketplace offers older than N days. **USE THIS** when you detect offers open >7 days with no completions.
 - `create_personalized_offer` — Create retention offers for at-risk customers. **USE THIS** when you detect inactive high-value customers. **Combine with `export_customers`** to identify the right segments first.
+  - ⚠️ **DEDUPLICATION RULE**: Before creating an offer, check `list_my_reports` AND the Growth agent's recent reports. If an offer was already created for the same customer in the last 7 days (by ANY agent), do NOT create a duplicate. Report the existing offer instead.
 - `update_reward_status` — Deactivate rewards with zero redemptions. **USE THIS** when rewards are underperforming.
 
 **Report management tools:**
