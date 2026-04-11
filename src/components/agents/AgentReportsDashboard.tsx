@@ -62,11 +62,22 @@ export function AgentReportsDashboard() {
 
   const updateStatus = async (reportId: string, newStatus: string) => {
     try {
-      const { error } = await supabase.functions.invoke('agent-reports', {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Not authenticated');
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const res = await fetch(`${supabaseUrl}/functions/v1/agent-reports`, {
         method: 'PATCH',
-        body: { report_id: reportId, status: newStatus },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ report_id: reportId, status: newStatus }),
       });
-      if (error) throw error;
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed');
+      }
       toast.success(`Status updated to "${newStatus}"`);
       queryClient.invalidateQueries({ queryKey: ['agent-reports'] });
     } catch {
