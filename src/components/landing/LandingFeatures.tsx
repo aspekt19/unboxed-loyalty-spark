@@ -11,6 +11,20 @@ const features = [
   { icon: Code, title: 'Composable', description: 'Build on top of the protocol', delay: 0.5, link: '/api-docs' },
 ];
 
+const FeatureContent = ({ feature }: { feature: typeof features[number] }) => (
+  <>
+    <motion.div 
+      className="mx-auto h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-gradient-primary flex items-center justify-center mb-4 sm:mb-5 shadow-glow"
+      whileHover={{ scale: 1.1, rotate: 5 }}
+      transition={{ type: "spring", stiffness: 300 }}
+    >
+      <feature.icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+    </motion.div>
+    <h3 className="text-sm sm:text-base font-bold text-foreground mb-2">{feature.title}</h3>
+    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
+  </>
+);
+
 const LandingFeatures = () => {
   return (
     <section className="py-12 sm:py-16 md:py-24">
