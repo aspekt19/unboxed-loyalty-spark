@@ -1,14 +1,29 @@
 import { motion } from 'framer-motion';
 import { Shield, Zap, Globe, TrendingUp, Bot, Code } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const features = [
-  { icon: Shield, title: 'Secure', description: 'Smart contract based security', delay: 0 },
+  { icon: Shield, title: 'Secure', description: 'Smart contract based security', delay: 0, link: '/guide' },
   { icon: Zap, title: 'Fast', description: 'Instant transactions on BASE', delay: 0.1 },
   { icon: Globe, title: 'Decentralized', description: 'True ownership of rewards', delay: 0.2 },
   { icon: TrendingUp, title: 'Tradeable', description: 'Exchange on any DEX', delay: 0.3 },
-  { icon: Bot, title: 'AI-Ready', description: 'REST API & MCP for AI agents', delay: 0.4 },
-  { icon: Code, title: 'Composable', description: 'Build on top of the protocol', delay: 0.5 },
+  { icon: Bot, title: 'AI-Ready', description: 'REST API & MCP for AI agents', delay: 0.4, link: '/api-docs' },
+  { icon: Code, title: 'Composable', description: 'Build on top of the protocol', delay: 0.5, link: '/api-docs' },
 ];
+
+const FeatureContent = ({ feature }: { feature: typeof features[number] }) => (
+  <>
+    <motion.div 
+      className="mx-auto h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-gradient-primary flex items-center justify-center mb-4 sm:mb-5 shadow-glow"
+      whileHover={{ scale: 1.1, rotate: 5 }}
+      transition={{ type: "spring", stiffness: 300 }}
+    >
+      <feature.icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+    </motion.div>
+    <h3 className="text-sm sm:text-base font-bold text-foreground mb-2">{feature.title}</h3>
+    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
+  </>
+);
 
 const LandingFeatures = () => {
   return (
@@ -35,15 +50,13 @@ const LandingFeatures = () => {
               transition={{ duration: 0.4, delay: feature.delay }}
               whileHover={{ y: -5 }}
             >
-              <motion.div 
-                className="mx-auto h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-gradient-primary flex items-center justify-center mb-4 sm:mb-5 shadow-glow"
-                whileHover={{ scale: 1.1, rotate: 5 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <feature.icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-              </motion.div>
-              <h3 className="text-sm sm:text-base font-bold text-foreground mb-2">{feature.title}</h3>
-              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
+              {feature.link ? (
+                <Link to={feature.link} className="block">
+                  <FeatureContent feature={feature} />
+                </Link>
+              ) : (
+                <FeatureContent feature={feature} />
+              )}
             </motion.div>
           ))}
         </div>
