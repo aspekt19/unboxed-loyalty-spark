@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Crown, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 
 export const PremiumStatusBadge = () => {
   const { isPremium, premiumStatus, isLoading } = usePremiumStatus();
@@ -18,7 +18,7 @@ export const PremiumStatusBadge = () => {
 
   const expiresAt = premiumStatus?.expires_at;
   const formattedDate = expiresAt 
-    ? format(new Date(expiresAt), 'd MMMM yyyy', { locale: ru })
+    ? format(new Date(expiresAt), 'MMMM d, yyyy', { locale: enUS })
     : null;
 
   return (
@@ -34,14 +34,14 @@ export const PremiumStatusBadge = () => {
                 <Crown className="h-3 w-3" />
                 Premium
               </Badge>
-              <p className="text-xs text-muted-foreground">Активная подписка</p>
+              <p className="text-xs text-muted-foreground">Active subscription</p>
             </div>
           </div>
           {formattedDate && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Calendar className="h-4 w-4" />
               <div className="text-right">
-                <p className="text-xs">Действует до</p>
+                <p className="text-xs">Valid until</p>
                 <p className="font-medium text-foreground">{formattedDate}</p>
               </div>
             </div>
