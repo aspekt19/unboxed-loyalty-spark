@@ -1,11 +1,21 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { verifyMessage } from "npm:viem@2.46.0";
+import { createPublicClient, http, verifyMessage } from "npm:viem@2.46.0";
+import { base } from "npm:viem@2.46.0/chains";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
+
+const publicClient = createPublicClient({
+  chain: base,
+  transport: http('https://base-rpc.publicnode.com', {
+    batch: false,
+    retryCount: 3,
+    retryDelay: 1_000,
+  }),
+});
 
 async function generateDeterministicPassword(address: string, secret: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -46,8 +56,10 @@ serve(async (req) => {
     }
     const address = addressLine.trim().toLowerCase();
 
-    // Verify the cryptographic signature
-    const isValid = await verifyMessage({
+    // Verify the cryptographic signature.
+    // Use the public client action so ERC-1271 / ERC-6492 smart wallets
+    // (including Coinbase Smart Wallet) verify correctly.
+    const isValid = await verifyMessage(publicClient, {
       address: address as `0x${string}`,
       message,
       signature: signature as `0x${string}`,
