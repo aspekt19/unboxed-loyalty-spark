@@ -1,0 +1,7 @@
+{
+  "nodeModulesDir": "auto",
+  "imports": {
+    "hono": "npm:hono@4",
+    "mcp-lite": "npm:mcp-lite@^0.10.0"
+  }
+}
