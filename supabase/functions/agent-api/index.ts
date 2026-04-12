@@ -1,24 +1,14 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-// --- Builder Code for Base attribution (base.dev analytics) ---
-const BUILDER_CODE = "bc_wdmnog7m";
-
-// ERC-8021 data suffix — pre-computed from ox/erc8021 Attribution.toDataSuffix({ codes: ['bc_wdmnog7m'] })
-// This is the CORRECT format that base.dev analytics recognizes.
-// Raw ASCII-only encoding does NOT work — the trailer bytes are required by ERC-8021.
-const BUILDER_SUFFIX = "62635f77646d6e6f67376d0b0080218021802180218021802180218021";
-
-function appendBuilderCode(calldata: string): string {
-  if (!BUILDER_SUFFIX) return calldata;
-  return calldata + BUILDER_SUFFIX;
-}
-
-// Encode mint(address,uint256) calldata with Builder Code
-function encodeMintCalldata(to: string, amount: number): string {
-  const paddedTo = to.toLowerCase().replace("0x", "").padStart(64, "0");
-  const amtHex = BigInt(Math.floor(amount * 1e18)).toString(16).padStart(64, "0");
-  return appendBuilderCode("0x40c10f19" + paddedTo + amtHex);
-}
+import {
+  appendBuilderCode,
+  BUILDER_CODE,
+  computeMintFeeAmount,
+  encodeMintCalldata,
+  getAgentFeePercent,
+  PLATFORM_FEE_WALLET,
+} from "../_shared/loyalspark-agent-helpers.ts";
+import { authenticateAgent, type AgentContext } from "./auth.ts";
+import { corsHeaders, jsonResponse } from "./http.ts";
 
 // Encode approve(address,uint256) calldata with Builder Code
 function encodeApproveCalldata(spender: string, amount: number): string {
@@ -36,9 +26,6 @@ function encodeTransferCalldata(to: string, amount: number): string {
 
 // Contract addresses
 const FACTORY_ADDRESS = "0x5F3DdBa12580CFdc6016258774cCc19C4250dA80";
-
-/** Platform wallet that receives mint fee (loyalty tokens), same as agent-wallet server mint */
-const PLATFORM_FEE_WALLET = "0x5cc0Aa9ed773F413f81f78a62F2e94109CE26205";
 
 // Function selectors (precomputed keccak256 first 4 bytes)
 const SELECTORS = {
@@ -74,69 +61,6 @@ function encodeCreateLoyaltyTokenCalldata(name: string, symbol: string, merchant
 // Encode no-argument function calldata
 function encodeNoArgCalldata(selector: string): string {
   return appendBuilderCode(selector);
-}
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-api-key",
-};
-
-async function hashApiKey(key: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(key);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-interface AgentContext {
-  agentId: string;
-  ownerAddress: string;
-  scopes: string[];
-  name: string;
-}
-
-async function authenticateAgent(
-  apiKey: string,
-  serviceClient: any
-): Promise<AgentContext | null> {
-  const keyHash = await hashApiKey(apiKey);
-
-  const { data: agent, error } = await serviceClient
-    .from("agent_registry")
-    .select("id, owner_address, scopes, name, is_active, rate_limit_per_minute, total_requests, last_request_at")
-    .eq("api_key_hash", keyHash)
-    .single();
-
-  if (error || !agent || !agent.is_active) return null;
-
-  // Simple rate limiting: check requests in last minute
-  if (agent.last_request_at) {
-    const lastReq = new Date(agent.last_request_at).getTime();
-    const now = Date.now();
-    // Very basic — for production, use a proper counter
-    if (now - lastReq < 1000) {
-      // Allow max ~60 req/min by enforcing at least 1s between requests
-      // This is a simplified check
-    }
-  }
-
-  // Update request count
-  await serviceClient
-    .from("agent_registry")
-    .update({
-      total_requests: (agent.total_requests || 0) + 1,
-      last_request_at: new Date().toISOString(),
-    })
-    .eq("id", agent.id);
-
-  return {
-    agentId: agent.id,
-    ownerAddress: agent.owner_address,
-    scopes: agent.scopes || ["read"],
-    name: agent.name,
-  };
 }
 
 // Resolve merchant address: either ownerAddress or CDP wallet if use_agent_wallet is true
@@ -197,35 +121,6 @@ async function findAgentProgram(
   return walletProgram || null;
 }
 
-async function getAgentFeePercent(
-  serviceClient: any,
-  agentId: string,
-  _ownerAddress: string
-): Promise<number> {
-  const { data: agentRow } = await serviceClient
-    .from("agent_registry")
-    .select("plan_id")
-    .eq("id", agentId)
-    .single();
-
-  if (agentRow?.plan_id) {
-    const { data: plan } = await serviceClient
-      .from("agent_plans")
-      .select("transaction_fee_percent")
-      .eq("id", agentRow.plan_id)
-      .single();
-    if (plan) return plan.transaction_fee_percent;
-  }
-
-  const { data: freePlan } = await serviceClient
-    .from("agent_plans")
-    .select("transaction_fee_percent")
-    .eq("slug", "free")
-    .single();
-
-  return freePlan?.transaction_fee_percent || 1.0;
-}
-
 function hasScope(agent: AgentContext, scope: string): boolean {
   return agent.scopes.includes(scope);
 }
@@ -246,13 +141,6 @@ async function logActivity(
     response_status: responseStatus,
     response_body: responseBody,
     ip_address: ipAddress || null,
-  });
-}
-
-function jsonResponse(data: any, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
 
@@ -323,11 +211,21 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "Missing or invalid API key. Use x-api-key header with your lsk_ key." }, 401);
   }
 
-  // Authenticate agent
-  const agent = await authenticateAgent(apiKey, serviceClient);
-  if (!agent) {
+  const auth = await authenticateAgent(apiKey, serviceClient);
+  if (!auth.ok && auth.error === "invalid_key") {
     return jsonResponse({ error: "Invalid API key or agent is deactivated" }, 401);
   }
+  if (!auth.ok && auth.error === "rate_limited") {
+    const msg =
+      auth.reason === "per_minute"
+        ? "Rate limit exceeded: too many requests per minute for this agent."
+        : "Monthly API call quota exceeded for your plan.";
+    return jsonResponse({ error: msg, code: "rate_limited", detail: auth.reason }, 429);
+  }
+  if (!auth.ok) {
+    return jsonResponse({ error: "Authentication failed" }, 401);
+  }
+  const agent = auth.agent;
 
   const ip = req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || "unknown";
 
@@ -725,8 +623,8 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: `Program is ${program.status}. Must be 'active' to mint.` }, 400);
       }
 
-      const feePercent = await getAgentFeePercent(serviceClient, agent.agentId, agent.ownerAddress);
-      const feeAmount = amount * (feePercent / 100);
+      const feePercent = await getAgentFeePercent(serviceClient, agent.agentId);
+      const feeAmount = computeMintFeeAmount(amount, feePercent);
       const recipientCalldata = encodeMintCalldata(recipient_address, amount);
       const feeCalldata = encodeMintCalldata(PLATFORM_FEE_WALLET, feeAmount);
 
@@ -1442,7 +1340,7 @@ Deno.serve(async (req) => {
       "POST /program-status": "Update program status in database",
       "GET /rewards?token_address=0x...": "List rewards for a program",
       "POST /rewards": "Create a new reward",
-      "POST /mint": "Record mint intent; returns recipient + platform fee calldata (two txs)",
+      "POST /mint": "Record mint intent; returns recipient_calldata + fee_calldata (both txs required for commission)",
       "POST /transfer": "Transfer tokens between wallets",
       "GET /balance?token_address=0x...&customer_address=0x...": "Get customer balance",
       "GET /customers?token_address=0x...": "List customers",

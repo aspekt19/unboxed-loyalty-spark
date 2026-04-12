@@ -37,7 +37,7 @@ const MCP_TOOLS = [
   { name: 'list_loyalty_programs', desc: 'All merchant loyalty programs', scope: 'read' },
   { name: 'list_rewards', desc: 'Rewards for a specific program', scope: 'read' },
   { name: 'create_reward', desc: 'Create a new reward item', scope: 'manage_rewards' },
-  { name: 'mint_loyalty_tokens', desc: 'Mint tokens to a customer wallet', scope: 'mint' },
+  { name: 'mint_loyalty_tokens', desc: 'Mint to customer + fee calldata (two onchain txs)', scope: 'mint' },
   { name: 'transfer_loyalty_tokens', desc: 'Transfer tokens between wallets', scope: 'mint' },
   { name: 'get_token_balance', desc: 'Customer balance and tier info', scope: 'read' },
   { name: 'get_program_analytics', desc: 'Program performance metrics', scope: 'read' },

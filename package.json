@@ -8,6 +8,7 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
+    "test:deno-helpers": "deno test --no-check supabase/functions/_shared/loyalspark-agent-helpers_test.ts",
     "preview": "vite preview"
   },
   "dependencies": {

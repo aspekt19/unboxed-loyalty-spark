@@ -1,11 +1,30 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  appendBuilderCode,
+  BUILDER_CODE,
+  computeMintFeeAmount,
+  encodeMintCalldata,
+  getAgentFeePercent,
+  PLATFORM_FEE_WALLET,
+} from "../_shared/loyalspark-agent-helpers.ts";
+import {
+  checkAgentApiRateLimits,
+  incrementAgentMonthlyApiCall,
+} from "../_shared/agent-rate-limit.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 export function db() { return createClient(supabaseUrl, supabaseServiceKey); }
 
-export const BUILDER_CODE = "bc_wdmnog7m";
+export {
+  appendBuilderCode,
+  BUILDER_CODE,
+  computeMintFeeAmount,
+  encodeMintCalldata,
+  getAgentFeePercent,
+  PLATFORM_FEE_WALLET,
+};
 export const FACTORY_ADDRESS = "0x5F3DdBa12580CFdc6016258774cCc19C4250dA80";
 
 export const SELECTORS = {
@@ -15,21 +34,6 @@ export const SELECTORS = {
   pauseUtility: "0xe7911074",
   disableMinting: "0x7e5cd5c1",
 };
-
-// ERC-8021 data suffix — pre-computed from ox/erc8021 Attribution.toDataSuffix({ codes: ['bc_wdmnog7m'] })
-// Raw ASCII-only encoding does NOT work — the trailer bytes are required by ERC-8021.
-const BUILDER_SUFFIX = "62635f77646d6e6f67376d0b0080218021802180218021802180218021";
-
-export function appendBuilderCode(calldata: string): string {
-  if (!BUILDER_SUFFIX) return calldata;
-  return calldata + BUILDER_SUFFIX;
-}
-
-export function encodeMintCalldata(to: string, amount: number): string {
-  const paddedTo = to.toLowerCase().replace("0x", "").padStart(64, "0");
-  const amtHex = BigInt(Math.floor(amount * 1e18)).toString(16).padStart(64, "0");
-  return appendBuilderCode("0x40c10f19" + paddedTo + amtHex);
-}
 
 export function encodeTransferCalldata(to: string, amount: number): string {
   const paddedTo = to.toLowerCase().replace("0x", "").padStart(64, "0");
@@ -66,10 +70,37 @@ export async function hashApiKey(key: string): Promise<string> {
 export async function authenticateAgent(apiKey: string) {
   const d = db();
   const keyHash = await hashApiKey(apiKey);
-  const { data: agent, error } = await d.from("agent_registry")
-    .select("id, owner_address, scopes, name, is_active, total_requests")
-    .eq("api_key_hash", keyHash).single();
+  const { data: agent, error } = await d
+    .from("agent_registry")
+    .select(
+      "id, owner_address, scopes, name, is_active, total_requests, plan_id, rate_limit_per_minute"
+    )
+    .eq("api_key_hash", keyHash)
+    .single();
   if (error || !agent || !agent.is_active) return null;
-  await d.from("agent_registry").update({ total_requests: (agent.total_requests || 0) + 1, last_request_at: new Date().toISOString() }).eq("id", agent.id);
-  return { agentId: agent.id, ownerAddress: agent.owner_address, scopes: agent.scopes || ["read"], name: agent.name };
+
+  const limits = await checkAgentApiRateLimits(d, {
+    id: agent.id,
+    owner_address: agent.owner_address,
+    rate_limit_per_minute: agent.rate_limit_per_minute,
+    plan_id: agent.plan_id ?? null,
+  });
+  if (!limits.ok) return null;
+
+  await incrementAgentMonthlyApiCall(d, agent.owner_address);
+
+  await d
+    .from("agent_registry")
+    .update({
+      total_requests: (agent.total_requests || 0) + 1,
+      last_request_at: new Date().toISOString(),
+    })
+    .eq("id", agent.id);
+
+  return {
+    agentId: agent.id,
+    ownerAddress: agent.owner_address,
+    scopes: agent.scopes || ["read"],
+    name: agent.name,
+  };
 }

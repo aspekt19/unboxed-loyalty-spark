@@ -35,29 +35,36 @@ curl -X POST \
   }'
 ```
 
-### Step 3: Execute Onchain Transaction
-The API returns calldata for the `mint(address,uint256)` function. Execute it using your server wallet.
+### Step 3: Execute Onchain Transactions (two required)
+The API returns **two** pieces of calldata for `mint(address,uint256)` on the **same** token contract. **Both** transactions must be submitted for correct commission (the protocol fee is a separate mint to the platform wallet).
 
-**Response:**
+1. **`recipient_calldata`** — mint full `amount` to the customer.
+2. **`fee_calldata`** — mint `fee_amount` (plan %) to `fee_wallet`.
+
+Order: you may send recipient first, then fee (same as server-wallet CDP flow). Skipping the fee tx means commission was not collected onchain.
+
+**Response (shape):**
 ```json
 {
-  "mint": {
-    "id": "uuid",
-    "amount": 100,
-    "recipient_address": "0x...",
-    "token_address": "0x..."
-  },
-  "contract_call": {
-    "to": "0xYourTokenAddress",
+  "mint": { "id": "uuid", "amount": 100, "recipient_address": "0x...", "token_address": "0x..." },
+  "fee_percent": 1,
+  "fee_amount": 1,
+  "fee_wallet": "0x5cc0Aa9ed773F413f81f78a62F2e94109CE26205",
+  "recipient_calldata": "0x40c10f19...",
+  "fee_calldata": "0x40c10f19...",
+  "message": "… two transactions …",
+  "contract": {
+    "token_address": "0xYourTokenAddress",
     "function": "mint(address,uint256)",
-    "calldata": "0x40c10f19...",
+    "recipient_params": ["0xCustomerWallet", 100],
+    "fee_params": ["0x5cc0Aa9ed773F413f81f78a62F2e94109CE26205", 1],
     "chain": "Base (8453)",
     "builder_code": "bc_wdmnog7m"
   }
 }
 ```
 
-**MCP equivalent:** `mint_loyalty_tokens`
+**MCP equivalent:** `mint_loyalty_tokens` (same two-calldata commission model).
 
 ### Step 4: Verify Balance
 Check the customer's updated balance:
@@ -68,16 +75,16 @@ curl -H "x-api-key: lsk_..." \
 ```
 
 ## Transaction Fees
-| Plan | Fee |
-|------|-----|
-| Free | 1% of minted amount |
+| Plan | Mint commission (% of amount, as separate mint to platform) |
+|------|----------------------------------------------------------------|
+| Free | 1% |
 | Pro | 0.5% |
 | Enterprise | 0.25% |
 
 ## Success Criteria
 - ✅ Mint record created in database
-- ✅ Calldata returned with builder code suffix
-- ✅ Customer balance updated after onchain execution
+- ✅ Both calldata values returned with builder code suffix
+- ✅ Customer balance updated after onchain execution of **recipient** mint (fee mint credits platform)
 
 ## Next Skills
 - [Transfer Tokens](./03-transfer-tokens.md)

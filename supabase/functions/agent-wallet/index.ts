@@ -1,5 +1,12 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { SignJWT, importPKCS8 } from "https://deno.land/x/jose@v5.2.4/index.ts";
+import {
+  appendBuilderCode,
+  computeMintFeeAmount,
+  encodeMintCalldata,
+  getAgentFeePercent,
+  PLATFORM_FEE_WALLET,
+} from "../_shared/loyalspark-agent-helpers.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,20 +19,6 @@ const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 function db() {
   return createClient(supabaseUrl, supabaseServiceKey);
-}
-
-// --- Builder Code for Base attribution (base.dev analytics) ---
-const BUILDER_CODE = "bc_wdmnog7m";
-
-// ERC-8021 data suffix — pre-computed from ox/erc8021 Attribution.toDataSuffix({ codes: ['bc_wdmnog7m'] })
-// This is the CORRECT format that base.dev analytics recognizes.
-// Raw ASCII-only encoding does NOT work — the trailer bytes (0b 00 80 21 ...) are required by ERC-8021.
-const BUILDER_SUFFIX = "62635f77646d6e6f67376d0b0080218021802180218021802180218021";
-
-// Append builder code suffix to any calldata
-function appendBuilderCode(calldata: string): string {
-  if (!BUILDER_SUFFIX) return calldata;
-  return calldata + BUILDER_SUFFIX;
 }
 
 // --- RLP encoder for EIP-1559 transactions ---
@@ -418,33 +411,6 @@ async function handleSignTransaction(d: any, agent: any, body: any) {
   });
 }
 
-async function getAgentFeePercent(d: any, agentId: string, ownerAddress: string): Promise<number> {
-  // Check if agent has a plan
-  const { data: agent } = await d
-    .from("agent_registry")
-    .select("plan_id")
-    .eq("id", agentId)
-    .single();
-
-  if (agent?.plan_id) {
-    const { data: plan } = await d
-      .from("agent_plans")
-      .select("transaction_fee_percent")
-      .eq("id", agent.plan_id)
-      .single();
-    if (plan) return plan.transaction_fee_percent;
-  }
-
-  // Default to free plan fee (1%)
-  const { data: freePlan } = await d
-    .from("agent_plans")
-    .select("transaction_fee_percent")
-    .eq("slug", "free")
-    .single();
-
-  return freePlan?.transaction_fee_percent || 1.0;
-}
-
 async function trackUsage(d: any, ownerAddress: string, mintAmount: number, feeUsdc: number) {
   const now = new Date();
   const periodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
@@ -480,8 +446,6 @@ async function trackUsage(d: any, ownerAddress: string, mintAmount: number, feeU
 
 async function handleServerMint(d: any, agent: any, body: any) {
   if (!agent.scopes.includes("mint")) return jsonResponse({ error: "Scope 'mint' required" }, 403);
-
-  const PLATFORM_FEE_WALLET = "0x5cc0Aa9ed773F413f81f78a62F2e94109CE26205";
 
   const { token_address, recipient_address, amount } = body;
   if (!token_address || !recipient_address || !amount) {
@@ -522,9 +486,8 @@ async function handleServerMint(d: any, agent: any, body: any) {
   if (!prog) return jsonResponse({ error: "Program not found or not owned" }, 404);
   if (prog.status !== "active") return jsonResponse({ error: `Program is ${prog.status}` }, 400);
 
-  // Calculate transaction fee
-  const feePercent = await getAgentFeePercent(d, agent.agentId, agent.ownerAddress);
-  const feeAmount = amount * (feePercent / 100);
+  const feePercent = await getAgentFeePercent(d, agent.agentId);
+  const feeAmount = computeMintFeeAmount(amount, feePercent);
 
   const { data: wallet } = await d
     .from("agent_wallets")
@@ -533,14 +496,7 @@ async function handleServerMint(d: any, agent: any, body: any) {
 
   if (!wallet) return jsonResponse({ error: "No wallet. Use action: create_wallet first." }, 404);
 
-  // Build calldata for recipient mint (with Builder Code suffix for base.dev)
-  const buildMintCalldata = (to: string, amt: number) => {
-    const paddedTo = to.toLowerCase().replace("0x", "").padStart(64, "0");
-    const amtHex = BigInt(Math.floor(amt * 1e18)).toString(16).padStart(64, "0");
-    return appendBuilderCode("0x40c10f19" + paddedTo + amtHex);
-  };
-
-  const recipientCalldata = buildMintCalldata(recipient_address, amount);
+  const recipientCalldata = encodeMintCalldata(recipient_address, amount);
 
   let txResult: { txHash: string; status: string };
   let feeTxResult: { txHash: string; status: string } | null = null;
@@ -561,7 +517,7 @@ async function handleServerMint(d: any, agent: any, body: any) {
 
     // 2. Mint fee tokens to platform wallet (separate tx)
     if (feeAmount > 0) {
-      const feeCalldata = buildMintCalldata(PLATFORM_FEE_WALLET, feeAmount);
+      const feeCalldata = encodeMintCalldata(PLATFORM_FEE_WALLET, feeAmount);
       const rlpFeeTx = encodeUnsignedEIP1559(token_address, feeCalldata);
       const feeCdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/send/transaction`, {
         transaction: rlpFeeTx,

@@ -1,8 +1,17 @@
 import { Hono } from "npm:hono@4";
 import { McpServer, StreamableHttpTransport } from "npm:mcp-lite@^0.10.0";
 import {
-  db, BUILDER_CODE, FACTORY_ADDRESS, SELECTORS,
-  encodeMintCalldata, encodeTransferCalldata, encodeCreateLoyaltyTokenCalldata, encodeNoArgCalldata,
+  db,
+  BUILDER_CODE,
+  FACTORY_ADDRESS,
+  SELECTORS,
+  computeMintFeeAmount,
+  encodeMintCalldata,
+  encodeTransferCalldata,
+  encodeCreateLoyaltyTokenCalldata,
+  encodeNoArgCalldata,
+  getAgentFeePercent,
+  PLATFORM_FEE_WALLET,
   authenticateAgent,
 } from "./helpers.ts";
 
@@ -172,7 +181,8 @@ function createMcpServer(agent: any) {
   });
 
   mcpServer.tool("mint_loyalty_tokens", {
-    description: "Record mint intent and get smart contract call params",
+    description:
+      "Record mint intent and get two mint calldatas: recipient + platform fee (plan %). Both txs must be sent for correct commission.",
     inputSchema: { type: "object" as const, properties: { token_address: { type: "string", description: "Token contract address" }, recipient: { type: "string", description: "Recipient wallet (0x...)" }, amount: { type: "number", description: "Tokens to mint" } }, required: ["token_address", "recipient", "amount"] },
     handler: async ({ token_address, recipient, amount }: any) => {
       const err = authGuard(["mint"]);
@@ -182,9 +192,29 @@ function createMcpServer(agent: any) {
       const { data: prog } = await d.from("loyalty_programs").select("id,name,symbol,status").eq("token_address", token_address.toLowerCase()).eq("merchant_address", agent.ownerAddress).single();
       if (!prog) return T('{"error":"Program not found"}');
       if (prog.status !== "active") return T(JSON.stringify({ error: `Program is ${prog.status}` }));
+      const feePercent = await getAgentFeePercent(d, agent.agentId);
+      const feeAmount = computeMintFeeAmount(amount, feePercent);
+      const recipientCalldata = encodeMintCalldata(recipient, amount);
+      const feeCalldata = encodeMintCalldata(PLATFORM_FEE_WALLET, feeAmount);
       const { data: mint, error } = await d.from("token_mint_history").insert({ merchant_address: agent.ownerAddress.toLowerCase(), recipient_address: recipient.toLowerCase(), amount, token_address: token_address.toLowerCase(), token_name: prog.name, token_symbol: prog.symbol }).select("id,amount,recipient_address,token_address,created_at").single();
       if (error) return T(JSON.stringify({ error: error.message }));
-      return T(JSON.stringify({ mint, contract_call: { to: token_address, function: "mint(address,uint256)", args: [recipient, amount], calldata: encodeMintCalldata(recipient, amount), chain: "Base (8453)", builder_code: BUILDER_CODE } }));
+      return T(JSON.stringify({
+        mint,
+        fee_percent: feePercent,
+        fee_amount: feeAmount,
+        fee_wallet: PLATFORM_FEE_WALLET,
+        recipient_calldata: recipientCalldata,
+        fee_calldata: feeCalldata,
+        message: "Broadcast two transactions to the token contract: recipient mint, then fee mint to fee_wallet.",
+        contract: {
+          to: token_address,
+          function: "mint(address,uint256)",
+          recipient_params: [recipient, amount],
+          fee_params: [PLATFORM_FEE_WALLET, feeAmount],
+          chain: "Base (8453)",
+          builder_code: BUILDER_CODE,
+        },
+      }));
     },
   });
 
