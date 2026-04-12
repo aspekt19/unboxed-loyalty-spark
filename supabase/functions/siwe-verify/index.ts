@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { createPublicClient, http, verifyMessage } from "npm:viem@2.46.0";
+import { createPublicClient, http } from "npm:viem@2.46.0";
 import { base } from "npm:viem@2.46.0/chains";
 
 const corsHeaders = {
@@ -59,7 +59,7 @@ serve(async (req) => {
     // Verify the cryptographic signature.
     // Use the public client action so ERC-1271 / ERC-6492 smart wallets
     // (including Coinbase Smart Wallet) verify correctly.
-    const isValid = await verifyMessage(publicClient, {
+    const isValid = await publicClient.verifyMessage({
       address: address as `0x${string}`,
       message,
       signature: signature as `0x${string}`,
