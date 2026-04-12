@@ -39,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const manualSignOutRef = useRef(false);
   const isFarcasterContext = useRef(false);
   const signingInRef = useRef(false);
+  const lastFailureAtRef = useRef(0);
   const retryBlockedUntilRef = useRef(0);
   const lastRateLimitToastAtRef = useRef(0);
   const lastSignInAttemptAtRef = useRef(0);
@@ -87,6 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const now = Date.now();
     if (now < retryBlockedUntilRef.current) return;
     if (now - lastSignInAttemptAtRef.current < 4000) return;
+    if (now - lastFailureAtRef.current < 8000) return;
     lastSignInAttemptAtRef.current = now;
 
     signingInRef.current = true;
@@ -180,6 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast.success('Successfully signed in with wallet');
     } catch (error: any) {
       console.error('[AuthProvider] SIWE sign in error:', error);
+      lastFailureAtRef.current = Date.now();
       
       if (error.status === 429 || error.code === 'over_request_rate_limit') {
         retryBlockedUntilRef.current = Date.now() + 30000;
