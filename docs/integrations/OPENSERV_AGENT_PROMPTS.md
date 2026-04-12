@@ -130,7 +130,7 @@ You are responsible for:
 ## Website Details
 
 - **Production URL**: https://loyalspark.online
-- **Key pages**: / (landing), /app (main app), /merchant (merchant panel), /customer (customer panel), /api-docs (documentation), /guide (getting started), /premium (subscription plans), /pitch-deck (investor deck)
+- **Key pages**: / (landing), /app (main app), /merchant (merchant panel), /customer (customer panel), /api-docs (documentation), /guide (getting started), /premium (subscription plans), /pitch (investor deck)
 - **Tech stack**: React SPA (Vite), deployed on Lovable
 - **Sitemap**: https://loyalspark.online/sitemap.xml
 - **Robots.txt**: https://loyalspark.online/robots.txt
@@ -155,7 +155,7 @@ You are responsible for:
 
 The following items have already been implemented by the developer. Do NOT include them as action items or issues:
 - ✅ JSON-LD Organization + WebSite + SoftwareApplication + WebAPI schema on landing page
-- ✅ BreadcrumbList JSON-LD on /api-docs, /guide, /pitch-deck
+- ✅ BreadcrumbList JSON-LD on /api-docs, /guide, /pitch
 - ✅ FAQPage JSON-LD on /guide
 - ✅ Canonical tags via usePageMeta on all routes
 - ✅ OG and Twitter Card meta tags updated per route via usePageMeta

@@ -244,6 +244,11 @@ npm run dev
 
 ```
 unboxed-loyalty-spark/
+├── docs/                          # Human docs (guides, integrations, pitch notes)
+│   ├── development/               # Build & deploy
+│   ├── integrations/              # Farcaster, OpenServ, A2A, prompts
+│   ├── pitch-deck/                # Investor deck (Markdown sources)
+│   └── supabase/                  # DB/edge runbooks
 ├── src/
 │   ├── components/
 │   │   ├── ui/                    # shadcn/ui library
@@ -263,7 +268,7 @@ unboxed-loyalty-spark/
 │   ├── config/                    # Contract addresses & ABIs
 │   ├── contexts/                  # Auth context
 │   ├── integrations/supabase/     # Database client & types
-│   ├── pages/                     # Route pages
+│   ├── pages/                     # Route pages (e.g. PitchDeck.tsx → /pitch)
 │   └── lib/                       # Utilities
 ├── public/
 │   ├── .well-known/
@@ -272,35 +277,16 @@ unboxed-loyalty-spark/
 │   └── media-kit/                 # Brand assets
 ├── contracts/                     # Solidity contracts
 ├── supabase/
-│   ├── functions/
-│   │   ├── agent-api/             # REST API for agents
-│   │   ├── agent-wallet/          # CDP wallet management
-│   │   ├── agent-api-key/         # API key generation
-│   │   ├── loyalty-mcp/           # MCP Server
-│   │   ├── siwe-verify/           # Wallet authentication
-│   │   ├── verify-payment/        # Payment verification
-│   │   └── ...                    # Other edge functions
+│   ├── functions/                 # Edge Functions — see supabase/functions/README.md
 │   └── migrations/                # Database migrations
 └── README.md
 ```
 
+**Indexes:** [docs/README.md](./docs/README.md) (all human-written guides) · [supabase/functions/README.md](./supabase/functions/README.md) (every Edge Function).
+
 ## Edge Functions
 
-| Function | Purpose |
-|----------|---------|
-| `agent-api` | REST API for AI agents (CRUD operations) |
-| `agent-wallet` | CDP MPC wallet creation & transaction signing |
-| `agent-api-key` | API key generation for agents |
-| `loyalty-mcp` | MCP Server for LLM integration |
-| `siwe-verify` | Sign-In With Ethereum authentication |
-| `verify-payment` | Premium subscription payment verification |
-| `verify-agent-plan-payment` | Agent plan USDC payment verification |
-| `check-premium-expiration` | Subscription expiration checks |
-| `check-program-expiration` | Program expiration handling |
-| `get-token-holders` | Token holder analytics |
-| `process-automation` | Marketing automation triggers |
-| `sync-mint-history` | Blockchain mint history sync |
-| `verify-voucher` | Voucher verification |
+See the **[supabase/functions/README.md](./supabase/functions/README.md)** catalogue (grouped by role: API, MCP, auth, payments, jobs). The root README table is intentionally shortened here to avoid duplication.
 
 ## Security
 
@@ -329,7 +315,7 @@ Loyal Spark is a **machine-payment-native** API. AI agents can discover, authent
 | OpenAPI Spec | [/openapi.json](https://loyalspark.online/openapi.json) | OpenAPI 3.1.0 with x-payment-info |
 | Skills Library | [/.well-known/skills/](https://loyalspark.online/.well-known/skills/index.md) | 11 step-by-step guides for agents |
 | LLMs.txt | [/llms.txt](https://loyalspark.online/llms.txt) | Protocol summary for LLM crawlers |
-| Prompt Guide | [PROMPT_GUIDE.md](./PROMPT_GUIDE.md) | Ready-to-use system prompts |
+| Prompt Guide | [PROMPT_GUIDE.md](./docs/integrations/PROMPT_GUIDE.md) | Ready-to-use system prompts |
 
 ### Payment Gateways (No API Key Needed)
 

@@ -12,7 +12,7 @@ import AppPage from "./pages/AppPage";
 import CustomerPage from "./pages/CustomerPage";
 import MerchantPage from "./pages/MerchantPage";
 import AdminPage from "./pages/AdminPage";
-import PitchDeck from "./pages/pitch-deck/PitchDeck";
+import PitchDeck from "./pages/PitchDeck";
 import GuidePage from "./pages/GuidePage";
 import InstallPage from "./pages/InstallPage";
 import PremiumPage from "./pages/PremiumPage";
