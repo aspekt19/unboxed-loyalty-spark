@@ -133,7 +133,7 @@ serve(async (req) => {
     console.log(`Found ${uniqueAddresses.size} unique addresses`);
 
     // Batch fetch balances
-    const holders: TokenHolder[] = [];
+    const holders: { address: string; balance: string }[] = [];
     const batchSize = 100;
     const addresses = Array.from(uniqueAddresses);
 
