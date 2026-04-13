@@ -17,7 +17,7 @@ import UseCases from '@/components/landing/UseCases';
 import LandingHero from '@/components/landing/LandingHero';
 import LandingFeatures from '@/components/landing/LandingFeatures';
 import LandingAgents from '@/components/landing/LandingAgents';
-import LandingRoundUp from '@/components/landing/LandingRoundUp';
+
 import LandingCTA from '@/components/landing/LandingCTA';
 
 const jsonLd = {
@@ -121,8 +121,6 @@ const Index = () => {
           {/* 4. Why Loyal Spark — feature grid */}
           <LandingFeatures />
 
-          {/* 5. Round-Up Investment */}
-          <LandingRoundUp />
 
           {/* 6. AI Agents Section — for developers/advanced users */}
           <LandingAgents />
