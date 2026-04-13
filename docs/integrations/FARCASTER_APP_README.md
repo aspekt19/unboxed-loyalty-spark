@@ -4,7 +4,7 @@ A decentralized loyalty program integrated with Farcaster, built on Base Mainnet
 
 ## Overview
 
-Loyal Spark Farcaster App enables merchants and customers to participate in a tokenized loyalty ecosystem through the Farcaster social network. The platform supports **flexible sign-in**: email/passkey via Coinbase Smart Wallet (no crypto needed), traditional wallets (MetaMask, WalletConnect), or automatic Farcaster connection inside Warpcast. AI agents integrate via REST API, MCP Server, or pay-per-request gateways (MPP / x402).
+Loyal Spark Farcaster App enables merchants and customers to participate in a tokenized loyalty ecosystem through the Farcaster social network. The platform supports **flexible sign-in**: email/phone/Google via Privy (embedded wallet created automatically), traditional wallets (MetaMask, WalletConnect), or automatic Farcaster connection inside Warpcast. AI agents integrate via REST API, MCP Server, or pay-per-request gateways (MPP / x402).
 
 ## Features
 
@@ -42,8 +42,8 @@ Loyal Spark Farcaster App enables merchants and customers to participate in a to
 
 - **Frontend**: React 18 + TypeScript + Vite
 - **Styling**: Tailwind CSS with custom design system
-- **Blockchain**: Wagmi + Viem + RainbowKit
-- **Authentication**: Email/Passkey (Coinbase Smart Wallet) + SIWE + Farcaster Auth Kit
+- **Blockchain**: Wagmi + Viem + Privy
+- **Authentication**: Email/Phone/Google (Privy embedded wallets) + SIWE + Farcaster Auth Kit
 - **Backend**: Lovable Cloud
 - **Agent Wallets**: Coinbase CDP MPC
 - **State**: React Query (TanStack Query)
@@ -61,7 +61,7 @@ Loyal Spark Farcaster App enables merchants and customers to participate in a to
 
 ### Prerequisites
 - Node.js 18+ or Bun
-- Email address, passkey, or Web3 wallet (Coinbase Wallet, MetaMask, etc.)
+- Email, phone number, Google account, or Web3 wallet (MetaMask, Coinbase Wallet, etc.)
 - Farcaster account (optional, for miniapp features)
 
 ### Installation

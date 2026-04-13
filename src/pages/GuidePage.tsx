@@ -416,7 +416,7 @@ export default function GuidePage() {
                     Choose the sign-in method that works best for you:
                   </p>
                   <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-                    <li><strong>Email or Passkey (recommended):</strong> Click "Sign In" and choose Coinbase Smart Wallet. A secure account is created automatically.</li>
+                    <li><strong>Email, Phone, or Google (recommended):</strong> Click "Sign In" via Privy. A secure wallet is created automatically — no crypto knowledge needed.</li>
                     <li><strong>Existing Wallet:</strong> Connect MetaMask, Coinbase Wallet, or WalletConnect if you already have one.</li>
                     <li><strong>Farcaster:</strong> If you're in Warpcast, your wallet connects automatically.</li>
                   </ol>
