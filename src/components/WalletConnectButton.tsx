@@ -1,5 +1,5 @@
 import { LogIn, User } from 'lucide-react';
-import { useConnect, useAccount } from 'wagmi';
+import { useConnect, useAccount, useDisconnect } from 'wagmi';
 import { useAuth } from '@/contexts/AuthContext';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -9,7 +9,8 @@ import { usePrivySafe } from '@/hooks/usePrivySafe';
 import { getPrivyPrimaryEmail, shouldUsePrivyTokenAuth } from '@/lib/privyAuth';
 
 export function WalletConnectButton() {
-  const { connect, connectors, disconnectAsync } = useConnect();
+  const { connect, connectors } = useConnect();
+  const { disconnectAsync } = useDisconnect();
   const { address, isConnected } = useAccount();
   const { user, signOut, signInWithWallet, signInWithPrivy, resetManualSignOut } = useAuth();
   const [isManuallyDisconnected, setIsManuallyDisconnected] = useState(false);
