@@ -86,31 +86,7 @@ const PaymentHandshake = () => {
           ))}
         </div>
 
-        {/* Pricing preview */}
-        <motion.div
-          className="bg-gradient-card rounded-xl border border-border/50 p-6 max-w-2xl mx-auto"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-        >
-          <h3 className="font-bold text-sm mb-3 text-foreground">Per-Request Pricing</h3>
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            <div className="space-y-1.5">
-              <p className="text-muted-foreground font-medium uppercase tracking-wider text-[10px]">Read Operations</p>
-              <div className="flex justify-between"><span className="text-muted-foreground">Programs</span><span className="font-mono text-foreground">$0.001</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Balance</span><span className="font-mono text-foreground">$0.001</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Analytics</span><span className="font-mono text-foreground">$0.005</span></div>
-            </div>
-            <div className="space-y-1.5">
-              <p className="text-muted-foreground font-medium uppercase tracking-wider text-[10px]">Write Operations</p>
-              <div className="flex justify-between"><span className="text-muted-foreground">Mint tokens</span><span className="font-mono text-foreground">$0.01</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Deploy program</span><span className="font-mono text-foreground">$0.05</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">P2P trade</span><span className="font-mono text-foreground">$0.01</span></div>
-            </div>
-          </div>
-          <p className="text-[10px] text-muted-foreground mt-3">Paid in USDC on Base (x402) or USDC/pathUSD on Tempo (MPP). Sub-cent costs per call.</p>
-        </motion.div>
+        
       </div>
     </section>
   );
