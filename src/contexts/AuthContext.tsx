@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import { sdk } from '@farcaster/miniapp-sdk';
-import { getPrivyPrimaryEmail } from '@/lib/privyAuth';
+import { getPrivyPrimaryEmail, shouldUsePrivyTokenAuth } from '@/lib/privyAuth';
 
 interface AuthContextType {
   user: User | null;
@@ -178,6 +178,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [address]);
 
   const signInWithWallet = useCallback(async () => {
+    const privyUser = (window as any).__privyUser;
+
+    if (!isFarcasterContext.current && privyUser && shouldUsePrivyTokenAuth(privyUser)) {
+      await signInWithPrivy();
+      return;
+    }
+
     if (!address || !isConnected) {
       toast.error('Please connect your wallet first');
       return;
@@ -308,7 +315,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signingInRef.current = false;
       setIsLoading(false);
     }
-  }, [address, isConnected, signMessageAsync]);
+  }, [address, isConnected, signInWithPrivy, signMessageAsync]);
 
   const signOut = useCallback(async () => {
     try {
@@ -369,6 +376,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
+        const privyUser = (window as any).__privyUser;
+        if (!isFarcasterContext.current && privyUser && shouldUsePrivyTokenAuth(privyUser)) {
+          setSession(currentSession);
+          setUser(currentSession.user);
+          return;
+        }
+
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('id')
@@ -407,14 +421,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [isConnected, address, signInWithWallet]);
 
   useEffect(() => {
-    if (isConnected && address && !user && !manualSignOutRef.current) {
-      supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
-        if (existingSession) {
-          signInWithWallet();
-        }
-      });
-    }
-  }, [isConnected, address, user, signInWithWallet]);
+    if (!isConnected || !address || user || manualSignOutRef.current) return;
+
+    let isActive = true;
+
+    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
+      if (!isActive || !existingSession) return;
+      setSession(existingSession);
+      setUser(existingSession.user);
+      setIsLoading(false);
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, [isConnected, address, user]);
 
   useEffect(() => {
     if (!isFarcasterContext.current) return;
