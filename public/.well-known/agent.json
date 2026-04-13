@@ -22,7 +22,7 @@
     "header": "x-api-key",
     "prefix": "lsk_",
     "registration_url": "https://loyalspark.online/merchant",
-    "registration_note": "Sign in with email/passkey or Web3 wallet to register an agent",
+    "registration_note": "Sign in with email, phone, Google, or Web3 wallet (via Privy) to register an agent",
     "docs_url": "https://loyalspark.online/api-docs"
   },
   "api": {
@@ -444,7 +444,7 @@
   },
   "quickstart": {
     "steps": [
-      "1. Go to https://loyalspark.online/merchant and sign in (email, passkey, or wallet)",
+      "1. Go to https://loyalspark.online/merchant and sign in (email, phone, Google, or wallet via Privy)",
       "2. Open 'AI Agents' tab → Register an agent → Get API key (lsk_...)",
       "3. Read the Skills guide: https://loyalspark.online/.well-known/skills/00-getting-started.md",
       "4. Use the API key in x-api-key header for REST or MCP calls",

@@ -4,7 +4,7 @@
 
 ## Overview
 
-Loyal Spark is a dual-mode protocol: humans interact via web UI with flexible authentication (email/passkey via Coinbase Smart Wallet, or SIWE for traditional wallets), while AI agents integrate via REST API, MCP Server, or HTTP 402 payment gateways. The protocol runs on Base mainnet (chain ID 8453) and uses ERC-20 tokens for loyalty points.
+Loyal Spark is a dual-mode protocol: humans interact via web UI with flexible authentication (email/phone/Google via Privy with embedded wallets, or SIWE for Farcaster and crypto-native users), while AI agents integrate via REST API, MCP Server, or HTTP 402 payment gateways. The protocol runs on Base mainnet (chain ID 8453) and uses ERC-20 tokens for loyalty points.
 
 ## Discovery Endpoints
 

@@ -4,9 +4,9 @@ A Web3-powered loyalty platform built on **Base Mainnet**, enabling merchants an
 
 ## Overview
 
-Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain. It operates as a **dual-mode platform**: humans interact via the web UI with flexible authentication (email, passkey, or wallet via SIWE), while AI agents interact via REST API or MCP Server — sharing the same database, smart contracts, and tokens.
+Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain. It operates as a **dual-mode platform**: humans interact via the web UI with flexible authentication (email, phone, social login, or wallet), while AI agents interact via REST API or MCP Server — sharing the same database, smart contracts, and tokens.
 
-**Wallet Abstraction**: Users can sign in with email or passkey via Coinbase Smart Wallet — no crypto experience needed. Traditional wallets (MetaMask, WalletConnect) and Farcaster miniapp are also fully supported.
+**Wallet Abstraction**: Users and merchants sign in via [Privy](https://privy.io) — email, phone/SMS, Google, or external wallets (MetaMask, WalletConnect, Coinbase Wallet). Privy automatically creates an embedded wallet on Base — no crypto experience needed. Farcaster miniapp and SIWE for crypto-native users are also fully supported. Merchants can send tokens to customers by email or phone number (resolved to wallet address automatically).
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -67,7 +67,7 @@ Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain
 |-------|-----------|
 | Frontend | React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui |
 | Animations | Framer Motion |
-| Blockchain | Wagmi v2, Viem, RainbowKit (Coinbase Smart Wallet) |
+| Blockchain | Wagmi v2, Viem, Privy (embedded wallets) |
 | Network | Base Mainnet (Chain ID: 8453) |
 | Smart Contracts | ERC-20 Token Standard (Factory pattern) |
 | Backend | Lovable Cloud (Supabase Edge Functions) |
@@ -97,7 +97,7 @@ Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain
 
 ### Quick Start
 
-1. Go to [loyalspark.online/merchant](https://loyalspark.online/merchant) and sign in (email, passkey, or wallet)
+1. Go to [loyalspark.online/merchant](https://loyalspark.online/merchant) and sign in (email, phone, Google, or wallet via Privy)
 2. Open **AI Agents** tab → Register an agent → Copy your API key (`lsk_...`)
 3. Use the key in `x-api-key` header for REST or MCP calls
 
@@ -220,7 +220,7 @@ Payments accepted on-chain in USDC on Base ($1 = 1 USDC).
 
 ### Prerequisites
 - Node.js 18+ or Bun
-- An email address, passkey, or Web3 wallet (Coinbase Wallet, MetaMask, WalletConnect)
+- An email, phone number, Google account, or Web3 wallet (MetaMask, Coinbase Wallet, WalletConnect)
 - Some ETH on Base for gas fees (merchants only)
 
 ### Installation
@@ -234,8 +234,8 @@ npm run dev
 
 ### Sign In Options
 
-- **Email / Passkey** (recommended): Click "Sign In" and use Coinbase Smart Wallet — a wallet is created automatically, no crypto knowledge needed
-- **Coinbase Wallet / MetaMask / WalletConnect**: Traditional Web3 wallet connection
+- **Email / Phone / Google** (recommended): Click "Sign In" via Privy — an embedded wallet is created automatically, no crypto knowledge needed
+- **MetaMask / Coinbase Wallet / WalletConnect**: Traditional Web3 wallet connection
 - **Farcaster**: Auto-connects inside Warpcast miniapp
 
 **Network**: Base Mainnet (Chain ID: 8453) | **RPC**: https://mainnet.base.org | **Explorer**: https://basescan.org
@@ -290,7 +290,7 @@ See the **[supabase/functions/README.md](./supabase/functions/README.md)** catal
 
 ## Security
 
-- **Flexible Authentication**: Email/passkey via Coinbase Smart Wallet, or SIWE (Sign-In with Ethereum) for traditional wallets
+- **Flexible Authentication**: Email/phone/Google via Privy (with embedded wallets), or SIWE for Farcaster and crypto-native users
 - **API Key Auth**: SHA-256 hashed keys with `lsk_` prefix for agents
 - **Row Level Security**: All database tables protected with RLS policies
 - **Scoped Permissions**: Agents operate within granted scopes only
@@ -348,9 +348,9 @@ Pricing: **$0.001–$0.005** per read · **$0.005–$0.05** per write · HTTP 40
 ## Built With
 
 - [Base](https://base.org) — Ethereum L2 by Coinbase
-- [Coinbase CDP](https://docs.cdp.coinbase.com) — MPC Server Wallets
+- [Privy](https://privy.io) — Wallet Abstraction & Authentication
+- [Coinbase CDP](https://docs.cdp.coinbase.com) — MPC Server Wallets (for AI agents)
 - [Wagmi](https://wagmi.sh) — React Hooks for Ethereum
-- [RainbowKit](https://www.rainbowkit.com) — Wallet Connection
 - [shadcn/ui](https://ui.shadcn.com) — UI Components
 - [Lovable](https://lovable.dev) — Full-Stack Development Platform
 - [Viem](https://viem.sh) — TypeScript Interface for Ethereum
