@@ -10,6 +10,7 @@ interface AuthContextType {
   session: Session | null;
   isLoading: boolean;
   signInWithWallet: () => Promise<void>;
+  signInWithPrivy: () => Promise<void>;
   signOut: () => Promise<void>;
   resetManualSignOut: () => void;
 }
@@ -97,6 +98,106 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Sign in via Privy (no wallet signature needed)
+  const signInWithPrivy = useCallback(async () => {
+    if (signingInRef.current) return;
+    if (manualSignOutRef.current) return;
+
+    const now = Date.now();
+    if (now < retryBlockedUntilRef.current) return;
+    if (now - lastSignInAttemptAtRef.current < 4000) return;
+    if (now - lastFailureAtRef.current < 8000) return;
+    lastSignInAttemptAtRef.current = now;
+
+    const privyUser = (window as any).__privyUser;
+    if (!privyUser) {
+      console.error('[AuthProvider] No Privy user available');
+      return;
+    }
+
+    signingInRef.current = true;
+    try {
+      // Check for existing valid session first
+      const { data: { session: existingSession } } = await supabase.auth.getSession();
+      if (existingSession) {
+        const isExpired = existingSession.expires_at 
+          ? new Date(existingSession.expires_at * 1000) < new Date()
+          : false;
+        
+        if (!isExpired) {
+          setSession(existingSession);
+          setUser(existingSession.user);
+          setIsLoading(false);
+          window.dispatchEvent(new Event('sessionReady'));
+          return;
+        }
+        await supabase.auth.signOut();
+      }
+
+      setIsLoading(true);
+
+      // Get Privy access token from window (set by PrivyProvider)
+      const privyAccessToken = (window as any).__privyAccessToken;
+      if (!privyAccessToken) {
+        console.error('[AuthProvider] No Privy access token');
+        throw new Error('Privy access token not available');
+      }
+
+      // Extract info from Privy user
+      const email = privyUser.email?.address || privyUser.google?.email;
+      const walletAddress = address || privyUser.wallet?.address;
+      const privyDid = privyUser.id; // did:privy:...
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const res = await fetch(`${supabaseUrl}/functions/v1/privy-auth`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({
+          privyToken: privyAccessToken,
+          privyDid,
+          email,
+          walletAddress: walletAddress?.toLowerCase(),
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Privy authentication failed');
+      }
+
+      const { access_token, refresh_token } = await res.json();
+
+      const { error: setSessionError } = await supabase.auth.setSession({
+        access_token,
+        refresh_token,
+      });
+
+      if (setSessionError) throw setSessionError;
+
+      retryBlockedUntilRef.current = 0;
+      manualSignOutRef.current = false;
+      setStoredManualSignOut(false);
+      window.dispatchEvent(new Event('profileMigrated'));
+      window.dispatchEvent(new Event('sessionReady'));
+      toast.success('Successfully signed in');
+    } catch (error: any) {
+      console.error('[AuthProvider] Privy sign in error:', error);
+      lastFailureAtRef.current = Date.now();
+      
+      if (error.status === 429 || error.code === 'over_request_rate_limit') {
+        retryBlockedUntilRef.current = Date.now() + 30000;
+      } else {
+        toast.error(error.message || 'Failed to sign in');
+      }
+    } finally {
+      signingInRef.current = false;
+      setIsLoading(false);
+    }
+  }, [address]);
+
   const signInWithWallet = useCallback(async () => {
     if (!address || !isConnected) {
       toast.error('Please connect your wallet first');
@@ -155,7 +256,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
 
-      // 1. Get nonce from server
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const nonceRes = await fetch(`${supabaseUrl}/functions/v1/siwe-nonce`, {
         headers: {
@@ -165,13 +265,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!nonceRes.ok) throw new Error('Failed to get nonce');
       const { nonce } = await nonceRes.json();
 
-      // 2. Construct EIP-4361 SIWE message
       const message = constructSiweMessage(address, nonce);
-
-      // 3. Request wallet signature (user will see a signing popup)
       const signature = await signMessageAsync({ account: address, message });
 
-      // 4. Verify signature on server and get session tokens
       const verifyRes = await fetch(`${supabaseUrl}/functions/v1/siwe-verify`, {
         method: 'POST',
         headers: {
@@ -188,7 +284,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const { access_token, refresh_token } = await verifyRes.json();
 
-      // 5. Set the Supabase session with the received tokens
       const { error: setSessionError } = await supabase.auth.setSession({
         access_token,
         refresh_token,
@@ -216,7 +311,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       retryBlockedUntilRef.current = 0;
-      manualSignOutRef.current = false; // Reset only on successful sign-in
+      manualSignOutRef.current = false;
       setStoredManualSignOut(false);
       window.dispatchEvent(new Event('profileMigrated'));
       window.dispatchEvent(new Event('sessionReady'));
@@ -276,7 +371,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const clearSessionState = async () => {
       setSession(null);
       setUser(null);
-
       try {
         await supabase.auth.signOut();
       } catch {}
@@ -331,7 +425,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         void signInWithWallet();
         return;
       }
-
       setSession(null);
       setUser(null);
     };
@@ -347,10 +440,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [isConnected, address, signInWithWallet]);
 
   // Auto sign-in only on initial page load when wallet is already connected
-  // Do NOT auto sign-in after manual sign-out — wait for explicit user action
   useEffect(() => {
     if (isConnected && address && !user && !manualSignOutRef.current) {
-      // Only auto-sign-in if there's an existing Supabase session (page reload scenario)
       supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
         if (existingSession) {
           signInWithWallet();
@@ -396,7 +487,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [isConnected, address, session, signInWithWallet]);
 
   return (
-    <AuthContext.Provider value={{ user, session, isLoading, signInWithWallet, signOut, resetManualSignOut }}>
+    <AuthContext.Provider value={{ user, session, isLoading, signInWithWallet, signInWithPrivy, signOut, resetManualSignOut }}>
       {children}
     </AuthContext.Provider>
   );
