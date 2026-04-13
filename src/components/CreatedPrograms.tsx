@@ -39,6 +39,7 @@ interface LoyaltyProgram {
   expirationDate?: string;
   status?: 'active' | 'expiring_soon' | 'expired' | 'paused' | 'inactive';
   cashbackRate?: number;
+  pointsPerDollar?: number;
 }
 
 /** Map DB row to LoyaltyProgram */
@@ -52,6 +53,7 @@ function mapDbProgram(prog: any): LoyaltyProgram {
     expirationDate: prog.expiration_date,
     status: prog.status as LoyaltyProgram['status'],
     cashbackRate: prog.cashback_rate ?? 5,
+    pointsPerDollar: prog.points_per_dollar ?? 1,
   };
 }
 
@@ -518,6 +520,31 @@ function ProgramCard({
   const [editingCashback, setEditingCashback] = useState(false);
   const [cashbackValue, setCashbackValue] = useState(program.cashbackRate ?? 5);
   const [savingCashback, setSavingCashback] = useState(false);
+  const [editingPoints, setEditingPoints] = useState(false);
+  const [pointsValue, setPointsValue] = useState(program.pointsPerDollar ?? 1);
+  const [savingPoints, setSavingPoints] = useState(false);
+
+  const handleSavePoints = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!program.id) return;
+    setSavingPoints(true);
+    try {
+      const { error } = await supabase
+        .from('loyalty_programs')
+        .update({ points_per_dollar: pointsValue })
+        .eq('id', program.id);
+      if (error) throw error;
+      program.pointsPerDollar = pointsValue;
+      toast.success(`Points rate updated to ${pointsValue} per $1`);
+      setEditingPoints(false);
+      window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
+    } catch (err) {
+      console.error('[ProgramCard] Points update error:', err);
+      toast.error('Failed to update points rate');
+    } finally {
+      setSavingPoints(false);
+    }
+  };
 
   const handleSaveCashback = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -687,6 +714,55 @@ function ProgramCard({
               >
                 <Calculator className="h-3 w-3" />
                 <span>Cashback: {program.cashbackRate ?? 5}%</span>
+              </button>
+            )}
+          </div>
+
+          {/* Points Per Dollar */}
+          <div className="text-[10px] text-muted-foreground" onClick={(e) => e.stopPropagation()}>
+            {editingPoints ? (
+              <div className="space-y-1.5 p-2 rounded-lg border bg-muted/30">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Points per $1</span>
+                  <span className="font-bold text-primary text-xs">{pointsValue}</span>
+                </div>
+                <Slider
+                  value={[pointsValue]}
+                  onValueChange={([v]) => setPointsValue(v)}
+                  min={1}
+                  max={100}
+                  step={1}
+                  className="w-full"
+                />
+                <p className="text-muted-foreground/70">
+                  Example: $100 purchase × {cashbackValue}% = ${(100 * cashbackValue / 100).toFixed(2)} × {pointsValue} = {(100 * cashbackValue / 100 * pointsValue).toFixed(0)} points
+                </p>
+                <div className="flex gap-1 justify-end">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-5 px-2 text-[10px]"
+                    onClick={(e) => { e.stopPropagation(); setEditingPoints(false); setPointsValue(program.pointsPerDollar ?? 1); }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="h-5 px-2 text-[10px]"
+                    onClick={handleSavePoints}
+                    disabled={savingPoints}
+                  >
+                    {savingPoints ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Save'}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <button
+                className="flex items-center gap-1 hover:text-primary transition-colors"
+                onClick={() => setEditingPoints(true)}
+              >
+                <Calculator className="h-3 w-3" />
+                <span>Rate: {program.pointsPerDollar ?? 1} pts/$1</span>
               </button>
             )}
           </div>

@@ -25,6 +25,7 @@ interface EarnPointsDialogProps {
   onSubmit: (recipientAddress: string, tokensToMint: string) => void;
   isPending: boolean;
   cashbackRate: number;
+  pointsPerDollar: number;
   programSymbol: string;
 }
 
@@ -34,6 +35,7 @@ export function EarnPointsDialog({
   onSubmit,
   isPending,
   cashbackRate,
+  pointsPerDollar,
   programSymbol,
 }: EarnPointsDialogProps) {
   const [recipientInput, setRecipientInput] = useState('');
@@ -42,8 +44,11 @@ export function EarnPointsDialog({
   const [inputType, setInputType] = useState<'wallet' | 'email' | 'phone'>('wallet');
   const { resolveRecipient, isResolving } = useResolveRecipient();
 
+  const cashbackDollars = purchaseAmount
+    ? (parseFloat(purchaseAmount) * (cashbackRate / 100))
+    : 0;
   const tokensToEarn = purchaseAmount
-    ? (parseFloat(purchaseAmount) * (cashbackRate / 100)).toFixed(2)
+    ? (cashbackDollars * pointsPerDollar).toFixed(2)
     : '0';
 
   const handleSubmit = useCallback(
@@ -171,8 +176,13 @@ export function EarnPointsDialog({
             <div className="p-4 rounded-lg border bg-muted/50 space-y-1">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calculator className="h-4 w-4" />
-                Cashback rate: {cashbackRate}%
+                Cashback: {cashbackRate}% · Rate: {pointsPerDollar} pts/$1
               </div>
+              {purchaseAmount && parseFloat(purchaseAmount) > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  ${purchaseAmount} × {cashbackRate}% = ${cashbackDollars.toFixed(2)} × {pointsPerDollar} = {tokensToEarn}
+                </p>
+              )}
               <div className="text-lg font-bold text-primary">
                 +{tokensToEarn} {programSymbol}
               </div>
