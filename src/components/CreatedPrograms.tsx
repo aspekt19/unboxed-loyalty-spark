@@ -37,6 +37,7 @@ interface LoyaltyProgram {
   tokenAddress?: string;
   expirationDate?: string;
   status?: 'active' | 'expiring_soon' | 'expired' | 'paused' | 'inactive';
+  cashbackRate?: number;
 }
 
 /** Map DB row to LoyaltyProgram */
@@ -49,6 +50,7 @@ function mapDbProgram(prog: any): LoyaltyProgram {
     tokenAddress: prog.token_address,
     expirationDate: prog.expiration_date,
     status: prog.status as LoyaltyProgram['status'],
+    cashbackRate: prog.cashback_rate ?? 5,
   };
 }
 

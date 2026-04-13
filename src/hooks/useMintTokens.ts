@@ -1,4 +1,4 @@
-import { useSendTransaction, useWaitForTransactionReceipt, usePublicClient } from 'wagmi';
+import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { CONTRACTS } from '@/config/contracts';
 import { parseUnits } from 'viem';
 import { toast } from 'sonner';
@@ -8,51 +8,24 @@ import { type ResettableTransactionResult, type TokenAddress, type WalletAddress
 const HOOK_NAME = 'MintTokens';
 
 export interface MintTokensResult extends ResettableTransactionResult {
-  mintTokens: (tokenAddress: string, recipientAddress: string, amount: string) => Promise<void>;
+  mintTokens: (tokenAddress: string, recipientAddress: string, amount: string) => void;
 }
 
 export function useMintTokens(): MintTokensResult {
   const { sendTransaction, data: hash, isPending, error, reset } = useSendTransaction();
-  const publicClient = usePublicClient();
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
 
-  const mintTokens = async (tokenAddress: string, recipientAddress: string, amount: string) => {
+  /**
+   * Mint tokens synchronously — no async operations before sendTransaction
+   * to preserve the user gesture chain (required for Coinbase Smart Wallet popups).
+   * Minting status should be checked BEFORE calling this function using useCheckProgramStatus.
+   */
+  const mintTokens = (tokenAddress: string, recipientAddress: string, amount: string) => {
     try {
       const amountInWei = parseUnits(amount, 18);
-
-      if (!publicClient) {
-        toast.error('Network connection not available');
-        return;
-      }
-
-      const isMintingActive = await publicClient.readContract({
-        address: tokenAddress as TokenAddress,
-        abi: CONTRACTS.LOYAL_SPARK_ERC20.abi,
-        functionName: 'isMintingActive',
-      } as any);
-
-      txLog(HOOK_NAME, 'debug', 'Minting active status', { isMintingActive });
-
-      if (!isMintingActive) {
-        txLog(HOOK_NAME, 'info', 'Minting inactive, enabling first');
-        toast.info('Enabling minting for this program first...');
-        
-        const enableMintingData = encodeWithBuilderCode(
-          CONTRACTS.LOYAL_SPARK_ERC20.abi,
-          'enableMinting'
-        );
-
-        sendTransaction({
-          to: tokenAddress as TokenAddress,
-          data: enableMintingData,
-        });
-
-        toast.info('Please confirm the transaction to enable minting, then try issuing tokens again');
-        return;
-      }
       
       txLog(HOOK_NAME, 'info', 'Minting tokens', { tokenAddress, recipientAddress, amount });
       

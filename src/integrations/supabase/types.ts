@@ -682,6 +682,7 @@ export type Database = {
       }
       loyalty_programs: {
         Row: {
+          cashback_rate: number
           created_at: string
           expiration_date: string
           expiration_warning_sent: boolean
@@ -694,6 +695,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cashback_rate?: number
           created_at?: string
           expiration_date: string
           expiration_warning_sent?: boolean
@@ -706,6 +708,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cashback_rate?: number
           created_at?: string
           expiration_date?: string
           expiration_warning_sent?: boolean
