@@ -352,6 +352,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isConnected || !address || manualSignOutRef.current) return;
 
+    const privyUserNow = (window as any).__privyUser;
+    const isPrivySocial = privyUserNow && shouldUsePrivyTokenAuth(privyUserNow);
+
     const clearSessionState = async () => {
       setSession(null);
       setUser(null);
@@ -367,6 +370,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error || !currentSession) {
           if (isFarcasterContext.current) {
             await signInWithWallet();
+          } else if (isPrivySocial) {
+            await signInWithPrivy();
           } else {
             setSession(null);
             setUser(null);
@@ -381,13 +386,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await clearSessionState();
             if (isFarcasterContext.current) {
               await signInWithWallet();
+            } else if (isPrivySocial) {
+              await signInWithPrivy();
             }
           }
           return;
         }
 
-        const privyUser = (window as any).__privyUser;
-        if (!isFarcasterContext.current && privyUser && shouldUsePrivyTokenAuth(privyUser)) {
+        if (!isFarcasterContext.current && isPrivySocial) {
           setSession(currentSession);
           setUser(currentSession.user);
           return;
@@ -404,6 +410,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await clearSessionState();
           if (isFarcasterContext.current) {
             await signInWithWallet();
+          } else if (isPrivySocial) {
+            await signInWithPrivy();
           }
         }
       } catch (error) {
@@ -428,7 +436,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearInterval(interval);
       window.removeEventListener('sessionExpired', handleSessionExpired);
     };
-  }, [isConnected, address, signInWithWallet]);
+  }, [isConnected, address, signInWithWallet, signInWithPrivy]);
 
   useEffect(() => {
     if (!isConnected || !address || user || manualSignOutRef.current) return;
