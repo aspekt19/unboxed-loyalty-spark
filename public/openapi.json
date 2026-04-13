@@ -439,6 +439,42 @@
         }
       }
     },
+    "/earn": {
+      "post": {
+        "operationId": "earnPoints",
+        "summary": "Auto-calculate and mint tokens from purchase amount using cashback rate",
+        "tags": ["Tokens"],
+        "x-payment-info": {
+          "pricingMode": "fixed",
+          "price": "0.010000",
+          "protocols": ["mpp"]
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token_address": { "type": "string", "description": "Token contract address" },
+                  "customer_address": { "type": "string", "description": "Customer wallet (0x...)" },
+                  "purchase_amount": { "type": "number", "description": "Purchase amount in currency units" },
+                  "cashback_rate": { "type": "number", "description": "Override cashback rate (%). Uses program default if omitted." }
+                },
+                "required": ["token_address", "customer_address", "purchase_amount"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tokens calculated and mint recorded",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "402": { "description": "Payment Required" }
+        }
+      }
+    },
     "/transfer": {
       "post": {
         "operationId": "transferTokens",
