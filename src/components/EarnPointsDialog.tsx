@@ -176,8 +176,13 @@ export function EarnPointsDialog({
             <div className="p-4 rounded-lg border bg-muted/50 space-y-1">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calculator className="h-4 w-4" />
-                Cashback rate: {cashbackRate}%
+                Cashback: {cashbackRate}% · Rate: {pointsPerDollar} pts/$1
               </div>
+              {purchaseAmount && parseFloat(purchaseAmount) > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  ${purchaseAmount} × {cashbackRate}% = ${cashbackDollars.toFixed(2)} × {pointsPerDollar} = {tokensToEarn}
+                </p>
+              )}
               <div className="text-lg font-bold text-primary">
                 +{tokensToEarn} {programSymbol}
               </div>
