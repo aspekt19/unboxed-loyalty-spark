@@ -4,31 +4,22 @@ import { Shield, LogIn } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAccount, useConnect } from 'wagmi';
 import { isFarcasterContext } from '@/config/wagmi';
-import { usePrivy } from '@privy-io/react-auth';
+import { usePrivySafe } from '@/hooks/usePrivySafe';
 
 export function AuthPrompt() {
   const { user, signInWithWallet, isLoading } = useAuth();
   const { isConnected } = useAccount();
   const { connect, connectors } = useConnect();
+  const { login: privyLogin } = usePrivySafe();
 
   const isFarcaster = isFarcasterContext();
-
-  let privyLogin: (() => void) | null = null;
-  if (!isFarcaster) {
-    try {
-      const privy = usePrivy();
-      privyLogin = privy.login;
-    } catch {
-      // Not in Privy context
-    }
-  }
 
   if (isLoading || user || isConnected) return null;
 
   const handleSignIn = () => {
     if (isFarcaster) {
       connect({ connector: connectors[0] });
-    } else if (privyLogin) {
+    } else {
       privyLogin();
     }
   };

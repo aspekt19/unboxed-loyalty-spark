@@ -5,13 +5,13 @@ import { sdk } from '@farcaster/miniapp-sdk';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useState, useEffect } from 'react';
 import { isFarcasterContext } from '@/config/wagmi';
-import { usePrivy } from '@privy-io/react-auth';
+import { usePrivySafe } from '@/hooks/usePrivySafe';
 
 export function WalletConnectButton() {
   const { disconnect } = useDisconnect();
   const { connect, connectors } = useConnect();
   const { address, isConnected } = useAccount();
-  const { signOut, signInWithWallet, resetManualSignOut, user } = useAuth();
+  const { signOut, signInWithWallet, resetManualSignOut } = useAuth();
   const [isManuallyDisconnected, setIsManuallyDisconnected] = useState(false);
   const [farcasterUser, setFarcasterUser] = useState<{
     username?: string;
@@ -20,22 +20,7 @@ export function WalletConnectButton() {
   } | null>(null);
 
   const isFarcaster = isFarcasterContext();
-
-  // Use Privy hook — will throw if not in PrivyProvider but we only call login/logout in non-Farcaster
-  let privyLogin: (() => void) | null = null;
-  let privyLogout: (() => Promise<void>) | null = null;
-  let privyUser: any = null;
-
-  if (!isFarcaster) {
-    try {
-      const privy = usePrivy();
-      privyLogin = privy.login;
-      privyLogout = privy.logout;
-      privyUser = privy.user;
-    } catch {
-      // Not in Privy context
-    }
-  }
+  const { login: privyLogin, logout: privyLogout, user: privyUser } = usePrivySafe();
 
   useEffect(() => {
     const loadFarcasterUser = async () => {
@@ -77,7 +62,7 @@ export function WalletConnectButton() {
     try {
       setIsManuallyDisconnected(true);
       await signOut();
-      if (privyLogout) {
+      if (!isFarcaster) {
         try { await privyLogout(); } catch {}
       }
     } catch (error) {
@@ -94,7 +79,7 @@ export function WalletConnectButton() {
       if (isConnected && address) {
         setTimeout(() => signInWithWallet(), 300);
       }
-    } else if (privyLogin) {
+    } else {
       privyLogin();
     }
   };
@@ -137,7 +122,7 @@ export function WalletConnectButton() {
     );
   }
   
-  // Regular browser — Privy UI
+  // Regular browser — Privy
   if (!isConnected || isManuallyDisconnected) {
     return (
       <button
