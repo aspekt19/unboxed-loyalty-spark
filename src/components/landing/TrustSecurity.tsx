@@ -29,8 +29,8 @@ const trustItems = [
   },
   {
     icon: ShieldCheck,
-    title: 'Onchain Verification',
-    description: 'All transactions tagged with ERC-8021 builder code for transparent attribution on Base.',
+    title: 'Transparent Onchain Records',
+    description: 'Every token mint, transfer, and redemption is verifiable onchain — full transparency you can trust.',
   },
 ];
 
