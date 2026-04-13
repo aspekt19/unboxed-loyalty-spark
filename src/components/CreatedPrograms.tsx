@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Gift, Check, Loader2, Clock, ChevronLeft, ChevronRight, CalendarPlus } from 'lucide-react';
+import { Gift, Check, Loader2, Clock, ChevronLeft, ChevronRight, CalendarPlus, Calculator } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
