@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import { AlertCircle, Loader2, Ticket } from 'lucide-react';
+import { AlertCircle, Loader2, Ticket, LogIn } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { useBurnTokens } from '@/hooks/useBurnTokens';
 import { useApproveTokens, useCheckAllowance } from '@/hooks/useApproveTokens';
@@ -36,6 +36,8 @@ export function RewardsSelection() {
   const [selectedRewardId, setSelectedRewardId] = useState<string>('');
   const [availableRewards, setAvailableRewards] = useState<Reward[]>([]);
   const [isLoadingRewards, setIsLoadingRewards] = useState(false);
+  const [profileVerified, setProfileVerified] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   const { balances, isLoading: balancesLoading, refetch } = useMultiTokenBalance(tokens);
   const { burnTokens, isPending, isSuccess, hash } = useBurnTokens();
@@ -77,6 +79,38 @@ export function RewardsSelection() {
     clearSelection,
   });
 
+  // ── Pre-verify profile status (no async in activate handler) ──
+  useEffect(() => {
+    if (!address || !session) {
+      setProfileVerified(false);
+      return;
+    }
+    
+    const checkProfile = async () => {
+      try {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('wallet_address')
+          .eq('wallet_address', address.toLowerCase())
+          .maybeSingle();
+        
+        setProfileVerified(!error && !!profile);
+      } catch {
+        setProfileVerified(false);
+      }
+    };
+    
+    checkProfile();
+    
+    const handleProfileUpdate = () => checkProfile();
+    window.addEventListener('profileMigrated', handleProfileUpdate);
+    window.addEventListener('sessionReady', handleProfileUpdate);
+    return () => {
+      window.removeEventListener('profileMigrated', handleProfileUpdate);
+      window.removeEventListener('sessionReady', handleProfileUpdate);
+    };
+  }, [address, session]);
+
   // ── Auto-auth on wallet connect ──
   useEffect(() => {
     if (address && !session && !authLoading) {
@@ -91,6 +125,7 @@ export function RewardsSelection() {
       setSelectedTokenAddress('');
       setSelectedRewardId('');
       setAvailableRewards([]);
+      setProfileVerified(false);
     }
   }, [address]);
 
@@ -201,69 +236,23 @@ export function RewardsSelection() {
     }
   }, [isApproved, refetchAllowance]);
 
-  // ── Handlers ──
-  const handleApprove = useCallback(() => {
-    if (!selectedRewardId) { toast.error('Please select a reward first'); return; }
-    if (!selectedTokenAddress) { toast.error('Please select a loyalty program'); return; }
-    if (!MERCHANT_ADDRESS || MERCHANT_ADDRESS === '0x0000000000000000000000000000000000000000') {
-      toast.error('Merchant address not found. Please select a valid reward.');
-      return;
+  // ── Handle sign in (separate from activate to preserve gesture chain) ──
+  const handleSignIn = useCallback(async () => {
+    setIsAuthenticating(true);
+    try {
+      await signInWithWallet();
+    } catch {
+      toast.error('Authentication failed. Please try again.');
+    } finally {
+      setIsAuthenticating(false);
     }
-    approveTokens(selectedTokenAddress, MERCHANT_ADDRESS, CONTRACTS.LOYAL_SPARK_ERC20.abi);
-  }, [selectedRewardId, selectedTokenAddress, MERCHANT_ADDRESS, approveTokens]);
+  }, [signInWithWallet]);
 
-  const handleActivate = async () => {
+  // ── Activate handler — SYNCHRONOUS to preserve popup gesture chain ──
+  const handleActivate = useCallback(() => {
     if (!address) { toast.error('Please connect your wallet'); return; }
-
-    if (isProgramPaused) {
-      toast.error('This loyalty program is currently inactive. Tokens cannot be used.');
-      return;
-    }
-
-    const selectedRewardForCheck = availableRewards.find(r => r.id === selectedRewardId);
-    if (selectedRewardForCheck && selectedRewardForCheck.merchantAddress.toLowerCase() === address.toLowerCase()) {
-      toast.error('Merchants cannot activate vouchers for their own loyalty programs');
-      return;
-    }
-
-    // Ensure auth session before burning tokens
-    if (!session) {
-      toast.info('Authenticating your wallet...');
-      try {
-        await signInWithWallet();
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('wallet_address')
-          .eq('wallet_address', address.toLowerCase())
-          .maybeSingle();
-
-        if (profileError || !profile) {
-          toast.error(profileError ? 'Failed to verify profile. Please try again.' : 'Failed to create profile. Please disconnect and reconnect your wallet.');
-          return;
-        }
-
-        toast.success('Authenticated! You can now activate the voucher.');
-      } catch {
-        toast.error('Authentication failed. Please try again.');
-        return;
-      }
-      return;
-    }
-
-    // Profile check for already-authenticated users
-    const { data: profileCheck, error: profileCheckError } = await supabase
-      .from('profiles')
-      .select('wallet_address')
-      .eq('wallet_address', address.toLowerCase())
-      .maybeSingle();
-
-    if (profileCheckError || !profileCheck) {
-      toast.error('Profile verification failed. Please reconnect your wallet.');
-      return;
-    }
-
+    if (!session || !profileVerified) { toast.error('Please sign in first'); return; }
+    if (isProgramPaused) { toast.error('This loyalty program is currently inactive.'); return; }
     if (!selectedTokenAddress) { toast.error('Please select a loyalty program'); return; }
     if (!selectedRewardId) { toast.error('Please select a reward'); return; }
 
@@ -271,20 +260,26 @@ export function RewardsSelection() {
     const balance = balances.find(b => b.address === selectedTokenAddress);
 
     if (!reward || !balance) { toast.error('Reward or balance not found'); return; }
+
+    if (reward.merchantAddress.toLowerCase() === address.toLowerCase()) {
+      toast.error('Merchants cannot activate vouchers for their own programs');
+      return;
+    }
+
     if (parseFloat(balance.balance) < reward.cost) {
       toast.error(`Insufficient balance. Need ${reward.cost} tokens`);
       return;
     }
 
+    // Direct synchronous call — no async before sendTransaction
     burnTokens(
       selectedTokenAddress,
       reward.cost.toString(),
       CONTRACTS.LOYAL_SPARK_ERC20.abi,
       reward.merchantAddress,
     );
-  };
+  }, [address, session, profileVerified, isProgramPaused, selectedTokenAddress, selectedRewardId, availableRewards, balances, burnTokens]);
 
-  // Approve is no longer needed (simple transfer), kept for interface compatibility
   const needsApproval = () => false;
 
   const selectedToken = tokens.find(t => t.address === selectedTokenAddress);
@@ -295,6 +290,8 @@ export function RewardsSelection() {
     const balance = balances.find(b => b.address === token.address);
     return balance && parseFloat(balance.balance) > 0;
   });
+
+  const needsAuth = !session || !profileVerified;
 
   return (
     <Card className="border-2 bg-gradient-to-br from-card to-muted/30">
@@ -415,15 +412,31 @@ export function RewardsSelection() {
             )}
 
             {selectedRewardId && !isLoadingRewards && (
-              <Button
-                type="button"
-                onClick={e => { e.preventDefault(); handleActivate(); }}
-                disabled={!selectedRewardId || isPending || balancesLoading || isProgramPaused || isLoadingRewards}
-                className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
-              >
-                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isProgramPaused ? 'Program Inactive' : 'Activate Voucher'}
-              </Button>
+              <>
+                {needsAuth ? (
+                  <Button
+                    type="button"
+                    onClick={handleSignIn}
+                    disabled={isAuthenticating || authLoading}
+                    className="w-full"
+                    variant="outline"
+                  >
+                    {(isAuthenticating || authLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    <LogIn className="mr-2 h-4 w-4" />
+                    Sign In to Activate
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    onClick={handleActivate}
+                    disabled={!selectedRewardId || isPending || balancesLoading || isProgramPaused || isLoadingRewards}
+                    className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+                  >
+                    {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isProgramPaused ? 'Program Inactive' : 'Activate Voucher'}
+                  </Button>
+                )}
+              </>
             )}
           </div>
         )}
