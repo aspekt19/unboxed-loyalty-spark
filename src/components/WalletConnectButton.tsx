@@ -79,13 +79,6 @@ export function WalletConnectButton() {
         setTimeout(() => {
           signInWithPrivy();
         }, 250);
-        return;
-      }
-
-      if (isConnected && address) {
-        setTimeout(() => {
-          signInWithWallet();
-        }, 250);
       }
     }
   }, [isFarcaster, user, isManuallyDisconnected, privyAuthenticated, privyUser, isConnected, address, signInWithPrivy, signInWithWallet]);
