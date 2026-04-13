@@ -5,14 +5,13 @@ import { WelcomeFlow } from '@/components/onboarding/WelcomeFlow';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { PremiumStatusBadge } from '@/components/PremiumStatusBadge';
 import { PremiumExpirationAlert } from '@/components/PremiumExpirationAlert';
-import { Gift, ArrowLeft, TrendingUp, Store } from 'lucide-react';
+import { Gift, ArrowLeft, Store } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PageTransition from '@/components/PageTransition';
 import { useEffect, useState, useCallback } from 'react';
 import { initializeCleanState } from '@/lib/clearOldData';
-import { RoundUpDashboard } from '@/components/roundup/RoundUpDashboard';
 import { PremiumUpgradeDialog } from '@/components/roundup/PremiumUpgradeDialog';
 import { MarketplaceDashboard } from '@/components/marketplace/MarketplaceDashboard';
 import { BottomNavBar } from '@/components/mobile/BottomNavBar';
@@ -62,8 +61,6 @@ const CustomerPage = () => {
             <MarketplaceDashboard />
           </div>
         );
-      case 'roundup':
-        return <RoundUpDashboard />;
       case 'profile':
         return <MobileProfileTab onUpgrade={() => setShowUpgradeDialog(true)} />;
       default:
@@ -116,7 +113,7 @@ const CustomerPage = () => {
           {/* Desktop: tabs at the top */}
           {!isMobile ? (
             <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-              <TabsList className="grid w-full max-w-2xl grid-cols-3">
+              <TabsList className="grid w-full max-w-2xl grid-cols-2">
                 <TabsTrigger value="loyalty" className="gap-2">
                   <Gift className="h-4 w-4" />
                   Loyalty
@@ -124,10 +121,6 @@ const CustomerPage = () => {
                 <TabsTrigger value="marketplace" className="gap-2">
                   <Store className="h-4 w-4" />
                   Exchange
-                </TabsTrigger>
-                <TabsTrigger value="roundup" className="gap-2">
-                  <TrendingUp className="h-4 w-4" />
-                  Invest
                 </TabsTrigger>
               </TabsList>
 
@@ -148,9 +141,6 @@ const CustomerPage = () => {
                 </div>
               </TabsContent>
 
-              <TabsContent value="roundup">
-                <RoundUpDashboard />
-              </TabsContent>
             </Tabs>
           ) : (
             /* Mobile: content driven by bottom nav */
