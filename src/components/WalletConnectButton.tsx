@@ -11,7 +11,7 @@ export function WalletConnectButton() {
   const { disconnect } = useDisconnect();
   const { connect, connectors } = useConnect();
   const { address, isConnected } = useAccount();
-  const { signOut, signInWithWallet, resetManualSignOut } = useAuth();
+  const { user, signOut, signInWithWallet, resetManualSignOut } = useAuth();
   const [isManuallyDisconnected, setIsManuallyDisconnected] = useState(false);
   const [farcasterUser, setFarcasterUser] = useState<{
     username?: string;
@@ -143,6 +143,19 @@ export function WalletConnectButton() {
       >
         <LogIn className="h-3 w-3 sm:h-4 sm:w-4" />
         <span>Sign In</span>
+      </button>
+    );
+  }
+
+  if (!user) {
+    return (
+      <button
+        onClick={signInWithWallet}
+        type="button"
+        className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg font-semibold bg-gradient-uds text-white hover:opacity-90 shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9"
+      >
+        <LogIn className="h-3 w-3 sm:h-4 sm:w-4" />
+        <span>Continue</span>
       </button>
     );
   }
