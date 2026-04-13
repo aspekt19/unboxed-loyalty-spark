@@ -1,25 +1,14 @@
 import { LogIn, User } from 'lucide-react';
-import { useDisconnect, useConnect, useAccount } from 'wagmi';
+import { useConnect, useAccount } from 'wagmi';
 import { useAuth } from '@/contexts/AuthContext';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useState, useEffect, useRef } from 'react';
 import { isFarcasterContext } from '@/config/wagmi';
 import { usePrivySafe } from '@/hooks/usePrivySafe';
-
-/**
- * Determine if the Privy user authenticated via social/email (not direct wallet).
- * If so, we use Privy-based auth (no SIWE signature needed).
- */
-function isPrivySocialLogin(privyUser: any): boolean {
-  if (!privyUser) return false;
-  // If user has email, google, phone, etc. — they used social login
-  // Even if they also have a wallet (embedded), the primary auth was social
-  return !!(privyUser.email || privyUser.google || privyUser.phone || privyUser.apple || privyUser.twitter);
-}
+import { getPrivyPrimaryEmail, shouldUsePrivyTokenAuth } from '@/lib/privyAuth';
 
 export function WalletConnectButton() {
-  const { disconnect } = useDisconnect();
   const { connect, connectors } = useConnect();
   const { address, isConnected } = useAccount();
   const { user, signOut, signInWithWallet, signInWithPrivy, resetManualSignOut } = useAuth();
@@ -31,35 +20,21 @@ export function WalletConnectButton() {
   } | null>(null);
 
   const isFarcaster = isFarcasterContext();
-  const { login: privyLogin, logout: privyLogout, user: privyUser, ready: privyReady, authenticated: privyAuthenticated } = usePrivySafe();
+  const { login: privyLogin, logout: privyLogout, user: privyUser, ready: privyReady, authenticated: privyAuthenticated, getAccessToken } = usePrivySafe();
   const prevPrivyUserRef = useRef(privyUser);
 
-  // Expose Privy user data and access token for AuthContext to read
   useEffect(() => {
     if (privyUser) {
       (window as any).__privyUser = privyUser;
+      (window as any).__privyGetAccessToken = getAccessToken;
+    } else {
+      (window as any).__privyUser = null;
+      (window as any).__privyGetAccessToken = null;
     }
-  }, [privyUser]);
+  }, [privyUser, getAccessToken]);
 
-  // Expose Privy access token
-  useEffect(() => {
-    if (!isFarcaster && privyAuthenticated) {
-      // Access token is available through getAccessToken
-      try {
-        const privy = (window as any).__privyInstance;
-        if (privy?.getAccessToken) {
-          privy.getAccessToken().then((token: string) => {
-            (window as any).__privyAccessToken = token;
-          });
-        }
-      } catch {}
-    }
-  }, [privyAuthenticated, isFarcaster]);
-
-  // Auto sign-out when Privy session expires (non-Farcaster)
   useEffect(() => {
     if (!isFarcaster && privyReady && prevPrivyUserRef.current && !privyUser && user) {
-      console.log('[WalletButton] Privy session expired, signing out');
       setIsManuallyDisconnected(true);
       signOut();
     }
@@ -77,61 +52,58 @@ export function WalletConnectButton() {
             pfpUrl: context.user.pfpUrl,
           });
         }
-      } catch {
-        // Not in Farcaster context
-      }
+      } catch {}
     };
     loadFarcasterUser();
   }, []);
-  
-  // Auto-connect wallet in Farcaster context
+
   useEffect(() => {
     if (isFarcaster && !isConnected && !isManuallyDisconnected && connectors.length > 0) {
       setTimeout(() => {
         connect({ connector: connectors[0] });
       }, 500);
     }
-  }, [connectors.length]);
-  
-  // Auto sign-in on reconnect in Farcaster
+  }, [isFarcaster, isConnected, isManuallyDisconnected, connectors, connect]);
+
   useEffect(() => {
     if (isFarcaster && isConnected && address && !isManuallyDisconnected) {
       setTimeout(() => {
         signInWithWallet();
       }, 300);
     }
-  }, [isConnected, address, isManuallyDisconnected, signInWithWallet]);
+  }, [isFarcaster, isConnected, address, isManuallyDisconnected, signInWithWallet]);
 
-  // Auto sign-in after Privy login (non-Farcaster)
-  // Use signInWithPrivy for social/email, signInWithWallet only for direct wallet login
   useEffect(() => {
-    if (!isFarcaster && !user && !isManuallyDisconnected && privyUser) {
-      if (isPrivySocialLogin(privyUser)) {
-        // Social/email login — use Privy auth (no SIWE popup)
+    if (!isFarcaster && !user && !isManuallyDisconnected && privyAuthenticated && privyUser) {
+      if (shouldUsePrivyTokenAuth(privyUser)) {
         setTimeout(() => {
           signInWithPrivy();
-        }, 500);
-      } else if (isConnected && address) {
-        // Direct wallet login via Privy — use SIWE
+        }, 250);
+        return;
+      }
+
+      if (isConnected && address) {
         setTimeout(() => {
           signInWithWallet();
-        }, 500);
+        }, 250);
       }
     }
-  }, [isFarcaster, isConnected, address, user, isManuallyDisconnected, privyUser, signInWithWallet, signInWithPrivy]);
-  
+  }, [isFarcaster, user, isManuallyDisconnected, privyAuthenticated, privyUser, isConnected, address, signInWithPrivy, signInWithWallet]);
+
   const handleDisconnect = async () => {
     try {
       setIsManuallyDisconnected(true);
       await signOut();
       if (!isFarcaster) {
-        try { await privyLogout(); } catch {}
+        try {
+          await privyLogout();
+        } catch {}
       }
     } catch (error) {
       console.error('[WalletButton] Disconnect error:', error);
     }
   };
-  
+
   const handleConnect = () => {
     setIsManuallyDisconnected(false);
     resetManualSignOut();
@@ -141,14 +113,14 @@ export function WalletConnectButton() {
       if (isConnected && address) {
         setTimeout(() => signInWithWallet(), 300);
       }
-    } else {
-      if (!privyUser) {
-        privyLogin();
-      }
+      return;
+    }
+
+    if (!privyUser) {
+      privyLogin();
     }
   };
 
-  // Farcaster UI
   if (farcasterUser) {
     if (!isConnected || isManuallyDisconnected) {
       return (
@@ -185,8 +157,7 @@ export function WalletConnectButton() {
       </button>
     );
   }
-  
-  // Regular browser — Privy
+
   if (!privyUser || isManuallyDisconnected) {
     return (
       <button
@@ -201,7 +172,6 @@ export function WalletConnectButton() {
   }
 
   if (!user) {
-    // Auth is in progress (Privy or SIWE)
     return (
       <button
         disabled
@@ -214,9 +184,8 @@ export function WalletConnectButton() {
     );
   }
 
-  // Connected state
   const displayAddress = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : '';
-  const displayName = privyUser?.email?.address || privyUser?.phone?.number || displayAddress;
+  const displayName = getPrivyPrimaryEmail(privyUser) || privyUser?.phone?.number || displayAddress;
 
   return (
     <button

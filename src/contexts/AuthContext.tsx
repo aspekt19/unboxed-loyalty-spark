@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import { sdk } from '@farcaster/miniapp-sdk';
+import { getPrivyPrimaryEmail } from '@/lib/privyAuth';
 
 interface AuthContextType {
   user: User | null;
@@ -67,7 +68,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     manualSignOutRef.current = getStoredManualSignOut();
   }, []);
 
-  // Detect Farcaster context on mount
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
@@ -83,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
@@ -98,10 +98,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Sign in via Privy (no wallet signature needed)
   const signInWithPrivy = useCallback(async () => {
-    if (signingInRef.current) return;
-    if (manualSignOutRef.current) return;
+    if (signingInRef.current || manualSignOutRef.current) return;
 
     const now = Date.now();
     if (now < retryBlockedUntilRef.current) return;
@@ -110,20 +108,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     lastSignInAttemptAtRef.current = now;
 
     const privyUser = (window as any).__privyUser;
-    if (!privyUser) {
-      console.error('[AuthProvider] No Privy user available');
-      return;
-    }
+    const getAccessToken = (window as any).__privyGetAccessToken as (() => Promise<string | null>) | undefined;
+    if (!privyUser || !getAccessToken) return;
 
     signingInRef.current = true;
     try {
-      // Check for existing valid session first
       const { data: { session: existingSession } } = await supabase.auth.getSession();
       if (existingSession) {
-        const isExpired = existingSession.expires_at 
+        const isExpired = existingSession.expires_at
           ? new Date(existingSession.expires_at * 1000) < new Date()
           : false;
-        
+
         if (!isExpired) {
           setSession(existingSession);
           setUser(existingSession.user);
@@ -131,50 +126,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           window.dispatchEvent(new Event('sessionReady'));
           return;
         }
+
         await supabase.auth.signOut();
       }
 
       setIsLoading(true);
 
-      // Get Privy access token from window (set by PrivyProvider)
-      const privyAccessToken = (window as any).__privyAccessToken;
+      const privyAccessToken = await getAccessToken();
       if (!privyAccessToken) {
-        console.error('[AuthProvider] No Privy access token');
         throw new Error('Privy access token not available');
       }
 
-      // Extract info from Privy user
-      const email = privyUser.email?.address || privyUser.google?.email;
-      const walletAddress = address || privyUser.wallet?.address;
-      const privyDid = privyUser.id; // did:privy:...
-
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const res = await fetch(`${supabaseUrl}/functions/v1/privy-auth`, {
+      const response = await fetch(`${supabaseUrl}/functions/v1/privy-auth`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
         body: JSON.stringify({
           privyToken: privyAccessToken,
-          privyDid,
-          email,
-          walletAddress: walletAddress?.toLowerCase(),
+          privyDid: privyUser.id,
+          email: getPrivyPrimaryEmail(privyUser),
+          walletAddress: address?.toLowerCase() ?? privyUser?.wallet?.address?.toLowerCase() ?? null,
         }),
       });
 
-      if (!res.ok) {
-        const err = await res.json();
+      if (!response.ok) {
+        const err = await response.json();
         throw new Error(err.error || 'Privy authentication failed');
       }
 
-      const { access_token, refresh_token } = await res.json();
-
-      const { error: setSessionError } = await supabase.auth.setSession({
-        access_token,
-        refresh_token,
-      });
-
+      const { access_token, refresh_token } = await response.json();
+      const { error: setSessionError } = await supabase.auth.setSession({ access_token, refresh_token });
       if (setSessionError) throw setSessionError;
 
       retryBlockedUntilRef.current = 0;
@@ -186,12 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       console.error('[AuthProvider] Privy sign in error:', error);
       lastFailureAtRef.current = Date.now();
-      
-      if (error.status === 429 || error.code === 'over_request_rate_limit') {
-        retryBlockedUntilRef.current = Date.now() + 30000;
-      } else {
-        toast.error(error.message || 'Failed to sign in');
-      }
+      toast.error(error.message || 'Failed to sign in');
     } finally {
       signingInRef.current = false;
       setIsLoading(false);
@@ -214,16 +193,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     signingInRef.current = true;
     try {
-      // Check for existing valid session first
       const { data: { session: existingSession }, error: sessionError } = await supabase.auth.getSession();
-      
+
       if (sessionError) {
         await supabase.auth.signOut();
       } else if (existingSession) {
-        const isExpired = existingSession.expires_at 
+        const isExpired = existingSession.expires_at
           ? new Date(existingSession.expires_at * 1000) < new Date()
           : false;
-        
+
         if (isExpired) {
           await supabase.auth.signOut();
         } else {
@@ -233,7 +211,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .eq('user_id', existingSession.user.id)
             .eq('wallet_address', address.toLowerCase())
             .maybeSingle();
-          
+
           if (profileError || !profile) {
             await supabase.auth.signOut();
           } else {
@@ -252,14 +230,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch {}
     }
 
-    // No valid session — proceed with SIWE authentication
     try {
       setIsLoading(true);
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const nonceRes = await fetch(`${supabaseUrl}/functions/v1/siwe-nonce`, {
         headers: {
-          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
       });
       if (!nonceRes.ok) throw new Error('Failed to get nonce');
@@ -272,7 +249,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
         body: JSON.stringify({ message, signature }),
       });
@@ -283,27 +260,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const { access_token, refresh_token } = await verifyRes.json();
-
-      const { error: setSessionError } = await supabase.auth.setSession({
-        access_token,
-        refresh_token,
-      });
-
+      const { error: setSessionError } = await supabase.auth.setSession({ access_token, refresh_token });
       if (setSessionError) throw setSessionError;
 
-      // Save Privy email/phone to profile if available
       try {
         const privyUser = (window as any).__privyUser;
         if (privyUser && address) {
           const updates: Record<string, string> = {};
           if (privyUser.email?.address) updates.email = privyUser.email.address;
           if (privyUser.phone?.number) updates.phone = privyUser.phone.number;
-          
+
           if (Object.keys(updates).length > 0) {
-            await supabase
-              .from('profiles')
-              .update(updates)
-              .eq('wallet_address', address.toLowerCase());
+            await supabase.from('profiles').update(updates).eq('wallet_address', address.toLowerCase());
           }
         }
       } catch (profileErr) {
@@ -319,7 +287,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       console.error('[AuthProvider] SIWE sign in error:', error);
       lastFailureAtRef.current = Date.now();
-      
+
       if (error.status === 429 || error.code === 'over_request_rate_limit') {
         retryBlockedUntilRef.current = Date.now() + 30000;
         const shouldShowRateLimitToast = Date.now() - lastRateLimitToastAtRef.current > 8000;
@@ -328,7 +296,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           lastRateLimitToastAtRef.current = Date.now();
         }
       } else if (
-        error.name === 'UserRejectedRequestError' || 
+        error.name === 'UserRejectedRequestError' ||
         error.message?.includes('rejected') ||
         error.message?.includes('denied')
       ) {
@@ -348,10 +316,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setStoredManualSignOut(true);
       setUser(null);
       setSession(null);
-      
+
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      
+
       toast.success('Signed out successfully');
     } catch (error: any) {
       console.error('[AuthProvider] Sign out error:', error);
@@ -364,7 +332,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStoredManualSignOut(false);
   }, []);
 
-  // Check and refresh session when user returns
   useEffect(() => {
     if (!isConnected || !address || manualSignOutRef.current) return;
 
@@ -379,7 +346,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const checkSession = async () => {
       try {
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-        
+
         if (error || !currentSession) {
           if (isFarcasterContext.current) {
             await signInWithWallet();
@@ -408,7 +375,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .eq('user_id', currentSession.user.id)
           .eq('wallet_address', address.toLowerCase())
           .maybeSingle();
-        
+
         if (profileError || !profile) {
           await clearSessionState();
           if (isFarcasterContext.current) {
@@ -428,8 +395,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(null);
       setUser(null);
     };
-    window.addEventListener('sessionExpired', handleSessionExpired);
 
+    window.addEventListener('sessionExpired', handleSessionExpired);
     checkSession();
 
     const interval = setInterval(checkSession, 60000);
@@ -439,7 +406,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [isConnected, address, signInWithWallet]);
 
-  // Auto sign-in only on initial page load when wallet is already connected
   useEffect(() => {
     if (isConnected && address && !user && !manualSignOutRef.current) {
       supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
@@ -450,14 +416,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [isConnected, address, user, signInWithWallet]);
 
-  // Handle Farcaster miniapp lifecycle events
   useEffect(() => {
     if (!isFarcasterContext.current) return;
 
     const handleVisibilityChange = async () => {
       if (!document.hidden) {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
-        
+
         if (!currentSession && isConnected && address) {
           setTimeout(() => signInWithWallet(), 500);
         } else if (currentSession) {
