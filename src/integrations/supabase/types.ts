@@ -689,6 +689,7 @@ export type Database = {
           id: string
           merchant_address: string
           name: string
+          points_per_dollar: number
           status: string
           symbol: string
           token_address: string
@@ -702,6 +703,7 @@ export type Database = {
           id?: string
           merchant_address: string
           name: string
+          points_per_dollar?: number
           status?: string
           symbol: string
           token_address: string
@@ -715,6 +717,7 @@ export type Database = {
           id?: string
           merchant_address?: string
           name?: string
+          points_per_dollar?: number
           status?: string
           symbol?: string
           token_address?: string
