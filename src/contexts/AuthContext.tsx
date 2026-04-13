@@ -196,6 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       retryBlockedUntilRef.current = 0;
+      manualSignOutRef.current = false; // Reset only on successful sign-in
       window.dispatchEvent(new Event('profileMigrated'));
       window.dispatchEvent(new Event('sessionReady'));
       toast.success('Successfully signed in with wallet');
