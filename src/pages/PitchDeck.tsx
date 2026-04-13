@@ -104,12 +104,12 @@ const PitchDeck = () => {
     {
       id: 'adoption',
       title: 'Adoption Strategy',
-      subtitle: 'Path to 1,000 merchants by Q4 2027',
+      subtitle: 'Path to 500+ merchants by Q4 2027',
       adoption: [
         { phase: 'Beta (Q3-Q4 2026)', target: '10 merchants', focus: 'Product testing & feedback' },
-        { phase: 'Launch (Q1 2027)', target: '100 merchants', focus: 'Local market penetration' },
-        { phase: 'Scale (Q2 2027)', target: '500 merchants', focus: 'Regional expansion' },
-        { phase: 'Growth (Q3-Q4 2027)', target: '1,000+ merchants', focus: 'National presence' },
+        { phase: 'Launch (Q1 2027)', target: '30+ merchants', focus: 'Local market penetration' },
+        { phase: 'Scale (Q2-Q3 2027)', target: '100+ merchants', focus: 'Regional expansion' },
+        { phase: 'Growth (Q3-Q4 2027)', target: '500+ merchants', focus: 'National presence' },
       ],
     },
     {
