@@ -5,22 +5,7 @@ import { sdk } from '@farcaster/miniapp-sdk';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useState, useEffect } from 'react';
 import { isFarcasterContext } from '@/config/wagmi';
-
-// Conditionally import Privy (only used in non-Farcaster context)
-let usePrivyHook: (() => { login: () => void; logout: () => Promise<void>; authenticated: boolean; user: any }) | null = null;
-try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const privy = await import('@privy-io/react-auth');
-  usePrivyHook = privy.usePrivy;
-} catch {
-  // Privy not available (Farcaster context)
-}
-
-/** Format display name: show short address or ENS */
-const formatDisplayName = (displayName: string) => {
-  if (displayName.includes('.')) return displayName;
-  return displayName;
-};
+import { usePrivy } from '@privy-io/react-auth';
 
 export function WalletConnectButton() {
   const { disconnect } = useDisconnect();
@@ -36,21 +21,19 @@ export function WalletConnectButton() {
 
   const isFarcaster = isFarcasterContext();
 
-  // Try to use Privy hook (only works in non-Farcaster context)
+  // Use Privy hook — will throw if not in PrivyProvider but we only call login/logout in non-Farcaster
   let privyLogin: (() => void) | null = null;
   let privyLogout: (() => Promise<void>) | null = null;
-  let privyAuthenticated = false;
   let privyUser: any = null;
 
-  if (!isFarcaster && usePrivyHook) {
+  if (!isFarcaster) {
     try {
-      const privy = usePrivyHook();
+      const privy = usePrivy();
       privyLogin = privy.login;
       privyLogout = privy.logout;
-      privyAuthenticated = privy.authenticated;
       privyUser = privy.user;
     } catch {
-      // Privy not in provider tree
+      // Not in Privy context
     }
   }
 
@@ -95,7 +78,7 @@ export function WalletConnectButton() {
       setIsManuallyDisconnected(true);
       await signOut();
       if (privyLogout) {
-        await privyLogout();
+        try { await privyLogout(); } catch {}
       }
     } catch (error) {
       console.error('[WalletButton] Disconnect error:', error);
