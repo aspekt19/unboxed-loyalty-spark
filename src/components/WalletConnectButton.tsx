@@ -64,6 +64,15 @@ export function WalletConnectButton() {
       }, 300);
     }
   }, [isConnected, address, isManuallyDisconnected, signInWithWallet]);
+
+  // Auto SIWE sign-in after Privy login (non-Farcaster)
+  useEffect(() => {
+    if (!isFarcaster && isConnected && address && !user && !isManuallyDisconnected && privyUser) {
+      setTimeout(() => {
+        signInWithWallet();
+      }, 500);
+    }
+  }, [isFarcaster, isConnected, address, user, isManuallyDisconnected, privyUser, signInWithWallet]);
   
   const handleDisconnect = async () => {
     try {
