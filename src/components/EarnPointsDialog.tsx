@@ -25,6 +25,7 @@ interface EarnPointsDialogProps {
   onSubmit: (recipientAddress: string, tokensToMint: string) => void;
   isPending: boolean;
   cashbackRate: number;
+  pointsPerDollar: number;
   programSymbol: string;
 }
 
@@ -34,6 +35,7 @@ export function EarnPointsDialog({
   onSubmit,
   isPending,
   cashbackRate,
+  pointsPerDollar,
   programSymbol,
 }: EarnPointsDialogProps) {
   const [recipientInput, setRecipientInput] = useState('');
@@ -42,8 +44,11 @@ export function EarnPointsDialog({
   const [inputType, setInputType] = useState<'wallet' | 'email' | 'phone'>('wallet');
   const { resolveRecipient, isResolving } = useResolveRecipient();
 
+  const cashbackDollars = purchaseAmount
+    ? (parseFloat(purchaseAmount) * (cashbackRate / 100))
+    : 0;
   const tokensToEarn = purchaseAmount
-    ? (parseFloat(purchaseAmount) * (cashbackRate / 100)).toFixed(2)
+    ? (cashbackDollars * pointsPerDollar).toFixed(2)
     : '0';
 
   const handleSubmit = useCallback(

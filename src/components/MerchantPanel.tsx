@@ -244,6 +244,7 @@ export function MerchantPanel() {
               onSubmit={handleMintSubmit}
               isPending={isPending}
               cashbackRate={selectedProgram?.cashbackRate ?? 5}
+              pointsPerDollar={selectedProgram?.pointsPerDollar ?? 1}
               programSymbol={selectedProgram?.symbol ?? 'tokens'}
             />
 
