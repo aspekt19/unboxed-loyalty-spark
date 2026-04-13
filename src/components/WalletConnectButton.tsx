@@ -3,7 +3,7 @@ import { useDisconnect, useConnect, useAccount } from 'wagmi';
 import { useAuth } from '@/contexts/AuthContext';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { isFarcasterContext } from '@/config/wagmi';
 import { usePrivySafe } from '@/hooks/usePrivySafe';
 
@@ -20,7 +20,8 @@ export function WalletConnectButton() {
   } | null>(null);
 
   const isFarcaster = isFarcasterContext();
-  const { login: privyLogin, logout: privyLogout, user: privyUser } = usePrivySafe();
+  const { login: privyLogin, logout: privyLogout, user: privyUser, ready: privyReady } = usePrivySafe();
+  const prevPrivyUserRef = useRef(privyUser);
 
   // Expose Privy user data for AuthContext to read
   useEffect(() => {
@@ -28,6 +29,17 @@ export function WalletConnectButton() {
       (window as any).__privyUser = privyUser;
     }
   }, [privyUser]);
+
+  // Auto sign-out when Privy session expires (non-Farcaster)
+  useEffect(() => {
+    // Only trigger if Privy was ready, user was previously logged in, and now is null
+    if (!isFarcaster && privyReady && prevPrivyUserRef.current && !privyUser && user) {
+      console.log('[WalletButton] Privy session expired, signing out');
+      setIsManuallyDisconnected(true);
+      signOut();
+    }
+    prevPrivyUserRef.current = privyUser;
+  }, [privyUser, privyReady, isFarcaster, user, signOut]);
 
   useEffect(() => {
     const loadFarcasterUser = async () => {
@@ -157,9 +169,24 @@ export function WalletConnectButton() {
   }
 
   if (!user) {
+    // Auto-SIWE is in progress or Privy session expired — show loading or sign-in
+    if (privyUser) {
+      // Privy is authenticated, SIWE should auto-trigger — show loading state
+      return (
+        <button
+          disabled
+          type="button"
+          className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg font-semibold bg-gradient-uds text-white opacity-70 shadow-md transition-all duration-200 flex items-center gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9"
+        >
+          <LogIn className="h-3 w-3 sm:h-4 sm:w-4 animate-pulse" />
+          <span>Signing in...</span>
+        </button>
+      );
+    }
+    // Privy session gone — need full re-auth
     return (
       <button
-        onClick={signInWithWallet}
+        onClick={handleConnect}
         type="button"
         className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg font-semibold bg-gradient-uds text-white hover:opacity-90 shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9"
       >
