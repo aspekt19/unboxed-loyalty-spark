@@ -34,8 +34,9 @@ import { mintTokensSchema } from '@/lib/validationSchemas';
 
 export function MerchantPanel() {
   const { address } = useAccount();
-  const [selectedProgram, setSelectedProgram] = useState<{ name: string; symbol: string; tokenAddress: string } | null>(null);
+  const [selectedProgram, setSelectedProgram] = useState<{ name: string; symbol: string; tokenAddress: string; cashbackRate?: number } | null>(null);
   const [mintDialogOpen, setMintDialogOpen] = useState(false);
+  const [earnDialogOpen, setEarnDialogOpen] = useState(false);
   const [lastMintParams, setLastMintParams] = useState<{ recipient: string; amount: string } | null>(null);
   
   // Always call hooks in the same order, regardless of conditions
