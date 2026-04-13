@@ -54,12 +54,17 @@ function extractWalletAddress(privyUser: any, fallback?: string | null): string 
   );
 }
 
-async function verifyPrivyToken(token: string, appId: string): Promise<any> {
+async function verifyPrivyToken(token: string, appId: string, origin?: string): Promise<any> {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    "privy-app-id": appId,
+  };
+  if (origin) {
+    headers["origin"] = origin;
+  }
+
   const response = await fetch("https://auth.privy.io/api/v1/users/me", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "privy-app-id": appId,
-    },
+    headers,
   });
 
   if (!response.ok) {
