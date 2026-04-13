@@ -170,22 +170,37 @@ Deno.serve(async (req) => {
       });
     }
 
-    // PATCH: update report status (requires auth)
+    // PATCH: update report status (requires auth via JWT or API key)
     if (req.method === "PATCH") {
+      let authorized = false;
+
+      // Try JWT auth first
       const authHeader = req.headers.get("Authorization");
-      if (!authHeader) {
-        return new Response(JSON.stringify({ error: "Auth required" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+      if (authHeader) {
+        const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+        const userClient = createClient(supabaseUrl, anonKey, {
+          global: { headers: { Authorization: authHeader } },
         });
+        const { data: { user } } = await userClient.auth.getUser();
+        if (user) authorized = true;
       }
 
-      const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-      const userClient = createClient(supabaseUrl, anonKey, {
-        global: { headers: { Authorization: authHeader } },
-      });
-      const { data: { user } } = await userClient.auth.getUser();
-      if (!user) {
+      // Fallback: API key auth (for agents or Privy-authenticated users calling via proxy)
+      if (!authorized) {
+        const apiKey = req.headers.get("x-api-key");
+        if (apiKey && apiKey.startsWith("lsk_")) {
+          const hash = await hashApiKey(apiKey);
+          const { data: agent } = await serviceClient
+            .from("agent_registry")
+            .select("id")
+            .eq("api_key_hash", hash)
+            .eq("is_active", true)
+            .single();
+          if (agent) authorized = true;
+        }
+      }
+
+      if (!authorized) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
