@@ -62,16 +62,24 @@ export function AgentReportsDashboard() {
 
   const updateStatus = async (reportId: string, newStatus: string) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('Not authenticated');
-
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'apikey': anonKey,
+      };
+
+      // Try to attach JWT if available
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      } else {
+        headers['Authorization'] = `Bearer ${anonKey}`;
+      }
+
       const res = await fetch(`${supabaseUrl}/functions/v1/agent-reports`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
+        headers,
         body: JSON.stringify({ report_id: reportId, status: newStatus }),
       });
       if (!res.ok) {
@@ -80,7 +88,8 @@ export function AgentReportsDashboard() {
       }
       toast.success(`Status updated to "${newStatus}"`);
       queryClient.invalidateQueries({ queryKey: ['agent-reports'] });
-    } catch {
+    } catch (e) {
+      console.error('Update status error:', e);
       toast.error('Failed to update status');
     }
   };
