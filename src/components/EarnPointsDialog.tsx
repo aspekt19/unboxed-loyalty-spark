@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { QrReader } from '@blackbox-vision/react-qr-reader';
-import { QrCode, X, Calculator, Coins } from 'lucide-react';
+import { QrCode, X, Calculator, Coins, Mail, Phone, Wallet, Loader2 } from 'lucide-react';
+import { useResolveRecipient } from '@/hooks/useResolveRecipient';
 import {
   Dialog,
   DialogContent,
@@ -11,6 +12,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs';
 
 interface EarnPointsDialogProps {
   isOpen: boolean;
@@ -29,32 +36,47 @@ export function EarnPointsDialog({
   cashbackRate,
   programSymbol,
 }: EarnPointsDialogProps) {
-  const [recipientAddress, setRecipientAddress] = useState('');
+  const [recipientInput, setRecipientInput] = useState('');
   const [purchaseAmount, setPurchaseAmount] = useState('');
   const [showScanner, setShowScanner] = useState(false);
+  const [inputType, setInputType] = useState<'wallet' | 'email' | 'phone'>('wallet');
+  const { resolveRecipient, isResolving } = useResolveRecipient();
 
   const tokensToEarn = purchaseAmount
     ? (parseFloat(purchaseAmount) * (cashbackRate / 100)).toFixed(2)
     : '0';
 
   const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
+    async (e: React.FormEvent) => {
       e.preventDefault();
-      if (!recipientAddress || !purchaseAmount || parseFloat(tokensToEarn) <= 0) return;
-      onSubmit(recipientAddress, tokensToEarn);
-      setRecipientAddress('');
+      if (!recipientInput || !purchaseAmount || parseFloat(tokensToEarn) <= 0) return;
+      
+      const walletAddress = await resolveRecipient(recipientInput);
+      if (!walletAddress) return;
+      
+      onSubmit(walletAddress, tokensToEarn);
+      setRecipientInput('');
       setPurchaseAmount('');
       setShowScanner(false);
     },
-    [recipientAddress, purchaseAmount, tokensToEarn, onSubmit],
+    [recipientInput, purchaseAmount, tokensToEarn, onSubmit, resolveRecipient],
   );
 
   const handleScan = useCallback((result: any) => {
     if (result?.text) {
-      setRecipientAddress(result.text);
+      setRecipientInput(result.text);
+      setInputType('wallet');
       setShowScanner(false);
     }
   }, []);
+
+  const getPlaceholder = () => {
+    switch (inputType) {
+      case 'email': return 'customer@example.com';
+      case 'phone': return '+1234567890';
+      default: return '0x...';
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -65,7 +87,7 @@ export function EarnPointsDialog({
             Earn Points
           </DialogTitle>
           <DialogDescription>
-            Scan customer's QR code, enter purchase amount — tokens are calculated automatically.
+            Scan QR, enter email/phone, or wallet — tokens are calculated automatically.
           </DialogDescription>
         </DialogHeader>
 
@@ -91,10 +113,10 @@ export function EarnPointsDialog({
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-            {/* Step 1: Customer address */}
+            {/* Step 1: Customer identifier */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="earn-recipient">Customer Wallet</Label>
+                <Label>Customer</Label>
                 <Button
                   type="button"
                   variant="outline"
@@ -106,12 +128,27 @@ export function EarnPointsDialog({
                   Scan QR
                 </Button>
               </div>
+              
+              <Tabs value={inputType} onValueChange={(v) => { setInputType(v as any); setRecipientInput(''); }}>
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="wallet" className="text-xs gap-1">
+                    <Wallet className="h-3 w-3" /> Wallet
+                  </TabsTrigger>
+                  <TabsTrigger value="email" className="text-xs gap-1">
+                    <Mail className="h-3 w-3" /> Email
+                  </TabsTrigger>
+                  <TabsTrigger value="phone" className="text-xs gap-1">
+                    <Phone className="h-3 w-3" /> Phone
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+
               <Input
-                id="earn-recipient"
-                placeholder="0x..."
-                value={recipientAddress}
-                onChange={e => setRecipientAddress(e.target.value)}
-                disabled={isPending}
+                placeholder={getPlaceholder()}
+                value={recipientInput}
+                onChange={e => setRecipientInput(e.target.value)}
+                disabled={isPending || isResolving}
+                type={inputType === 'email' ? 'email' : inputType === 'phone' ? 'tel' : 'text'}
               />
             </div>
 
@@ -126,7 +163,7 @@ export function EarnPointsDialog({
                 placeholder="e.g. 50.00"
                 value={purchaseAmount}
                 onChange={e => setPurchaseAmount(e.target.value)}
-                disabled={isPending}
+                disabled={isPending || isResolving}
               />
             </div>
 
@@ -146,10 +183,14 @@ export function EarnPointsDialog({
 
             <Button
               type="submit"
-              disabled={isPending || !recipientAddress || !purchaseAmount || parseFloat(tokensToEarn) <= 0}
+              disabled={isPending || isResolving || !recipientInput || !purchaseAmount || parseFloat(tokensToEarn) <= 0}
               className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
             >
-              {isPending ? 'Processing...' : `Credit ${tokensToEarn} ${programSymbol}`}
+              {isResolving ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Looking up customer...</>
+              ) : (
+                isPending ? 'Processing...' : `Credit ${tokensToEarn} ${programSymbol}`
+              )}
             </Button>
           </form>
         )}
