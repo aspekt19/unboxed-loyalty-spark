@@ -5,6 +5,7 @@ import { CreateReward } from './rewards/CreateReward';
 import { RewardsList } from './rewards/RewardsList';
 import { VouchersManagement } from './rewards/VouchersManagement';
 import { MintTokensDialog } from './MintTokensDialog';
+import { EarnPointsDialog } from './EarnPointsDialog';
 import { MerchantDashboard } from './crm/MerchantDashboard';
 import { EnhancedAnalytics } from './crm/EnhancedAnalytics';
 import { CustomerList } from './crm/CustomerList';
