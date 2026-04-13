@@ -19,6 +19,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const MANUAL_SIGN_OUT_STORAGE_KEY = 'loyalspark:manual-signout';
+const MANUAL_SIGN_OUT_EVENT = 'loyalspark:manual-signout-changed';
 
 function getStoredManualSignOut(): boolean {
   if (typeof window === 'undefined') return false;
@@ -29,9 +30,11 @@ function setStoredManualSignOut(value: boolean) {
   if (typeof window === 'undefined') return;
   if (value) {
     window.localStorage.setItem(MANUAL_SIGN_OUT_STORAGE_KEY, 'true');
+    window.dispatchEvent(new CustomEvent(MANUAL_SIGN_OUT_EVENT, { detail: true }));
     return;
   }
   window.localStorage.removeItem(MANUAL_SIGN_OUT_STORAGE_KEY);
+  window.dispatchEvent(new CustomEvent(MANUAL_SIGN_OUT_EVENT, { detail: false }));
 }
 
 function constructSiweMessage(address: string, nonce: string): string {
@@ -323,9 +326,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setStoredManualSignOut(true);
       setUser(null);
       setSession(null);
+      setIsLoading(false);
 
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem('customerTokens');
+        (window as any).__privyUser = null;
+        (window as any).__privyGetAccessToken = null;
+      }
+
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      if (error && !/session/i.test(error.message ?? '')) throw error;
 
       toast.success('Signed out successfully');
     } catch (error: any) {
