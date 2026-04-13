@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Gift, Check, Loader2, Clock, ChevronLeft, ChevronRight, CalendarPlus } from 'lucide-react';
+import { Gift, Check, Loader2, Clock, ChevronLeft, ChevronRight, CalendarPlus, Calculator } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
@@ -18,6 +18,7 @@ import { format } from 'date-fns';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useFarcasterHaptics } from '@/hooks/useFarcasterHaptics';
+import { Slider } from '@/components/ui/slider';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -514,6 +515,31 @@ function ProgramCard({
   setDeleteDialogOpen,
 }: ProgramCardProps) {
   const [extendDialogOpen, setExtendDialogOpen] = useState(false);
+  const [editingCashback, setEditingCashback] = useState(false);
+  const [cashbackValue, setCashbackValue] = useState(program.cashbackRate ?? 5);
+  const [savingCashback, setSavingCashback] = useState(false);
+
+  const handleSaveCashback = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!program.id) return;
+    setSavingCashback(true);
+    try {
+      const { error } = await supabase
+        .from('loyalty_programs')
+        .update({ cashback_rate: cashbackValue })
+        .eq('id', program.id);
+      if (error) throw error;
+      program.cashbackRate = cashbackValue;
+      toast.success(`Cashback rate updated to ${cashbackValue}%`);
+      setEditingCashback(false);
+      window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
+    } catch (err) {
+      console.error('[ProgramCard] Cashback update error:', err);
+      toast.error('Failed to update cashback rate');
+    } finally {
+      setSavingCashback(false);
+    }
+  };
 
   return (
     <>
@@ -618,6 +644,52 @@ function ProgramCard({
               </Button>
             </div>
           )}
+
+          {/* Cashback Rate */}
+          <div className="text-[10px] text-muted-foreground" onClick={(e) => e.stopPropagation()}>
+            {editingCashback ? (
+              <div className="space-y-1.5 p-2 rounded-lg border bg-muted/30">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Cashback Rate</span>
+                  <span className="font-bold text-primary text-xs">{cashbackValue}%</span>
+                </div>
+                <Slider
+                  value={[cashbackValue]}
+                  onValueChange={([v]) => setCashbackValue(v)}
+                  min={1}
+                  max={50}
+                  step={1}
+                  className="w-full"
+                />
+                <div className="flex gap-1 justify-end">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-5 px-2 text-[10px]"
+                    onClick={(e) => { e.stopPropagation(); setEditingCashback(false); setCashbackValue(program.cashbackRate ?? 5); }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="h-5 px-2 text-[10px]"
+                    onClick={handleSaveCashback}
+                    disabled={savingCashback}
+                  >
+                    {savingCashback ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Save'}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <button
+                className="flex items-center gap-1 hover:text-primary transition-colors"
+                onClick={() => setEditingCashback(true)}
+              >
+                <Calculator className="h-3 w-3" />
+                <span>Cashback: {program.cashbackRate ?? 5}%</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
       
