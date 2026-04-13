@@ -22,6 +22,13 @@ export function WalletConnectButton() {
   const isFarcaster = isFarcasterContext();
   const { login: privyLogin, logout: privyLogout, user: privyUser } = usePrivySafe();
 
+  // Expose Privy user data for AuthContext to read
+  useEffect(() => {
+    if (privyUser) {
+      (window as any).__privyUser = privyUser;
+    }
+  }, [privyUser]);
+
   useEffect(() => {
     const loadFarcasterUser = async () => {
       try {

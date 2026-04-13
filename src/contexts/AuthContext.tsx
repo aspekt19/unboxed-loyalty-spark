@@ -176,6 +176,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (setSessionError) throw setSessionError;
 
+      // Save Privy email/phone to profile if available
+      try {
+        const privyUser = (window as any).__privyUser;
+        if (privyUser && address) {
+          const updates: Record<string, string> = {};
+          if (privyUser.email?.address) updates.email = privyUser.email.address;
+          if (privyUser.phone?.number) updates.phone = privyUser.phone.number;
+          
+          if (Object.keys(updates).length > 0) {
+            await supabase
+              .from('profiles')
+              .update(updates)
+              .eq('wallet_address', address.toLowerCase());
+          }
+        }
+      } catch (profileErr) {
+        console.error('[AuthProvider] Failed to save Privy contact info:', profileErr);
+      }
+
       retryBlockedUntilRef.current = 0;
       window.dispatchEvent(new Event('profileMigrated'));
       window.dispatchEvent(new Event('sessionReady'));

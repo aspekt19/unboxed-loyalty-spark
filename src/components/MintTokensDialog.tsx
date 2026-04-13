@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { QrReader } from '@blackbox-vision/react-qr-reader';
-import { QrCode, X } from 'lucide-react';
+import { QrCode, X, Mail, Phone, Wallet, Loader2 } from 'lucide-react';
+import { useResolveRecipient } from '@/hooks/useResolveRecipient';
 import {
   Dialog,
   DialogContent,
@@ -11,6 +12,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs';
 
 interface MintTokensDialogProps {
   isOpen: boolean;
@@ -25,21 +32,28 @@ export function MintTokensDialog({
   onSubmit, 
   isPending,
 }: MintTokensDialogProps) {
-  const [recipientAddress, setRecipientAddress] = useState('');
+  const [recipientInput, setRecipientInput] = useState('');
   const [mintAmount, setMintAmount] = useState('');
   const [showScanner, setShowScanner] = useState(false);
+  const [inputType, setInputType] = useState<'wallet' | 'email' | 'phone'>('wallet');
+  const { resolveRecipient, isResolving } = useResolveRecipient();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(recipientAddress, mintAmount);
-    setRecipientAddress('');
+    
+    const walletAddress = await resolveRecipient(recipientInput);
+    if (!walletAddress) return;
+    
+    onSubmit(walletAddress, mintAmount);
+    setRecipientInput('');
     setMintAmount('');
     setShowScanner(false);
   };
 
   const handleScan = (result: any) => {
     if (result?.text) {
-      setRecipientAddress(result.text);
+      setRecipientInput(result.text);
+      setInputType('wallet');
       setShowScanner(false);
     }
   };
@@ -48,13 +62,29 @@ export function MintTokensDialog({
     console.error('QR scan error:', error);
   };
 
+  const getPlaceholder = () => {
+    switch (inputType) {
+      case 'email': return 'customer@example.com';
+      case 'phone': return '+1234567890';
+      default: return '0x...';
+    }
+  };
+
+  const getLabel = () => {
+    switch (inputType) {
+      case 'email': return 'Customer Email';
+      case 'phone': return 'Customer Phone';
+      default: return 'Customer Wallet Address';
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Issue Loyalty Tokens</DialogTitle>
           <DialogDescription>
-            Send tokens to your customer's wallet address
+            Send tokens by wallet address, email, or phone number
           </DialogDescription>
         </DialogHeader>
         
@@ -62,7 +92,7 @@ export function MintTokensDialog({
           <form onSubmit={handleSubmit} className="space-y-4 mt-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="recipient">Customer Wallet Address</Label>
+                <Label>{getLabel()}</Label>
                 <Button
                   type="button"
                   variant="outline"
@@ -71,15 +101,30 @@ export function MintTokensDialog({
                   className="h-9 px-3 border-primary/50 text-primary hover:bg-primary/10"
                 >
                   <QrCode className="h-4 w-4 mr-1.5" />
-                  Scan QR Code
+                  Scan QR
                 </Button>
               </div>
+              
+              <Tabs value={inputType} onValueChange={(v) => { setInputType(v as any); setRecipientInput(''); }}>
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="wallet" className="text-xs gap-1">
+                    <Wallet className="h-3 w-3" /> Wallet
+                  </TabsTrigger>
+                  <TabsTrigger value="email" className="text-xs gap-1">
+                    <Mail className="h-3 w-3" /> Email
+                  </TabsTrigger>
+                  <TabsTrigger value="phone" className="text-xs gap-1">
+                    <Phone className="h-3 w-3" /> Phone
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+
               <Input
-                id="recipient"
-                placeholder="0x..."
-                value={recipientAddress}
-                onChange={(e) => setRecipientAddress(e.target.value)}
-                disabled={isPending}
+                placeholder={getPlaceholder()}
+                value={recipientInput}
+                onChange={(e) => setRecipientInput(e.target.value)}
+                disabled={isPending || isResolving}
+                type={inputType === 'email' ? 'email' : inputType === 'phone' ? 'tel' : 'text'}
               />
             </div>
             
@@ -91,12 +136,16 @@ export function MintTokensDialog({
                 placeholder="0.00"
                 value={mintAmount}
                 onChange={(e) => setMintAmount(e.target.value)}
-                disabled={isPending}
+                disabled={isPending || isResolving}
               />
             </div>
             
-            <Button type="submit" disabled={isPending} className="w-full">
-              Issue Tokens
+            <Button type="submit" disabled={isPending || isResolving} className="w-full">
+              {isResolving ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Looking up recipient...</>
+              ) : (
+                'Issue Tokens'
+              )}
             </Button>
           </form>
         ) : (
