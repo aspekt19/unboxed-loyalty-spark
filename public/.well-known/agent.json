@@ -7,6 +7,7 @@
   "capabilities": [
     "create_loyalty_program",
     "mint_tokens",
+    "earn_points_from_purchases",
     "manage_rewards",
     "marketplace_trading",
     "customer_analytics",
@@ -84,6 +85,18 @@
         "path": "/mint",
         "scope": "mint",
         "description": "Mint loyalty tokens to a wallet address (1% fee on Free, 0.5% Pro, 0.25% Enterprise)"
+      },
+      {
+        "method": "POST",
+        "path": "/earn",
+        "scope": "mint",
+        "description": "Auto-calculate and mint tokens from purchase amount using program's cashback rate. POS-friendly alternative to /mint.",
+        "body": {
+          "token_address": "0x...",
+          "customer_address": "0x...",
+          "purchase_amount": 50,
+          "cashback_rate": 5
+        }
       },
       {
         "method": "POST",
@@ -299,6 +312,7 @@
       "list_rewards",
       "create_reward",
       "mint_loyalty_tokens",
+      "earn_points",
       "transfer_loyalty_tokens",
       "get_token_balance",
       "get_program_analytics",

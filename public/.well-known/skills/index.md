@@ -28,6 +28,7 @@ Loyal Spark provides a complete loyalty infrastructure via REST API and MCP Serv
 | 9 | [Referral Programs](./08-referrals.md) | `08-referrals.md` | `read`, `mint` |
 | 10 | [Voucher Management](./09-vouchers.md) | `09-vouchers.md` | `read`, `manage_rewards` |
 | 11 | [Server Wallets](./10-server-wallets.md) | `10-server-wallets.md` | — |
+| 12 | [Earn Points (Cashback)](./11-earn-points.md) | `11-earn-points.md` | `mint` |
 
 ## API Endpoints
 
