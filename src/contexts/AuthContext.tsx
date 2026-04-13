@@ -16,6 +16,22 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const MANUAL_SIGN_OUT_STORAGE_KEY = 'loyalspark:manual-signout';
+
+function getStoredManualSignOut(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.localStorage.getItem(MANUAL_SIGN_OUT_STORAGE_KEY) === 'true';
+}
+
+function setStoredManualSignOut(value: boolean) {
+  if (typeof window === 'undefined') return;
+  if (value) {
+    window.localStorage.setItem(MANUAL_SIGN_OUT_STORAGE_KEY, 'true');
+    return;
+  }
+  window.localStorage.removeItem(MANUAL_SIGN_OUT_STORAGE_KEY);
+}
+
 function constructSiweMessage(address: string, nonce: string): string {
   const domain = window.location.host;
   const origin = window.location.origin;
@@ -45,6 +61,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const lastSignInAttemptAtRef = useRef(0);
   const { address, isConnected } = useAccount();
   const { signMessageAsync } = useSignMessage();
+
+  useEffect(() => {
+    manualSignOutRef.current = getStoredManualSignOut();
+  }, []);
 
   // Detect Farcaster context on mount
   useEffect(() => {
@@ -197,6 +217,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       retryBlockedUntilRef.current = 0;
       manualSignOutRef.current = false; // Reset only on successful sign-in
+      setStoredManualSignOut(false);
       window.dispatchEvent(new Event('profileMigrated'));
       window.dispatchEvent(new Event('sessionReady'));
       toast.success('Successfully signed in with wallet');
@@ -229,6 +250,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     try {
       manualSignOutRef.current = true;
+      setStoredManualSignOut(true);
       setUser(null);
       setSession(null);
       
@@ -244,6 +266,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const resetManualSignOut = useCallback(() => {
     manualSignOutRef.current = false;
+    setStoredManualSignOut(false);
   }, []);
 
   // Check and refresh session when user returns
