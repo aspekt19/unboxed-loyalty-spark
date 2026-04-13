@@ -672,6 +672,109 @@ Deno.serve(async (req) => {
       }, 201);
     }
 
+    // ==================== EARN (auto-calculate tokens from purchase amount) ====================
+    if (resource === "earn" && req.method === "POST") {
+      if (!hasScope(agent, "mint")) {
+        await logActivity(serviceClient, agent.agentId, "earn_points", body, 403, { error: "Insufficient scope" }, ip);
+        return jsonResponse({ error: "Scope 'mint' required" }, 403);
+      }
+
+      const { token_address, customer_address, purchase_amount, cashback_rate: customRate } = body;
+      if (!token_address || !customer_address || !purchase_amount) {
+        return jsonResponse({ error: "Missing required fields: token_address, customer_address, purchase_amount" }, 400);
+      }
+
+      if (typeof purchase_amount !== "number" || purchase_amount <= 0) {
+        return jsonResponse({ error: "purchase_amount must be a positive number" }, 400);
+      }
+
+      if (!/^0x[a-fA-F0-9]{40}$/.test(customer_address)) {
+        return jsonResponse({ error: "Invalid customer_address format" }, 400);
+      }
+
+      if (!/^0x[a-fA-F0-9]{40}$/.test(token_address)) {
+        return jsonResponse({ error: "Invalid token_address format" }, 400);
+      }
+
+      // Verify ownership
+      const program = await findAgentProgram(serviceClient, agent, token_address, "id, name, symbol, status, merchant_address, cashback_rate");
+
+      if (!program) {
+        await logActivity(serviceClient, agent.agentId, "earn_points", body, 404, { error: "Program not found" }, ip);
+        return jsonResponse({ error: "Loyalty program not found or not owned by you" }, 404);
+      }
+
+      if (program.status !== "active") {
+        await logActivity(serviceClient, agent.agentId, "earn_points", body, 400, { error: "Program not active" }, ip);
+        return jsonResponse({ error: `Program is ${program.status}. Must be 'active' to earn.` }, 400);
+      }
+
+      // Use custom rate if provided, otherwise program's cashback_rate (default 5%)
+      const rate = typeof customRate === "number" && customRate > 0 && customRate <= 100
+        ? customRate
+        : (program.cashback_rate || 5);
+      const tokensToMint = Math.round(purchase_amount * rate / 100 * 100) / 100; // 2 decimal precision
+
+      if (tokensToMint <= 0) {
+        return jsonResponse({ error: "Calculated token amount is zero. Increase purchase_amount or cashback_rate." }, 400);
+      }
+
+      const feePercent = await getAgentFeePercent(serviceClient, agent.agentId);
+      const feeAmount = computeMintFeeAmount(tokensToMint, feePercent);
+      const recipientCalldata = encodeMintCalldata(customer_address, tokensToMint);
+      const feeCalldata = encodeMintCalldata(PLATFORM_FEE_WALLET, feeAmount);
+
+      // Record mint
+      const { data: mintRecord, error: mintError } = await serviceClient
+        .from("token_mint_history")
+        .insert({
+          merchant_address: program.merchant_address.toLowerCase(),
+          recipient_address: customer_address.toLowerCase(),
+          amount: tokensToMint,
+          token_address: token_address.toLowerCase(),
+          token_name: program.name,
+          token_symbol: program.symbol,
+          transaction_hash: null,
+        })
+        .select("id, amount, recipient_address, token_address, created_at")
+        .single();
+
+      if (mintError) {
+        await logActivity(serviceClient, agent.agentId, "earn_points", body, 500, { error: mintError.message }, ip);
+        return jsonResponse({ error: "Failed to record mint" }, 500);
+      }
+
+      await logActivity(serviceClient, agent.agentId, "earn_points", body, 201, {
+        mint_id: mintRecord.id,
+        purchase_amount,
+        cashback_rate: rate,
+        tokens: tokensToMint,
+      }, ip);
+
+      return jsonResponse({
+        earn: {
+          purchase_amount,
+          cashback_rate: rate,
+          tokens_earned: tokensToMint,
+        },
+        mint: mintRecord,
+        fee_percent: feePercent,
+        fee_amount: feeAmount,
+        fee_wallet: PLATFORM_FEE_WALLET,
+        recipient_calldata: recipientCalldata,
+        fee_calldata: feeCalldata,
+        message: `Customer earns ${tokensToMint} ${program.symbol} tokens for a $${purchase_amount} purchase (${rate}% cashback). Send two transactions to complete on-chain.`,
+        contract: {
+          token_address,
+          function: "mint(address,uint256)",
+          recipient_params: [customer_address, tokensToMint],
+          fee_params: [PLATFORM_FEE_WALLET, feeAmount],
+          chain: "Base (8453)",
+          builder_code: BUILDER_CODE,
+        },
+      }, 201);
+    }
+
     // ==================== BALANCE ====================
     if (resource === "balance" && req.method === "GET") {
       if (!hasScope(agent, "read")) {

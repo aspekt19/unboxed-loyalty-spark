@@ -7,6 +7,7 @@
   "capabilities": [
     "create_loyalty_program",
     "mint_tokens",
+    "earn_points_from_purchases",
     "manage_rewards",
     "marketplace_trading",
     "customer_analytics",
@@ -84,6 +85,18 @@
         "path": "/mint",
         "scope": "mint",
         "description": "Mint loyalty tokens to a wallet address (1% fee on Free, 0.5% Pro, 0.25% Enterprise)"
+      },
+      {
+        "method": "POST",
+        "path": "/earn",
+        "scope": "mint",
+        "description": "Auto-calculate and mint tokens from purchase amount using program's cashback rate. POS-friendly alternative to /mint.",
+        "body": {
+          "token_address": "0x...",
+          "customer_address": "0x...",
+          "purchase_amount": 50,
+          "cashback_rate": 5
+        }
       },
       {
         "method": "POST",
@@ -264,6 +277,7 @@
         "POST /program-status": "0.005",
         "POST /rewards": "0.01",
         "POST /mint": "0.01",
+        "POST /earn": "0.01",
         "POST /transfer": "0.005",
         "POST /redeem-reward": "0.01",
         "POST /vouchers/use": "0.005",
@@ -299,6 +313,7 @@
       "list_rewards",
       "create_reward",
       "mint_loyalty_tokens",
+      "earn_points",
       "transfer_loyalty_tokens",
       "get_token_balance",
       "get_program_analytics",
@@ -362,6 +377,7 @@
       "POST /program-status": "0.005",
       "POST /rewards": "0.01",
       "POST /mint": "0.01",
+      "POST /earn": "0.01",
       "POST /transfer": "0.005",
       "POST /redeem-reward": "0.01",
       "POST /vouchers/use": "0.005",
@@ -384,7 +400,8 @@
       {"id": "analytics", "file": "07-analytics-crm.md", "description": "Program analytics and CRM data"},
       {"id": "referrals", "file": "08-referrals.md", "description": "Referral programs for organic growth"},
       {"id": "vouchers", "file": "09-vouchers.md", "description": "Voucher lifecycle management"},
-      {"id": "server-wallets", "file": "10-server-wallets.md", "description": "CDP MPC wallets for autonomous transactions"}
+      {"id": "server-wallets", "file": "10-server-wallets.md", "description": "CDP MPC wallets for autonomous transactions"},
+      {"id": "earn-points", "file": "11-earn-points.md", "description": "Auto-calculate tokens from purchase amount (cashback)"}
     ]
   },
   "why_use": {
