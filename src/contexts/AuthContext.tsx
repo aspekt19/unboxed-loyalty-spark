@@ -273,12 +273,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isConnected || !address || manualSignOutRef.current) return;
 
+    const clearSessionState = async () => {
+      setSession(null);
+      setUser(null);
+
+      try {
+        await supabase.auth.signOut();
+      } catch {}
+    };
+
     const checkSession = async () => {
       try {
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
         
         if (error || !currentSession) {
-          await signInWithWallet();
+          if (isFarcasterContext.current) {
+            await signInWithWallet();
+          } else {
+            setSession(null);
+            setUser(null);
+          }
           return;
         }
 
@@ -286,8 +300,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (userError) {
           const { error: refreshError } = await supabase.auth.refreshSession();
           if (refreshError) {
-            await supabase.auth.signOut();
-            await signInWithWallet();
+            await clearSessionState();
+            if (isFarcasterContext.current) {
+              await signInWithWallet();
+            }
           }
           return;
         }
@@ -300,15 +316,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .maybeSingle();
         
         if (profileError || !profile) {
-          await supabase.auth.signOut();
-          await signInWithWallet();
+          await clearSessionState();
+          if (isFarcasterContext.current) {
+            await signInWithWallet();
+          }
         }
       } catch (error) {
         console.error('[AuthProvider] Session check error:', error);
       }
     };
 
-    const handleSessionExpired = () => signInWithWallet();
+    const handleSessionExpired = () => {
+      if (isFarcasterContext.current) {
+        void signInWithWallet();
+        return;
+      }
+
+      setSession(null);
+      setUser(null);
+    };
     window.addEventListener('sessionExpired', handleSessionExpired);
 
     checkSession();
