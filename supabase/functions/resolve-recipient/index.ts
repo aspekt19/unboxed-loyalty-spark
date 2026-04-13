@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     const trimmed = identifier.trim().toLowerCase();
 
     // If it's already a wallet address, return as-is
-    if (/^0x[a-fA-F0-9]{40}$/.test(trimmed)) {
+   if (/^0x[a-fA-F0-9]{40}$/.test(trimmed)) {
       return new Response(
         JSON.stringify({ wallet_address: trimmed, resolved_by: "address" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
     // Try email lookup
-    const isEmail = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(trimmed);
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
     if (isEmail) {
       const { data: profile } = await adminClient
         .from("profiles")
@@ -84,10 +84,10 @@ Deno.serve(async (req) => {
     }
 
     // Try phone lookup (starts with + or contains only digits)
-    const isPhone = /^\\+?[\\d\\s\\-()]{7,}$/.test(trimmed);
+    const isPhone = /^\+?[\d\s\-()]{7,}$/.test(trimmed);
     if (isPhone) {
       // Normalize: keep only digits and leading +
-      const normalized = trimmed.replace(/[\\s\\-()]/g, "");
+      const normalized = trimmed.replace(/[\s\-()]/g, "");
       const { data: profile } = await adminClient
         .from("profiles")
         .select("wallet_address")

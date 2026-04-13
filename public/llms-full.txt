@@ -74,7 +74,7 @@ curl -X POST \
 
 Response returns calldata with Builder Code for onchain execution.
 
-## MCP Server — 17 Tools
+## MCP Server — 26 Tools
 
 URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp
 Transport: Streamable HTTP
@@ -89,18 +89,26 @@ Auth: x-api-key header
 5. `register_loyalty_program` — Register deployed token
 6. `activate_loyalty_program` — Activation calldata
 7. `update_program_status` — Update status in DB
-8. `list_rewards` — Rewards for a program
+8. `list_rewards` — Rewards for a program (with redemption metrics)
 9. `create_reward` — Create redeemable reward
-10. `mint_loyalty_tokens` — Mint calldata
+10. `mint_loyalty_tokens` — Mint calldata with platform fee
 11. `earn_points` — Auto-calculate and mint tokens from purchase amount (cashback)
 12. `transfer_loyalty_tokens` — Transfer calldata
-11. `transfer_loyalty_tokens` — Transfer calldata
 13. `get_token_balance` — Balance and tier info
 14. `get_program_analytics` — Metrics and performance
-15. `list_marketplace_offers` — P2P offers
-16. `redeem_reward` — Redeem reward: verify tx + create voucher
-17. `use_voucher` — Mark voucher as used
-18. `check_voucher_status` — Public voucher status lookup (no API key)
+15. `get_platform_stats` — Global platform statistics (admin-only)
+16. `list_marketplace_offers` — P2P offers
+17. `cancel_stale_offers` — Cancel old marketplace offers (admin-only)
+18. `redeem_reward` — Redeem reward: verify tx + create voucher
+19. `use_voucher` — Mark voucher as used
+20. `check_voucher_status` — Public voucher status lookup (no API key)
+21. `create_personalized_offer` — Create targeted offer for a customer
+22. `update_reward_status` — Activate/deactivate rewards
+23. `export_customers` — Export customer data for analytics
+24. `send_report` — Submit report to developer dashboard
+25. `list_my_reports` — View previously submitted reports
+26. `update_report_status` — Update report status (reviewed/done)
+27. `delete_report` — Delete an outdated report
 
 ### MCP Configuration for Claude/Cursor
 
