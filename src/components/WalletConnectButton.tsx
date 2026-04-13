@@ -9,7 +9,7 @@ import { usePrivySafe } from '@/hooks/usePrivySafe';
 import { getPrivyPrimaryEmail, shouldUsePrivyTokenAuth } from '@/lib/privyAuth';
 
 export function WalletConnectButton() {
-  const { connect, connectors } = useConnect();
+  const { connect, connectors, disconnectAsync } = useConnect();
   const { address, isConnected } = useAccount();
   const { user, signOut, signInWithWallet, signInWithPrivy, resetManualSignOut } = useAuth();
   const [isManuallyDisconnected, setIsManuallyDisconnected] = useState(false);
@@ -87,6 +87,9 @@ export function WalletConnectButton() {
     try {
       setIsManuallyDisconnected(true);
       await signOut();
+      try {
+        await disconnectAsync?.();
+      } catch {}
       if (!isFarcaster) {
         try {
           await privyLogout();
@@ -96,6 +99,22 @@ export function WalletConnectButton() {
       console.error('[WalletButton] Disconnect error:', error);
     }
   };
+
+  useEffect(() => {
+    const syncManualState = (event?: Event) => {
+      const detail = event instanceof CustomEvent ? Boolean(event.detail) : window.localStorage.getItem('loyalspark:manual-signout') === 'true';
+      setIsManuallyDisconnected(detail);
+    };
+
+    syncManualState();
+    window.addEventListener('loyalspark:manual-signout-changed', syncManualState as EventListener);
+    window.addEventListener('storage', syncManualState as EventListener);
+
+    return () => {
+      window.removeEventListener('loyalspark:manual-signout-changed', syncManualState as EventListener);
+      window.removeEventListener('storage', syncManualState as EventListener);
+    };
+  }, []);
 
   const handleConnect = () => {
     setIsManuallyDisconnected(false);

@@ -8,6 +8,8 @@ import { DexIntegration } from '@/components/DexIntegration';
 import { useAccount } from 'wagmi';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Wallet } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { AuthPrompt } from '@/components/AuthPrompt';
 
 interface MobileProfileTabProps {
   onUpgrade: () => void;
@@ -15,15 +17,23 @@ interface MobileProfileTabProps {
 
 export function MobileProfileTab({ onUpgrade }: MobileProfileTabProps) {
   const { address } = useAccount();
+  const { user, session, isLoading } = useAuth();
 
-  if (!address) {
+  if (isLoading) {
+    return null;
+  }
+
+  if (!address || !user || !session) {
     return (
-      <Alert>
-        <Wallet className="h-4 w-4" />
-        <AlertDescription>
-          Please connect your wallet to view your profile
-        </AlertDescription>
-      </Alert>
+      <div className="space-y-4">
+        <AuthPrompt />
+        <Alert>
+          <Wallet className="h-4 w-4" />
+          <AlertDescription>
+            Please sign in to view your profile
+          </AlertDescription>
+        </Alert>
+      </div>
     );
   }
 

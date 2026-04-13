@@ -11,19 +11,29 @@ import { WalletQRCode } from './WalletQRCode';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAccount } from 'wagmi';
 import { Wallet } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { AuthPrompt } from './AuthPrompt';
 
 export function CustomerPanel() {
   const { address } = useAccount();
+  const { user, session, isLoading } = useAuth();
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
 
-  if (!address) {
+  if (isLoading) {
+    return null;
+  }
+
+  if (!address || !user || !session) {
     return (
-      <Alert>
-        <Wallet className="h-4 w-4" />
-        <AlertDescription>
-          Please sign in to access your rewards and loyalty balance
-        </AlertDescription>
-      </Alert>
+      <div className="space-y-4">
+        <AuthPrompt />
+        <Alert>
+          <Wallet className="h-4 w-4" />
+          <AlertDescription>
+            Please sign in to access your rewards and loyalty balance
+          </AlertDescription>
+        </Alert>
+      </div>
     );
   }
 
