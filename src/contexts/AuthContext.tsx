@@ -104,15 +104,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithPrivy = useCallback(async () => {
     if (signingInRef.current || manualSignOutRef.current) return;
 
+    const privyUser = (window as any).__privyUser;
+    const getAccessToken = (window as any).__privyGetAccessToken as (() => Promise<string | null>) | undefined;
+    if (!privyUser || !getAccessToken) return;
+
     const now = Date.now();
     if (now < retryBlockedUntilRef.current) return;
     if (now - lastSignInAttemptAtRef.current < 4000) return;
     if (now - lastFailureAtRef.current < 8000) return;
     lastSignInAttemptAtRef.current = now;
-
-    const privyUser = (window as any).__privyUser;
-    const getAccessToken = (window as any).__privyGetAccessToken as (() => Promise<string | null>) | undefined;
-    if (!privyUser || !getAccessToken) return;
 
     signingInRef.current = true;
     try {
