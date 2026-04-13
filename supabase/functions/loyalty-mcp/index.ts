@@ -233,6 +233,37 @@ function createMcpServer(agent: any) {
     },
   });
 
+  mcpServer.tool("earn_points", {
+    description: "Calculate and mint loyalty tokens based on purchase amount and program's cashback rate. Simplifies the mint flow for point-of-sale scenarios — just provide purchase amount, tokens are calculated automatically.",
+    inputSchema: { type: "object" as const, properties: { token_address: { type: "string", description: "Token contract address (0x...)" }, customer_address: { type: "string", description: "Customer wallet (0x...)" }, purchase_amount: { type: "number", description: "Purchase amount in currency units (e.g. dollars)" }, cashback_rate: { type: "number", description: "Override cashback rate (%). If omitted, uses the program's default rate." } }, required: ["token_address", "customer_address", "purchase_amount"] },
+    handler: async ({ token_address, customer_address, purchase_amount, cashback_rate: customRate }: any) => {
+      const err = authGuard(["mint"]);
+      if (err) return T(err);
+      if (!/^0x[a-fA-F0-9]{40}$/.test(customer_address)) return T('{"error":"Invalid customer_address"}');
+      const d = db();
+      const { data: prog } = await d.from("loyalty_programs").select("id,name,symbol,status,cashback_rate").eq("token_address", token_address.toLowerCase()).eq("merchant_address", agent.ownerAddress).single();
+      if (!prog) return T('{"error":"Program not found or not owned by you"}');
+      if (prog.status !== "active") return T(JSON.stringify({ error: `Program is ${prog.status}` }));
+      const rate = typeof customRate === "number" && customRate > 0 && customRate <= 100 ? customRate : (prog.cashback_rate || 5);
+      const tokensToMint = Math.round(purchase_amount * rate / 100 * 100) / 100;
+      if (tokensToMint <= 0) return T('{"error":"Calculated token amount is zero"}');
+      const feePercent = await getAgentFeePercent(d, agent.agentId);
+      const feeAmount = computeMintFeeAmount(tokensToMint, feePercent);
+      const recipientCalldata = encodeMintCalldata(customer_address, tokensToMint);
+      const feeCalldata = encodeMintCalldata(PLATFORM_FEE_WALLET, feeAmount);
+      const { data: mint, error: me } = await d.from("token_mint_history").insert({ merchant_address: agent.ownerAddress.toLowerCase(), recipient_address: customer_address.toLowerCase(), amount: tokensToMint, token_address: token_address.toLowerCase(), token_name: prog.name, token_symbol: prog.symbol }).select("id,amount,recipient_address,token_address,created_at").single();
+      if (me) return T(JSON.stringify({ error: me.message }));
+      return T(JSON.stringify({
+        earn: { purchase_amount, cashback_rate: rate, tokens_earned: tokensToMint },
+        mint,
+        fee_percent: feePercent, fee_amount: feeAmount, fee_wallet: PLATFORM_FEE_WALLET,
+        recipient_calldata: recipientCalldata, fee_calldata: feeCalldata,
+        message: `Customer earns ${tokensToMint} ${prog.symbol} for $${purchase_amount} purchase (${rate}% cashback). Send two txs.`,
+        contract: { to: token_address, function: "mint(address,uint256)", recipient_params: [customer_address, tokensToMint], fee_params: [PLATFORM_FEE_WALLET, feeAmount], chain: "Base (8453)", builder_code: BUILDER_CODE },
+      }));
+    },
+  });
+
   mcpServer.tool("get_token_balance", {
     description: "Get loyalty token balance and tier info for a customer",
     inputSchema: { type: "object" as const, properties: { token_address: { type: "string", description: "Token contract address" }, customer_address: { type: "string", description: "Customer wallet" } }, required: ["token_address", "customer_address"] },
