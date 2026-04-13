@@ -87,7 +87,11 @@ export function WalletConnectButton() {
         setTimeout(() => signInWithWallet(), 300);
       }
     } else {
-      privyLogin();
+      // Don't call privyLogin() if already authenticated — prevents
+      // "Attempted to log in, but user is already logged in" warning
+      if (!privyUser) {
+        privyLogin();
+      }
     }
   };
 
