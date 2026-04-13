@@ -90,8 +90,9 @@ serve(async (req) => {
       });
     }
 
+    const requestOrigin = req.headers.get("origin") || req.headers.get("referer")?.replace(/\/+$/, "") || "https://loyalspark.online";
     const appId = Deno.env.get("PRIVY_APP_ID") || "cmnx59voy00f80bl5mtkn0n10";
-    const verifiedPayload = await verifyPrivyToken(privyToken, appId);
+    const verifiedPayload = await verifyPrivyToken(privyToken, appId, requestOrigin);
     const verifiedUser = verifiedPayload?.user ?? verifiedPayload;
     const verifiedDid = verifiedUser?.id;
 
