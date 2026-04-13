@@ -277,6 +277,7 @@
         "POST /program-status": "0.005",
         "POST /rewards": "0.01",
         "POST /mint": "0.01",
+        "POST /earn": "0.01",
         "POST /transfer": "0.005",
         "POST /redeem-reward": "0.01",
         "POST /vouchers/use": "0.005",
@@ -376,6 +377,7 @@
       "POST /program-status": "0.005",
       "POST /rewards": "0.01",
       "POST /mint": "0.01",
+      "POST /earn": "0.01",
       "POST /transfer": "0.005",
       "POST /redeem-reward": "0.01",
       "POST /vouchers/use": "0.005",
@@ -398,7 +400,8 @@
       {"id": "analytics", "file": "07-analytics-crm.md", "description": "Program analytics and CRM data"},
       {"id": "referrals", "file": "08-referrals.md", "description": "Referral programs for organic growth"},
       {"id": "vouchers", "file": "09-vouchers.md", "description": "Voucher lifecycle management"},
-      {"id": "server-wallets", "file": "10-server-wallets.md", "description": "CDP MPC wallets for autonomous transactions"}
+      {"id": "server-wallets", "file": "10-server-wallets.md", "description": "CDP MPC wallets for autonomous transactions"},
+      {"id": "earn-points", "file": "11-earn-points.md", "description": "Auto-calculate tokens from purchase amount (cashback)"}
     ]
   },
   "why_use": {
