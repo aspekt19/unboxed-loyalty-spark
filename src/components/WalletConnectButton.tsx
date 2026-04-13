@@ -20,7 +20,8 @@ export function WalletConnectButton() {
   } | null>(null);
 
   const isFarcaster = isFarcasterContext();
-  const { login: privyLogin, logout: privyLogout, user: privyUser } = usePrivySafe();
+  const { login: privyLogin, logout: privyLogout, user: privyUser, ready: privyReady } = usePrivySafe();
+  const prevPrivyUserRef = useRef(privyUser);
 
   // Expose Privy user data for AuthContext to read
   useEffect(() => {
@@ -28,6 +29,17 @@ export function WalletConnectButton() {
       (window as any).__privyUser = privyUser;
     }
   }, [privyUser]);
+
+  // Auto sign-out when Privy session expires (non-Farcaster)
+  useEffect(() => {
+    // Only trigger if Privy was ready, user was previously logged in, and now is null
+    if (!isFarcaster && privyReady && prevPrivyUserRef.current && !privyUser && user) {
+      console.log('[WalletButton] Privy session expired, signing out');
+      setIsManuallyDisconnected(true);
+      signOut();
+    }
+    prevPrivyUserRef.current = privyUser;
+  }, [privyUser, privyReady, isFarcaster, user, signOut]);
 
   useEffect(() => {
     const loadFarcasterUser = async () => {
