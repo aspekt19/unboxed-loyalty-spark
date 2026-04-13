@@ -7,11 +7,22 @@ import { useState, useEffect, useRef } from 'react';
 import { isFarcasterContext } from '@/config/wagmi';
 import { usePrivySafe } from '@/hooks/usePrivySafe';
 
+/**
+ * Determine if the Privy user authenticated via social/email (not direct wallet).
+ * If so, we use Privy-based auth (no SIWE signature needed).
+ */
+function isPrivySocialLogin(privyUser: any): boolean {
+  if (!privyUser) return false;
+  // If user has email, google, phone, etc. — they used social login
+  // Even if they also have a wallet (embedded), the primary auth was social
+  return !!(privyUser.email || privyUser.google || privyUser.phone || privyUser.apple || privyUser.twitter);
+}
+
 export function WalletConnectButton() {
   const { disconnect } = useDisconnect();
   const { connect, connectors } = useConnect();
   const { address, isConnected } = useAccount();
-  const { user, signOut, signInWithWallet, resetManualSignOut } = useAuth();
+  const { user, signOut, signInWithWallet, signInWithPrivy, resetManualSignOut } = useAuth();
   const [isManuallyDisconnected, setIsManuallyDisconnected] = useState(false);
   const [farcasterUser, setFarcasterUser] = useState<{
     username?: string;
@@ -20,19 +31,33 @@ export function WalletConnectButton() {
   } | null>(null);
 
   const isFarcaster = isFarcasterContext();
-  const { login: privyLogin, logout: privyLogout, user: privyUser, ready: privyReady } = usePrivySafe();
+  const { login: privyLogin, logout: privyLogout, user: privyUser, ready: privyReady, authenticated: privyAuthenticated } = usePrivySafe();
   const prevPrivyUserRef = useRef(privyUser);
 
-  // Expose Privy user data for AuthContext to read
+  // Expose Privy user data and access token for AuthContext to read
   useEffect(() => {
     if (privyUser) {
       (window as any).__privyUser = privyUser;
     }
   }, [privyUser]);
 
+  // Expose Privy access token
+  useEffect(() => {
+    if (!isFarcaster && privyAuthenticated) {
+      // Access token is available through getAccessToken
+      try {
+        const privy = (window as any).__privyInstance;
+        if (privy?.getAccessToken) {
+          privy.getAccessToken().then((token: string) => {
+            (window as any).__privyAccessToken = token;
+          });
+        }
+      } catch {}
+    }
+  }, [privyAuthenticated, isFarcaster]);
+
   // Auto sign-out when Privy session expires (non-Farcaster)
   useEffect(() => {
-    // Only trigger if Privy was ready, user was previously logged in, and now is null
     if (!isFarcaster && privyReady && prevPrivyUserRef.current && !privyUser && user) {
       console.log('[WalletButton] Privy session expired, signing out');
       setIsManuallyDisconnected(true);
@@ -77,14 +102,23 @@ export function WalletConnectButton() {
     }
   }, [isConnected, address, isManuallyDisconnected, signInWithWallet]);
 
-  // Auto SIWE sign-in after Privy login (non-Farcaster)
+  // Auto sign-in after Privy login (non-Farcaster)
+  // Use signInWithPrivy for social/email, signInWithWallet only for direct wallet login
   useEffect(() => {
-    if (!isFarcaster && isConnected && address && !user && !isManuallyDisconnected && privyUser) {
-      setTimeout(() => {
-        signInWithWallet();
-      }, 500);
+    if (!isFarcaster && !user && !isManuallyDisconnected && privyUser) {
+      if (isPrivySocialLogin(privyUser)) {
+        // Social/email login — use Privy auth (no SIWE popup)
+        setTimeout(() => {
+          signInWithPrivy();
+        }, 500);
+      } else if (isConnected && address) {
+        // Direct wallet login via Privy — use SIWE
+        setTimeout(() => {
+          signInWithWallet();
+        }, 500);
+      }
     }
-  }, [isFarcaster, isConnected, address, user, isManuallyDisconnected, privyUser, signInWithWallet]);
+  }, [isFarcaster, isConnected, address, user, isManuallyDisconnected, privyUser, signInWithWallet, signInWithPrivy]);
   
   const handleDisconnect = async () => {
     try {
@@ -108,8 +142,6 @@ export function WalletConnectButton() {
         setTimeout(() => signInWithWallet(), 300);
       }
     } else {
-      // Don't call privyLogin() if already authenticated — prevents
-      // "Attempted to log in, but user is already logged in" warning
       if (!privyUser) {
         privyLogin();
       }
@@ -155,7 +187,7 @@ export function WalletConnectButton() {
   }
   
   // Regular browser — Privy
-  if (!isConnected || isManuallyDisconnected) {
+  if (!privyUser || isManuallyDisconnected) {
     return (
       <button
         onClick={handleConnect}
@@ -169,29 +201,15 @@ export function WalletConnectButton() {
   }
 
   if (!user) {
-    // Auto-SIWE is in progress or Privy session expired — show loading or sign-in
-    if (privyUser) {
-      // Privy is authenticated, SIWE should auto-trigger — show loading state
-      return (
-        <button
-          disabled
-          type="button"
-          className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg font-semibold bg-gradient-uds text-white opacity-70 shadow-md transition-all duration-200 flex items-center gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9"
-        >
-          <LogIn className="h-3 w-3 sm:h-4 sm:w-4 animate-pulse" />
-          <span>Signing in...</span>
-        </button>
-      );
-    }
-    // Privy session gone — need full re-auth
+    // Auth is in progress (Privy or SIWE)
     return (
       <button
-        onClick={handleConnect}
+        disabled
         type="button"
-        className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg font-semibold bg-gradient-uds text-white hover:opacity-90 shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9"
+        className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg font-semibold bg-gradient-uds text-white opacity-70 shadow-md transition-all duration-200 flex items-center gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9"
       >
-        <LogIn className="h-3 w-3 sm:h-4 sm:w-4" />
-        <span>Sign In</span>
+        <LogIn className="h-3 w-3 sm:h-4 sm:w-4 animate-pulse" />
+        <span>Signing in...</span>
       </button>
     );
   }
