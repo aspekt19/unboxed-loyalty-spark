@@ -20,7 +20,7 @@ export function useMintTokens(): MintTokensResult {
 
   /**
    * Mint tokens synchronously — no async operations before sendTransaction
-   * to preserve the user gesture chain (required for Coinbase Smart Wallet popups).
+   * to preserve the user gesture chain (required for wallet popups).
    * Minting status should be checked BEFORE calling this function using useCheckProgramStatus.
    */
   const mintTokens = (tokenAddress: string, recipientAddress: string, amount: string) => {

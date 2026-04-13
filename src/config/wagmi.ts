@@ -46,4 +46,4 @@ export const privyWagmiConfig = createPrivyWagmiConfig({
 // Legacy export for backward compatibility
 export const config = isFarcasterContext() ? farcasterWagmiConfig : privyWagmiConfig;
 
-export const rainbowKitLocale = 'en';
+export const rainbowKitLocale = 'en'; // Legacy export, kept for backward compatibility
