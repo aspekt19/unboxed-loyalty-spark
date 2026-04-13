@@ -196,6 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       retryBlockedUntilRef.current = 0;
+      manualSignOutRef.current = false; // Reset only on successful sign-in
       window.dispatchEvent(new Event('profileMigrated'));
       window.dispatchEvent(new Event('sessionReady'));
       toast.success('Successfully signed in with wallet');
@@ -296,25 +297,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [isConnected, address, signInWithWallet]);
 
+  // Auto sign-in only on initial page load when wallet is already connected
+  // Do NOT auto sign-in after manual sign-out — wait for explicit user action
   useEffect(() => {
     if (isConnected && address && !user && !manualSignOutRef.current) {
-      signInWithWallet();
-    }
-    
-    if (!isConnected && manualSignOutRef.current) {
-      const timer = setTimeout(() => {
-        manualSignOutRef.current = false;
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-    
-    if (isConnected && address && user) {
-      const timer = setTimeout(() => {
-        if (manualSignOutRef.current) {
-          manualSignOutRef.current = false;
+      // Only auto-sign-in if there's an existing Supabase session (page reload scenario)
+      supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
+        if (existingSession) {
+          signInWithWallet();
         }
-      }, 1000);
-      return () => clearTimeout(timer);
+      });
     }
   }, [isConnected, address, user, signInWithWallet]);
 
