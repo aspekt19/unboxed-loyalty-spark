@@ -19,6 +19,7 @@ export function CustomerPanel() {
   const { address } = useAccount();
   const { user, session, isLoading } = useAuth();
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
+  const [selectedMerchant, setSelectedMerchant] = useState<string | null>(null);
 
   if (isLoading) {
     return null;
@@ -38,13 +39,20 @@ export function CustomerPanel() {
     );
   }
 
+  const handleMerchantSelect = (merchantAddress: string) => {
+    setSelectedMerchant(prev => prev === merchantAddress ? null : merchantAddress);
+  };
+
   return (
     <div className="space-y-6">
       {/* Step 1: Show QR - primary action */}
       <WalletQRCode />
       
       {/* Browse merchants */}
-      <MerchantCardGrid />
+      <MerchantCardGrid 
+        onMerchantSelect={handleMerchantSelect}
+        selectedMerchant={selectedMerchant}
+      />
       
       <PersonalizedOffers />
       
@@ -54,6 +62,7 @@ export function CustomerPanel() {
       <TokenList 
         selectedProgram={selectedProgram}
         onProgramSelect={setSelectedProgram}
+        filterByMerchant={selectedMerchant}
       />
       
       {/* Step 3: Activate a reward */}
