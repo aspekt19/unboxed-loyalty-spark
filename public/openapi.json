@@ -3,12 +3,22 @@
   "info": {
     "title": "Loyal Spark — Onchain Loyalty Protocol",
     "version": "2.1.0",
-    "description": "AI-agent-native loyalty protocol on Base L2. Create ERC-20 loyalty programs, mint tokens, manage rewards, trade on P2P marketplace, and get autonomous MPC wallets.",
-    "x-guidance": "Loyal Spark is an onchain loyalty protocol for AI agents on Base L2.\n\nAuthentication: Include your API key in the x-api-key header (format: lsk_...). Get one from the Merchant Panel at https://loyalspark.online.\n\nCommon workflow:\n1. GET /me — check your agent profile and permissions\n2. POST /programs — deploy a new ERC-20 loyalty token\n3. POST /register-program — register the deployed token\n4. POST /activate-program — get calldata to activate the program onchain\n5. POST /mint — mint tokens to customer wallets\n6. POST /rewards — create redeemable rewards\n7. GET /analytics — view program metrics\n\nAll write operations return calldata for Base L2 transactions. Use an MPC wallet (POST to agent-wallet endpoint) for autonomous signing.\n\nDocs: https://loyalspark.online/api-docs\nllms.txt: https://loyalspark.online/llms.txt"
+    "description": "AI-agent-native loyalty protocol on Base L2. REST: 22 authenticated routes plus public GET /vouchers/status. MCP: 27 tools at /loyalty-mcp. Create loyalty programs, mint tokens, POST /earn for purchase cashback, manage rewards, P2P marketplace, CDP server wallets.",
+    "x-guidance": "Loyal Spark — Base L2 (chain 8453).\n\nAuthentication: Almost every path requires header x-api-key: lsk_... from https://loyalspark.online/merchant → AI Agents. Exception: GET /vouchers/status is public (no key).\n\nProgram lifecycle scopes: POST /programs, /register-program, /activate-program, /program-status accept mint OR create_program.\n\nTypical flow:\n1. GET /me — profile and scopes\n2. POST /programs — factory calldata to deploy ERC-20\n3. POST /register-program — persist program\n4. POST /activate-program — unpause + enable mint calldata\n5. POST /program-status — set active in DB\n6. POST /mint or POST /earn — distribute points\n7. POST /rewards — catalog\n8. GET /analytics — metrics\n\nMCP mirrors REST with 27 tools (see repo loyalty-mcp/index.ts). Server wallets: Supabase function agent-wallet (not agent-api).\n\nDocs: https://loyalspark.online/api-docs · llms: https://loyalspark.online/llms.txt · agent manifest: https://loyalspark.online/.well-known/agent.json",
+    "x-mcp": {
+      "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+      "transport": "streamable-http",
+      "tool_count": 27
+    }
   },
   "servers": [
     {
-      "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway"
+      "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api",
+      "description": "Loyal Spark agent REST API (x-api-key required except where noted per-path)"
+    },
+    {
+      "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway",
+      "description": "MPP gateway — HTTP 402 pay-per-request proxy to agent-api"
     }
   ],
   "security": [
@@ -68,7 +78,7 @@
       },
       "post": {
         "operationId": "deployProgram",
-        "summary": "Deploy new ERC-20 loyalty token via factory",
+        "summary": "Deploy new ERC-20 loyalty token via factory (scope: mint or create_program)",
         "tags": ["Programs"],
         "x-payment-info": {
           "pricingMode": "fixed",
@@ -388,7 +398,7 @@
                 "type": "object",
                 "properties": {
                   "token_address": { "type": "string" },
-                  "status": { "type": "string", "enum": ["active", "paused"] }
+                  "status": { "type": "string", "enum": ["active", "paused", "inactive"] }
                 },
                 "required": ["token_address", "status"]
               }
@@ -581,6 +591,7 @@
         "operationId": "checkVoucherStatus",
         "summary": "Check voucher status by code or ID. Public — no API key required.",
         "tags": ["Vouchers"],
+        "security": [],
         "x-payment-info": {
           "pricingMode": "free",
           "price": "0",
@@ -670,7 +681,7 @@
     "/tx-receipt": {
       "get": {
         "operationId": "getTxReceipt",
-        "summary": "Extract token_address from a deploy transaction hash",
+        "summary": "Extract token_address from a deploy transaction hash (requires x-api-key; not a public route)",
         "tags": ["Agent"],
         "parameters": [
           { "name": "tx_hash", "in": "query", "schema": { "type": "string" }, "description": "Transaction hash from token deployment" }

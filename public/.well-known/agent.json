@@ -1,6 +1,6 @@
 {
   "name": "Loyal Spark",
-  "description": "Onchain loyalty protocol on Base L2. AI agents can autonomously create loyalty programs, mint ERC-20 loyalty tokens, manage rewards, trade on marketplace, and get their own MPC wallets — all via REST API, MCP Server, or MPP (Machine Payments Protocol).",
+  "description": "Onchain loyalty protocol on Base L2. AI agents can autonomously create loyalty programs, mint ERC-20 loyalty tokens, earn cashback via POST /earn, manage rewards, trade on marketplace, and get their own MPC wallets — via REST API (22 routes with x-api-key + public GET /vouchers/status), MCP Server (27 tools), MPP, or x402.",
   "url": "https://loyalspark.online",
   "version": "2.1.0",
   "protocol": "a2a-loyalty",
@@ -27,11 +27,12 @@
   },
   "api": {
     "base_url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api",
+    "authentication_summary": "All routes except GET /vouchers/status require header x-api-key: lsk_...",
     "endpoints": [
       {
         "method": "GET",
         "path": "/me",
-        "scope": "read",
+        "scope": "authenticated",
         "description": "Get agent profile, permissions, plan, and wallet info"
       },
       {
@@ -43,28 +44,28 @@
       {
         "method": "POST",
         "path": "/programs",
-        "scope": "mint",
+        "scope": "mint or create_program",
         "description": "Get calldata to deploy a new ERC-20 loyalty token via factory contract",
         "body": { "name": "Coffee Rewards", "symbol": "COFFEE", "expiration_days": 365 }
       },
       {
         "method": "POST",
         "path": "/register-program",
-        "scope": "mint",
+        "scope": "mint or create_program",
         "description": "Register a deployed token as a loyalty program in the database",
         "body": { "name": "Coffee Rewards", "symbol": "COFFEE", "token_address": "0x...", "expiration_days": 365 }
       },
       {
         "method": "POST",
         "path": "/activate-program",
-        "scope": "mint",
+        "scope": "mint or create_program",
         "description": "Get activation calldata (unpauseUtility + enableMinting). Returns 2 transactions to execute.",
         "body": { "token_address": "0x..." }
       },
       {
         "method": "POST",
         "path": "/program-status",
-        "scope": "mint",
+        "scope": "mint or create_program",
         "description": "Update program status in database after on-chain activation/pause",
         "body": { "token_address": "0x...", "status": "active" }
       },
@@ -157,14 +158,14 @@
       {
         "method": "GET",
         "path": "/tx-receipt",
-        "scope": "any",
-        "description": "Extract token_address from a deploy transaction hash",
+        "scope": "authenticated",
+        "description": "Extract token_address from a deploy transaction hash (requires API key; not public)",
         "query_params": { "tx_hash": "0x..." }
       },
       {
         "method": "GET",
         "path": "/offers",
-        "scope": "trade",
+        "scope": "read or trade",
         "description": "List active P2P escrow offers for token trading"
       },
       {
@@ -214,7 +215,7 @@
   "wallets": {
     "type": "cdp_mpc",
     "description": "Coinbase CDP MPC wallets on Base — agents get their own server wallet for autonomous onchain operations. No private keys to manage.",
-    "create_endpoint": "POST /agent-api (action: create_server_wallet)",
+    "create_endpoint": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-wallet (POST JSON body per function docs; x-api-key required)",
     "chain": "Base (8453)",
     "features": [
       "Automatic wallet creation",
@@ -283,7 +284,8 @@
         "POST /vouchers/use": "0.005",
         "POST /offers": "0.01",
         "POST /accept-offer": "0.01",
-        "POST /cancel-offer": "0.005"
+        "POST /cancel-offer": "0.005",
+        "GET /tx-receipt": "free (requires API key)"
       }
     }
   },
@@ -296,6 +298,7 @@
   },
   "mcp": {
     "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+    "tool_count": 27,
     "transport": "streamable-http",
     "authentication": {
       "type": "api_key",
@@ -383,12 +386,14 @@
       "POST /vouchers/use": "0.005",
       "POST /offers": "0.01",
       "POST /accept-offer": "0.01",
-      "POST /cancel-offer": "0.005"
+      "POST /cancel-offer": "0.005",
+      "GET /tx-receipt": "free (requires API key)"
     }
   },
   "skills": {
     "url": "https://loyalspark.online/.well-known/skills/index.md",
     "format": "markdown",
+    "guide_count": 12,
     "list": [
       {"id": "getting-started", "file": "00-getting-started.md", "description": "Register agent, get API key, first request"},
       {"id": "create-program", "file": "01-create-loyalty-program.md", "description": "Deploy ERC-20 loyalty token on Base"},
@@ -448,7 +453,7 @@
       "2. Open 'AI Agents' tab → Register an agent → Get API key (lsk_...)",
       "3. Read the Skills guide: https://loyalspark.online/.well-known/skills/00-getting-started.md",
       "4. Use the API key in x-api-key header for REST or MCP calls",
-      "5. Create a server wallet: POST /agent-api with action 'create_server_wallet'",
+      "5. Create a server wallet: POST https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-wallet (see Edge Function docs)",
       "6. Start minting tokens, creating rewards, and managing programs!"
     ]
   },
