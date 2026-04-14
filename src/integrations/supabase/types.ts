@@ -818,6 +818,45 @@ export type Database = {
         }
         Relationships: []
       }
+      merchant_profiles: {
+        Row: {
+          business_name: string
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          location: string | null
+          logo_url: string | null
+          merchant_address: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          business_name: string
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string | null
+          logo_url?: string | null
+          merchant_address: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          business_name?: string
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string | null
+          logo_url?: string | null
+          merchant_address?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       notification_history: {
         Row: {
           campaign_id: string | null
