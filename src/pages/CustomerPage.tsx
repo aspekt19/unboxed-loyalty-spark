@@ -5,7 +5,7 @@ import { WelcomeFlow } from '@/components/onboarding/WelcomeFlow';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { PremiumStatusBadge } from '@/components/PremiumStatusBadge';
 import { PremiumExpirationAlert } from '@/components/PremiumExpirationAlert';
-import { Gift, ArrowLeft, Store } from 'lucide-react';
+import { Gift, ArrowLeft, Store, User } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,7 +15,7 @@ import { initializeCleanState } from '@/lib/clearOldData';
 import { PremiumUpgradeDialog } from '@/components/roundup/PremiumUpgradeDialog';
 import { MarketplaceDashboard } from '@/components/marketplace/MarketplaceDashboard';
 import { BottomNavBar } from '@/components/mobile/BottomNavBar';
-import { MobileProfileTab } from '@/components/mobile/MobileProfileTab';
+import { CustomerProfileSection } from '@/components/customer/CustomerProfileSection';
 import { PullToRefresh } from '@/components/mobile/PullToRefresh';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useQueryClient } from '@tanstack/react-query';
@@ -62,7 +62,7 @@ const CustomerPage = () => {
           </div>
         );
       case 'profile':
-        return <MobileProfileTab onUpgrade={() => setShowUpgradeDialog(true)} />;
+        return <CustomerProfileSection onUpgrade={() => setShowUpgradeDialog(true)} />;
       default:
         return null;
     }
@@ -103,17 +103,11 @@ const CustomerPage = () => {
 
         <main className="container mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-8 md:py-12 relative">
           {/* Desktop: show premium badges inline */}
-          {!isMobile && (
-            <div className="mb-6 space-y-4">
-              <PremiumStatusBadge />
-              <PremiumExpirationAlert onUpgrade={() => setShowUpgradeDialog(true)} />
-            </div>
-          )}
 
           {/* Desktop: tabs at the top */}
           {!isMobile ? (
             <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-              <TabsList className="grid w-full max-w-2xl grid-cols-2">
+              <TabsList className="grid w-full max-w-2xl grid-cols-3">
                 <TabsTrigger value="loyalty" className="gap-2">
                   <Gift className="h-4 w-4" />
                   Loyalty
@@ -121,6 +115,10 @@ const CustomerPage = () => {
                 <TabsTrigger value="marketplace" className="gap-2">
                   <Store className="h-4 w-4" />
                   Exchange
+                </TabsTrigger>
+                <TabsTrigger value="profile" className="gap-2">
+                  <User className="h-4 w-4" />
+                  Profile
                 </TabsTrigger>
               </TabsList>
 
@@ -138,6 +136,12 @@ const CustomerPage = () => {
               <TabsContent value="marketplace">
                 <div className="max-w-4xl mx-auto">
                   <MarketplaceDashboard />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="profile">
+                <div className="max-w-2xl mx-auto">
+                  <CustomerProfileSection onUpgrade={() => setShowUpgradeDialog(true)} />
                 </div>
               </TabsContent>
 
