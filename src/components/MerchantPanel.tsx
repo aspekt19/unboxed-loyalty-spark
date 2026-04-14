@@ -147,6 +147,7 @@ export function MerchantPanel() {
           </div>
 
           <TabsContent value="dashboard" className="space-y-6 mt-6">
+            <MerchantProfileForm />
             <MerchantDashboard />
             <RFMSegmentation />
           </TabsContent>
