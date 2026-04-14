@@ -176,7 +176,23 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
           <Gift className="h-5 w-5 text-primary" />
           Loyalty Programs
         </CardTitle>
-        <CardDescription>Each merchant issues their own token. Your balance never expires unless you use it.</CardDescription>
+        <CardDescription>
+          {filterByMerchant 
+            ? 'Showing programs for selected merchant' 
+            : 'Each merchant issues their own token. Your balance never expires unless you use it.'
+          }
+        </CardDescription>
+        {programs.length > 2 && (
+          <div className="relative mt-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search programs..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pl-9 h-9"
+            />
+          </div>
+        )}
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden flex flex-col">
         {isLoading || balancesLoading ? (
