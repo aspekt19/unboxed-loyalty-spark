@@ -1495,6 +1495,84 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ==================== MERCHANT PROFILE ====================
+    if (resource === "merchant-profile" && req.method === "GET") {
+      if (!hasScope(agent, "read")) {
+        await logActivity(serviceClient, agent.agentId, "get_merchant_profile", {}, 403, { error: "Insufficient scope" }, ip);
+        return jsonResponse({ error: "Scope 'read' required" }, 403);
+      }
+
+      const merchantAddress = await resolveAgentMerchantAddress(serviceClient, agent, body.use_agent_wallet);
+
+      const { data: profile } = await serviceClient
+        .from("merchant_profiles")
+        .select("*")
+        .eq("merchant_address", merchantAddress)
+        .maybeSingle();
+
+      await logActivity(serviceClient, agent.agentId, "get_merchant_profile", {}, 200, { found: !!profile }, ip);
+      return jsonResponse({ profile: profile || null });
+    }
+
+    if (resource === "merchant-profile" && (req.method === "POST" || req.method === "PUT")) {
+      if (!hasScope(agent, "mint") && !hasScope(agent, "create_program")) {
+        await logActivity(serviceClient, agent.agentId, "upsert_merchant_profile", body, 403, { error: "Insufficient scope" }, ip);
+        return jsonResponse({ error: "Scope 'mint' or 'create_program' required" }, 403);
+      }
+
+      const { business_name, category, logo_url, description, website, location: loc, use_agent_wallet } = body;
+      if (!business_name || typeof business_name !== "string" || business_name.trim().length === 0) {
+        return jsonResponse({ error: "Missing required field: business_name" }, 400);
+      }
+      if (business_name.length > 100) {
+        return jsonResponse({ error: "business_name must be under 100 characters" }, 400);
+      }
+
+      const validCategories = ["cafe","restaurant","retail","beauty","fitness","grocery","pharmacy","entertainment","services","education","travel","other"];
+      const cat = category && validCategories.includes(category) ? category : "other";
+
+      const merchantAddress = await resolveAgentMerchantAddress(serviceClient, agent, use_agent_wallet);
+
+      const profileData: Record<string, unknown> = {
+        merchant_address: merchantAddress,
+        business_name: business_name.trim(),
+        category: cat,
+      };
+      if (logo_url !== undefined) profileData.logo_url = logo_url || null;
+      if (description !== undefined) profileData.description = description || null;
+      if (website !== undefined) profileData.website = website || null;
+      if (loc !== undefined) profileData.location = loc || null;
+
+      // Check existing
+      const { data: existing } = await serviceClient
+        .from("merchant_profiles")
+        .select("id")
+        .eq("merchant_address", merchantAddress)
+        .maybeSingle();
+
+      const { data: profile, error } = existing
+        ? await serviceClient
+            .from("merchant_profiles")
+            .update(profileData)
+            .eq("merchant_address", merchantAddress)
+            .select("*")
+            .single()
+        : await serviceClient
+            .from("merchant_profiles")
+            .insert(profileData)
+            .select("*")
+            .single();
+
+      if (error) {
+        await logActivity(serviceClient, agent.agentId, "upsert_merchant_profile", body, 500, { error: error.message }, ip);
+        return jsonResponse({ error: "Failed to save merchant profile" }, 500);
+      }
+
+      const status = existing ? 200 : 201;
+      await logActivity(serviceClient, agent.agentId, "upsert_merchant_profile", body, status, { profile_id: profile.id }, ip);
+      return jsonResponse({ profile, message: existing ? "Profile updated" : "Profile created" }, status);
+    }
+
     // ==================== UNKNOWN ROUTE ====================
     await logActivity(serviceClient, agent.agentId, "unknown", { resource, method: req.method }, 404, { error: "Not found" }, ip);
     return jsonResponse({
@@ -1521,6 +1599,8 @@ Deno.serve(async (req) => {
       "POST /offers": "Create a P2P escrow offer",
       "POST /accept-offer": "Accept a P2P offer",
       "POST /cancel-offer": "Cancel your P2P offer",
+      "GET /merchant-profile": "Get merchant business profile",
+      "POST /merchant-profile": "Create or update merchant business profile",
       "GET /me": "Get agent info",
       "GET /tx-receipt?tx_hash=0x...": "Extract token_address from deploy transaction",
       },
