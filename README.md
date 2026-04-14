@@ -361,7 +361,6 @@ Pricing: **$0.001–$0.005** per read · **$0.005–$0.05** per write · HTTP 40
 
 ### Catalogues & Registries
 
-- **[mpp.dev](https://mpp.dev)** — Machine Payment Protocol registry (PR #474)
 - **[mppscan.com](https://mppscan.com)** — MPP service scanner (indexed via OpenAPI)
 - **[glama.ai](https://glama.ai)** — MCP server directory
 - **[mcp.so](https://mcp.so)** — MCP server registry
