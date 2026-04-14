@@ -10,6 +10,11 @@ import {
   shouldUsePrivyTokenAuth,
   type PrivyLinkedAccount,
 } from '@/lib/privyAuth';
+import {
+  dispatchWalletConnectorRecovery,
+  isWalletConnectorFailureMessage,
+  walletConnectorFailureText,
+} from '@/lib/walletConnectorErrors';
 
 export type SignOutOptions = {
   /** After a broken wagmi reconnect (e.g. missing MetaMask in in-app browser). */
@@ -188,7 +193,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       console.error('[AuthProvider] Privy sign in error:', error);
       lastFailureAtRef.current = Date.now();
-      toast.error(error.message || 'Failed to sign in');
+      const msg = walletConnectorFailureText(error);
+      if (isWalletConnectorFailureMessage(msg)) {
+        dispatchWalletConnectorRecovery();
+      } else {
+        toast.error(error.message || 'Failed to sign in');
+      }
     } finally {
       signingInRef.current = false;
       setIsLoading(false);
@@ -327,7 +337,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ) {
         toast.error('Signature request was rejected');
       } else {
-        toast.error(error.message || 'Failed to sign in');
+        const msg = walletConnectorFailureText(error);
+        if (isWalletConnectorFailureMessage(msg)) {
+          dispatchWalletConnectorRecovery();
+        } else {
+          toast.error(error.message || 'Failed to sign in');
+        }
       }
     } finally {
       signingInRef.current = false;
