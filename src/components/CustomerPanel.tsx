@@ -60,7 +60,7 @@ export function CustomerPanel({ selectedMerchant, onMerchantSelect }: CustomerPa
       />
       
       {/* Activate a reward */}
-      <RewardsSelection />
+      <RewardsSelection filterByMerchant={selectedMerchant} />
       
       {/* View activated vouchers */}
       <MyVouchers />

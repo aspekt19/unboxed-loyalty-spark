@@ -20,6 +20,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { ProgramExpirationInfo } from '@/components/ProgramExpirationInfo';
 import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
 import { isFarcasterContext } from '@/config/wagmi';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
 
 interface TokenInfo {
   address: string;
@@ -30,6 +32,11 @@ interface TokenInfo {
 }
 
 export function RewardsSelection() {
+interface RewardsSelectionProps {
+  filterByMerchant?: string | null;
+}
+
+export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
   const { address } = useAccount();
   const { user, session, signInWithWallet, isLoading: authLoading } = useAuth();
   const isFarcaster = isFarcasterContext();
@@ -40,6 +47,7 @@ export function RewardsSelection() {
   const [isLoadingRewards, setIsLoadingRewards] = useState(false);
   const [profileVerified, setProfileVerified] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [programSearch, setProgramSearch] = useState('');
 
   const { balances, isLoading: balancesLoading, refetch } = useMultiTokenBalance(tokens);
   const { burnTokens, isPending, isSuccess, hash } = useBurnTokens();
@@ -284,14 +292,47 @@ export function RewardsSelection() {
 
   const needsApproval = () => false;
 
-  const selectedToken = tokens.find(t => t.address === selectedTokenAddress);
-  const selectedBalance = balances.find(b => b.address === selectedTokenAddress);
-  const selectedReward = availableRewards.find(r => r.id === selectedRewardId);
-
-  const tokensWithBalance = tokens.filter(token => {
+  const tokensWithBalance = useMemo(() => tokens.filter(token => {
     const balance = balances.find(b => b.address === token.address);
     return balance && parseFloat(balance.balance) > 0;
-  });
+  }), [tokens, balances]);
+
+  const filteredTokensWithBalance = useMemo(() => {
+    let filteredTokens = tokensWithBalance;
+
+    if (filterByMerchant) {
+      const normalizedMerchant = filterByMerchant.toLowerCase();
+      filteredTokens = filteredTokens.filter(token => {
+        const rewardMerchant = availableRewards.find(reward => reward.tokenAddress === token.address)?.merchantAddress;
+        return rewardMerchant?.toLowerCase() === normalizedMerchant;
+      });
+    }
+
+    if (programSearch.trim()) {
+      const query = programSearch.toLowerCase();
+      filteredTokens = filteredTokens.filter(token =>
+        token.name.toLowerCase().includes(query) ||
+        token.symbol.toLowerCase().includes(query),
+      );
+    }
+
+    return filteredTokens;
+  }, [tokensWithBalance, filterByMerchant, programSearch, availableRewards]);
+
+  useEffect(() => {
+    if (!selectedTokenAddress) return;
+
+    const hasSelectedToken = filteredTokensWithBalance.some(token => token.address === selectedTokenAddress);
+
+    if (!hasSelectedToken) {
+      setSelectedTokenAddress(filteredTokensWithBalance[0]?.address ?? '');
+      setSelectedRewardId('');
+    }
+  }, [filteredTokensWithBalance, selectedTokenAddress]);
+
+  const selectedToken = filteredTokensWithBalance.find(t => t.address === selectedTokenAddress);
+  const selectedBalance = balances.find(b => b.address === selectedTokenAddress);
+  const selectedReward = availableRewards.find(r => r.id === selectedRewardId);
 
   const needsAuth = !session || !profileVerified;
 
@@ -305,13 +346,15 @@ export function RewardsSelection() {
         <CardDescription>Spend your loyalty tokens to unlock rewards and get a redeemable voucher.</CardDescription>
       </CardHeader>
       <CardContent>
-        {tokensWithBalance.length === 0 ? (
+        {filteredTokensWithBalance.length === 0 ? (
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              {tokens.length === 0
+              {tokensWithBalance.length === 0
                 ? 'No loyalty programs available. Ask a merchant to issue you loyalty tokens!'
-                : 'You have no tokens in your loyalty programs. Ask a merchant to issue you tokens!'}
+                : filterByMerchant
+                  ? 'For this merchant, no loyalty programs or token balances were found.'
+                  : 'No loyalty programs match your search.'}
             </AlertDescription>
           </Alert>
         ) : (
@@ -327,6 +370,17 @@ export function RewardsSelection() {
 
             <div className="space-y-2">
               <Label htmlFor="program">Loyalty Program</Label>
+              {filteredTokensWithBalance.length > 1 && (
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={programSearch}
+                    onChange={(event) => setProgramSearch(event.target.value)}
+                    placeholder="Search programs..."
+                    className="pl-9"
+                  />
+                </div>
+              )}
               <Select
                 value={selectedTokenAddress}
                 onValueChange={setSelectedTokenAddress}
@@ -336,7 +390,7 @@ export function RewardsSelection() {
                   <SelectValue placeholder="Select a program" />
                 </SelectTrigger>
                 <SelectContent>
-                  {tokensWithBalance.map(token => {
+                  {filteredTokensWithBalance.map(token => {
                     const balance = balances.find(b => b.address === token.address);
                     return (
                       <SelectItem key={token.address} value={token.address}>
