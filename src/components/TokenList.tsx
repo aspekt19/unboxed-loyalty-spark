@@ -412,12 +412,28 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant }
               Each merchant issues their own token. Tap to view tier status.
             </CardDescription>
           </div>
-          {isMobile && tokensWithBalance.length > 1 && (
+          {isMobile && filteredTokens.length > 1 && (
             <div className="text-sm text-muted-foreground">
-              {currentSlide + 1}/{tokensWithBalance.length}
+              {currentSlide + 1}/{filteredTokens.length}
             </div>
           )}
         </div>
+        {tokensWithBalance.length > 2 && (
+          <div className="relative mt-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by name or symbol..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pl-9 h-9"
+            />
+          </div>
+        )}
+        {filterByMerchant && (
+          <p className="text-xs text-muted-foreground mt-1">
+            Filtered by selected merchant · <button className="underline" onClick={() => {}}>show all</button>
+          </p>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         {!walletAddress && (
@@ -444,9 +460,16 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant }
             <p className="text-xs mt-2">Found {allTokens.length} loyalty program(s) total</p>
           </div>
         )}
+
+        {walletAddress && !isLoading && !isLoadingTokens && tokensWithBalance.length > 0 && filteredTokens.length === 0 && (
+          <div className="text-center py-6 text-muted-foreground">
+            <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <p className="text-sm">No tokens match your search</p>
+          </div>
+        )}
         
-        {tokensWithBalance.length > 0 && (
-          isMobile && tokensWithBalance.length > 1 ? (
+        {filteredTokens.length > 0 && (
+          isMobile && filteredTokens.length > 1 ? (
             <div className="relative">
               <Carousel
                 setApi={setCarouselApi}
@@ -457,7 +480,7 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant }
                 className="w-full"
               >
                 <CarouselContent className="-ml-2">
-                  {tokensWithBalance.map((token) => (
+                  {filteredTokens.map((token) => (
                     <CarouselItem key={token.address} className="pl-2 basis-[90%]">
                       {renderTokenItem(token)}
                     </CarouselItem>
@@ -476,7 +499,7 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant }
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <div className="flex items-center gap-1">
-                  {tokensWithBalance.map((_, index) => (
+                  {filteredTokens.map((_, index) => (
                     <div
                       key={index}
                       className={`h-2 w-2 rounded-full transition-colors ${
@@ -490,7 +513,7 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant }
                   size="icon"
                   className="h-8 w-8 rounded-full"
                   onClick={scrollNext}
-                  disabled={currentSlide === tokensWithBalance.length - 1}
+                  disabled={currentSlide === filteredTokens.length - 1}
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -499,7 +522,7 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant }
           ) : (
             <ScrollArea className="h-[330px]">
               <div className="space-y-3 pr-4 pb-4">
-                {tokensWithBalance.map((token) => renderTokenItem(token))}
+                {filteredTokens.map((token) => renderTokenItem(token))}
               </div>
             </ScrollArea>
           )
