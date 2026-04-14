@@ -113,7 +113,7 @@ const CustomerPage = () => {
           {/* Desktop: tabs at the top */}
           {!isMobile ? (
             <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-              <TabsList className="grid w-full max-w-2xl grid-cols-2">
+              <TabsList className="grid w-full max-w-2xl grid-cols-3">
                 <TabsTrigger value="loyalty" className="gap-2">
                   <Gift className="h-4 w-4" />
                   Loyalty
@@ -121,6 +121,10 @@ const CustomerPage = () => {
                 <TabsTrigger value="marketplace" className="gap-2">
                   <Store className="h-4 w-4" />
                   Exchange
+                </TabsTrigger>
+                <TabsTrigger value="profile" className="gap-2">
+                  <User className="h-4 w-4" />
+                  Profile
                 </TabsTrigger>
               </TabsList>
 
@@ -138,6 +142,12 @@ const CustomerPage = () => {
               <TabsContent value="marketplace">
                 <div className="max-w-4xl mx-auto">
                   <MarketplaceDashboard />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="profile">
+                <div className="max-w-2xl mx-auto">
+                  <CustomerProfileSection onUpgrade={() => setShowUpgradeDialog(true)} />
                 </div>
               </TabsContent>
 
