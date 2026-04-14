@@ -182,7 +182,7 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
             : 'Each merchant issues their own token. Your balance never expires unless you use it.'
           }
         </CardDescription>
-        {programs.length > 2 && (
+        {programsWithBalance.length > 1 && (
           <div className="relative mt-2">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input

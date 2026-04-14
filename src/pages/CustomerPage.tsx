@@ -101,6 +101,17 @@ const CustomerPage = () => {
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               <ThemeToggle />
+              {!isMobile && (
+                <Button
+                  variant={activeTab === 'profile' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleTabChange('profile')}
+                  className="gap-1.5"
+                >
+                  <User className="h-4 w-4" />
+                  <span className="hidden sm:inline">Profile</span>
+                </Button>
+              )}
               <WalletConnectButton />
             </div>
           </div>
@@ -112,7 +123,7 @@ const CustomerPage = () => {
           {/* Desktop: tabs at the top */}
           {!isMobile ? (
             <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-              <TabsList className="grid w-full max-w-2xl grid-cols-3">
+              <TabsList className="grid w-full max-w-md grid-cols-2">
                 <TabsTrigger value="loyalty" className="gap-2">
                   <Gift className="h-4 w-4" />
                   Loyalty
@@ -120,10 +131,6 @@ const CustomerPage = () => {
                 <TabsTrigger value="marketplace" className="gap-2">
                   <Store className="h-4 w-4" />
                   Exchange
-                </TabsTrigger>
-                <TabsTrigger value="profile" className="gap-2">
-                  <User className="h-4 w-4" />
-                  Profile
                 </TabsTrigger>
               </TabsList>
 
