@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,7 @@ import { useMultiTokenBalance, type TokenInfo } from '@/hooks/useMultiTokenBalan
 import { useTransferTokens } from '@/hooks/useTransferTokens';
 import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
-import { Loader2, Coins, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, Coins, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { usePublicClient, useAccount } from 'wagmi';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,9 +26,10 @@ import {
 interface TokenListProps {
   selectedProgram: string | null;
   onProgramSelect: (address: string) => void;
+  filterByMerchant?: string | null;
 }
 
-export function TokenList({ selectedProgram, onProgramSelect }: TokenListProps) {
+export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant }: TokenListProps) {
   const [selectedToken, setSelectedToken] = useState<TokenInfo | null>(null);
   const [recipientAddress, setRecipientAddress] = useState('');
   const [transferAmount, setTransferAmount] = useState('');
