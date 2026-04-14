@@ -34,10 +34,15 @@ interface TokenInfo {
   merchantAddress: string;
 }
 
-export function CustomerFiltersPanel() {
+interface CustomerFiltersPanelProps {
+  filterByMerchant?: string | null;
+}
+
+export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelProps) {
   const { address } = useAccount();
   const [programs, setPrograms] = useState<TokenInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const isMobile = useIsMobile();
   const { selectionChanged } = useFarcasterHaptics();
 
