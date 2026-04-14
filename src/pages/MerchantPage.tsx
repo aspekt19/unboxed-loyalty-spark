@@ -4,6 +4,7 @@ import { IssuedTokensHistory } from '@/components/IssuedTokensHistory';
 import { WelcomeFlow } from '@/components/onboarding/WelcomeFlow';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { PremiumStatusBadge } from '@/components/PremiumStatusBadge';
+import { MerchantProfileSection } from '@/components/merchant/MerchantProfileSection';
 import { ArrowLeft } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -11,20 +12,25 @@ import PageTransition from '@/components/PageTransition';
 import { PullToRefresh } from '@/components/mobile/PullToRefresh';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 const MerchantPage = () => {
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const location = useLocation();
   const isNativeMode = location.pathname.startsWith('/native/');
+  const [showProfile, setShowProfile] = useState(false);
 
   const handleRefresh = useCallback(async () => {
     await queryClient.invalidateQueries();
     await new Promise(resolve => setTimeout(resolve, 500));
   }, [queryClient]);
 
-  const content = (
+  const content = showProfile ? (
+    <div className="max-w-2xl mx-auto">
+      <MerchantProfileSection onUpgrade={() => setShowProfile(false)} />
+    </div>
+  ) : (
     <>
       <div className="mb-6">
         <PremiumStatusBadge />
@@ -68,6 +74,14 @@ const MerchantPage = () => {
               </div>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
+              <Button
+                variant={showProfile ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setShowProfile(!showProfile)}
+                className="h-8 sm:h-9 text-xs sm:text-sm px-3"
+              >
+                Profile
+              </Button>
               <ThemeToggle />
               <WalletConnectButton />
             </div>
