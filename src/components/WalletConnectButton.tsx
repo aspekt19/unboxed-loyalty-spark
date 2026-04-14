@@ -3,10 +3,10 @@ import { useConnect, useAccount, useDisconnect } from 'wagmi';
 import { useAuth } from '@/contexts/AuthContext';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { isFarcasterContext } from '@/config/wagmi';
 import { usePrivySafe } from '@/hooks/usePrivySafe';
-import { getPrivyPrimaryEmail, shouldUsePrivyTokenAuth } from '@/lib/privyAuth';
+import { getPrivyLinkedAccounts, getPrivyPrimaryEmail, shouldUsePrivyTokenAuth } from '@/lib/privyAuth';
 
 export function WalletConnectButton() {
   const { connect, connectors } = useConnect();
@@ -23,6 +23,31 @@ export function WalletConnectButton() {
   const isFarcaster = isFarcasterContext();
   const { login: privyLogin, logout: privyLogout, user: privyUser, ready: privyReady, authenticated: privyAuthenticated, getAccessToken } = usePrivySafe();
   const prevPrivyUserRef = useRef(privyUser);
+
+  const privyUserId = privyUser?.id ?? '';
+  /** Stable when Privy re-renders with a new `user` object reference. */
+  const privyAuthRouteKey = useMemo(() => {
+    if (!privyUser) return '';
+    const types = getPrivyLinkedAccounts(privyUser)
+      .map((a) => a.type ?? '')
+      .sort()
+      .join('|');
+    const hint = [
+      Boolean(privyUser.email?.address),
+      Boolean(privyUser.phone?.number),
+      Boolean(privyUser.google),
+      Boolean(privyUser.apple),
+      Boolean(privyUser.twitter),
+    ]
+      .map(Number)
+      .join('');
+    return `${privyUser.id ?? ''}:${types}:${hint}`;
+  }, [privyUser]);
+
+  const useTokenAuth = useMemo(() => {
+    if (!privyUser) return false;
+    return shouldUsePrivyTokenAuth(privyUser);
+  }, [privyUser, privyAuthRouteKey]);
 
   useEffect(() => {
     if (privyUser) {
@@ -74,20 +99,48 @@ export function WalletConnectButton() {
     }
   }, [isFarcaster, isConnected, address, isManuallyDisconnected, signInWithWallet]);
 
+  // Email / SMS / OAuth: Supabase via Privy token only — never SIWE here.
   useEffect(() => {
-    if (!isFarcaster && !user && !isManuallyDisconnected && privyAuthenticated && privyUser) {
-      // For social logins (email, Google, etc.) — always use token auth
-      // For wallet logins (MetaMask) — use token auth as fallback when wallet is not connected
-      const useTokenAuth = shouldUsePrivyTokenAuth(privyUser);
-      const walletNotAvailable = !useTokenAuth && !isConnected;
-      
-      if (useTokenAuth || walletNotAvailable) {
-        setTimeout(() => {
-          signInWithPrivy();
-        }, 250);
-      }
-    }
-  }, [isFarcaster, user, isManuallyDisconnected, privyAuthenticated, privyUser, isConnected, address, signInWithPrivy, signInWithWallet]);
+    if (isFarcaster || !privyReady || user || isManuallyDisconnected || !privyAuthenticated || !privyUserId) return;
+    if (!useTokenAuth) return;
+
+    const t = window.setTimeout(() => {
+      void signInWithPrivy();
+    }, 250);
+    return () => window.clearTimeout(t);
+  }, [
+    isFarcaster,
+    privyReady,
+    user,
+    isManuallyDisconnected,
+    privyAuthenticated,
+    privyUserId,
+    useTokenAuth,
+    signInWithPrivy,
+  ]);
+
+  // Wallet-only Privy login: after wagmi is connected, complete app auth with SIWE.
+  useEffect(() => {
+    if (isFarcaster || !privyReady || user || isManuallyDisconnected || !privyAuthenticated || !privyUserId) return;
+    if (useTokenAuth) return;
+    if (!isConnected || !address) return;
+
+    const t = window.setTimeout(() => {
+      void signInWithWallet();
+    }, 400);
+    return () => window.clearTimeout(t);
+  }, [
+    isFarcaster,
+    privyReady,
+    user,
+    isManuallyDisconnected,
+    privyAuthenticated,
+    privyUserId,
+    useTokenAuth,
+    isConnected,
+    address,
+    signInWithWallet,
+  ]);
 
   const handleDisconnect = async () => {
     try {

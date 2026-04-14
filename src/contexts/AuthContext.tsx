@@ -4,7 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import { sdk } from '@farcaster/miniapp-sdk';
-import { getPrivyPrimaryEmail, getPrivyLinkedAccounts, shouldUsePrivyTokenAuth } from '@/lib/privyAuth';
+import {
+  getPrivyPrimaryEmail,
+  getPrivyLinkedAccounts,
+  shouldUsePrivyTokenAuth,
+  type PrivyLinkedAccount,
+} from '@/lib/privyAuth';
 
 interface AuthContextType {
   user: User | null;
@@ -153,7 +158,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email: getPrivyPrimaryEmail(privyUser),
           walletAddress: address?.toLowerCase()
             ?? privyUser?.wallet?.address?.toLowerCase()
-            ?? getPrivyLinkedAccounts(privyUser).find((a: any) => a?.type === 'wallet' || a?.type === 'smart_wallet')?.address?.toLowerCase()
+            ?? getPrivyLinkedAccounts(privyUser)
+              .find((a: PrivyLinkedAccount) => a.type === 'wallet' || a.type === 'smart_wallet')
+              ?.address?.toLowerCase()
             ?? null,
         }),
       });
@@ -375,6 +382,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await signInWithWallet();
           } else if (isPrivySocial) {
             await signInWithPrivy();
+          } else if (isConnected && address) {
+            await signInWithWallet();
           } else {
             setSession(null);
             setUser(null);
@@ -391,6 +400,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               await signInWithWallet();
             } else if (isPrivySocial) {
               await signInWithPrivy();
+            } else if (isConnected && address) {
+              await signInWithWallet();
             }
           }
           return;
@@ -415,6 +426,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await signInWithWallet();
           } else if (isPrivySocial) {
             await signInWithPrivy();
+          } else if (isConnected && address) {
+            await signInWithWallet();
           }
         }
       } catch (error) {
