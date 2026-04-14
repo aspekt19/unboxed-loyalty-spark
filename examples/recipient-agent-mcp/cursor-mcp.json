@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "loyal-spark-recipient": {
+      "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp",
+      "headers": {
+        "x-api-key": "${env:LOYAL_SPARK_RECIPIENT_API_KEY}"
+      }
+    }
+  }
+}

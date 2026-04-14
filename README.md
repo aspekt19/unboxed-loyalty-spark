@@ -168,6 +168,22 @@ Connect Claude, GPT, or any MCP-compatible agent:
 **MCP tools (28)** — defined in `supabase/functions/loyalty-mcp/index.ts`:  
 `get_platform_info`, `get_my_profile`, `list_loyalty_programs`, `create_loyalty_program`, `register_loyalty_program`, `activate_loyalty_program`, `update_program_status`, `update_program_config`, `list_rewards`, `create_reward`, `mint_loyalty_tokens`, `transfer_loyalty_tokens`, `earn_points`, `get_token_balance`, `get_program_analytics`, `list_marketplace_offers`, `redeem_reward`, `use_voucher`, `check_voucher_status`, `get_platform_stats`, `cancel_stale_offers`, `create_personalized_offer`, `update_reward_status`, `export_customers`, `send_report`, `list_my_reports`, `update_report_status`, `delete_report`.
 
+### Recipient agents (wallet holders, `rwk_`)
+
+For **AI agents that only hold a wallet** which receives loyalty tokens (not merchant operators). Humans are unchanged; this is an optional machine path.
+
+| Piece | URL / path |
+|-------|----------------|
+| REST | `https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-api` |
+| MCP | `https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp` |
+| Register key | `POST …/recipient-api/register` with SIWE `{ message, signature }` (nonce from `siwe-nonce`) — returns `rwk_…` once |
+
+**REST (all require `x-api-key: rwk_…` except register):** `GET /me`, `GET /balances`, `GET /balance?token_address=`, `GET /rewards?token_address=`, `GET /vouchers`, `POST /redeem-reward` with `{ reward_id, transaction_hash }` (customer is always the bound wallet).
+
+**MCP tools (6)** — `supabase/functions/recipient-loyalty-mcp/index.ts`: `get_recipient_profile`, `list_my_loyalty_balances`, `get_my_loyalty_balance`, `list_rewards_for_program`, `list_my_vouchers`, `redeem_my_reward`.
+
+Example MCP fragment: [`examples/recipient-agent-mcp/cursor-mcp.json`](./examples/recipient-agent-mcp/cursor-mcp.json).
+
 ### Agent Discovery
 
 AI agents can discover the protocol automatically via:
@@ -345,6 +361,7 @@ Pricing: **$0.001–$0.005** per read · **$0.005–$0.05** per write · HTTP 40
 
 ### Catalogues & Registries
 
+- **[mpp.dev](https://mpp.dev)** — Machine Payment Protocol registry (PR #474)
 - **[mppscan.com](https://mppscan.com)** — MPP service scanner (indexed via OpenAPI)
 - **[glama.ai](https://glama.ai)** — MCP server directory
 - **[mcp.so](https://mcp.so)** — MCP server registry

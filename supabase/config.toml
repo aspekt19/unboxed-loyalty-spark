@@ -32,3 +32,9 @@ verify_jwt = false
 
 [functions.agent-api-key]
 verify_jwt = false
+
+[functions.recipient-api]
+verify_jwt = false
+
+[functions.recipient-loyalty-mcp]
+verify_jwt = false

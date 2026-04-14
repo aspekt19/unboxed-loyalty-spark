@@ -18,10 +18,13 @@ import {
   BookOpen,
 } from "lucide-react";
 import { MCP_TOOL_COUNT, MCP_TOOL_NAMES } from "@/constants/mcpToolNames";
+import { RECIPIENT_MCP_TOOL_COUNT, RECIPIENT_MCP_TOOL_NAMES } from "@/constants/recipientMcpToolNames";
 
 const SITE = "https://loyalspark.online";
 const REST = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-api`;
 const MCP = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/loyalty-mcp`;
+const RECIPIENT_REST = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/recipient-api`;
+const RECIPIENT_MCP = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/recipient-loyalty-mcp`;
 const X402 = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/x402-gateway`;
 const MPP = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mpp-gateway`;
 
@@ -62,8 +65,34 @@ const mcpJson = `{
   }
 }`;
 
+const recipientMcpJson = `{
+  "mcpServers": {
+    "loyal-spark-recipient": {
+      "url": "${RECIPIENT_MCP}",
+      "headers": {
+        "x-api-key": "rwk_YOUR_RECIPIENT_KEY"
+      }
+    }
+  }
+}`;
+
 const curlProbe = `curl -sS -H "x-api-key: lsk_YOUR_API_KEY" \\
   "${REST}/programs"`;
+
+const recipientKeyFlow = `Recipient keys (rwk_) are for wallets that receive loyalty points — not merchants.
+
+1) Nonce (same as web SIWE):
+curl -sS "${import.meta.env.VITE_SUPABASE_URL}/functions/v1/siwe-nonce" \\
+  -H "apikey: ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}"
+
+2) Build a standards-compliant EIP-4361 SIWE message including that nonce for the recipient wallet; sign with that wallet.
+
+3) One-time key:
+curl -sS -X POST "${RECIPIENT_REST}/register" \\
+  -H "Content-Type: application/json" \\
+  -d '{"message":"<SIWE message>","signature":"0x...","name":"optional label"}'
+
+4) Call APIs with header: x-api-key: rwk_...`;
 
 export default function ForAgentsPage() {
   const jsonLd = {
@@ -107,14 +136,16 @@ export default function ForAgentsPage() {
         <main className="container max-w-5xl mx-auto px-4 py-8 space-y-10">
           <section className="text-center space-y-3 max-w-3xl mx-auto">
             <Badge variant="secondary" className="text-xs">
-              Base mainnet · ERC-20 · {MCP_TOOL_COUNT} MCP tools
+              Base mainnet · ERC-20 · {MCP_TOOL_COUNT} merchant MCP tools · {RECIPIENT_MCP_TOOL_COUNT} recipient MCP tools
             </Badge>
             <h2 className="text-2xl sm:text-4xl font-bold tracking-tight">
               Ship an agent that runs real loyalty programs
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground">
-              Humans use Privy + the web app. <strong>Agents</strong> use an <code className="text-xs bg-muted px-1 py-0.5 rounded">lsk_</code> key,
-              the REST API, or MCP — same contracts and database. Public voucher lookup needs no key.
+              Humans use Privy + the web app. <strong>Merchant agents</strong> use an <code className="text-xs bg-muted px-1 py-0.5 rounded">lsk_</code> key
+              and <code className="text-xs bg-muted px-1 py-0.5 rounded">agent-api</code> / <code className="text-xs bg-muted px-1 py-0.5 rounded">loyalty-mcp</code>.
+              <strong> Recipient agents</strong> (wallets that earn points) use <code className="text-xs bg-muted px-1 py-0.5 rounded">rwk_</code> and a separate
+              REST + MCP stack — humans never need to touch that. Public voucher lookup needs no key.
             </p>
             <div className="flex flex-wrap justify-center gap-2 pt-2">
               <Button asChild variant="outline" size="sm">
@@ -138,7 +169,7 @@ export default function ForAgentsPage() {
               <CardHeader className="pb-2">
                 <Terminal className="h-6 w-6 text-primary mb-1" />
                 <CardTitle className="text-base">REST</CardTitle>
-                <CardDescription>22 routes + public GET /vouchers/status</CardDescription>
+                <CardDescription>23 routes + public GET /vouchers/status</CardDescription>
               </CardHeader>
               <CardContent className="text-xs text-muted-foreground space-y-2">
                 <p>Base URL (append path):</p>
@@ -217,6 +248,30 @@ export default function ForAgentsPage() {
               <code className="text-xs bg-muted px-1 rounded">examples/agent-mcp/</code>.
             </p>
             <CodeBlock code={mcpJson} />
+          </section>
+
+          <section className="space-y-3 rounded-lg border border-dashed border-primary/25 bg-muted/20 p-4">
+            <h3 className="text-lg font-semibold">Recipient AI agents (rwk_)</h3>
+            <p className="text-sm text-muted-foreground">
+              For autonomous wallets that <strong>receive</strong> loyalty tokens (e.g. another agent thanked on-chain). Keys are created with a SIWE signature from
+              that wallet — no merchant dashboard. REST base: <code className="text-xs bg-muted px-1 rounded break-all">{RECIPIENT_REST}</code>
+            </p>
+            <CodeBlock code={recipientKeyFlow} />
+            <p className="text-xs text-muted-foreground">Then: GET /balances, GET /rewards?token_address=..., POST /redeem-reward with reward_id + transfer tx hash.</p>
+            <h4 className="text-sm font-medium pt-2">Recipient MCP ({RECIPIENT_MCP_TOOL_COUNT} tools)</h4>
+            <p className="text-xs text-muted-foreground break-all">URL: {RECIPIENT_MCP}</p>
+            <CodeBlock code={recipientMcpJson} />
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {RECIPIENT_MCP_TOOL_NAMES.map((name) => (
+                <code key={name} className="text-[10px] sm:text-xs bg-muted/80 border rounded px-1.5 py-0.5 font-mono">
+                  {name}
+                </code>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Source: <code className="bg-muted px-1 rounded">src/constants/recipientMcpToolNames.ts</code> · server{" "}
+              <code className="bg-muted px-1 rounded">recipient-loyalty-mcp/index.ts</code>
+            </p>
           </section>
 
           <section className="space-y-3">

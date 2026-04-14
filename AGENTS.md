@@ -24,12 +24,14 @@ This file is the **entry point** for coding agents (Cursor, OpenServ, Claude Cod
 
 Source files for the above: `public/.well-known/`, `public/openapi.json`, `public/llms.txt`, `public/llms-full.txt`.
 
-Copy-paste MCP and curl: **[examples/agent-mcp/](./examples/agent-mcp/)** · Short repo quickstart: **[docs/agents/QUICKSTART.md](./docs/agents/QUICKSTART.md)**.
+Copy-paste MCP and curl: **[examples/agent-mcp/](./examples/agent-mcp/)** (merchant `lsk_`) · **[examples/recipient-agent-mcp/](./examples/recipient-agent-mcp/)** (holder `rwk_`) · Short repo quickstart: **[docs/agents/QUICKSTART.md](./docs/agents/QUICKSTART.md)**.
 
 ## API & MCP (source of truth)
 
-- **REST:** `supabase/functions/agent-api/index.ts` — count routes here if docs disagree.
-- **MCP:** `supabase/functions/loyalty-mcp/index.ts` — each `mcpServer.tool("name", …)` is one tool.
+- **REST (merchants):** `supabase/functions/agent-api/index.ts` — count routes here if docs disagree.
+- **MCP (merchants):** `supabase/functions/loyalty-mcp/index.ts` — each `mcpServer.tool("name", …)` is one tool.
+- **REST (recipients):** `supabase/functions/recipient-api/index.ts` — wallet-bound `rwk_` keys.
+- **MCP (recipients):** `supabase/functions/recipient-loyalty-mcp/index.ts` — holder-only tools.
 
 ## Prompts & OpenServ
 

@@ -1,0 +1,340 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createPublicClient, http } from "npm:viem@2.46.0";
+import { base } from "npm:viem@2.46.0/chains";
+import { corsHeaders, jsonResponse } from "./http.ts";
+import {
+  authenticateRecipientAgent,
+  hashRecipientApiKey,
+  insertRecipientActivity,
+} from "../_shared/recipient-agent-auth.ts";
+import { walletHasEngagement } from "../_shared/recipient-queries.ts";
+import { recipientRedeemReward } from "../_shared/recipient-redeem.ts";
+
+const publicClient = createPublicClient({
+  chain: base,
+  transport: http("https://base-rpc.publicnode.com", { batch: false, retryCount: 2, retryDelay: 1_000 }),
+});
+
+function generateRecipientApiKey(): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const segments = [];
+  for (let s = 0; s < 4; s++) {
+    let segment = "";
+    for (let i = 0; i < 8; i++) {
+      const randomValues = new Uint8Array(1);
+      crypto.getRandomValues(randomValues);
+      segment += chars[randomValues[0] % chars.length];
+    }
+    segments.push(segment);
+  }
+  return `rwk_${segments.join("_")}`;
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
+
+  const url = new URL(req.url);
+  const path = url.pathname.split("/").filter(Boolean);
+  const apiIdx = path.indexOf("recipient-api");
+  const resource = path[apiIdx + 1] || path[path.length - 1] || "";
+
+  let body: Record<string, unknown> = {};
+  if (req.method === "POST" || req.method === "PUT" || req.method === "PATCH") {
+    body = await req.json().catch(() => ({}));
+  }
+
+  const ip = req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || "unknown";
+
+  // ==================== PUBLIC: register (SIWE) ====================
+  if (resource === "register" && req.method === "POST") {
+    const message = body.message as string | undefined;
+    const signature = body.signature as string | undefined;
+    const name = typeof body.name === "string" && body.name.trim().length > 0 ? body.name.trim().slice(0, 100) : "Recipient agent";
+
+    if (!message || !signature) {
+      return jsonResponse({ error: "Required: message, signature (SIWE). Obtain nonce from POST /siwe-nonce first." }, 400);
+    }
+
+    const lines = message.split("\n");
+    const addressLine = lines.find((line: string) => /^0x[a-fA-F0-9]{40}$/.test(line.trim()));
+    if (!addressLine) {
+      return jsonResponse({ error: "Invalid SIWE message: no wallet address line" }, 400);
+    }
+    const address = addressLine.trim().toLowerCase() as `0x${string}`;
+
+    const isValid = await publicClient.verifyMessage({
+      address,
+      message,
+      signature: signature as `0x${string}`,
+    });
+    if (!isValid) {
+      return jsonResponse({ error: "Invalid signature" }, 401);
+    }
+
+    const issuedAtMatch = message.match(/Issued At: (.+)/);
+    if (issuedAtMatch) {
+      const issuedAt = new Date(issuedAtMatch[1].trim());
+      const diffMs = Date.now() - issuedAt.getTime();
+      if (diffMs > 5 * 60 * 1000 || diffMs < -60_000) {
+        return jsonResponse({ error: "SIWE message expired or clock skew too large" }, 401);
+      }
+    }
+
+    const nonceMatch = message.match(/Nonce: (.+)/);
+    if (!nonceMatch) return jsonResponse({ error: "Missing nonce in SIWE message" }, 400);
+    const nonce = nonceMatch[1].trim();
+
+    const { data: nonceRow, error: nonceError } = await serviceClient
+      .from("siwe_nonces")
+      .update({ used: true })
+      .eq("nonce", nonce)
+      .eq("used", false)
+      .gte("created_at", new Date(Date.now() - 5 * 60 * 1000).toISOString())
+      .select("nonce")
+      .maybeSingle();
+
+    if (nonceError || !nonceRow) {
+      return jsonResponse({ error: "Invalid or already used nonce" }, 401);
+    }
+
+    const { count: activeCount } = await serviceClient
+      .from("recipient_agent_registry")
+      .select("id", { count: "exact", head: true })
+      .eq("wallet_address", address)
+      .eq("is_active", true);
+
+    if ((activeCount ?? 0) >= 5) {
+      return jsonResponse({ error: "Maximum 5 active recipient agents per wallet" }, 400);
+    }
+
+    const apiKey = generateRecipientApiKey();
+    const apiKeyHash = await hashRecipientApiKey(apiKey);
+    const apiKeyPrefix = apiKey.substring(0, 12);
+
+    const { data: regRow, error: insErr } = await serviceClient
+      .from("recipient_agent_registry")
+      .insert({
+        wallet_address: address,
+        name,
+        api_key_hash: apiKeyHash,
+        api_key_prefix: apiKeyPrefix,
+      })
+      .select("id, name, wallet_address, api_key_prefix, created_at")
+      .single();
+
+    if (insErr || !regRow) {
+      console.error("recipient register insert:", insErr);
+      return jsonResponse({ error: "Failed to create recipient agent" }, 500);
+    }
+
+    return jsonResponse(
+      {
+        agent: regRow,
+        api_key: apiKey,
+        warning: "Save this rwk_ API key now. It cannot be retrieved later. Use header x-api-key on recipient-api and recipient-loyalty-mcp.",
+        docs: "https://loyalspark.online/for-agents (Recipient AI agents)",
+      },
+      201
+    );
+  }
+
+  // ==================== Authenticated routes (rwk_ only) ====================
+  const apiKey = req.headers.get("x-api-key");
+  if (!apiKey || !apiKey.startsWith("rwk_")) {
+    return jsonResponse({ error: "Missing or invalid API key. Use x-api-key with your rwk_ key (register via POST /recipient-api/register)." }, 401);
+  }
+
+  const auth = await authenticateRecipientAgent(apiKey, serviceClient);
+  if (!auth.ok && auth.error === "invalid_key") {
+    return jsonResponse({ error: "Invalid API key or agent is deactivated" }, 401);
+  }
+  if (!auth.ok && auth.error === "rate_limited") {
+    return jsonResponse({ error: "Rate limit exceeded for this recipient agent." }, 429);
+  }
+  const agent = auth.agent;
+  const wallet = agent.walletAddress.toLowerCase();
+
+  try {
+    if (resource === "me" && req.method === "GET") {
+      const { data: row } = await serviceClient
+        .from("recipient_agent_registry")
+        .select("id, name, wallet_address, api_key_prefix, total_requests, created_at")
+        .eq("id", agent.agentId)
+        .single();
+      await insertRecipientActivity(serviceClient, agent.agentId, "me", {}, 200, { ok: true }, ip);
+      return jsonResponse({
+        recipient_agent: row,
+        note: "This key can only access loyalty data for wallet_address above (mint/redeem flows scoped to you).",
+      });
+    }
+
+    if (resource === "balances" && req.method === "GET") {
+      const { data: tiers, error } = await serviceClient
+        .from("customer_tier_status")
+        .select("token_address, current_balance, tokens_earned_total, current_tier_id, last_calculated_at")
+        .eq("customer_address", wallet);
+
+      if (error) {
+        await insertRecipientActivity(serviceClient, agent.agentId, "balances", {}, 500, { error: error.message }, ip);
+        return jsonResponse({ error: "Failed to load balances" }, 500);
+      }
+
+      const tokens = [...new Set((tiers || []).map((t: { token_address: string }) => t.token_address.toLowerCase()))];
+      let programs: Record<string, { name: string; symbol: string; status: string }> = {};
+      if (tokens.length > 0) {
+        const { data: plist } = await serviceClient
+          .from("loyalty_programs")
+          .select("token_address, name, symbol, status")
+          .in("token_address", tokens);
+        programs = Object.fromEntries((plist || []).map((p: any) => [p.token_address.toLowerCase(), p]));
+      }
+
+      const balances = (tiers || []).map((t: any) => ({
+        ...t,
+        program: programs[t.token_address.toLowerCase()] || null,
+      }));
+
+      await insertRecipientActivity(serviceClient, agent.agentId, "balances", {}, 200, { count: balances.length }, ip);
+      return jsonResponse({ balances });
+    }
+
+    if (resource === "balance" && req.method === "GET") {
+      const tokenAddress = url.searchParams.get("token_address");
+      if (!tokenAddress || !/^0x[a-fA-F0-9]{40}$/.test(tokenAddress)) {
+        return jsonResponse({ error: "Missing or invalid query param: token_address" }, 400);
+      }
+
+      const { data: tierStatus } = await serviceClient
+        .from("customer_tier_status")
+        .select("current_balance, tokens_earned_total, current_tier_id, last_calculated_at")
+        .eq("token_address", tokenAddress.toLowerCase())
+        .eq("customer_address", wallet)
+        .maybeSingle();
+
+      let tierInfo = null;
+      if (tierStatus?.current_tier_id) {
+        const { data: tier } = await serviceClient
+          .from("customer_tiers")
+          .select("tier_name, tier_level, badge_color, cashback_multiplier")
+          .eq("id", tierStatus.current_tier_id)
+          .single();
+        tierInfo = tier;
+      }
+
+      await insertRecipientActivity(serviceClient, agent.agentId, "balance", { tokenAddress }, 200, {}, ip);
+      return jsonResponse({
+        balance: {
+          current_balance: tierStatus?.current_balance ?? 0,
+          tokens_earned_total: tierStatus?.tokens_earned_total ?? 0,
+          last_updated: tierStatus?.last_calculated_at ?? null,
+          tier: tierInfo,
+        },
+      });
+    }
+
+    if (resource === "rewards" && req.method === "GET") {
+      const tokenAddress = url.searchParams.get("token_address");
+      if (!tokenAddress || !/^0x[a-fA-F0-9]{40}$/.test(tokenAddress)) {
+        return jsonResponse({ error: "Missing or invalid query param: token_address" }, 400);
+      }
+
+      const ok = await walletHasEngagement(serviceClient, wallet, tokenAddress);
+      if (!ok) {
+        await insertRecipientActivity(serviceClient, agent.agentId, "rewards", { tokenAddress }, 403, { error: "no_engagement" }, ip);
+        return jsonResponse(
+          { error: "No loyalty activity for your wallet on this program token. Earn or hold a balance first." },
+          403
+        );
+      }
+
+      const { data: rewards, error } = await serviceClient
+        .from("rewards")
+        .select("id, name, description, cost, is_active, token_address, created_at")
+        .eq("token_address", tokenAddress.toLowerCase())
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        await insertRecipientActivity(serviceClient, agent.agentId, "rewards", { tokenAddress }, 500, { error: error.message }, ip);
+        return jsonResponse({ error: "Failed to fetch rewards" }, 500);
+      }
+
+      await insertRecipientActivity(serviceClient, agent.agentId, "rewards", { tokenAddress }, 200, { count: rewards?.length }, ip);
+      return jsonResponse({ rewards: rewards || [] });
+    }
+
+    if (resource === "vouchers" && req.method === "GET") {
+      const tokenAddress = url.searchParams.get("token_address");
+      const status = url.searchParams.get("status");
+      const limit = Math.min(parseInt(url.searchParams.get("limit") || "50", 10), 100);
+
+      let q = serviceClient
+        .from("vouchers")
+        .select("id, code, reward_name, cost, status, token_address, merchant_address, activated_at, used_at")
+        .eq("customer_address", wallet)
+        .order("activated_at", { ascending: false })
+        .limit(limit);
+
+      if (tokenAddress) q = q.eq("token_address", tokenAddress.toLowerCase());
+      if (status) q = q.eq("status", status);
+
+      const { data: vouchers, error } = await q;
+      if (error) {
+        await insertRecipientActivity(serviceClient, agent.agentId, "vouchers", {}, 500, { error: error.message }, ip);
+        return jsonResponse({ error: "Failed to fetch vouchers" }, 500);
+      }
+
+      await insertRecipientActivity(serviceClient, agent.agentId, "vouchers", {}, 200, { count: vouchers?.length }, ip);
+      return jsonResponse({ vouchers: vouchers || [] });
+    }
+
+    if (resource === "redeem-reward" && req.method === "POST") {
+      const reward_id = body.reward_id as string | undefined;
+      const transaction_hash = body.transaction_hash as string | undefined;
+
+      if (!reward_id || !transaction_hash) {
+        await insertRecipientActivity(serviceClient, agent.agentId, "redeem_reward", body, 400, { error: "missing_fields" }, ip);
+        return jsonResponse({ error: "Required: reward_id, transaction_hash" }, 400);
+      }
+
+      const result = await recipientRedeemReward(serviceClient, wallet, reward_id, transaction_hash);
+      const logStatus = result.status === 200 && (result.body as any).retryable ? 202 : result.status;
+      await insertRecipientActivity(serviceClient, agent.agentId, "redeem_reward", body, logStatus, result.body, ip);
+      return jsonResponse(result.body, result.status);
+    }
+
+    await insertRecipientActivity(serviceClient, agent.agentId, "unknown", { resource, method: req.method }, 404, {}, ip);
+    return jsonResponse(
+      {
+        error: "Unknown endpoint",
+        available: {
+          "POST /recipient-api/register": "Create rwk_ key (body: message, signature from SIWE; optional name)",
+          "GET /recipient-api/me": "Profile",
+          "GET /recipient-api/balances": "All tier balances for your wallet",
+          "GET /recipient-api/balance?token_address=0x...": "Balance for one program",
+          "GET /recipient-api/rewards?token_address=0x...": "Rewards catalog (requires prior activity on program)",
+          "GET /recipient-api/vouchers?token_address=0x...&status=active": "Your vouchers",
+          "POST /recipient-api/redeem-reward": "Body: { reward_id, transaction_hash } — customer is always your wallet",
+        },
+      },
+      404
+    );
+  } catch (e) {
+    console.error("recipient-api error:", e);
+    await insertRecipientActivity(
+      serviceClient,
+      agent.agentId,
+      "error",
+      { resource },
+      500,
+      { error: String(e) },
+      ip
+    ).catch(() => {});
+    return jsonResponse({ error: "Internal server error" }, 500);
+  }
+});
