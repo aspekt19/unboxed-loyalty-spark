@@ -151,7 +151,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           privyToken: privyAccessToken,
           privyDid: privyUser.id,
           email: getPrivyPrimaryEmail(privyUser),
-          walletAddress: address?.toLowerCase() ?? privyUser?.wallet?.address?.toLowerCase() ?? null,
+          walletAddress: address?.toLowerCase()
+            ?? privyUser?.wallet?.address?.toLowerCase()
+            ?? getPrivyLinkedAccounts(privyUser).find((a: any) => a?.type === 'wallet' || a?.type === 'smart_wallet')?.address?.toLowerCase()
+            ?? null,
         }),
       });
 
