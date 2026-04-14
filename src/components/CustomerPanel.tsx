@@ -8,6 +8,7 @@ import { ReferralCard } from './referral/ReferralCard';
 import { ReferralCodeInput } from './referral/ReferralCodeInput';
 import { CustomerReviewsSection } from './reviews/CustomerReviewsSection';
 import { WalletQRCode } from './WalletQRCode';
+import { MerchantCardGrid } from './customer/MerchantCardGrid';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAccount } from 'wagmi';
 import { Wallet } from 'lucide-react';
