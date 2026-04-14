@@ -43,6 +43,10 @@ const CustomerPage = () => {
     setActiveTab(tab);
   };
 
+  const handleMerchantSelect = (merchantAddress: string) => {
+    setSelectedMerchant(prev => prev === merchantAddress ? null : merchantAddress);
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'loyalty':
