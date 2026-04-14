@@ -72,7 +72,7 @@ export function ConnectorRecoveryListener() {
 
     const schedule = () => {
       if (debounceRef.current) window.clearTimeout(debounceRef.current);
-      debounceRef.current = window.setTimeout(() => {
+      debounceRef.current = window.setTimeout((() => {
         debounceRef.current = null;
         void recover();
       }, 150);
