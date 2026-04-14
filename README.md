@@ -176,7 +176,7 @@ For **AI agents that only hold a wallet** which receives loyalty tokens (not mer
 |-------|----------------|
 | REST | `https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-api` |
 | MCP | `https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp` |
-| Register key | `POST …/recipient-api/register` with SIWE `{ message, signature }` (nonce from `siwe-nonce`) — returns `rwk_…` once |
+| Register key | `POST …/recipient-api/register` with SIWE `{ message, signature }` (nonce from `siwe-nonce`) — returns `rwk_…` once. Pass Supabase `apikey` (anon/publishable) header like other public functions. |
 
 **REST (all require `x-api-key: rwk_…` except register):** `GET /me`, `GET /balances`, `GET /balance?token_address=`, `GET /rewards?token_address=`, `GET /vouchers`, `POST /redeem-reward` with `{ reward_id, transaction_hash }` (customer is always the bound wallet).
 

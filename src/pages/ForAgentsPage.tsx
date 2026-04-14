@@ -90,6 +90,7 @@ curl -sS "${import.meta.env.VITE_SUPABASE_URL}/functions/v1/siwe-nonce" \\
 3) One-time key:
 curl -sS -X POST "${RECIPIENT_REST}/register" \\
   -H "Content-Type: application/json" \\
+  -H "apikey: ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}" \\
   -d '{"message":"<SIWE message>","signature":"0x...","name":"optional label"}'
 
 4) Call APIs with header: x-api-key: rwk_...`;
