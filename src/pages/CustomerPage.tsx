@@ -62,7 +62,7 @@ const CustomerPage = () => {
           </div>
         );
       case 'profile':
-        return <MobileProfileTab onUpgrade={() => setShowUpgradeDialog(true)} />;
+        return <CustomerProfileSection onUpgrade={() => setShowUpgradeDialog(true)} />;
       default:
         return null;
     }
