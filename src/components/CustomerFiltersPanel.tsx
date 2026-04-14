@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAccount } from 'wagmi';
-import { Gift, Loader2, AlertCircle, Store, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Gift, Loader2, AlertCircle, Store, Clock, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useMultiTokenBalance } from '@/hooks/useMultiTokenBalance';
 import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
