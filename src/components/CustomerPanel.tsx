@@ -2,12 +2,7 @@ import { useState } from 'react';
 import { TokenList } from './TokenList';
 import { RewardsSelection } from './rewards/RewardsSelection';
 import { MyVouchers } from './rewards/MyVouchers';
-import { CustomerTiersSection } from './tiers/CustomerTiersSection';
 import { PersonalizedOffers } from './marketing/PersonalizedOffers';
-import { ReferralCard } from './referral/ReferralCard';
-import { ReferralCodeInput } from './referral/ReferralCodeInput';
-import { CustomerReviewsSection } from './reviews/CustomerReviewsSection';
-import { WalletQRCode } from './WalletQRCode';
 import { MerchantCardGrid } from './customer/MerchantCardGrid';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAccount } from 'wagmi';
@@ -45,9 +40,6 @@ export function CustomerPanel() {
 
   return (
     <div className="space-y-6">
-      {/* Step 1: Show QR - primary action */}
-      <WalletQRCode />
-      
       {/* Browse merchants */}
       <MerchantCardGrid 
         onMerchantSelect={handleMerchantSelect}
@@ -56,26 +48,18 @@ export function CustomerPanel() {
       
       <PersonalizedOffers />
       
-      <CustomerTiersSection selectedProgram={selectedProgram} />
-      
-      {/* Step 2: View earned tokens by merchant */}
+      {/* View earned tokens with inline tier status */}
       <TokenList 
         selectedProgram={selectedProgram}
         onProgramSelect={setSelectedProgram}
         filterByMerchant={selectedMerchant}
       />
       
-      {/* Step 3: Activate a reward */}
+      {/* Activate a reward */}
       <RewardsSelection />
       
-      {/* Step 4: View activated vouchers */}
+      {/* View activated vouchers */}
       <MyVouchers />
-      
-      <ReferralCodeInput />
-      
-      <ReferralCard />
-      
-      <CustomerReviewsSection />
     </div>
   );
 }

@@ -15,7 +15,7 @@ import { initializeCleanState } from '@/lib/clearOldData';
 import { PremiumUpgradeDialog } from '@/components/roundup/PremiumUpgradeDialog';
 import { MarketplaceDashboard } from '@/components/marketplace/MarketplaceDashboard';
 import { BottomNavBar } from '@/components/mobile/BottomNavBar';
-import { MobileProfileTab } from '@/components/mobile/MobileProfileTab';
+import { CustomerProfileSection } from '@/components/customer/CustomerProfileSection';
 import { PullToRefresh } from '@/components/mobile/PullToRefresh';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useQueryClient } from '@tanstack/react-query';
