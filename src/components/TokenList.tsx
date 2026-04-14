@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,7 @@ import { useMultiTokenBalance, type TokenInfo } from '@/hooks/useMultiTokenBalan
 import { useTransferTokens } from '@/hooks/useTransferTokens';
 import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
-import { Loader2, Coins, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, Coins, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { usePublicClient, useAccount } from 'wagmi';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,9 +26,10 @@ import {
 interface TokenListProps {
   selectedProgram: string | null;
   onProgramSelect: (address: string) => void;
+  filterByMerchant?: string | null;
 }
 
-export function TokenList({ selectedProgram, onProgramSelect }: TokenListProps) {
+export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant }: TokenListProps) {
   const [selectedToken, setSelectedToken] = useState<TokenInfo | null>(null);
   const [recipientAddress, setRecipientAddress] = useState('');
   const [transferAmount, setTransferAmount] = useState('');
@@ -38,7 +39,7 @@ export function TokenList({ selectedProgram, onProgramSelect }: TokenListProps) 
   const [activePrograms, setActivePrograms] = useState<Set<string>>(new Set());
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = useState(0);
-
+  const [searchQuery, setSearchQuery] = useState('');
   const publicClient = usePublicClient();
   const { address: walletAddress } = useAccount();
   const { balances, isLoading, refetch } = useMultiTokenBalance(allTokens);
@@ -324,6 +325,22 @@ export function TokenList({ selectedProgram, onProgramSelect }: TokenListProps) 
     (activePrograms.size === 0 || activePrograms.has(token.address.toLowerCase()))
   );
 
+  // Apply merchant filter and search
+  const filteredTokens = useMemo(() => {
+    let result = tokensWithBalance;
+    if (filterByMerchant) {
+      result = result.filter(t => t.merchantAddress?.toLowerCase() === filterByMerchant.toLowerCase());
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(t => 
+        t.name.toLowerCase().includes(q) || 
+        t.symbol.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [tokensWithBalance, filterByMerchant, searchQuery]);
+
   console.log('TokenList render - tokens:', allTokens.length, 'balances:', balances.length, 'with balance:', tokensWithBalance.length);
 
   // Track previous isSuccess state to detect transitions
@@ -395,12 +412,28 @@ export function TokenList({ selectedProgram, onProgramSelect }: TokenListProps) 
               Each merchant issues their own token. Tap to view tier status.
             </CardDescription>
           </div>
-          {isMobile && tokensWithBalance.length > 1 && (
+          {isMobile && filteredTokens.length > 1 && (
             <div className="text-sm text-muted-foreground">
-              {currentSlide + 1}/{tokensWithBalance.length}
+              {currentSlide + 1}/{filteredTokens.length}
             </div>
           )}
         </div>
+        {tokensWithBalance.length > 2 && (
+          <div className="relative mt-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by name or symbol..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pl-9 h-9"
+            />
+          </div>
+        )}
+        {filterByMerchant && (
+          <p className="text-xs text-muted-foreground mt-1">
+            Filtered by selected merchant · <button className="underline" onClick={() => {}}>show all</button>
+          </p>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         {!walletAddress && (
@@ -427,9 +460,16 @@ export function TokenList({ selectedProgram, onProgramSelect }: TokenListProps) 
             <p className="text-xs mt-2">Found {allTokens.length} loyalty program(s) total</p>
           </div>
         )}
+
+        {walletAddress && !isLoading && !isLoadingTokens && tokensWithBalance.length > 0 && filteredTokens.length === 0 && (
+          <div className="text-center py-6 text-muted-foreground">
+            <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <p className="text-sm">No tokens match your search</p>
+          </div>
+        )}
         
-        {tokensWithBalance.length > 0 && (
-          isMobile && tokensWithBalance.length > 1 ? (
+        {filteredTokens.length > 0 && (
+          isMobile && filteredTokens.length > 1 ? (
             <div className="relative">
               <Carousel
                 setApi={setCarouselApi}
@@ -440,7 +480,7 @@ export function TokenList({ selectedProgram, onProgramSelect }: TokenListProps) 
                 className="w-full"
               >
                 <CarouselContent className="-ml-2">
-                  {tokensWithBalance.map((token) => (
+                  {filteredTokens.map((token) => (
                     <CarouselItem key={token.address} className="pl-2 basis-[90%]">
                       {renderTokenItem(token)}
                     </CarouselItem>
@@ -459,7 +499,7 @@ export function TokenList({ selectedProgram, onProgramSelect }: TokenListProps) 
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <div className="flex items-center gap-1">
-                  {tokensWithBalance.map((_, index) => (
+                  {filteredTokens.map((_, index) => (
                     <div
                       key={index}
                       className={`h-2 w-2 rounded-full transition-colors ${
@@ -473,7 +513,7 @@ export function TokenList({ selectedProgram, onProgramSelect }: TokenListProps) 
                   size="icon"
                   className="h-8 w-8 rounded-full"
                   onClick={scrollNext}
-                  disabled={currentSlide === tokensWithBalance.length - 1}
+                  disabled={currentSlide === filteredTokens.length - 1}
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -482,7 +522,7 @@ export function TokenList({ selectedProgram, onProgramSelect }: TokenListProps) 
           ) : (
             <ScrollArea className="h-[330px]">
               <div className="space-y-3 pr-4 pb-4">
-                {tokensWithBalance.map((token) => renderTokenItem(token))}
+                {filteredTokens.map((token) => renderTokenItem(token))}
               </div>
             </ScrollArea>
           )
