@@ -23,6 +23,7 @@ import { useQueryClient } from '@tanstack/react-query';
 const CustomerPage = () => {
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('loyalty');
+  const [selectedMerchant, setSelectedMerchant] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const location = useLocation();
@@ -42,16 +43,20 @@ const CustomerPage = () => {
     setActiveTab(tab);
   };
 
+  const handleMerchantSelect = (merchantAddress: string) => {
+    setSelectedMerchant(prev => prev === merchantAddress ? null : merchantAddress);
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'loyalty':
         return (
           <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6">
             <aside className="hidden lg:block lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)]">
-              <CustomerFiltersPanel />
+              <CustomerFiltersPanel filterByMerchant={selectedMerchant} />
             </aside>
             <div className="max-w-4xl">
-              <CustomerPanel />
+              <CustomerPanel selectedMerchant={selectedMerchant} onMerchantSelect={handleMerchantSelect} />
             </div>
           </div>
         );
@@ -125,10 +130,10 @@ const CustomerPage = () => {
               <TabsContent value="loyalty">
                 <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6">
                   <aside className="lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)]">
-                    <CustomerFiltersPanel />
+                    <CustomerFiltersPanel filterByMerchant={selectedMerchant} />
                   </aside>
                   <div className="max-w-4xl">
-                    <CustomerPanel />
+                    <CustomerPanel selectedMerchant={selectedMerchant} onMerchantSelect={handleMerchantSelect} />
                   </div>
                 </div>
               </TabsContent>

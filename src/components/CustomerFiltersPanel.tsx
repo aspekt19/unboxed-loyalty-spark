@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAccount } from 'wagmi';
-import { Gift, Loader2, AlertCircle, Store, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Gift, Loader2, AlertCircle, Store, Clock, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useMultiTokenBalance } from '@/hooks/useMultiTokenBalance';
 import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
@@ -33,10 +34,15 @@ interface TokenInfo {
   merchantAddress: string;
 }
 
-export function CustomerFiltersPanel() {
+interface CustomerFiltersPanelProps {
+  filterByMerchant?: string | null;
+}
+
+export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelProps) {
   const { address } = useAccount();
   const [programs, setPrograms] = useState<TokenInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const isMobile = useIsMobile();
   const { selectionChanged } = useFarcasterHaptics();
 
@@ -142,11 +148,24 @@ export function CustomerFiltersPanel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address, programs.length]);
 
-  // Filter programs with non-zero balance
-  const programsWithBalance = programs.filter(program => {
-    const balance = balances.find(b => b.address === program.address);
-    return balance && parseFloat(balance.balance) > 0;
-  });
+  // Filter programs with non-zero balance, then by merchant and search
+  const programsWithBalance = useMemo(() => {
+    let result = programs.filter(program => {
+      const balance = balances.find(b => b.address === program.address);
+      return balance && parseFloat(balance.balance) > 0;
+    });
+    if (filterByMerchant) {
+      result = result.filter(p => p.merchantAddress.toLowerCase() === filterByMerchant.toLowerCase());
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        p.symbol.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [programs, balances, filterByMerchant, searchQuery]);
 
   if (!address) return null;
 
@@ -157,7 +176,23 @@ export function CustomerFiltersPanel() {
           <Gift className="h-5 w-5 text-primary" />
           Loyalty Programs
         </CardTitle>
-        <CardDescription>Each merchant issues their own token. Your balance never expires unless you use it.</CardDescription>
+        <CardDescription>
+          {filterByMerchant 
+            ? 'Showing programs for selected merchant' 
+            : 'Each merchant issues their own token. Your balance never expires unless you use it.'
+          }
+        </CardDescription>
+        {programs.length > 2 && (
+          <div className="relative mt-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search programs..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pl-9 h-9"
+            />
+          </div>
+        )}
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden flex flex-col">
         {isLoading || balancesLoading ? (

@@ -10,11 +10,15 @@ import { Wallet } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthPrompt } from './AuthPrompt';
 
-export function CustomerPanel() {
+interface CustomerPanelProps {
+  selectedMerchant: string | null;
+  onMerchantSelect: (address: string) => void;
+}
+
+export function CustomerPanel({ selectedMerchant, onMerchantSelect }: CustomerPanelProps) {
   const { address } = useAccount();
   const { user, session, isLoading } = useAuth();
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
-  const [selectedMerchant, setSelectedMerchant] = useState<string | null>(null);
 
   if (isLoading) {
     return null;
@@ -35,7 +39,7 @@ export function CustomerPanel() {
   }
 
   const handleMerchantSelect = (merchantAddress: string) => {
-    setSelectedMerchant(prev => prev === merchantAddress ? null : merchantAddress);
+    onMerchantSelect(merchantAddress);
   };
 
   return (
