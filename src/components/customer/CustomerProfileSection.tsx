@@ -6,12 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { WalletQRCode } from '@/components/WalletQRCode';
 import { PremiumStatusBadge } from '@/components/PremiumStatusBadge';
 import { PremiumExpirationAlert } from '@/components/PremiumExpirationAlert';
-import { ReferralCard } from '@/components/referral/ReferralCard';
-import { ReferralCodeInput } from '@/components/referral/ReferralCodeInput';
-import { CustomerReviewsSection } from '@/components/reviews/CustomerReviewsSection';
 import { DexIntegration } from '@/components/DexIntegration';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -174,10 +170,6 @@ export function CustomerProfileSection({ onUpgrade }: CustomerProfileSectionProp
         </CardContent>
       </Card>
 
-      <WalletQRCode />
-      <ReferralCodeInput />
-      <ReferralCard />
-      <CustomerReviewsSection />
       <DexIntegration />
     </div>
   );
