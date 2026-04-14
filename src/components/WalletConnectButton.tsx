@@ -76,7 +76,12 @@ export function WalletConnectButton() {
 
   useEffect(() => {
     if (!isFarcaster && !user && !isManuallyDisconnected && privyAuthenticated && privyUser) {
-      if (shouldUsePrivyTokenAuth(privyUser)) {
+      // For social logins (email, Google, etc.) — always use token auth
+      // For wallet logins (MetaMask) — use token auth as fallback when wallet is not connected
+      const useTokenAuth = shouldUsePrivyTokenAuth(privyUser);
+      const walletNotAvailable = !useTokenAuth && !isConnected;
+      
+      if (useTokenAuth || walletNotAvailable) {
         setTimeout(() => {
           signInWithPrivy();
         }, 250);
