@@ -103,12 +103,6 @@ const CustomerPage = () => {
 
         <main className="container mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-8 md:py-12 relative">
           {/* Desktop: show premium badges inline */}
-          {!isMobile && (
-            <div className="mb-6 space-y-4">
-              <PremiumStatusBadge />
-              <PremiumExpirationAlert onUpgrade={() => setShowUpgradeDialog(true)} />
-            </div>
-          )}
 
           {/* Desktop: tabs at the top */}
           {!isMobile ? (
