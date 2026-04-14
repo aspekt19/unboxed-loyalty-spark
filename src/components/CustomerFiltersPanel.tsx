@@ -148,11 +148,24 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address, programs.length]);
 
-  // Filter programs with non-zero balance
-  const programsWithBalance = programs.filter(program => {
-    const balance = balances.find(b => b.address === program.address);
-    return balance && parseFloat(balance.balance) > 0;
-  });
+  // Filter programs with non-zero balance, then by merchant and search
+  const programsWithBalance = useMemo(() => {
+    let result = programs.filter(program => {
+      const balance = balances.find(b => b.address === program.address);
+      return balance && parseFloat(balance.balance) > 0;
+    });
+    if (filterByMerchant) {
+      result = result.filter(p => p.merchantAddress.toLowerCase() === filterByMerchant.toLowerCase());
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        p.symbol.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [programs, balances, filterByMerchant, searchQuery]);
 
   if (!address) return null;
 
