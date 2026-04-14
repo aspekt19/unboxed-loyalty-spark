@@ -27,6 +27,7 @@ import { useEffect } from "react";
 import { migrateAllData } from "./lib/migrateLocalStorageData";
 import { usePageMeta } from "./hooks/usePageMeta";
 import { AuthProvider } from "./contexts/AuthContext";
+import { ConnectorRecoveryListener } from "./components/ConnectorRecoveryListener";
 import { ThemeProvider } from "next-themes";
 
 const queryClient = new QueryClient();
@@ -105,6 +106,7 @@ function BrowserProviders({ children }: { children: React.ReactNode }) {
         <PrivyWagmiProvider config={privyWagmiConfig}>
           <AuthProvider>
             <TooltipProvider>
+              <ConnectorRecoveryListener />
               <Toaster />
               <Sonner />
               {children}

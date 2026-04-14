@@ -11,13 +11,18 @@ import {
   type PrivyLinkedAccount,
 } from '@/lib/privyAuth';
 
+export type SignOutOptions = {
+  /** After a broken wagmi reconnect (e.g. missing MetaMask in in-app browser). */
+  variant?: 'normal' | 'connector_recovery';
+};
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
   signInWithWallet: () => Promise<void>;
   signInWithPrivy: () => Promise<void>;
-  signOut: () => Promise<void>;
+  signOut: (options?: SignOutOptions) => Promise<void>;
   resetManualSignOut: () => void;
 }
 
@@ -330,7 +335,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [address, isConnected, signInWithPrivy, signMessageAsync]);
 
-  const signOut = useCallback(async () => {
+  const signOut = useCallback(async (options?: SignOutOptions) => {
     try {
       manualSignOutRef.current = true;
       setStoredManualSignOut(true);
@@ -347,7 +352,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase.auth.signOut({ scope: 'global' });
       if (error && !/session/i.test(error.message ?? '')) throw error;
 
-      toast.success('Signed out successfully');
+      if (options?.variant === 'connector_recovery') {
+        toast.info('Wallet connection was reset. Tap Sign in to connect again.');
+      } else {
+        toast.success('Signed out successfully');
+      }
     } catch (error: any) {
       console.error('[AuthProvider] Sign out error:', error);
       toast.error('Failed to sign out');
