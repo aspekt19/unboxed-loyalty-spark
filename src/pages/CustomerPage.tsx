@@ -53,10 +53,10 @@ const CustomerPage = () => {
         return (
           <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6">
             <aside className="hidden lg:block lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)]">
-              <CustomerFiltersPanel />
+              <CustomerFiltersPanel filterByMerchant={selectedMerchant} />
             </aside>
             <div className="max-w-4xl">
-              <CustomerPanel />
+              <CustomerPanel selectedMerchant={selectedMerchant} onMerchantSelect={handleMerchantSelect} />
             </div>
           </div>
         );
