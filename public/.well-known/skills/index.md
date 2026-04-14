@@ -13,22 +13,24 @@ Loyal Spark provides a complete loyalty infrastructure via REST API and MCP Serv
 - **Chain**: Base L2 (Chain ID: 8453)
 - **Token Standard**: ERC-20
 
-## Available Skills
+## Available Skills (12 files: `00`–`11`)
 
-| # | Skill | File | Scopes Required |
-|---|-------|------|-----------------|
-| 1 | [Getting Started](./00-getting-started.md) | `00-getting-started.md` | — |
-| 2 | [Create Loyalty Program](./01-create-loyalty-program.md) | `01-create-loyalty-program.md` | `create_program` |
-| 3 | [Mint Tokens](./02-mint-tokens.md) | `02-mint-tokens.md` | `mint` |
-| 4 | [Transfer Tokens](./03-transfer-tokens.md) | `03-transfer-tokens.md` | `mint` |
-| 5 | [Manage Rewards](./04-manage-rewards.md) | `04-manage-rewards.md` | `manage_rewards` |
-| 6 | [Check Balance & Tiers](./05-balance-and-tiers.md) | `05-balance-and-tiers.md` | `read` |
-| 7 | [Marketplace Trading](./06-marketplace-trading.md) | `06-marketplace-trading.md` | `trade` |
-| 8 | [Analytics & CRM](./07-analytics-crm.md) | `07-analytics-crm.md` | `read` |
-| 9 | [Referral Programs](./08-referrals.md) | `08-referrals.md` | `read`, `mint` |
-| 10 | [Voucher Management](./09-vouchers.md) | `09-vouchers.md` | `read`, `manage_rewards` |
-| 11 | [Server Wallets](./10-server-wallets.md) | `10-server-wallets.md` | — |
-| 12 | [Earn Points (Cashback)](./11-earn-points.md) | `11-earn-points.md` | `mint` |
+Scopes mirror the REST API: program lifecycle accepts **`mint` or `create_program`**.
+
+| File | Skill | Scopes required |
+|------|-------|-----------------|
+| [00-getting-started.md](./00-getting-started.md) | Getting Started | — |
+| [01-create-loyalty-program.md](./01-create-loyalty-program.md) | Create Loyalty Program | `mint` or `create_program` |
+| [02-mint-tokens.md](./02-mint-tokens.md) | Mint Tokens | `mint` |
+| [03-transfer-tokens.md](./03-transfer-tokens.md) | Transfer Tokens | `mint` |
+| [04-manage-rewards.md](./04-manage-rewards.md) | Manage Rewards | `manage_rewards` |
+| [05-balance-and-tiers.md](./05-balance-and-tiers.md) | Balance & Tiers | `read` |
+| [06-marketplace-trading.md](./06-marketplace-trading.md) | Marketplace Trading | `trade` |
+| [07-analytics-crm.md](./07-analytics-crm.md) | Analytics & CRM | `read` |
+| [08-referrals.md](./08-referrals.md) | Referral Programs | `read`, `mint` |
+| [09-vouchers.md](./09-vouchers.md) | Voucher Management | `read`, `manage_rewards` |
+| [10-server-wallets.md](./10-server-wallets.md) | Server Wallets (CDP MPC) | — |
+| [11-earn-points.md](./11-earn-points.md) | Earn Points (Cashback) | `mint` |
 
 ## API Endpoints
 

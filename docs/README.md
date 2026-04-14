@@ -1,12 +1,16 @@
 # Documentation index
 
-Human-oriented guides and plans live under `docs/`. **Runtime discovery** for AI agents stays in `public/.well-known/` and `public/openapi.json` (URLs must not move).
+Human-oriented guides and plans live under `docs/`. **Runtime discovery** for AI agents stays in `public/.well-known/` and `public/openapi.json` (URLs on https://loyalspark.online must stay stable).
+
+## For AI / coding agents
+
+Start at the repo root **[AGENTS.md](../AGENTS.md)** (links to rules, APIs, and discovery files). Editor/repo rules live in **[`.cursorrules`](../.cursorrules)**.
 
 ## Layout
 
 | Path | Contents |
 |------|----------|
-| [development/](./development/) | Build, deploy, local native app |
+| [development/](./development/) | Build, deploy, Capacitor native apps |
 | [integrations/](./integrations/) | Farcaster, OpenServ, A2A, prompts, adaptation plans |
 | [pitch-deck/](./pitch-deck/) | Investor deck source notes (Markdown); live UI route: `/pitch` |
 | [supabase/](./supabase/) | Supabase-specific runbooks (e.g. expiration cron) |
@@ -24,10 +28,17 @@ Human-oriented guides and plans live under `docs/`. **Runtime discovery** for AI
 - [Program / voucher expiration](./supabase/EXPIRATION_SETUP.md)
 - [Edge Functions catalogue](../supabase/functions/README.md)
 
-## Repository map (short)
+## Repository map
 
-- `src/` — React app (domain folders under `components/`, routes under `pages/`, data in `hooks/`)
-- `supabase/functions/` — Deno Edge Functions (one folder per function; see README there)
-- `supabase/migrations/` — SQL migrations
-- `public/` — Static assets and **agent-facing** manifests (do not move without updating live URLs)
-- `contracts/` — Solidity
+| Path | Role |
+|------|------|
+| `src/` | React + TypeScript app: domain UI under `components/`, routes under `pages/`, Supabase data access under `hooks/` (not inline in presentational components) |
+| `public/` | Static assets; **agent** manifests (`openapi.json`, `llms.txt`, `.well-known/`) — treat as public API surface |
+| `supabase/migrations/` | Postgres schema & RLS |
+| `supabase/functions/` | Deno Edge Functions — one deployable folder per function |
+| `contracts/` | Solidity sources |
+| `capacitor.config.ts`, `ios/`, `android/` | Native shells (after `npx cap add`) |
+| `.cursorrules` | Cursor / agent coding conventions for this repo |
+| `.lovable/` | Lovable IDE metadata (optional; safe to ignore for builds) |
+
+**Indexes:** this file (human guides) · [AGENTS.md](../AGENTS.md) (agents) · [supabase/functions/README.md](../supabase/functions/README.md) (API backend catalogue).

@@ -48,8 +48,8 @@ Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain
 - **Multi-Token Dashboard**: View all loyalty tokens from different merchants
 - **Browse Rewards**: Explore available vouchers across all programs
 - **Redeem Vouchers**: Burn tokens to claim exclusive rewards with QR codes
-- **DEX Trading**: Trade loyalty tokens on decentralized exchanges
-- **Round-Up Investment**: Automatically invest spare change into DeFi (Aave/Compound)
+- **DEX Trading**: Trade loyalty tokens on decentralized exchanges *(module frozen in this repo — no new work in `marketplace/`)*  
+- **Round-Up Investment**: Automatically invest spare change into DeFi *(module frozen in this repo — no new work in `roundup/`)*  
 - **Tier System**: Bronze → Silver → Gold → Platinum with increasing perks
 
 ### For AI Agents (REST API + MCP)
@@ -59,21 +59,22 @@ Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain
 - **Scoped Permissions**: Granular access control (read, mint, manage_rewards, trade)
 - **Activity Logging**: Full audit trail of all agent operations
 - **Tiered Pricing**: Free (100 calls/mo, 1% fee) → Pro ($29/mo, 0.5%) → Enterprise ($99/mo, 0.25%)
-- **Skills Documentation**: 11 structured step-by-step guides for agent onboarding and operations
+- **Skills Documentation**: 12 structured step-by-step guides (`00`–`11` under `/.well-known/skills/`) for agent onboarding and operations
 
 ## Technology Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui |
+| Frontend | React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui (Radix) |
 | Animations | Framer Motion |
-| Blockchain | Wagmi v2, Viem, Privy (embedded wallets) |
+| Blockchain | Wagmi v2, Viem, RainbowKit, Privy (`@privy-io/react-auth` + `@privy-io/wagmi`) |
 | Network | Base Mainnet (Chain ID: 8453) |
 | Smart Contracts | ERC-20 Token Standard (Factory pattern) |
-| Backend | Lovable Cloud (Supabase Edge Functions) |
+| Backend | Supabase (PostgreSQL, RLS, Deno Edge Functions, Realtime) |
+| Native apps | Capacitor 8 (iOS / Android) — see `docs/development/NATIVE_BUILD_GUIDE.md` |
 | Agent Wallets | Coinbase CDP MPC (Server Wallets) |
-| State | React Hooks, TanStack Query v5 |
-| Routing | React Router v6 |
+| State | TanStack Query v5 |
+| Routing | React Router DOM v6 |
 | Forms | React Hook Form + Zod validation |
 | Builder Attribution | Base Builder Code (ERC-8021) |
 
@@ -116,19 +117,22 @@ curl -X POST \
   https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/mint
 ```
 
-### API Endpoints (22 total)
+### API Endpoints (22 authenticated + 1 public)
+
+All routes below require `x-api-key: lsk_...` except **GET `/vouchers/status`** (public).
 
 | Method | Path | Scope | Description |
 |--------|------|-------|-------------|
-| GET | `/me` | any | Agent profile & permissions |
+| GET | `/me` | authenticated | Agent profile & permissions |
 | GET | `/programs` | read | List loyalty programs |
-| POST | `/programs` | create_program | Deploy new ERC-20 token |
-| POST | `/register-program` | create_program | Register deployed token |
-| POST | `/activate-program` | create_program | Get activation calldata |
-| POST | `/program-status` | create_program | Update program status |
+| POST | `/programs` | mint or `create_program` | Calldata to deploy new ERC-20 token |
+| POST | `/register-program` | mint or `create_program` | Register deployed token |
+| POST | `/activate-program` | mint or `create_program` | Activation calldata |
+| POST | `/program-status` | mint or `create_program` | Update program status |
 | GET | `/rewards` | read | List rewards |
 | POST | `/rewards` | manage_rewards | Create reward |
 | POST | `/mint` | mint | Mint tokens |
+| POST | `/earn` | mint | Cashback: mint from purchase amount × rate |
 | POST | `/transfer` | mint | Transfer tokens |
 | GET | `/balance` | read | Token balance & tier |
 | GET | `/customers` | read | Customer list |
@@ -141,7 +145,7 @@ curl -X POST \
 | POST | `/offers` | trade | Create P2P offer |
 | POST | `/accept-offer` | trade | Accept P2P offer |
 | POST | `/cancel-offer` | trade | Cancel P2P offer |
-| GET | `/tx-receipt` | any | Extract token_address from tx |
+| GET | `/tx-receipt` | authenticated | Extract token_address from deploy tx |
 
 ### MCP Server (for LLMs)
 
@@ -160,13 +164,14 @@ Connect Claude, GPT, or any MCP-compatible agent:
 }
 ```
 
-**Available MCP Tools (17)**: `get_platform_info`, `get_my_profile`, `list_loyalty_programs`, `create_loyalty_program`, `register_loyalty_program`, `activate_loyalty_program`, `update_program_status`, `list_rewards`, `create_reward`, `mint_loyalty_tokens`, `transfer_loyalty_tokens`, `get_token_balance`, `get_program_analytics`, `list_marketplace_offers`, `redeem_reward`, `use_voucher`, `check_voucher_status`
+**MCP tools (27)** — defined in `supabase/functions/loyalty-mcp/index.ts`:  
+`get_platform_info`, `get_my_profile`, `list_loyalty_programs`, `create_loyalty_program`, `register_loyalty_program`, `activate_loyalty_program`, `update_program_status`, `list_rewards`, `create_reward`, `mint_loyalty_tokens`, `transfer_loyalty_tokens`, `earn_points`, `get_token_balance`, `get_program_analytics`, `list_marketplace_offers`, `redeem_reward`, `use_voucher`, `check_voucher_status`, `get_platform_stats`, `cancel_stale_offers`, `create_personalized_offer`, `update_reward_status`, `export_customers`, `send_report`, `list_my_reports`, `update_report_status`, `delete_report`.
 
 ### Agent Discovery
 
 AI agents can discover the protocol automatically via:
 - `/.well-known/agent.json` — Full protocol specification, capabilities, pricing
-- `/.well-known/skills/` — 11 structured Skills (step-by-step guides for each operation)
+- `/.well-known/skills/` — 12 structured Skills (`00`–`11`, step-by-step guides)
 - `/api-docs` — Interactive API documentation
 
 ### Skills for AI Agents
@@ -186,6 +191,7 @@ Structured Markdown guides that teach agents how to use the protocol:
 | 08 | Referrals | Referral programs for organic growth |
 | 09 | Vouchers | Voucher lifecycle management |
 | 10 | Server Wallets | CDP MPC wallets for autonomous transactions |
+| 11 | Earn Points (Cashback) | Mint from purchase amount × cashback rate |
 
 Skills index: `https://loyalspark.online/.well-known/skills/index.md`
 
@@ -244,6 +250,7 @@ npm run dev
 
 ```
 unboxed-loyalty-spark/
+├── AGENTS.md                      # Entry map for AI / coding agents
 ├── docs/                          # Human docs (guides, integrations, pitch notes)
 │   ├── development/               # Build & deploy
 │   ├── integrations/              # Farcaster, OpenServ, A2A, prompts
@@ -264,7 +271,7 @@ unboxed-loyalty-spark/
 │   │   ├── reviews/               # Customer reviews
 │   │   ├── onboarding/            # Welcome flows & tours
 │   │   └── admin/                 # Platform administration
-│   ├── hooks/                     # Custom React hooks
+│   ├── hooks/                     # Data fetching (TanStack Query + Supabase) — keep queries here
 │   ├── config/                    # Contract addresses & ABIs
 │   ├── contexts/                  # Auth context
 │   ├── integrations/supabase/     # Database client & types
@@ -273,8 +280,12 @@ unboxed-loyalty-spark/
 ├── public/
 │   ├── .well-known/
 │   │   ├── agent.json             # AI agent discovery
+│   │   ├── skills/                # Markdown skills for agents (00–11)
 │   │   └── farcaster.json         # Farcaster manifest
-│   └── media-kit/                 # Brand assets
+│   ├── openapi.json               # OpenAPI 3.1 (API + x402 hints)
+│   ├── llms.txt / llms-full.txt   # Short / long summaries for LLM crawlers
+│   └── media-kit/                 # Brand & press assets
+├── capacitor.config.ts            # Native app IDs (see docs/development/)
 ├── contracts/                     # Solidity contracts
 ├── supabase/
 │   ├── functions/                 # Edge Functions — see supabase/functions/README.md
@@ -282,7 +293,7 @@ unboxed-loyalty-spark/
 └── README.md
 ```
 
-**Indexes:** [docs/README.md](./docs/README.md) (all human-written guides) · [supabase/functions/README.md](./supabase/functions/README.md) (every Edge Function).
+**Indexes:** [AGENTS.md](./AGENTS.md) (AI agents) · [docs/README.md](./docs/README.md) (human guides) · [supabase/functions/README.md](./supabase/functions/README.md) (Edge Functions).
 
 ## Edge Functions
 
@@ -313,7 +324,7 @@ Loyal Spark is a **machine-payment-native** API. AI agents can discover, authent
 | Agent Manifest | [/.well-known/agent.json](https://loyalspark.online/.well-known/agent.json) | Full protocol spec, capabilities, pricing |
 | MPP Manifest | [/.well-known/mpp.json](https://loyalspark.online/.well-known/mpp.json) | Machine Payment Protocol manifest |
 | OpenAPI Spec | [/openapi.json](https://loyalspark.online/openapi.json) | OpenAPI 3.1.0 with x-payment-info |
-| Skills Library | [/.well-known/skills/](https://loyalspark.online/.well-known/skills/index.md) | 11 step-by-step guides for agents |
+| Skills Library | [/.well-known/skills/](https://loyalspark.online/.well-known/skills/index.md) | 12 step-by-step guides for agents (`00`–`11`) |
 | LLMs.txt | [/llms.txt](https://loyalspark.online/llms.txt) | Protocol summary for LLM crawlers |
 | Prompt Guide | [PROMPT_GUIDE.md](./docs/integrations/PROMPT_GUIDE.md) | Ready-to-use system prompts |
 

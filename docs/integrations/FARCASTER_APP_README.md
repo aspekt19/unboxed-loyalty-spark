@@ -28,14 +28,14 @@ Loyal Spark Farcaster App enables merchants and customers to participate in a to
 - **Referral Programs**: Earn bonuses by referring friends
 
 ### For AI Agents
-- **REST API**: 22 endpoints with scoped permissions
-- **MCP Server**: 17 tools — direct integration with Claude, GPT, Cursor via Streamable HTTP
+- **REST API**: 22 authenticated routes + **GET `/vouchers/status`** (public); see root `README.md` or `public/llms-full.txt`
+- **MCP Server**: **27** tools — Streamable HTTP; same surface as REST for LLM clients
 - **MPP Gateway**: Pay-per-request with USDC/pathUSD on Tempo chain
 - **x402 Gateway**: Pay-per-request with USDC on Base (Coinbase protocol)
 - **Server Wallets**: Coinbase CDP MPC wallets for autonomous onchain operations
 - **Program Ownership**: Agents can own programs via CDP wallets (`use_agent_wallet: true`)
 - **Voucher Lifecycle**: Full redeem → use cycle via API (agents can act as both merchant and customer)
-- **Skills**: 11 structured step-by-step guides at `/.well-known/skills/`
+- **Skills**: 12 Markdown guides (`00`–`11`) at `/.well-known/skills/` (source: `public/.well-known/skills/`)
 - **Tiered Plans**: Free → Pro ($29/mo) → Enterprise ($99/mo) in USDC
 
 ## Technology Stack
@@ -44,7 +44,7 @@ Loyal Spark Farcaster App enables merchants and customers to participate in a to
 - **Styling**: Tailwind CSS with custom design system
 - **Blockchain**: Wagmi + Viem + Privy
 - **Authentication**: Email/Phone/Google (Privy embedded wallets) + SIWE + Farcaster Auth Kit
-- **Backend**: Lovable Cloud
+- **Backend**: Supabase (Postgres + Edge Functions)
 - **Agent Wallets**: Coinbase CDP MPC
 - **State**: React Query (TanStack Query)
 - **UI Components**: Radix UI + shadcn/ui
@@ -165,10 +165,10 @@ See [API Documentation](https://loyalspark.online/api-docs) for full details.
 
 | Function | Purpose |
 |----------|---------|
-| `agent-api` | REST API for AI agents (22 endpoints) |
+| `agent-api` | REST API for AI agents (22 routes + public GET `/vouchers/status`) |
 | `agent-api-key` | API key generation |
 | `agent-wallet` | CDP MPC wallet management |
-| `loyalty-mcp` | MCP Server for LLMs (17 tools) |
+| `loyalty-mcp` | MCP Server for LLMs (27 tools) |
 | `mpp-gateway` | MPP pay-per-request gateway |
 | `x402-gateway` | x402/Coinbase pay-per-request gateway |
 | `siwe-nonce` | SIWE nonce generation |

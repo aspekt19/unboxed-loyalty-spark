@@ -2,29 +2,29 @@
 
 > 4 ИИ-агента для автономного роста проекта: CEO, SEO, Growth, Data Analyst.
 
-## Быстрый старт (15 минут)
+## Важно про этот репозиторий
+
+В **текущем** GitHub-репозитории (`aspekt19/unboxed-loyalty-spark`) **нет** каталога `agents/`, файла `setup-agents.sh` и `docker-compose.yml` из примеров ниже — это **референс-архитектура**, которую можно воспроизвести в отдельном репо или у себя локально. Для интеграции с Loyal Spark достаточно любого OpenServ-агента (один сервис), которому заданы:
+
+- `LOYAL_SPARK_API` = `https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api` (или ваш кастомный деплой)
+- `LOYAL_SPARK_API_KEY` = ключ `lsk_...` из [loyalspark.online/merchant](https://loyalspark.online/merchant) → вкладка **AI Agents**
+
+Общая карта для агентов: [AGENTS.md](../../AGENTS.md).
+
+## Быстрый старт (если поднимаешь стек как в документе)
 
 ```bash
-# 1. Клонируй проект и создай папку агентов
-cd unboxed-loyalty-spark
-chmod +x setup-agents.sh
-./setup-agents.sh
+# 1. Отдельная папка проекта (пример). Скрипты ниже — шаблон, не часть monorepo.
+mkdir loyal-spark-agents && cd loyal-spark-agents
+# Скопируй структуру из раздела «Архитектура» и добавь setup-agents.sh / docker-compose при необходимости.
 
-# 2. Вставь свои ключи в .env файлы каждого агента
+# 2. Ключи в .env каждого сервиса-агента:
 # OPENSERV_API_KEY — из OpenServ Secret Management
 # LOYAL_SPARK_API_KEY — из панели мерчанта (вкладка AI Agents)
 
-# 3. Запусти локально
-docker-compose -f agents/docker-compose.yml up
+# 3. Локально (пример): docker compose -f agents/docker-compose.yml up
 
-# 4. Пробрось через ngrok (в отдельных терминалах)
-ngrok http 7378  # CEO
-ngrok http 7379  # SEO
-ngrok http 7380  # Growth
-ngrok http 7381  # Data Analyst
-
-# 5. Зарегистрируй в OpenServ → Agent Management → Add Agent
-# Вставь ngrok URL для каждого агента
+# 4. Проброс портов через ngrok — по одному URL на агента, затем регистрация в OpenServ → Agent Management → Add Agent
 ```
 
 ---

@@ -20,7 +20,7 @@ Authentication: x-api-key: YOUR_API_KEY
 
 You can perform the following operations:
 - Create loyalty programs (deploy ERC-20 tokens on Base)
-- Mint tokens to customer wallets as rewards
+- Mint tokens to customer wallets as rewards (including **POST /earn** for purchase-based cashback when configured)
 - Transfer tokens between addresses
 - Create and manage reward catalogs
 - Check token balances and customer tiers
@@ -174,7 +174,7 @@ For Claude, Cursor, Windsurf, or any MCP-compatible client:
 }
 ```
 
-The MCP server exposes the same operations as the REST API via standard MCP tools. No additional prompting is needed — the tool descriptions are self-documenting.
+The MCP server exposes the loyalty API as **27** standard MCP tools (core flows + reporting, exports, and admin-only helpers). Tool names match `supabase/functions/loyalty-mcp/index.ts`. No extra prompting is required — descriptions are self-documenting.
 
 ---
 
@@ -191,7 +191,7 @@ The MCP server exposes the same operations as the REST API via standard MCP tool
 ## Getting an API Key
 
 1. Visit [loyalspark.online/merchant](https://loyalspark.online/merchant)
-2. Sign in with email/passkey or connect your wallet (Base network)
+2. Sign in via **Privy** (email, phone, Google, Apple, etc.) or connect a Web3 wallet (Base)
 3. Navigate to **AI Agents** tab
 4. Click **Register New Agent**
 5. Copy your `lsk_...` API key (shown only once)

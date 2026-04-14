@@ -21,11 +21,11 @@
 
 ### 1. Экспорт и клонирование
 
-1. В Lovable нажмите **Export to GitHub**
-2. Клонируйте репозиторий:
+1. Репозиторий уже на GitHub (например `https://github.com/aspekt19/unboxed-loyalty-spark.git`) — клонируйте его или продолжайте в существующей копии.
+2. Установка зависимостей:
 ```bash
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
-cd YOUR_REPO
+git clone https://github.com/aspekt19/unboxed-loyalty-spark.git
+cd unboxed-loyalty-spark
 npm install
 ```
 

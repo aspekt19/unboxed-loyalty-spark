@@ -100,41 +100,44 @@ supabase/functions/
 
 ## Agent Integration
 
-### REST API (22 endpoints)
+### REST API (22 authenticated routes + 1 public GET)
 Base URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api
-Auth: x-api-key: lsk_... header required
 
-GET endpoints:
+**Public (no `x-api-key`):**
+- GET `/vouchers/status` — voucher status by `code` or `voucher_id`
+
+**Authenticated (`x-api-key: lsk_...` required):**
+
+GET:
 - /me               — free    — agent profile, plan, wallet
 - /programs         — $0.001  — list loyalty programs
 - /rewards          — $0.001  — rewards (param: token_address)
 - /balance          — $0.001  — balance & tier (params: token_address, wallet_address)
 - /customers        — $0.002  — customer list (param: token_address)
 - /vouchers         — $0.001  — vouchers list (param: token_address)
-- /vouchers/status  — free    — voucher status, no API key needed
 - /analytics        — $0.005  — program analytics (param: token_address)
 - /offers           — $0.001  — P2P offers list
-- /tx-receipt       — free    — extract token_address from tx
+- /tx-receipt       — free    — extract token_address from deploy tx (still requires API key)
 
-POST endpoints:
-- /programs         — $0.05  — scope: mint          — calldata for token deploy
-- /register-program — $0.01  — scope: mint          — register token in DB
-- /activate-program — $0.01  — scope: mint          — activation calldata
-- /program-status   — $0.005 — scope: mint          — update program status
+POST (scopes: program lifecycle accepts **mint** or **create_program**):
+- /programs         — $0.05  — calldata for token deploy
+- /register-program — $0.01  — register token in DB
+- /activate-program — $0.01  — activation calldata
+- /program-status   — $0.005 — update program status
 - /rewards          — $0.01  — scope: manage_rewards — create reward
-- /mint             — $0.01  — scope: mint          — mint tokens
-- /transfer         — $0.005 — scope: mint          — transfer tokens
-- /offers           — $0.01  — scope: trade         — create P2P offer
-- /accept-offer     — $0.01  — scope: trade         — accept offer
-- /cancel-offer     — $0.005 — scope: trade         — cancel offer
-- /redeem-reward    — $0.01  — scope: read          — exchange reward for voucher
+- /mint             — $0.01  — scope: mint — mint tokens
+- /earn             — $0.01  — scope: mint — cashback from purchase amount × rate
+- /transfer         — $0.005 — scope: mint — transfer tokens
+- /offers           — $0.01  — scope: trade — create P2P offer
+- /accept-offer     — $0.01  — scope: trade — accept offer
+- /cancel-offer     — $0.005 — scope: trade — cancel offer
+- /redeem-reward    — $0.01  — scope: read — exchange reward for voucher
 - /vouchers/use     — $0.005 — scope: manage_rewards — use voucher
 
-### MCP Server (17 tools)
-URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp
-Transport: Streamable HTTP (JSON-RPC 2.0)
-Auth: x-api-key: lsk_... header
-Compatible with: Claude Desktop, Cursor, VS Code, OpenServ, any MCP client
+### MCP Server (27 tools)
+URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp  
+Transport: Streamable HTTP (JSON-RPC 2.0) · Auth: `x-api-key` · **Tool list = each `mcpServer.tool("…")` in `loyalty-mcp/index.ts`** (includes reporting, exports, admin-only tools).  
+Compatible with: Claude Desktop, Cursor, VS Code, OpenServ, any MCP client.
 
 ### MPP Gateway
 URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway
@@ -149,10 +152,11 @@ Facilitator: https://facilitator.x402.org
 No API key needed — payment embedded in protocol.
 
 ## API Key Scopes
-- read           — GET endpoints only
-- mint           — token deploy, mint, transfer
-- manage_rewards — create rewards, use vouchers
-- trade          — P2P offers (create, accept, cancel)
+- read            — read-only GET routes (plus redeem per server rules)
+- mint            — mint, transfer, earn; program deploy/register/activate when combined with flow
+- create_program  — optional narrow scope; program POSTs also accept **mint**
+- manage_rewards  — create rewards, use vouchers
+- trade           — P2P offers (create, accept, cancel)
 
 ## Pricing Tiers
 - Free:       $0/mo,       100 calls,    1 agent,   1% mint fee,   1,000 tokens/mo
@@ -162,7 +166,7 @@ Subscription payment: onchain USDC on Base, auto-verified.
 
 ## Agent Rules
 - Always validate x-api-key on every protected endpoint
-- /vouchers/status and /tx-receipt are public — no auth needed
+- Only **GET /vouchers/status** is public — no API key
 - Agent scope must be checked before every write operation
 - Rate limiting is per-agent, tracked in DB
 - All agent activity must be logged to audit trail
