@@ -43,6 +43,9 @@ export function CustomerPanel() {
       {/* Step 1: Show QR - primary action */}
       <WalletQRCode />
       
+      {/* Browse merchants */}
+      <MerchantCardGrid />
+      
       <PersonalizedOffers />
       
       <CustomerTiersSection selectedProgram={selectedProgram} />
