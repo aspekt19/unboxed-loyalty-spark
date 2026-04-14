@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import { AlertCircle, Loader2, Ticket, LogIn } from 'lucide-react';
+import { AlertCircle, Loader2, Ticket, LogIn, Search } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { useBurnTokens } from '@/hooks/useBurnTokens';
 import { useApproveTokens, useCheckAllowance } from '@/hooks/useApproveTokens';
@@ -21,17 +21,16 @@ import { ProgramExpirationInfo } from '@/components/ProgramExpirationInfo';
 import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
 import { isFarcasterContext } from '@/config/wagmi';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
 
 interface TokenInfo {
   address: string;
   name: string;
   symbol: string;
+  merchantAddress: string;
   expirationDate?: string;
   status?: 'active' | 'expiring_soon' | 'expired';
 }
 
-export function RewardsSelection() {
 interface RewardsSelectionProps {
   filterByMerchant?: string | null;
 }
@@ -163,6 +162,7 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
             address: p.token_address,
             name: p.name,
             symbol: p.symbol,
+            merchantAddress: p.merchant_address,
             expirationDate: p.expiration_date,
             status: p.status as 'active' | 'expiring_soon' | 'expired',
           }));
@@ -302,10 +302,9 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
 
     if (filterByMerchant) {
       const normalizedMerchant = filterByMerchant.toLowerCase();
-      filteredTokens = filteredTokens.filter(token => {
-        const rewardMerchant = availableRewards.find(reward => reward.tokenAddress === token.address)?.merchantAddress;
-        return rewardMerchant?.toLowerCase() === normalizedMerchant;
-      });
+      filteredTokens = filteredTokens.filter(
+        token => token.merchantAddress.toLowerCase() === normalizedMerchant,
+      );
     }
 
     if (programSearch.trim()) {
@@ -370,7 +369,7 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
 
             <div className="space-y-2">
               <Label htmlFor="program">Loyalty Program</Label>
-              {filteredTokensWithBalance.length > 1 && (
+              {(tokensWithBalance.length > 3 || filteredTokensWithBalance.length > 1 || !!programSearch) && (
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
