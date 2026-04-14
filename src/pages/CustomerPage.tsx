@@ -23,6 +23,7 @@ import { useQueryClient } from '@tanstack/react-query';
 const CustomerPage = () => {
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('loyalty');
+  const [selectedMerchant, setSelectedMerchant] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const location = useLocation();
