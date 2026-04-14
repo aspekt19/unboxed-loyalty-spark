@@ -3,7 +3,7 @@
     "loyal-spark": {
       "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
       "headers": {
-        "x-api-key": "lsk_YOUR_API_KEY"
+        "x-api-key": "${env:LOYAL_SPARK_API_KEY}"
       }
     }
   }
