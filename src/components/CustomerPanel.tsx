@@ -8,6 +8,7 @@ import { ReferralCard } from './referral/ReferralCard';
 import { ReferralCodeInput } from './referral/ReferralCodeInput';
 import { CustomerReviewsSection } from './reviews/CustomerReviewsSection';
 import { WalletQRCode } from './WalletQRCode';
+import { MerchantCardGrid } from './customer/MerchantCardGrid';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAccount } from 'wagmi';
 import { Wallet } from 'lucide-react';
@@ -41,6 +42,9 @@ export function CustomerPanel() {
     <div className="space-y-6">
       {/* Step 1: Show QR - primary action */}
       <WalletQRCode />
+      
+      {/* Browse merchants */}
+      <MerchantCardGrid />
       
       <PersonalizedOffers />
       
