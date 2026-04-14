@@ -325,6 +325,22 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant }
     (activePrograms.size === 0 || activePrograms.has(token.address.toLowerCase()))
   );
 
+  // Apply merchant filter and search
+  const filteredTokens = useMemo(() => {
+    let result = tokensWithBalance;
+    if (filterByMerchant) {
+      result = result.filter(t => t.merchantAddress?.toLowerCase() === filterByMerchant.toLowerCase());
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(t => 
+        t.name.toLowerCase().includes(q) || 
+        t.symbol.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [tokensWithBalance, filterByMerchant, searchQuery]);
+
   console.log('TokenList render - tokens:', allTokens.length, 'balances:', balances.length, 'with balance:', tokensWithBalance.length);
 
   // Track previous isSuccess state to detect transitions
