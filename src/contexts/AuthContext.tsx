@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import { sdk } from '@farcaster/miniapp-sdk';
-import { getPrivyPrimaryEmail, shouldUsePrivyTokenAuth } from '@/lib/privyAuth';
+import { getPrivyPrimaryEmail, getPrivyLinkedAccounts, shouldUsePrivyTokenAuth } from '@/lib/privyAuth';
 
 interface AuthContextType {
   user: User | null;
