@@ -33,8 +33,6 @@ export const farcasterWagmiConfig = createWagmiConfig({
   },
   connectors: [farcasterMiniApp()],
   ssr: false,
-  // Suppress reconnect errors when a previously used connector is unavailable
-  reconnectOnMount: true,
 });
 
 // Privy wagmi config: used for regular browser (Privy manages connectors)
