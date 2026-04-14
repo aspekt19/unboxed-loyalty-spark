@@ -72,7 +72,7 @@ export default function ForAgentsPage() {
     name: "For AI Agents — Loyal Spark",
     url: `${SITE}/for-agents`,
     description:
-      "Onboard AI agents to Loyal Spark: API keys, REST, MCP (27 tools), x402/MPP, discovery URLs, and skills on Base L2.",
+      `Onboard AI agents to Loyal Spark: API keys, REST, MCP (${MCP_TOOL_COUNT} tools), x402/MPP, discovery URLs, and skills on Base L2.`,
   };
 
   return (

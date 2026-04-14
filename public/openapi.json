@@ -3,12 +3,12 @@
   "info": {
     "title": "Loyal Spark — Onchain Loyalty Protocol",
     "version": "2.1.0",
-    "description": "AI-agent-native loyalty protocol on Base L2. REST: 22 authenticated routes plus public GET /vouchers/status. MCP: 27 tools at /loyalty-mcp. Create loyalty programs, mint tokens, POST /earn for purchase cashback, manage rewards, P2P marketplace, CDP server wallets.",
-    "x-guidance": "Loyal Spark — Base L2 (chain 8453).\n\nAuthentication: Almost every path requires header x-api-key: lsk_... from https://loyalspark.online/merchant → AI Agents. Exception: GET /vouchers/status is public (no key).\n\nProgram lifecycle scopes: POST /programs, /register-program, /activate-program, /program-status accept mint OR create_program.\n\nTypical flow:\n1. GET /me — profile and scopes\n2. POST /programs — factory calldata to deploy ERC-20\n3. POST /register-program — persist program\n4. POST /activate-program — unpause + enable mint calldata\n5. POST /program-status — set active in DB\n6. POST /mint or POST /earn — distribute points\n7. POST /rewards — catalog\n8. GET /analytics — metrics\n\nMCP mirrors REST with 27 tools (see repo loyalty-mcp/index.ts). Server wallets: Supabase function agent-wallet (not agent-api).\n\nDocs: https://loyalspark.online/api-docs · llms: https://loyalspark.online/llms.txt · agent manifest: https://loyalspark.online/.well-known/agent.json",
+    "description": "AI-agent-native loyalty protocol on Base L2. REST: 23 authenticated routes plus public GET /vouchers/status. MCP: 28 tools at /loyalty-mcp. Create loyalty programs, mint tokens, POST /earn for purchase cashback, manage rewards, P2P marketplace, CDP server wallets.",
+    "x-guidance": "Loyal Spark — Base L2 (chain 8453).\n\nAuthentication: Almost every path requires header x-api-key: lsk_... from https://loyalspark.online/merchant → AI Agents. Exception: GET /vouchers/status is public (no key).\n\nProgram lifecycle scopes: POST /programs, /register-program, /update-program-config, /activate-program, /program-status accept mint OR create_program.\n\nTypical flow:\n1. GET /me — profile and scopes\n2. POST /programs — factory calldata to deploy ERC-20\n3. POST /register-program — persist program (optional cashback_rate, points_per_dollar)\n4. POST /update-program-config — change default cashback / points-per-dollar later\n5. POST /activate-program — unpause + enable mint calldata\n6. POST /program-status — set active in DB\n7. POST /mint or POST /earn — distribute points\n8. POST /rewards — catalog\n9. GET /analytics — metrics\n\nMCP mirrors REST with 28 tools (see repo loyalty-mcp/index.ts). Server wallets: Supabase function agent-wallet (not agent-api).\n\nDocs: https://loyalspark.online/api-docs · llms: https://loyalspark.online/llms.txt · agent manifest: https://loyalspark.online/.well-known/agent.json",
     "x-mcp": {
       "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
       "transport": "streamable-http",
-      "tool_count": 27
+      "tool_count": 28
     }
   },
   "servers": [
@@ -331,9 +331,48 @@
                   "token_address": { "type": "string" },
                   "name": { "type": "string" },
                   "symbol": { "type": "string" },
-                  "merchant_address": { "type": "string" }
+                  "merchant_address": { "type": "string" },
+                  "expiration_days": { "type": "number" },
+                  "use_agent_wallet": { "type": "boolean" },
+                  "cashback_rate": { "type": "number", "description": "Default cashback % for POST /earn (1–100). Omit for default 5." },
+                  "points_per_dollar": { "type": "number", "description": "Points per $1 spent (1–1000). Omit for default 1." }
                 },
                 "required": ["token_address", "name", "symbol", "merchant_address"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "402": { "description": "Payment Required" }
+        }
+      }
+    },
+    "/update-program-config": {
+      "post": {
+        "operationId": "updateProgramConfig",
+        "summary": "Update program cashback_rate and/or points_per_dollar",
+        "tags": ["Programs"],
+        "x-payment-info": {
+          "pricingMode": "fixed",
+          "price": "0.005000",
+          "protocols": ["mpp"]
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token_address": { "type": "string" },
+                  "cashback_rate": { "type": "number", "description": "New default cashback % (1–100)" },
+                  "points_per_dollar": { "type": "number", "description": "New points per $1 (1–1000)" }
+                },
+                "required": ["token_address"]
               }
             }
           }

@@ -14,6 +14,7 @@ import {
   PLATFORM_FEE_WALLET,
   authenticateAgent,
 } from "./helpers.ts";
+import { parseOptionalCashbackRate, parseOptionalPointsPerDollar } from "../_shared/program-economics.ts";
 
 const app = new Hono();
 
@@ -55,7 +56,7 @@ function createMcpServer(agent: any) {
     handler: async ({ include_expired }: any) => {
       const err = authGuard(["read"]);
       if (err) return T(err);
-      let q = db().from("loyalty_programs").select("id,name,symbol,token_address,status,expiration_date,created_at").eq("merchant_address", agent.ownerAddress).order("created_at", { ascending: false });
+      let q = db().from("loyalty_programs").select("id,name,symbol,token_address,status,expiration_date,created_at,cashback_rate,points_per_dollar").eq("merchant_address", agent.ownerAddress).order("created_at", { ascending: false });
       if (!include_expired) q = q.neq("status", "expired");
       const { data, error } = await q;
       if (error) return T(JSON.stringify({ error: error.message }));
@@ -78,17 +79,24 @@ function createMcpServer(agent: any) {
 
   mcpServer.tool("register_loyalty_program", {
     description: "Register a deployed token as a loyalty program in the database",
-    inputSchema: { type: "object" as const, properties: { name: { type: "string", description: "Program name" }, symbol: { type: "string", description: "Token symbol" }, token_address: { type: "string", description: "Deployed token contract address (0x...)" }, expiration_days: { type: "number", description: "Duration in days (default: 365)" } }, required: ["name", "symbol", "token_address"] },
-    handler: async ({ name, symbol, token_address, expiration_days }: any) => {
+    inputSchema: { type: "object" as const, properties: { name: { type: "string", description: "Program name" }, symbol: { type: "string", description: "Token symbol" }, token_address: { type: "string", description: "Deployed token contract address (0x...)" }, expiration_days: { type: "number", description: "Duration in days (default: 365)" }, cashback_rate: { type: "number", description: "Default cashback percent for earn (1–100). Omit for DB default (5)." }, points_per_dollar: { type: "number", description: "Loyalty points per $1 spent (1–1000). Omit for DB default (1)." } }, required: ["name", "symbol", "token_address"] },
+    handler: async ({ name, symbol, token_address, expiration_days, cashback_rate, points_per_dollar }: any) => {
       const err = authGuard(["mint", "create_program"]);
       if (err) return T(err);
       if (!/^0x[a-fA-F0-9]{40}$/.test(token_address)) return T('{"error":"Invalid token_address"}');
+      const cr = parseOptionalCashbackRate(cashback_rate);
+      if (!cr.ok) return T(JSON.stringify({ error: cr.error }));
+      const ppd = parseOptionalPointsPerDollar(points_per_dollar);
+      if (!ppd.ok) return T(JSON.stringify({ error: ppd.error }));
       const d = db();
       const { data: existing } = await d.from("loyalty_programs").select("id").eq("token_address", token_address.toLowerCase()).single();
       if (existing) return T('{"error":"Program already registered"}');
       const days = expiration_days || 365;
       const expDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
-      const { data: program, error } = await d.from("loyalty_programs").insert({ name: name.trim(), symbol: symbol.toUpperCase().trim(), token_address: token_address.toLowerCase(), merchant_address: agent.ownerAddress, status: "inactive", expiration_date: expDate }).select("id,name,symbol,token_address,status,expiration_date,created_at").single();
+      const row: Record<string, unknown> = { name: name.trim(), symbol: symbol.toUpperCase().trim(), token_address: token_address.toLowerCase(), merchant_address: agent.ownerAddress, status: "inactive", expiration_date: expDate };
+      if (cr.value !== undefined) row.cashback_rate = cr.value;
+      if (ppd.value !== undefined) row.points_per_dollar = ppd.value;
+      const { data: program, error } = await d.from("loyalty_programs").insert(row).select("id,name,symbol,token_address,status,expiration_date,created_at,cashback_rate,points_per_dollar").single();
       if (error) return T(JSON.stringify({ error: error.message }));
       return T(JSON.stringify({ program, message: "Program registered as inactive. Call activate_loyalty_program next." }));
     },
@@ -125,6 +133,32 @@ function createMcpServer(agent: any) {
       const { error } = await d.from("loyalty_programs").update({ status, updated_at: new Date().toISOString() }).eq("token_address", token_address.toLowerCase()).eq("merchant_address", agent.ownerAddress);
       if (error) return T(JSON.stringify({ error: error.message }));
       return T(JSON.stringify({ message: `Status updated from '${prog.status}' to '${status}'`, program: { id: prog.id, name: prog.name, new_status: status } }));
+    },
+  });
+
+  mcpServer.tool("update_program_config", {
+    description: "Update default cashback_rate and/or points_per_dollar for a program (same as merchant dashboard sliders)",
+    inputSchema: { type: "object" as const, properties: { token_address: { type: "string", description: "Token contract address (0x...)" }, cashback_rate: { type: "number", description: "New default cashback % for earn (1–100). Omit to leave unchanged." }, points_per_dollar: { type: "number", description: "New points per $1 (0–1000, exclusive 0). Omit to leave unchanged." } }, required: ["token_address"] },
+    handler: async ({ token_address, cashback_rate, points_per_dollar }: any) => {
+      const err = authGuard(["mint", "create_program"]);
+      if (err) return T(err);
+      if (!/^0x[a-fA-F0-9]{40}$/.test(token_address)) return T('{"error":"Invalid token_address"}');
+      const hasCash = cashback_rate !== undefined && cashback_rate !== null;
+      const hasPts = points_per_dollar !== undefined && points_per_dollar !== null;
+      if (!hasCash && !hasPts) return T('{"error":"Provide at least one of: cashback_rate, points_per_dollar"}');
+      const cr = hasCash ? parseOptionalCashbackRate(cashback_rate) : { ok: true as const };
+      if (!cr.ok) return T(JSON.stringify({ error: cr.error }));
+      const ppd = hasPts ? parseOptionalPointsPerDollar(points_per_dollar) : { ok: true as const };
+      if (!ppd.ok) return T(JSON.stringify({ error: ppd.error }));
+      const d = db();
+      const { data: prog } = await d.from("loyalty_programs").select("id,name,symbol,token_address,cashback_rate,points_per_dollar").eq("token_address", token_address.toLowerCase()).eq("merchant_address", agent.ownerAddress).single();
+      if (!prog) return T('{"error":"Program not found"}');
+      const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+      if (hasCash && "value" in cr && cr.value !== undefined) patch.cashback_rate = cr.value;
+      if (hasPts && "value" in ppd && ppd.value !== undefined) patch.points_per_dollar = ppd.value;
+      const { data: updated, error } = await d.from("loyalty_programs").update(patch).eq("id", prog.id).select("id,name,symbol,token_address,status,cashback_rate,points_per_dollar,expiration_date,created_at").single();
+      if (error) return T(JSON.stringify({ error: error.message }));
+      return T(JSON.stringify({ program: updated, message: "Program economics updated" }));
     },
   });
 

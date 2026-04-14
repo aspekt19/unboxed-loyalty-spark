@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Bot, Code, Shield, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { MCP_TOOL_COUNT } from '@/constants/mcpToolNames';
 
 const LandingAgents = () => {
   return (
@@ -23,7 +24,7 @@ const LandingAgents = () => {
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
             Agents mint points, run cashback via <code className="text-xs bg-muted/80 px-1 rounded">POST /earn</code>, manage rewards,
-            and use MPC wallets — over REST, MCP (27 tools), or pay-per-request (x402 / MPP).
+            and use MPC wallets — over REST, MCP ({MCP_TOOL_COUNT} tools), or pay-per-request (x402 / MPP).
           </p>
         </motion.div>
 

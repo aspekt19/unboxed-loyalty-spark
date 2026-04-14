@@ -43,6 +43,7 @@ const PRICING_TABLE = [
   { endpoint: 'GET /offers', price: '$0.001', category: 'read' },
   { endpoint: 'POST /programs', price: '$0.05', category: 'write' },
   { endpoint: 'POST /register-program', price: '$0.01', category: 'write' },
+  { endpoint: 'POST /update-program-config', price: '$0.005', category: 'write' },
   { endpoint: 'POST /activate-program', price: '$0.01', category: 'write' },
   { endpoint: 'POST /program-status', price: '$0.005', category: 'write' },
   { endpoint: 'POST /rewards', price: '$0.01', category: 'write' },

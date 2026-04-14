@@ -9,6 +9,7 @@ import {
 } from "../_shared/loyalspark-agent-helpers.ts";
 import { authenticateAgent, type AgentContext } from "./auth.ts";
 import { corsHeaders, jsonResponse } from "./http.ts";
+import { parseOptionalCashbackRate, parseOptionalPointsPerDollar } from "../_shared/program-economics.ts";
 
 // Encode approve(address,uint256) calldata with Builder Code
 function encodeApproveCalldata(spender: string, amount: number): string {
@@ -265,7 +266,7 @@ Deno.serve(async (req) => {
 
       const { data: programs, error } = await serviceClient
         .from("loyalty_programs")
-        .select("id, name, symbol, token_address, status, expiration_date, created_at, merchant_address")
+        .select("id, name, symbol, token_address, status, expiration_date, created_at, merchant_address, cashback_rate, points_per_dollar")
         .in("merchant_address", merchantAddresses)
         .neq("status", "expired")
         .order("created_at", { ascending: false });
@@ -337,7 +338,7 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Scope 'mint' or 'create_program' required" }, 403);
       }
 
-      const { name, symbol, token_address, expiration_days, use_agent_wallet } = body;
+      const { name, symbol, token_address, expiration_days, use_agent_wallet, cashback_rate, points_per_dollar } = body;
       if (!name || !symbol || !token_address) {
         return jsonResponse({ error: "Missing required fields: name, symbol, token_address" }, 400);
       }
@@ -345,6 +346,11 @@ Deno.serve(async (req) => {
       if (!/^0x[a-fA-F0-9]{40}$/.test(token_address)) {
         return jsonResponse({ error: "Invalid token_address format" }, 400);
       }
+
+      const cr = parseOptionalCashbackRate(cashback_rate);
+      if (!cr.ok) return jsonResponse({ error: cr.error }, 400);
+      const ppd = parseOptionalPointsPerDollar(points_per_dollar);
+      if (!ppd.ok) return jsonResponse({ error: ppd.error }, 400);
 
       // Check if program already exists
       const { data: existing } = await serviceClient
@@ -362,17 +368,21 @@ Deno.serve(async (req) => {
 
       const merchantAddress = await resolveAgentMerchantAddress(serviceClient, agent, use_agent_wallet);
 
+      const insertRow: Record<string, unknown> = {
+        name: name.trim(),
+        symbol: symbol.toUpperCase().trim(),
+        token_address: token_address.toLowerCase(),
+        merchant_address: merchantAddress,
+        status: "inactive",
+        expiration_date: expirationDate,
+      };
+      if (cr.value !== undefined) insertRow.cashback_rate = cr.value;
+      if (ppd.value !== undefined) insertRow.points_per_dollar = ppd.value;
+
       const { data: program, error } = await serviceClient
         .from("loyalty_programs")
-        .insert({
-          name: name.trim(),
-          symbol: symbol.toUpperCase().trim(),
-          token_address: token_address.toLowerCase(),
-          merchant_address: merchantAddress,
-          status: "inactive",
-          expiration_date: expirationDate,
-        })
-        .select("id, name, symbol, token_address, status, expiration_date, created_at")
+        .insert(insertRow)
+        .select("id, name, symbol, token_address, status, expiration_date, created_at, cashback_rate, points_per_dollar")
         .single();
 
       if (error) {
@@ -386,6 +396,60 @@ Deno.serve(async (req) => {
         message: "Program registered with status 'inactive'. Call POST /activate-program to get activation calldata (unpauseUtility + enableMinting).",
         next_step: "POST /activate-program with { token_address }",
       }, 201);
+    }
+
+    // ==================== UPDATE PROGRAM CONFIG (cashback / points rate) ====================
+    if (resource === "update-program-config" && req.method === "POST") {
+      if (!hasScope(agent, "mint") && !hasScope(agent, "create_program")) {
+        await logActivity(serviceClient, agent.agentId, "update_program_config", body, 403, { error: "Insufficient scope" }, ip);
+        return jsonResponse({ error: "Scope 'mint' or 'create_program' required" }, 403);
+      }
+
+      const { token_address, cashback_rate, points_per_dollar } = body;
+      if (!token_address || !/^0x[a-fA-F0-9]{40}$/.test(token_address)) {
+        return jsonResponse({ error: "Missing or invalid token_address" }, 400);
+      }
+
+      const hasCash = cashback_rate !== undefined && cashback_rate !== null;
+      const hasPts = points_per_dollar !== undefined && points_per_dollar !== null;
+      if (!hasCash && !hasPts) {
+        return jsonResponse({ error: "Provide at least one of: cashback_rate, points_per_dollar" }, 400);
+      }
+
+      const cr = hasCash ? parseOptionalCashbackRate(cashback_rate) : { ok: true as const };
+      if (!cr.ok) return jsonResponse({ error: cr.error }, 400);
+      const ppd = hasPts ? parseOptionalPointsPerDollar(points_per_dollar) : { ok: true as const };
+      if (!ppd.ok) return jsonResponse({ error: ppd.error }, 400);
+
+      const program = await findAgentProgram(
+        serviceClient,
+        agent,
+        token_address,
+        "id, name, symbol, token_address, cashback_rate, points_per_dollar"
+      );
+      if (!program) {
+        await logActivity(serviceClient, agent.agentId, "update_program_config", body, 404, { error: "Program not found" }, ip);
+        return jsonResponse({ error: "Program not found or not owned by you" }, 404);
+      }
+
+      const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+      if (hasCash && "value" in cr && cr.value !== undefined) patch.cashback_rate = cr.value;
+      if (hasPts && "value" in ppd && ppd.value !== undefined) patch.points_per_dollar = ppd.value;
+
+      const { data: updated, error: upErr } = await serviceClient
+        .from("loyalty_programs")
+        .update(patch)
+        .eq("id", program.id)
+        .select("id, name, symbol, token_address, status, cashback_rate, points_per_dollar, expiration_date, created_at")
+        .single();
+
+      if (upErr) {
+        await logActivity(serviceClient, agent.agentId, "update_program_config", body, 500, { error: upErr.message }, ip);
+        return jsonResponse({ error: "Failed to update program config" }, 500);
+      }
+
+      await logActivity(serviceClient, agent.agentId, "update_program_config", body, 200, { program_id: program.id }, ip);
+      return jsonResponse({ program: updated, message: "Program economics updated" });
     }
 
     // ==================== ACTIVATE PROGRAM ====================
@@ -1438,7 +1502,8 @@ Deno.serve(async (req) => {
       available_endpoints: {
       "GET /programs": "List your loyalty programs (supports CDP wallet programs)",
       "POST /programs": "Get calldata to deploy a new loyalty token (use_agent_wallet: true for CDP)",
-      "POST /register-program": "Register a deployed token (use_agent_wallet: true for CDP)",
+      "POST /register-program": "Register a deployed token (optional cashback_rate, points_per_dollar; use_agent_wallet: true for CDP)",
+      "POST /update-program-config": "Update cashback_rate and/or points_per_dollar for your program",
       "POST /activate-program": "Get activation calldata (supports CDP wallet programs)",
       "POST /program-status": "Update program status in database",
       "GET /rewards?token_address=0x...": "List rewards for a program",

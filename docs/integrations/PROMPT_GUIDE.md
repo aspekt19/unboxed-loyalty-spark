@@ -174,7 +174,7 @@ For Claude, Cursor, Windsurf, or any MCP-compatible client:
 }
 ```
 
-The MCP server exposes the loyalty API as **27** standard MCP tools (core flows + reporting, exports, and admin-only helpers). Tool names match `supabase/functions/loyalty-mcp/index.ts`. No extra prompting is required — descriptions are self-documenting.
+The MCP server exposes the loyalty API as **28** standard MCP tools (core flows + reporting, exports, and admin-only helpers). Tool names match `supabase/functions/loyalty-mcp/index.ts`. No extra prompting is required — descriptions are self-documenting.
 
 ---
 

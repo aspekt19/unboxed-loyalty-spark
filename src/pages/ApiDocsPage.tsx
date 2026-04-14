@@ -90,12 +90,17 @@ const ENDPOINTS: Endpoint[] = [
       { name: 'symbol', type: 'string', required: true, description: 'Token symbol' },
       { name: 'token_address', type: 'string', required: true, description: 'Deployed token contract address' },
       { name: 'expiration_days', type: 'number', required: false, description: 'Program duration in days' },
+      { name: 'use_agent_wallet', type: 'boolean', required: false, description: 'If true, bind program to your CDP server wallet' },
+      { name: 'cashback_rate', type: 'number', required: false, description: 'Default cashback % for POST /earn (1–100); omit for 5' },
+      { name: 'points_per_dollar', type: 'number', required: false, description: 'Points per $1 spent (1–1000); omit for 1' },
     ],
     exampleRequest: `{
   "name": "Coffee Rewards",
   "symbol": "COFFEE",
   "token_address": "0x1234...abcd",
-  "expiration_days": 365
+  "expiration_days": 365,
+  "cashback_rate": 5,
+  "points_per_dollar": 1
 }`,
     exampleResponse: `{
   "program": {
@@ -103,8 +108,34 @@ const ENDPOINTS: Endpoint[] = [
     "name": "Coffee Rewards",
     "symbol": "COFFEE",
     "token_address": "0x1234...abcd",
-    "status": "pending"
+    "status": "inactive",
+    "cashback_rate": 5,
+    "points_per_dollar": 1
   }
+}`,
+  },
+  {
+    method: 'POST',
+    path: '/update-program-config',
+    description: 'Change default cashback_rate and/or points_per_dollar for a program (same fields as merchant dashboard).',
+    scope: 'create_program',
+    params: [
+      { name: 'token_address', type: 'string', required: true, description: 'Program token contract' },
+      { name: 'cashback_rate', type: 'number', required: false, description: 'New default cashback % (1–100)' },
+      { name: 'points_per_dollar', type: 'number', required: false, description: 'New points per $1 (1–1000)' },
+    ],
+    exampleRequest: `{
+  "token_address": "0x1234...abcd",
+  "cashback_rate": 7.5,
+  "points_per_dollar": 2
+}`,
+    exampleResponse: `{
+  "program": {
+    "id": "uuid",
+    "cashback_rate": 7.5,
+    "points_per_dollar": 2
+  },
+  "message": "Program economics updated"
 }`,
   },
   {
@@ -667,7 +698,7 @@ const reward = await fetch(\`\${BASE}/rewards\`, {
         "@type": "WebPage",
         "name": "Agent API Documentation — Loyal Spark",
         "url": "https://loyalspark.online/api-docs",
-        "description": "REST API and MCP Server docs for AI agents on Base L2 — 22 authenticated routes, public voucher status, 27 MCP tools."
+        "description": "REST API and MCP Server docs for AI agents on Base L2 — 23 authenticated routes, public voucher status, 28 MCP tools."
       },
       {
         "@type": "BreadcrumbList",

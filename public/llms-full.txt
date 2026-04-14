@@ -27,7 +27,7 @@ To get an API key:
 3. Open "AI Agents" tab
 4. Register an agent and copy the key
 
-## REST API — 23 Endpoints
+## REST API — 24 Endpoints
 
 Base URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api
 
@@ -51,7 +51,8 @@ Base URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api
 | Endpoint | Price | Scope | Description |
 |----------|-------|-------|-------------|
 | /programs | $0.05 | mint | Get calldata to deploy new ERC-20 token |
-| /register-program | $0.01 | mint | Register deployed token in database |
+| /register-program | $0.01 | mint | Register deployed token (optional cashback_rate, points_per_dollar) |
+| /update-program-config | $0.005 | mint | Update program cashback_rate and/or points_per_dollar |
 | /activate-program | $0.01 | mint | Get activation calldata (unpause + enable minting) |
 | /program-status | $0.005 | mint | Update program status |
 | /rewards | $0.01 | manage_rewards | Create a redeemable reward |
@@ -76,7 +77,7 @@ curl -X POST \
 
 Response returns calldata with Builder Code for onchain execution.
 
-## MCP Server — 27 Tools
+## MCP Server — 28 Tools
 
 URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp
 Transport: Streamable HTTP
@@ -88,29 +89,30 @@ Auth: x-api-key header
 2. `get_my_profile` — Agent identity, plan, wallet
 3. `list_loyalty_programs` — All active programs
 4. `create_loyalty_program` — Deploy calldata for new token
-5. `register_loyalty_program` — Register deployed token
+5. `register_loyalty_program` — Register deployed token (optional cashback_rate, points_per_dollar)
 6. `activate_loyalty_program` — Activation calldata
 7. `update_program_status` — Update status in DB
-8. `list_rewards` — Rewards for a program (with redemption metrics)
-9. `create_reward` — Create redeemable reward
-10. `mint_loyalty_tokens` — Mint calldata with platform fee
-11. `earn_points` — Auto-calculate and mint tokens from purchase amount (cashback)
-12. `transfer_loyalty_tokens` — Transfer calldata
-13. `get_token_balance` — Balance and tier info
-14. `get_program_analytics` — Metrics and performance
-15. `get_platform_stats` — Global platform statistics (admin-only)
-16. `list_marketplace_offers` — P2P offers
-17. `cancel_stale_offers` — Cancel old marketplace offers (admin-only)
-18. `redeem_reward` — Redeem reward: verify tx + create voucher
-19. `use_voucher` — Mark voucher as used
-20. `check_voucher_status` — Public voucher status lookup (no API key)
-21. `create_personalized_offer` — Create targeted offer for a customer
-22. `update_reward_status` — Activate/deactivate rewards
-23. `export_customers` — Export customer data for analytics
-24. `send_report` — Submit report to developer dashboard
-25. `list_my_reports` — View previously submitted reports
-26. `update_report_status` — Update report status (reviewed/done)
-27. `delete_report` — Delete an outdated report
+8. `update_program_config` — Update cashback_rate / points_per_dollar in DB
+9. `list_rewards` — Rewards for a program (with redemption metrics)
+10. `create_reward` — Create redeemable reward
+11. `mint_loyalty_tokens` — Mint calldata with platform fee
+12. `earn_points` — Auto-calculate and mint tokens from purchase amount (cashback)
+13. `transfer_loyalty_tokens` — Transfer calldata
+14. `get_token_balance` — Balance and tier info
+15. `get_program_analytics` — Metrics and performance
+16. `get_platform_stats` — Global platform statistics (admin-only)
+17. `list_marketplace_offers` — P2P offers
+18. `cancel_stale_offers` — Cancel old marketplace offers (admin-only)
+19. `redeem_reward` — Redeem reward: verify tx + create voucher
+20. `use_voucher` — Mark voucher as used
+21. `check_voucher_status` — Public voucher status lookup (no API key)
+22. `create_personalized_offer` — Create targeted offer for a customer
+23. `update_reward_status` — Activate/deactivate rewards
+24. `export_customers` — Export customer data for analytics
+25. `send_report` — Submit report to developer dashboard
+26. `list_my_reports` — View previously submitted reports
+27. `update_report_status` — Update report status (reviewed/done)
+28. `delete_report` — Delete an outdated report
 
 ### MCP Configuration for Claude/Cursor
 

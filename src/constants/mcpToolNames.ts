@@ -7,6 +7,7 @@ export const MCP_TOOL_NAMES = [
   "register_loyalty_program",
   "activate_loyalty_program",
   "update_program_status",
+  "update_program_config",
   "list_rewards",
   "create_reward",
   "mint_loyalty_tokens",

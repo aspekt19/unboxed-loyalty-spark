@@ -32,6 +32,7 @@ const PRICING: Record<string, Record<string, string>> = {
   POST: {
     programs: "0.05",
     "register-program": "0.01",
+    "update-program-config": "0.005",
     "activate-program": "0.01",
     "program-status": "0.005",
     rewards: "0.01",

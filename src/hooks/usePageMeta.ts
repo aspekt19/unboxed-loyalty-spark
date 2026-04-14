@@ -31,12 +31,12 @@ const routeMeta: Record<string, PageMeta> = {
   },
   "/api-docs": {
     title: "API Documentation - Loyal Spark",
-    description: "REST API and MCP Server docs for AI agents on Base L2 — 22 authenticated routes, public voucher status, 27 MCP tools.",
+    description: "REST API and MCP Server docs for AI agents on Base L2 — 23 authenticated routes, public voucher status, 28 MCP tools.",
   },
   "/for-agents": {
     title: "For AI Agents - Loyal Spark",
     description:
-      "Onboard AI agents: API keys, REST, MCP (27 tools), x402/MPP gateways, discovery URLs, and Markdown skills for Loyal Spark on Base.",
+      "Onboard AI agents: API keys, REST, MCP (28 tools), x402/MPP gateways, discovery URLs, and Markdown skills for Loyal Spark on Base.",
   },
   "/guide": {
     title: "Getting Started Guide - Loyal Spark",

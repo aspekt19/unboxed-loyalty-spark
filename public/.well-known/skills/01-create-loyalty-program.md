@@ -61,9 +61,13 @@ curl -X POST \
     "name": "Coffee Rewards",
     "symbol": "COFFEE",
     "token_address": "0xDeployedTokenAddress",
-    "expiration_days": 365
+    "expiration_days": 365,
+    "cashback_rate": 5,
+    "points_per_dollar": 1
   }'
 ```
+
+Optional: omit `cashback_rate` / `points_per_dollar` to use defaults (5% and 1 pt/$). To change them later, use **POST `/update-program-config`** (or MCP `update_program_config`).
 
 **MCP equivalent:** `register_loyalty_program`
 
@@ -117,6 +121,7 @@ curl -H "x-api-key: lsk_..." \
 POST /programs          → get factory calldata
    ↓ execute on-chain
 POST /register-program  → save to database (status: inactive)
+POST /update-program-config → (optional) change cashback_rate / points_per_dollar
 POST /activate-program  → get unpause + enableMinting calldata
    ↓ execute 2 on-chain txs
 POST /program-status    → update DB to "active"

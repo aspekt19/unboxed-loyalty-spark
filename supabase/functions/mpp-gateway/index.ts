@@ -24,6 +24,7 @@ const PRICING: Record<string, Record<string, string>> = {
   POST: {
     programs: "0.05",          // deploy new token
     "register-program": "0.01",
+    "update-program-config": "0.005",
     "activate-program": "0.01",
     "program-status": "0.005",
     rewards: "0.01",
@@ -90,7 +91,14 @@ function buildOpenApiSpec(baseUrl: string): object {
       path: "/register-program", method: "post", operationId: "registerProgram", summary: "Register deployed token as loyalty program", price: "0.010000", tags: ["Programs"],
       requestBody: {
         required: true,
-        content: { "application/json": { schema: { type: "object", properties: { token_address: { type: "string" }, name: { type: "string" }, symbol: { type: "string" }, merchant_address: { type: "string" } }, required: ["token_address", "name", "symbol", "merchant_address"] } } },
+        content: { "application/json": { schema: { type: "object", properties: { token_address: { type: "string" }, name: { type: "string" }, symbol: { type: "string" }, merchant_address: { type: "string" }, expiration_days: { type: "number" }, cashback_rate: { type: "number" }, points_per_dollar: { type: "number" } }, required: ["token_address", "name", "symbol", "merchant_address"] } } },
+      },
+    },
+    {
+      path: "/update-program-config", method: "post", operationId: "updateProgramConfig", summary: "Update program cashback_rate and/or points_per_dollar", price: "0.005000", tags: ["Programs"],
+      requestBody: {
+        required: true,
+        content: { "application/json": { schema: { type: "object", properties: { token_address: { type: "string" }, cashback_rate: { type: "number" }, points_per_dollar: { type: "number" } }, required: ["token_address"] } } },
       },
     },
     {
@@ -219,11 +227,12 @@ Authentication: Include your API key in the x-api-key header (format: lsk_...). 
 Common workflow:
 1. GET /me — check your agent profile and permissions
 2. POST /programs — deploy a new ERC-20 loyalty token
-3. POST /register-program — register the deployed token
-4. POST /activate-program — get calldata to activate the program onchain
-5. POST /mint — mint tokens to customer wallets
-6. POST /rewards — create redeemable rewards
-7. GET /analytics — view program metrics
+3. POST /register-program — register the deployed token (optional cashback_rate, points_per_dollar)
+4. POST /update-program-config — change default cashback / points-per-dollar
+5. POST /activate-program — get calldata to activate the program onchain
+6. POST /mint — mint tokens to customer wallets
+7. POST /rewards — create redeemable rewards
+8. GET /analytics — view program metrics
 
 All write operations return calldata for Base L2 transactions. Use an MPC wallet (POST to agent-wallet endpoint) for autonomous signing.
 

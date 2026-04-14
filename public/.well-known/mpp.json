@@ -48,6 +48,7 @@
       "GET /offers": { "price": "0.001", "description": "List marketplace offers" },
       "POST /programs": { "price": "0.05", "description": "Deploy new loyalty token" },
       "POST /register-program": { "price": "0.01", "description": "Register deployed token" },
+      "POST /update-program-config": { "price": "0.005", "description": "Update cashback / points per dollar" },
       "POST /activate-program": { "price": "0.01", "description": "Get activation calldata" },
       "POST /program-status": { "price": "0.005", "description": "Update program status" },
       "POST /rewards": { "price": "0.01", "description": "Create reward" },

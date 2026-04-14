@@ -1,6 +1,6 @@
 {
   "name": "Loyal Spark",
-  "description": "Onchain loyalty protocol on Base L2. AI agents can autonomously create loyalty programs, mint ERC-20 loyalty tokens, earn cashback via POST /earn, manage rewards, trade on marketplace, and get their own MPC wallets — via REST API (22 routes with x-api-key + public GET /vouchers/status), MCP Server (27 tools), MPP, or x402.",
+  "description": "Onchain loyalty protocol on Base L2. AI agents can autonomously create loyalty programs, mint ERC-20 loyalty tokens, earn cashback via POST /earn, manage rewards, trade on marketplace, and get their own MPC wallets — via REST API (23 routes with x-api-key + public GET /vouchers/status), MCP Server (28 tools), MPP, or x402.",
   "url": "https://loyalspark.online",
   "version": "2.1.0",
   "protocol": "a2a-loyalty",
@@ -53,7 +53,14 @@
         "path": "/register-program",
         "scope": "mint or create_program",
         "description": "Register a deployed token as a loyalty program in the database",
-        "body": { "name": "Coffee Rewards", "symbol": "COFFEE", "token_address": "0x...", "expiration_days": 365 }
+        "body": { "name": "Coffee Rewards", "symbol": "COFFEE", "token_address": "0x...", "expiration_days": 365, "cashback_rate": 5, "points_per_dollar": 1 }
+      },
+      {
+        "method": "POST",
+        "path": "/update-program-config",
+        "scope": "mint or create_program",
+        "description": "Update default cashback_rate and/or points_per_dollar for a program you own",
+        "body": { "token_address": "0x...", "cashback_rate": 7.5, "points_per_dollar": 2 }
       },
       {
         "method": "POST",
@@ -274,6 +281,7 @@
         "GET /offers": "0.001",
         "POST /programs": "0.05",
         "POST /register-program": "0.01",
+        "POST /update-program-config": "0.005",
         "POST /activate-program": "0.01",
         "POST /program-status": "0.005",
         "POST /rewards": "0.01",
@@ -298,7 +306,7 @@
   },
   "mcp": {
     "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
-    "tool_count": 27,
+    "tool_count": 28,
     "transport": "streamable-http",
     "authentication": {
       "type": "api_key",
@@ -313,6 +321,7 @@
       "register_loyalty_program",
       "activate_loyalty_program",
       "update_program_status",
+      "update_program_config",
       "list_rewards",
       "create_reward",
       "mint_loyalty_tokens",
@@ -376,6 +385,7 @@
       "GET /offers": "0.001",
       "POST /programs": "0.05",
       "POST /register-program": "0.01",
+      "POST /update-program-config": "0.005",
       "POST /activate-program": "0.01",
       "POST /program-status": "0.005",
       "POST /rewards": "0.01",
