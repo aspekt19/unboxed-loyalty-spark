@@ -11,11 +11,10 @@ function T(text: string) {
   return { content: [{ type: "text" as const, text }] };
 }
 
-// deno-lint-ignore no-explicit-any
 function createRecipientMcpServer(
   wallet: string,
   agentId: string,
-  d: any,
+  d: ReturnType<typeof createClient>,
   ip: string
 ) {
   const w = wallet.toLowerCase();

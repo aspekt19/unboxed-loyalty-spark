@@ -70,18 +70,18 @@ async function resolveAgentMerchantAddress(
   agent: AgentContext,
   useAgentWallet?: boolean
 ): Promise<string> {
-  if (!useAgentWallet) return agent.ownerAddress;
+  const raw = !useAgentWallet
+    ? agent.ownerAddress
+    : (await serviceClient
+        .from("agent_wallets")
+        .select("wallet_address")
+        .eq("agent_id", agent.agentId)
+        .eq("chain_id", 8453)
+        .eq("is_active", true)
+        .single()).data?.wallet_address;
 
-  const { data: wallet } = await serviceClient
-    .from("agent_wallets")
-    .select("wallet_address")
-    .eq("agent_id", agent.agentId)
-    .eq("chain_id", 8453)
-    .eq("is_active", true)
-    .single();
-
-  if (!wallet) return agent.ownerAddress;
-  return wallet.wallet_address;
+  const resolved = raw || agent.ownerAddress;
+  return typeof resolved === "string" ? resolved.toLowerCase() : resolved;
 }
 
 // Check program ownership: merchant can be either ownerAddress or agent's CDP wallet
@@ -1502,7 +1502,8 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Scope 'read' required" }, 403);
       }
 
-      const merchantAddress = await resolveAgentMerchantAddress(serviceClient, agent, body.use_agent_wallet);
+      const useAgentWallet = url.searchParams.get("use_agent_wallet") === "true";
+      const merchantAddress = await resolveAgentMerchantAddress(serviceClient, agent, useAgentWallet);
 
       const { data: profile } = await serviceClient
         .from("merchant_profiles")
@@ -1599,7 +1600,7 @@ Deno.serve(async (req) => {
       "POST /offers": "Create a P2P escrow offer",
       "POST /accept-offer": "Accept a P2P offer",
       "POST /cancel-offer": "Cancel your P2P offer",
-      "GET /merchant-profile": "Get merchant business profile",
+      "GET /merchant-profile?use_agent_wallet=true": "Get merchant business profile (query flag optional; true = CDP agent wallet)",
       "POST /merchant-profile": "Create or update merchant business profile",
       "GET /me": "Get agent info",
       "GET /tx-receipt?tx_hash=0x...": "Extract token_address from deploy transaction",

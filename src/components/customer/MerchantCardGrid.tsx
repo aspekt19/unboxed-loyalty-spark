@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Store, Search, Star, Gift, Users, MapPin, ExternalLink, Loader2 } from 'lucide-react';
+import { Store, Search, Star, Gift, Users, MapPin, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -58,6 +58,7 @@ export function MerchantCardGrid({ onMerchantSelect, selectedMerchant }: Merchan
 
       if (profilesError) {
         console.error('[MerchantCardGrid] profiles error:', profilesError.message);
+        setMerchants([]);
         return;
       }
 
@@ -85,6 +86,15 @@ export function MerchantCardGrid({ onMerchantSelect, selectedMerchant }: Merchan
           .select('merchant_address, rating')
           .in('merchant_address', merchantAddresses),
       ]);
+
+      if (programsRes.error || rewardsRes.error || reviewsRes.error) {
+        console.error(
+          '[MerchantCardGrid] related data error:',
+          programsRes.error?.message || rewardsRes.error?.message || reviewsRes.error?.message
+        );
+        setMerchants([]);
+        return;
+      }
 
       const cards: MerchantCard[] = profiles.map(profile => {
         const programs = (programsRes.data || []).filter(

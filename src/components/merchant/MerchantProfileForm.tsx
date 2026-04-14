@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,6 +26,13 @@ const CATEGORIES = [
   { value: 'other', label: '📦 Other' },
 ];
 
+function websiteHref(raw: string): string {
+  const t = raw.trim();
+  if (!t) return '#';
+  if (/^https?:\/\//i.test(t)) return t;
+  return `https://${t}`;
+}
+
 export function MerchantProfileForm() {
   const { address } = useAccount();
   const [isLoading, setIsLoading] = useState(true);
@@ -40,12 +47,7 @@ export function MerchantProfileForm() {
   const [website, setWebsite] = useState('');
   const [location, setLocation] = useState('');
 
-  useEffect(() => {
-    if (!address) return;
-    loadProfile();
-  }, [address]);
-
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     if (!address) return;
     setIsLoading(true);
     try {
@@ -74,7 +76,12 @@ export function MerchantProfileForm() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [address]);
+
+  useEffect(() => {
+    if (!address) return;
+    void loadProfile();
+  }, [address, loadProfile]);
 
   const handleSave = async () => {
     if (!address) return;
@@ -148,7 +155,16 @@ export function MerchantProfileForm() {
           <CardContent className="pt-0 space-y-1 text-sm text-muted-foreground">
             {description && <p>{description}</p>}
             {location && <p>📍 {location}</p>}
-            {website && <a href={website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline block">🌐 {website}</a>}
+            {website && (
+              <a
+                href={websiteHref(website)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline block"
+              >
+                🌐 {website}
+              </a>
+            )}
           </CardContent>
         )}
       </Card>
