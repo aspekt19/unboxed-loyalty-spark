@@ -1,4 +1,4 @@
-import { Gift, Store, TrendingUp, User, Home } from 'lucide-react';
+import { Gift, Store, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -11,7 +11,6 @@ interface NavItem {
 const navItems: NavItem[] = [
   { id: 'loyalty', label: 'Loyalty', icon: Gift },
   { id: 'marketplace', label: 'Exchange', icon: Store },
-  { id: 'roundup', label: 'Invest', icon: TrendingUp },
   { id: 'profile', label: 'Profile', icon: User },
 ];
 
