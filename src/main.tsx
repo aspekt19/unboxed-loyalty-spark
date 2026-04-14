@@ -9,7 +9,19 @@ window.addEventListener('unhandledrejection', (event) => {
   if (
     msg.includes('connector error') ||
     msg.includes('Unknown RPC') ||
-    msg.includes('connector not found')
+    msg.includes('connector not found') ||
+    msg.includes('unknown RPC')
+  ) {
+    event.preventDefault();
+  }
+});
+
+window.addEventListener('error', (event) => {
+  const msg = event.message || '';
+  if (
+    msg.includes('connector error') ||
+    msg.includes('Unknown RPC') ||
+    msg.includes('unknown RPC')
   ) {
     event.preventDefault();
   }
