@@ -39,7 +39,7 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant }
   const [activePrograms, setActivePrograms] = useState<Set<string>>(new Set());
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = useState(0);
-
+  const [searchQuery, setSearchQuery] = useState('');
   const publicClient = usePublicClient();
   const { address: walletAddress } = useAccount();
   const { balances, isLoading, refetch } = useMultiTokenBalance(allTokens);
