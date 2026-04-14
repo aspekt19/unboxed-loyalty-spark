@@ -16,7 +16,7 @@ export function ConnectorRecoveryListener() {
   const config = useConfig();
   const { logout: privyLogout } = usePrivySafe();
   const busyRef = useRef(false);
-  const debounceRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
+  const debounceRef = useRef<number | null>(null);
 
   const recover = useCallback(async () => {
     if (isFarcaster || busyRef.current) return;
@@ -72,7 +72,7 @@ export function ConnectorRecoveryListener() {
 
     const schedule = () => {
       if (debounceRef.current) window.clearTimeout(debounceRef.current);
-      debounceRef.current = window.setTimeout((() => {
+      debounceRef.current = window.setTimeout(() => {
         debounceRef.current = null;
         void recover();
       }, 150);
