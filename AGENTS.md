@@ -15,6 +15,7 @@ This file is the **entry point** for coding agents (Cursor, OpenServ, Claude Cod
 
 | Resource | Production URL |
 |----------|----------------|
+| **Onboarding (humans + agents)** | `https://loyalspark.online/for-agents` |
 | Agent manifest | `https://loyalspark.online/.well-known/agent.json` |
 | Skills (Markdown) | `https://loyalspark.online/.well-known/skills/index.md` |
 | OpenAPI | `https://loyalspark.online/openapi.json` |
@@ -22,6 +23,8 @@ This file is the **entry point** for coding agents (Cursor, OpenServ, Claude Cod
 | Long LLM reference | `https://loyalspark.online/llms-full.txt` |
 
 Source files for the above: `public/.well-known/`, `public/openapi.json`, `public/llms.txt`, `public/llms-full.txt`.
+
+Copy-paste MCP and curl: **[examples/agent-mcp/](./examples/agent-mcp/)** · Short repo quickstart: **[docs/agents/QUICKSTART.md](./docs/agents/QUICKSTART.md)**.
 
 ## API & MCP (source of truth)
 

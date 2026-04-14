@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Copy, Check, Cpu, Wrench } from 'lucide-react';
+import { MCP_TOOL_COUNT, MCP_TOOL_NAMES } from '@/constants/mcpToolNames';
 
 const MCP_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/loyalty-mcp`;
 
@@ -30,20 +32,6 @@ function CodeBlock({ code }: { code: string }) {
     </div>
   );
 }
-
-const MCP_TOOLS = [
-  { name: 'get_platform_info', desc: 'Protocol metadata (chain, features)', scope: 'any' },
-  { name: 'get_my_profile', desc: 'Agent identity and permissions', scope: 'any' },
-  { name: 'list_loyalty_programs', desc: 'All merchant loyalty programs', scope: 'read' },
-  { name: 'list_rewards', desc: 'Rewards for a specific program', scope: 'read' },
-  { name: 'create_reward', desc: 'Create a new reward item', scope: 'manage_rewards' },
-  { name: 'mint_loyalty_tokens', desc: 'Mint to customer + fee calldata (two onchain txs)', scope: 'mint' },
-  { name: 'transfer_loyalty_tokens', desc: 'Transfer tokens between wallets', scope: 'mint' },
-  { name: 'get_token_balance', desc: 'Customer balance and tier info', scope: 'read' },
-  { name: 'get_program_analytics', desc: 'Program performance metrics', scope: 'read' },
-  { name: 'get_platform_stats', desc: 'Global platform statistics (admin-only)', scope: 'read (admin)' },
-  { name: 'list_marketplace_offers', desc: 'Active token trading offers', scope: 'trade' },
-];
 
 export default function McpServerSection() {
   const claudeConfig = `{
@@ -204,15 +192,20 @@ async def main():
         <div>
           <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-3 flex items-center gap-1.5">
             <Wrench className="h-3.5 w-3.5" />
-            Available Tools ({MCP_TOOLS.length})
+            Tool ids ({MCP_TOOL_COUNT})
           </h4>
-          <div className="grid gap-1.5">
-            {MCP_TOOLS.map((tool) => (
-              <div key={tool.name} className="flex items-center gap-2 p-2 rounded border text-sm">
-                <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono shrink-0">{tool.name}</code>
-                <span className="text-xs text-muted-foreground flex-1">{tool.desc}</span>
-                <Badge variant="secondary" className="text-[10px] shrink-0">{tool.scope}</Badge>
-              </div>
+          <p className="text-xs text-muted-foreground mb-2">
+            Descriptions ship with each tool from the server. Human onboarding:{' '}
+            <Link to="/for-agents" className="text-primary underline underline-offset-2 font-medium">
+              /for-agents
+            </Link>
+            .
+          </p>
+          <div className="flex flex-wrap gap-1.5 max-h-52 overflow-y-auto p-2 rounded-md border bg-muted/20">
+            {MCP_TOOL_NAMES.map((name) => (
+              <code key={name} className="text-[10px] sm:text-xs bg-background border rounded px-1.5 py-0.5 font-mono">
+                {name}
+              </code>
             ))}
           </div>
         </div>

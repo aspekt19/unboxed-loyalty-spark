@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Copy, Check, Bot, Key, Shield, Zap, Lightbulb, Network, BadgeCheck, Users, TrendingUp, Puzzle, BookOpen, ExternalLink } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import PageTransition from '@/components/PageTransition';
 import McpServerSection from '@/components/api-docs/McpServerSection';
 import MppSection from '@/components/api-docs/MppSection';
@@ -667,7 +667,7 @@ const reward = await fetch(\`\${BASE}/rewards\`, {
         "@type": "WebPage",
         "name": "Agent API Documentation — Loyal Spark",
         "url": "https://loyalspark.online/api-docs",
-        "description": "REST API and MCP Server docs for AI agents. 19 endpoints to manage loyalty programs on Base L2."
+        "description": "REST API and MCP Server docs for AI agents on Base L2 — 22 authenticated routes, public voucher status, 27 MCP tools."
       },
       {
         "@type": "BreadcrumbList",
@@ -697,6 +697,13 @@ const reward = await fetch(\`\${BASE}/rewards\`, {
               <p className="text-muted-foreground text-xs sm:text-sm">
                 REST API for AI agents to interact with Loyal Spark loyalty programs
               </p>
+              <Link
+                to="/for-agents"
+                className="text-xs sm:text-sm text-primary font-medium inline-flex items-center gap-1 mt-1 hover:underline underline-offset-4"
+              >
+                <BookOpen className="h-3.5 w-3.5" />
+                Agent onboarding (keys, MCP, discovery)
+              </Link>
             </div>
           </div>
 

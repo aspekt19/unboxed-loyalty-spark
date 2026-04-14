@@ -18,6 +18,7 @@ import GuidePage from "./pages/GuidePage";
 import InstallPage from "./pages/InstallPage";
 import PremiumPage from "./pages/PremiumPage";
 import ApiDocsPage from "./pages/ApiDocsPage";
+import ForAgentsPage from "./pages/ForAgentsPage";
 import NotFound from "./pages/NotFound";
 import NativeShopperPage from "./pages/NativeShopperPage";
 import NativeBusinessPage from "./pages/NativeBusinessPage";
@@ -68,6 +69,7 @@ function AnimatedRoutes() {
         <Route path="/guide" element={<GuidePage />} />
         <Route path="/install" element={<InstallPage />} />
         <Route path="/api-docs" element={<ApiDocsPage />} />
+        <Route path="/for-agents" element={<ForAgentsPage />} />
         {/* Native app entry points (Capacitor) */}
         <Route path="/native/shopper" element={<NativeShopperPage />} />
         <Route path="/native/business" element={<NativeBusinessPage />} />

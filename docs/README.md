@@ -10,6 +10,7 @@ Start at the repo root **[AGENTS.md](../AGENTS.md)** (links to rules, APIs, and 
 
 | Path | Contents |
 |------|----------|
+| [agents/](./agents/) | Short quickstart for coding agents (links to `/for-agents`, examples) |
 | [development/](./development/) | Build, deploy, Capacitor native apps |
 | [integrations/](./integrations/) | Farcaster, OpenServ, A2A, prompts, adaptation plans |
 | [pitch-deck/](./pitch-deck/) | Investor deck source notes (Markdown); live UI route: `/pitch` |
@@ -17,6 +18,7 @@ Start at the repo root **[AGENTS.md](../AGENTS.md)** (links to rules, APIs, and 
 
 ## Quick links
 
+- [AI agents — repo quickstart](./agents/QUICKSTART.md) · live **[/for-agents](https://loyalspark.online/for-agents)**
 - [Native / Capacitor build](./development/NATIVE_BUILD_GUIDE.md)
 - [Deployment](./development/DEPLOYMENT_INSTRUCTIONS.md)
 - [Farcaster](./integrations/FARCASTER_APP_README.md)

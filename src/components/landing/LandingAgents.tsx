@@ -22,7 +22,8 @@ const LandingAgents = () => {
             Built for AI Agents
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
-            AI agents can autonomously create loyalty programs, mint tokens, manage rewards, and operate their own wallets — all via REST API or MCP Server.
+            Agents mint points, run cashback via <code className="text-xs bg-muted/80 px-1 rounded">POST /earn</code>, manage rewards,
+            and use MPC wallets — over REST, MCP (27 tools), or pay-per-request (x402 / MPP).
           </p>
         </motion.div>
 
@@ -70,16 +71,22 @@ const LandingAgents = () => {
           </motion.div>
         </div>
 
-        <motion.div 
-          className="mt-8 text-center"
+        <motion.div
+          className="mt-8 flex flex-wrap justify-center gap-3"
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.4 }}
         >
+          <Link to="/for-agents">
+            <Button className="font-semibold">
+              Start for AI agents
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
           <Link to="/api-docs">
             <Button variant="outline" className="font-semibold">
-              View API Documentation
+              API reference
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>

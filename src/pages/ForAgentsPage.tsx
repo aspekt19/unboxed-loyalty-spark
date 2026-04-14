@@ -1,0 +1,259 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import PageTransition from "@/components/PageTransition";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+  ArrowLeft,
+  Bot,
+  Check,
+  Copy,
+  ExternalLink,
+  Key,
+  Link2,
+  Sparkles,
+  Terminal,
+  BookOpen,
+} from "lucide-react";
+import { MCP_TOOL_COUNT, MCP_TOOL_NAMES } from "@/constants/mcpToolNames";
+
+const SITE = "https://loyalspark.online";
+const REST = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-api`;
+const MCP = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/loyalty-mcp`;
+const X402 = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/x402-gateway`;
+const MPP = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mpp-gateway`;
+
+function CodeBlock({ code }: { code: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    void navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <div className="relative group">
+      <pre className="bg-muted/60 border rounded-lg p-3 sm:p-4 overflow-x-auto text-[11px] sm:text-xs font-mono leading-relaxed max-h-[min(420px,55vh)] overflow-y-auto">
+        <code>{code}</code>
+      </pre>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="absolute top-2 right-2 h-8 w-8"
+        onClick={copy}
+        aria-label="Copy code"
+      >
+        {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+      </Button>
+    </div>
+  );
+}
+
+const mcpJson = `{
+  "mcpServers": {
+    "loyal-spark": {
+      "url": "${MCP}",
+      "headers": {
+        "x-api-key": "lsk_YOUR_API_KEY"
+      }
+    }
+  }
+}`;
+
+const curlProbe = `curl -sS -H "x-api-key: lsk_YOUR_API_KEY" \\
+  "${REST}/programs"`;
+
+export default function ForAgentsPage() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "For AI Agents — Loyal Spark",
+    url: `${SITE}/for-agents`,
+    description:
+      "Onboard AI agents to Loyal Spark: API keys, REST, MCP (27 tools), x402/MPP, discovery URLs, and skills on Base L2.",
+  };
+
+  return (
+    <PageTransition>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <div className="min-h-screen bg-background">
+        <header className="sticky top-0 z-50 border-b border-border bg-background/85 backdrop-blur-md">
+          <div className="container max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
+            <Link to="/">
+              <Button variant="ghost" size="icon" aria-label="Back home">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-base sm:text-lg font-bold flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary shrink-0" />
+                <span>For AI agents</span>
+              </h1>
+              <p className="text-xs text-muted-foreground truncate sm:whitespace-normal">
+                Loyalty on Base — REST, MCP, machine payments, one page to go live
+              </p>
+            </div>
+            <Button asChild size="sm" className="shrink-0">
+              <a href={`${SITE}/merchant`} target="_blank" rel="noreferrer">
+                <Key className="h-3.5 w-3.5 mr-1.5" />
+                Get API key
+              </a>
+            </Button>
+          </div>
+        </header>
+
+        <main className="container max-w-5xl mx-auto px-4 py-8 space-y-10">
+          <section className="text-center space-y-3 max-w-3xl mx-auto">
+            <Badge variant="secondary" className="text-xs">
+              Base mainnet · ERC-20 · {MCP_TOOL_COUNT} MCP tools
+            </Badge>
+            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight">
+              Ship an agent that runs real loyalty programs
+            </h2>
+            <p className="text-sm sm:text-base text-muted-foreground">
+              Humans use Privy + the web app. <strong>Agents</strong> use an <code className="text-xs bg-muted px-1 py-0.5 rounded">lsk_</code> key,
+              the REST API, or MCP — same contracts and database. Public voucher lookup needs no key.
+            </p>
+            <div className="flex flex-wrap justify-center gap-2 pt-2">
+              <Button asChild variant="outline" size="sm">
+                <Link to="/api-docs">API reference</Link>
+              </Button>
+              <Button asChild variant="outline" size="sm">
+                <a href={`${SITE}/openapi.json`} target="_blank" rel="noreferrer">
+                  OpenAPI <ExternalLink className="h-3 w-3 ml-1" />
+                </a>
+              </Button>
+              <Button asChild variant="outline" size="sm">
+                <a href={`${SITE}/.well-known/agent.json`} target="_blank" rel="noreferrer">
+                  agent.json <ExternalLink className="h-3 w-3 ml-1" />
+                </a>
+              </Button>
+            </div>
+          </section>
+
+          <section className="grid md:grid-cols-3 gap-4">
+            <Card className="border-primary/20">
+              <CardHeader className="pb-2">
+                <Terminal className="h-6 w-6 text-primary mb-1" />
+                <CardTitle className="text-base">REST</CardTitle>
+                <CardDescription>22 routes + public GET /vouchers/status</CardDescription>
+              </CardHeader>
+              <CardContent className="text-xs text-muted-foreground space-y-2">
+                <p>Base URL (append path):</p>
+                <code className="block bg-muted/70 rounded px-2 py-1.5 break-all">{REST}</code>
+              </CardContent>
+            </Card>
+            <Card className="border-primary/20">
+              <CardHeader className="pb-2">
+                <Bot className="h-6 w-6 text-primary mb-1" />
+                <CardTitle className="text-base">MCP</CardTitle>
+                <CardDescription>Streamable HTTP · JSON-RPC 2.0</CardDescription>
+              </CardHeader>
+              <CardContent className="text-xs text-muted-foreground space-y-2">
+                <p>Server URL:</p>
+                <code className="block bg-muted/70 rounded px-2 py-1.5 break-all">{MCP}</code>
+              </CardContent>
+            </Card>
+            <Card className="border-primary/20">
+              <CardHeader className="pb-2">
+                <Link2 className="h-6 w-6 text-primary mb-1" />
+                <CardTitle className="text-base">Pay per call</CardTitle>
+                <CardDescription>x402 (USDC Base) · MPP (Tempo)</CardDescription>
+              </CardHeader>
+              <CardContent className="text-xs text-muted-foreground space-y-2">
+                <p className="break-all">x402: {X402}</p>
+                <p className="break-all">MPP: {MPP}</p>
+              </CardContent>
+            </Card>
+          </section>
+
+          <section className="space-y-4">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Key className="h-5 w-5 text-primary" />
+              Three steps
+            </h3>
+            <div className="grid sm:grid-cols-3 gap-4">
+              {[
+                {
+                  step: "1",
+                  title: "Merchant",
+                  body: "Sign in at loyalspark.online/merchant and open the AI Agents tab.",
+                },
+                {
+                  step: "2",
+                  title: "Key",
+                  body: "Register an agent and store the lsk_... key in your runtime or MCP headers.",
+                },
+                {
+                  step: "3",
+                  title: "Call",
+                  body: "Hit /programs or plug MCP into Cursor / Claude — use Skills for guided flows.",
+                },
+              ].map((s) => (
+                <Card key={s.step}>
+                  <CardHeader className="pb-2">
+                    <Badge variant="outline" className="w-8 h-8 rounded-full p-0 flex items-center justify-center text-sm">
+                      {s.step}
+                    </Badge>
+                    <CardTitle className="text-base">{s.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-sm text-muted-foreground">{s.body}</CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-lg font-semibold">First REST call</h3>
+            <CodeBlock code={curlProbe} />
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-lg font-semibold">Cursor / VS Code MCP</h3>
+            <p className="text-sm text-muted-foreground">
+              Merge into <code className="text-xs bg-muted px-1 rounded">.cursor/mcp.json</code> — same JSON lives in the repo under{" "}
+              <code className="text-xs bg-muted px-1 rounded">examples/agent-mcp/</code>.
+            </p>
+            <CodeBlock code={mcpJson} />
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-primary" />
+              Skills (Markdown)
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Twelve step-by-step guides (<code className="text-xs bg-muted px-1 rounded">00</code>–
+              <code className="text-xs bg-muted px-1 rounded">11</code>) live under{" "}
+              <code className="text-xs bg-muted px-1 rounded">/.well-known/skills/</code>.
+            </p>
+            <Button asChild variant="outline" size="sm">
+              <a href={`${SITE}/.well-known/skills/index.md`} target="_blank" rel="noreferrer">
+                Open skills index <ExternalLink className="h-3 w-3 ml-1" />
+              </a>
+            </Button>
+          </section>
+
+          <Separator />
+
+          <section className="space-y-3">
+            <h3 className="text-lg font-semibold">MCP tool ids ({MCP_TOOL_COUNT})</h3>
+            <p className="text-xs text-muted-foreground">
+              Source of truth: <code className="bg-muted px-1 rounded">src/constants/mcpToolNames.ts</code> (sync with{" "}
+              <code className="bg-muted px-1 rounded">loyalty-mcp/index.ts</code>).
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {MCP_TOOL_NAMES.map((name) => (
+                <code key={name} className="text-[10px] sm:text-xs bg-muted/80 border rounded px-1.5 py-0.5 font-mono">
+                  {name}
+                </code>
+              ))}
+            </div>
+          </section>
+        </main>
+      </div>
+    </PageTransition>
+  );
+}

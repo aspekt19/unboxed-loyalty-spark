@@ -6,6 +6,7 @@
 
 ## Docs
 
+- [For AI agents (onboarding)](https://loyalspark.online/for-agents)
 - [API Documentation](https://loyalspark.online/api-docs)
 - [Skills Guide](https://loyalspark.online/.well-known/skills/index.md)
 - [Agent Manifest](https://loyalspark.online/.well-known/agent.json)

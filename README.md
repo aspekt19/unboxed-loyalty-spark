@@ -275,8 +275,9 @@ unboxed-loyalty-spark/
 │   ├── config/                    # Contract addresses & ABIs
 │   ├── contexts/                  # Auth context
 │   ├── integrations/supabase/     # Database client & types
-│   ├── pages/                     # Route pages (e.g. PitchDeck.tsx → /pitch)
+│   ├── pages/                     # Routes (e.g. ForAgentsPage → /for-agents, ApiDocsPage → /api-docs)
 │   └── lib/                       # Utilities
+├── examples/agent-mcp/            # Copy-paste MCP + curl for agents
 ├── public/
 │   ├── .well-known/
 │   │   ├── agent.json             # AI agent discovery
@@ -321,12 +322,14 @@ Loyal Spark is a **machine-payment-native** API. AI agents can discover, authent
 
 | Resource | URL | Purpose |
 |----------|-----|---------|
+| **Agent onboarding (web)** | [/for-agents](https://loyalspark.online/for-agents) | Keys, REST, MCP, gateways, discovery — one page for builders |
 | Agent Manifest | [/.well-known/agent.json](https://loyalspark.online/.well-known/agent.json) | Full protocol spec, capabilities, pricing |
 | MPP Manifest | [/.well-known/mpp.json](https://loyalspark.online/.well-known/mpp.json) | Machine Payment Protocol manifest |
 | OpenAPI Spec | [/openapi.json](https://loyalspark.online/openapi.json) | OpenAPI 3.1.0 with x-payment-info |
 | Skills Library | [/.well-known/skills/](https://loyalspark.online/.well-known/skills/index.md) | 12 step-by-step guides for agents (`00`–`11`) |
 | LLMs.txt | [/llms.txt](https://loyalspark.online/llms.txt) | Protocol summary for LLM crawlers |
 | Prompt Guide | [PROMPT_GUIDE.md](./docs/integrations/PROMPT_GUIDE.md) | Ready-to-use system prompts |
+| Copy-paste MCP / curl | [examples/agent-mcp/](./examples/agent-mcp/) | Starter configs in the repo |
 
 ### Payment Gateways (No API Key Needed)
 

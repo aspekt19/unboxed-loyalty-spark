@@ -8,6 +8,8 @@ Loyal Spark is a dual-mode protocol: humans interact via web UI with flexible au
 
 ## Discovery Endpoints
 
+- Onboarding (web): https://loyalspark.online/for-agents
+- Static pointer (markdown): https://loyalspark.online/for-agents.md
 - Agent Manifest: https://loyalspark.online/.well-known/agent.json
 - OpenAPI 3.1.0: https://loyalspark.online/openapi.json
 - MCP Server: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp (Streamable HTTP)
