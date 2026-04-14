@@ -5,7 +5,7 @@ import { WelcomeFlow } from '@/components/onboarding/WelcomeFlow';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { PremiumStatusBadge } from '@/components/PremiumStatusBadge';
 import { PremiumExpirationAlert } from '@/components/PremiumExpirationAlert';
-import { Gift, ArrowLeft, Store, User } from 'lucide-react';
+import { Gift, ArrowLeft, Store } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -102,15 +102,17 @@ const CustomerPage = () => {
             <div className="flex items-center gap-2 flex-shrink-0">
               <ThemeToggle />
               {!isMobile && (
-                <Button
-                  variant={activeTab === 'profile' ? 'default' : 'outline'}
-                  size="sm"
+                <button
                   onClick={() => handleTabChange('profile')}
-                  className="gap-1.5"
+                  type="button"
+                  className={`px-3 py-1.5 rounded-lg font-bold shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-1.5 text-xs h-8 sm:h-9 sm:text-sm ${
+                    activeTab === 'profile'
+                      ? 'bg-uds-purple text-white hover:bg-uds-purple-light'
+                      : 'border-2 border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-primary/50'
+                  }`}
                 >
-                  <User className="h-4 w-4" />
-                  <span className="hidden sm:inline">Profile</span>
-                </Button>
+                  Profile
+                </button>
               )}
               <WalletConnectButton />
             </div>
