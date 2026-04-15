@@ -11,7 +11,7 @@
 
 - **Transport**: HTTP (Streamable HTTP)
 - **URL**: `https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp`
-- **Header**: `x-api-key: lsk_A9NV68ba_ciGZBSc6_pk5jv0XC_nL7mEFaj`
+- **Header**: `x-api-key: YOUR_API_LOYALKEY`
 
 > Note: In OpenServ, the MCP server is added once at the workspace level. All agents share the same connection and API key. Agents are distinguished by the `agent_role` parameter in `send_report`.
 
@@ -469,7 +469,7 @@ For the OpenServ workspace:
 1. ✅ Add MCP server connection (once, shared by all agents):
    - Transport: **HTTP**
    - URL: `https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp`
-   - Header: `x-api-key: lsk_A9NV68ba_ciGZBSc6_pk5jv0XC_nL7mEFaj`
+   - Header: `x-api-key: YOUR_API_LOYALKEY`
 2. ✅ Create 4 agents with names and system prompts above
 3. ✅ Set models (GPT-5 or GPT-5-mini as noted)
 4. ✅ Create Operations Workflow (set schedule in Workflow settings):
