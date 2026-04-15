@@ -34,7 +34,7 @@ export function AcceptMerchantInviteCard() {
     }
     setBusy(true);
     try {
-      const { data, error } = await supabase.rpc('accept_merchant_invite', {
+      const { data, error } = await supabase.rpc('accept_merchant_invite' as any, {
         p_invite_code: trimmed,
       });
       if (error) {

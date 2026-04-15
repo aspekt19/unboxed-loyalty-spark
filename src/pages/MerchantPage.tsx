@@ -80,7 +80,7 @@ const MerchantPage = () => {
                 variant={showProfile ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setShowProfile(!showProfile)}
-                className="h-8 sm:h-9 text-xs sm:text-sm px-3"
+                className="h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3"
               >
                 Profile
               </Button>
