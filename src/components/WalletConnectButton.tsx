@@ -194,7 +194,7 @@ export function WalletConnectButton() {
   };
 
   const headerButtonClassName =
-    'h-8 sm:h-9 min-w-[80px] rounded-md px-3 text-xs font-medium leading-none sm:min-w-[80px] sm:px-3';
+    'px-4 py-2 rounded-xl font-bold shadow-md hover:shadow-lg transition-all duration-200';
 
   if (farcasterUser) {
     if (!isConnected || isManuallyDisconnected) {
