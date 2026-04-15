@@ -683,103 +683,78 @@ function ProgramCard({
 
           {/* Cashback Rate */}
           {readOnly ? (
-            <div className="text-[10px] text-muted-foreground flex items-center gap-1">
-              <Calculator className="h-3 w-3" />
-              <span>Cashback: {program.cashbackRate ?? 5}%</span>
-            </div>
-          ) : (
-            {editingCashback ? (
-              <div className="space-y-1.5 p-2 rounded-lg border bg-muted/30">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Cashback Rate</span>
-                  <span className="font-bold text-primary text-xs">{cashbackValue}%</span>
-                </div>
-                <Slider
-                  value={[cashbackValue]}
-                  onValueChange={([v]) => setCashbackValue(v)}
-                  min={1}
-                  max={50}
-                  step={1}
-                  className="w-full"
-                />
-                <div className="flex gap-1 justify-end">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-5 px-2 text-[10px]"
-                    onClick={(e) => { e.stopPropagation(); setEditingCashback(false); setCashbackValue(program.cashbackRate ?? 5); }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="h-5 px-2 text-[10px]"
-                    onClick={handleSaveCashback}
-                    disabled={savingCashback}
-                  >
-                    {savingCashback ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Save'}
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <button
-                className="flex items-center gap-1 hover:text-primary transition-colors"
-                onClick={() => setEditingCashback(true)}
-              >
+            <>
+              <div className="text-[10px] text-muted-foreground flex items-center gap-1">
                 <Calculator className="h-3 w-3" />
                 <span>Cashback: {program.cashbackRate ?? 5}%</span>
-              </button>
-            )}
-          </div>
-
-          {/* Points Per Dollar */}
-          <div className="text-[10px] text-muted-foreground" onClick={(e) => e.stopPropagation()}>
-            {editingPoints ? (
-              <div className="space-y-1.5 p-2 rounded-lg border bg-muted/30">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Points per $1</span>
-                  <span className="font-bold text-primary text-xs">{pointsValue}</span>
-                </div>
-                <Slider
-                  value={[pointsValue]}
-                  onValueChange={([v]) => setPointsValue(v)}
-                  min={1}
-                  max={100}
-                  step={1}
-                  className="w-full"
-                />
-                <p className="text-muted-foreground/70">
-                  Example: $100 purchase × {cashbackValue}% = ${(100 * cashbackValue / 100).toFixed(2)} × {pointsValue} = {(100 * cashbackValue / 100 * pointsValue).toFixed(0)} points
-                </p>
-                <div className="flex gap-1 justify-end">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-5 px-2 text-[10px]"
-                    onClick={(e) => { e.stopPropagation(); setEditingPoints(false); setPointsValue(program.pointsPerDollar ?? 1); }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="h-5 px-2 text-[10px]"
-                    onClick={handleSavePoints}
-                    disabled={savingPoints}
-                  >
-                    {savingPoints ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Save'}
-                  </Button>
-                </div>
               </div>
-            ) : (
-              <button
-                className="flex items-center gap-1 hover:text-primary transition-colors"
-                onClick={() => setEditingPoints(true)}
-              >
+              <div className="text-[10px] text-muted-foreground flex items-center gap-1">
                 <Calculator className="h-3 w-3" />
                 <span>Rate: {program.pointsPerDollar ?? 1} pts/$1</span>
-              </button>
-            )}
-          </div>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Cashback Rate */}
+              <div className="text-[10px] text-muted-foreground" onClick={(e) => e.stopPropagation()}>
+                {editingCashback ? (
+                  <div className="space-y-1.5 p-2 rounded-lg border bg-muted/30">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">Cashback Rate</span>
+                      <span className="font-bold text-primary text-xs">{cashbackValue}%</span>
+                    </div>
+                    <Slider
+                      value={[cashbackValue]}
+                      onValueChange={([v]) => setCashbackValue(v)}
+                      min={1}
+                      max={50}
+                      step={1}
+                      className="w-full"
+                    />
+                    <div className="flex gap-1 justify-end">
+                      <Button variant="ghost" size="sm" className="h-5 px-2 text-[10px]"
+                        onClick={(e) => { e.stopPropagation(); setEditingCashback(false); setCashbackValue(program.cashbackRate ?? 5); }}>Cancel</Button>
+                      <Button size="sm" className="h-5 px-2 text-[10px]" onClick={handleSaveCashback} disabled={savingCashback}>
+                        {savingCashback ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Save'}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <button className="flex items-center gap-1 hover:text-primary transition-colors" onClick={() => setEditingCashback(true)}>
+                    <Calculator className="h-3 w-3" />
+                    <span>Cashback: {program.cashbackRate ?? 5}%</span>
+                  </button>
+                )}
+              </div>
+              {/* Points Per Dollar */}
+              <div className="text-[10px] text-muted-foreground" onClick={(e) => e.stopPropagation()}>
+                {editingPoints ? (
+                  <div className="space-y-1.5 p-2 rounded-lg border bg-muted/30">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">Points per $1</span>
+                      <span className="font-bold text-primary text-xs">{pointsValue}</span>
+                    </div>
+                    <Slider value={[pointsValue]} onValueChange={([v]) => setPointsValue(v)} min={1} max={100} step={1} className="w-full" />
+                    <p className="text-muted-foreground/70">
+                      Example: $100 purchase × {cashbackValue}% = ${(100 * cashbackValue / 100).toFixed(2)} × {pointsValue} = {(100 * cashbackValue / 100 * pointsValue).toFixed(0)} points
+                    </p>
+                    <div className="flex gap-1 justify-end">
+                      <Button variant="ghost" size="sm" className="h-5 px-2 text-[10px]"
+                        onClick={(e) => { e.stopPropagation(); setEditingPoints(false); setPointsValue(program.pointsPerDollar ?? 1); }}>Cancel</Button>
+                      <Button size="sm" className="h-5 px-2 text-[10px]" onClick={handleSavePoints} disabled={savingPoints}>
+                        {savingPoints ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Save'}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <button className="flex items-center gap-1 hover:text-primary transition-colors" onClick={() => setEditingPoints(true)}>
+                    <Calculator className="h-3 w-3" />
+                    <span>Rate: {program.pointsPerDollar ?? 1} pts/$1</span>
+                  </button>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
       
