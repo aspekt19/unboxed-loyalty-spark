@@ -55,7 +55,7 @@ const MerchantPage = () => {
       <div className="min-h-screen bg-background">
         <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
           <div className="container mx-auto px-2 sm:px-3 py-2 flex justify-between items-center gap-1.5 sm:gap-2">
-            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-shrink">
+            <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-shrink">
               {!isNativeMode && (
                 <Link to="/">
                   <Button variant="ghost" size="icon" className="hover:bg-secondary h-7 w-7 sm:h-8 sm:w-8">
@@ -68,14 +68,17 @@ const MerchantPage = () => {
                 alt="Loyal Spark" 
                 className="h-6 w-6 sm:h-7 sm:w-7 rounded-lg flex-shrink-0" 
               />
-              <div className="min-w-0">
+              <div className="min-w-0 hidden sm:block">
                 <h1 className="text-xs sm:text-sm font-bold text-foreground tracking-tight truncate">
                   Loyal Spark
                 </h1>
                 <p className="text-[9px] sm:text-[10px] text-muted-foreground truncate">Merchant Portal</p>
               </div>
             </div>
-            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              <div className="hidden sm:block">
+                <ThemeToggle />
+              </div>
               <Button
                 variant={showProfile ? 'default' : 'outline'}
                 size="sm"
@@ -84,7 +87,6 @@ const MerchantPage = () => {
               >
                 Profile
               </Button>
-              <ThemeToggle />
               <WalletConnectButton />
             </div>
           </div>

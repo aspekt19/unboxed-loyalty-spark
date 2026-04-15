@@ -97,15 +97,17 @@ const CustomerPage = () => {
                 alt="Loyal Spark" 
                 className="h-6 w-6 sm:h-7 sm:w-7 rounded-lg flex-shrink-0" 
               />
-              <div className="min-w-0">
+              <div className="min-w-0 hidden sm:block">
                 <h1 className="text-xs sm:text-sm font-bold text-foreground tracking-tight truncate">
                   Loyal Spark
                 </h1>
                 <p className="text-[9px] sm:text-[10px] text-muted-foreground truncate">Customer Portal</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <ThemeToggle />
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              <div className="hidden sm:block">
+                <ThemeToggle />
+              </div>
               {!isMobile && (
                 <button
                   onClick={() => handleTabChange('profile')}
