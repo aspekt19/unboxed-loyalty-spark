@@ -824,7 +824,7 @@ function createMcpServer(agent: any) {
   });
 
   mcpServer.tool("delete_report", {
-    description: "Delete a report that is no longer relevant. Use to clean up outdated or irrelevant reports.",
+    description: "DANGER: Permanently delete a report. Only use when the merchant explicitly requests deletion. Do NOT delete reports automatically — they are valuable for the merchant dashboard. Reports persist so merchants can review agent insights over time.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -841,6 +841,15 @@ function createMcpServer(agent: any) {
       if (report.owner_address?.toLowerCase() !== agent.ownerAddress.toLowerCase()) return T('{"error":"Not your report"}');
       const { error: delErr } = await d.from("agent_reports").delete().eq("id", report_id);
       if (delErr) return T(JSON.stringify({ error: delErr.message }));
+
+      // Log deletion so we can track unexpected cleanups
+      await d.from("agent_activity_log").insert({
+        agent_id: agent.agentId,
+        action: `report:delete`,
+        request_body: { report_id, title: report.title },
+        response_status: 200,
+      }).catch(() => {});
+
       return T(JSON.stringify({ message: `Report '${report.title}' deleted` }));
     },
   });
