@@ -568,6 +568,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure) {
             total_offers: marketTotal.count || 0,
             active_offers: marketActive.count || 0,
             completed: marketCompleted.count || 0,
+            cancelled: marketCancelled.count || 0,
           },
           rewards: {
             total: rewardsTotal.count || 0,
