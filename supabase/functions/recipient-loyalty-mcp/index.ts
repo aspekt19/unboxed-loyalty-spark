@@ -14,7 +14,7 @@ function T(text: string) {
 function createRecipientMcpServer(
   wallet: string,
   agentId: string,
-  d: ReturnType<typeof createClient>,
+  d: any,
   ip: string
 ) {
   const w = wallet.toLowerCase();
