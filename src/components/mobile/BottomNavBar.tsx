@@ -17,9 +17,13 @@ const navItems: NavItem[] = [
 interface BottomNavBarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  /** When false, Profile is hidden until the user is signed in (same as merchant header). */
+  showProfileNav?: boolean;
 }
 
-export function BottomNavBar({ activeTab, onTabChange }: BottomNavBarProps) {
+export function BottomNavBar({ activeTab, onTabChange, showProfileNav = true }: BottomNavBarProps) {
+  const items = showProfileNav ? navItems : navItems.filter((i) => i.id !== 'profile');
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
       {/* Gradient fade above the bar */}
@@ -27,7 +31,7 @@ export function BottomNavBar({ activeTab, onTabChange }: BottomNavBarProps) {
       
       <div className="bg-background/95 backdrop-blur-xl border-t border-border/60 px-2 pb-[env(safe-area-inset-bottom,8px)]">
         <div className="flex items-center justify-around py-1.5">
-          {navItems.map((item) => {
+          {items.map((item) => {
             const isActive = activeTab === item.id;
             return (
               <button
