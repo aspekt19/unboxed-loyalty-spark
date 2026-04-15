@@ -12,7 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMintTokens } from '@/hooks/useMintTokens';
 import { useAccount } from 'wagmi';
 import { toast } from 'sonner';
-import { Wallet, Bot, Users, Building2, Briefcase } from 'lucide-react';
+import { Wallet, Bot, Users, Building2, Briefcase, CreditCard } from 'lucide-react';
+import { MerchantBillingDashboard } from '@/components/merchant/MerchantBillingDashboard';
 import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
 import { mintTokensSchema } from '@/lib/validationSchemas';
 import { useQuery } from '@tanstack/react-query';
@@ -314,6 +315,9 @@ export function MerchantPanel() {
               <TabsTrigger value="programs" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Programs</TabsTrigger>
               <TabsTrigger value="rewards" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Rewards</TabsTrigger>
               <TabsTrigger value="marketing" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Marketing</TabsTrigger>
+              <TabsTrigger value="billing" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">
+                <CreditCard className="h-3.5 w-3.5 mr-1" />Billing
+              </TabsTrigger>
               <TabsTrigger value="agents" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">
                 <Bot className="h-3.5 w-3.5 mr-1" />AI Agents
               </TabsTrigger>
@@ -351,6 +355,9 @@ export function MerchantPanel() {
               selectedProgram={selectedProgram}
               merchantAddress={address.toLowerCase()}
             />
+          </TabsContent>
+          <TabsContent value="billing" className="mt-6">
+            <MerchantBillingDashboard />
           </TabsContent>
           <TabsContent value="agents" className="mt-6">
             <AgentsTab />

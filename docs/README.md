@@ -16,6 +16,10 @@ Start at the repo root **[AGENTS.md](../AGENTS.md)** (links to rules, APIs, and 
 | [pitch-deck/](./pitch-deck/) | Investor deck source notes (Markdown); live UI route: `/pitch` |
 | [supabase/](./supabase/) | Supabase-specific runbooks (e.g. expiration cron) |
 
+## Business & pricing
+
+- [Monetization & public pricing](./business/MONETIZATION_AND_PRICING.md) · [Action plan](./business/ACTION_PLAN_MONETIZATION.md) · [Grandfathering & admin wallets](./business/GRANDFATHERING_AND_ADMINS.md)
+
 ## Quick links
 
 - [AI agents — repo quickstart](./agents/QUICKSTART.md) · live **[/for-agents](https://loyalspark.online/for-agents)**

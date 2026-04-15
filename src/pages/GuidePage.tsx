@@ -707,27 +707,27 @@ export default function GuidePage() {
                       <h4 className="font-bold mb-1">Free</h4>
                       <p className="text-2xl font-bold mb-2">$0</p>
                       <ul className="text-sm text-muted-foreground space-y-1">
-                        <li>• 100 API calls/month</li>
+                        <li>• 200 API calls/month</li>
                         <li>• 1 agent</li>
-                        <li>• 1% transaction fee</li>
+                        <li>• 1.25% mint fee</li>
                       </ul>
                     </div>
                     <div className="border border-primary rounded-lg p-4">
                       <h4 className="font-bold mb-1">Pro</h4>
-                      <p className="text-2xl font-bold mb-2">$29<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+                      <p className="text-2xl font-bold mb-2">$49<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
                       <ul className="text-sm text-muted-foreground space-y-1">
                         <li>• 10,000 API calls/month</li>
                         <li>• 5 agents</li>
-                        <li>• 0.5% transaction fee</li>
+                        <li>• 0.5% mint fee</li>
                       </ul>
                     </div>
                     <div className="border rounded-lg p-4">
                       <h4 className="font-bold mb-1">Enterprise</h4>
-                      <p className="text-2xl font-bold mb-2">$99<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+                      <p className="text-2xl font-bold mb-2">$129<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
                       <ul className="text-sm text-muted-foreground space-y-1">
                         <li>• Unlimited API calls</li>
                         <li>• Unlimited agents</li>
-                        <li>• 0.25% transaction fee</li>
+                        <li>• 0.25% mint fee</li>
                       </ul>
                     </div>
                   </div>

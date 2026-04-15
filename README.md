@@ -59,7 +59,7 @@ Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain
 - **Server Wallets**: Coinbase CDP MPC wallets for autonomous onchain operations
 - **Scoped Permissions**: Granular access control (read, mint, manage_rewards, trade)
 - **Activity Logging**: Full audit trail of all agent operations
-- **Tiered Pricing**: Free (100 calls/mo, 1% fee) → Pro ($29/mo, 0.5%) → Enterprise ($99/mo, 0.25%)
+- **Tiered Pricing (agents)**: Free (200 calls/mo, 1.25% mint fee) → Pro ($49/mo, 0.5%) → Enterprise ($129/mo, 0.25%) — see [docs/business/MONETIZATION_AND_PRICING.md](./docs/business/MONETIZATION_AND_PRICING.md)
 - **Skills Documentation**: 12 structured step-by-step guides (`00`–`11` under `/.well-known/skills/`) for agent onboarding and operations
 
 ## Technology Stack
@@ -110,7 +110,7 @@ Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain
 curl -H "x-api-key: lsk_YOUR_KEY" \
   https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/programs
 
-# Mint tokens (1% fee on Free plan)
+# Mint tokens (1.25% mint fee on Free plan)
 curl -X POST \
   -H "x-api-key: lsk_YOUR_KEY" \
   -H "Content-Type: application/json" \
@@ -232,13 +232,15 @@ Benefits:
 
 ### Pricing
 
-| Plan | Monthly | API Calls | Agents | Tx Fee |
-|------|---------|-----------|--------|--------|
-| Free | $0 | 100 | 1 | 1% |
-| Pro | $29 USDC | 10,000 | 5 | 0.5% |
-| Enterprise | $99 USDC | Unlimited | Unlimited | 0.25% |
+| Plan | Monthly | API Calls | Agents | Mint fee |
+|------|---------|-----------|--------|----------|
+| Free | $0 | 200 | 1 | 1.25% |
+| Pro | $49 USDC | 10,000 | 5 | 0.5% |
+| Enterprise | $129 USDC | Unlimited | Unlimited | 0.25% |
 
-Payments accepted on-chain in USDC on Base ($1 = 1 USDC).
+**Merchant SaaS (portal):** Starter **$39** / Growth **$79** / Scale **$149** per month (annual discount 15–20% optional) — details in [docs/business/MONETIZATION_AND_PRICING.md](./docs/business/MONETIZATION_AND_PRICING.md).
+
+Payments for agent plans on-chain in USDC on Base ($1 = 1 USDC).
 
 ## Getting Started
 

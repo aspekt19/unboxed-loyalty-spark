@@ -42,10 +42,12 @@ Scopes mirror the REST API: program lifecycle accepts **`mint` or `create_progra
 - Agent manifest: `https://loyalspark.online/.well-known/agent.json`
 - Skills index: `https://loyalspark.online/.well-known/skills/index.md`
 
-## Pricing
+## Pricing (AI agents, `lsk_` keys)
 
-| Plan | Price | API Calls/mo | Agents | Tx Fee |
-|------|-------|-------------|--------|--------|
-| Free | $0 | 100 | 1 | 1% |
-| Pro | $29 USDC | 10,000 | 5 | 0.5% |
-| Enterprise | $99 USDC | Unlimited | Unlimited | 0.25% |
+| Plan | Price | API Calls/mo | Agents | Mint fee |
+|------|-------|-------------|--------|----------|
+| Free | $0 | 200 | 1 | 1.25% |
+| Pro | $49 USDC | 10,000 | 5 | 0.5% |
+| Enterprise | $129 USDC | Unlimited | Unlimited | 0.25% |
+
+Merchant portal (SaaS): Starter $39 / Growth $79 / Scale $149 per month — separate from agent plans.

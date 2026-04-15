@@ -36,7 +36,7 @@ Loyal Spark Farcaster App enables merchants and customers to participate in a to
 - **Program Ownership**: Agents can own programs via CDP wallets (`use_agent_wallet: true`)
 - **Voucher Lifecycle**: Full redeem → use cycle via API (agents can act as both merchant and customer)
 - **Skills**: 12 Markdown guides (`00`–`11`) at `/.well-known/skills/` (source: `public/.well-known/skills/`)
-- **Tiered Plans**: Free → Pro ($29/mo) → Enterprise ($99/mo) in USDC
+- **Tiered Plans**: Free → Pro ($49/mo) → Enterprise ($129/mo) in USDC (see `docs/business/MONETIZATION_AND_PRICING.md`)
 
 ## Technology Stack
 
@@ -149,7 +149,7 @@ curl -H "x-api-key: lsk_YOUR_KEY" \
 |---------|----------|---------|
 | **MPP** (Machine Payments Protocol) | USDC / pathUSD on Tempo | $0.001–$0.05/request |
 | **x402** (Coinbase) | USDC on Base | $0.001–$0.05/request |
-| **API Key** (subscription) | USDC monthly | Free / $29 / $99 |
+| **API Key** (subscription) | USDC monthly | Free / $49 / $129 |
 
 ### Discovery
 

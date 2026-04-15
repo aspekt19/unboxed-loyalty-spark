@@ -56,11 +56,11 @@ The Loyal Spark platform operates as a dual-mode protocol where **humans** inter
 - **Table**: `agent_wallets` — stores wallet addresses linked to agents
 
 ### 5. Monetization ✅
-- **Transaction Fees**: 1% (Free), 0.5% (Pro), 0.25% (Enterprise) — collected during `server_mint`
-- **SaaS Plans**: Free ($0), Pro ($29/mo USDC), Enterprise ($99/mo USDC)
+- **Transaction Fees**: 1.25% (Free), 0.5% (Pro), 0.25% (Enterprise) — collected during `server_mint`
+- **SaaS Plans (agents)**: Free ($0), Pro ($49/mo USDC), Enterprise ($129/mo USDC) — see `docs/business/MONETIZATION_AND_PRICING.md`
 - **Payment**: On-chain USDC transfer verification via BaseScan API
 - **Tables**: `agent_plans`, `agent_plan_subscriptions`, `agent_usage`, `agent_fee_log`
-- **Edge Function**: `verify-agent-plan-payment` — verifies USDC Transfer events on-chain
+- **Edge Function**: `verify-agent-plan-payment` — verifies USDC Transfer events on-chain for **agent** plans (`product` default) and **merchant** SaaS plans (`product: "merchant"`); same treasury wallet as agents
 
 ### 6. Builder Code Attribution ✅
 - **Code**: `bc_wdmnog7m` (ERC-8021 format)

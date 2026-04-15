@@ -339,7 +339,7 @@ const mintRes = await x402Fetch('${X402_URL}/mint', {
           <p className="text-sm font-medium mb-1">💡 Pay-Per-Request vs Subscription</p>
           <p className="text-xs text-muted-foreground">
             Both protocols are ideal for agents making occasional requests. For high-volume usage, the subscription plans 
-            (Free / Pro $29/mo / Enterprise $99/mo) with API key authentication offer better value. 
+            (Free / Pro $49/mo / Enterprise $129/mo) with API key authentication offer better value. 
             All three methods (MPP, x402, API key) can be used in parallel — same API key works with all.
           </p>
         </div>

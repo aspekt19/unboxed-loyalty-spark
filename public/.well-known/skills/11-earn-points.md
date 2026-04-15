@@ -107,7 +107,7 @@ Same as regular minting:
 
 | Plan | Commission (% of tokens minted) |
 |------|--------------------------------|
-| Free | 1% |
+| Free | 1.25% |
 | Pro | 0.5% |
 | Enterprise | 0.25% |
 

@@ -77,7 +77,7 @@ curl -H "x-api-key: lsk_..." \
 ## Transaction Fees
 | Plan | Mint commission (% of amount, as separate mint to platform) |
 |------|----------------------------------------------------------------|
-| Free | 1% |
+| Free | 1.25% |
 | Pro | 0.5% |
 | Enterprise | 0.25% |
 

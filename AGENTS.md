@@ -6,6 +6,7 @@ This file is the **entry point** for coding agents (Cursor, OpenServ, Claude Cod
 
 | What | Path |
 |------|------|
+| **Monetization & public pricing (merchant + agents)** | [`docs/business/MONETIZATION_AND_PRICING.md`](./docs/business/MONETIZATION_AND_PRICING.md) |
 | Repo rules for edits (stack, folders, API scopes) | [`.cursorrules`](./.cursorrules) |
 | Human docs index (build, Farcaster, OpenServ, Supabase runbooks) | [`docs/README.md`](./docs/README.md) |
 | Merchant / customer portal UI & team invites | [`docs/development/PORTALS_AND_TEAM.md`](./docs/development/PORTALS_AND_TEAM.md) |

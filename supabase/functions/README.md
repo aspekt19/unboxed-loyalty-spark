@@ -25,7 +25,7 @@ Each subdirectory is one deployable function (`index.ts` entry). Shared Deno mod
 | `siwe-verify` | SIWE message verification |
 | `siwe-nonce` | Nonce for SIWE |
 | `verify-payment` | Premium / subscription USDC checks |
-| `verify-agent-plan-payment` | Agent plan payment |
+| `verify-agent-plan-payment` | USDC subscription verification for **agent** and **merchant** plans (`product` in body; same `payment_settings.subscription_wallet_address`) |
 | `verify-voucher` | Voucher verification |
 | `mpp-gateway` | MPP pay-per-request proxy to `agent-api` |
 | `x402-gateway` | x402 USDC on Base proxy to `agent-api` |

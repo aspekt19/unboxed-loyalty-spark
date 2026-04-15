@@ -31,9 +31,11 @@ Pay per request with USDC on Base. Native HTTP 402 flow with on-chain settlement
 
 ### API Key (Subscription)
 Traditional API key authentication with monthly plans.
-- Free: 100 calls/month, 1% tx fee
-- Pro ($29/mo): 10K calls, 0.5% fee
-- Enterprise ($99/mo): unlimited, 0.25% fee
+- Free: 200 calls/month, 1.25% mint fee
+- Pro ($49/mo): 10K calls, 0.5% mint fee
+- Enterprise ($129/mo): unlimited, 0.25% mint fee
+
+Merchant SaaS (portal): Starter $39 / Growth $79 / Scale $149 per month — see site docs.
 
 ## Endpoints
 
