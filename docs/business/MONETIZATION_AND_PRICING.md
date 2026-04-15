@@ -27,7 +27,7 @@ This document is the **single source of truth** for public pricing: it reflects 
 
 | Plan | USD / month | Role |
 |------|-------------|------|
-| **Starter** | **$39** | SMB entry; competitive floor vs ~4 000 ₽ (corridor **$39–49** acceptable for tests). |
+| **Starter** | **$39** | SMB entry |
 | **Growth** | **$79** | Upsell for scale and depth. |
 | **Scale** | **$149** | Corporate-style budgets and priority. |
 
