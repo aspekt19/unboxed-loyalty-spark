@@ -101,6 +101,34 @@ supabase/functions/
 - RLS must be enabled on every new Supabase table
 - Keep components under 200 lines — split if larger
 
+## LLM workflow — Karpathy guidelines
+
+Behavioral rules to reduce over-engineering and unclear edits (from [Karpathy guidelines skill](https://github.com/forrestchang/andrej-karpathy-skills/blob/main/skills/karpathy-guidelines/SKILL.md), derived from [Karpathy on LLM coding pitfalls](https://x.com/karpathy/status/2015883857489522876)). **Tradeoff:** bias toward caution over speed; for trivial one-liners, use judgment.
+
+### 1. Think before coding
+- State assumptions explicitly; if uncertain, ask rather than guess.
+- If multiple interpretations exist, present them — do not pick silently.
+- If a simpler approach exists, say so; push back when warranted.
+- If something is unclear, stop, name what is confusing, ask.
+
+### 2. Simplicity first
+- Minimum code that solves the problem; nothing speculative.
+- No features, abstractions, or “configurability” beyond the request.
+- No error handling for scenarios that cannot happen in this codebase path.
+- If a change balloons in size, simplify before shipping.
+
+### 3. Surgical changes
+- Touch only what you must; do not “improve” adjacent code, comments, or formatting.
+- Do not refactor unrelated areas; match existing style even if you would do it differently.
+- Unrelated dead code: mention in passing — do not delete unless asked.
+- Remove only orphans **your** diff created (unused imports/vars from your edit).
+- **Test:** every changed line should trace directly to the user’s request.
+
+### 4. Goal-driven execution
+- Turn work into verifiable outcomes (e.g. fix → repro test or concrete manual check → pass).
+- For multi-step work, use a short plan with a verify step per step.
+- Prefer explicit success criteria over vague “make it work”.
+
 ## Agent Integration
 
 ### REST API (22 authenticated routes + 1 public GET)
