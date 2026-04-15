@@ -502,6 +502,7 @@ interface ProgramCardProps {
   onToggleProgram: (program: LoyaltyProgram, shouldPause: boolean) => void;
   onDeleteProgram: (programId: string, burnTokens: boolean) => void;
   setDeleteDialogOpen: (id: string | null) => void;
+  readOnly?: boolean;
 }
 
 function ProgramCard({
@@ -520,6 +521,7 @@ function ProgramCard({
   onToggleProgram,
   onDeleteProgram,
   setDeleteDialogOpen,
+  readOnly,
 }: ProgramCardProps) {
   const [extendDialogOpen, setExtendDialogOpen] = useState(false);
   const [editingCashback, setEditingCashback] = useState(false);
