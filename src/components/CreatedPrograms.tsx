@@ -117,16 +117,18 @@ export function CreatedPrograms({ onSelectProgram, merchantAddress: merchantAddr
     }
   }, [address]);
 
+  const effectiveMerchantAddress = merchantAddressOverride || address?.toLowerCase();
+
   // Load programs from DB + realtime subscription
   useEffect(() => {
-    if (!address) return;
+    if (!effectiveMerchantAddress) return;
 
     const loadPrograms = async () => {
       try {
         const { data: dbPrograms, error } = await supabase
           .from('loyalty_programs')
           .select('*')
-          .eq('merchant_address', address.toLowerCase())
+          .eq('merchant_address', effectiveMerchantAddress)
           .order('created_at', { ascending: false });
 
         if (error) {
@@ -137,7 +139,9 @@ export function CreatedPrograms({ onSelectProgram, merchantAddress: merchantAddr
 
         const mapped = dbPrograms.map(mapDbProgram);
         setPrograms(mapped);
-        localStorage.setItem('loyaltyPrograms', JSON.stringify(mapped));
+        if (!merchantAddressOverride) {
+          localStorage.setItem('loyaltyPrograms', JSON.stringify(mapped));
+        }
       } catch (error) {
         console.error('[CreatedPrograms] Load error:', error);
       }
@@ -149,10 +153,10 @@ export function CreatedPrograms({ onSelectProgram, merchantAddress: merchantAddr
     window.addEventListener('loyaltyProgramsUpdated', handleUpdate);
 
     const channel = supabase
-      .channel('loyalty_programs_changes')
+      .channel(`loyalty_programs_changes_${effectiveMerchantAddress}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'loyalty_programs', filter: `merchant_address=eq.${address.toLowerCase()}` },
+        { event: '*', schema: 'public', table: 'loyalty_programs', filter: `merchant_address=eq.${effectiveMerchantAddress}` },
         () => loadPrograms()
       )
       .subscribe();
@@ -161,7 +165,7 @@ export function CreatedPrograms({ onSelectProgram, merchantAddress: merchantAddr
       window.removeEventListener('loyaltyProgramsUpdated', handleUpdate);
       supabase.removeChannel(channel);
     };
-  }, [address]);
+  }, [effectiveMerchantAddress, merchantAddressOverride]);
 
   const handleSelectProgram = (program: LoyaltyProgram, index: number) => {
     if (!program.tokenAddress) {
