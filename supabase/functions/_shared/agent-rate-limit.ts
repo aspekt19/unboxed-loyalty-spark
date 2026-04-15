@@ -43,6 +43,11 @@ export async function checkAgentApiRateLimits(
   serviceClient: any,
   agent: AgentRateLimitRow
 ): Promise<RateLimitResult> {
+  // Admin wallets bypass all rate limits
+  if (ADMIN_WALLETS.includes(agent.owner_address.toLowerCase())) {
+    return { ok: true };
+  }
+
   const perMin = agent.rate_limit_per_minute ?? 60;
   const sinceIso = new Date(Date.now() - 60_000).toISOString();
 
