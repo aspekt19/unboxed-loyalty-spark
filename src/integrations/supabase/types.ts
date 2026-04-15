@@ -818,6 +818,139 @@ export type Database = {
         }
         Relationships: []
       }
+      merchant_branches: {
+        Row: {
+          branch_address: string | null
+          branch_name: string
+          created_at: string
+          id: string
+          is_active: boolean
+          merchant_address: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          branch_address?: string | null
+          branch_name: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          merchant_address: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          branch_address?: string | null
+          branch_name?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          merchant_address?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      merchant_employees: {
+        Row: {
+          branch_id: string | null
+          created_at: string
+          display_name: string | null
+          employee_wallet_address: string
+          id: string
+          invited_by: string | null
+          is_active: boolean
+          joined_at: string | null
+          merchant_address: string
+          role: Database["public"]["Enums"]["merchant_employee_role"]
+          updated_at: string
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string
+          display_name?: string | null
+          employee_wallet_address: string
+          id?: string
+          invited_by?: string | null
+          is_active?: boolean
+          joined_at?: string | null
+          merchant_address: string
+          role?: Database["public"]["Enums"]["merchant_employee_role"]
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string
+          display_name?: string | null
+          employee_wallet_address?: string
+          id?: string
+          invited_by?: string | null
+          is_active?: boolean
+          joined_at?: string | null
+          merchant_address?: string
+          role?: Database["public"]["Enums"]["merchant_employee_role"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_employees_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "merchant_branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      merchant_invites: {
+        Row: {
+          branch_id: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          invite_code: string | null
+          merchant_address: string
+          role: Database["public"]["Enums"]["merchant_employee_role"]
+          status: string
+          target_wallet_address: string | null
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          invite_code?: string | null
+          merchant_address: string
+          role?: Database["public"]["Enums"]["merchant_employee_role"]
+          status?: string
+          target_wallet_address?: string | null
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          invite_code?: string | null
+          merchant_address?: string
+          role?: Database["public"]["Enums"]["merchant_employee_role"]
+          status?: string
+          target_wallet_address?: string | null
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_invites_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "merchant_branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       merchant_profiles: {
         Row: {
           business_name: string
@@ -1434,7 +1567,9 @@ export type Database = {
       token_mint_history: {
         Row: {
           amount: number
+          branch_id: string | null
           created_at: string
+          employee_address: string | null
           id: string
           merchant_address: string
           recipient_address: string
@@ -1445,7 +1580,9 @@ export type Database = {
         }
         Insert: {
           amount: number
+          branch_id?: string | null
           created_at?: string
+          employee_address?: string | null
           id?: string
           merchant_address: string
           recipient_address: string
@@ -1456,7 +1593,9 @@ export type Database = {
         }
         Update: {
           amount?: number
+          branch_id?: string | null
           created_at?: string
+          employee_address?: string | null
           id?: string
           merchant_address?: string
           recipient_address?: string
@@ -1465,7 +1604,15 @@ export type Database = {
           token_symbol?: string
           transaction_hash?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "token_mint_history_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "merchant_branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       traffic_sources: {
         Row: {
@@ -1668,6 +1815,10 @@ export type Database = {
           rfm_score: string
         }[]
       }
+      get_merchant_role: {
+        Args: { p_merchant_address: string; p_wallet_address: string }
+        Returns: Database["public"]["Enums"]["merchant_employee_role"]
+      }
       has_premium_access: {
         Args: { p_wallet_address: string }
         Returns: boolean
@@ -1680,6 +1831,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_merchant_member: {
+        Args: { p_merchant_address: string; p_wallet_address: string }
+        Returns: boolean
+      }
       log_premium_activity: {
         Args: {
           p_activity_data?: Json
@@ -1727,6 +1882,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      merchant_employee_role: "cashier" | "branch_manager" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1855,6 +2011,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      merchant_employee_role: ["cashier", "branch_manager", "admin"],
     },
   },
 } as const

@@ -20,6 +20,8 @@ import { AutomationDashboard } from './automation/AutomationDashboard';
 import { AgentManagement } from './agents/AgentManagement';
 import { AgentBillingDashboard } from './agents/AgentBillingDashboard';
 import { AgentReportsDashboard } from './agents/AgentReportsDashboard';
+import { BranchManagement } from './team/BranchManagement';
+import { EmployeeManagement } from './team/EmployeeManagement';
 import { MerchantProfileForm } from './merchant/MerchantProfileForm';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,7 +31,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMintTokens } from '@/hooks/useMintTokens';
 import { useAccount } from 'wagmi';
 import { toast } from 'sonner';
-import { Coins, AlertCircle, Wallet, AlertTriangle, Bot, ShoppingCart } from 'lucide-react';
+import { Coins, AlertCircle, Wallet, AlertTriangle, Bot, ShoppingCart, Users } from 'lucide-react';
 import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
 import { mintTokensSchema } from '@/lib/validationSchemas';
 
@@ -142,6 +144,10 @@ export function MerchantPanel() {
               <TabsTrigger value="agents" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">
                 <Bot className="h-3.5 w-3.5 mr-1" />
                 AI Agents
+              </TabsTrigger>
+              <TabsTrigger value="team" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">
+                <Users className="h-3.5 w-3.5 mr-1" />
+                Team
               </TabsTrigger>
             </TabsList>
           </div>
@@ -300,6 +306,11 @@ export function MerchantPanel() {
             <AgentReportsDashboard />
             <AgentManagement />
             <AgentBillingDashboard />
+          </TabsContent>
+
+          <TabsContent value="team" className="space-y-6 mt-6">
+            <BranchManagement />
+            <EmployeeManagement />
           </TabsContent>
         </Tabs>
       )}
