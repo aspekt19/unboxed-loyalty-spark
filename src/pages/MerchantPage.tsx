@@ -1,4 +1,4 @@
-import { WalletConnectButton, HEADER_CLUSTER_ACTION_CLASSNAME } from '@/components/WalletConnectButton';
+import { WalletConnectButton, HEADER_PROFILE_BUTTON_CLASSNAME } from '@/components/WalletConnectButton';
 import { MerchantPanel } from '@/components/MerchantPanel';
 import { IssuedTokensHistory } from '@/components/IssuedTokensHistory';
 import { WelcomeFlow } from '@/components/onboarding/WelcomeFlow';
@@ -87,7 +87,7 @@ const MerchantPage = () => {
                 <Button
                   variant={showProfile ? 'default' : 'outline'}
                   onClick={() => setShowProfile(!showProfile)}
-                  className={cn(HEADER_CLUSTER_ACTION_CLASSNAME)}
+                  className={cn(HEADER_PROFILE_BUTTON_CLASSNAME)}
                 >
                   Profile
                 </Button>

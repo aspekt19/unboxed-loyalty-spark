@@ -1,4 +1,4 @@
-import { WalletConnectButton, HEADER_CLUSTER_ACTION_CLASSNAME } from '@/components/WalletConnectButton';
+import { WalletConnectButton, HEADER_PROFILE_BUTTON_CLASSNAME } from '@/components/WalletConnectButton';
 import { CustomerPanel } from '@/components/CustomerPanel';
 import { CustomerFiltersPanel } from '@/components/CustomerFiltersPanel';
 import { WelcomeFlow } from '@/components/onboarding/WelcomeFlow';
@@ -120,8 +120,8 @@ const CustomerPage = () => {
                   onClick={() => handleTabChange('profile')}
                   type="button"
                   className={cn(
-                    HEADER_CLUSTER_ACTION_CLASSNAME,
-                    'inline-flex items-center gap-1.5 font-bold shadow-md hover:shadow-lg transition-all duration-200',
+                    HEADER_PROFILE_BUTTON_CLASSNAME,
+                    'inline-flex items-center justify-center gap-1.5 font-bold shadow-md hover:shadow-lg transition-all duration-200',
                     activeTab === 'profile'
                       ? 'bg-uds-purple text-white hover:bg-uds-purple-light'
                       : 'border-2 border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-primary/50',

@@ -10,10 +10,16 @@ import { getPrivyLinkedAccounts, getPrivyPrimaryEmail, shouldUsePrivyTokenAuth }
 import { cn } from '@/lib/utils';
 
 /**
- * Header row: Profile + wallet (fixed width so blocks align; compact height, readable text).
+ * Header row: wallet / Sign in (fixed width for alignment with truncated address).
  */
 export const HEADER_CLUSTER_ACTION_CLASSNAME =
   'h-8 min-h-8 w-[8.75rem] sm:w-[9.25rem] shrink-0 justify-center rounded-md px-2.5 text-sm font-semibold leading-none';
+
+/**
+ * Header “Profile” only: same height as wallet chip, width hugs label, minimal horizontal padding.
+ */
+export const HEADER_PROFILE_BUTTON_CLASSNAME =
+  'h-8 min-h-8 w-auto shrink-0 rounded-md px-2 sm:px-2.5 text-sm font-semibold leading-none';
 
 /**
  * Same vertical rhythm as header actions; width follows label (cards, alerts).
