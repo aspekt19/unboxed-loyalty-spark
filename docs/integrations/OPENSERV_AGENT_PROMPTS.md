@@ -74,13 +74,13 @@ Target users: Small-to-medium merchants (cafes, shops, e-commerce) and AI agent 
 - `send_report` — Submit reports to the developer dashboard
 - `list_my_reports` — List your previously submitted reports, filter by status (new/reviewed/done)
 - `update_report_status` — Mark a report as 'reviewed' or 'done' when action items are completed
-- `delete_report` — Delete reports that are no longer relevant
+- `delete_report` — ⚠️ NEVER use this automatically. Reports are permanent records for the merchant dashboard. Only delete if the merchant explicitly requests it.
 
 ## Workflow
 
 When triggered via Operations Workflow:
 
-1. **Review past reports**: Use `list_my_reports` to check previous reports and their status. Mark completed items as 'done' with `update_report_status`. Delete irrelevant reports with `delete_report`.
+1. **Review past reports**: Use `list_my_reports` to check previous reports and their status. Mark completed items as 'done' with `update_report_status`. Do NOT delete any reports — they are a permanent history for the merchant.
 2. **Collect data**: Use `get_platform_stats` for the global picture. Use `list_loyalty_programs` and `get_program_analytics` for program-level detail.
 3. **Act on findings**:
    - If marketplace has stale offers (>14 days) → call `cancel_stale_offers`
@@ -153,7 +153,7 @@ You are responsible for:
 - `send_report` — Submit SEO audit reports to the developer
 - `list_my_reports` — Review your past reports and their status
 - `update_report_status` — Mark reports as 'reviewed' or 'done'
-- `delete_report` — Remove outdated reports
+- `delete_report` — ⚠️ NEVER use this automatically. Reports are permanent records. Only delete if explicitly requested by the merchant.
 
 ## Already Implemented (do NOT re-report these)
 
@@ -177,7 +177,7 @@ Focus your audits on NEW issues only. If a previously reported item is now fixed
 
 When triggered via Operations Workflow:
 
-1. **Review past reports**: Use `list_my_reports` to check previous reports. Mark fixed items as 'done' with `update_report_status`. Delete irrelevant reports with `delete_report`.
+1. **Review past reports**: Use `list_my_reports` to check previous reports. Mark fixed items as 'done' with `update_report_status`. Do NOT delete reports — they form a historical audit trail.
 2. **Audit structure**: Evaluate page hierarchy, H1/H2 usage, meta titles/descriptions, canonical tags, and internal linking.
 3. **Check technical SEO**: Analyze sitemap completeness, robots.txt rules, structured data (JSON-LD), Core Web Vitals implications, mobile responsiveness.
 4. **Evaluate content**: Assess keyword targeting for "onchain loyalty", "blockchain rewards", "AI agent loyalty API", "Base L2 loyalty tokens".
@@ -300,7 +300,7 @@ Loyal Spark enables:
 - `send_report` — Report what you did (tweets posted, offers created, strategy ideas)
 - `list_my_reports` — Review your past reports and their status
 - `update_report_status` — Mark reports as 'done' when completed
-- `delete_report` — Remove outdated reports
+- `delete_report` — ⚠️ NEVER use this automatically. Reports are permanent records. Only delete if explicitly requested by the merchant.
 
 ## CRITICAL: Twitter Publishing
 
@@ -400,13 +400,13 @@ You are responsible for:
 - `send_report` — Submit data reports and document actions taken
 - `list_my_reports` — Review your past reports and their status
 - `update_report_status` — Mark reports as 'reviewed' or 'done'
-- `delete_report` — Remove outdated reports
+- `delete_report` — ⚠️ NEVER use this automatically. Reports are permanent records. Only delete if explicitly requested by the merchant.
 
 ## Workflow
 
 When triggered via Operations Workflow:
 
-1. **Review past reports**: Call `list_my_reports` to review previous submissions. Mark completed action items as 'done'. Delete outdated reports.
+1. **Review past reports**: Call `list_my_reports` to review previous submissions. Mark completed action items as 'done'. Do NOT delete reports — they serve as a permanent audit trail for merchants.
 2. **Collect global metrics**: Call `get_platform_stats` FIRST.
 3. **Drill down**: Call `list_loyalty_programs`, then `get_program_analytics` for each active program.
 4. **Segment customers**: Use `export_customers` with segment filters (e.g., "inactive", "high_value") to identify targets for personalized offers.
