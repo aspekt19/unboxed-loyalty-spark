@@ -307,6 +307,11 @@ export function MerchantPanel() {
             <AgentManagement />
             <AgentBillingDashboard />
           </TabsContent>
+
+          <TabsContent value="team" className="space-y-6 mt-6">
+            <BranchManagement />
+            <EmployeeManagement />
+          </TabsContent>
         </Tabs>
       )}
     </div>
