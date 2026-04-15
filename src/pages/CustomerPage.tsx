@@ -109,7 +109,7 @@ const CustomerPage = () => {
                 <button
                   onClick={() => handleTabChange('profile')}
                   type="button"
-                  className={`px-3 py-1.5 rounded-lg font-bold shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-1.5 text-xs h-8 sm:h-9 sm:text-sm ${
+                  className={`px-4 py-2 rounded-xl font-bold shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-1.5 ${
                     activeTab === 'profile'
                       ? 'bg-uds-purple text-white hover:bg-uds-purple-light'
                       : 'border-2 border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-primary/50'
