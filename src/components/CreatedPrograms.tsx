@@ -57,7 +57,7 @@ function mapDbProgram(prog: any): LoyaltyProgram {
   };
 }
 
-export function CreatedPrograms({ onSelectProgram }: { onSelectProgram: (program: LoyaltyProgram & { tokenAddress: string }) => void }) {
+export function CreatedPrograms({ onSelectProgram, merchantAddress: merchantAddressOverride, readOnly }: { onSelectProgram: (program: LoyaltyProgram & { tokenAddress: string }) => void; merchantAddress?: string; readOnly?: boolean }) {
   const [programs, setPrograms] = useState<LoyaltyProgram[]>([]);
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<string | null>(null);
