@@ -15,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from '@/components/ui/carousel';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useFarcasterHaptics } from '@/hooks/useFarcasterHaptics';
+import { useTierSummaries } from '@/hooks/useTierSummaries';
 import {
   Dialog,
   DialogContent,
@@ -27,9 +28,11 @@ interface TokenListProps {
   selectedProgram: string | null;
   onProgramSelect: (address: string) => void;
   filterByMerchant?: string | null;
+  /** Clears merchant filter from parent (desktop sidebar + mobile selection) */
+  onClearMerchantFilter?: () => void;
 }
 
-export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant }: TokenListProps) {
+export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, onClearMerchantFilter }: TokenListProps) {
   const [selectedToken, setSelectedToken] = useState<TokenInfo | null>(null);
   const [recipientAddress, setRecipientAddress] = useState('');
   const [transferAmount, setTransferAmount] = useState('');
@@ -341,6 +344,17 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant }
     return result;
   }, [tokensWithBalance, filterByMerchant, searchQuery]);
 
+  const tierEntries = useMemo(
+    () =>
+      filteredTokens.map((t) => ({
+        tokenAddress: t.address,
+        balance: t.balance,
+        symbol: t.symbol,
+      })),
+    [filteredTokens],
+  );
+  const tierSummaries = useTierSummaries(tierEntries);
+
   console.log('TokenList render - tokens:', allTokens.length, 'balances:', balances.length, 'with balance:', tokensWithBalance.length);
 
   // Track previous isSuccess state to detect transitions
@@ -393,6 +407,7 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant }
       symbol={token.symbol}
       balance={token.balance}
       merchantAddress={token.merchantAddress}
+      tierSummary={tierSummaries[token.address.toLowerCase()]}
       onClick={() => onProgramSelect(token.address)}
       selected={selectedProgram === token.address}
       onSendClick={() => {
@@ -409,7 +424,7 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant }
           <div>
             <CardTitle>Your Loyalty Tokens</CardTitle>
             <CardDescription>
-              Each merchant issues their own token. Tap to view tier status.
+              Each merchant issues their own token. Your tier for each program is shown in one line under the token name.
             </CardDescription>
           </div>
           {isMobile && filteredTokens.length > 1 && (
@@ -429,9 +444,16 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant }
             />
           </div>
         )}
-        {filterByMerchant && (
+        {filterByMerchant && onClearMerchantFilter && (
           <p className="text-xs text-muted-foreground mt-1">
-            Filtered by selected merchant · <button className="underline" onClick={() => {}}>show all</button>
+            Filtered by selected merchant ·{' '}
+            <button
+              type="button"
+              className="underline text-primary font-medium"
+              onClick={onClearMerchantFilter}
+            >
+              Show all
+            </button>
           </p>
         )}
       </CardHeader>

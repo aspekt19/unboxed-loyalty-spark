@@ -13,9 +13,10 @@ import { AuthPrompt } from './AuthPrompt';
 interface CustomerPanelProps {
   selectedMerchant: string | null;
   onMerchantSelect: (address: string) => void;
+  onClearMerchantFilter?: () => void;
 }
 
-export function CustomerPanel({ selectedMerchant, onMerchantSelect }: CustomerPanelProps) {
+export function CustomerPanel({ selectedMerchant, onMerchantSelect, onClearMerchantFilter }: CustomerPanelProps) {
   const { address } = useAccount();
   const { user, session, isLoading } = useAuth();
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
@@ -53,10 +54,11 @@ export function CustomerPanel({ selectedMerchant, onMerchantSelect }: CustomerPa
       <PersonalizedOffers />
       
       {/* View earned tokens with inline tier status */}
-      <TokenList 
+      <TokenList
         selectedProgram={selectedProgram}
         onProgramSelect={setSelectedProgram}
         filterByMerchant={selectedMerchant}
+        onClearMerchantFilter={onClearMerchantFilter}
       />
       
       {/* Activate a reward */}

@@ -56,7 +56,11 @@ const CustomerPage = () => {
               <CustomerFiltersPanel filterByMerchant={selectedMerchant} />
             </aside>
             <div className="max-w-4xl">
-              <CustomerPanel selectedMerchant={selectedMerchant} onMerchantSelect={handleMerchantSelect} />
+              <CustomerPanel
+                selectedMerchant={selectedMerchant}
+                onMerchantSelect={handleMerchantSelect}
+                onClearMerchantFilter={() => setSelectedMerchant(null)}
+              />
             </div>
           </div>
         );
@@ -142,7 +146,11 @@ const CustomerPage = () => {
                     <CustomerFiltersPanel filterByMerchant={selectedMerchant} />
                   </aside>
                   <div className="max-w-4xl">
-                    <CustomerPanel selectedMerchant={selectedMerchant} onMerchantSelect={handleMerchantSelect} />
+                    <CustomerPanel
+                      selectedMerchant={selectedMerchant}
+                      onMerchantSelect={handleMerchantSelect}
+                      onClearMerchantFilter={() => setSelectedMerchant(null)}
+                    />
                   </div>
                 </div>
               </TabsContent>

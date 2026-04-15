@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTierSummaries } from '@/hooks/useTierSummaries';
+import { CompactTierInline } from '@/components/tiers/CompactTierInline';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -318,6 +320,20 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
     return filteredTokens;
   }, [tokensWithBalance, filterByMerchant, programSearch, availableRewards]);
 
+  const rewardTierEntries = useMemo(
+    () =>
+      filteredTokensWithBalance.map((token) => {
+        const balance = balances.find((b) => b.address === token.address);
+        return {
+          tokenAddress: token.address,
+          balance: balance?.balance || '0',
+          symbol: token.symbol,
+        };
+      }),
+    [filteredTokensWithBalance, balances],
+  );
+  const rewardTierSummaries = useTierSummaries(rewardTierEntries);
+
   useEffect(() => {
     if (!selectedTokenAddress) return;
 
@@ -391,9 +407,17 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
                 <SelectContent>
                   {filteredTokensWithBalance.map(token => {
                     const balance = balances.find(b => b.address === token.address);
+                    const ts = rewardTierSummaries[token.address.toLowerCase()];
                     return (
                       <SelectItem key={token.address} value={token.address}>
-                        {token.name} ({token.symbol}) - Balance: {balance?.balance || '0'}
+                        <div className="flex flex-col gap-0.5 py-0.5">
+                          <span>
+                            {token.name} ({token.symbol}) — {balance?.balance || '0'}
+                          </span>
+                          {ts && (ts.tierName || ts.toNextLine) && (
+                            <CompactTierInline summary={ts} />
+                          )}
+                        </div>
                       </SelectItem>
                     );
                   })}

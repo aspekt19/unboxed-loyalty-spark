@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTierSummaries, type TierSummary } from '@/hooks/useTierSummaries';
+import { CompactTierInline } from '@/components/tiers/CompactTierInline';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -167,6 +169,20 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
     return result;
   }, [programs, balances, filterByMerchant, searchQuery]);
 
+  const tierEntries = useMemo(
+    () =>
+      programsWithBalance.map((p) => {
+        const balance = balances.find((b) => b.address === p.address);
+        return {
+          tokenAddress: p.address,
+          balance: balance?.balance || '0',
+          symbol: p.symbol,
+        };
+      }),
+    [programsWithBalance, balances],
+  );
+  const tierSummaries = useTierSummaries(tierEntries);
+
   if (!address) return null;
 
   return (
@@ -223,6 +239,7 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
                           program={program}
                           balance={balance?.balance || '0'}
                           isExpiringSoon={program.status === 'expiring_soon'}
+                          tierSummary={tierSummaries[program.address.toLowerCase()]}
                         />
                       </div>
                     );
@@ -283,6 +300,7 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
                       program={program}
                       balance={balance?.balance || '0'}
                       isExpiringSoon={program.status === 'expiring_soon'}
+                      tierSummary={tierSummaries[program.address.toLowerCase()]}
                     />
                   );
                 })}
@@ -295,10 +313,16 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
   );
 }
 
-function ProgramCard({ program, balance, isExpiringSoon }: { 
-  program: TokenInfo; 
-  balance: string; 
+function ProgramCard({
+  program,
+  balance,
+  isExpiringSoon,
+  tierSummary,
+}: {
+  program: TokenInfo;
+  balance: string;
   isExpiringSoon: boolean;
+  tierSummary?: TierSummary;
 }) {
   const { isPaused } = useCheckProgramStatus(program.address as `0x${string}`);
   
@@ -329,6 +353,11 @@ function ProgramCard({ program, balance, isExpiringSoon }: {
             )}
           </div>
           <p className="text-sm text-muted-foreground">{program.symbol}</p>
+          {tierSummary && (
+            <div className="mt-1">
+              <CompactTierInline summary={tierSummary} />
+            </div>
+          )}
         </div>
         <div className="text-right">
           <p className="text-2xl font-bold">
