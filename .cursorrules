@@ -101,9 +101,9 @@ supabase/functions/
 - RLS must be enabled on every new Supabase table
 - Keep components under 200 lines — split if larger
 
-## LLM workflow — Karpathy guidelines
+## LLM workflow
 
-Behavioral rules to reduce over-engineering and unclear edits (from [Karpathy guidelines skill](https://github.com/forrestchang/andrej-karpathy-skills/blob/main/skills/karpathy-guidelines/SKILL.md), derived from [Karpathy on LLM coding pitfalls](https://x.com/karpathy/status/2015883857489522876)). **Tradeoff:** bias toward caution over speed; for trivial one-liners, use judgment.
+Behavioral rules to reduce over-engineering and unclear edits. **Tradeoff:** bias toward caution over speed; for trivial one-liners, use judgment.
 
 ### 1. Think before coding
 - State assumptions explicitly; if uncertain, ask rather than guess.
