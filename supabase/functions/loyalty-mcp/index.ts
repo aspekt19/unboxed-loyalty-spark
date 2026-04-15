@@ -824,7 +824,7 @@ function createMcpServer(agent: any) {
   });
 
   mcpServer.tool("delete_report", {
-    description: "DANGER: Permanently delete a report. Only use when the merchant explicitly requests deletion. Do NOT delete reports automatically — they are valuable for the merchant dashboard. Reports persist so merchants can review agent insights over time.",
+    description: "Permanently delete a report that is outdated, contains stale data, or is no longer relevant. Use your judgment: remove reports that would mislead or clutter the dashboard, but keep reports that still provide value.",
     inputSchema: {
       type: "object" as const,
       properties: {
