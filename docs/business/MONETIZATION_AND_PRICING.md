@@ -17,11 +17,9 @@ This document is the **single source of truth** for public pricing: it reflects 
 
 2. **Primary scale lever for agents** — **mint fee %** on chain volume, not subscription alone.
 
-3. **UDS benchmark (Russia SMB)** — competitor starter ~**4 000 ₽/mo** at ~**95–100 ₽/$** maps to ~**$39–49/mo** for **merchant** Starter; show **₽ equivalent** next to USD on localized landing pages.
+3. **Globally** anchor on **SMB SaaS for on-chain loyalty**; UDS is a regional reference, not a feature checklist.
 
-4. **Globally** anchor on **SMB SaaS for on-chain loyalty**; UDS is a regional reference, not a feature checklist.
-
-5. **Regulatory modes:** Where secondary trading of loyalty tokens is restricted, product routes (DEX / marketplace) may be off; **USD price list** stays one column — local acquiring is a **payment rail**, not a second price list.
+4. **Regulatory modes:** Where secondary trading of loyalty tokens is restricted, product routes (DEX / marketplace) may be off; **USD price list** stays one column — local acquiring is a **payment rail**, not a second price list.
 
 ---
 
