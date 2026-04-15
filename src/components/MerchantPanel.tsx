@@ -137,10 +137,7 @@ export function MerchantPanel() {
               <TabsTrigger value="customers" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Customers</TabsTrigger>
               <TabsTrigger value="programs" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Programs</TabsTrigger>
               <TabsTrigger value="rewards" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Rewards</TabsTrigger>
-              <TabsTrigger value="tiers" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Tiers</TabsTrigger>
               <TabsTrigger value="marketing" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Marketing</TabsTrigger>
-              <TabsTrigger value="referrals" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Referrals</TabsTrigger>
-              <TabsTrigger value="reviews" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Reviews</TabsTrigger>
               <TabsTrigger value="agents" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">
                 <Bot className="h-3.5 w-3.5 mr-1" />
                 AI Agents
@@ -270,22 +267,13 @@ export function MerchantPanel() {
             <VouchersManagement />
           </TabsContent>
 
-          <TabsContent value="tiers" className="space-y-6 mt-6">
-            <TierManagement />
-          </TabsContent>
-
           <TabsContent value="marketing" className="space-y-6 mt-6">
+            <TierManagement />
             <CreateCampaign />
             <CampaignList />
             <AutomationDashboard />
-          </TabsContent>
-
-          <TabsContent value="referrals" className="space-y-6 mt-6">
             <ReferralStats />
             <ReferralManagement />
-          </TabsContent>
-
-          <TabsContent value="reviews" className="space-y-6 mt-6">
             {selectedProgram ? (
               <ReviewsList
                 tokenAddress={selectedProgram.tokenAddress}
