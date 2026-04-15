@@ -20,6 +20,8 @@ import { AutomationDashboard } from './automation/AutomationDashboard';
 import { AgentManagement } from './agents/AgentManagement';
 import { AgentBillingDashboard } from './agents/AgentBillingDashboard';
 import { AgentReportsDashboard } from './agents/AgentReportsDashboard';
+import { BranchManagement } from './team/BranchManagement';
+import { EmployeeManagement } from './team/EmployeeManagement';
 import { MerchantProfileForm } from './merchant/MerchantProfileForm';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
