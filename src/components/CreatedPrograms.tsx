@@ -664,23 +664,30 @@ function ProgramCard({
             <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
               <Clock className="h-3 w-3" />
               <span className="flex-1">Expires: {format(new Date(program.expirationDate), 'dd.MM.yyyy')}</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-5 px-1.5 text-[10px] text-primary hover:text-primary"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setExtendDialogOpen(true);
-                }}
-              >
-                <CalendarPlus className="h-3 w-3 mr-0.5" />
-                Extend
-              </Button>
+              {!readOnly && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-5 px-1.5 text-[10px] text-primary hover:text-primary"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setExtendDialogOpen(true);
+                  }}
+                >
+                  <CalendarPlus className="h-3 w-3 mr-0.5" />
+                  Extend
+                </Button>
+              )}
             </div>
           )}
 
           {/* Cashback Rate */}
-          <div className="text-[10px] text-muted-foreground" onClick={(e) => e.stopPropagation()}>
+          {readOnly ? (
+            <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+              <Calculator className="h-3 w-3" />
+              <span>Cashback: {program.cashbackRate ?? 5}%</span>
+            </div>
+          ) : (
             {editingCashback ? (
               <div className="space-y-1.5 p-2 rounded-lg border bg-muted/30">
                 <div className="flex items-center justify-between">
