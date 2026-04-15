@@ -114,7 +114,9 @@ export function EmployeeManagement() {
   const generateInvite = useMutation({
     mutationFn: async () => {
       if (!address) throw new Error('Not connected');
-      const code = Math.random().toString(36).substring(2, 10).toUpperCase();
+      const bytes = new Uint8Array(4);
+      crypto.getRandomValues(bytes);
+      const code = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('').toUpperCase();
       const { error } = await supabase.from('merchant_invites').insert({
         merchant_address: address.toLowerCase(),
         invite_code: code,
@@ -243,7 +245,9 @@ export function EmployeeManagement() {
             </TabsContent>
             <TabsContent value="code" className="space-y-3 pt-2">
               <p className="text-xs text-muted-foreground">
-                Generate a one-time invite code. Share it with the employee — they'll enter it on their device to join.
+                Generate a one-time code and send it to the employee. They open the same site →{' '}
+                <strong>Merchant</strong> portal (<strong>/merchant</strong>), sign in with their wallet, and paste the code in the{' '}
+                <strong>Team invite code</strong> box at the top (valid about 7 days until used).
               </p>
               <Button
                 size="sm"

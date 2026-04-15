@@ -54,7 +54,7 @@ function summarizeForBalance(tiers: TierRow[], balanceNum: number, pointsLabel: 
   return {
     tierName: null,
     badgeColor: null,
-    toNextLine: `${need.toFixed(0)} ${pointsLabel} to ${next!.tier_name}`,
+    toNextLine: `${need.toFixed(0)} ${pointsLabel} → ${next!.tier_name}`,
   };
 }
 

@@ -5,6 +5,7 @@ import { WelcomeFlow } from '@/components/onboarding/WelcomeFlow';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { PremiumStatusBadge } from '@/components/PremiumStatusBadge';
 import { MerchantProfileSection } from '@/components/merchant/MerchantProfileSection';
+import { AcceptMerchantInviteCard } from '@/components/team/AcceptMerchantInviteCard';
 import { ArrowLeft } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -32,10 +33,11 @@ const MerchantPage = () => {
     </div>
   ) : (
     <>
-      <div className="mb-6">
+      <div className="mb-6 space-y-4">
         <PremiumStatusBadge />
+        <AcceptMerchantInviteCard />
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6">
         <aside className="hidden lg:block lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)]">
           <IssuedTokensHistory />
