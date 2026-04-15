@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PageTransition from '@/components/PageTransition';
 import { useEffect, useState, useCallback } from 'react';
 import { initializeCleanState } from '@/lib/clearOldData';
+import { SupportBanner } from '@/components/SupportBanner';
 import { PremiumUpgradeDialog } from '@/components/roundup/PremiumUpgradeDialog';
 import { MarketplaceDashboard } from '@/components/marketplace/MarketplaceDashboard';
 import { BottomNavBar } from '@/components/mobile/BottomNavBar';
@@ -190,6 +191,7 @@ const CustomerPage = () => {
               </div>
             </PullToRefresh>
           )}
+          <SupportBanner />
         </main>
 
         {/* Bottom Navigation for mobile */}

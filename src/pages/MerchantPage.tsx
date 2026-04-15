@@ -1,5 +1,6 @@
 import { WalletConnectButton, HEADER_PROFILE_BUTTON_CLASSNAME } from '@/components/WalletConnectButton';
 import { MerchantPanel } from '@/components/MerchantPanel';
+import { SupportBanner } from '@/components/SupportBanner';
 import { IssuedTokensHistory } from '@/components/IssuedTokensHistory';
 import { WelcomeFlow } from '@/components/onboarding/WelcomeFlow';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -105,6 +106,7 @@ const MerchantPage = () => {
           ) : (
             content
           )}
+          <SupportBanner />
         </main>
       </div>
     </PageTransition>
