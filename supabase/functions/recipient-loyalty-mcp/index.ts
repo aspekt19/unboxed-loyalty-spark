@@ -18,6 +18,7 @@ function createRecipientMcpServer(
   ip: string
 ) {
   const w = wallet.toLowerCase();
+  const db = d as any;
   const log = (action: string, reqBody: unknown, status: number, resBody: unknown) =>
     insertRecipientActivity(d, agentId, `mcp:${action}`, reqBody, status, resBody, ip).catch(() => {});
 
@@ -27,7 +28,7 @@ function createRecipientMcpServer(
     description: "Who this recipient agent key is bound to (wallet only)",
     inputSchema: { type: "object" as const, properties: {} },
     handler: async () => {
-      const { data: row } = await d
+      const { data: row } = await db
         .from("recipient_agent_registry")
         .select("id, name, wallet_address, api_key_prefix, total_requests, created_at")
         .eq("id", agentId)
@@ -42,7 +43,7 @@ function createRecipientMcpServer(
     description: "All loyalty program balances (tier rows) for your wallet",
     inputSchema: { type: "object" as const, properties: {} },
     handler: async () => {
-      const { data: tiers, error } = await d
+      const { data: tiers, error } = await db
         .from("customer_tier_status")
         .select("token_address, current_balance, tokens_earned_total, current_tier_id, last_calculated_at")
         .eq("customer_address", w);
@@ -53,7 +54,7 @@ function createRecipientMcpServer(
       const tokens = [...new Set((tiers || []).map((t: { token_address: string }) => t.token_address.toLowerCase()))];
       let programs: Record<string, unknown> = {};
       if (tokens.length > 0) {
-        const { data: plist } = await d.from("loyalty_programs").select("token_address, name, symbol, status").in("token_address", tokens);
+        const { data: plist } = await db.from("loyalty_programs").select("token_address, name, symbol, status").in("token_address", tokens);
         programs = Object.fromEntries((plist || []).map((p: any) => [p.token_address.toLowerCase(), p]));
       }
       const balances = (tiers || []).map((t: any) => ({
@@ -73,7 +74,7 @@ function createRecipientMcpServer(
         await log("get_my_loyalty_balance", { token_address }, 400, { error: "bad_address" });
         return T('{"error":"Invalid token_address"}');
       }
-      const { data: tierStatus } = await d
+      const { data: tierStatus } = await db
         .from("customer_tier_status")
         .select("current_balance, tokens_earned_total, current_tier_id, last_calculated_at")
         .eq("token_address", token_address.toLowerCase())
@@ -81,7 +82,7 @@ function createRecipientMcpServer(
         .maybeSingle();
       let tierInfo = null;
       if (tierStatus?.current_tier_id) {
-        const { data: tier } = await d
+        const { data: tier } = await db
           .from("customer_tiers")
           .select("tier_name, tier_level, badge_color, cashback_multiplier")
           .eq("id", tierStatus.current_tier_id)
@@ -110,12 +111,12 @@ function createRecipientMcpServer(
         await log("list_rewards_for_program", { token_address }, 400, {});
         return T('{"error":"Invalid token_address"}');
       }
-      const ok = await walletHasEngagement(d, w, token_address);
+      const ok = await walletHasEngagement(db, w, token_address);
       if (!ok) {
         await log("list_rewards_for_program", { token_address }, 403, {});
         return T('{"error":"No loyalty activity for your wallet on this program"}');
       }
-      const { data: rewards, error } = await d
+      const { data: rewards, error } = await db
         .from("rewards")
         .select("id, name, description, cost, is_active, token_address, created_at")
         .eq("token_address", token_address.toLowerCase())
@@ -141,7 +142,7 @@ function createRecipientMcpServer(
     },
     handler: async ({ token_address, status, limit }: any) => {
       const lim = Math.min(typeof limit === "number" && limit > 0 ? limit : 50, 100);
-      let q = d
+      let q = db
         .from("vouchers")
         .select("id, code, reward_name, cost, status, token_address, merchant_address, activated_at, used_at")
         .eq("customer_address", w)
@@ -170,7 +171,7 @@ function createRecipientMcpServer(
       required: ["reward_id", "transaction_hash"],
     },
     handler: async ({ reward_id, transaction_hash }: any) => {
-      const result = await recipientRedeemReward(d, w, reward_id, transaction_hash);
+      const result = await recipientRedeemReward(db, w, reward_id, transaction_hash);
       const logStatus = result.status === 200 && (result.body as any).retryable ? 202 : result.status;
       await log("redeem_my_reward", { reward_id }, logStatus, result.body);
       return T(JSON.stringify(result.body));

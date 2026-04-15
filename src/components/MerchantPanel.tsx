@@ -196,15 +196,42 @@ export function MerchantPanel() {
       {isEmployeeMode ? (
         /* Employee mode: tabs depend on role */
         <div className="space-y-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Users className="h-4 w-4" />
-            <span>Working at <strong className="text-foreground">{activeMembership!.business_name}</strong></span>
-            {activeMembership!.branch_name && (
-              <span>· {activeMembership!.branch_name}</span>
-            )}
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-              {activeMembership!.role === 'admin' ? 'Admin' : activeMembership!.role === 'branch_manager' ? 'Manager' : 'Cashier'}
+          {/* Team membership info + role guide */}
+          <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-3">
+            <div className="flex items-center gap-2 text-sm">
+              <Users className="h-4 w-4 text-primary" />
+              <span>You are a team member at <strong className="text-foreground">{activeMembership!.business_name}</strong></span>
+              {activeMembership!.branch_name && (
+                <span className="text-muted-foreground">· {activeMembership!.branch_name}</span>
+              )}
+            </div>
+            <Badge variant="outline" className="text-xs">
+              {activeMembership!.role === 'admin' ? 'Administrator' : activeMembership!.role === 'branch_manager' ? 'Branch Manager' : 'Cashier'}
             </Badge>
+            <div className="text-xs text-muted-foreground space-y-1 border-t pt-2">
+              <p className="font-medium text-foreground/80">Your permissions:</p>
+              {activeMembership!.role === 'cashier' && (
+                <ul className="list-disc pl-4 space-y-0.5">
+                  <li>View loyalty programs of this store</li>
+                  <li>Earn points for customers (scan wallet → enter purchase amount)</li>
+                  <li>Rates and prices are set by the store owner and locked</li>
+                </ul>
+              )}
+              {activeMembership!.role === 'branch_manager' && (
+                <ul className="list-disc pl-4 space-y-0.5">
+                  <li>Everything a Cashier can do</li>
+                  <li>Manually issue (mint) tokens to customers</li>
+                  <li>View customer list and analytics</li>
+                </ul>
+              )}
+              {activeMembership!.role === 'admin' && (
+                <ul className="list-disc pl-4 space-y-0.5">
+                  <li>Everything a Manager can do</li>
+                  <li>Access dashboard and analytics</li>
+                  <li>Manage rewards catalog and marketing campaigns</li>
+                </ul>
+              )}
+            </div>
           </div>
 
           {activeMembership!.role === 'cashier' ? (
