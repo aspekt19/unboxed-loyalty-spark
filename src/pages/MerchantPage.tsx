@@ -5,7 +5,7 @@ import { WelcomeFlow } from '@/components/onboarding/WelcomeFlow';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { PremiumStatusBadge } from '@/components/PremiumStatusBadge';
 import { MerchantProfileSection } from '@/components/merchant/MerchantProfileSection';
-import { AcceptMerchantInviteCard } from '@/components/team/AcceptMerchantInviteCard';
+
 import { ArrowLeft } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -33,9 +33,8 @@ const MerchantPage = () => {
     </div>
   ) : (
     <>
-      <div className="mb-6 space-y-4">
+      <div className="mb-6">
         <PremiumStatusBadge />
-        <AcceptMerchantInviteCard />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6">
@@ -75,12 +74,12 @@ const MerchantPage = () => {
                 <p className="text-[9px] sm:text-[10px] text-muted-foreground truncate">Merchant Portal</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
               <Button
                 variant={showProfile ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setShowProfile(!showProfile)}
-                className="h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3"
+                className="h-8 sm:h-9 text-xs sm:text-sm px-3 sm:px-4 min-w-[70px] sm:min-w-[80px]"
               >
                 Profile
               </Button>
