@@ -7,6 +7,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { isFarcasterContext } from '@/config/wagmi';
 import { usePrivySafe } from '@/hooks/usePrivySafe';
 import { getPrivyLinkedAccounts, getPrivyPrimaryEmail, shouldUsePrivyTokenAuth } from '@/lib/privyAuth';
+import { cn } from '@/lib/utils';
 
 export function WalletConnectButton() {
   const { connect, connectors } = useConnect();
@@ -192,15 +193,21 @@ export function WalletConnectButton() {
     }
   };
 
+  const headerButtonClassName =
+    'h-8 sm:h-9 min-w-[80px] rounded-md px-3 text-xs font-medium leading-none sm:min-w-[80px] sm:px-3';
+
   if (farcasterUser) {
     if (!isConnected || isManuallyDisconnected) {
       return (
         <button
           onClick={handleConnect}
           type="button"
-          className="px-5 py-2.5 rounded-lg font-semibold bg-gradient-uds text-white hover:opacity-90 transition-all duration-200 flex items-center gap-2"
+          className={cn(
+            headerButtonClassName,
+            'inline-flex items-center justify-center gap-2 whitespace-nowrap bg-gradient-uds text-white shadow-md transition-smooth hover:opacity-90 disabled:pointer-events-none disabled:opacity-50',
+          )}
         >
-          <LogIn className="h-4 w-4" />
+          <LogIn className="h-3.5 w-3.5 flex-shrink-0" />
           <span>Sign In</span>
         </button>
       );
@@ -234,9 +241,12 @@ export function WalletConnectButton() {
       <button
         onClick={handleConnect}
         type="button"
-        className="px-3 sm:px-4 rounded-lg font-semibold bg-gradient-uds text-white hover:opacity-90 shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-1.5 text-xs sm:text-sm h-8 sm:h-9 min-w-[70px] sm:min-w-[80px]"
+        className={cn(
+          headerButtonClassName,
+          'inline-flex items-center justify-center gap-1.5 whitespace-nowrap bg-gradient-uds text-white shadow-md transition-smooth hover:opacity-90 disabled:pointer-events-none disabled:opacity-50',
+        )}
       >
-        <LogIn className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+        <LogIn className="h-3.5 w-3.5 flex-shrink-0" />
         <span>Sign In</span>
       </button>
     );
@@ -247,9 +257,12 @@ export function WalletConnectButton() {
       <button
         disabled
         type="button"
-        className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg font-semibold bg-gradient-uds text-white opacity-70 shadow-md transition-all duration-200 flex items-center gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9"
+        className={cn(
+          headerButtonClassName,
+          'inline-flex items-center justify-center gap-1.5 whitespace-nowrap bg-gradient-uds text-white opacity-70 shadow-md transition-smooth disabled:pointer-events-none disabled:opacity-50',
+        )}
       >
-        <LogIn className="h-3 w-3 sm:h-4 sm:w-4 animate-pulse" />
+        <LogIn className="h-3.5 w-3.5 animate-pulse flex-shrink-0" />
         <span>Signing in...</span>
       </button>
     );
