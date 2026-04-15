@@ -145,6 +145,10 @@ export function MerchantPanel() {
                 <Bot className="h-3.5 w-3.5 mr-1" />
                 AI Agents
               </TabsTrigger>
+              <TabsTrigger value="team" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">
+                <Users className="h-3.5 w-3.5 mr-1" />
+                Team
+              </TabsTrigger>
             </TabsList>
           </div>
 
