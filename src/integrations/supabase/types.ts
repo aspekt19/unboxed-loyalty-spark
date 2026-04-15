@@ -951,6 +951,89 @@ export type Database = {
           },
         ]
       }
+      merchant_plan_subscriptions: {
+        Row: {
+          amount_usdc: number
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          owner_address: string
+          paid_at: string | null
+          plan_id: string
+          status: string
+          transaction_hash: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount_usdc: number
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          owner_address: string
+          paid_at?: string | null
+          plan_id: string
+          status?: string
+          transaction_hash?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount_usdc?: number
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          owner_address?: string
+          paid_at?: string | null
+          plan_id?: string
+          status?: string
+          transaction_hash?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_plan_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "merchant_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      merchant_plans: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          name: string
+          price_usdc_monthly: number
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price_usdc_monthly?: number
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price_usdc_monthly?: number
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       merchant_profiles: {
         Row: {
           business_name: string
@@ -961,6 +1044,7 @@ export type Database = {
           location: string | null
           logo_url: string | null
           merchant_address: string
+          merchant_plan_id: string | null
           updated_at: string
           website: string | null
         }
@@ -973,6 +1057,7 @@ export type Database = {
           location?: string | null
           logo_url?: string | null
           merchant_address: string
+          merchant_plan_id?: string | null
           updated_at?: string
           website?: string | null
         }
@@ -985,10 +1070,19 @@ export type Database = {
           location?: string | null
           logo_url?: string | null
           merchant_address?: string
+          merchant_plan_id?: string | null
           updated_at?: string
           website?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "merchant_profiles_merchant_plan_id_fkey"
+            columns: ["merchant_plan_id"]
+            isOneToOne: false
+            referencedRelation: "merchant_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notification_history: {
         Row: {
@@ -1112,6 +1206,24 @@ export type Database = {
           used_at?: string | null
           valid_from?: string | null
           valid_until?: string
+        }
+        Relationships: []
+      }
+      platform_merchant_admin_wallets: {
+        Row: {
+          created_at: string
+          note: string | null
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string
+          note?: string | null
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string
+          note?: string | null
+          wallet_address?: string
         }
         Relationships: []
       }
@@ -1836,6 +1948,7 @@ export type Database = {
         Args: { p_merchant_address: string; p_wallet_address: string }
         Returns: boolean
       }
+      is_unrestricted_merchant: { Args: { p_wallet: string }; Returns: boolean }
       log_premium_activity: {
         Args: {
           p_activity_data?: Json
