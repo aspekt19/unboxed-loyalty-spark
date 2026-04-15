@@ -12,9 +12,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMintTokens } from '@/hooks/useMintTokens';
 import { useAccount } from 'wagmi';
 import { toast } from 'sonner';
-import { Wallet, Bot, Users } from 'lucide-react';
+import { Wallet, Bot, Users, Building2, Briefcase } from 'lucide-react';
 import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
 import { mintTokensSchema } from '@/lib/validationSchemas';
+import { useQuery } from '@tanstack/react-query';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+
+interface TeamMembership {
+  merchant_address: string;
+  role: string;
+  branch_id: string | null;
+  business_name: string;
+  branch_name?: string;
+}
 
 export function MerchantPanel() {
   const { address } = useAccount();
@@ -22,18 +33,63 @@ export function MerchantPanel() {
   const [mintDialogOpen, setMintDialogOpen] = useState(false);
   const [earnDialogOpen, setEarnDialogOpen] = useState(false);
   const [lastMintParams, setLastMintParams] = useState<{ recipient: string; amount: string } | null>(null);
+  // 'own' = own business, or merchant_address string = employee mode
+  const [workspace, setWorkspace] = useState<string>('own');
   
   const { mintTokens, isPending, isSuccess, reset, hash } = useMintTokens();
   const { isPaused, isMintingActive } = useCheckProgramStatus(
     selectedProgram?.tokenAddress as `0x${string}` | undefined
   );
 
+  // Fetch team memberships
+  const { data: memberships = [] } = useQuery<TeamMembership[]>({
+    queryKey: ['my-team-memberships-panel', address],
+    queryFn: async () => {
+      if (!address) return [];
+      const { data, error } = await supabase
+        .from('merchant_employees')
+        .select('*, merchant_branches(branch_name)')
+        .eq('employee_wallet_address', address.toLowerCase())
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+
+      const merchantAddresses = [...new Set(data.map((d: any) => d.merchant_address))];
+      const { data: profiles } = await supabase
+        .from('merchant_profiles')
+        .select('merchant_address, business_name')
+        .in('merchant_address', merchantAddresses);
+
+      const profileMap = new Map((profiles || []).map((p: any) => [p.merchant_address, p.business_name]));
+
+      return data.map((d: any) => ({
+        merchant_address: d.merchant_address,
+        role: d.role,
+        branch_id: d.branch_id,
+        business_name: profileMap.get(d.merchant_address) || `${d.merchant_address.slice(0, 6)}...${d.merchant_address.slice(-4)}`,
+        branch_name: d.merchant_branches?.branch_name,
+      }));
+    },
+    enabled: !!address,
+  });
+
+  const activeMembership = memberships.find(m => m.merchant_address === workspace);
+  const isEmployeeMode = workspace !== 'own' && !!activeMembership;
+
   useEffect(() => {
     if (!address) {
       setSelectedProgram(null);
       setMintDialogOpen(false);
+      setWorkspace('own');
     }
   }, [address]);
+
+  // Reset selected program when switching workspace
+  useEffect(() => {
+    setSelectedProgram(null);
+    setMintDialogOpen(false);
+    setEarnDialogOpen(false);
+  }, [workspace]);
 
   const handleMintSubmit = async (recipientAddress: string, amount: string) => {
     if (!selectedProgram) {
@@ -63,16 +119,19 @@ export function MerchantPanel() {
 
   useEffect(() => {
     if (isSuccess && selectedProgram && address && lastMintParams) {
+      const merchantAddr = isEmployeeMode ? activeMembership!.merchant_address : address.toLowerCase();
       supabase
         .from('token_mint_history')
         .insert({
-          merchant_address: address.toLowerCase(),
+          merchant_address: merchantAddr,
           recipient_address: lastMintParams.recipient.toLowerCase(),
           amount: parseFloat(lastMintParams.amount),
           token_address: selectedProgram.tokenAddress.toLowerCase(),
           token_name: selectedProgram.name,
           token_symbol: selectedProgram.symbol,
           transaction_hash: hash || null,
+          employee_address: isEmployeeMode ? address.toLowerCase() : null,
+          branch_id: isEmployeeMode ? activeMembership!.branch_id : null,
         })
         .then(({ error: insertError }) => {
           if (insertError) console.error('[MerchantPanel] Failed to save mint history:', insertError);
@@ -86,7 +145,7 @@ export function MerchantPanel() {
       window.dispatchEvent(new Event('tokensIssued'));
       setTimeout(() => reset(), 2000);
     }
-  }, [isSuccess, reset, selectedProgram, address, lastMintParams, hash]);
+  }, [isSuccess, reset, selectedProgram, address, lastMintParams, hash, isEmployeeMode, activeMembership]);
 
   if (!address) {
     return (
@@ -97,59 +156,124 @@ export function MerchantPanel() {
     );
   }
 
-  return (
-    <Tabs defaultValue="dashboard" className="w-full">
-      <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-2">
-        <TabsList className="inline-flex w-auto min-w-full">
-          <TabsTrigger value="dashboard" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Dashboard</TabsTrigger>
-          <TabsTrigger value="customers" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Customers</TabsTrigger>
-          <TabsTrigger value="programs" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Programs</TabsTrigger>
-          <TabsTrigger value="rewards" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Rewards</TabsTrigger>
-          <TabsTrigger value="marketing" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Marketing</TabsTrigger>
-          <TabsTrigger value="agents" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">
-            <Bot className="h-3.5 w-3.5 mr-1" />AI Agents
-          </TabsTrigger>
-          <TabsTrigger value="team" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">
-            <Users className="h-3.5 w-3.5 mr-1" />Team
-          </TabsTrigger>
-        </TabsList>
-      </div>
+  const showWorkspaceSwitcher = memberships.length > 0;
 
-      <TabsContent value="dashboard" className="mt-6">
-        <DashboardTab />
-      </TabsContent>
-      <TabsContent value="customers" className="mt-6">
-        <CustomersTab />
-      </TabsContent>
-      <TabsContent value="programs" className="mt-6">
-        <ProgramsTab
-          selectedProgram={selectedProgram}
-          onSelectProgram={setSelectedProgram}
-          mintDialogOpen={mintDialogOpen}
-          setMintDialogOpen={setMintDialogOpen}
-          earnDialogOpen={earnDialogOpen}
-          setEarnDialogOpen={setEarnDialogOpen}
-          handleMintSubmit={handleMintSubmit}
-          isPending={isPending}
-          isPaused={isPaused}
-          isMintingActive={isMintingActive}
-        />
-      </TabsContent>
-      <TabsContent value="rewards" className="mt-6">
-        <RewardsTab />
-      </TabsContent>
-      <TabsContent value="marketing" className="mt-6">
-        <MarketingTab
-          selectedProgram={selectedProgram}
-          merchantAddress={address.toLowerCase()}
-        />
-      </TabsContent>
-      <TabsContent value="agents" className="mt-6">
-        <AgentsTab />
-      </TabsContent>
-      <TabsContent value="team" className="mt-6">
-        <TeamTab />
-      </TabsContent>
-    </Tabs>
+  return (
+    <div className="space-y-4">
+      {showWorkspaceSwitcher && (
+        <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground flex-shrink-0">
+            <Briefcase className="h-4 w-4" />
+            <span className="hidden sm:inline">Working as:</span>
+          </div>
+          <Select value={workspace} onValueChange={setWorkspace}>
+            <SelectTrigger className="flex-1">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="own">
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  <span>My Business</span>
+                </div>
+              </SelectItem>
+              {memberships.map((m) => (
+                <SelectItem key={m.merchant_address} value={m.merchant_address}>
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    <span>{m.business_name}</span>
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                      {m.role === 'admin' ? 'Admin' : m.role === 'branch_manager' ? 'Manager' : 'Cashier'}
+                    </Badge>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {isEmployeeMode ? (
+        /* Employee mode: only show Programs tab (earn points + mint based on role) */
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Users className="h-4 w-4" />
+            <span>Working at <strong className="text-foreground">{activeMembership!.business_name}</strong></span>
+            {activeMembership!.branch_name && (
+              <span>· {activeMembership!.branch_name}</span>
+            )}
+          </div>
+          <ProgramsTab
+            selectedProgram={selectedProgram}
+            onSelectProgram={setSelectedProgram}
+            mintDialogOpen={mintDialogOpen}
+            setMintDialogOpen={setMintDialogOpen}
+            earnDialogOpen={earnDialogOpen}
+            setEarnDialogOpen={setEarnDialogOpen}
+            handleMintSubmit={handleMintSubmit}
+            isPending={isPending}
+            isPaused={isPaused}
+            isMintingActive={isMintingActive}
+            employeeMerchantAddress={activeMembership!.merchant_address}
+            employeeRole={activeMembership!.role}
+          />
+        </div>
+      ) : (
+        /* Own business mode: full merchant panel */
+        <Tabs defaultValue="dashboard" className="w-full">
+          <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-2">
+            <TabsList className="inline-flex w-auto min-w-full">
+              <TabsTrigger value="dashboard" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Dashboard</TabsTrigger>
+              <TabsTrigger value="customers" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Customers</TabsTrigger>
+              <TabsTrigger value="programs" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Programs</TabsTrigger>
+              <TabsTrigger value="rewards" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Rewards</TabsTrigger>
+              <TabsTrigger value="marketing" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Marketing</TabsTrigger>
+              <TabsTrigger value="agents" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">
+                <Bot className="h-3.5 w-3.5 mr-1" />AI Agents
+              </TabsTrigger>
+              <TabsTrigger value="team" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">
+                <Users className="h-3.5 w-3.5 mr-1" />Team
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="dashboard" className="mt-6">
+            <DashboardTab />
+          </TabsContent>
+          <TabsContent value="customers" className="mt-6">
+            <CustomersTab />
+          </TabsContent>
+          <TabsContent value="programs" className="mt-6">
+            <ProgramsTab
+              selectedProgram={selectedProgram}
+              onSelectProgram={setSelectedProgram}
+              mintDialogOpen={mintDialogOpen}
+              setMintDialogOpen={setMintDialogOpen}
+              earnDialogOpen={earnDialogOpen}
+              setEarnDialogOpen={setEarnDialogOpen}
+              handleMintSubmit={handleMintSubmit}
+              isPending={isPending}
+              isPaused={isPaused}
+              isMintingActive={isMintingActive}
+            />
+          </TabsContent>
+          <TabsContent value="rewards" className="mt-6">
+            <RewardsTab />
+          </TabsContent>
+          <TabsContent value="marketing" className="mt-6">
+            <MarketingTab
+              selectedProgram={selectedProgram}
+              merchantAddress={address.toLowerCase()}
+            />
+          </TabsContent>
+          <TabsContent value="agents" className="mt-6">
+            <AgentsTab />
+          </TabsContent>
+          <TabsContent value="team" className="mt-6">
+            <TeamTab />
+          </TabsContent>
+        </Tabs>
+      )}
+    </div>
   );
 }
