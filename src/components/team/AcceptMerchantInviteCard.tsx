@@ -34,11 +34,18 @@ export function AcceptMerchantInviteCard() {
     }
     setBusy(true);
     try {
-      const { data, error } = await supabase.rpc('accept_merchant_invite' as any, {
+      const { data, error } = await supabase.rpc('accept_merchant_invite', {
         p_invite_code: trimmed,
       });
       if (error) {
-        toast.error(error.message || 'Could not join team');
+        const msg = error.message || '';
+        if (msg.includes('schema cache') || msg.includes('accept_merchant_invite')) {
+          toast.error(
+            'This environment has not applied the team-invite database migration yet. Run the latest Supabase migrations (accept_merchant_invite).',
+          );
+          return;
+        }
+        toast.error(msg || 'Could not join team');
         return;
       }
       const row = data as { ok?: boolean; error?: string; merchant_address?: string } | null;

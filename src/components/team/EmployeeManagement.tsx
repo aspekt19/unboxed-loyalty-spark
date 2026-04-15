@@ -247,7 +247,7 @@ export function EmployeeManagement() {
               <p className="text-xs text-muted-foreground">
                 Generate a one-time code and send it to the employee. They open the same site →{' '}
                 <strong>Merchant</strong> portal (<strong>/merchant</strong>), sign in with their wallet, and paste the code in the{' '}
-                <strong>Team invite code</strong> box at the top (valid about 7 days until used).
+                <strong>Team</strong> tab → <strong>Team invite code</strong> (valid about 7 days until used).
               </p>
               <Button
                 size="sm"
