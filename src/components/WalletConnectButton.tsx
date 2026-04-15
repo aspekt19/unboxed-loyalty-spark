@@ -9,9 +9,17 @@ import { usePrivySafe } from '@/hooks/usePrivySafe';
 import { getPrivyLinkedAccounts, getPrivyPrimaryEmail, shouldUsePrivyTokenAuth } from '@/lib/privyAuth';
 import { cn } from '@/lib/utils';
 
-/** Same outer box as Merchant (and other) header Profile — Sign in / Signing in / connected wallet. */
+/**
+ * Header row: Profile + wallet (fixed width so blocks align; compact height, readable text).
+ */
 export const HEADER_CLUSTER_ACTION_CLASSNAME =
-  'h-9 w-[10.75rem] sm:w-[11.75rem] shrink-0 justify-center rounded-md px-3 text-xs font-semibold';
+  'h-8 min-h-8 w-[8.75rem] sm:w-[9.25rem] shrink-0 justify-center rounded-md px-2.5 text-sm font-semibold leading-none';
+
+/**
+ * Same vertical rhythm as header actions; width follows label (cards, alerts).
+ */
+export const INLINE_AUTH_CTA_CLASSNAME =
+  'h-8 min-h-8 px-3 rounded-md text-sm font-semibold leading-none inline-flex items-center justify-center gap-2 shadow-md';
 
 export function WalletConnectButton() {
   const { connect, connectors } = useConnect();
@@ -229,7 +237,7 @@ export function WalletConnectButton() {
         )}
       >
         {(farcasterUser?.pfpUrl || farcasterUser?.username) && (
-          <Avatar className="h-6 w-6 flex-shrink-0">
+          <Avatar className="h-5 w-5 flex-shrink-0">
             {farcasterUser?.pfpUrl && (
               <AvatarImage src={farcasterUser.pfpUrl} alt={farcasterUser.username || farcasterUser.displayName || 'User'} />
             )}

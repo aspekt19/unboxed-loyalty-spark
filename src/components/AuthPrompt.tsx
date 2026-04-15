@@ -6,6 +6,8 @@ import { useAccount, useConnect } from 'wagmi';
 import { isFarcasterContext } from '@/config/wagmi';
 import { usePrivySafe } from '@/hooks/usePrivySafe';
 import { shouldUsePrivyTokenAuth } from '@/lib/privyAuth';
+import { INLINE_AUTH_CTA_CLASSNAME } from '@/components/WalletConnectButton';
+import { cn } from '@/lib/utils';
 
 export function AuthPrompt() {
   const { user, signInWithWallet, signInWithPrivy, isLoading } = useAuth();
@@ -32,8 +34,13 @@ export function AuthPrompt() {
             <p className="text-sm text-muted-foreground">
               Sign in to access your rewards, track your loyalty balance, and redeem perks.
             </p>
-            <Button onClick={() => void signInWithWallet()} disabled={isLoading} className="gap-2">
-              <LogIn className="h-4 w-4" />
+            <Button
+              variant="uds"
+              onClick={() => void signInWithWallet()}
+              disabled={isLoading}
+              className={cn(INLINE_AUTH_CTA_CLASSNAME)}
+            >
+              <LogIn className="h-3.5 w-3.5 shrink-0" />
               {isLoading ? 'Signing in...' : 'Continue'}
             </Button>
           </AlertDescription>
@@ -50,11 +57,12 @@ export function AuthPrompt() {
             Sign in with your Farcaster wallet to continue.
           </p>
           <Button
+            variant="uds"
             onClick={() => connect({ connector: connectors[0] })}
-            className="gap-2"
+            className={cn(INLINE_AUTH_CTA_CLASSNAME)}
             type="button"
           >
-            <LogIn className="h-4 w-4" />
+            <LogIn className="h-3.5 w-3.5 shrink-0" />
             Sign In
           </Button>
         </AlertDescription>
@@ -74,8 +82,8 @@ export function AuthPrompt() {
             Sign in with email, SMS, Google, or an external wallet. Email and social sign-in do not
             require a wallet signature.
           </p>
-          <Button onClick={() => privyLogin()} className="gap-2" type="button">
-            <LogIn className="h-4 w-4" />
+          <Button variant="uds" onClick={() => privyLogin()} className={cn(INLINE_AUTH_CTA_CLASSNAME)} type="button">
+            <LogIn className="h-3.5 w-3.5 shrink-0" />
             Sign In
           </Button>
         </AlertDescription>
@@ -90,8 +98,14 @@ export function AuthPrompt() {
         <AlertTitle className="text-lg font-semibold mb-2">Almost there</AlertTitle>
         <AlertDescription className="space-y-4">
           <p className="text-sm text-muted-foreground">Finish signing in to your account.</p>
-          <Button onClick={() => void signInWithPrivy()} disabled={isLoading} className="gap-2" type="button">
-            <LogIn className="h-4 w-4" />
+          <Button
+            variant="uds"
+            onClick={() => void signInWithPrivy()}
+            disabled={isLoading}
+            className={cn(INLINE_AUTH_CTA_CLASSNAME)}
+            type="button"
+          >
+            <LogIn className="h-3.5 w-3.5 shrink-0" />
             {isLoading ? 'Signing in...' : 'Continue'}
           </Button>
         </AlertDescription>
@@ -109,8 +123,8 @@ export function AuthPrompt() {
             Choose a wallet in the Privy window. After it connects, you will sign one message (SIWE)
             to link your wallet to Loyal Spark.
           </p>
-          <Button onClick={() => privyLogin()} className="gap-2" type="button">
-            <LogIn className="h-4 w-4" />
+          <Button variant="uds" onClick={() => privyLogin()} className={cn(INLINE_AUTH_CTA_CLASSNAME)} type="button">
+            <LogIn className="h-3.5 w-3.5 shrink-0" />
             Connect wallet
           </Button>
         </AlertDescription>
@@ -126,8 +140,14 @@ export function AuthPrompt() {
         <p className="text-sm text-muted-foreground">
           Sign the message in your wallet to complete sign-in (Sign-In With Ethereum).
         </p>
-        <Button onClick={() => void signInWithWallet()} disabled={isLoading} className="gap-2" type="button">
-          <LogIn className="h-4 w-4" />
+        <Button
+          variant="uds"
+          onClick={() => void signInWithWallet()}
+          disabled={isLoading}
+          className={cn(INLINE_AUTH_CTA_CLASSNAME, 'w-full sm:w-auto')}
+          type="button"
+        >
+          <LogIn className="h-3.5 w-3.5 shrink-0" />
           {isLoading ? 'Waiting for signature...' : 'Sign in with wallet'}
         </Button>
       </AlertDescription>
