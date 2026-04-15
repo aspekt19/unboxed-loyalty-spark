@@ -11,7 +11,7 @@
 
 - **Transport**: HTTP (Streamable HTTP)
 - **URL**: `https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp`
-- **Header**: `x-api-key: lsk_YOUR_SHARED_KEY`
+- **Header**: `x-api-key: lsk_A9NV68ba_ciGZBSc6_pk5jv0XC_nL7mEFaj`
 
 > Note: In OpenServ, the MCP server is added once at the workspace level. All agents share the same connection and API key. Agents are distinguished by the `agent_role` parameter in `send_report`.
 
