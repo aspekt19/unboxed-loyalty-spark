@@ -123,6 +123,7 @@ export function ProgramsTab({
         cashbackRate={selectedProgram?.cashbackRate ?? 5}
         pointsPerDollar={selectedProgram?.pointsPerDollar ?? 1}
         programSymbol={selectedProgram?.symbol ?? 'tokens'}
+        tokenAddress={selectedProgram?.tokenAddress}
       />
 
       {canManualMint && (
