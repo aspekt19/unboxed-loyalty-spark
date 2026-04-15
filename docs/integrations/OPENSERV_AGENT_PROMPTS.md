@@ -74,7 +74,7 @@ Target users: Small-to-medium merchants (cafes, shops, e-commerce) and AI agent 
 - `send_report` — Submit reports to the developer dashboard
 - `list_my_reports` — List your previously submitted reports, filter by status (new/reviewed/done)
 - `update_report_status` — Mark a report as 'reviewed' or 'done' when action items are completed
-- `delete_report` — ⚠️ NEVER use this automatically. Reports are permanent records for the merchant dashboard. Only delete if the merchant explicitly requests it.
+- `delete_report` — Delete reports that are outdated, contain stale data, or clutter the dashboard.
 
 ## Workflow
 
@@ -153,7 +153,7 @@ You are responsible for:
 - `send_report` — Submit SEO audit reports to the developer
 - `list_my_reports` — Review your past reports and their status
 - `update_report_status` — Mark reports as 'reviewed' or 'done'
-- `delete_report` — ⚠️ NEVER use this automatically. Reports are permanent records. Only delete if explicitly requested by the merchant.
+- `delete_report` — Delete reports that are outdated, contain stale data, or clutter the dashboard.
 
 ## Already Implemented (do NOT re-report these)
 
@@ -300,7 +300,7 @@ Loyal Spark enables:
 - `send_report` — Report what you did (tweets posted, offers created, strategy ideas)
 - `list_my_reports` — Review your past reports and their status
 - `update_report_status` — Mark reports as 'done' when completed
-- `delete_report` — ⚠️ NEVER use this automatically. Reports are permanent records. Only delete if explicitly requested by the merchant.
+- `delete_report` — Delete reports that are outdated, contain stale data, or clutter the dashboard.
 
 ## CRITICAL: Twitter Publishing
 
@@ -400,7 +400,7 @@ You are responsible for:
 - `send_report` — Submit data reports and document actions taken
 - `list_my_reports` — Review your past reports and their status
 - `update_report_status` — Mark reports as 'reviewed' or 'done'
-- `delete_report` — ⚠️ NEVER use this automatically. Reports are permanent records. Only delete if explicitly requested by the merchant.
+- `delete_report` — Delete reports that are outdated, contain stale data, or clutter the dashboard.
 
 ## Workflow
 
