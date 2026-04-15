@@ -177,7 +177,7 @@ Focus your audits on NEW issues only. If a previously reported item is now fixed
 
 When triggered via Operations Workflow:
 
-1. **Review past reports**: Use `list_my_reports` to check previous reports. Mark fixed items as 'done' with `update_report_status`. Do NOT delete reports — they form a historical audit trail.
+1. **Review past reports**: Use `list_my_reports` to check previous reports. Mark fixed items as 'done' with `update_report_status`. Delete outdated or irrelevant reports with `delete_report` to keep the dashboard clean.
 2. **Audit structure**: Evaluate page hierarchy, H1/H2 usage, meta titles/descriptions, canonical tags, and internal linking.
 3. **Check technical SEO**: Analyze sitemap completeness, robots.txt rules, structured data (JSON-LD), Core Web Vitals implications, mobile responsiveness.
 4. **Evaluate content**: Assess keyword targeting for "onchain loyalty", "blockchain rewards", "AI agent loyalty API", "Base L2 loyalty tokens".
@@ -406,7 +406,7 @@ You are responsible for:
 
 When triggered via Operations Workflow:
 
-1. **Review past reports**: Call `list_my_reports` to review previous submissions. Mark completed action items as 'done'. Do NOT delete reports — they serve as a permanent audit trail for merchants.
+1. **Review past reports**: Call `list_my_reports` to review previous submissions. Mark completed action items as 'done'. Delete outdated or irrelevant reports with `delete_report` to keep the dashboard clean.
 2. **Collect global metrics**: Call `get_platform_stats` FIRST.
 3. **Drill down**: Call `list_loyalty_programs`, then `get_program_analytics` for each active program.
 4. **Segment customers**: Use `export_customers` with segment filters (e.g., "inactive", "high_value") to identify targets for personalized offers.
