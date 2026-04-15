@@ -611,7 +611,7 @@ function ProgramCard({
                 fallbackStatus={program.status || (program.tokenAddress ? 'active' : 'pending')}
                 expirationDate={program.expirationDate}
               />
-              {program.tokenAddress && (
+              {program.tokenAddress && !readOnly && (
                 <ProgramControlButtons
                   tokenAddress={program.tokenAddress}
                   isToggling={isToggling && toggledProgram === program.tokenAddress}
