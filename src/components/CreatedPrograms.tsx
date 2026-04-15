@@ -388,9 +388,9 @@ export function CreatedPrograms({ onSelectProgram, merchantAddress: merchantAddr
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Gift className="h-5 w-5 text-primary" />
-          Your Loyalty Programs
+          {readOnly ? 'Store Programs' : 'Your Loyalty Programs'}
         </CardTitle>
-        <CardDescription>Select a program to issue rewards</CardDescription>
+        <CardDescription>{readOnly ? 'Select a program to credit points' : 'Select a program to issue rewards'}</CardDescription>
       </CardHeader>
       <CardContent>
         {isMobile ? (
