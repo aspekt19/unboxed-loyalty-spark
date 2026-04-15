@@ -14,6 +14,7 @@ import {
   PLATFORM_FEE_WALLET,
   authenticateAgent,
 } from "./helpers.ts";
+import { resolveMcpApiKey } from "../_shared/mcp-http-api-key.ts";
 import { parseOptionalCashbackRate, parseOptionalPointsPerDollar } from "../_shared/program-economics.ts";
 
 const app = new Hono();
@@ -27,7 +28,9 @@ function createMcpServer(agent: any) {
   const mcpServer = new McpServer({ name: "loyal-spark-mcp", version: "1.0.0" });
 
   function authGuard(scopes?: string[]) {
-    if (!agent) return '{"error":"Not authenticated. Provide x-api-key header."}';
+    if (!agent) {
+      return '{"error":"Not authenticated. Send HTTP header x-api-key: lsk_... or Authorization: Bearer lsk_... on every MCP request (some gateways strip custom headers)."}';
+    }
     if (scopes && !scopes.some(s => agent.scopes.includes(s))) return `{"error":"Required scope: ${scopes.join(" or ")}"}`;
     return null;
   }
@@ -824,7 +827,7 @@ function createMcpServer(agent: any) {
   });
 
   mcpServer.tool("delete_report", {
-    description: "Deletion of agent reports is disabled. Reports are retained as an audit history for the merchant dashboard.",
+    description: "Delete a report that is no longer relevant. Use to clean up outdated or irrelevant reports.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -832,10 +835,16 @@ function createMcpServer(agent: any) {
       },
       required: ["report_id"],
     },
-    handler: async () => {
-      return T(JSON.stringify({
-        error: "Report deletion is disabled. Use update_report_status to mark reports as reviewed or done instead.",
-      }));
+    handler: async ({ report_id }: any) => {
+      const err = authGuard();
+      if (err) return T(err);
+      const d = db();
+      const { data: report } = await d.from("agent_reports").select("id, title, owner_address").eq("id", report_id).single();
+      if (!report) return T('{"error":"Report not found"}');
+      if (report.owner_address?.toLowerCase() !== agent.ownerAddress.toLowerCase()) return T('{"error":"Not your report"}');
+      const { error: delErr } = await d.from("agent_reports").delete().eq("id", report_id);
+      if (delErr) return T(JSON.stringify({ error: delErr.message }));
+      return T(JSON.stringify({ message: `Report '${report.title}' deleted` }));
     },
   });
 
@@ -888,9 +897,9 @@ function createMcpServer(agent: any) {
 }
 
 app.all("/*", async (c) => {
-  const apiKey = c.req.header("x-api-key");
+  const apiKey = resolveMcpApiKey((name) => c.req.header(name), "lsk_");
   let agent = null;
-  if (apiKey?.startsWith("lsk_")) {
+  if (apiKey) {
     agent = await authenticateAgent(apiKey);
   }
   const server = createMcpServer(agent);

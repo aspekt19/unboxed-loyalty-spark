@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.recipient-loyalty-mcp]
 verify_jwt = false
+
+[functions.loyalty-mcp]
+verify_jwt = false

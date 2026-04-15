@@ -11,6 +11,8 @@
 
 Общая карта для агентов: [AGENTS.md](../../AGENTS.md). Порталы и приглашения в команду: [PORTALS_AND_TEAM.md](../development/PORTALS_AND_TEAM.md).
 
+**OpenServ + MCP «Not authenticated»:** см. [OPENSERV_MCP_AUTH.md](./OPENSERV_MCP_AUTH.md) — часто нужно передать ключ как `Authorization: Bearer lsk_...` или привязать секрет к шагу workflow.
+
 ## Быстрый старт (если поднимаешь стек как в документе)
 
 ```bash

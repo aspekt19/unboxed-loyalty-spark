@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { McpServer, StreamableHttpTransport } from "mcp-lite";
+import { resolveMcpApiKey } from "../_shared/mcp-http-api-key.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { authenticateRecipientAgent, insertRecipientActivity } from "../_shared/recipient-agent-auth.ts";
 import { walletHasEngagement } from "../_shared/recipient-queries.ts";
@@ -14,7 +15,7 @@ function T(text: string) {
 function createRecipientMcpServer(
   wallet: string,
   agentId: string,
-  d: any,
+  d: ReturnType<typeof createClient>,
   ip: string
 ) {
   const w = wallet.toLowerCase();
@@ -182,9 +183,11 @@ function createRecipientMcpServer(
 }
 
 app.all("/*", async (c) => {
-  const apiKey = c.req.header("x-api-key");
-  if (!apiKey?.startsWith("rwk_")) {
-    return new Response(JSON.stringify({ error: "Missing x-api-key with rwk_ recipient agent key" }), {
+  const apiKey = resolveMcpApiKey((name) => c.req.header(name), "rwk_");
+  if (!apiKey) {
+    return new Response(JSON.stringify({
+      error: "Missing recipient key. Use header x-api-key: rwk_... or Authorization: Bearer rwk_...",
+    }), {
       status: 401,
       headers: { "Content-Type": "application/json" },
     });

@@ -24,6 +24,7 @@ Start at the repo root **[AGENTS.md](../AGENTS.md)** (links to rules, APIs, and 
 - [Round-Up contracts (legacy filename)](./development/DEPLOYMENT_INSTRUCTIONS.md) — Solidity deploy steps, not the web app
 - [Farcaster](./integrations/FARCASTER_APP_README.md)
 - [OpenServ agents setup](./integrations/OPENSERV_AGENTS_SETUP.md)
+- [OpenServ MCP auth troubleshooting](./integrations/OPENSERV_MCP_AUTH.md)
 - [OpenServ prompts](./integrations/OPENSERV_AGENT_PROMPTS.md)
 - [Prompt guide (LLMs)](./integrations/PROMPT_GUIDE.md)
 - [A2A integration plan](./integrations/A2A_INTEGRATION_PLAN.md)
