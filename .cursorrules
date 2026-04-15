@@ -2,7 +2,7 @@
 
 ## Project Overview
 Web3-powered loyalty platform built on Base Mainnet (Chain ID: 8453).
-Dual-mode: humans via Web UI (SIWE auth), AI agents via REST API / MCP Server.
+Dual-mode: humans via Web UI (Privy-first + SIWE where needed), AI agents via REST API / MCP Server.
 
 ## Tech Stack
 - Frontend: React 18, TypeScript, Vite 5, Tailwind CSS 3, shadcn/ui (Radix), Framer Motion, Sonner
@@ -26,6 +26,7 @@ Dual-mode: humans via Web UI (SIWE auth), AI agents via REST API / MCP Server.
 ## Authentication
 - Humans: **Privy** first (email / SMS / OAuth / embedded + external wallets); Supabase session via `privy-auth` + client helpers in `src/lib/privyAuth.ts`
 - Wallet-only path: SIWE message + `siwe-nonce` / `siwe-verify` Edge Functions (still used for wagmi-connected wallet login)
+- Merchant / Customer headers: **Profile** is shown only when `useAuth().user` exists; order is **Theme → Profile (if signed in) → Wallet**. See `docs/development/PORTALS_AND_TEAM.md`.
 - Farcaster Mini App: detect FC context (`@farcaster/miniapp-sdk`) and avoid fighting Mini App lifecycle in auth UI
 - AI Agents: API keys with `lsk_` prefix, hashed in DB (unchanged server rules)
 
@@ -44,6 +45,8 @@ src/
     marketplace/ # Token trading (DEX) — FROZEN
     reviews/     # Customer reviews
     onboarding/  # Welcome flows
+    merchant/    # Merchant shell & tabs (Team, Programs, dashboard, …)
+    team/          # Branches, employees, invite codes, AcceptMerchantInviteCard
     admin/       # Platform administration
   hooks/         # ALL Supabase queries must live here, never in components
   config/        # Contract addresses & ABIs

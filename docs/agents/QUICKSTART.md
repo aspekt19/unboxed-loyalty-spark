@@ -5,8 +5,10 @@ Live onboarding page: **[https://loyalspark.online/for-agents](https://loyalspar
 ## 1. API key
 
 1. Open [loyalspark.online/merchant](https://loyalspark.online/merchant)  
-2. Sign in (Privy: email / phone / social / wallet)  
+2. Sign in (Privy: email / phone / social / wallet). The **Profile** button appears only **after** a Supabase session exists — use **Sign In** in the header first.  
 3. **AI Agents** → register → copy `lsk_...` (shown once)
+
+Portal behaviour (header order, team invites, migrations): [PORTALS_AND_TEAM.md](../development/PORTALS_AND_TEAM.md).
 
 ## 2. REST (smoke test)
 

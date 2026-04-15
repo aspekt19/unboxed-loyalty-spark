@@ -43,6 +43,7 @@ Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain
 - **Referral Programs**: Generate referral codes with bonuses
 - **Voucher Management**: Track redemptions with QR code verification
 - **AI Agent Management**: Register agents, manage API keys, monitor activity
+- **Team & branches**: Invite cashiers/managers by wallet or **one-time invite code** (redeem on **Merchant → Team**); requires Postgres RPC `accept_merchant_invite` — see [docs/development/PORTALS_AND_TEAM.md](./docs/development/PORTALS_AND_TEAM.md)
 
 ### For Customers (Web UI)
 - **Multi-Token Dashboard**: View all loyalty tokens from different merchants
@@ -261,6 +262,8 @@ npm run dev
 - **MetaMask / Coinbase Wallet / WalletConnect**: Traditional Web3 wallet connection
 - **Farcaster**: Auto-connects inside Warpcast miniapp
 
+On **Merchant** and **Customer** portals, use the header **Sign In** / wallet control until a session exists; the **Profile** control appears only after you are signed in. See [docs/development/PORTALS_AND_TEAM.md](./docs/development/PORTALS_AND_TEAM.md).
+
 **Network**: Base Mainnet (Chain ID: 8453) | **RPC**: https://mainnet.base.org | **Explorer**: https://basescan.org
 
 ## Project Structure
@@ -287,6 +290,8 @@ unboxed-loyalty-spark/
 │   │   ├── marketplace/           # Token trading
 │   │   ├── reviews/               # Customer reviews
 │   │   ├── onboarding/            # Welcome flows & tours
+│   │   ├── merchant/              # Merchant shell & tabs (Team, Programs, …)
+│   │   ├── team/                  # Branches, employees, invite redemption
 │   │   └── admin/                 # Platform administration
 │   ├── hooks/                     # Data fetching (TanStack Query + Supabase) — keep queries here
 │   ├── config/                    # Contract addresses & ABIs
@@ -311,7 +316,7 @@ unboxed-loyalty-spark/
 └── README.md
 ```
 
-**Indexes:** [AGENTS.md](./AGENTS.md) (AI agents) · [docs/README.md](./docs/README.md) (human guides) · [supabase/functions/README.md](./supabase/functions/README.md) (Edge Functions).
+**Indexes:** [AGENTS.md](./AGENTS.md) (AI agents) · [docs/README.md](./docs/README.md) (human guides) · [docs/development/PORTALS_AND_TEAM.md](./docs/development/PORTALS_AND_TEAM.md) (portal UI & team invites) · [supabase/functions/README.md](./supabase/functions/README.md) (Edge Functions).
 
 ## Edge Functions
 

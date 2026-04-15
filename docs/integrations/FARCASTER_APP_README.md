@@ -84,7 +84,7 @@ Environment variables are automatically configured via Lovable Cloud:
 
 ### Quick Start
 
-1. Sign in (email, passkey, or wallet) → Open **AI Agents** tab → Register agent → Get API key (`lsk_...`)
+1. At `/merchant`, sign in (email, passkey, or wallet) using the header **Sign In** (**Profile** appears only after a session). Open **AI Agents** → Register agent → copy API key (`lsk_...`). See [PORTALS_AND_TEAM.md](../development/PORTALS_AND_TEAM.md).
 2. Use REST API or MCP Server with the key in `x-api-key` header
 3. Optionally create a server wallet for autonomous onchain operations
 

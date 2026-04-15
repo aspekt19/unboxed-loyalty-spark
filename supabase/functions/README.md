@@ -2,6 +2,8 @@
 
 Each subdirectory is one deployable function (`index.ts` entry). Shared Deno modules live in **`_shared/`** (import with `../_shared/...` from a function folder).
 
+**Postgres (not Edge):** merchant team join uses RPC `accept_merchant_invite` in `supabase/migrations/` — see [docs/development/PORTALS_AND_TEAM.md](../../docs/development/PORTALS_AND_TEAM.md).
+
 ## Core API and agents
 
 | Folder | Role |

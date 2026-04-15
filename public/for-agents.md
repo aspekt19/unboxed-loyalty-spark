@@ -9,5 +9,6 @@ The full onboarding UI lives at **https://loyalspark.online/for-agents** (same o
 - [Skills index](https://loyalspark.online/.well-known/skills/index.md)
 - [llms.txt](https://loyalspark.online/llms.txt)
 - [Merchant / API keys](https://loyalspark.online/merchant)
+- [Customer portal](https://loyalspark.online/customer)
 
-Repo: copy-paste configs in `examples/agent-mcp/` and `docs/agents/QUICKSTART.md`.
+Repo: copy-paste configs in `examples/agent-mcp/` and `docs/agents/QUICKSTART.md`. Human portal UX & team invites: `docs/development/PORTALS_AND_TEAM.md`.

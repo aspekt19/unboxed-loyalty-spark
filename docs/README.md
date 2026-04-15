@@ -11,7 +11,7 @@ Start at the repo root **[AGENTS.md](../AGENTS.md)** (links to rules, APIs, and 
 | Path | Contents |
 |------|----------|
 | [agents/](./agents/) | Short quickstart for coding agents (links to `/for-agents`, examples) |
-| [development/](./development/) | Build, deploy, Capacitor native apps |
+| [development/](./development/) | Build, deploy, Capacitor; [PORTALS_AND_TEAM.md](./development/PORTALS_AND_TEAM.md) (`/merchant`, `/customer`, team RPC) |
 | [integrations/](./integrations/) | Farcaster, OpenServ, A2A, prompts, adaptation plans |
 | [pitch-deck/](./pitch-deck/) | Investor deck source notes (Markdown); live UI route: `/pitch` |
 | [supabase/](./supabase/) | Supabase-specific runbooks (e.g. expiration cron) |
@@ -20,7 +20,8 @@ Start at the repo root **[AGENTS.md](../AGENTS.md)** (links to rules, APIs, and 
 
 - [AI agents — repo quickstart](./agents/QUICKSTART.md) · live **[/for-agents](https://loyalspark.online/for-agents)**
 - [Native / Capacitor build](./development/NATIVE_BUILD_GUIDE.md)
-- [Deployment](./development/DEPLOYMENT_INSTRUCTIONS.md)
+- [Merchant & customer portals — header, Profile, team invites](./development/PORTALS_AND_TEAM.md)
+- [Round-Up contracts (legacy filename)](./development/DEPLOYMENT_INSTRUCTIONS.md) — Solidity deploy steps, not the web app
 - [Farcaster](./integrations/FARCASTER_APP_README.md)
 - [OpenServ agents setup](./integrations/OPENSERV_AGENTS_SETUP.md)
 - [OpenServ prompts](./integrations/OPENSERV_AGENT_PROMPTS.md)
@@ -36,7 +37,7 @@ Start at the repo root **[AGENTS.md](../AGENTS.md)** (links to rules, APIs, and 
 |------|------|
 | `src/` | React + TypeScript app: domain UI under `components/`, routes under `pages/`, Supabase data access under `hooks/` (not inline in presentational components) |
 | `public/` | Static assets; **agent** manifests (`openapi.json`, `llms.txt`, `.well-known/`) — treat as public API surface |
-| `supabase/migrations/` | Postgres schema & RLS |
+| `supabase/migrations/` | Postgres schema & RLS (includes `accept_merchant_invite` for team joins — see PORTALS_AND_TEAM) |
 | `supabase/functions/` | Deno Edge Functions — one deployable folder per function |
 | `contracts/` | Solidity sources |
 | `capacitor.config.ts`, `ios/`, `android/` | Native shells (after `npx cap add`) |

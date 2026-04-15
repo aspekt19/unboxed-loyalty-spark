@@ -7,9 +7,9 @@
 В **текущем** GitHub-репозитории (`aspekt19/unboxed-loyalty-spark`) **нет** каталога `agents/`, файла `setup-agents.sh` и `docker-compose.yml` из примеров ниже — это **референс-архитектура**, которую можно воспроизвести в отдельном репо или у себя локально. Для интеграции с Loyal Spark достаточно любого OpenServ-агента (один сервис), которому заданы:
 
 - `LOYAL_SPARK_API` = `https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api` (или ваш кастомный деплой)
-- `LOYAL_SPARK_API_KEY` = ключ `lsk_...` из [loyalspark.online/merchant](https://loyalspark.online/merchant) → вкладка **AI Agents**
+- `LOYAL_SPARK_API_KEY` = ключ `lsk_...` из [loyalspark.online/merchant](https://loyalspark.online/merchant) → войти через **Sign In** в шапке (кнопка **Profile** только после сессии) → вкладка **AI Agents**
 
-Общая карта для агентов: [AGENTS.md](../../AGENTS.md).
+Общая карта для агентов: [AGENTS.md](../../AGENTS.md). Порталы и приглашения в команду: [PORTALS_AND_TEAM.md](../development/PORTALS_AND_TEAM.md).
 
 ## Быстрый старт (если поднимаешь стек как в документе)
 

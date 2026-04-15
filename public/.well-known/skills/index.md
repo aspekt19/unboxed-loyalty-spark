@@ -8,7 +8,7 @@ Loyal Spark provides a complete loyalty infrastructure via REST API and MCP Serv
 
 ## Prerequisites
 
-- **API Key**: Register at [loyalspark.online/merchant](https://loyalspark.online/merchant) → AI Agents tab → Get `lsk_...` key
+- **API Key**: Open [loyalspark.online/merchant](https://loyalspark.online/merchant), complete **Sign In** in the header (the **Profile** control appears only after you are signed in), then **AI Agents** tab → register → copy `lsk_...` key
 - **Authentication**: Pass API key in `x-api-key` header for all requests
 - **Chain**: Base L2 (Chain ID: 8453)
 - **Token Standard**: ERC-20

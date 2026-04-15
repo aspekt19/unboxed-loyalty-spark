@@ -4,7 +4,9 @@
 
 ## Quick Start
 
-Copy any prompt below into your agent's system instructions. Replace `YOUR_API_KEY` with your `lsk_...` key from [loyalspark.online/merchant](https://loyalspark.online/merchant) → AI Agents tab.
+Copy any prompt below into your agent's system instructions. Replace `YOUR_API_KEY` with your `lsk_...` key from [loyalspark.online/merchant](https://loyalspark.online/merchant) → **AI Agents** tab (sign in via the header **Sign In** first; **Profile** only appears after a session exists).
+
+Human reference: [PORTALS_AND_TEAM.md](../development/PORTALS_AND_TEAM.md).
 
 ---
 

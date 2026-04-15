@@ -8,6 +8,7 @@ This file is the **entry point** for coding agents (Cursor, OpenServ, Claude Cod
 |------|------|
 | Repo rules for edits (stack, folders, API scopes) | [`.cursorrules`](./.cursorrules) |
 | Human docs index (build, Farcaster, OpenServ, Supabase runbooks) | [`docs/README.md`](./docs/README.md) |
+| Merchant / customer portal UI & team invites | [`docs/development/PORTALS_AND_TEAM.md`](./docs/development/PORTALS_AND_TEAM.md) |
 | Edge Functions catalogue | [`supabase/functions/README.md`](./supabase/functions/README.md) |
 | Supabase layout (migrations vs functions) | [`supabase/README.md`](./supabase/README.md) |
 
