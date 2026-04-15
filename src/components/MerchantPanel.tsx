@@ -194,29 +194,88 @@ export function MerchantPanel() {
       )}
 
       {isEmployeeMode ? (
-        /* Employee mode: only show Programs tab (earn points + mint based on role) */
-        <div className="space-y-2">
+        /* Employee mode: tabs depend on role */
+        <div className="space-y-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Users className="h-4 w-4" />
             <span>Working at <strong className="text-foreground">{activeMembership!.business_name}</strong></span>
             {activeMembership!.branch_name && (
               <span>· {activeMembership!.branch_name}</span>
             )}
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+              {activeMembership!.role === 'admin' ? 'Admin' : activeMembership!.role === 'branch_manager' ? 'Manager' : 'Cashier'}
+            </Badge>
           </div>
-          <ProgramsTab
-            selectedProgram={selectedProgram}
-            onSelectProgram={setSelectedProgram}
-            mintDialogOpen={mintDialogOpen}
-            setMintDialogOpen={setMintDialogOpen}
-            earnDialogOpen={earnDialogOpen}
-            setEarnDialogOpen={setEarnDialogOpen}
-            handleMintSubmit={handleMintSubmit}
-            isPending={isPending}
-            isPaused={isPaused}
-            isMintingActive={isMintingActive}
-            employeeMerchantAddress={activeMembership!.merchant_address}
-            employeeRole={activeMembership!.role}
-          />
+
+          {activeMembership!.role === 'cashier' ? (
+            /* Cashier: only earn points */
+            <ProgramsTab
+              selectedProgram={selectedProgram}
+              onSelectProgram={setSelectedProgram}
+              mintDialogOpen={mintDialogOpen}
+              setMintDialogOpen={setMintDialogOpen}
+              earnDialogOpen={earnDialogOpen}
+              setEarnDialogOpen={setEarnDialogOpen}
+              handleMintSubmit={handleMintSubmit}
+              isPending={isPending}
+              isPaused={isPaused}
+              isMintingActive={isMintingActive}
+              employeeMerchantAddress={activeMembership!.merchant_address}
+              employeeRole={activeMembership!.role}
+            />
+          ) : (
+            /* Manager / Admin: multiple tabs */
+            <Tabs defaultValue="programs" className="w-full">
+              <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-2">
+                <TabsList className="inline-flex w-auto min-w-full">
+                  <TabsTrigger value="programs" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Programs</TabsTrigger>
+                  <TabsTrigger value="customers" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Customers</TabsTrigger>
+                  {activeMembership!.role === 'admin' && (
+                    <>
+                      <TabsTrigger value="dashboard" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Dashboard</TabsTrigger>
+                      <TabsTrigger value="rewards" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Rewards</TabsTrigger>
+                      <TabsTrigger value="marketing" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Marketing</TabsTrigger>
+                    </>
+                  )}
+                </TabsList>
+              </div>
+              <TabsContent value="programs" className="mt-6">
+                <ProgramsTab
+                  selectedProgram={selectedProgram}
+                  onSelectProgram={setSelectedProgram}
+                  mintDialogOpen={mintDialogOpen}
+                  setMintDialogOpen={setMintDialogOpen}
+                  earnDialogOpen={earnDialogOpen}
+                  setEarnDialogOpen={setEarnDialogOpen}
+                  handleMintSubmit={handleMintSubmit}
+                  isPending={isPending}
+                  isPaused={isPaused}
+                  isMintingActive={isMintingActive}
+                  employeeMerchantAddress={activeMembership!.merchant_address}
+                  employeeRole={activeMembership!.role}
+                />
+              </TabsContent>
+              <TabsContent value="customers" className="mt-6">
+                <CustomersTab />
+              </TabsContent>
+              {activeMembership!.role === 'admin' && (
+                <>
+                  <TabsContent value="dashboard" className="mt-6">
+                    <DashboardTab />
+                  </TabsContent>
+                  <TabsContent value="rewards" className="mt-6">
+                    <RewardsTab />
+                  </TabsContent>
+                  <TabsContent value="marketing" className="mt-6">
+                    <MarketingTab
+                      selectedProgram={selectedProgram}
+                      merchantAddress={activeMembership!.merchant_address}
+                    />
+                  </TabsContent>
+                </>
+              )}
+            </Tabs>
+          )}
         </div>
       ) : (
         /* Own business mode: full merchant panel */
