@@ -39,7 +39,7 @@ export function EmployeeManagement() {
   const [inviteTab, setInviteTab] = useState<string>('wallet');
   const [walletInput, setWalletInput] = useState('');
   const [selectedRole, setSelectedRole] = useState<EmployeeRole>('cashier');
-  const [selectedBranch, setSelectedBranch] = useState<string>('');
+  const [selectedBranch, setSelectedBranch] = useState<string>('all');
   const [displayName, setDisplayName] = useState('');
 
   const { data: employees = [], isLoading } = useQuery({
@@ -96,7 +96,7 @@ export function EmployeeManagement() {
         merchant_address: address.toLowerCase(),
         employee_wallet_address: walletInput.trim().toLowerCase(),
         role: selectedRole,
-        branch_id: selectedBranch || null,
+        branch_id: selectedBranch === 'all' ? null : selectedBranch,
         display_name: displayName.trim() || null,
         invited_by: address.toLowerCase(),
       });
@@ -119,7 +119,7 @@ export function EmployeeManagement() {
         merchant_address: address.toLowerCase(),
         invite_code: code,
         role: selectedRole,
-        branch_id: selectedBranch || null,
+        branch_id: selectedBranch === 'all' ? null : selectedBranch,
       });
       if (error) throw error;
       return code;
@@ -202,7 +202,7 @@ export function EmployeeManagement() {
               <Select value={selectedBranch} onValueChange={setSelectedBranch}>
                 <SelectTrigger><SelectValue placeholder="All branches" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All branches</SelectItem>
+                  <SelectItem value="all">All branches</SelectItem>
                   {branches.map((b) => (
                     <SelectItem key={b.id} value={b.id}>{b.branch_name}</SelectItem>
                   ))}
