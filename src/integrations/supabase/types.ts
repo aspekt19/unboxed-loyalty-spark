@@ -1784,6 +1784,7 @@ export type Database = {
       }
     }
     Functions: {
+      accept_merchant_invite: { Args: { p_invite_code: string }; Returns: Json }
       activate_premium_subscription: {
         Args: { p_request_id: string; p_wallet_address: string }
         Returns: boolean
