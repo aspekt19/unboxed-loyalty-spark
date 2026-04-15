@@ -490,7 +490,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure) {
         programsTotal, programsActive, programsPaused, programsExpired,
         vouchersTotal, vouchersActive, vouchersUsed,
         mintsCount, mintSum,
-        marketTotal, marketActive, marketCompleted,
+        marketTotal, marketActive, marketCompleted, marketCancelled,
         rewardsTotal, rewardsActive,
         agentCount,
       ] = await Promise.all([
@@ -519,6 +519,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure) {
         d.from("marketplace_offers").select("*", { count: "exact", head: true }),
         d.from("marketplace_offers").select("*", { count: "exact", head: true }).eq("status", "active"),
         d.from("marketplace_offers").select("*", { count: "exact", head: true }).eq("status", "completed"),
+        d.from("marketplace_offers").select("*", { count: "exact", head: true }).eq("status", "cancelled"),
         d.from("rewards").select("*", { count: "exact", head: true }),
         d.from("rewards").select("*", { count: "exact", head: true }).eq("is_active", true),
         d.from("agent_registry").select("*", { count: "exact", head: true }).eq("is_active", true),
