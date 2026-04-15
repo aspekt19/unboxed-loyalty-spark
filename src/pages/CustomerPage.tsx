@@ -1,4 +1,4 @@
-import { WalletConnectButton } from '@/components/WalletConnectButton';
+import { WalletConnectButton, HEADER_CLUSTER_ACTION_CLASSNAME } from '@/components/WalletConnectButton';
 import { CustomerPanel } from '@/components/CustomerPanel';
 import { CustomerFiltersPanel } from '@/components/CustomerFiltersPanel';
 import { WelcomeFlow } from '@/components/onboarding/WelcomeFlow';
@@ -19,6 +19,7 @@ import { CustomerProfileSection } from '@/components/customer/CustomerProfileSec
 import { PullToRefresh } from '@/components/mobile/PullToRefresh';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useQueryClient } from '@tanstack/react-query';
+import { cn } from '@/lib/utils';
 
 const CustomerPage = () => {
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
@@ -109,11 +110,13 @@ const CustomerPage = () => {
                 <button
                   onClick={() => handleTabChange('profile')}
                   type="button"
-                  className={`px-4 py-2 rounded-xl font-bold shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-1.5 ${
+                  className={cn(
+                    HEADER_CLUSTER_ACTION_CLASSNAME,
+                    'inline-flex items-center gap-1.5 font-bold shadow-md hover:shadow-lg transition-all duration-200',
                     activeTab === 'profile'
                       ? 'bg-uds-purple text-white hover:bg-uds-purple-light'
-                      : 'border-2 border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-primary/50'
-                  }`}
+                      : 'border-2 border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-primary/50',
+                  )}
                 >
                   Profile
                 </button>

@@ -1,4 +1,4 @@
-import { WalletConnectButton } from '@/components/WalletConnectButton';
+import { WalletConnectButton, HEADER_CLUSTER_ACTION_CLASSNAME } from '@/components/WalletConnectButton';
 import { MerchantPanel } from '@/components/MerchantPanel';
 import { IssuedTokensHistory } from '@/components/IssuedTokensHistory';
 import { WelcomeFlow } from '@/components/onboarding/WelcomeFlow';
@@ -14,6 +14,7 @@ import { PullToRefresh } from '@/components/mobile/PullToRefresh';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
+import { cn } from '@/lib/utils';
 
 const MerchantPage = () => {
   const isMobile = useIsMobile();
@@ -79,6 +80,7 @@ const MerchantPage = () => {
                 variant={showProfile ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setShowProfile(!showProfile)}
+                className={cn(HEADER_CLUSTER_ACTION_CLASSNAME)}
               >
                 Profile
               </Button>

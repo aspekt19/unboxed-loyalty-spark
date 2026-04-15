@@ -14,7 +14,7 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <Button variant="ghost" size="icon" className="h-8 w-8">
+      <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0">
         <Sun className="h-4 w-4" />
       </Button>
     );
@@ -25,7 +25,7 @@ export function ThemeToggle() {
       variant="ghost"
       size="icon"
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      className="h-8 w-8 hover:bg-secondary transition-all duration-300"
+      className="h-9 w-9 shrink-0 hover:bg-secondary transition-all duration-300"
       aria-label="Toggle theme"
     >
       {theme === "dark" ? (
