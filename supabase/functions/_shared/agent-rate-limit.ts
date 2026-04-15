@@ -2,6 +2,12 @@
  * Per-agent per-minute limits (agent_activity_log) and per-owner monthly API caps (agent_plans + agent_usage).
  */
 
+/** Admin wallets get unlimited API access (no rate limits). */
+const ADMIN_WALLETS = [
+  "0x5cc0aa9ed773f413f81f78a62f2e94109ce26205",
+  "0x40a8cdd6a10ec1a8cb3dfb2834675e7a2cf4ad8b",
+];
+
 export type AgentRateLimitRow = {
   id: string;
   owner_address: string;
