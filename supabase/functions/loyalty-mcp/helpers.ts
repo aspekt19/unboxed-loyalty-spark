@@ -67,7 +67,18 @@ export async function hashApiKey(key: string): Promise<string> {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-export async function authenticateAgent(apiKey: string) {
+export type McpAgentContext = {
+  agentId: string;
+  ownerAddress: string;
+  scopes: string[];
+  name: string;
+};
+
+export type AuthenticateMcpAgentResult =
+  | { ok: true; agent: McpAgentContext }
+  | { ok: false; reason: "invalid_key" | "rate_limited" };
+
+export async function authenticateAgent(apiKey: string): Promise<AuthenticateMcpAgentResult> {
   const d = db();
   const keyHash = await hashApiKey(apiKey);
   const { data: agent, error } = await d
@@ -77,7 +88,7 @@ export async function authenticateAgent(apiKey: string) {
     )
     .eq("api_key_hash", keyHash)
     .single();
-  if (error || !agent || !agent.is_active) return null;
+  if (error || !agent || !agent.is_active) return { ok: false, reason: "invalid_key" };
 
   const limits = await checkAgentApiRateLimits(d, {
     id: agent.id,
@@ -85,7 +96,7 @@ export async function authenticateAgent(apiKey: string) {
     rate_limit_per_minute: agent.rate_limit_per_minute,
     plan_id: agent.plan_id ?? null,
   });
-  if (!limits.ok) return null;
+  if (!limits.ok) return { ok: false, reason: "rate_limited" };
 
   await incrementAgentMonthlyApiCall(d, agent.owner_address);
 
@@ -98,9 +109,12 @@ export async function authenticateAgent(apiKey: string) {
     .eq("id", agent.id);
 
   return {
-    agentId: agent.id,
-    ownerAddress: agent.owner_address,
-    scopes: agent.scopes || ["read"],
-    name: agent.name,
+    ok: true,
+    agent: {
+      agentId: agent.id,
+      ownerAddress: agent.owner_address,
+      scopes: agent.scopes || ["read"],
+      name: agent.name,
+    },
   };
 }

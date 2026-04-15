@@ -24,11 +24,26 @@ const ADMIN_ADDRESSES = [
   "0x40a8cdd6a10ec1a8cb3dfb2834675e7a2cf4ad8b",
 ];
 
-function createMcpServer(agent: any) {
+type AuthFailure = null | "missing_key" | "invalid_key" | "rate_limited";
+
+function createMcpServer(agent: any, authFailure: AuthFailure) {
   const mcpServer = new McpServer({ name: "loyal-spark-mcp", version: "1.0.0" });
 
   function authGuard(scopes?: string[]) {
-    if (!agent) {
+    if (authFailure === "rate_limited") {
+      return JSON.stringify({
+        error: "Monthly API call quota exceeded for your plan.",
+        code: "rate_limited",
+        detail: "monthly_quota",
+      });
+    }
+    if (authFailure === "invalid_key") {
+      return JSON.stringify({
+        error: "Invalid or inactive API key.",
+        code: "invalid_key",
+      });
+    }
+    if (!agent || authFailure === "missing_key") {
       return '{"error":"Not authenticated. Send HTTP header x-api-key: lsk_... or Authorization: Bearer lsk_... on every MCP request (some gateways strip custom headers)."}';
     }
     if (scopes && !scopes.some(s => agent.scopes.includes(s))) return `{"error":"Required scope: ${scopes.join(" or ")}"}`;
@@ -898,11 +913,17 @@ function createMcpServer(agent: any) {
 
 app.all("/*", async (c) => {
   const apiKey = resolveMcpApiKey((name) => c.req.header(name), "lsk_");
-  let agent = null;
+  let agent: any = null;
+  let authFailure: AuthFailure = apiKey ? null : "missing_key";
   if (apiKey) {
-    agent = await authenticateAgent(apiKey);
+    const r = await authenticateAgent(apiKey);
+    if (!r.ok) {
+      authFailure = r.reason;
+    } else {
+      agent = r.agent;
+    }
   }
-  const server = createMcpServer(agent);
+  const server = createMcpServer(agent, authFailure);
   const transport = new StreamableHttpTransport();
   const handler = transport.bind(server);
   return handler(c.req.raw);
