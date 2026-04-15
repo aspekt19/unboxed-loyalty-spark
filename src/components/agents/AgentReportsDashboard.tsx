@@ -62,30 +62,15 @@ export function AgentReportsDashboard() {
 
   const updateStatus = async (reportId: string, newStatus: string) => {
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        'apikey': anonKey,
-      };
-
-      // Try to attach JWT if available
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.access_token) {
-        headers['Authorization'] = `Bearer ${session.access_token}`;
-      } else {
-        headers['Authorization'] = `Bearer ${anonKey}`;
+      const updateData: Record<string, unknown> = { status: newStatus };
+      if (['reviewed', 'done', 'dismissed'].includes(newStatus)) {
+        updateData.reviewed_at = new Date().toISOString();
       }
-
-      const res = await fetch(`${supabaseUrl}/functions/v1/agent-reports`, {
-        method: 'PATCH',
-        headers,
-        body: JSON.stringify({ report_id: reportId, status: newStatus }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Failed');
-      }
+      const { error } = await supabase
+        .from('agent_reports')
+        .update(updateData)
+        .eq('id', reportId);
+      if (error) throw error;
       toast.success(`Status updated to "${newStatus}"`);
       queryClient.invalidateQueries({ queryKey: ['agent-reports'] });
     } catch (e) {
