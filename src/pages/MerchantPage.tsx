@@ -75,8 +75,10 @@ const MerchantPage = () => {
                 <p className="text-[9px] sm:text-[10px] text-muted-foreground truncate">Merchant Portal</p>
               </div>
             </div>
-            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-              <ThemeToggle />
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              <div className="hidden sm:block">
+                <ThemeToggle />
+              </div>
               <Button
                 variant={showProfile ? 'default' : 'outline'}
                 size="sm"
