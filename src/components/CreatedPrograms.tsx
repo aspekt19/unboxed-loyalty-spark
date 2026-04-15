@@ -380,6 +380,7 @@ export function CreatedPrograms({ onSelectProgram, merchantAddress: merchantAddr
       onToggleProgram={handleToggleProgram}
       onDeleteProgram={handleDeleteProgram}
       setDeleteDialogOpen={setDeleteDialogOpen}
+      readOnly={readOnly}
     />
   ));
 
