@@ -824,7 +824,7 @@ function createMcpServer(agent: any) {
   });
 
   mcpServer.tool("delete_report", {
-    description: "Permanently delete a report that is outdated, contains stale data, or is no longer relevant. Use your judgment: remove reports that would mislead or clutter the dashboard, but keep reports that still provide value.",
+    description: "Deletion of agent reports is disabled. Reports are retained as an audit history for the merchant dashboard.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -832,25 +832,10 @@ function createMcpServer(agent: any) {
       },
       required: ["report_id"],
     },
-    handler: async ({ report_id }: any) => {
-      const err = authGuard();
-      if (err) return T(err);
-      const d = db();
-      const { data: report } = await d.from("agent_reports").select("id, title, owner_address").eq("id", report_id).single();
-      if (!report) return T('{"error":"Report not found"}');
-      if (report.owner_address?.toLowerCase() !== agent.ownerAddress.toLowerCase()) return T('{"error":"Not your report"}');
-      const { error: delErr } = await d.from("agent_reports").delete().eq("id", report_id);
-      if (delErr) return T(JSON.stringify({ error: delErr.message }));
-
-      // Log deletion so we can track unexpected cleanups
-      await d.from("agent_activity_log").insert({
-        agent_id: agent.agentId,
-        action: `report:delete`,
-        request_body: { report_id, title: report.title },
-        response_status: 200,
-      }).catch(() => {});
-
-      return T(JSON.stringify({ message: `Report '${report.title}' deleted` }));
+    handler: async () => {
+      return T(JSON.stringify({
+        error: "Report deletion is disabled. Use update_report_status to mark reports as reviewed or done instead.",
+      }));
     },
   });
 
