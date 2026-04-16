@@ -20,6 +20,8 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import type { NavItem } from '@/components/mobile/BottomNavBar';
 
+const HOME_SUB_TABS = ['dashboard', 'customers', 'marketing', 'billing', 'agents'];
+
 const merchantNavItems: NavItem[] = [
   { id: 'dashboard', label: 'Home', icon: LayoutDashboard },
   { id: 'programs', label: 'Programs', icon: Package },
@@ -52,6 +54,9 @@ const MerchantPage = () => {
   const handleMobileTabChange = (tab: string) => {
     setMobileTab(tab);
   };
+
+  // Derive which bottom nav item is active (home sub-tabs all highlight "Home")
+  const activeBottomNav = HOME_SUB_TABS.includes(mobileTab) ? 'dashboard' : mobileTab;
 
   const desktopContent = showProfile ? (
     <div className="max-w-2xl mx-auto">
@@ -156,7 +161,7 @@ const MerchantPage = () => {
 
         {isMobile && (
           <BottomNavBar
-            activeTab={mobileTab}
+            activeTab={activeBottomNav}
             onTabChange={handleMobileTabChange}
             showProfileNav={Boolean(user)}
             navItems={merchantNavItems}
