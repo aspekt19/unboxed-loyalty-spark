@@ -161,7 +161,7 @@ const MerchantPage = () => {
 
         {isMobile && (
           <BottomNavBar
-            activeTab={mobileTab}
+            activeTab={activeBottomNav}
             onTabChange={handleMobileTabChange}
             showProfileNav={Boolean(user)}
             navItems={merchantNavItems}
