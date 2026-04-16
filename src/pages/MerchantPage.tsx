@@ -7,16 +7,26 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { PremiumStatusBadge } from '@/components/PremiumStatusBadge';
 import { MerchantProfileSection } from '@/components/merchant/MerchantProfileSection';
 
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, LayoutDashboard, Package, Gift, Users, User } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import PageTransition from '@/components/PageTransition';
 import { PullToRefresh } from '@/components/mobile/PullToRefresh';
+import { BottomNavBar } from '@/components/mobile/BottomNavBar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import type { NavItem } from '@/components/mobile/BottomNavBar';
+
+const merchantNavItems: NavItem[] = [
+  { id: 'dashboard', label: 'Home', icon: LayoutDashboard },
+  { id: 'programs', label: 'Programs', icon: Package },
+  { id: 'rewards', label: 'Rewards', icon: Gift },
+  { id: 'team', label: 'Team', icon: Users },
+  { id: 'profile', label: 'Profile', icon: User },
+];
 
 const MerchantPage = () => {
   const isMobile = useIsMobile();
@@ -25,17 +35,25 @@ const MerchantPage = () => {
   const isNativeMode = location.pathname.startsWith('/native/');
   const { user } = useAuth();
   const [showProfile, setShowProfile] = useState(false);
+  const [mobileTab, setMobileTab] = useState('dashboard');
 
   useEffect(() => {
-    if (!user) setShowProfile(false);
-  }, [user]);
+    if (!user) {
+      setShowProfile(false);
+      if (mobileTab === 'profile') setMobileTab('dashboard');
+    }
+  }, [user, mobileTab]);
 
   const handleRefresh = useCallback(async () => {
     await queryClient.invalidateQueries();
     await new Promise(resolve => setTimeout(resolve, 500));
   }, [queryClient]);
 
-  const content = showProfile ? (
+  const handleMobileTabChange = (tab: string) => {
+    setMobileTab(tab);
+  };
+
+  const desktopContent = showProfile ? (
     <div className="max-w-2xl mx-auto">
       <MerchantProfileSection onUpgrade={() => setShowProfile(false)} />
     </div>
@@ -55,6 +73,31 @@ const MerchantPage = () => {
       </div>
     </>
   );
+
+  const mobileContent = () => {
+    if (mobileTab === 'profile' && user) {
+      return (
+        <div className="max-w-2xl mx-auto">
+          <MerchantProfileSection onUpgrade={() => setMobileTab('dashboard')} />
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <div className="mb-4">
+          <PremiumStatusBadge />
+        </div>
+        <div className="max-w-4xl">
+          <MerchantPanel
+            activeTab={mobileTab === 'profile' ? 'dashboard' : mobileTab}
+            onTabChange={handleMobileTabChange}
+            hideTabsList
+          />
+        </div>
+      </>
+    );
+  };
 
   return (
     <PageTransition>
@@ -84,7 +127,7 @@ const MerchantPage = () => {
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
               <ThemeToggle />
-              {user ? (
+              {!isMobile && user ? (
                 <Button
                   variant={showProfile ? 'default' : 'outline'}
                   onClick={() => setShowProfile(!showProfile)}
@@ -101,13 +144,24 @@ const MerchantPage = () => {
         <main className="container mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-8 md:py-12 relative">
           {isMobile ? (
             <PullToRefresh onRefresh={handleRefresh}>
-              {content}
+              <div>
+                {mobileContent()}
+              </div>
             </PullToRefresh>
           ) : (
-            content
+            desktopContent
           )}
           <SupportBanner />
         </main>
+
+        {isMobile && (
+          <BottomNavBar
+            activeTab={mobileTab}
+            onTabChange={handleMobileTabChange}
+            showProfileNav={Boolean(user)}
+            navItems={merchantNavItems}
+          />
+        )}
       </div>
     </PageTransition>
   );

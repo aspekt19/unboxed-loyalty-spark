@@ -28,7 +28,15 @@ interface TeamMembership {
   branch_name?: string;
 }
 
-export function MerchantPanel() {
+interface MerchantPanelProps {
+  /** When set, Tabs becomes controlled (mobile bottom-nav drives it). */
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
+  /** Hide the horizontal TabsList (bottom nav replaces it on mobile). */
+  hideTabsList?: boolean;
+}
+
+export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: MerchantPanelProps = {}) {
   const { address } = useAccount();
   const [selectedProgram, setSelectedProgram] = useState<{ name: string; symbol: string; tokenAddress: string; cashbackRate?: number; pointsPerDollar?: number } | null>(null);
   const [mintDialogOpen, setMintDialogOpen] = useState(false);
@@ -307,7 +315,8 @@ export function MerchantPanel() {
         </div>
       ) : (
         /* Own business mode: full merchant panel */
-        <Tabs defaultValue="dashboard" className="w-full">
+        <Tabs {...(activeTab !== undefined ? { value: activeTab, onValueChange: onTabChange } : { defaultValue: "dashboard" })} className="w-full">
+          {!hideTabsList && (
           <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-2">
             <TabsList className="inline-flex w-auto min-w-full">
               <TabsTrigger value="dashboard" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Dashboard</TabsTrigger>
@@ -326,6 +335,7 @@ export function MerchantPanel() {
               </TabsTrigger>
             </TabsList>
           </div>
+          )}
 
           <TabsContent value="dashboard" className="mt-6">
             <DashboardTab />
