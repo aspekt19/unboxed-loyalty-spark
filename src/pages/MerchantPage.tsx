@@ -130,16 +130,22 @@ const MerchantPage = () => {
                 <p className="text-[9px] sm:text-[10px] text-muted-foreground truncate">Merchant Portal</p>
               </div>
             </div>
-            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+            <div className="flex items-center gap-2 flex-shrink-0">
               <ThemeToggle />
               {!isMobile && user ? (
-                <Button
-                  variant={showProfile ? 'default' : 'outline'}
+                <button
+                  type="button"
                   onClick={() => setShowProfile(!showProfile)}
-                  className={cn(HEADER_PROFILE_BUTTON_CLASSNAME)}
+                  className={cn(
+                    HEADER_PROFILE_BUTTON_CLASSNAME,
+                    'inline-flex items-center justify-center gap-1.5 font-bold shadow-md hover:shadow-lg transition-all duration-200',
+                    showProfile
+                      ? 'bg-uds-purple text-white hover:bg-uds-purple-light'
+                      : 'border-2 border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-primary/50',
+                  )}
                 >
                   Profile
-                </Button>
+                </button>
               ) : null}
               <WalletConnectButton />
             </div>
