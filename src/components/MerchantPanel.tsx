@@ -316,25 +316,48 @@ export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: Merchant
       ) : (
         /* Own business mode: full merchant panel */
         <Tabs {...(activeTab !== undefined ? { value: activeTab, onValueChange: onTabChange } : { defaultValue: "dashboard" })} className="w-full">
-          {!hideTabsList && (
-          <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-2">
-            <TabsList className="inline-flex w-auto min-w-full">
-              <TabsTrigger value="dashboard" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Dashboard</TabsTrigger>
-              <TabsTrigger value="customers" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Customers</TabsTrigger>
-              <TabsTrigger value="programs" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Programs</TabsTrigger>
-              <TabsTrigger value="rewards" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Rewards</TabsTrigger>
-              <TabsTrigger value="marketing" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Marketing</TabsTrigger>
-              <TabsTrigger value="billing" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">
-                <CreditCard className="h-3.5 w-3.5 mr-1" />Billing
-              </TabsTrigger>
-              <TabsTrigger value="agents" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">
-                <Bot className="h-3.5 w-3.5 mr-1" />AI Agents
-              </TabsTrigger>
-              <TabsTrigger value="team" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">
-                <Users className="h-3.5 w-3.5 mr-1" />Team
-              </TabsTrigger>
-            </TabsList>
-          </div>
+          {hideTabsList ? (
+            /* Mobile: show sub-tab bar only for "Home" group tabs */
+            ['dashboard', 'customers', 'marketing', 'billing', 'agents'].includes(activeTab || 'dashboard') && (
+              <div className="overflow-x-auto -mx-3 px-3 pb-2">
+                <TabsList className="inline-flex w-auto min-w-full">
+                  <TabsTrigger value="dashboard" className="flex-shrink-0 text-xs px-2 whitespace-nowrap">
+                    <LayoutDashboard className="h-3.5 w-3.5 mr-1" />Dashboard
+                  </TabsTrigger>
+                  <TabsTrigger value="customers" className="flex-shrink-0 text-xs px-2 whitespace-nowrap">
+                    <UserSearch className="h-3.5 w-3.5 mr-1" />Customers
+                  </TabsTrigger>
+                  <TabsTrigger value="marketing" className="flex-shrink-0 text-xs px-2 whitespace-nowrap">
+                    <Megaphone className="h-3.5 w-3.5 mr-1" />Marketing
+                  </TabsTrigger>
+                  <TabsTrigger value="billing" className="flex-shrink-0 text-xs px-2 whitespace-nowrap">
+                    <CreditCard className="h-3.5 w-3.5 mr-1" />Billing
+                  </TabsTrigger>
+                  <TabsTrigger value="agents" className="flex-shrink-0 text-xs px-2 whitespace-nowrap">
+                    <Bot className="h-3.5 w-3.5 mr-1" />Agents
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+            )
+          ) : (
+            <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-2">
+              <TabsList className="inline-flex w-auto min-w-full">
+                <TabsTrigger value="dashboard" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Dashboard</TabsTrigger>
+                <TabsTrigger value="customers" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Customers</TabsTrigger>
+                <TabsTrigger value="programs" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Programs</TabsTrigger>
+                <TabsTrigger value="rewards" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Rewards</TabsTrigger>
+                <TabsTrigger value="marketing" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Marketing</TabsTrigger>
+                <TabsTrigger value="billing" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">
+                  <CreditCard className="h-3.5 w-3.5 mr-1" />Billing
+                </TabsTrigger>
+                <TabsTrigger value="agents" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">
+                  <Bot className="h-3.5 w-3.5 mr-1" />AI Agents
+                </TabsTrigger>
+                <TabsTrigger value="team" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">
+                  <Users className="h-3.5 w-3.5 mr-1" />Team
+                </TabsTrigger>
+              </TabsList>
+            </div>
           )}
 
           <TabsContent value="dashboard" className="mt-6">
