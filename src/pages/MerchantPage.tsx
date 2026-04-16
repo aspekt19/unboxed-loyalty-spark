@@ -20,6 +20,8 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import type { NavItem } from '@/components/mobile/BottomNavBar';
 
+const HOME_SUB_TABS = ['dashboard', 'customers', 'marketing', 'billing', 'agents'];
+
 const merchantNavItems: NavItem[] = [
   { id: 'dashboard', label: 'Home', icon: LayoutDashboard },
   { id: 'programs', label: 'Programs', icon: Package },
