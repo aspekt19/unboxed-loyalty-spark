@@ -28,7 +28,15 @@ interface TeamMembership {
   branch_name?: string;
 }
 
-export function MerchantPanel() {
+interface MerchantPanelProps {
+  /** When set, Tabs becomes controlled (mobile bottom-nav drives it). */
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
+  /** Hide the horizontal TabsList (bottom nav replaces it on mobile). */
+  hideTabsList?: boolean;
+}
+
+export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: MerchantPanelProps = {}) {
   const { address } = useAccount();
   const [selectedProgram, setSelectedProgram] = useState<{ name: string; symbol: string; tokenAddress: string; cashbackRate?: number; pointsPerDollar?: number } | null>(null);
   const [mintDialogOpen, setMintDialogOpen] = useState(false);
