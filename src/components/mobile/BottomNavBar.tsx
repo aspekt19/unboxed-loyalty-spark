@@ -2,13 +2,13 @@ import { Gift, Store, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
-interface NavItem {
+export interface NavItem {
   id: string;
   label: string;
   icon: React.ElementType;
 }
 
-const navItems: NavItem[] = [
+const defaultNavItems: NavItem[] = [
   { id: 'loyalty', label: 'Loyalty', icon: Gift },
   { id: 'marketplace', label: 'Exchange', icon: Store },
   { id: 'profile', label: 'Profile', icon: User },
@@ -17,18 +17,17 @@ const navItems: NavItem[] = [
 interface BottomNavBarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
-  /** When false, Profile is hidden until the user is signed in (same as merchant header). */
   showProfileNav?: boolean;
+  navItems?: NavItem[];
 }
 
-export function BottomNavBar({ activeTab, onTabChange, showProfileNav = true }: BottomNavBarProps) {
-  const items = showProfileNav ? navItems : navItems.filter((i) => i.id !== 'profile');
+export function BottomNavBar({ activeTab, onTabChange, showProfileNav = true, navItems }: BottomNavBarProps) {
+  const base = navItems || defaultNavItems;
+  const items = showProfileNav ? base : base.filter((i) => i.id !== 'profile');
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
-      {/* Gradient fade above the bar */}
       <div className="h-6 bg-gradient-to-t from-background to-transparent pointer-events-none" />
-      
       <div className="bg-background/95 backdrop-blur-xl border-t border-border/60 px-2 pb-[env(safe-area-inset-bottom,8px)]">
         <div className="flex items-center justify-around py-1.5">
           {items.map((item) => {
