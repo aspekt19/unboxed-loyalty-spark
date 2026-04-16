@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMintTokens } from '@/hooks/useMintTokens';
 import { useAccount } from 'wagmi';
 import { toast } from 'sonner';
-import { Wallet, Bot, Users, Building2, Briefcase, CreditCard } from 'lucide-react';
+import { Wallet, Bot, Users, Building2, Briefcase, CreditCard, LayoutDashboard, UserSearch, Megaphone } from 'lucide-react';
 import { MerchantBillingDashboard } from '@/components/merchant/MerchantBillingDashboard';
 import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
 import { mintTokensSchema } from '@/lib/validationSchemas';
