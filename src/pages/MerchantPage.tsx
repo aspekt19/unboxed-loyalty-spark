@@ -55,6 +55,9 @@ const MerchantPage = () => {
     setMobileTab(tab);
   };
 
+  // Derive which bottom nav item is active (home sub-tabs all highlight "Home")
+  const activeBottomNav = HOME_SUB_TABS.includes(mobileTab) ? 'dashboard' : mobileTab;
+
   const desktopContent = showProfile ? (
     <div className="max-w-2xl mx-auto">
       <MerchantProfileSection onUpgrade={() => setShowProfile(false)} />
