@@ -1,13 +1,15 @@
+import { getMcpBazaarTool, isMcpToolResource } from "../_shared/mcp-bazaar-tools.ts";
+import { resolveMcpApiKey } from "../_shared/mcp-http-api-key.ts";
+import { buildAcceptEntry, requirementsFromAccept } from "../_shared/x402-bazaar-accept.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-api-key, payment-signature, x-payment",
   "Access-Control-Expose-Headers":
-    "X-Payment-Required, X-Payment-Response, X-Payment-Protocol, X-Payment-TxHash, X-Payment-Error",
+    "X-Payment-Required, X-Payment-Response, X-Payment-Protocol, X-Payment-TxHash, X-Payment-Error, EXTENSION-RESPONSES",
 };
 
-// USDC on Base
-const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 const BASE_NETWORK = "base";
 
 // Platform recipient address
@@ -56,41 +58,34 @@ function getResourceFromUrl(url: URL): string {
 }
 
 function getPrice(method: string, resource: string): string | null {
+  if (resource.startsWith("mcp-tools/")) {
+    if (method !== "POST") return null;
+    const t = getMcpBazaarTool(resource.slice("mcp-tools/".length));
+    return t ? t.price : null;
+  }
   const methodPricing = PRICING[method];
   if (!methodPricing) return null;
   return methodPricing[resource] ?? null;
 }
 
-// Convert USD string to USDC smallest units (6 decimals)
-function usdToUsdcUnits(usd: string): string {
-  const amount = parseFloat(usd);
-  return Math.round(amount * 1_000_000).toString();
-}
+function buildPaymentRequired(price: string, resource: string, requestUrl: URL): Response {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const { accept, resourceMethod, resourceUrlForDiscovery } = buildAcceptEntry({
+    price,
+    resource,
+    requestUrl,
+    recipient: RECIPIENT,
+    network: BASE_NETWORK,
+    supabaseUrl,
+  });
 
-// Build x402 PaymentRequired response
-function buildPaymentRequired(price: string, resource: string): Response {
   const paymentRequirements = {
     x402Version: 2,
-    accepts: [
-      {
-        scheme: "exact",
-        network: BASE_NETWORK,
-        maxAmountRequired: usdToUsdcUnits(price),
-        resource: `/${resource}`,
-        description: `Loyal Spark API — ${resource}`,
-        mimeType: "application/json",
-        payTo: RECIPIENT,
-        asset: USDC_BASE,
-        extra: {
-          name: "Loyal Spark",
-          description: `Access to /${resource} endpoint`,
-        },
-      },
-    ],
+    accepts: [accept],
     error: "X-PAYMENT header is required",
     resource: {
-      url: `/${resource}`,
-      method: "GET",
+      url: resourceUrlForDiscovery,
+      method: resourceMethod,
       mimeType: "application/json",
     },
   };
@@ -108,21 +103,28 @@ function buildPaymentRequired(price: string, resource: string): Response {
   });
 }
 
-// Verify payment via Coinbase facilitator
-async function verifyPayment(paymentSignature: string, price: string, resource: string): Promise<{ valid: boolean; error?: string }> {
+async function verifyPayment(
+  paymentSignature: string,
+  price: string,
+  resource: string,
+  requestUrl: URL,
+): Promise<{ valid: boolean; error?: string }> {
   try {
     const paymentPayload = JSON.parse(atob(paymentSignature));
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const { accept } = buildAcceptEntry({
+      price,
+      resource,
+      requestUrl,
+      recipient: RECIPIENT,
+      network: BASE_NETWORK,
+      supabaseUrl,
+    });
+    const requirements = requirementsFromAccept(accept);
 
     const verifyBody = {
       payload: paymentPayload,
-      requirements: {
-        scheme: "exact",
-        network: BASE_NETWORK,
-        maxAmountRequired: usdToUsdcUnits(price),
-        resource: `/${resource}`,
-        payTo: RECIPIENT,
-        asset: USDC_BASE,
-      },
+      requirements,
     };
 
     const resp = await fetch(`${FACILITATOR_URL}/verify`, {
@@ -145,21 +147,28 @@ async function verifyPayment(paymentSignature: string, price: string, resource: 
   }
 }
 
-// Settle payment via Coinbase facilitator
-async function settlePayment(paymentSignature: string, price: string, resource: string): Promise<{ success: boolean; txHash?: string }> {
+async function settlePayment(
+  paymentSignature: string,
+  price: string,
+  resource: string,
+  requestUrl: URL,
+): Promise<{ success: boolean; txHash?: string; extensionResponsesHeader?: string }> {
   try {
     const paymentPayload = JSON.parse(atob(paymentSignature));
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const { accept } = buildAcceptEntry({
+      price,
+      resource,
+      requestUrl,
+      recipient: RECIPIENT,
+      network: BASE_NETWORK,
+      supabaseUrl,
+    });
+    const requirements = requirementsFromAccept(accept);
 
     const settleBody = {
       payload: paymentPayload,
-      requirements: {
-        scheme: "exact",
-        network: BASE_NETWORK,
-        maxAmountRequired: usdToUsdcUnits(price),
-        resource: `/${resource}`,
-        payTo: RECIPIENT,
-        asset: USDC_BASE,
-      },
+      requirements,
     };
 
     const resp = await fetch(`${FACILITATOR_URL}/settle`, {
@@ -174,8 +183,13 @@ async function settlePayment(paymentSignature: string, price: string, resource: 
       return { success: false };
     }
 
+    const extensionResponsesHeader = resp.headers.get("EXTENSION-RESPONSES") ?? undefined;
     const result = await resp.json();
-    return { success: true, txHash: result.txHash || result.transactionHash };
+    return {
+      success: true,
+      txHash: result.txHash || result.transactionHash,
+      extensionResponsesHeader,
+    };
   } catch (err) {
     console.error("Payment settlement error:", err);
     return { success: false };
@@ -190,9 +204,26 @@ Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
     const resource = getResourceFromUrl(url);
+
+    if (resource.startsWith("mcp-tools/")) {
+      const toolName = resource.slice("mcp-tools/".length);
+      if (!getMcpBazaarTool(toolName)) {
+        return new Response(JSON.stringify({ error: "Unknown MCP tool", tool: toolName }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (req.method !== "POST") {
+        return new Response(JSON.stringify({ error: "Method Not Allowed", detail: "MCP Bazaar routes require POST (Streamable HTTP MCP)." }), {
+          status: 405,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const price = getPrice(req.method, resource);
 
-    // Unknown endpoint — proxy as-is
+    // Unknown endpoint — proxy as-is to agent-api
     if (price === null) {
       return await proxyToAgentApi(req);
     }
@@ -202,21 +233,18 @@ Deno.serve(async (req) => {
       return await proxyToAgentApi(req);
     }
 
-    // Check for payment signature
     const paymentSignature =
       req.headers.get("x-payment") ||
       req.headers.get("payment-signature") ||
       req.headers.get("X-PAYMENT");
 
     if (!paymentSignature) {
-      // No payment — return 402 challenge
-      return buildPaymentRequired(price, resource);
+      return buildPaymentRequired(price, resource, url);
     }
 
-    // Verify payment
-    const verification = await verifyPayment(paymentSignature, price, resource);
+    const verification = await verifyPayment(paymentSignature, price, resource, url);
     if (!verification.valid) {
-      const errorResp = buildPaymentRequired(price, resource);
+      const errorResp = buildPaymentRequired(price, resource, url);
       const headers = new Headers(errorResp.headers);
       headers.set("X-Payment-Error", verification.error || "Payment verification failed");
       return new Response(await errorResp.text(), {
@@ -225,13 +253,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Settle payment (async, don't block response)
-    const settlement = settlePayment(paymentSignature, price, resource);
+    const settlement = settlePayment(paymentSignature, price, resource, url);
 
-    // Proxy to agent-api
-    const apiResponse = await proxyToAgentApi(req);
+    const apiResponse = await proxyToUpstream(req);
 
-    // Wait for settlement and add receipt
     const settleResult = await settlement;
 
     const respHeaders = new Headers(apiResponse.headers);
@@ -242,6 +267,9 @@ Deno.serve(async (req) => {
     respHeaders.set("X-Payment-Protocol", "x402");
     if (settleResult.txHash) {
       respHeaders.set("X-Payment-TxHash", settleResult.txHash);
+    }
+    if (settleResult.extensionResponsesHeader) {
+      respHeaders.set("EXTENSION-RESPONSES", settleResult.extensionResponsesHeader);
     }
 
     return new Response(await apiResponse.text(), {
@@ -259,10 +287,64 @@ Deno.serve(async (req) => {
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      },
     );
   }
 });
+
+async function proxyToUpstream(originalReq: Request): Promise<Response> {
+  const originalUrl = new URL(originalReq.url);
+  const resource = getResourceFromUrl(originalUrl);
+  if (isMcpToolResource(resource)) {
+    return proxyToLoyaltyMcp(originalReq);
+  }
+  return proxyToAgentApi(originalReq);
+}
+
+async function proxyToLoyaltyMcp(originalReq: Request): Promise<Response> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+  const originalUrl = new URL(originalReq.url);
+  const loyaltyMcpUrl = `${supabaseUrl}/functions/v1/loyalty-mcp${originalUrl.search}`;
+
+  const get = (name: string) => originalReq.headers.get(name) ?? undefined;
+  const lsk = resolveMcpApiKey(get, "lsk_");
+
+  const headers: Record<string, string> = {
+    "Content-Type": originalReq.headers.get("content-type") || "application/json",
+    Authorization: `Bearer ${serviceKey}`,
+  };
+  if (lsk) {
+    headers["x-api-key"] = lsk;
+  }
+
+  const ip = originalReq.headers.get("x-forwarded-for") || originalReq.headers.get("cf-connecting-ip");
+  if (ip) headers["x-forwarded-for"] = ip;
+
+  let body: string | undefined;
+  if (originalReq.method === "POST" || originalReq.method === "PUT" || originalReq.method === "PATCH") {
+    body = await originalReq.text();
+  }
+
+  const proxyResp = await fetch(loyaltyMcpUrl, {
+    method: originalReq.method,
+    headers,
+    body,
+  });
+
+  const respBody = await proxyResp.text();
+
+  const respHeaders = new Headers(proxyResp.headers);
+  for (const [k, v] of Object.entries(corsHeaders)) {
+    respHeaders.set(k, v);
+  }
+
+  return new Response(respBody, {
+    status: proxyResp.status,
+    headers: respHeaders,
+  });
+}
 
 async function proxyToAgentApi(originalReq: Request): Promise<Response> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
