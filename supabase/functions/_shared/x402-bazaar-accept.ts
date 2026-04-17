@@ -55,6 +55,10 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
   const resourceUrlForDiscovery = `${p.requestUrl.origin}${pathOnGateway}`;
 
   const maxAmountRequired = Math.round(parseFloat(p.price) * 1_000_000).toString();
+  /** x402 v2 schema uses `amount` (same micro‑USDC string); EIP‑3009 client reads `amount`, not `maxAmountRequired`. */
+  const amount = maxAmountRequired;
+  /** Required by PaymentRequirementsV2 + EIP‑3009 `validBefore` window. */
+  const maxTimeoutSeconds = 300;
 
   if (p.resource.startsWith("mcp-tools/")) {
     const toolName = p.resource.slice("mcp-tools/".length);
@@ -67,7 +71,9 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
     const accept: Record<string, unknown> = {
       scheme: "exact",
       network: p.network,
+      amount,
       maxAmountRequired,
+      maxTimeoutSeconds,
       resource: resourceUrlForDiscovery,
       description: `Loyal Spark MCP — ${mcp.name}: ${mcp.description}`,
       mimeType: "application/json",
@@ -100,7 +106,9 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
   const accept: Record<string, unknown> = {
     scheme: "exact",
     network: p.network,
+    amount,
     maxAmountRequired,
+    maxTimeoutSeconds,
     resource: resourceUrlForDiscovery,
     description: `Loyal Spark API — ${p.resource}`,
     mimeType: "application/json",
@@ -149,10 +157,12 @@ export function requirementsFromAccept(accept: Record<string, unknown>): Record<
   const r: Record<string, unknown> = {
     scheme: accept.scheme,
     network: accept.network,
+    amount: accept.amount ?? accept.maxAmountRequired,
     maxAmountRequired: accept.maxAmountRequired,
     resource: accept.resource,
     payTo: accept.payTo,
     asset: accept.asset,
+    maxTimeoutSeconds: accept.maxTimeoutSeconds ?? 300,
   };
   if (accept.description) r.description = accept.description;
   if (accept.mimeType) r.mimeType = accept.mimeType;

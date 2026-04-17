@@ -77,6 +77,15 @@ function wrapFetchNormalizeBaseNetwork(origFetch) {
           a.network = "eip155:8453";
           changed = true;
         }
+        // x402 v2 + @x402/evm expect `amount` and `maxTimeoutSeconds`; older gateways only sent maxAmountRequired.
+        if (data.x402Version === 2 && a.maxAmountRequired != null && a.amount == null) {
+          a.amount = a.maxAmountRequired;
+          changed = true;
+        }
+        if (data.x402Version === 2 && typeof a.maxTimeoutSeconds !== "number") {
+          a.maxTimeoutSeconds = 300;
+          changed = true;
+        }
       }
     }
     const newText = JSON.stringify(data);

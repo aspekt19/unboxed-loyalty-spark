@@ -120,8 +120,18 @@ async function testX402PaidEndpointNoPayment() {
     assert(accept.asset === "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", "Asset is USDC on Base");
     assert(accept.payTo === "0x40a8CdD6a10EC1a8cB3dFb2834675e7a2CF4ad8b", "Correct recipient");
     assert(accept.scheme === "exact", `Scheme is 'exact'`);
+    assert(
+      accept.amount === accept.maxAmountRequired,
+      "x402 v2 accept.amount matches maxAmountRequired (EIP-3009 client)",
+      `amount=${accept.amount} max=${accept.maxAmountRequired}`,
+    );
+    assert(
+      typeof accept.maxTimeoutSeconds === "number" && accept.maxTimeoutSeconds > 0,
+      "maxTimeoutSeconds present for v2",
+      String(accept.maxTimeoutSeconds),
+    );
     // Verify amount is in smallest units (not human-readable)
-    const amount = parseInt(accept.maxAmountRequired);
+    const amount = parseInt(String(accept.amount));
     assert(amount >= 1 && amount <= 1_000_000, "Amount is in USDC micro-units (not human-readable)", `got ${amount}`);
   }
 }
