@@ -57,7 +57,9 @@ async function buildFacilitatorHeaders(
     Deno.env.get("COINBASE_CDP_API_KEY")?.trim();
 
   if (id && secret) {
-    const { generateJwt } = await import("@coinbase/cdp-sdk/auth");
+    // Lazy import via esm.sh to avoid pulling the heavy CDP SDK into the edge bundle at build time.
+    const mod = await import("https://esm.sh/@coinbase/cdp-sdk@1.47.0/auth");
+    const generateJwt = (mod as { generateJwt: (opts: Record<string, string>) => Promise<string> }).generateJwt;
     const jwt = await generateJwt({
       apiKeyId: id,
       apiKeySecret: secret,
