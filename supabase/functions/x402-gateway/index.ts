@@ -16,8 +16,11 @@ const BASE_NETWORK = "eip155:8453";
 // Platform recipient address
 const RECIPIENT = Deno.env.get("X402_RECIPIENT_ADDRESS") || "0x40a8CdD6a10EC1a8cB3dFb2834675e7a2CF4ad8b";
 
-// Coinbase hosted facilitator
-const FACILITATOR_URL = "https://facilitator.x402.org";
+/** Same default as @x402/core HTTPFacilitatorClient. Avoid `facilitator.x402.org` — some Edge runtimes fail DNS on that host. */
+const FACILITATOR_URL = (Deno.env.get("X402_FACILITATOR_URL") || "https://x402.org/facilitator").replace(
+  /\/+$/,
+  "",
+);
 
 // --- Per-request pricing (USD) — same as MPP ---
 const PRICING: Record<string, Record<string, string>> = {
