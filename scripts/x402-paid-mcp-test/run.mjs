@@ -10,6 +10,7 @@
  *
  * Run:
  *   X402_PRIVATE_KEY=0x... LOYAL_SPARK_API_KEY=lsk_... node run.mjs
+ *   (X402_PRIVATE_KEY may be 64 hex chars without 0x — MetaMask default export)
  *
  * Bazaar: after HTTP 200 + settle, check discovery (may lag):
  *   GET https://api.cdp.coinbase.com/platform/v2/x402/discovery/resources
@@ -26,11 +27,22 @@ const GATEWAY =
   process.env.X402_GATEWAY_URL ||
   "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway";
 const TOOL = process.env.MCP_TOOL || "get_platform_info";
-const PK = process.env.X402_PRIVATE_KEY;
 const LSK = process.env.LOYAL_SPARK_API_KEY;
 
-if (!PK?.startsWith("0x") || PK.length < 64) {
-  console.error("Set X402_PRIVATE_KEY to a 0x-prefixed hex key (Base wallet with USDC).");
+/** MetaMask often copies 64 hex chars without 0x; viem expects 0x + 64 hex. */
+function normalizePrivateKey(raw) {
+  if (!raw || typeof raw !== "string") return null;
+  const s = raw.trim();
+  if (s.startsWith("0x") && /^0x[0-9a-fA-F]{64}$/.test(s)) return s;
+  if (/^[0-9a-fA-F]{64}$/.test(s)) return `0x${s}`;
+  return null;
+}
+
+const PK = normalizePrivateKey(process.env.X402_PRIVATE_KEY);
+if (!PK) {
+  console.error(
+    "Set X402_PRIVATE_KEY to 64 hex chars (with or without 0x prefix) — Base payer wallet with USDC.",
+  );
   process.exit(1);
 }
 if (!LSK?.startsWith("lsk_")) {
