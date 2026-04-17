@@ -15,7 +15,8 @@ Each subdirectory is one deployable function (`index.ts` entry). Shared Deno mod
 | `recipient-api` | REST for wallet-bound recipient agents (`rwk_` keys, SIWE registration) |
 | `recipient-loyalty-mcp` | MCP tools for loyalty token recipients only |
 | `agent-wallet` | CDP MPC wallet lifecycle and server-side mint |
-| `agent-api-key` | API key issuance / rotation |
+| `agent-api-key` | API key issuance / rotation (dashboard, JWT) |
+| `agent-register-siwe` | **Free `lsk_` registration via SIWE** (no web login; same limits as dashboard) |
 | `agent-reports` | Merchant reporting |
 
 ## Auth and payments

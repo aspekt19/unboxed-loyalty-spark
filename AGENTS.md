@@ -6,6 +6,8 @@ This file is the **entry point** for coding agents (Cursor, OpenServ, Claude Cod
 
 | What | Path |
 |------|------|
+| **x402 v2 paid MCP + Bazaar (agent-facing)** | [`docs/agents/X402_MCP_AND_BAZAAR.md`](./docs/agents/X402_MCP_AND_BAZAAR.md) |
+| **Free `lsk_` without web login (SIWE)** | [`docs/agents/AUTONOMOUS_AGENT_REGISTRATION.md`](./docs/agents/AUTONOMOUS_AGENT_REGISTRATION.md) |
 | **Monetization & public pricing (merchant + agents)** | [`docs/business/MONETIZATION_AND_PRICING.md`](./docs/business/MONETIZATION_AND_PRICING.md) |
 | Repo rules for edits (stack, folders, API scopes) | [`.cursorrules`](./.cursorrules) |
 | Human docs index (build, Farcaster, OpenServ, Supabase runbooks) | [`docs/README.md`](./docs/README.md) |

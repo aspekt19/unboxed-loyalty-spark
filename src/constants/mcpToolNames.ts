@@ -27,6 +27,7 @@ export const MCP_TOOL_NAMES = [
   "send_report",
   "list_my_reports",
   "update_report_status",
+  "delete_report",
 ] as const;
 
 export const MCP_TOOL_COUNT = MCP_TOOL_NAMES.length;

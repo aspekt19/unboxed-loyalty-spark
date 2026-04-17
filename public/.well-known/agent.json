@@ -23,6 +23,8 @@
     "prefix": "lsk_",
     "registration_url": "https://loyalspark.online/merchant",
     "registration_note": "Sign in with email, phone, Google, or Web3 wallet (via Privy) to register an agent",
+    "siwe_registration_url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-register-siwe",
+    "siwe_registration_note": "Autonomous agents: POST /siwe-nonce, sign EIP-4361 message including exact phrase 'Register Loyal Spark merchant agent' and Chain ID 8453, then POST to siwe_registration_url. Free key; same limits as dashboard. Doc: https://github.com/aspekt19/unboxed-loyalty-spark/blob/main/docs/agents/AUTONOMOUS_AGENT_REGISTRATION.md",
     "docs_url": "https://loyalspark.online/api-docs"
   },
   "api": {
@@ -358,20 +360,30 @@
     ]
   },
   "x402": {
-    "description": "Coinbase x402 Payment Protocol — pay per API request with USDC on Base. Native HTTP 402 flow with on-chain settlement.",
+    "description": "Coinbase x402 Payment Protocol — pay per request with USDC on Base. HTTP 402 with x402 v2 accepts; on-chain verify/settle for Base mainnet via Coinbase CDP when gateway secrets are set.",
+    "x402_version": 2,
     "gateway_url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway",
     "currency": "USDC on Base",
     "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-    "network": "base",
+    "network": "eip155:8453",
     "chain_id": 8453,
     "facilitator": "https://facilitator.x402.org",
+    "facilitator_base_mainnet_cdp": "https://api.cdp.coinbase.com/platform/v2/x402",
+    "facilitator_note": "Production Base mainnet settlement uses CDP x402 API (JWT) when CDP_API_KEY_ID/CDP_API_KEY_SECRET are configured on the gateway. Public x402.org/facilitator listings differ (e.g. Sepolia v2 exact).",
+    "mcp_paid": {
+      "url_template": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway/mcp-tools/{tool_name}",
+      "method": "POST",
+      "body": "JSON-RPC 2.0: method tools/call, params.name = tool_name, params.arguments = object per tool schema",
+      "headers_after_payment": ["x-api-key: lsk_...", "Content-Type: application/json"],
+      "tool_schemas_source": "https://github.com/aspekt19/unboxed-loyalty-spark/blob/main/supabase/functions/_shared/mcp-bazaar-tools.ts",
+      "bazaar": "HTTP 402 response includes extensions.bazaar (discoverable, inputSchema for headers/body) for MCP resources"
+    },
     "protocol_spec": "https://github.com/coinbase/x402",
     "how_to_use": [
-      "1. Install x402 client: npm install @x402/fetch @x402/evm",
-      "2. Make request to x402-gateway — get 402 with PAYMENT-REQUIRED header",
-      "3. Sign USDC payment on Base using x402 client SDK",
-      "4. Retry request with X-PAYMENT header containing signed payload",
-      "5. Gateway verifies via Coinbase facilitator, settles USDC, returns data"
+      "1. npm install @x402/fetch @x402/evm",
+      "2. POST {gateway_url}/mcp-tools/{tool} or other x402 routes — receive 402 with accepts (v2)",
+      "3. Sign USDC payment on Base with x402 client; retry with payment header",
+      "4. Gateway verify/settle via CDP x402 on mainnet; for MCP, body is forwarded to loyalty-mcp with x-api-key"
     ],
     "prices_usd": {
       "GET /me": "free",

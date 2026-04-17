@@ -64,7 +64,19 @@ curl -H "x-api-key: lsk_..." \
 }
 ```
 
-### Step 5: Create Server Wallet (Optional)
+### Step 5 (Optional): Pay-per-call MCP via x402 (Bazaar-compatible)
+
+If the agent should **pay USDC per MCP call** instead of using subscription-only access to `loyalty-mcp`:
+
+- Use **`POST`** to  
+  `https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway/mcp-tools/<tool_name>`  
+  with JSON-RPC **`tools/call`**, same **`name`** / **`arguments`** as direct MCP, and header **`x-api-key: lsk_...`** on the **paid** retry.
+- Use an x402 client (**`@x402/fetch`**, **`@x402/evm`**) and a wallet with **USDC on Base** to satisfy **HTTP 402**.
+- **Parameter reference** (required fields, types): repository file **`supabase/functions/_shared/mcp-bazaar-tools.ts`** — keep prompts aligned with these schemas.
+
+See also: **`docs/agents/X402_MCP_AND_BAZAAR.md`** in the repo.
+
+### Step 6: Create Server Wallet (Optional)
 For autonomous onchain transactions, create a Coinbase MPC wallet:
 
 ```bash

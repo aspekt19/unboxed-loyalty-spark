@@ -138,12 +138,14 @@ Auth: x-api-key header
 - Flow: Request → 402 challenge → pay → retry with credential
 - SDK: `npm install -g mppx`
 
-### x402 (Coinbase Protocol)
+### x402 (Coinbase Protocol) — v2
 - Gateway: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway
-- Currency: USDC on Base (0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
-- Facilitator: https://facilitator.x402.org
+- Currency: USDC on Base (0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913) · network CAIP-2 `eip155:8453`
+- **Paid MCP:** `POST …/x402-gateway/mcp-tools/<tool_name>` — JSON-RPC `tools/call`, header `x-api-key: lsk_…` after payment. Tool ids + argument schemas: `supabase/functions/_shared/mcp-bazaar-tools.ts` (repo). Bazaar: 402 body includes `extensions.bazaar` for MCP routes.
+- Facilitator (Base mainnet production): Coinbase CDP `https://api.cdp.coinbase.com/platform/v2/x402` (gateway uses CDP JWT when configured). Reference: https://facilitator.x402.org
 - SDK: `@x402/fetch`, `@x402/evm`
 - Spec: https://github.com/coinbase/x402
+- Doc: `docs/agents/X402_MCP_AND_BAZAAR.md` (repo)
 
 ## Agent Wallets
 

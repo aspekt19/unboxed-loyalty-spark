@@ -27,6 +27,7 @@ const RECIPIENT_REST = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/recipi
 const RECIPIENT_MCP = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/recipient-loyalty-mcp`;
 const X402 = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/x402-gateway`;
 const MPP = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mpp-gateway`;
+const REGISTER_SIWE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-register-siwe`;
 
 function CodeBlock({ code }: { code: string }) {
   const [copied, setCopied] = useState(false);
@@ -78,6 +79,24 @@ const recipientMcpJson = `{
 
 const curlProbe = `curl -sS -H "x-api-key: lsk_YOUR_API_KEY" \\
   "${REST}/programs"`;
+
+const merchantSiweFlow = `Autonomous merchant agents (lsk_) — no web login. Same SIWE nonce as everyone else.
+
+1) Nonce:
+curl -sS "${import.meta.env.VITE_SUPABASE_URL}/functions/v1/siwe-nonce" \\
+  -H "apikey: ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}"
+
+2) Build EIP-4361 message for Base (8453). It MUST contain the exact phrase:
+   Register Loyal Spark merchant agent
+   and include Chain ID: 8453 and the nonce from step 1. Sign with your merchant wallet.
+
+3) One-time lsk_ key:
+curl -sS -X POST "${REGISTER_SIWE}" \\
+  -H "Content-Type: application/json" \\
+  -H "apikey: ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}" \\
+  -d '{"message":"<SIWE message>","signature":"0x...","name":"My agent","scopes":["read","mint","create_program"]}'
+
+Docs: /docs/agents/AUTONOMOUS_AGENT_REGISTRATION.md in the repo.`;
 
 const recipientKeyFlow = `Recipient keys (rwk_) are for wallets that receive loyalty points — not merchants.
 
@@ -144,7 +163,8 @@ export default function ForAgentsPage() {
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground">
               Humans use Privy + the web app. <strong>Merchant agents</strong> use an <code className="text-xs bg-muted px-1 py-0.5 rounded">lsk_</code> key
-              and <code className="text-xs bg-muted px-1 py-0.5 rounded">agent-api</code> / <code className="text-xs bg-muted px-1 py-0.5 rounded">loyalty-mcp</code>.
+              and <code className="text-xs bg-muted px-1 py-0.5 rounded">agent-api</code> / <code className="text-xs bg-muted px-1 py-0.5 rounded">loyalty-mcp</code>{" "}
+              (dashboard <em>or</em> free SIWE registration — see below).
               <strong> Recipient agents</strong> (wallets that earn points) use <code className="text-xs bg-muted px-1 py-0.5 rounded">rwk_</code> and a separate
               REST + MCP stack — humans never need to touch that. Public voucher lookup needs no key.
             </p>
@@ -235,6 +255,14 @@ export default function ForAgentsPage() {
                 </Card>
               ))}
             </div>
+          </section>
+
+          <section className="space-y-3 rounded-lg border border-dashed border-muted-foreground/30 bg-muted/15 p-4">
+            <h3 className="text-lg font-semibold">Autonomous merchant key (lsk_ via SIWE)</h3>
+            <p className="text-sm text-muted-foreground">
+              No merchant dashboard: prove wallet ownership with a signed message (Base mainnet). Free key creation; usage is billed per your agent plan like keys from the UI.
+            </p>
+            <CodeBlock code={merchantSiweFlow} />
           </section>
 
           <section className="space-y-3">

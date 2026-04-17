@@ -21,13 +21,14 @@ Pay per request with USDC or pathUSD on Tempo chain. No API key required for pay
 - SDK: mppx (npm install -g mppx)
 - Pricing: $0.001–$0.05 per request
 
-### x402 (Coinbase Payment Protocol)
-Pay per request with USDC on Base. Native HTTP 402 flow with on-chain settlement via Coinbase facilitator.
+### x402 (Coinbase Payment Protocol) — v2
+Pay per request with USDC on Base. HTTP **402** with **x402 v2** `accepts` (CAIP-2 `eip155:8453`). Verify/settle on Base **mainnet** use **Coinbase CDP** (`https://api.cdp.coinbase.com/platform/v2/x402`) when the gateway is configured with CDP API keys (see repo `supabase/functions/x402-gateway`).
 - Gateway: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway
+- **Paid MCP (Bazaar-oriented metadata in 402 body):** `POST …/x402-gateway/mcp-tools/<tool_name>` — JSON-RPC `tools/call`, header `x-api-key: lsk_…` after payment. Tool ids + argument schemas: repo `supabase/functions/_shared/mcp-bazaar-tools.ts`
 - Currency: USDC on Base (0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
-- Facilitator: https://facilitator.x402.org
+- Public facilitator reference: https://x402.org/facilitator (Sepolia-focused v2 listings differ from Base mainnet CDP)
 - SDK: @x402/fetch, @x402/evm
-- Pricing: Same as MPP ($0.001–$0.05 per request)
+- MCP per-call price: typically **$0.01** per tool (see mcp-bazaar-tools); REST routes use separate prices on the gateway
 
 ### API Key (Subscription)
 Traditional API key authentication with monthly plans.
@@ -81,10 +82,12 @@ Merchant SaaS (portal): Starter $39 / Growth $79 / Scale $149 per month — see 
 
 ## x402 Gateway (Coinbase)
 - URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway
-- Currency: USDC on Base
-- Facilitator: https://facilitator.x402.org
+- Currency: USDC on Base · **x402 v2**
+- Facilitator (Base mainnet production): Coinbase CDP `https://api.cdp.coinbase.com/platform/v2/x402` (gateway uses CDP JWT when configured)
+- Paid MCP URL pattern: `…/x402-gateway/mcp-tools/<tool_name>`
 - SDK: @x402/fetch, @x402/evm
 - Spec: https://github.com/coinbase/x402
+- Agent doc: https://github.com/aspekt19/unboxed-loyalty-spark/blob/main/docs/agents/X402_MCP_AND_BAZAAR.md
 
 ## Links
 - Website: https://loyalspark.online

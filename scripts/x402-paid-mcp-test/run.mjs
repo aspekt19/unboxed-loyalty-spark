@@ -12,11 +12,18 @@
  *   X402_PRIVATE_KEY=0x... LOYAL_SPARK_API_KEY=lsk_... node run.mjs
  *   (X402_PRIVATE_KEY may be 64 hex chars without 0x — MetaMask default export)
  *
+ * Another paid tool (same Bazaar path: .../mcp-tools/<tool>):
+ *   MCP_TOOL=get_my_profile node run.mjs
+ *   MCP_TOOL=list_loyalty_programs node run.mjs
+ *   MCP_TOOL=list_rewards MCP_ARGS='{"token_address":"0xYourToken"}' node run.mjs
+ *
+ * Tool names / schemas: supabase/functions/_shared/mcp-bazaar-tools.ts
+ *
  * Bazaar: after HTTP 200 + settle, check discovery (may lag):
  *   GET https://api.cdp.coinbase.com/platform/v2/x402/discovery/resources
  *
  * Optional env:
- *   X402_GATEWAY_URL, MCP_TOOL
+ *   X402_GATEWAY_URL, MCP_TOOL (default get_platform_info), MCP_ARGS (JSON object)
  */
 
 import { wrapFetchWithPayment, x402Client } from "@x402/fetch";
@@ -28,6 +35,26 @@ const GATEWAY =
   "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway";
 const TOOL = process.env.MCP_TOOL || "get_platform_info";
 const LSK = process.env.LOYAL_SPARK_API_KEY;
+
+/** JSON object for tools/call arguments (tools that need token_address, etc.). */
+function parseMcpArgs() {
+  const raw = process.env.MCP_ARGS;
+  if (raw == null || String(raw).trim() === "") return {};
+  try {
+    const o = JSON.parse(String(raw));
+    if (o === null || typeof o !== "object" || Array.isArray(o)) {
+      console.error('MCP_ARGS must be a JSON object, e.g. {"token_address":"0x..."}');
+      process.exit(1);
+    }
+    return o;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error("MCP_ARGS must be valid JSON:", msg);
+    process.exit(1);
+  }
+}
+
+const MCP_ARGUMENTS = parseMcpArgs();
 
 /** MetaMask often copies 64 hex chars without 0x; viem expects 0x + 64 hex. */
 function normalizePrivateKey(raw) {
@@ -118,11 +145,13 @@ const mcpBody = JSON.stringify({
   method: "tools/call",
   params: {
     name: TOOL,
-    arguments: {},
+    arguments: MCP_ARGUMENTS,
   },
 });
 
 console.log("Payer:", account.address);
+console.log("MCP tool:", TOOL);
+console.log("MCP arguments:", JSON.stringify(MCP_ARGUMENTS));
 console.log("POST", url);
 
 const res = await x402Fetch(url, {

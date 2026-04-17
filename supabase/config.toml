@@ -33,6 +33,9 @@ verify_jwt = false
 [functions.agent-api-key]
 verify_jwt = false
 
+[functions.agent-register-siwe]
+verify_jwt = false
+
 [functions.recipient-api]
 verify_jwt = false
 
