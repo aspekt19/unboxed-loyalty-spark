@@ -22,7 +22,11 @@ const RECIPIENT = Deno.env.get("X402_RECIPIENT_ADDRESS") || "0x40a8CdD6a10EC1a8c
  */
 function getFacilitatorConfig(): { baseUrl: string; headers: Record<string, string> } {
   const custom = Deno.env.get("X402_FACILITATOR_URL")?.trim().replace(/\/+$/, "");
-  const cdpKey = (Deno.env.get("CDP_API_KEY") ?? Deno.env.get("COINBASE_CDP_API_KEY"))?.trim();
+  const cdpKey = (
+    Deno.env.get("CDP_API_KEY") ??
+    Deno.env.get("COINBASE_CDP_API_KEY") ??
+    Deno.env.get("CDP_API_KEY_SECRET")
+  )?.trim();
 
   const baseUrl =
     custom ??
