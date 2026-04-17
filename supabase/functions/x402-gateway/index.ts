@@ -1,6 +1,6 @@
 import { getMcpBazaarTool, isMcpToolResource } from "../_shared/mcp-bazaar-tools.ts";
 import { resolveMcpApiKey } from "../_shared/mcp-http-api-key.ts";
-import { buildAcceptEntry, requirementsFromAccept } from "../_shared/x402-bazaar-accept.ts";
+import { buildAcceptEntry, paymentRequirementsForFacilitator } from "../_shared/x402-bazaar-accept.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -141,7 +141,7 @@ async function verifyPayment(
       network: BASE_NETWORK,
       supabaseUrl,
     });
-    const paymentRequirements = requirementsFromAccept(accept);
+    const paymentRequirements = paymentRequirementsForFacilitator(paymentPayload, accept);
 
     // Must match @x402/core HTTPFacilitatorClient — facilitator rejects { payload, requirements }.
     const verifyBody = {
@@ -159,7 +159,8 @@ async function verifyPayment(
     if (!resp.ok) {
       const errText = await resp.text();
       console.error("Facilitator verify error:", resp.status, errText);
-      return { valid: false, error: `Facilitator returned ${resp.status}` };
+      const excerpt = errText.length > 500 ? `${errText.slice(0, 500)}…` : errText;
+      return { valid: false, error: `Facilitator ${resp.status}: ${excerpt}` };
     }
 
     const result = await resp.json() as { valid?: boolean; isValid?: boolean };
@@ -187,7 +188,7 @@ async function settlePayment(
       network: BASE_NETWORK,
       supabaseUrl,
     });
-    const paymentRequirements = requirementsFromAccept(accept);
+    const paymentRequirements = paymentRequirementsForFacilitator(paymentPayload, accept);
 
     const settleBody = {
       x402Version: paymentPayload.x402Version as number,
@@ -204,6 +205,8 @@ async function settlePayment(
     if (!resp.ok) {
       const errText = await resp.text();
       console.error("Facilitator settle error:", resp.status, errText);
+      const excerpt = errText.length > 500 ? `${errText.slice(0, 500)}…` : errText;
+      console.error("Facilitator settle excerpt:", excerpt);
       return { success: false };
     }
 
