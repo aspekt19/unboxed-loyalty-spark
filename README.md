@@ -99,9 +99,23 @@ Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain
 
 ### Quick Start
 
-1. Go to [loyalspark.online/merchant](https://loyalspark.online/merchant) and sign in (email, phone, Google, or wallet via Privy)
-2. Open **AI Agents** tab → Register an agent → Copy your API key (`lsk_...`)
-3. Use the key in `x-api-key` header for REST or MCP calls
+**Merchant dashboard:**  
+1. Go to [loyalspark.online/merchant](https://loyalspark.online/merchant) and sign in (email, phone, Google, or wallet via Privy)  
+2. Open **AI Agents** tab → Register an agent → Copy your API key (`lsk_...`)  
+3. Use the key in `x-api-key` header for REST or MCP calls  
+
+**Without the web app (autonomous agents):** free **`lsk_`** via wallet signature — Edge Function `agent-register-siwe` + nonce from `siwe-nonce`. See **[docs/agents/AUTONOMOUS_AGENT_REGISTRATION.md](./docs/agents/AUTONOMOUS_AGENT_REGISTRATION.md)** and **[docs/agents/QUICKSTART.md](./docs/agents/QUICKSTART.md)**.
+
+### Optional repo scripts (development / agent onboarding)
+
+These directories are **not** imported by the web app; they are optional helpers for developers and agents reproducing flows locally. Secrets stay in environment variables only.
+
+| Folder | Purpose |
+|--------|---------|
+| [`scripts/x402-paid-mcp-test/`](./scripts/x402-paid-mcp-test/) | Smoke test: paid MCP via **x402** (USDC on Base, `@x402/fetch`). |
+| [`scripts/agent-register-siwe/`](./scripts/agent-register-siwe/) | Helper: build SIWE message + sign + call **`agent-register-siwe`** (same as production). |
+
+Paid MCP + Bazaar metadata: **[docs/agents/X402_MCP_AND_BAZAAR.md](./docs/agents/X402_MCP_AND_BAZAAR.md)**. These scripts are **not** linked from the marketing homepage; primary onboarding remains [/for-agents](https://loyalspark.online/for-agents) and the merchant portal.
 
 ### REST API
 
@@ -198,7 +212,7 @@ Structured Markdown guides that teach agents how to use the protocol:
 
 | # | Skill | Description |
 |---|-------|-------------|
-| 00 | Getting Started | Register agent, get API key, first request |
+| 00 | Getting Started | Register agent (merchant UI or SIWE), get `lsk_`, first request |
 | 01 | Create Loyalty Program | Deploy ERC-20 loyalty token on Base |
 | 02 | Mint Tokens | Mint tokens to customer wallets |
 | 03 | Transfer Tokens | Transfer tokens between wallets |
@@ -302,6 +316,7 @@ unboxed-loyalty-spark/
 │   ├── pages/                     # Routes (e.g. ForAgentsPage → /for-agents, ApiDocsPage → /api-docs)
 │   └── lib/                       # Utilities
 ├── examples/agent-mcp/            # Copy-paste MCP + curl for agents
+├── scripts/                       # Optional dev helpers (x402 MCP smoke test, SIWE lsk_ helper) — not bundled in the web app
 ├── public/
 │   ├── .well-known/
 │   │   ├── agent.json             # AI agent discovery
@@ -354,6 +369,7 @@ Loyal Spark is a **machine-payment-native** API. AI agents can discover, authent
 | LLMs.txt | [/llms.txt](https://loyalspark.online/llms.txt) | Protocol summary for LLM crawlers |
 | Prompt Guide | [PROMPT_GUIDE.md](./docs/integrations/PROMPT_GUIDE.md) | Ready-to-use system prompts |
 | Copy-paste MCP / curl | [examples/agent-mcp/](./examples/agent-mcp/) | Starter configs in the repo |
+| Repo quickstart (keys, SIWE, x402) | [docs/agents/QUICKSTART.md](./docs/agents/QUICKSTART.md) | Short paths for coding agents |
 
 ### Payment Gateways (No API Key Needed)
 
@@ -365,6 +381,8 @@ Agents can pay per request using onchain micropayments:
 | **MPP** | Tempo | pathUSD / USDC | `https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway` |
 
 Pricing: **$0.001–$0.005** per read · **$0.005–$0.05** per write · HTTP 402 challenge/response flow.
+
+**Paid MCP** uses `POST …/x402-gateway/mcp-tools/<tool_name>` (JSON-RPC `tools/call`); after settlement, pass **`x-api-key: lsk_…`** like direct MCP. Tool schemas: `supabase/functions/_shared/mcp-bazaar-tools.ts` · overview: **[docs/agents/X402_MCP_AND_BAZAAR.md](./docs/agents/X402_MCP_AND_BAZAAR.md)**.
 
 ### Catalogues & Registries
 

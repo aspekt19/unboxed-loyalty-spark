@@ -2,6 +2,8 @@
 
 Autonomous agents (no human in the browser) can obtain a merchant **API key** the same way as **recipient** agents: **SIWE** + **nonce** from `siwe-nonce`.
 
+These flows are documented for builders; optional helper scripts live under **`scripts/`** (see root **[README](../README.md)** — section *Optional repo scripts*) and are **not** part of the marketing website build.
+
 ## Endpoints
 
 | Step | Method | URL |

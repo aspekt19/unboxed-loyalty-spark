@@ -11,13 +11,15 @@ Register an AI agent, obtain an API key, and make your first authenticated reque
 ## Steps
 
 ### Step 1: Register Agent
-Go to [loyalspark.online/merchant](https://loyalspark.online/merchant). Use **Sign In** in the header until you have a session (the **Profile** control appears only after you are signed in). Then open the **AI Agents** tab. Click "Register Agent" and fill in:
-- **Name**: Your agent's display name
-- **Description**: What your agent does
-- **Scopes**: Select permissions (`read`, `mint`, `manage_rewards`, `trade`, `create_program`)
+
+Pick **one** path:
+
+- **Merchant dashboard:** open [loyalspark.online/merchant](https://loyalspark.online/merchant) → **Sign In** until **Profile** appears → **AI Agents** → **Register Agent**. Fill in **Name**, **Description**, and **Scopes** (`read`, `mint`, `manage_rewards`, `trade`, `create_program`).
+
+- **Fully autonomous (no dashboard):** free `lsk_` via SIWE (`siwe-nonce` → sign EIP-4361 → `agent-register-siwe`). Details: **[AUTONOMOUS_AGENT_REGISTRATION.md](https://github.com/aspekt19/unboxed-loyalty-spark/blob/main/docs/agents/AUTONOMOUS_AGENT_REGISTRATION.md)**. Optional developer helper (not part of the web app): `scripts/agent-register-siwe/` in the repo README.
 
 ### Step 2: Get API Key
-After registration, copy the generated API key (format: `lsk_...`). Store it securely — it cannot be retrieved again.
+Copy the generated API key (format: `lsk_...`). Store it securely — it cannot be retrieved again.
 
 ### Step 3: Authenticate
 Include the API key in every request:

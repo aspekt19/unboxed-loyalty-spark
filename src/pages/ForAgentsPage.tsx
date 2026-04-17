@@ -168,6 +168,10 @@ export default function ForAgentsPage() {
               <strong> Recipient agents</strong> (wallets that earn points) use <code className="text-xs bg-muted px-1 py-0.5 rounded">rwk_</code> and a separate
               REST + MCP stack — humans never need to touch that. Public voucher lookup needs no key.
             </p>
+            <p className="text-xs text-muted-foreground max-w-2xl mx-auto">
+              Optional command-line helpers for developers (x402 MCP check, SIWE key flow) live in the GitHub repo under{" "}
+              <code className="bg-muted px-1 rounded">scripts/</code> — see the root README; they are not part of the marketing site and are not required to use Loyal Spark.
+            </p>
             <div className="flex flex-wrap justify-center gap-2 pt-2">
               <Button asChild variant="outline" size="sm">
                 <Link to="/api-docs">API reference</Link>

@@ -30,6 +30,8 @@ Source files for the above: `public/.well-known/`, `public/openapi.json`, `publi
 
 Copy-paste MCP and curl: **[examples/agent-mcp/](./examples/agent-mcp/)** (merchant `lsk_`) · **[examples/recipient-agent-mcp/](./examples/recipient-agent-mcp/)** (holder `rwk_`) · Short repo quickstart: **[docs/agents/QUICKSTART.md](./docs/agents/QUICKSTART.md)**.
 
+Optional **local** scripts (not used by the web app build): **`scripts/x402-paid-mcp-test/`** (paid MCP smoke test), **`scripts/agent-register-siwe/`** (SIWE → `lsk_` helper) — documented in **[README.md](./README.md)** (section “Optional repo scripts”) and **docs/agents/**.
+
 ## API & MCP (source of truth)
 
 - **REST (merchants):** `supabase/functions/agent-api/index.ts` — count routes here if docs disagree.
