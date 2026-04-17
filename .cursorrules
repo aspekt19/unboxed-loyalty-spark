@@ -179,7 +179,7 @@ No API key needed — pay-per-request.
 ### x402 Gateway
 URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway
 Payment: USDC on Base (0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
-Facilitator (Base mainnet): Coinbase CDP `https://api.cdp.coinbase.com/platform/v2/x402` — Bearer from `CDP_API_KEY` (preferred) or existing `CDP_API_KEY_SECRET` / `COINBASE_CDP_API_KEY`. Public `https://x402.org/facilitator` only registers Base **Sepolia** (84532) for v2 `exact`, not mainnet (8453).
+Facilitator (Base mainnet): CDP `https://api.cdp.coinbase.com/platform/v2/x402` — JWT via `CDP_API_KEY_ID` + `CDP_API_KEY_SECRET` (`@coinbase/cdp-sdk/auth` generateJwt per /verify and /settle). Optional single-token `CDP_API_KEY`. Public `https://x402.org/facilitator` is Sepolia-only for v2 `exact`.
 
 ## API Key Scopes
 - read            — read-only GET routes (plus redeem per server rules)

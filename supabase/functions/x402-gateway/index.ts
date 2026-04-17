@@ -17,29 +17,66 @@ const BASE_NETWORK = "eip155:8453";
 const RECIPIENT = Deno.env.get("X402_RECIPIENT_ADDRESS") || "0x40a8CdD6a10EC1a8cB3dFb2834675e7a2CF4ad8b";
 
 /**
- * - Public `https://x402.org/facilitator` — no auth; `/supported` lists v2 `exact` on Base **Sepolia** only, not mainnet.
- * - Coinbase CDP `https://api.cdp.coinbase.com/platform/v2/x402` — **Base mainnet** (eip155:8453); Bearer from CDP key (see below).
- *
- * Bearer token resolution (first hit wins): `CDP_API_KEY` → `COINBASE_CDP_API_KEY` → `CDP_API_KEY_SECRET`
- * (Supabase often already has `CDP_API_KEY_SECRET` for MPC; x402 may still need a dedicated x402 Secret API Key if verify returns 401).
+ * - Public `https://x402.org/facilitator` — no auth; v2 `exact` on Base **Sepolia** only, not mainnet.
+ * - CDP `https://api.cdp.coinbase.com/platform/v2/x402` — **Base mainnet**; uses **JWT** (not raw secret as Bearer):
+ *   `CDP_API_KEY_ID` + `CDP_API_KEY_SECRET` → `generateJwt` per request (see CDP docs).
+ *   Optional: single-token `CDP_API_KEY` / `COINBASE_CDP_API_KEY` as Bearer if CDP issued that format.
  */
-function getFacilitatorConfig(): { baseUrl: string; headers: Record<string, string> } {
+const CDP_FACILITATOR_BASE = "https://api.cdp.coinbase.com/platform/v2/x402";
+const CDP_FACILITATOR_HOST = "api.cdp.coinbase.com";
+
+function getFacilitatorBaseUrl(): string {
   const custom = Deno.env.get("X402_FACILITATOR_URL")?.trim().replace(/\/+$/, "");
-  const cdpKey =
+  if (custom) return custom;
+
+  const id = Deno.env.get("CDP_API_KEY_ID")?.trim();
+  const secret = Deno.env.get("CDP_API_KEY_SECRET")?.trim();
+  const single =
     Deno.env.get("CDP_API_KEY")?.trim() ||
-    Deno.env.get("COINBASE_CDP_API_KEY")?.trim() ||
-    Deno.env.get("CDP_API_KEY_SECRET")?.trim();
+    Deno.env.get("COINBASE_CDP_API_KEY")?.trim();
 
-  const baseUrl =
-    custom ??
-    (cdpKey ? "https://api.cdp.coinbase.com/platform/v2/x402" : "https://x402.org/facilitator");
+  const useCdp = !!(id && secret) || !!single || !!secret;
+  return useCdp ? CDP_FACILITATOR_BASE : "https://x402.org/facilitator";
+}
 
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (baseUrl.includes("api.cdp.coinbase.com") && cdpKey) {
-    headers["Authorization"] = `Bearer ${cdpKey}`;
+/** Authorization for CDP: JWT from ID+secret, or single Bearer. `requestPath` must match the HTTP path (e.g. `/platform/v2/x402/verify`). */
+async function buildFacilitatorHeaders(
+  method: string,
+  requestPath: string,
+  baseUrl: string,
+): Promise<Record<string, string>> {
+  const h: Record<string, string> = { "Content-Type": "application/json" };
+  if (!baseUrl.includes("api.cdp.coinbase.com")) {
+    return h;
   }
 
-  return { baseUrl, headers };
+  const id = Deno.env.get("CDP_API_KEY_ID")?.trim();
+  const secret = Deno.env.get("CDP_API_KEY_SECRET")?.trim();
+  const single =
+    Deno.env.get("CDP_API_KEY")?.trim() ||
+    Deno.env.get("COINBASE_CDP_API_KEY")?.trim();
+
+  if (id && secret) {
+    const { generateJwt } = await import("@coinbase/cdp-sdk/auth");
+    const jwt = await generateJwt({
+      apiKeyId: id,
+      apiKeySecret: secret,
+      requestMethod: method,
+      requestHost: CDP_FACILITATOR_HOST,
+      requestPath,
+    });
+    h["Authorization"] = `Bearer ${jwt}`;
+    return h;
+  }
+
+  if (single) {
+    h["Authorization"] = `Bearer ${single}`;
+    return h;
+  }
+
+  throw new Error(
+    "CDP facilitator requires JWT: set CDP_API_KEY_ID and CDP_API_KEY_SECRET (see CDP portal), or set CDP_API_KEY / COINBASE_CDP_API_KEY. Raw CDP_API_KEY_SECRET alone is not a valid Bearer token.",
+  );
 }
 
 // --- Per-request pricing (USD) — same as MPP ---
@@ -170,10 +207,10 @@ async function verifyPayment(
       paymentRequirements,
     };
 
-    const fc = getFacilitatorConfig();
-    const resp = await fetch(`${fc.baseUrl}/verify`, {
+    const baseUrl = getFacilitatorBaseUrl();
+    const resp = await fetch(`${baseUrl}/verify`, {
       method: "POST",
-      headers: fc.headers,
+      headers: await buildFacilitatorHeaders("POST", "/platform/v2/x402/verify", baseUrl),
       body: JSON.stringify(verifyBody, (_k, v) => (typeof v === "bigint" ? v.toString() : v)),
     });
 
@@ -217,10 +254,10 @@ async function settlePayment(
       paymentRequirements,
     };
 
-    const fc = getFacilitatorConfig();
-    const resp = await fetch(`${fc.baseUrl}/settle`, {
+    const baseUrl = getFacilitatorBaseUrl();
+    const resp = await fetch(`${baseUrl}/settle`, {
       method: "POST",
-      headers: fc.headers,
+      headers: await buildFacilitatorHeaders("POST", "/platform/v2/x402/settle", baseUrl),
       body: JSON.stringify(settleBody, (_k, v) => (typeof v === "bigint" ? v.toString() : v)),
     });
 
