@@ -18,15 +18,17 @@ const RECIPIENT = Deno.env.get("X402_RECIPIENT_ADDRESS") || "0x40a8CdD6a10EC1a8c
 
 /**
  * - Public `https://x402.org/facilitator` — no auth; `/supported` lists v2 `exact` on Base **Sepolia** only, not mainnet.
- * - Coinbase CDP `https://api.cdp.coinbase.com/platform/v2/x402` — **Base mainnet** (eip155:8453); requires `CDP_API_KEY` (Bearer).
+ * - Coinbase CDP `https://api.cdp.coinbase.com/platform/v2/x402` — **Base mainnet** (eip155:8453); Bearer from CDP key (see below).
+ *
+ * Bearer token resolution (first hit wins): `CDP_API_KEY` → `COINBASE_CDP_API_KEY` → `CDP_API_KEY_SECRET`
+ * (Supabase often already has `CDP_API_KEY_SECRET` for MPC; x402 may still need a dedicated x402 Secret API Key if verify returns 401).
  */
 function getFacilitatorConfig(): { baseUrl: string; headers: Record<string, string> } {
   const custom = Deno.env.get("X402_FACILITATOR_URL")?.trim().replace(/\/+$/, "");
-  const cdpKey = (
-    Deno.env.get("CDP_API_KEY") ??
-    Deno.env.get("COINBASE_CDP_API_KEY") ??
-    Deno.env.get("CDP_API_KEY_SECRET")
-  )?.trim();
+  const cdpKey =
+    Deno.env.get("CDP_API_KEY")?.trim() ||
+    Deno.env.get("COINBASE_CDP_API_KEY")?.trim() ||
+    Deno.env.get("CDP_API_KEY_SECRET")?.trim();
 
   const baseUrl =
     custom ??
