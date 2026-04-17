@@ -81,6 +81,21 @@ async function buildFacilitatorHeaders(
   );
 }
 
+/** CDP / x402.org settle JSON may use `transaction`, `txHash`, or `transactionHash`. */
+function txHashFromFacilitatorSettle(result: Record<string, unknown>): string | undefined {
+  const direct = [result.txHash, result.transactionHash, result.transaction, result.hash];
+  for (const v of direct) {
+    if (typeof v === "string" && v.length > 0) return v;
+  }
+  const data = result.data;
+  if (data && typeof data === "object" && !Array.isArray(data)) {
+    const d = data as Record<string, unknown>;
+    const nested = d.txHash ?? d.transactionHash ?? d.transaction;
+    if (typeof nested === "string" && nested.length > 0) return nested;
+  }
+  return undefined;
+}
+
 // --- Per-request pricing (USD) — same as MPP ---
 const PRICING: Record<string, Record<string, string>> = {
   GET: {
@@ -272,10 +287,10 @@ async function settlePayment(
     }
 
     const extensionResponsesHeader = resp.headers.get("EXTENSION-RESPONSES") ?? undefined;
-    const result = await resp.json();
+    const result = (await resp.json()) as Record<string, unknown>;
     return {
       success: true,
-      txHash: result.txHash || result.transactionHash,
+      txHash: txHashFromFacilitatorSettle(result),
       extensionResponsesHeader,
     };
   } catch (err) {
