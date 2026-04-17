@@ -136,6 +136,7 @@ const res = await x402Fetch(url, {
 
 const text = await res.text();
 console.log("Status:", res.status);
+console.log("X-Payment-Error:", res.headers.get("x-payment-error"));
 console.log("X-Payment-Response:", res.headers.get("x-payment-response"));
 console.log("X-Payment-TxHash:", res.headers.get("x-payment-txhash"));
 console.log("EXTENSION-RESPONSES:", res.headers.get("extension-responses"));

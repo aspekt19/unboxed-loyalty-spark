@@ -138,17 +138,19 @@ async function verifyPayment(
       network: BASE_NETWORK,
       supabaseUrl,
     });
-    const requirements = requirementsFromAccept(accept);
+    const paymentRequirements = requirementsFromAccept(accept);
 
+    // Must match @x402/core HTTPFacilitatorClient — facilitator rejects { payload, requirements }.
     const verifyBody = {
-      payload: paymentPayload,
-      requirements,
+      x402Version: paymentPayload.x402Version as number,
+      paymentPayload,
+      paymentRequirements,
     };
 
     const resp = await fetch(`${FACILITATOR_URL}/verify`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(verifyBody),
+      body: JSON.stringify(verifyBody, (_k, v) => (typeof v === "bigint" ? v.toString() : v)),
     });
 
     if (!resp.ok) {
@@ -157,8 +159,8 @@ async function verifyPayment(
       return { valid: false, error: `Facilitator returned ${resp.status}` };
     }
 
-    const result = await resp.json();
-    return { valid: result.valid === true || result.isValid === true };
+    const result = await resp.json() as { valid?: boolean; isValid?: boolean };
+    return { valid: result.isValid === true || result.valid === true };
   } catch (err) {
     console.error("Payment verification error:", err);
     return { valid: false, error: err instanceof Error ? err.message : String(err) };
@@ -182,17 +184,18 @@ async function settlePayment(
       network: BASE_NETWORK,
       supabaseUrl,
     });
-    const requirements = requirementsFromAccept(accept);
+    const paymentRequirements = requirementsFromAccept(accept);
 
     const settleBody = {
-      payload: paymentPayload,
-      requirements,
+      x402Version: paymentPayload.x402Version as number,
+      paymentPayload,
+      paymentRequirements,
     };
 
     const resp = await fetch(`${FACILITATOR_URL}/settle`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(settleBody),
+      body: JSON.stringify(settleBody, (_k, v) => (typeof v === "bigint" ? v.toString() : v)),
     });
 
     if (!resp.ok) {
