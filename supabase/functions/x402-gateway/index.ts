@@ -16,11 +16,25 @@ const BASE_NETWORK = "eip155:8453";
 // Platform recipient address
 const RECIPIENT = Deno.env.get("X402_RECIPIENT_ADDRESS") || "0x40a8CdD6a10EC1a8cB3dFb2834675e7a2CF4ad8b";
 
-/** Same default as @x402/core HTTPFacilitatorClient. Avoid `facilitator.x402.org` — some Edge runtimes fail DNS on that host. */
-const FACILITATOR_URL = (Deno.env.get("X402_FACILITATOR_URL") || "https://x402.org/facilitator").replace(
-  /\/+$/,
-  "",
-);
+/**
+ * - Public `https://x402.org/facilitator` — no auth; `/supported` lists v2 `exact` on Base **Sepolia** only, not mainnet.
+ * - Coinbase CDP `https://api.cdp.coinbase.com/platform/v2/x402` — **Base mainnet** (eip155:8453); requires `CDP_API_KEY` (Bearer).
+ */
+function getFacilitatorConfig(): { baseUrl: string; headers: Record<string, string> } {
+  const custom = Deno.env.get("X402_FACILITATOR_URL")?.trim().replace(/\/+$/, "");
+  const cdpKey = (Deno.env.get("CDP_API_KEY") ?? Deno.env.get("COINBASE_CDP_API_KEY"))?.trim();
+
+  const baseUrl =
+    custom ??
+    (cdpKey ? "https://api.cdp.coinbase.com/platform/v2/x402" : "https://x402.org/facilitator");
+
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (baseUrl.includes("api.cdp.coinbase.com") && cdpKey) {
+    headers["Authorization"] = `Bearer ${cdpKey}`;
+  }
+
+  return { baseUrl, headers };
+}
 
 // --- Per-request pricing (USD) — same as MPP ---
 const PRICING: Record<string, Record<string, string>> = {
@@ -150,9 +164,10 @@ async function verifyPayment(
       paymentRequirements,
     };
 
-    const resp = await fetch(`${FACILITATOR_URL}/verify`, {
+    const fc = getFacilitatorConfig();
+    const resp = await fetch(`${fc.baseUrl}/verify`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: fc.headers,
       body: JSON.stringify(verifyBody, (_k, v) => (typeof v === "bigint" ? v.toString() : v)),
     });
 
@@ -196,9 +211,10 @@ async function settlePayment(
       paymentRequirements,
     };
 
-    const resp = await fetch(`${FACILITATOR_URL}/settle`, {
+    const fc = getFacilitatorConfig();
+    const resp = await fetch(`${fc.baseUrl}/settle`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: fc.headers,
       body: JSON.stringify(settleBody, (_k, v) => (typeof v === "bigint" ? v.toString() : v)),
     });
 
