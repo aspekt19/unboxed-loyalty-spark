@@ -10,7 +10,8 @@ const corsHeaders = {
     "X-Payment-Required, Payment-Required, PAYMENT-REQUIRED, X-Payment-Response, Payment-Response, PAYMENT-RESPONSE, X-Payment-Protocol, X-Payment-TxHash, X-Payment-Error, EXTENSION-RESPONSES",
 };
 
-const BASE_NETWORK = "base";
+/** CAIP-2 chain id for Base mainnet — required for @x402/fetch + facilitator; "base" string breaks client scheme matching. */
+const BASE_NETWORK = "eip155:8453";
 
 // Platform recipient address
 const RECIPIENT = Deno.env.get("X402_RECIPIENT_ADDRESS") || "0x40a8CdD6a10EC1a8cB3dFb2834675e7a2CF4ad8b";

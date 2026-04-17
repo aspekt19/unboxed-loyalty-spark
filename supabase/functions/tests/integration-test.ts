@@ -116,7 +116,7 @@ async function testX402PaidEndpointNoPayment() {
 
   if (data.accepts?.length > 0) {
     const accept = data.accepts[0];
-    assert(accept.network === "base", `Network is 'base'`, `got ${accept.network}`);
+    assert(accept.network === "eip155:8453", `Network is eip155:8453 (Base)`, `got ${accept.network}`);
     assert(accept.asset === "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", "Asset is USDC on Base");
     assert(accept.payTo === "0x40a8CdD6a10EC1a8cB3dFb2834675e7a2CF4ad8b", "Correct recipient");
     assert(accept.scheme === "exact", `Scheme is 'exact'`);
