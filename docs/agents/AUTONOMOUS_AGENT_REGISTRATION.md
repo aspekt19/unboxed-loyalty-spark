@@ -11,6 +11,17 @@ Autonomous agents (no human in the browser) can obtain a merchant **API key** th
 
 Use header `apikey: {VITE_SUPABASE_PUBLISHABLE_KEY}` (anon key) on `siwe-nonce` if your client requires it — same as recipient flow.
 
+### One-command script (nonce + sign + register)
+
+Repo: **`scripts/agent-register-siwe/run.mjs`** — только секреты в env:
+
+```bash
+cd scripts/agent-register-siwe && npm install
+LOYALSPARK_ANON_KEY="<anon>" REGISTER_PRIVATE_KEY="0x..." node run.mjs
+```
+
+Опционально: `AGENT_NAME`, `AGENT_SCOPES=read,mint`, `SUPABASE_FUNCTIONS_BASE` если другой проект.
+
 ## SIWE message (EIP-4361)
 
 The signed message **must**:

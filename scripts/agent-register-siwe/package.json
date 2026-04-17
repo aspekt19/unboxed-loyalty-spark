@@ -1,0 +1,9 @@
+{
+  "name": "loyalspark-agent-register-siwe",
+  "private": true,
+  "type": "module",
+  "description": "One-shot: siwe-nonce + sign + agent-register-siwe (lsk_). Only secrets in env.",
+  "dependencies": {
+    "viem": "^2.46.0"
+  }
+}
