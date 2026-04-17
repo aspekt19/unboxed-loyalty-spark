@@ -29,6 +29,25 @@ function canonicalPublicOrigin(requestUrl: URL): string {
   return requestUrl.origin;
 }
 
+/**
+ * Prefer `SUPABASE_URL` origin when the request hits the same project host — env is always `https`
+ * and matches what verify/settle and Bazaar discovery must use.
+ */
+function resourcePublicOrigin(requestUrl: URL, supabaseUrl: string): string {
+  const raw = supabaseUrl.trim();
+  if (raw) {
+    try {
+      const env = new URL(raw);
+      if (env.hostname === requestUrl.hostname) {
+        return env.origin;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  return canonicalPublicOrigin(requestUrl);
+}
+
 function mcpBazaarExtension(_mcp: McpBazaarTool) {
   return {
     discoverable: true,
@@ -61,7 +80,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
   resourceUrlForDiscovery: string;
 } {
   const pathOnGateway = `/functions/v1/x402-gateway/${p.resource}`;
-  const resourceUrlForDiscovery = `${canonicalPublicOrigin(p.requestUrl)}${pathOnGateway}`;
+  const resourceUrlForDiscovery = `${resourcePublicOrigin(p.requestUrl, p.supabaseUrl)}${pathOnGateway}`;
 
   const maxAmountRequired = Math.round(parseFloat(p.price) * 1_000_000).toString();
   /** x402 v2 schema uses `amount` (same micro‑USDC string); EIP‑3009 client reads `amount`, not `maxAmountRequired`. */
