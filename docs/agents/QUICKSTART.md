@@ -39,7 +39,7 @@ Use the **same** tools as `loyalty-mcp`, but URL pattern:
 
 Body: JSON-RPC `tools/call` with `name` and `arguments`. Headers: `x-api-key: lsk_...` (after payment).  
 Client: `@x402/fetch` + `@x402/evm` (wallet with USDC on Base pays the 402).  
-Reference: [X402_MCP_AND_BAZAAR.md](./X402_MCP_AND_BAZAAR.md) · local script: `scripts/x402-paid-mcp-test/run.mjs`.
+Reference: `supabase/functions/_shared/mcp-bazaar-tools.ts` · `scripts/x402-paid-mcp-test/run.mjs`.
 
 ## 5. Discovery (for crawlers & tools)
 

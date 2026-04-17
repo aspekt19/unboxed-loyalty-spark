@@ -145,8 +145,6 @@ Auth: x-api-key header
 - Facilitator (Base mainnet production): Coinbase CDP `https://api.cdp.coinbase.com/platform/v2/x402` (gateway uses CDP JWT when configured). Reference: https://facilitator.x402.org
 - SDK: `@x402/fetch`, `@x402/evm`
 - Spec: https://github.com/coinbase/x402
-- Doc: `docs/agents/X402_MCP_AND_BAZAAR.md` (repo)
-
 ## Agent Wallets
 
 Agents can create Coinbase CDP MPC wallets for autonomous onchain operations:

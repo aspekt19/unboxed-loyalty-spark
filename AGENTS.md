@@ -6,7 +6,7 @@ This file is the **entry point** for coding agents (Cursor, OpenServ, Claude Cod
 
 | What | Path |
 |------|------|
-| **x402 v2 paid MCP + Bazaar (agent-facing)** | [`docs/agents/X402_MCP_AND_BAZAAR.md`](./docs/agents/X402_MCP_AND_BAZAAR.md) |
+| **Paid MCP via x402** | Tool list + schemas: [`supabase/functions/_shared/mcp-bazaar-tools.ts`](./supabase/functions/_shared/mcp-bazaar-tools.ts) · gateway accepts: [`supabase/functions/_shared/x402-bazaar-accept.ts`](./supabase/functions/_shared/x402-bazaar-accept.ts) · quickstart [`docs/agents/QUICKSTART.md`](./docs/agents/QUICKSTART.md) |
 | **Free `lsk_` without web login (SIWE)** | [`docs/agents/AUTONOMOUS_AGENT_REGISTRATION.md`](./docs/agents/AUTONOMOUS_AGENT_REGISTRATION.md) |
 | **Monetization & public pricing (merchant + agents)** | [`docs/business/MONETIZATION_AND_PRICING.md`](./docs/business/MONETIZATION_AND_PRICING.md) |
 | Repo rules for edits (stack, folders, API scopes) | [`.cursorrules`](./.cursorrules) |

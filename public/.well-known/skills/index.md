@@ -10,7 +10,7 @@ Loyal Spark provides a complete loyalty infrastructure via REST API and MCP Serv
 
 - **API Key**: Open [loyalspark.online/merchant](https://loyalspark.online/merchant), complete **Sign In** in the header (the **Profile** control appears only after you are signed in), then **AI Agents** tab → register → copy `lsk_...` key
 - **Authentication**: Pass API key in `x-api-key` header for all requests
-- **Pay-per-call MCP (x402 v2)**: Optional — use `POST …/x402-gateway/mcp-tools/<tool_name>` with `@x402/fetch`, USDC on Base for payment, same `lsk_` after 402. Tool names and **argument JSON Schemas**: repo `supabase/functions/_shared/mcp-bazaar-tools.ts`. Human-readable: [X402 MCP & Bazaar](https://github.com/aspekt19/unboxed-loyalty-spark/blob/main/docs/agents/X402_MCP_AND_BAZAAR.md).
+- **Pay-per-call MCP (x402 v2)**: Optional — use `POST …/x402-gateway/mcp-tools/<tool_name>` with `@x402/fetch`, USDC on Base for payment, same `lsk_` after 402. Tool names and **argument JSON Schemas**: repo `supabase/functions/_shared/mcp-bazaar-tools.ts`; HTTP **`accepts`** (+ Bazaar-oriented fields for MCP routes): `supabase/functions/_shared/x402-bazaar-accept.ts`.
 - **Chain**: Base L2 (Chain ID: 8453)
 - **Token Standard**: ERC-20
 
@@ -42,7 +42,7 @@ Scopes mirror the REST API: program lifecycle accepts **`mint` or `create_progra
 
 - Agent manifest: `https://loyalspark.online/.well-known/agent.json`
 - Skills index: `https://loyalspark.online/.well-known/skills/index.md`
-- x402 paid MCP + Bazaar notes: repo `docs/agents/X402_MCP_AND_BAZAAR.md` (tool schemas: `mcp-bazaar-tools.ts`)
+- x402 paid MCP: repo `supabase/functions/_shared/mcp-bazaar-tools.ts` · `supabase/functions/_shared/x402-bazaar-accept.ts`
 
 ## Pricing (AI agents, `lsk_` keys)
 

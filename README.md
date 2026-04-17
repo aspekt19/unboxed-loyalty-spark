@@ -115,7 +115,7 @@ These directories are **not** imported by the web app; they are optional helpers
 | [`scripts/x402-paid-mcp-test/`](./scripts/x402-paid-mcp-test/) | Smoke test: paid MCP via **x402** (USDC on Base, `@x402/fetch`). |
 | [`scripts/agent-register-siwe/`](./scripts/agent-register-siwe/) | Helper: build SIWE message + sign + call **`agent-register-siwe`** (same as production). |
 
-Paid MCP + Bazaar metadata: **[docs/agents/X402_MCP_AND_BAZAAR.md](./docs/agents/X402_MCP_AND_BAZAAR.md)**. These scripts are **not** linked from the marketing homepage; primary onboarding remains [/for-agents](https://loyalspark.online/for-agents) and the merchant portal.
+Schemas for paid MCP (`mcp-tools/<name>`): **[supabase/functions/_shared/mcp-bazaar-tools.ts](./supabase/functions/_shared/mcp-bazaar-tools.ts)**. These scripts are **not** linked from the marketing homepage; primary onboarding remains [/for-agents](https://loyalspark.online/for-agents) and the merchant portal.
 
 ### REST API
 
@@ -382,7 +382,7 @@ Agents can pay per request using onchain micropayments:
 
 Pricing: **$0.001–$0.005** per read · **$0.005–$0.05** per write · HTTP 402 challenge/response flow.
 
-**Paid MCP** uses `POST …/x402-gateway/mcp-tools/<tool_name>` (JSON-RPC `tools/call`); after settlement, pass **`x-api-key: lsk_…`** like direct MCP. Tool schemas: `supabase/functions/_shared/mcp-bazaar-tools.ts` · overview: **[docs/agents/X402_MCP_AND_BAZAAR.md](./docs/agents/X402_MCP_AND_BAZAAR.md)**.
+**Paid MCP** uses `POST …/x402-gateway/mcp-tools/<tool_name>` (JSON-RPC `tools/call`); after settlement, pass **`x-api-key: lsk_…`** like direct MCP. Tool schemas: **`supabase/functions/_shared/mcp-bazaar-tools.ts`** · **`supabase/functions/_shared/x402-bazaar-accept.ts`** (402 `accepts` + Bazaar-oriented metadata).
 
 ### Catalogues & Registries
 
