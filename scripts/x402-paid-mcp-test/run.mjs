@@ -53,7 +53,47 @@ if (!LSK?.startsWith("lsk_")) {
 const account = privateKeyToAccount(PK);
 const client = new x402Client();
 registerExactEvmScheme(client, { signer: account });
-const x402Fetch = wrapFetchWithPayment(fetch, client);
+
+/**
+ * Production may still return network "base"; @x402/evm only matches CAIP-2 (eip155:8453).
+ * Patch 402 JSON + PAYMENT-REQUIRED headers so the client can sign. For settlement, the
+ * gateway must eventually use the same network id in verify (redeploy x402-gateway).
+ */
+function wrapFetchNormalizeBaseNetwork(origFetch) {
+  return async (input, init) => {
+    const res = await origFetch(input, init);
+    if (res.status !== 402) return res;
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      return new Response(text, { status: 402, headers: res.headers });
+    }
+    let changed = false;
+    if (Array.isArray(data.accepts)) {
+      for (const a of data.accepts) {
+        if (a.network === "base") {
+          a.network = "eip155:8453";
+          changed = true;
+        }
+      }
+    }
+    const newText = JSON.stringify(data);
+    const headers = new Headers(res.headers);
+    if (changed) {
+      const b64 = Buffer.from(newText, "utf8").toString("base64");
+      headers.set("PAYMENT-REQUIRED", b64);
+      headers.set("X-Payment-Required", b64);
+      console.warn(
+        "[x402] 402 body had network \"base\" → patched to eip155:8453 for the client. Redeploy supabase x402-gateway so the server uses eip155:8453 and verify/settle match the signed payment.",
+      );
+    }
+    return new Response(newText, { status: 402, headers });
+  };
+}
+
+const x402Fetch = wrapFetchWithPayment(wrapFetchNormalizeBaseNetwork(fetch), client);
 
 const url = `${GATEWAY}/mcp-tools/${TOOL}`;
 
