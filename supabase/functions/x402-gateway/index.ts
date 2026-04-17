@@ -49,6 +49,21 @@ const PRICING: Record<string, Record<string, string>> = {
   },
 };
 
+/**
+ * Supabase Edge / reverse proxies often surface `req.url` as `http://` while browsers and
+ * @x402/fetch use `https://`. Payment verify/settle must use the same canonical URL as the client.
+ */
+function publicRequestUrl(req: Request): URL {
+  const url = new URL(req.url);
+  const forwarded = req.headers.get("x-forwarded-proto");
+  if (forwarded === "https" && url.protocol === "http:") {
+    url.protocol = "https:";
+  } else if (url.hostname.endsWith(".supabase.co") && url.protocol === "http:") {
+    url.protocol = "https:";
+  }
+  return url;
+}
+
 function getResourceFromUrl(url: URL): string {
   const path = url.pathname.split("/").filter(Boolean);
   // Find "x402-gateway" index and extract resource + sub-resource
@@ -205,7 +220,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const url = new URL(req.url);
+    const url = publicRequestUrl(req);
     const resource = getResourceFromUrl(url);
 
     if (resource.startsWith("mcp-tools/")) {
