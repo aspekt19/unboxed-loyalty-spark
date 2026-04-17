@@ -20,6 +20,15 @@ export type BuildAcceptParams = {
   supabaseUrl: string;
 };
 
+/** Edge often sees `http://`; clients and facilitators use the public `https://` origin. */
+function canonicalPublicOrigin(requestUrl: URL): string {
+  const host = requestUrl.hostname;
+  if (host.endsWith(".supabase.co") && requestUrl.protocol === "http:") {
+    return `https://${host}`;
+  }
+  return requestUrl.origin;
+}
+
 function mcpBazaarExtension(_mcp: McpBazaarTool) {
   return {
     discoverable: true,
@@ -52,7 +61,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
   resourceUrlForDiscovery: string;
 } {
   const pathOnGateway = `/functions/v1/x402-gateway/${p.resource}`;
-  const resourceUrlForDiscovery = `${p.requestUrl.origin}${pathOnGateway}`;
+  const resourceUrlForDiscovery = `${canonicalPublicOrigin(p.requestUrl)}${pathOnGateway}`;
 
   const maxAmountRequired = Math.round(parseFloat(p.price) * 1_000_000).toString();
   /** x402 v2 schema uses `amount` (same micro‑USDC string); EIP‑3009 client reads `amount`, not `maxAmountRequired`. */

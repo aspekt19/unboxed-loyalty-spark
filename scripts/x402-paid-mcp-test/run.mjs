@@ -71,11 +71,13 @@ function wrapFetchNormalizeBaseNetwork(origFetch) {
       return new Response(text, { status: 402, headers: res.headers });
     }
     let changed = false;
+    let patchedNetworkBase = false;
     if (Array.isArray(data.accepts)) {
       for (const a of data.accepts) {
         if (a.network === "base") {
           a.network = "eip155:8453";
           changed = true;
+          patchedNetworkBase = true;
         }
         // x402 v2 + @x402/evm expect `amount` and `maxTimeoutSeconds`; older gateways only sent maxAmountRequired.
         if (data.x402Version === 2 && a.maxAmountRequired != null && a.amount == null) {
@@ -94,9 +96,13 @@ function wrapFetchNormalizeBaseNetwork(origFetch) {
       const b64 = Buffer.from(newText, "utf8").toString("base64");
       headers.set("PAYMENT-REQUIRED", b64);
       headers.set("X-Payment-Required", b64);
-      console.warn(
-        "[x402] 402 body had network \"base\" → patched to eip155:8453 for the client. Redeploy supabase x402-gateway so the server uses eip155:8453 and verify/settle match the signed payment.",
-      );
+      if (patchedNetworkBase) {
+        console.warn(
+          '[x402] 402 had network "base" → patched to eip155:8453. Redeploy x402-gateway so verify/settle use CAIP-2.',
+        );
+      } else {
+        console.warn("[x402] Patched legacy v2 fields (amount / maxTimeoutSeconds) in the 402 body.");
+      }
     }
     return new Response(newText, { status: 402, headers });
   };
