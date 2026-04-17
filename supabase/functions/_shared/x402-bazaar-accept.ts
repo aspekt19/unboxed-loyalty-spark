@@ -7,6 +7,9 @@ import { getMcpBazaarTool, type McpBazaarTool } from "./mcp-bazaar-tools.ts";
 
 const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 
+/** EIP-712 domain for native USDC on Base (EIP-3009) — required by x402 EVM clients. */
+const USDC_EIP712 = { name: "USD Coin", version: "2" } as const;
+
 export type BuildAcceptParams = {
   price: string;
   resource: string;
@@ -71,9 +74,8 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
       payTo: p.recipient,
       asset: USDC_BASE,
       extra: {
-        name: "Loyal Spark",
-        version: "1",
-        description: `Streamable HTTP MCP. After payment, POST the same JSON-RPC body to this x402 URL with X-PAYMENT; the gateway forwards to ${loyaltyMcpUrl}.`,
+        ...USDC_EIP712,
+        description: `Loyal Spark MCP. After payment, POST the same JSON-RPC body to this x402 URL with PAYMENT-SIGNATURE / X-PAYMENT; gateway forwards to ${loyaltyMcpUrl}.`,
         mcpServer: loyaltyMcpUrl,
         mcpTool: mcp.name,
       },
@@ -105,8 +107,8 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
     payTo: p.recipient,
     asset: USDC_BASE,
     extra: {
-      name: "Loyal Spark",
-      description: `Access to /${p.resource} (agent-api)`,
+      ...USDC_EIP712,
+      description: `Loyal Spark agent-api /${p.resource}`,
     },
     extensions: {
       bazaar: {

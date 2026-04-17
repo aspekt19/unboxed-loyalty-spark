@@ -1,0 +1,11 @@
+{
+  "name": "loyalspark-x402-paid-mcp-test",
+  "private": true,
+  "type": "module",
+  "description": "One-shot: pay x402 on mcp-tools/* then hit loyalty-mcp (Bazaar indexing after settle)",
+  "dependencies": {
+    "@x402/fetch": "^2.10.0",
+    "@x402/evm": "^2.10.0",
+    "viem": "^2.46.0"
+  }
+}

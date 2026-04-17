@@ -106,6 +106,8 @@ async function testX402PaidEndpointNoPayment() {
   // Check x402 headers
   const paymentRequired = r.headers.get("x-payment-required");
   assert(!!paymentRequired, "X-Payment-Required header present");
+  const paymentRequiredV2 = r.headers.get("payment-required");
+  assert(!!paymentRequiredV2, "PAYMENT-REQUIRED header present (x402-foundation clients)");
 
   // Parse body for payment requirements
   const data = JSON.parse(body);

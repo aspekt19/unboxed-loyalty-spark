@@ -5,9 +5,9 @@ import { buildAcceptEntry, requirementsFromAccept } from "../_shared/x402-bazaar
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-api-key, payment-signature, x-payment",
+    "authorization, x-client-info, apikey, content-type, x-api-key, payment-signature, payment-required, x-payment, payment-response",
   "Access-Control-Expose-Headers":
-    "X-Payment-Required, X-Payment-Response, X-Payment-Protocol, X-Payment-TxHash, X-Payment-Error, EXTENSION-RESPONSES",
+    "X-Payment-Required, Payment-Required, PAYMENT-REQUIRED, X-Payment-Response, Payment-Response, PAYMENT-RESPONSE, X-Payment-Protocol, X-Payment-TxHash, X-Payment-Error, EXTENSION-RESPONSES",
 };
 
 const BASE_NETWORK = "base";
@@ -96,6 +96,8 @@ function buildPaymentRequired(price: string, resource: string, requestUrl: URL):
   const headers = new Headers(corsHeaders);
   headers.set("Content-Type", "application/json");
   headers.set("X-Payment-Required", encoded);
+  // x402-foundation @x402/fetch expects PAYMENT-REQUIRED (same payload as body / X-Payment-Required)
+  headers.set("PAYMENT-REQUIRED", encoded);
 
   return new Response(JSON.stringify(paymentRequirements), {
     status: 402,
@@ -235,8 +237,9 @@ Deno.serve(async (req) => {
 
     const paymentSignature =
       req.headers.get("x-payment") ||
+      req.headers.get("X-PAYMENT") ||
       req.headers.get("payment-signature") ||
-      req.headers.get("X-PAYMENT");
+      req.headers.get("PAYMENT-SIGNATURE");
 
     if (!paymentSignature) {
       return buildPaymentRequired(price, resource, url);
