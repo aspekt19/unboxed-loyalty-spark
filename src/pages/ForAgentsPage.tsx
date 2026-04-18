@@ -114,6 +114,51 @@ curl -sS -X POST "${RECIPIENT_REST}/register" \\
 
 4) Call APIs with header: x-api-key: rwk_...`;
 
+const recipientP2PFlow = `P2P offers — recipient wallets swap loyalty tokens with each other.
+The API records intent and returns escrow contract hints. The actual on-chain
+swap (ERC-20 approve + escrow create/accept/cancel) is performed separately
+by the wallet — same pattern as the merchant agent-api.
+
+# List open offers (optionally filter by token)
+curl -sS "${RECIPIENT_REST}/offers" \\
+  -H "x-api-key: rwk_YOUR_RECIPIENT_KEY" \\
+  -H "apikey: ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}"
+
+# Create an offer (your wallet = creator)
+curl -sS -X POST "${RECIPIENT_REST}/offers" \\
+  -H "Content-Type: application/json" \\
+  -H "x-api-key: rwk_YOUR_RECIPIENT_KEY" \\
+  -H "apikey: ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}" \\
+  -d '{"offer_token_address":"0x...","offer_amount":"100","request_token_address":"0x...","request_amount":"50"}'
+
+# Accept someone else's offer
+curl -sS -X POST "${RECIPIENT_REST}/accept-offer" \\
+  -H "Content-Type: application/json" \\
+  -H "x-api-key: rwk_YOUR_RECIPIENT_KEY" \\
+  -H "apikey: ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}" \\
+  -d '{"offer_id":"<uuid>","transaction_hash":"0x..."}'
+
+# Cancel your own active offer
+curl -sS -X POST "${RECIPIENT_REST}/cancel-offer" \\
+  -H "Content-Type: application/json" \\
+  -H "x-api-key: rwk_YOUR_RECIPIENT_KEY" \\
+  -H "apikey: ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}" \\
+  -d '{"offer_id":"<uuid>"}'
+
+MCP equivalents: list_p2p_offers · create_p2p_offer · accept_p2p_offer · cancel_p2p_offer`;
+
+const merchantUseVoucherFlow = `Completing a voucher — after the customer received the reward in the real world,
+the merchant agent (scope: manage_rewards) flips its status active → used.
+Note: this is the lifecycle transition, not a separate "activation" DB status.
+
+# REST
+curl -sS -X POST "${REST}/vouchers/use" \\
+  -H "Content-Type: application/json" \\
+  -H "x-api-key: lsk_YOUR_API_KEY" \\
+  -d '{"voucher_id":"<uuid>"}'
+
+# MCP tool: use_voucher  (args: { voucher_id })`;
+
 export default function ForAgentsPage() {
   const jsonLd = {
     "@context": "https://schema.org",
