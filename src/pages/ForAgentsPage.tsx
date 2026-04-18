@@ -385,6 +385,32 @@ export default function ForAgentsPage() {
               ))}
             </div>
           </section>
+
+          <section className="space-y-3 rounded-lg border border-dashed border-primary/25 bg-muted/20 p-4">
+            <h3 className="text-lg font-semibold">P2P offers for recipients (rwk_)</h3>
+            <p className="text-sm text-muted-foreground">
+              Holder wallets can browse open swap offers, post their own (creator = caller's wallet), accept somebody else's, or cancel their own active offer.
+              The API only records intent and returns escrow contract hints — the actual on-chain step (ERC-20{" "}
+              <code className="text-xs bg-muted px-1 rounded">approve</code> + escrow{" "}
+              <code className="text-xs bg-muted px-1 rounded">create</code>/<code className="text-xs bg-muted px-1 rounded">accept</code>/<code className="text-xs bg-muted px-1 rounded">cancel</code>) is performed by the wallet, exactly like the merchant <code className="text-xs bg-muted px-1 rounded">agent-api</code>.
+            </p>
+            <CodeBlock code={recipientP2PFlow} />
+            <p className="text-xs text-muted-foreground">
+              REST: <code className="bg-muted px-1 rounded break-all">{RECIPIENT_REST}/offers</code> · <code className="bg-muted px-1 rounded">/accept-offer</code> · <code className="bg-muted px-1 rounded">/cancel-offer</code>
+            </p>
+          </section>
+
+          <section className="space-y-3 rounded-lg border border-dashed border-muted-foreground/30 bg-muted/15 p-4">
+            <h3 className="text-lg font-semibold">Completing a voucher (merchant lsk_)</h3>
+            <p className="text-sm text-muted-foreground">
+              After the customer collects the reward in the real world, a merchant agent with scope{" "}
+              <code className="text-xs bg-muted px-1 rounded">manage_rewards</code> flips the voucher{" "}
+              <code className="text-xs bg-muted px-1 rounded">active</code> → <code className="text-xs bg-muted px-1 rounded">used</code> via{" "}
+              <code className="text-xs bg-muted px-1 rounded">POST /vouchers/use</code> or MCP{" "}
+              <code className="text-xs bg-muted px-1 rounded">use_voucher</code>. This is a lifecycle transition — not a separate "activation" status in the database.
+            </p>
+            <CodeBlock code={merchantUseVoucherFlow} />
+          </section>
         </main>
       </div>
     </PageTransition>
