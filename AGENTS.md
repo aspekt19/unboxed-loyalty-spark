@@ -36,8 +36,8 @@ Optional **local** scripts (not used by the web app build): **`scripts/x402-paid
 
 - **REST (merchants):** `supabase/functions/agent-api/index.ts` — count routes here if docs disagree.
 - **MCP (merchants):** `supabase/functions/loyalty-mcp/index.ts` — each `mcpServer.tool("name", …)` is one tool.
-- **REST (recipients):** `supabase/functions/recipient-api/index.ts` — wallet-bound `rwk_` keys.
-- **MCP (recipients):** `supabase/functions/recipient-loyalty-mcp/index.ts` — holder-only tools.
+- **REST (recipients):** `supabase/functions/recipient-api/index.ts` — wallet-bound `rwk_` keys (balances, rewards, vouchers, redeem, P2P offers list/create/accept/cancel).
+- **MCP (recipients):** `supabase/functions/recipient-loyalty-mcp/index.ts` — holder tools including P2P (`list_p2p_offers`, `create_p2p_offer`, `accept_p2p_offer`, `cancel_p2p_offer`).
 
 ## Prompts & OpenServ
 

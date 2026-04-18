@@ -6,6 +6,10 @@ export const RECIPIENT_MCP_TOOL_NAMES = [
   "list_rewards_for_program",
   "list_my_vouchers",
   "redeem_my_reward",
+  "list_p2p_offers",
+  "create_p2p_offer",
+  "accept_p2p_offer",
+  "cancel_p2p_offer",
 ] as const;
 
 export const RECIPIENT_MCP_TOOL_COUNT = RECIPIENT_MCP_TOOL_NAMES.length;

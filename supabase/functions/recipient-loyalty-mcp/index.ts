@@ -5,6 +5,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { authenticateRecipientAgent, insertRecipientActivity } from "../_shared/recipient-agent-auth.ts";
 import { walletHasEngagement } from "../_shared/recipient-queries.ts";
 import { recipientRedeemReward } from "../_shared/recipient-redeem.ts";
+import {
+  marketplaceAcceptOffer,
+  marketplaceCancelOffer,
+  marketplaceCreateOffer,
+  marketplaceListOffers,
+} from "../_shared/marketplace-p2p.ts";
 
 const app = new Hono();
 
@@ -176,6 +182,68 @@ function createRecipientMcpServer(
       const logStatus = result.status === 200 && (result.body as any).retryable ? 202 : result.status;
       await log("redeem_my_reward", { reward_id }, logStatus, result.body);
       return T(JSON.stringify(result.body));
+    },
+  });
+
+  mcpServer.tool("list_p2p_offers", {
+    description: "List active P2P token swap intents (same as merchant GET /offers). Optional filter by loyalty token address.",
+    inputSchema: {
+      type: "object" as const,
+      properties: { token_address: { type: "string", description: "Filter offers involving this ERC-20 (0x...)" } },
+    },
+    handler: async ({ token_address }: any) => {
+      const listRes = await marketplaceListOffers(db, typeof token_address === "string" ? token_address : null);
+      await log("list_p2p_offers", { token_address }, listRes.status, listRes.body);
+      return T(JSON.stringify(listRes.body));
+    },
+  });
+
+  mcpServer.tool("create_p2p_offer", {
+    description:
+      "Record a P2P swap intent with your wallet as creator. You must still approve tokens and call escrow createOffer on-chain (see escrow_contract in response).",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        offer_token_address: { type: "string" },
+        offer_amount: { type: "number" },
+        request_token_address: { type: "string" },
+        request_amount: { type: "number" },
+      },
+      required: ["offer_token_address", "offer_amount", "request_token_address", "request_amount"],
+    },
+    handler: async (args: any) => {
+      const createRes = await marketplaceCreateOffer(db, w, args as Record<string, unknown>);
+      await log("create_p2p_offer", args, createRes.status, createRes.body);
+      return T(JSON.stringify(createRes.body));
+    },
+  });
+
+  mcpServer.tool("accept_p2p_offer", {
+    description:
+      "Mark an active offer as accepted in the app DB (your wallet is the counterparty). Complete the swap on-chain via escrow fillOffer.",
+    inputSchema: {
+      type: "object" as const,
+      properties: { offer_id: { type: "string", description: "UUID from list_p2p_offers / POST offers response" } },
+      required: ["offer_id"],
+    },
+    handler: async ({ offer_id }: any) => {
+      const acceptRes = await marketplaceAcceptOffer(db, w, { offer_id });
+      await log("accept_p2p_offer", { offer_id }, acceptRes.status, acceptRes.body);
+      return T(JSON.stringify(acceptRes.body));
+    },
+  });
+
+  mcpServer.tool("cancel_p2p_offer", {
+    description: "Cancel an active P2P offer you created. Also call escrow cancelOffer on-chain to release tokens.",
+    inputSchema: {
+      type: "object" as const,
+      properties: { offer_id: { type: "string" } },
+      required: ["offer_id"],
+    },
+    handler: async ({ offer_id }: any) => {
+      const cancelRes = await marketplaceCancelOffer(db, w, { offer_id });
+      await log("cancel_p2p_offer", { offer_id }, cancelRes.status, cancelRes.body);
+      return T(JSON.stringify(cancelRes.body));
     },
   });
 

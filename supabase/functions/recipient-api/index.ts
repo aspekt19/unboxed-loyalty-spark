@@ -9,6 +9,12 @@ import {
 } from "../_shared/recipient-agent-auth.ts";
 import { walletHasEngagement } from "../_shared/recipient-queries.ts";
 import { recipientRedeemReward } from "../_shared/recipient-redeem.ts";
+import {
+  marketplaceAcceptOffer,
+  marketplaceCancelOffer,
+  marketplaceCreateOffer,
+  marketplaceListOffers,
+} from "../_shared/marketplace-p2p.ts";
 
 const publicClient = createPublicClient({
   chain: base,
@@ -308,6 +314,67 @@ Deno.serve(async (req) => {
       return jsonResponse(result.body, result.status);
     }
 
+    // ==================== P2P (buyer wallet = creator / acceptor) ====================
+    if (resource === "offers" && req.method === "GET") {
+      const tokenAddress = url.searchParams.get("token_address");
+      const listRes = await marketplaceListOffers(serviceClient, tokenAddress);
+      const offers = (listRes.body.offers as unknown[]) || [];
+      await insertRecipientActivity(
+        serviceClient,
+        agent.agentId,
+        "get_offers",
+        { tokenAddress },
+        listRes.status >= 400 ? listRes.status : 200,
+        listRes.status >= 400 ? listRes.body : { count: offers.length },
+        ip
+      );
+      return jsonResponse(listRes.body, listRes.status);
+    }
+
+    if (resource === "offers" && req.method === "POST") {
+      const createRes = await marketplaceCreateOffer(serviceClient, wallet, body as Record<string, unknown>);
+      await insertRecipientActivity(
+        serviceClient,
+        agent.agentId,
+        "create_offer",
+        body,
+        createRes.status,
+        createRes.status === 201
+          ? { offer_id: (createRes.body.offer as { id?: string } | undefined)?.id }
+          : createRes.body,
+        ip
+      );
+      return jsonResponse(createRes.body, createRes.status);
+    }
+
+    if (resource === "accept-offer" && req.method === "POST") {
+      const acceptRes = await marketplaceAcceptOffer(serviceClient, wallet, body as Record<string, unknown>);
+      await insertRecipientActivity(
+        serviceClient,
+        agent.agentId,
+        "accept_offer",
+        body,
+        acceptRes.status,
+        acceptRes.status === 200 ? { offer_id: body.offer_id } : acceptRes.body,
+        ip
+      );
+      return jsonResponse(acceptRes.body, acceptRes.status);
+    }
+
+    if (resource === "cancel-offer" && req.method === "POST") {
+      const cancelRes = await marketplaceCancelOffer(serviceClient, wallet, body as Record<string, unknown>);
+      await insertRecipientActivity(
+        serviceClient,
+        agent.agentId,
+        "cancel_offer",
+        body,
+        cancelRes.status,
+        cancelRes.status === 200 ? { offer_id: body.offer_id } : cancelRes.body,
+        ip
+      );
+      return jsonResponse(cancelRes.body, cancelRes.status);
+    }
+
     await insertRecipientActivity(serviceClient, agent.agentId, "unknown", { resource, method: req.method }, 404, {}, ip);
     return jsonResponse(
       {
@@ -320,6 +387,10 @@ Deno.serve(async (req) => {
           "GET /recipient-api/rewards?token_address=0x...": "Rewards catalog (requires prior activity on program)",
           "GET /recipient-api/vouchers?token_address=0x...&status=active": "Your vouchers",
           "POST /recipient-api/redeem-reward": "Body: { reward_id, transaction_hash } — customer is always your wallet",
+          "GET /recipient-api/offers?token_address=0x...": "List active P2P offers (optional filter)",
+          "POST /recipient-api/offers": "Body: { offer_token_address, offer_amount, request_token_address, request_amount } — creator is your wallet",
+          "POST /recipient-api/accept-offer": "Body: { offer_id }",
+          "POST /recipient-api/cancel-offer": "Body: { offer_id } — only your active offers",
         },
       },
       404

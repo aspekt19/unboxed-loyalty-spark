@@ -10,6 +10,12 @@ import {
 import { authenticateAgent, type AgentContext } from "./auth.ts";
 import { corsHeaders, jsonResponse } from "./http.ts";
 import { parseOptionalCashbackRate, parseOptionalPointsPerDollar } from "../_shared/program-economics.ts";
+import {
+  marketplaceAcceptOffer,
+  marketplaceCancelOffer,
+  marketplaceCreateOffer,
+  marketplaceListOffers,
+} from "../_shared/marketplace-p2p.ts";
 
 // Encode approve(address,uint256) calldata with Builder Code
 function encodeApproveCalldata(spender: string, amount: number): string {
@@ -1212,26 +1218,14 @@ Deno.serve(async (req) => {
       }
 
       const tokenAddress = url.searchParams.get("token_address");
-      let query = serviceClient
-        .from("marketplace_offers")
-        .select("*")
-        .eq("status", "active")
-        .order("created_at", { ascending: false })
-        .limit(50);
-
-      if (tokenAddress) {
-        query = query.or(`offer_token_address.eq.${tokenAddress.toLowerCase()},request_token_address.eq.${tokenAddress.toLowerCase()}`);
+      const listRes = await marketplaceListOffers(serviceClient, tokenAddress);
+      const offers = (listRes.body.offers as unknown[]) || [];
+      if (listRes.status >= 400) {
+        await logActivity(serviceClient, agent.agentId, "get_offers", {}, listRes.status, listRes.body, ip);
+        return jsonResponse(listRes.body, listRes.status);
       }
-
-      const { data: offers, error } = await query;
-
-      if (error) {
-        await logActivity(serviceClient, agent.agentId, "get_offers", {}, 500, { error: error.message }, ip);
-        return jsonResponse({ error: "Failed to fetch offers" }, 500);
-      }
-
-      await logActivity(serviceClient, agent.agentId, "get_offers", { tokenAddress }, 200, { count: offers?.length }, ip);
-      return jsonResponse({ offers: offers || [] });
+      await logActivity(serviceClient, agent.agentId, "get_offers", { tokenAddress }, 200, { count: offers.length }, ip);
+      return jsonResponse(listRes.body);
     }
 
     // ==================== CREATE P2P OFFER ====================
@@ -1241,53 +1235,14 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Scope 'trade' required" }, 403);
       }
 
-      const { offer_token_address, offer_amount, request_token_address, request_amount } = body;
-      if (!offer_token_address || !offer_amount || !request_token_address || !request_amount) {
-        return jsonResponse({ error: "Missing fields: offer_token_address, offer_amount, request_token_address, request_amount" }, 400);
+      const createRes = await marketplaceCreateOffer(serviceClient, agent.ownerAddress, body);
+      if (createRes.status >= 400) {
+        await logActivity(serviceClient, agent.agentId, "create_offer", body, createRes.status, createRes.body, ip);
+        return jsonResponse(createRes.body, createRes.status);
       }
-
-      if (!/^0x[a-fA-F0-9]{40}$/.test(offer_token_address) || !/^0x[a-fA-F0-9]{40}$/.test(request_token_address)) {
-        return jsonResponse({ error: "Invalid token address format" }, 400);
-      }
-
-      if (offer_token_address.toLowerCase() === request_token_address.toLowerCase()) {
-        return jsonResponse({ error: "Cannot exchange same tokens" }, 400);
-      }
-
-      if (typeof offer_amount !== "number" || offer_amount <= 0 || typeof request_amount !== "number" || request_amount <= 0) {
-        return jsonResponse({ error: "Amounts must be positive numbers" }, 400);
-      }
-
-      // Record the offer intent — agent must execute escrow on-chain
-      const { data: offer, error } = await serviceClient
-        .from("marketplace_offers")
-        .insert({
-          creator_address: agent.ownerAddress.toLowerCase(),
-          offer_token_address: offer_token_address.toLowerCase(),
-          offer_amount,
-          request_token_address: request_token_address.toLowerCase(),
-          request_amount,
-          status: "active",
-        })
-        .select("id, offer_token_address, offer_amount, request_token_address, request_amount, status, created_at")
-        .single();
-
-      if (error) {
-        await logActivity(serviceClient, agent.agentId, "create_offer", body, 500, { error: error.message }, ip);
-        return jsonResponse({ error: "Failed to create offer" }, 500);
-      }
-
-      await logActivity(serviceClient, agent.agentId, "create_offer", body, 201, { offer_id: offer.id }, ip);
-      return jsonResponse({
-        offer,
-        message: "Offer recorded. To secure with escrow, approve and call createOffer on the escrow contract.",
-        escrow_contract: {
-          function: "createOffer(address,uint256,address,uint256)",
-          params: [offer_token_address, offer_amount, request_token_address, request_amount],
-          note: "First approve the escrow contract for offer_amount of offer_token, then call createOffer.",
-          builder_code: BUILDER_CODE,
-        },
-      }, 201);
+      const offerId = (createRes.body.offer as { id?: string } | undefined)?.id;
+      await logActivity(serviceClient, agent.agentId, "create_offer", body, 201, { offer_id: offerId }, ip);
+      return jsonResponse(createRes.body, createRes.status);
     }
 
     // ==================== ACCEPT P2P OFFER ====================
@@ -1297,46 +1252,13 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Scope 'trade' required" }, 403);
       }
 
-      const { offer_id } = body;
-      if (!offer_id) {
-        return jsonResponse({ error: "Missing field: offer_id" }, 400);
+      const acceptRes = await marketplaceAcceptOffer(serviceClient, agent.ownerAddress, body);
+      if (acceptRes.status >= 400) {
+        await logActivity(serviceClient, agent.agentId, "accept_offer", body, acceptRes.status, acceptRes.body, ip);
+        return jsonResponse(acceptRes.body, acceptRes.status);
       }
-
-      const { data: offer, error } = await serviceClient
-        .from("marketplace_offers")
-        .select("*")
-        .eq("id", offer_id)
-        .eq("status", "active")
-        .single();
-
-      if (error || !offer) {
-        await logActivity(serviceClient, agent.agentId, "accept_offer", body, 404, { error: "Offer not found or not active" }, ip);
-        return jsonResponse({ error: "Offer not found or already completed" }, 404);
-      }
-
-      if (offer.creator_address === agent.ownerAddress.toLowerCase()) {
-        return jsonResponse({ error: "Cannot accept your own offer" }, 400);
-      }
-
-      // Update status
-      await serviceClient
-        .from("marketplace_offers")
-        .update({
-          status: "completed",
-          completed_by: agent.ownerAddress.toLowerCase(),
-          completed_at: new Date().toISOString(),
-        })
-        .eq("id", offer_id);
-
-      await logActivity(serviceClient, agent.agentId, "accept_offer", body, 200, { offer_id }, ip);
-      return jsonResponse({
-        message: "Offer accepted. Execute fillOffer on the escrow contract to complete the atomic swap.",
-        escrow_contract: {
-          function: "fillOffer(uint256)",
-          note: "First approve the escrow contract for request_amount of request_token, then call fillOffer with the on-chain offer ID.",
-        },
-        offer,
-      });
+      await logActivity(serviceClient, agent.agentId, "accept_offer", body, 200, { offer_id: body.offer_id }, ip);
+      return jsonResponse(acceptRes.body);
     }
 
     // ==================== CANCEL P2P OFFER ====================
@@ -1346,36 +1268,12 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Scope 'trade' required" }, 403);
       }
 
-      const { offer_id } = body;
-      if (!offer_id) {
-        return jsonResponse({ error: "Missing field: offer_id" }, 400);
+      const cancelRes = await marketplaceCancelOffer(serviceClient, agent.ownerAddress, body);
+      if (cancelRes.status >= 400) {
+        return jsonResponse(cancelRes.body, cancelRes.status);
       }
-
-      const { data: offer, error } = await serviceClient
-        .from("marketplace_offers")
-        .select("*")
-        .eq("id", offer_id)
-        .eq("creator_address", agent.ownerAddress.toLowerCase())
-        .eq("status", "active")
-        .single();
-
-      if (error || !offer) {
-        return jsonResponse({ error: "Offer not found or not owned by you" }, 404);
-      }
-
-      await serviceClient
-        .from("marketplace_offers")
-        .update({ status: "cancelled" })
-        .eq("id", offer_id);
-
-      await logActivity(serviceClient, agent.agentId, "cancel_offer", body, 200, { offer_id }, ip);
-      return jsonResponse({
-        message: "Offer cancelled. Call cancelOffer on the escrow contract to retrieve your tokens.",
-        escrow_contract: {
-          function: "cancelOffer(uint256)",
-          note: "Call cancelOffer with the on-chain offer ID to return escrowed tokens.",
-        },
-      });
+      await logActivity(serviceClient, agent.agentId, "cancel_offer", body, 200, { offer_id: body.offer_id }, ip);
+      return jsonResponse(cancelRes.body);
     }
 
     // ==================== TRANSFER ====================

@@ -193,9 +193,9 @@ For **AI agents that only hold a wallet** which receives loyalty tokens (not mer
 | MCP | `https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp` |
 | Register key | `POST …/recipient-api/register` with SIWE `{ message, signature }` (nonce from `siwe-nonce`) — returns `rwk_…` once. Pass Supabase `apikey` (anon/publishable) header like other public functions. |
 
-**REST (all require `x-api-key: rwk_…` except register):** `GET /me`, `GET /balances`, `GET /balance?token_address=`, `GET /rewards?token_address=`, `GET /vouchers`, `POST /redeem-reward` with `{ reward_id, transaction_hash }` (customer is always the bound wallet).
+**REST (all require `x-api-key: rwk_…` except register):** `GET /me`, `GET /balances`, `GET /balance?token_address=`, `GET /rewards?token_address=`, `GET /vouchers`, `POST /redeem-reward` with `{ reward_id, transaction_hash }` (customer is always the bound wallet). **P2P:** `GET /offers?token_address=`, `POST /offers`, `POST /accept-offer`, `POST /cancel-offer` (same bodies as merchant `agent-api` marketplace; `creator_address` is the bound wallet).
 
-**MCP tools (6)** — `supabase/functions/recipient-loyalty-mcp/index.ts`: `get_recipient_profile`, `list_my_loyalty_balances`, `get_my_loyalty_balance`, `list_rewards_for_program`, `list_my_vouchers`, `redeem_my_reward`.
+**MCP tools (10)** — `supabase/functions/recipient-loyalty-mcp/index.ts`: `get_recipient_profile`, `list_my_loyalty_balances`, `get_my_loyalty_balance`, `list_rewards_for_program`, `list_my_vouchers`, `redeem_my_reward`, `list_p2p_offers`, `create_p2p_offer`, `accept_p2p_offer`, `cancel_p2p_offer`.
 
 Example MCP fragment: [`examples/recipient-agent-mcp/cursor-mcp.json`](./examples/recipient-agent-mcp/cursor-mcp.json).
 
