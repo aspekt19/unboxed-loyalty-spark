@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAccount } from 'wagmi';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Gift, Calendar, Percent } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Gift, Calendar, Percent, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface Offer {
@@ -20,17 +21,32 @@ interface Offer {
   used_at: string | null;
 }
 
+const DISMISSED_KEY = 'ls_dismissed_offers';
+
+function getDismissed(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem(DISMISSED_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function setDismissed(ids: string[]) {
+  localStorage.setItem(DISMISSED_KEY, JSON.stringify(ids));
+}
+
 export function PersonalizedOffers() {
   const { address } = useAccount();
   const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dismissed, setDismissedState] = useState<string[]>(getDismissed());
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     if (!address) return;
 
     loadOffers();
 
-    // Realtime subscription
     const channel = supabase
       .channel('personalized_offers_changes')
       .on(
@@ -73,93 +89,135 @@ export function PersonalizedOffers() {
     }
   };
 
+  const handleDismiss = (id: string) => {
+    const next = [...dismissed, id];
+    setDismissed(next);
+    setDismissedState(next);
+  };
+
+  const visibleOffers = useMemo(
+    () => offers.filter((o) => !dismissed.includes(o.id)),
+    [offers, dismissed]
+  );
+
   if (loading) {
-    return <Skeleton className="h-64 w-full" />;
+    return <Skeleton className="h-24 w-full" />;
   }
 
-  if (offers.length === 0) {
-    return (
-      <Alert>
-        <Gift className="h-4 w-4" />
-        <AlertDescription>
-          No personalized offers available. Check back later for exclusive deals!
-        </AlertDescription>
-      </Alert>
-    );
+  if (visibleOffers.length === 0) {
+    return null;
   }
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Gift className="h-5 w-5 text-primary" />
-          Your Personalized Offers
-        </CardTitle>
-        <CardDescription>Exclusive deals just for you</CardDescription>
+      <CardHeader className="py-3 px-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <Gift className="h-4 w-4 text-primary" />
+              Personalized Offers
+              <Badge variant="secondary" className="ml-1 h-5 text-[10px]">
+                {visibleOffers.length}
+              </Badge>
+            </CardTitle>
+            {!collapsed && (
+              <CardDescription className="text-xs mt-0.5">
+                Exclusive deals just for you
+              </CardDescription>
+            )}
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 flex-shrink-0"
+            onClick={() => setCollapsed((v) => !v)}
+            aria-label={collapsed ? 'Expand' : 'Collapse'}
+          >
+            {collapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+          </Button>
+        </div>
       </CardHeader>
-      <CardContent>
-        <div className="grid gap-4 md:grid-cols-2">
-          {offers.map((offer) => {
-            const isExpired = new Date(offer.valid_until) < new Date();
-            const isUsed = offer.is_used;
+      {!collapsed && (
+        <CardContent className="px-3 pb-3 pt-0">
+          <ScrollArea className="h-[260px] pr-2">
+            <div className="space-y-2">
+              {visibleOffers.map((offer) => {
+                const isExpired = new Date(offer.valid_until) < new Date();
+                const isUsed = offer.is_used;
 
-            return (
-              <div
-                key={offer.id}
-                className={`p-4 border rounded-lg space-y-3 ${
-                  isUsed || isExpired ? 'opacity-50' : 'bg-gradient-to-br from-card to-primary/5'
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="font-semibold">{offer.title}</h3>
+                return (
+                  <div
+                    key={offer.id}
+                    className={`p-3 border rounded-lg space-y-1.5 relative ${
+                      isUsed || isExpired
+                        ? 'opacity-60'
+                        : 'bg-gradient-to-br from-card to-primary/5'
+                    }`}
+                  >
+                    <button
+                      onClick={() => handleDismiss(offer.id)}
+                      className="absolute top-1.5 right-1.5 p-1 rounded-md hover:bg-muted transition-colors"
+                      aria-label="Dismiss offer"
+                    >
+                      <X className="h-3.5 w-3.5 text-muted-foreground" />
+                    </button>
+
+                    <div className="flex items-start justify-between gap-2 pr-6">
+                      <h3 className="font-semibold text-sm leading-tight">{offer.title}</h3>
+                      {isUsed ? (
+                        <Badge variant="secondary" className="h-5 text-[10px] flex-shrink-0">
+                          Used
+                        </Badge>
+                      ) : isExpired ? (
+                        <Badge variant="destructive" className="h-5 text-[10px] flex-shrink-0">
+                          Expired
+                        </Badge>
+                      ) : (
+                        <Badge variant="default" className="h-5 text-[10px] flex-shrink-0">
+                          Active
+                        </Badge>
+                      )}
+                    </div>
+
                     {offer.description && (
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <p className="text-xs text-muted-foreground line-clamp-2 pr-6">
                         {offer.description}
                       </p>
                     )}
+
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                      {offer.discount_percentage && (
+                        <div className="flex items-center gap-1">
+                          <Percent className="h-3 w-3 text-primary" />
+                          <span>
+                            <strong>{offer.discount_percentage}%</strong> off
+                          </span>
+                        </div>
+                      )}
+                      {offer.bonus_tokens && (
+                        <div className="flex items-center gap-1">
+                          <Gift className="h-3 w-3 text-primary" />
+                          <span>
+                            <strong>{offer.bonus_tokens}</strong> bonus
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1 text-muted-foreground ml-auto">
+                        <Calendar className="h-3 w-3" />
+                        {isUsed ? (
+                          <span>Used {format(new Date(offer.used_at!), 'MMM dd')}</span>
+                        ) : (
+                          <span>Until {format(new Date(offer.valid_until), 'MMM dd')}</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  {isUsed ? (
-                    <Badge variant="secondary">Used</Badge>
-                  ) : isExpired ? (
-                    <Badge variant="destructive">Expired</Badge>
-                  ) : (
-                    <Badge variant="default">Active</Badge>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  {offer.discount_percentage && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Percent className="h-4 w-4 text-primary" />
-                      <span>
-                        <strong>{offer.discount_percentage}%</strong> discount
-                      </span>
-                    </div>
-                  )}
-                  {offer.bonus_tokens && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Gift className="h-4 w-4 text-primary" />
-                      <span>
-                        <strong>{offer.bonus_tokens}</strong> bonus tokens
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-1 text-xs text-muted-foreground pt-2 border-t">
-                  <Calendar className="h-3 w-3" />
-                  {isUsed ? (
-                    <span>Used on {format(new Date(offer.used_at!), 'MMM dd, yyyy')}</span>
-                  ) : (
-                    <span>Valid until {format(new Date(offer.valid_until), 'MMM dd, yyyy')}</span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </CardContent>
+                );
+              })}
+            </div>
+          </ScrollArea>
+        </CardContent>
+      )}
     </Card>
   );
 }
