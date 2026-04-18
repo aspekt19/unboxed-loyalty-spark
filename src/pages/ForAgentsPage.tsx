@@ -114,6 +114,51 @@ curl -sS -X POST "${RECIPIENT_REST}/register" \\
 
 4) Call APIs with header: x-api-key: rwk_...`;
 
+const recipientP2PFlow = `P2P offers — recipient wallets swap loyalty tokens with each other.
+The API records intent and returns escrow contract hints. The actual on-chain
+swap (ERC-20 approve + escrow create/accept/cancel) is performed separately
+by the wallet — same pattern as the merchant agent-api.
+
+# List open offers (optionally filter by token)
+curl -sS "${RECIPIENT_REST}/offers" \\
+  -H "x-api-key: rwk_YOUR_RECIPIENT_KEY" \\
+  -H "apikey: ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}"
+
+# Create an offer (your wallet = creator)
+curl -sS -X POST "${RECIPIENT_REST}/offers" \\
+  -H "Content-Type: application/json" \\
+  -H "x-api-key: rwk_YOUR_RECIPIENT_KEY" \\
+  -H "apikey: ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}" \\
+  -d '{"offer_token_address":"0x...","offer_amount":"100","request_token_address":"0x...","request_amount":"50"}'
+
+# Accept someone else's offer
+curl -sS -X POST "${RECIPIENT_REST}/accept-offer" \\
+  -H "Content-Type: application/json" \\
+  -H "x-api-key: rwk_YOUR_RECIPIENT_KEY" \\
+  -H "apikey: ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}" \\
+  -d '{"offer_id":"<uuid>","transaction_hash":"0x..."}'
+
+# Cancel your own active offer
+curl -sS -X POST "${RECIPIENT_REST}/cancel-offer" \\
+  -H "Content-Type: application/json" \\
+  -H "x-api-key: rwk_YOUR_RECIPIENT_KEY" \\
+  -H "apikey: ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}" \\
+  -d '{"offer_id":"<uuid>"}'
+
+MCP equivalents: list_p2p_offers · create_p2p_offer · accept_p2p_offer · cancel_p2p_offer`;
+
+const merchantUseVoucherFlow = `Completing a voucher — after the customer received the reward in the real world,
+the merchant agent (scope: manage_rewards) flips its status active → used.
+Note: this is the lifecycle transition, not a separate "activation" DB status.
+
+# REST
+curl -sS -X POST "${REST}/vouchers/use" \\
+  -H "Content-Type: application/json" \\
+  -H "x-api-key: lsk_YOUR_API_KEY" \\
+  -d '{"voucher_id":"<uuid>"}'
+
+# MCP tool: use_voucher  (args: { voucher_id })`;
+
 export default function ForAgentsPage() {
   const jsonLd = {
     "@context": "https://schema.org",
@@ -339,6 +384,32 @@ export default function ForAgentsPage() {
                 </code>
               ))}
             </div>
+          </section>
+
+          <section className="space-y-3 rounded-lg border border-dashed border-primary/25 bg-muted/20 p-4">
+            <h3 className="text-lg font-semibold">P2P offers for recipients (rwk_)</h3>
+            <p className="text-sm text-muted-foreground">
+              Holder wallets can browse open swap offers, post their own (creator = caller's wallet), accept somebody else's, or cancel their own active offer.
+              The API only records intent and returns escrow contract hints — the actual on-chain step (ERC-20{" "}
+              <code className="text-xs bg-muted px-1 rounded">approve</code> + escrow{" "}
+              <code className="text-xs bg-muted px-1 rounded">create</code>/<code className="text-xs bg-muted px-1 rounded">accept</code>/<code className="text-xs bg-muted px-1 rounded">cancel</code>) is performed by the wallet, exactly like the merchant <code className="text-xs bg-muted px-1 rounded">agent-api</code>.
+            </p>
+            <CodeBlock code={recipientP2PFlow} />
+            <p className="text-xs text-muted-foreground">
+              REST: <code className="bg-muted px-1 rounded break-all">{RECIPIENT_REST}/offers</code> · <code className="bg-muted px-1 rounded">/accept-offer</code> · <code className="bg-muted px-1 rounded">/cancel-offer</code>
+            </p>
+          </section>
+
+          <section className="space-y-3 rounded-lg border border-dashed border-muted-foreground/30 bg-muted/15 p-4">
+            <h3 className="text-lg font-semibold">Completing a voucher (merchant lsk_)</h3>
+            <p className="text-sm text-muted-foreground">
+              After the customer collects the reward in the real world, a merchant agent with scope{" "}
+              <code className="text-xs bg-muted px-1 rounded">manage_rewards</code> flips the voucher{" "}
+              <code className="text-xs bg-muted px-1 rounded">active</code> → <code className="text-xs bg-muted px-1 rounded">used</code> via{" "}
+              <code className="text-xs bg-muted px-1 rounded">POST /vouchers/use</code> or MCP{" "}
+              <code className="text-xs bg-muted px-1 rounded">use_voucher</code>. This is a lifecycle transition — not a separate "activation" status in the database.
+            </p>
+            <CodeBlock code={merchantUseVoucherFlow} />
           </section>
         </main>
       </div>
