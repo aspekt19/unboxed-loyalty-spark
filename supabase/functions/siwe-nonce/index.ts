@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const nonce = crypto.randomUUID().replace(/-/g, '');
+    const nonce = crypto.randomUUID().replace(/-/g, '').toLowerCase();
 
     // Store nonce server-side for replay protection
     const supabaseAdmin = createClient(

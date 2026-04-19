@@ -93,7 +93,7 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    const nonce = nonceMatch[1].trim();
+    const nonce = nonceMatch[1].trim().toLowerCase();
 
     // Setup Supabase clients
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -102,17 +102,11 @@ serve(async (req) => {
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-    // Atomically verify nonce exists, is unused, and mark it consumed
-    const { data: nonceRow, error: nonceError } = await supabaseAdmin
-      .from('siwe_nonces')
-      .update({ used: true })
-      .eq('nonce', nonce)
-      .eq('used', false)
-      .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString())
-      .select('nonce')
-      .maybeSingle();
+    const { data: consumedNonce, error: consumeErr } = await supabaseAdmin.rpc('consume_siwe_nonce', {
+      p_nonce: nonce,
+    });
 
-    if (nonceError || !nonceRow) {
+    if (consumeErr || !consumedNonce) {
       return new Response(JSON.stringify({ error: 'Invalid or already used nonce' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

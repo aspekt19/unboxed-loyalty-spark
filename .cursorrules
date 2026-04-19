@@ -63,7 +63,9 @@ supabase/functions/
   loyalty-mcp/            # MCP (JSON-RPC) for LLM tools
   privy-auth/             # Privy → Supabase session bridge
   siwe-nonce/             # SIWE nonce
-  siwe-verify/            # SIWE verify
+  siwe-verify/            # SIWE verify; nonce consumption via RPC consume_siwe_nonce
+  recipient-api/          # Holder/recipient REST + SIWE register (rwk_)
+  recipient-loyalty-mcp/  # MCP (JSON-RPC) for recipient agents (rwk_)
   verify-payment/         # Premium / subscription USDC
   verify-agent-plan-payment/
   verify-voucher/

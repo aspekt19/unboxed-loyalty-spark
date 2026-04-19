@@ -3,7 +3,7 @@
  *
  * Prereqs:
  *   - Wallet private key with USDC on Base (native USDC 0x8335…2913) for micropayments (~$0.01 + buffer).
- *   - LOYAL_SPARK_API_KEY=lsk_... (merchant agent; forwarded to loyalty-mcp after payment).
+ *   - LOYAL_SPARK_API_KEY=lsk_... (merchant → loyalty-mcp) or rwk_... (holder → recipient-loyalty-mcp).
  *
  * Setup:
  *   cd scripts/x402-paid-mcp-test && npm install
@@ -24,6 +24,7 @@
  *
  * Optional env:
  *   X402_GATEWAY_URL, MCP_TOOL (default get_platform_info), MCP_ARGS (JSON object)
+ *   MCP_PATH_PREFIX — "mcp-tools" (default, merchant lsk_) or "recipient-mcp-tools" (buyer rwk_).
  */
 
 import { wrapFetchWithPayment, x402Client } from "@x402/fetch";
@@ -34,6 +35,7 @@ const GATEWAY =
   process.env.X402_GATEWAY_URL ||
   "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway";
 const TOOL = process.env.MCP_TOOL || "get_platform_info";
+const PATH_PREFIX = (process.env.MCP_PATH_PREFIX || "mcp-tools").replace(/\/+$/, "");
 const LSK = process.env.LOYAL_SPARK_API_KEY;
 
 /** JSON object for tools/call arguments (tools that need token_address, etc.). */
@@ -72,8 +74,18 @@ if (!PK) {
   );
   process.exit(1);
 }
-if (!LSK?.startsWith("lsk_")) {
-  console.error("Set LOYAL_SPARK_API_KEY=lsk_... for MCP auth after payment.");
+const isLsk = LSK?.startsWith("lsk_");
+const isRwk = LSK?.startsWith("rwk_");
+if (!isLsk && !isRwk) {
+  console.error("Set LOYAL_SPARK_API_KEY=lsk_... (merchant) or rwk_... (recipient/holder).");
+  process.exit(1);
+}
+if (PATH_PREFIX.includes("recipient") && !isRwk) {
+  console.error("recipient-mcp-tools requires LOYAL_SPARK_API_KEY=rwk_...");
+  process.exit(1);
+}
+if (PATH_PREFIX === "mcp-tools" && !isLsk) {
+  console.error("mcp-tools requires LOYAL_SPARK_API_KEY=lsk_...");
   process.exit(1);
 }
 
@@ -137,7 +149,7 @@ function wrapFetchNormalizeBaseNetwork(origFetch) {
 
 const x402Fetch = wrapFetchWithPayment(wrapFetchNormalizeBaseNetwork(fetch), client);
 
-const url = `${GATEWAY}/mcp-tools/${TOOL}`;
+const url = `${GATEWAY}/${PATH_PREFIX}/${TOOL}`;
 
 const mcpBody = JSON.stringify({
   jsonrpc: "2.0",

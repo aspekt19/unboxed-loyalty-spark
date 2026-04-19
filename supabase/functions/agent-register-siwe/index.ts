@@ -132,22 +132,17 @@ Deno.serve(async (req) => {
     if (!nonceMatch) {
       return jsonResponse({ error: "Missing nonce in SIWE message" }, 400);
     }
-    const nonce = nonceMatch[1].trim();
+    const nonce = nonceMatch[1].trim().toLowerCase();
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { data: nonceRow, error: nonceError } = await serviceClient
-      .from("siwe_nonces")
-      .update({ used: true })
-      .eq("nonce", nonce)
-      .eq("used", false)
-      .gte("created_at", new Date(Date.now() - 5 * 60 * 1000).toISOString())
-      .select("nonce")
-      .maybeSingle();
+    const { data: consumedNonce, error: consumeErr } = await serviceClient.rpc("consume_siwe_nonce", {
+      p_nonce: nonce,
+    });
 
-    if (nonceError || !nonceRow) {
+    if (consumeErr || !consumedNonce) {
       return jsonResponse({ error: "Invalid or already used nonce" }, 401);
     }
 
