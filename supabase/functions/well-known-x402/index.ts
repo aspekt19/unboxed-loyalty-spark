@@ -70,62 +70,86 @@ function buildPaymentRequired(req: Request): Response {
   const supabaseUrl = (Deno.env.get("SUPABASE_URL") || "https://bzxmejzssxjazswgwqqs.supabase.co").replace(/\/+$/, "");
   const resource = `${supabaseUrl}/functions/v1/well-known-x402`;
 
-  const accepts = [
-    {
-      scheme: "exact",
-      network: NETWORK,
-      maxAmountRequired: PRICE_ATOMIC,
-      resource,
-      description:
-        "Loyal Spark — onchain loyalty protocol on Base. Discovery probe; full list of 69 paid x402 resources (merchant + recipient REST and MCP tools) is returned by GET on this URL.",
-      mimeType: "application/json",
-      payTo: recipient,
-      maxTimeoutSeconds: 60,
-      asset: USDC_BASE,
-      outputSchema: {
-        input: { type: "http", method: "POST" },
-        output: { discovery: "GET this URL with Accept: application/json" },
-      },
-      extra: {
-        name: "USD Coin",
-        version: "2",
+  // Bazaar v2 / CDP facilitator parses extensions.bazaar.info strictly:
+  //   info.input  = { type:"http", method, queryParams?, bodyType? }
+  //   info.output = { type:"json", example, schema? }
+  // The textual brand ("Loyal Spark") is surfaced via accepts[].description and
+  // top-level metadata.description (quality-signal fields per Bazaar docs).
+  const bazaarInfo = {
+    input: {
+      type: "http",
+      method: "POST",
+      bodyType: "json",
+    },
+    output: {
+      type: "json",
+      example: {
+        x402Version: 1,
         provider: "Loyal Spark",
-        brand: "Loyal Spark",
-        website: "https://loyalspark.online",
+        resources_count: 69,
+        discovery: "GET this URL to receive the full list of paid Loyal Spark x402 resources (merchant + recipient REST and MCP).",
+        documentation: "https://loyalspark.online/for-agents",
       },
-      extensions: {
-        bazaar: {
-          discoverable: true,
-          info: {
-            type: "http",
-            method: "POST",
-            name: "Loyal Spark",
-            title: "Loyal Spark — Onchain Loyalty Protocol",
-            displayName: "Loyal Spark",
-            provider: "Loyal Spark",
-            website: "https://loyalspark.online",
-            documentation: "https://loyalspark.online/for-agents",
-            description:
-              "Loyal Spark is an onchain loyalty protocol on Base. This endpoint exposes 69 paid x402 resources: merchant REST/MCP (mint, transfer, rewards, vouchers, analytics) and recipient REST/MCP (balances, P2P offers, redeem). Full list available via GET on this URL or https://loyalspark.online/.well-known/x402.json.",
-            tags: ["loyalty", "rewards", "onchain", "base", "mcp", "agents"],
-            category: "loyalty",
-          },
+      schema: {
+        $schema: "https://json-schema.org/draft/2020-12/schema",
+        type: "object",
+        properties: {
+          x402Version: { type: "number" },
+          provider: { type: "string" },
+          resources_count: { type: "number" },
+          discovery: { type: "string" },
+          documentation: { type: "string" },
         },
+        required: ["provider", "discovery"],
       },
     },
-  ];
+  };
+
+  const description =
+    "Loyal Spark — onchain loyalty protocol on Base (loyalspark.online). Discovery probe: GET this URL to receive the full list of 69 paid Loyal Spark x402 resources (merchant REST/MCP: mint, transfer, rewards, vouchers, analytics; recipient REST/MCP: balances, P2P offers, redeem). Docs: https://loyalspark.online/for-agents.";
+
+  // Emit two PaymentRequirements so both Bazaar v2 (CAIP-2) and legacy x402scan ("base") accept us.
+  const buildAccept = (network: string) => ({
+    scheme: "exact",
+    network,
+    maxAmountRequired: PRICE_ATOMIC,
+    resource,
+    description,
+    mimeType: "application/json",
+    payTo: recipient,
+    maxTimeoutSeconds: 60,
+    asset: USDC_BASE,
+    outputSchema: bazaarInfo.output.schema,
+    extra: {
+      name: "USD Coin",
+      version: "2",
+    },
+    extensions: {
+      bazaar: {
+        info: bazaarInfo,
+      },
+    },
+  });
+
+  const accepts = [buildAccept(NETWORK_CAIP2), buildAccept(NETWORK)];
 
   const body = JSON.stringify({
     x402Version: 1,
     error: "X-PAYMENT header is required",
     accepts,
+    metadata: {
+      description,
+      provider: "Loyal Spark",
+      website: "https://loyalspark.online",
+      documentation: "https://loyalspark.online/for-agents",
+    },
   });
 
   const headers = new Headers(corsHeaders);
   headers.set("Content-Type", "application/json; charset=utf-8");
   headers.set(
     "WWW-Authenticate",
-    `x402 realm="loyalspark", scheme="exact", network="${NETWORK}", asset="${USDC_BASE}"`,
+    `x402 realm="loyalspark", scheme="exact", network="${NETWORK_CAIP2}", asset="${USDC_BASE}"`,
   );
   return new Response(body, { status: 402, headers });
 }
