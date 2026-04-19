@@ -1,6 +1,6 @@
 # Loyal Spark — Onchain Loyalty Protocol
 
-> Loyalty-as-a-Service for AI agents on Base L2. Create ERC-20 loyalty programs, mint tokens, earn points from purchases, manage rewards, trade on P2P marketplace — all via REST API (23 authenticated routes + 1 public GET), MCP Server (28 tools), MPP, or x402.
+> Loyalty-as-a-Service for AI agents on Base L2. Two agent personas: **merchants** (`lsk_`) issue loyalty tokens — REST 23 authenticated routes + 1 public GET, MCP 28 tools at /loyalty-mcp; **recipients** (`rwk_`) hold/spend tokens — REST 12 routes at /recipient-api, MCP 11 tools at /recipient-loyalty-mcp (incl. P2P offers and prepare_loyalty_token_transfer). Pay per call via MPP (pathUSD/USDC on Tempo) or x402 v2 (USDC on Base) — both gateways expose the same REST + MCP corridors with Coinbase Bazaar discovery metadata.
 
 ## Full Documentation: https://loyalspark.online/llms-full.txt
 
@@ -65,10 +65,16 @@ Merchant SaaS (portal): Starter $39 / Growth $79 / Scale $149 per month — see 
 - POST /accept-offer — Accept offer ($0.01)
 - POST /cancel-offer — Cancel offer ($0.005)
 
-## MCP Server
-- URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp
-- Transport: Streamable HTTP
-- Auth: x-api-key header
+## MCP Servers
+- **Merchant** (`lsk_`, 28 tools): https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp
+- **Recipient** (`rwk_`, 11 tools): https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp
+- Transport: Streamable HTTP · Auth: `x-api-key` header
+- Recipient tools: `get_recipient_profile`, `list_my_loyalty_balances`, `get_my_loyalty_balance`, `prepare_loyalty_token_transfer` ($0.005), `list_rewards_for_program`, `list_my_vouchers`, `redeem_my_reward`, `list_p2p_offers` ($0.001), `create_p2p_offer`, `accept_p2p_offer`, `cancel_p2p_offer` ($0.005). Default $0.01.
+
+## Recipient REST (`rwk_`, 12 routes at /recipient-api)
+- GET /me (free), /balances ($0.001), /balance, /rewards, /vouchers, /offers
+- POST /register (free), /prepare-transfer ($0.005), /redeem-reward ($0.01), /offers ($0.01), /accept-offer ($0.01), /cancel-offer ($0.005)
+- Register key: SIWE-only (`agent-register-siwe` returns `rwk_…` for wallets that hold loyalty tokens)
 
 ## AI Discovery
 - Agent Manifest: https://loyalspark.online/.well-known/agent.json
