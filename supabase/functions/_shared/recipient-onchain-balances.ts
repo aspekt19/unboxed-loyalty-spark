@@ -96,8 +96,11 @@ export async function loadOnchainLoyaltyBalances(
   const candidateTokens = new Set<string>();
   for (const t of tierRows) candidateTokens.add(t.token_address.toLowerCase());
   for (const m of mintRows) candidateTokens.add(m.token_address.toLowerCase());
-  // Note: we DO NOT pre-add every program — that would explode RPC cost.
-  // We only add programs the wallet has ever interacted with (via mint history or tier).
+  // Also include all active programs — the wallet may hold tokens received via
+  // P2P swaps or direct transfers that never went through token_mint_history.
+  // The UI does the same (scans every known program via balanceOf), so API
+  // must mirror it for parity.
+  for (const p of programRows) candidateTokens.add(p.token_address.toLowerCase());
 
   if (candidateTokens.size === 0) return [];
 
