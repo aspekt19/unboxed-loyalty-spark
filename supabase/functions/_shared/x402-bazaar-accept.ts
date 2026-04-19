@@ -53,69 +53,65 @@ function resourcePublicOrigin(requestUrl: URL, supabaseUrl: string): string {
   return canonicalPublicOrigin(requestUrl);
 }
 
-function mcpBazaarExtension(_mcp: McpBazaarTool) {
+/** Bazaar v2 `info` shape per CDP docs: `{ input: { type, method, bodyType? }, output: { type, example, schema? } }`. */
+function mcpBazaarExtension(mcp: McpBazaarTool, kind: "merchant" | "recipient") {
+  const keyHint = kind === "merchant" ? "lsk_..." : "rwk_...";
   return {
     discoverable: true,
-    /** x402scan endpoint-only registration looks for `extensions.bazaar.info` + schema (DISCOVERY.md §C). */
+    provider: "Loyal Spark",
+    brand: "Loyal Spark",
+    website: "https://loyalspark.online",
+    documentation: "https://loyalspark.online/for-agents",
+    tags: ["loyalty", "rewards", "onchain", "base", "mcp", kind],
     info: {
-      type: "mcp",
-      tool: _mcp.name,
-      description: _mcp.description,
-      inputSchema: _mcp.inputSchema,
-    },
-    inputSchema: {
-      headers: {
-        "x-api-key": {
-          type: "string",
-          description: "Loyal Spark agent API key (lsk_...). Required for tools that access merchant data.",
-        },
-        Authorization: {
-          type: "string",
-          description: "Optional: Bearer lsk_... (alternative to x-api-key).",
-        },
-      },
-      body: {
+      input: {
+        type: "http",
+        method: "POST",
+        bodyType: "json",
         description:
-          "JSON-RPC 2.0 for Streamable HTTP MCP (e.g. tools/call with name and arguments). Paid gateway forwards the body to the MCP server.",
+          `JSON-RPC 2.0 (Streamable HTTP MCP). Authenticate with header x-api-key: ${keyHint} (or Authorization: Bearer ${keyHint}). Body: tools/call { name: "${mcp.name}", arguments: { ... } }.`,
+        mcpTool: mcp.name,
+        mcpToolDescription: mcp.description,
+        mcpToolInputSchema: mcp.inputSchema,
       },
-    },
-    outputSchema: {
-      type: "object",
-      description: "MCP tool result (JSON-RPC response).",
+      output: {
+        type: "json",
+        description: "MCP JSON-RPC 2.0 response with `result.content[]` (text/json blocks).",
+        example: {
+          jsonrpc: "2.0",
+          id: 1,
+          result: {
+            content: [{ type: "text", text: `{ "ok": true, "tool": "${mcp.name}" }` }],
+          },
+        },
+        schema: {
+          $schema: "https://json-schema.org/draft/2020-12/schema",
+          type: "object",
+          properties: {
+            jsonrpc: { type: "string", const: "2.0" },
+            id: {},
+            result: {
+              type: "object",
+              properties: {
+                content: {
+                  type: "array",
+                  items: { type: "object" },
+                },
+              },
+            },
+            error: { type: "object" },
+          },
+        },
+      },
     },
   };
 }
 
-function recipientMcpBazaarExtension(_mcp: RecipientMcpBazaarTool) {
-  return {
-    discoverable: true,
-    info: {
-      type: "mcp",
-      tool: _mcp.name,
-      description: _mcp.description,
-      inputSchema: _mcp.inputSchema,
-    },
-    inputSchema: {
-      headers: {
-        "x-api-key": {
-          type: "string",
-          description: "Loyal Spark recipient API key (rwk_...). Required for holder/recipient MCP tools.",
-        },
-        Authorization: {
-          type: "string",
-          description: "Optional: Bearer rwk_... (alternative to x-api-key).",
-        },
-      },
-      body: {
-        description:
-          "JSON-RPC 2.0 for Streamable HTTP MCP (e.g. tools/call). Paid gateway forwards to recipient-loyalty-mcp.",
-      },
-    },
-    outputSchema: {
-      type: "object",
-      description: "MCP tool result (JSON-RPC response).",
-    },
-  };
+function recipientMcpBazaarExtension(mcp: RecipientMcpBazaarTool) {
+  return mcpBazaarExtension(
+    { name: mcp.name, price: mcp.price, description: mcp.description, inputSchema: mcp.inputSchema },
+    "recipient",
+  );
 }
 
 export function buildAcceptEntry(p: BuildAcceptParams): {
@@ -153,6 +149,10 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
       asset: USDC_BASE,
       extra: {
         ...USDC_EIP712,
+        provider: "Loyal Spark",
+        brand: "Loyal Spark",
+        website: "https://loyalspark.online",
+        documentation: "https://loyalspark.online/for-agents",
         description: `Loyal Spark MCP. After payment, POST the same JSON-RPC body to this x402 URL with PAYMENT-SIGNATURE / X-PAYMENT; gateway forwards to ${loyaltyMcpUrl}.`,
         mcpServer: loyaltyMcpUrl,
         mcpTool: mcp.name,
@@ -167,7 +167,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
         },
       },
       extensions: {
-        bazaar: mcpBazaarExtension(mcp),
+        bazaar: mcpBazaarExtension(mcp, "merchant"),
       },
     };
 
@@ -195,6 +195,10 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
       asset: USDC_BASE,
       extra: {
         ...USDC_EIP712,
+        provider: "Loyal Spark",
+        brand: "Loyal Spark",
+        website: "https://loyalspark.online",
+        documentation: "https://loyalspark.online/for-agents",
         description:
           `Loyal Spark Recipient MCP. After payment, POST the same JSON-RPC body to this x402 URL with PAYMENT-SIGNATURE / X-PAYMENT; gateway forwards to ${recipientMcpUrl}.`,
         mcpServer: recipientMcpUrl,
@@ -231,24 +235,36 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
     asset: USDC_BASE,
     extra: {
       ...USDC_EIP712,
+      provider: "Loyal Spark",
+      brand: "Loyal Spark",
+      website: "https://loyalspark.online",
+      documentation: "https://loyalspark.online/for-agents",
       description: `Loyal Spark agent-api /${p.resource}`,
     },
     extensions: {
       bazaar: {
         discoverable: true,
+        provider: "Loyal Spark",
+        brand: "Loyal Spark",
+        website: "https://loyalspark.online",
+        documentation: "https://loyalspark.online/for-agents",
+        tags: ["loyalty", "rewards", "onchain", "base", "rest", "http"],
         info: {
-          type: "http",
-          resource: p.resource,
-          inputSchema: {
-            type: "object",
-            description: `HTTP ${getRestMethod(p.resource)} …/x402-gateway/${p.resource} — see OpenAPI / agent-api docs for query/body.`,
+          input: {
+            type: "http",
+            method: getRestMethod(p.resource),
+            bodyType: getRestMethod(p.resource) === "POST" ? "json" : undefined,
+            description:
+              `HTTP ${getRestMethod(p.resource)} ${resourceUrlForDiscovery} — Loyal Spark agent-api /${p.resource}. Authenticate with header x-api-key: lsk_... See OpenAPI: https://loyalspark.online/openapi.json.`,
+            resource: p.resource,
           },
-        },
-        inputSchema: {
-          headers: {
-            "x-api-key": {
-              type: "string",
-              description: "Agent API key lsk_... (required for authenticated agent-api routes).",
+          output: {
+            type: "json",
+            description: "JSON response from Loyal Spark agent-api. See OpenAPI for schema.",
+            example: { ok: true, resource: p.resource },
+            schema: {
+              $schema: "https://json-schema.org/draft/2020-12/schema",
+              type: "object",
             },
           },
         },
