@@ -148,6 +148,7 @@ function buildPaymentRequired(req: Request): Response {
       provider: "Loyal Spark",
       website: "https://loyalspark.online",
       documentation: "https://loyalspark.online/for-agents",
+      builderCode: "bc_wdmnog7m",
     },
   });
 
