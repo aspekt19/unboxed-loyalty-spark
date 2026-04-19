@@ -76,7 +76,7 @@ function buildPaymentRequired(req: Request): Response {
       maxAmountRequired: PRICE_ATOMIC,
       resource,
       description:
-        "Loyal Spark x402 discovery probe. Real paid routes are listed in GET /well-known-x402 (resources[]).",
+        "Loyal Spark — onchain loyalty protocol on Base. Discovery probe; full list of 69 paid x402 resources (merchant + recipient REST and MCP tools) is returned by GET on this URL.",
       mimeType: "application/json",
       payTo: recipient,
       maxTimeoutSeconds: 60,
@@ -85,15 +85,29 @@ function buildPaymentRequired(req: Request): Response {
         input: { type: "http", method: "POST" },
         output: { discovery: "GET this URL with Accept: application/json" },
       },
-      extra: { name: "USD Coin", version: "2" },
+      extra: {
+        name: "USD Coin",
+        version: "2",
+        provider: "Loyal Spark",
+        brand: "Loyal Spark",
+        website: "https://loyalspark.online",
+      },
       extensions: {
         bazaar: {
           discoverable: true,
           info: {
             type: "http",
             method: "POST",
+            name: "Loyal Spark",
+            title: "Loyal Spark — Onchain Loyalty Protocol",
+            displayName: "Loyal Spark",
+            provider: "Loyal Spark",
+            website: "https://loyalspark.online",
+            documentation: "https://loyalspark.online/for-agents",
             description:
-              "Discovery probe endpoint. Use GET on the same URL to fetch the full x402 resources[] list.",
+              "Loyal Spark is an onchain loyalty protocol on Base. This endpoint exposes 69 paid x402 resources: merchant REST/MCP (mint, transfer, rewards, vouchers, analytics) and recipient REST/MCP (balances, P2P offers, redeem). Full list available via GET on this URL or https://loyalspark.online/.well-known/x402.json.",
+            tags: ["loyalty", "rewards", "onchain", "base", "mcp", "agents"],
+            category: "loyalty",
           },
         },
       },
