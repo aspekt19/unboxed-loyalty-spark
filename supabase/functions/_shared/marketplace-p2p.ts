@@ -263,7 +263,10 @@ export async function marketplaceCancelOffer(
   body: JsonBody
 ): Promise<ServiceResult> {
   const w = creatorAddress.toLowerCase();
-  const { offer_id } = body;
+  const { offer_id, onchain_offer_id } = body as {
+    offer_id?: string;
+    onchain_offer_id?: number | string;
+  };
   if (!offer_id) {
     return { status: 400, body: { error: "Missing field: offer_id" } };
   }
@@ -282,13 +285,35 @@ export async function marketplaceCancelOffer(
 
   await serviceClient.from("marketplace_offers").update({ status: "cancelled" }).eq("id", offer_id);
 
+  const cancelCalldata =
+    onchain_offer_id !== undefined && onchain_offer_id !== null
+      ? encodeEscrowCancelOfferCalldata(onchain_offer_id as number | string)
+      : null;
+
   return {
     status: 200,
     body: {
       message: "Offer cancelled. Call cancelOffer on the escrow contract to retrieve your tokens.",
       escrow_contract: {
+        address: ESCROW_ADDRESS,
         function: "cancelOffer(uint256)",
         note: "Call cancelOffer with the on-chain offer ID to return escrowed tokens.",
+        builder_code: BUILDER_CODE,
+        calldata: cancelCalldata
+          ? {
+              cancel_offer: {
+                to: ESCROW_ADDRESS,
+                data: cancelCalldata,
+                description: "cancelOffer(onchain_offer_id) with Builder Code suffix",
+              },
+            }
+          : {
+              cancel_offer: {
+                to: ESCROW_ADDRESS,
+                description:
+                  "Pass onchain_offer_id (uint256 from OfferCreated event) to receive ready calldata.",
+              },
+            },
       },
     },
   };
