@@ -16,6 +16,10 @@ import {
   marketplaceCreateOffer,
   marketplaceListOffers,
 } from "../_shared/marketplace-p2p.ts";
+import {
+  loadOnchainLoyaltyBalance,
+  loadOnchainLoyaltyBalances,
+} from "../_shared/recipient-onchain-balances.ts";
 
 const publicClient = createPublicClient({
   chain: base,
@@ -188,34 +192,16 @@ Deno.serve(async (req) => {
     }
 
     if (resource === "balances" && req.method === "GET") {
-      const { data: tiers, error } = await serviceClient
-        .from("customer_tier_status")
-        .select("token_address, current_balance, tokens_earned_total, current_tier_id, last_calculated_at")
-        // DB может хранить адрес в mixed-case; wallet уже lower — без ilike строки не находились (пустой balances при живом UI)
-        .ilike("customer_address", wallet);
-
-      if (error) {
-        await insertRecipientActivity(serviceClient, agent.agentId, "balances", {}, 500, { error: error.message }, ip);
-        return jsonResponse({ error: "Failed to load balances" }, 500);
+      // Tier-only SQL misses tokens held via P2P/transfer without a tier row; helper matches UI (DB ∪ programs ∪ on-chain balanceOf).
+      try {
+        const balances = await loadOnchainLoyaltyBalances(serviceClient, wallet);
+        await insertRecipientActivity(serviceClient, agent.agentId, "balances", {}, 200, { count: balances.length }, ip);
+        return jsonResponse({ balances });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        await insertRecipientActivity(serviceClient, agent.agentId, "balances", {}, 500, { error: message }, ip);
+        return jsonResponse({ error: "Failed to load balances", hint: message }, 500);
       }
-
-      const tokens = [...new Set((tiers || []).map((t: { token_address: string }) => t.token_address.toLowerCase()))];
-      let programs: Record<string, { name: string; symbol: string; status: string }> = {};
-      if (tokens.length > 0) {
-        const { data: plist } = await serviceClient
-          .from("loyalty_programs")
-          .select("token_address, name, symbol, status")
-          .in("token_address", tokens);
-        programs = Object.fromEntries((plist || []).map((p: any) => [p.token_address.toLowerCase(), p]));
-      }
-
-      const balances = (tiers || []).map((t: any) => ({
-        ...t,
-        program: programs[t.token_address.toLowerCase()] || null,
-      }));
-
-      await insertRecipientActivity(serviceClient, agent.agentId, "balances", {}, 200, { count: balances.length }, ip);
-      return jsonResponse({ balances });
     }
 
     if (resource === "balance" && req.method === "GET") {
@@ -224,32 +210,39 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Missing or invalid query param: token_address" }, 400);
       }
 
-      const { data: tierStatus } = await serviceClient
-        .from("customer_tier_status")
-        .select("current_balance, tokens_earned_total, current_tier_id, last_calculated_at")
-        .ilike("token_address", tokenAddress.toLowerCase())
-        .ilike("customer_address", wallet)
-        .maybeSingle();
+      try {
+        const onchain = await loadOnchainLoyaltyBalance(serviceClient, wallet, tokenAddress);
+        if (!onchain) {
+          await insertRecipientActivity(serviceClient, agent.agentId, "balance", { tokenAddress }, 404, { error: "no_balance" }, ip);
+          return jsonResponse({ error: "No balance data for this token" }, 404);
+        }
 
-      let tierInfo = null;
-      if (tierStatus?.current_tier_id) {
-        const { data: tier } = await serviceClient
-          .from("customer_tiers")
-          .select("tier_name, tier_level, badge_color, cashback_multiplier")
-          .eq("id", tierStatus.current_tier_id)
-          .single();
-        tierInfo = tier;
+        let tierInfo: unknown = null;
+        if (onchain.current_tier_id) {
+          const { data: tier } = await serviceClient
+            .from("customer_tiers")
+            .select("tier_name, tier_level, badge_color, cashback_multiplier")
+            .eq("id", onchain.current_tier_id)
+            .single();
+          tierInfo = tier;
+        }
+
+        await insertRecipientActivity(serviceClient, agent.agentId, "balance", { tokenAddress }, 200, {}, ip);
+        return jsonResponse({
+          balance: {
+            current_balance: onchain.current_balance,
+            raw_balance: onchain.raw_balance,
+            tokens_earned_total: onchain.tokens_earned_total,
+            last_updated: onchain.last_calculated_at,
+            program: onchain.program,
+            tier: tierInfo,
+          },
+        });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        await insertRecipientActivity(serviceClient, agent.agentId, "balance", { tokenAddress }, 500, { error: message }, ip);
+        return jsonResponse({ error: "Failed to load balance", hint: message }, 500);
       }
-
-      await insertRecipientActivity(serviceClient, agent.agentId, "balance", { tokenAddress }, 200, {}, ip);
-      return jsonResponse({
-        balance: {
-          current_balance: tierStatus?.current_balance ?? 0,
-          tokens_earned_total: tierStatus?.tokens_earned_total ?? 0,
-          last_updated: tierStatus?.last_calculated_at ?? null,
-          tier: tierInfo,
-        },
-      });
     }
 
     if (resource === "rewards" && req.method === "GET") {

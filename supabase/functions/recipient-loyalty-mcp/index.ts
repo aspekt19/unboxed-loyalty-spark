@@ -12,6 +12,7 @@ import {
   marketplaceCreateOffer,
   marketplaceListOffers,
 } from "../_shared/marketplace-p2p.ts";
+import { loadOnchainLoyaltyBalance, loadOnchainLoyaltyBalances } from "../_shared/recipient-onchain-balances.ts";
 
 const app = new Hono();
 
@@ -48,66 +49,62 @@ function createRecipientMcpServer(
   });
 
   mcpServer.tool("list_my_loyalty_balances", {
-    description: "All loyalty program balances (tier rows) for your wallet",
+    description: "All loyalty program balances for your wallet (tier DB + mint history + programs; on-chain balanceOf — same as customer UI)",
     inputSchema: { type: "object" as const, properties: {} },
     handler: async () => {
-      const { data: tiers, error } = await db
-        .from("customer_tier_status")
-        .select("token_address, current_balance, tokens_earned_total, current_tier_id, last_calculated_at")
-        .ilike("customer_address", w);
-      if (error) {
-        await log("list_my_loyalty_balances", {}, 500, { error: error.message });
-        return T(JSON.stringify({ error: error.message }));
+      try {
+        const balances = await loadOnchainLoyaltyBalances(db, w);
+        await log("list_my_loyalty_balances", {}, 200, { count: balances.length });
+        return T(JSON.stringify({ balances }));
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        await log("list_my_loyalty_balances", {}, 500, { error: message });
+        return T(JSON.stringify({ error: message }));
       }
-      const tokens = [...new Set((tiers || []).map((t: { token_address: string }) => t.token_address.toLowerCase()))];
-      let programs: Record<string, unknown> = {};
-      if (tokens.length > 0) {
-        const { data: plist } = await db.from("loyalty_programs").select("token_address, name, symbol, status").in("token_address", tokens);
-        programs = Object.fromEntries((plist || []).map((p: any) => [p.token_address.toLowerCase(), p]));
-      }
-      const balances = (tiers || []).map((t: any) => ({
-        ...t,
-        program: programs[t.token_address.toLowerCase()] || null,
-      }));
-      await log("list_my_loyalty_balances", {}, 200, { count: balances.length });
-      return T(JSON.stringify({ balances }));
     },
   });
 
   mcpServer.tool("get_my_loyalty_balance", {
-    description: "Balance and tier for one loyalty token (your wallet must be the customer)",
+    description: "Balance and tier for one loyalty token (live on-chain balanceOf + tier metadata)",
     inputSchema: { type: "object" as const, properties: { token_address: { type: "string", description: "ERC-20 loyalty token 0x..." } }, required: ["token_address"] },
     handler: async ({ token_address }: any) => {
       if (!/^0x[a-fA-F0-9]{40}$/.test(token_address)) {
         await log("get_my_loyalty_balance", { token_address }, 400, { error: "bad_address" });
         return T('{"error":"Invalid token_address"}');
       }
-      const { data: tierStatus } = await db
-        .from("customer_tier_status")
-        .select("current_balance, tokens_earned_total, current_tier_id, last_calculated_at")
-        .ilike("token_address", token_address.toLowerCase())
-        .ilike("customer_address", w)
-        .maybeSingle();
-      let tierInfo = null;
-      if (tierStatus?.current_tier_id) {
-        const { data: tier } = await db
-          .from("customer_tiers")
-          .select("tier_name, tier_level, badge_color, cashback_multiplier")
-          .eq("id", tierStatus.current_tier_id)
-          .single();
-        tierInfo = tier;
+      try {
+        const onchain = await loadOnchainLoyaltyBalance(db, w, token_address);
+        if (!onchain) {
+          await log("get_my_loyalty_balance", { token_address }, 404, { error: "no_balance" });
+          return T(JSON.stringify({ error: "No balance data for this token" }));
+        }
+        let tierInfo: unknown = null;
+        if (onchain.current_tier_id) {
+          const { data: tier } = await db
+            .from("customer_tiers")
+            .select("tier_name, tier_level, badge_color, cashback_multiplier")
+            .eq("id", onchain.current_tier_id)
+            .single();
+          tierInfo = tier;
+        }
+        await log("get_my_loyalty_balance", { token_address }, 200, {});
+        return T(
+          JSON.stringify({
+            balance: {
+              current_balance: onchain.current_balance,
+              raw_balance: onchain.raw_balance,
+              tokens_earned_total: onchain.tokens_earned_total,
+              last_updated: onchain.last_calculated_at,
+              program: onchain.program,
+              tier: tierInfo,
+            },
+          })
+        );
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        await log("get_my_loyalty_balance", { token_address }, 500, { error: message });
+        return T(JSON.stringify({ error: message }));
       }
-      await log("get_my_loyalty_balance", { token_address }, 200, {});
-      return T(
-        JSON.stringify({
-          balance: {
-            current_balance: tierStatus?.current_balance ?? 0,
-            tokens_earned_total: tierStatus?.tokens_earned_total ?? 0,
-            last_updated: tierStatus?.last_calculated_at ?? null,
-            tier: tierInfo,
-          },
-        })
-      );
     },
   });
 
