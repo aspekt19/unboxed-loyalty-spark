@@ -1,9 +1,10 @@
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
+import { useSendTransaction, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { ROUNDUP_CONTRACTS, type StrategyType } from '@/config/roundup-contracts';
 import { toast } from 'sonner';
+import { encodeWithBuilderCode } from '@/config/builder-code';
 
 export const useRoundUpInvest = (userAddress?: `0x${string}`) => {
-  const { data: hash, writeContract, isPending } = useWriteContract();
+  const { data: hash, sendTransaction, isPending } = useSendTransaction();
   
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
@@ -51,13 +52,15 @@ export const useRoundUpInvest = (userAddress?: `0x${string}`) => {
 
   const invest = async (strategy: StrategyType) => {
     try {
-      await writeContract({
-        address: ROUNDUP_CONTRACTS.ROUND_UP_VAULT.address,
-        abi: ROUNDUP_CONTRACTS.ROUND_UP_VAULT.abi,
-        functionName: 'invest',
-        args: [strategy],
-      } as any);
-      
+      const data = encodeWithBuilderCode(
+        ROUNDUP_CONTRACTS.ROUND_UP_VAULT.abi as any,
+        'invest',
+        [strategy],
+      );
+      sendTransaction({
+        to: ROUNDUP_CONTRACTS.ROUND_UP_VAULT.address,
+        data,
+      });
       toast.success('Investment started!');
     } catch (error) {
       console.error('Invest error:', error);
@@ -68,13 +71,15 @@ export const useRoundUpInvest = (userAddress?: `0x${string}`) => {
 
   const withdraw = async (strategy: StrategyType, amount: bigint) => {
     try {
-      await writeContract({
-        address: ROUNDUP_CONTRACTS.ROUND_UP_VAULT.address,
-        abi: ROUNDUP_CONTRACTS.ROUND_UP_VAULT.abi,
-        functionName: 'withdraw',
-        args: [strategy, amount],
-      } as any);
-      
+      const data = encodeWithBuilderCode(
+        ROUNDUP_CONTRACTS.ROUND_UP_VAULT.abi as any,
+        'withdraw',
+        [strategy, amount],
+      );
+      sendTransaction({
+        to: ROUNDUP_CONTRACTS.ROUND_UP_VAULT.address,
+        data,
+      });
       toast.success('Withdrawal started!');
     } catch (error) {
       console.error('Withdraw error:', error);
