@@ -1,6 +1,6 @@
 # Loyal Spark — Onchain Loyalty Protocol (Full Reference)
 
-> Loyalty-as-a-Service for AI agents and merchants on Base L2. Deploy ERC-20 tokens, manage rewards, earn points from purchases, trade on P2P marketplace — via REST API, MCP Server, or pay-per-request gateways.
+> Loyalty-as-a-Service for AI agents and merchants on Base L2. Two API personas: **merchant** (`lsk_` — issue and manage loyalty programs) and **recipient** (`rwk_` — wallet that holds loyalty tokens, redeems rewards, trades P2P). Deploy ERC-20 tokens, manage rewards, earn points from purchases, trade on P2P marketplace — via REST API, MCP Server, or pay-per-request gateways (MPP / x402 v2).
 
 ## Overview
 
@@ -12,20 +12,24 @@ Loyal Spark is a dual-mode protocol: humans interact via web UI with flexible au
 - Static pointer (markdown): https://loyalspark.online/for-agents.md
 - Agent Manifest: https://loyalspark.online/.well-known/agent.json
 - OpenAPI 3.1.0: https://loyalspark.online/openapi.json
-- MCP Server: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp (Streamable HTTP)
+- MCP Server (merchant, `lsk_`, 28 tools): https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp (Streamable HTTP)
+- MCP Server (recipient, `rwk_`, 11 tools): https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp (Streamable HTTP)
+- REST (recipient, `rwk_`, 12 routes): https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-api
 - MPP Manifest: https://loyalspark.online/.well-known/mpp.json
+- x402 Resources: https://loyalspark.online/.well-known/x402.json (Bazaar-discoverable URLs for both merchant and recipient corridors)
 - AI Plugin: https://loyalspark.online/.well-known/ai-plugin.json
 - Skills Guide: https://loyalspark.online/.well-known/skills/index.md
 
 ## Authentication
 
-All API calls require an `x-api-key` header with a key prefixed `lsk_`.
+Two key prefixes for two roles:
 
-To get an API key:
-1. Visit https://loyalspark.online/merchant
-2. Sign in with email/passkey or connect a Web3 wallet
-3. Open "AI Agents" tab
-4. Register an agent and copy the key
+- **`lsk_…`** — merchant agent: issues programs, mints tokens, manages rewards. All `agent-api/*` and `loyalty-mcp` paths require `x-api-key: lsk_…` (only `GET /vouchers/status` is public).
+- **`rwk_…`** — recipient agent: a wallet that *holds* loyalty tokens. All `recipient-api/*` and `recipient-loyalty-mcp` paths require `x-api-key: rwk_…`.
+
+How to get a key:
+1. **Dashboard (humans):** sign in at https://loyalspark.online/merchant (Privy: email/phone/Google/wallet) → "AI Agents" tab → register → copy `lsk_…` (shown once).
+2. **Autonomous (no browser):** SIWE flow at `agent-register-siwe` — `POST /siwe-nonce` → sign EIP-4361 message including `Register Loyal Spark merchant agent` (or `…recipient agent`) and Chain ID 8453 → POST signature → receive `lsk_…` or `rwk_…`. Same limits as dashboard.
 
 ## REST API — 24 Endpoints
 
@@ -130,6 +134,44 @@ Auth: x-api-key header
 }
 ```
 
+## Recipient REST API (`rwk_`) — 12 Routes
+
+Base URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-api · Auth: `x-api-key: rwk_…`
+
+| Method | Path | Price | Description |
+|--------|------|-------|-------------|
+| GET | /me | free | Recipient agent profile and wallet |
+| GET | /balances | $0.001 | All loyalty balances for the bound wallet |
+| GET | /balance?token_address=0x… | $0.001 | One-token balance and tier |
+| GET | /rewards?token_address=0x… | $0.001 | Rewards available for redemption |
+| GET | /vouchers | $0.001 | Vouchers issued to this wallet |
+| GET | /offers | $0.001 | P2P marketplace offers |
+| POST | /register | free | One-time wallet registration (after SIWE) |
+| POST | /prepare-transfer | $0.005 | ERC-20 transfer calldata (holder → any address) |
+| POST | /redeem-reward | $0.01 | Redeem a reward via on-chain tx hash |
+| POST | /offers | $0.01 | Create a P2P swap intent (escrow) |
+| POST | /accept-offer | $0.01 | Accept a P2P offer (atomic swap) |
+| POST | /cancel-offer | $0.005 | Cancel your own P2P offer |
+
+## Recipient MCP Server — 11 Tools
+
+URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp · Transport: Streamable HTTP · Auth: `x-api-key: rwk_…`
+
+1. `get_recipient_profile` — Wallet identity bound to this `rwk_` key
+2. `list_my_loyalty_balances` — All loyalty balances and tiers
+3. `get_my_loyalty_balance` — One-program balance
+4. `prepare_loyalty_token_transfer` — ERC-20 transfer calldata ($0.005)
+5. `list_rewards_for_program` — Rewards available to redeem
+6. `list_my_vouchers` — Voucher inventory
+7. `redeem_my_reward` — Redeem reward (verifies tx hash, mints voucher)
+8. `list_p2p_offers` — Active marketplace offers ($0.001)
+9. `create_p2p_offer` — Lock tokens into escrow
+10. `accept_p2p_offer` — Atomic swap with escrow contract
+11. `cancel_p2p_offer` — Cancel and unlock your tokens ($0.005)
+
+Default price: $0.01 per call (matches merchant MCP). Same Bazaar metadata exposed in 402 challenges via `recipient-mcp-tools/<name>` x402 corridor.
+
+
 ## Payment Gateways
 
 ### MPP (Machine Payments Protocol)
@@ -150,8 +192,8 @@ Auth: x-api-key header
 Agents can create Coinbase CDP MPC wallets for autonomous onchain operations:
 - No private keys to manage
 - Server-side transaction signing
-- Support for `use_agent_wallet: true` in program creation
-- Create via: POST /agent-api with action `create_server_wallet`
+- Support for `use_agent_wallet: true` in program creation / mint flows
+- Endpoint: `POST https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-wallet` with `x-api-key: lsk_…` (separate Edge Function, not part of agent-api)
 
 ## Subscription Plans (AI agents, `lsk_`)
 

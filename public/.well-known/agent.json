@@ -1,6 +1,6 @@
 {
   "name": "Loyal Spark",
-  "description": "Onchain loyalty protocol on Base L2. AI agents can autonomously create loyalty programs, mint ERC-20 loyalty tokens, earn cashback via POST /earn, manage rewards, trade on marketplace, and get their own MPC wallets — via REST API (23 routes with x-api-key + public GET /vouchers/status), MCP Server (28 tools), MPP, or x402.",
+  "description": "Onchain loyalty protocol on Base L2. Two agent personas: MERCHANT (lsk_, 23 REST routes + 1 public + 28 MCP tools at /loyalty-mcp) issues programs, mints ERC-20, manages rewards, P2P trading, CDP MPC wallets, POST /earn cashback. RECIPIENT (rwk_, 12 REST routes at /recipient-api + 11 MCP tools at /recipient-loyalty-mcp) holds tokens, redeems rewards, P2P swaps, prepare_loyalty_token_transfer. Pay-per-call via MPP (pathUSD/USDC on Tempo) or x402 v2 (USDC on Base) — both gateways relay merchant + recipient corridors with Coinbase Bazaar discovery metadata.",
   "url": "https://loyalspark.online",
   "version": "2.1.0",
   "protocol": "a2a-loyalty",
@@ -345,6 +345,45 @@
       "update_report_status",
       "delete_report"
     ]
+  },
+  "recipient_api": {
+    "description": "Wallet-bound API for agents that HOLD loyalty tokens (not merchants). Authenticated with x-api-key: rwk_… Register via SIWE (POST /siwe-nonce → sign EIP-4361 'Register Loyal Spark recipient agent' Chain ID 8453 → POST /agent-register-siwe).",
+    "rest_base_url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-api",
+    "mcp_url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp",
+    "mcp_transport": "streamable-http",
+    "mcp_tool_count": 11,
+    "mcp_tools": [
+      "get_recipient_profile",
+      "list_my_loyalty_balances",
+      "get_my_loyalty_balance",
+      "prepare_loyalty_token_transfer",
+      "list_rewards_for_program",
+      "list_my_vouchers",
+      "redeem_my_reward",
+      "list_p2p_offers",
+      "create_p2p_offer",
+      "accept_p2p_offer",
+      "cancel_p2p_offer"
+    ],
+    "rest_endpoints": [
+      { "method": "GET",  "path": "/me",                "price_usd": "free",  "description": "Recipient profile and bound wallet" },
+      { "method": "GET",  "path": "/balances",          "price_usd": "0.001", "description": "All loyalty balances for the bound wallet" },
+      { "method": "GET",  "path": "/balance",           "price_usd": "0.001", "description": "One-token balance and tier" },
+      { "method": "GET",  "path": "/rewards",           "price_usd": "0.001", "description": "Rewards available for redemption" },
+      { "method": "GET",  "path": "/vouchers",          "price_usd": "0.001", "description": "Vouchers issued to this wallet" },
+      { "method": "GET",  "path": "/offers",            "price_usd": "0.001", "description": "P2P marketplace offers" },
+      { "method": "POST", "path": "/register",          "price_usd": "free",  "description": "One-time wallet registration after SIWE" },
+      { "method": "POST", "path": "/prepare-transfer",  "price_usd": "0.005", "description": "ERC-20 transfer calldata (holder → any address)" },
+      { "method": "POST", "path": "/redeem-reward",     "price_usd": "0.01",  "description": "Redeem a reward via on-chain tx hash" },
+      { "method": "POST", "path": "/offers",            "price_usd": "0.01",  "description": "Create P2P swap intent (escrow)" },
+      { "method": "POST", "path": "/accept-offer",      "price_usd": "0.01",  "description": "Accept a P2P offer (atomic swap)" },
+      { "method": "POST", "path": "/cancel-offer",      "price_usd": "0.005", "description": "Cancel your own P2P offer" }
+    ],
+    "x402_corridor": {
+      "rest_url_template": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway/recipient-api/{path}",
+      "mcp_url_template": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway/recipient-mcp-tools/{tool_name}",
+      "bazaar": "Same extensions.bazaar metadata as merchant corridor; tools schemas in supabase/functions/_shared/recipient-mcp-bazaar-tools.ts"
+    }
   },
   "mpp": {
     "description": "Machine Payments Protocol — pay per API request with HTTP 402 flow. No subscription needed.",
