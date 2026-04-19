@@ -9,6 +9,11 @@
       "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
       "transport": "streamable-http",
       "tool_count": 28
+    },
+    "x-x402-discovery": {
+      "wellKnownResources": "https://loyalspark.online/.well-known/x402",
+      "gatewayBaseUrl": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway",
+      "note": "Full list of x402 resource URLs for scanners (x402scan DISCOVERY.md); same paths as agent-api + mcp-tools/* + recipient-mcp-tools/* + recipient-api/*."
     }
   },
   "servers": [
@@ -19,6 +24,10 @@
     {
       "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway",
       "description": "MPP gateway — HTTP 402 pay-per-request proxy to agent-api"
+    },
+    {
+      "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway",
+      "description": "x402 Bazaar — HTTP 402 pay-per-request (agent REST + MCP + recipient); discovery https://loyalspark.online/.well-known/x402"
     }
   ],
   "security": [
