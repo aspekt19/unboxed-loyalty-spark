@@ -1,6 +1,6 @@
 {
   "name": "Loyal Spark",
-  "description": "Onchain loyalty protocol on Base L2. AI agents can create ERC-20 loyalty programs, mint tokens, manage rewards, trade on P2P marketplace — all via REST API with pay-per-request pricing.",
+  "description": "Onchain loyalty protocol on Base L2. Two API personas with x-api-key: merchant (lsk_, agent-api 23 routes + loyalty-mcp 28 tools) and recipient (rwk_, recipient-api 12 routes + recipient-loyalty-mcp 11 tools). Pay-per-request via MPP (pathUSD/USDC on Tempo) or x402 v2 (USDC on Base).",
   "url": "https://loyalspark.online",
   "version": "2.1.0",
   "payment_methods": [
@@ -31,8 +31,12 @@
   "authentication": {
     "type": "api_key",
     "header": "x-api-key",
-    "prefix": "lsk_",
-    "registration_url": "https://loyalspark.online/merchant"
+    "prefixes": {
+      "lsk_": "Merchant agent — agent-api/* and loyalty-mcp",
+      "rwk_": "Recipient agent (wallet holder) — recipient-api/* and recipient-loyalty-mcp"
+    },
+    "registration_url": "https://loyalspark.online/merchant",
+    "siwe_url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-register-siwe"
   },
   "pricing": {
     "model": "pay-per-request",
@@ -53,10 +57,38 @@
       "POST /program-status": { "price": "0.005", "description": "Update program status" },
       "POST /rewards": { "price": "0.01", "description": "Create reward" },
       "POST /mint": { "price": "0.01", "description": "Mint tokens" },
+      "POST /earn": { "price": "0.01", "description": "Auto-mint cashback from purchase amount" },
       "POST /transfer": { "price": "0.005", "description": "Transfer tokens" },
+      "POST /redeem-reward": { "price": "0.01", "description": "Redeem reward (verify tx + create voucher)" },
+      "POST /vouchers/use": { "price": "0.005", "description": "Mark voucher as used" },
       "POST /offers": { "price": "0.01", "description": "Create marketplace offer" },
       "POST /accept-offer": { "price": "0.01", "description": "Accept offer" },
-      "POST /cancel-offer": { "price": "0.005", "description": "Cancel offer" }
+      "POST /cancel-offer": { "price": "0.005", "description": "Cancel offer" },
+      "GET /vouchers/status": { "price": "0", "description": "Public voucher status check (no key)" },
+      "GET /tx-receipt": { "price": "0", "description": "Extract token_address from deploy tx" }
+    },
+    "recipient_endpoints": {
+      "GET recipient-api/me": { "price": "0", "description": "Recipient profile" },
+      "GET recipient-api/balances": { "price": "0.001", "description": "All loyalty balances" },
+      "GET recipient-api/balance": { "price": "0.001", "description": "One-token balance and tier" },
+      "GET recipient-api/rewards": { "price": "0.001", "description": "Rewards available to redeem" },
+      "GET recipient-api/vouchers": { "price": "0.001", "description": "Vouchers for this wallet" },
+      "GET recipient-api/offers": { "price": "0.001", "description": "P2P marketplace offers" },
+      "POST recipient-api/register": { "price": "0", "description": "Wallet registration after SIWE" },
+      "POST recipient-api/prepare-transfer": { "price": "0.005", "description": "ERC-20 transfer calldata" },
+      "POST recipient-api/redeem-reward": { "price": "0.01", "description": "Redeem reward via tx hash" },
+      "POST recipient-api/offers": { "price": "0.01", "description": "Create P2P swap intent" },
+      "POST recipient-api/accept-offer": { "price": "0.01", "description": "Accept P2P offer" },
+      "POST recipient-api/cancel-offer": { "price": "0.005", "description": "Cancel P2P offer" }
+    },
+    "mcp_paid_url_templates": {
+      "merchant": "{x402_or_mpp_gateway}/mcp-tools/{tool_name}",
+      "recipient": "{x402_or_mpp_gateway}/recipient-mcp-tools/{tool_name}",
+      "default_price_usd": "0.01",
+      "schemas": {
+        "merchant": "supabase/functions/_shared/mcp-bazaar-tools.ts",
+        "recipient": "supabase/functions/_shared/recipient-mcp-bazaar-tools.ts"
+      }
     }
   },
   "docs": "https://loyalspark.online/api-docs",
