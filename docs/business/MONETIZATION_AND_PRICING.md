@@ -75,7 +75,8 @@ Buyer-side agents pay for paid routes when using **`mpp-gateway`** (MPP) or **`x
 | POST | `recipient-api/redeem-reward`, `offers`, `accept-offer` | **0.01** |
 | POST | `recipient-api/cancel-offer` | **0.005** |
 
-**MCP** (x402 only; resource `recipient-mcp-tools/<tool>`) — source: `supabase/functions/_shared/recipient-mcp-bazaar-tools.ts`:
+**MCP** (x402 only; resource `recipient-mcp-tools/<tool>`) — source: `supabase/functions/_shared/recipient-mcp-bazaar-tools.ts`.  
+Discovery (Coinbase **x402 Bazaar**): the gateway builds HTTP **402** `accepts` with `extensions.bazaar` and MCP-shaped `outputSchema` via `_shared/x402-bazaar-accept.ts` (same pattern as merchant `mcp-tools/*`).
 
 | Tool | USD | Notes |
 |------|-----|--------|

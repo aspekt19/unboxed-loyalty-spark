@@ -33,13 +33,19 @@ Copy [examples/agent-mcp/cursor-mcp.json](../../examples/agent-mcp/cursor-mcp.js
 
 ## 4. MCP via x402 (pay-per-call, Bazaar-compatible)
 
-Use the **same** tools as `loyalty-mcp`, but URL pattern:
+**Merchant (same tools as `loyalty-mcp`, `lsk_`):**
 
 `POST https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway/mcp-tools/<tool_name>`
 
-Body: JSON-RPC `tools/call` with `name` and `arguments`. Headers: `x-api-key: lsk_...` (after payment).  
+**Recipient / holder (`rwk_`):**
+
+`POST …/x402-gateway/recipient-mcp-tools/<tool_name>`
+
+Body: JSON-RPC `tools/call` with `name` and `arguments`. Headers: `x-api-key: lsk_...` or `rwk_...` (after payment).  
 Client: `@x402/fetch` + `@x402/evm` (wallet with USDC on Base pays the 402).  
-Reference: `supabase/functions/_shared/mcp-bazaar-tools.ts` · `scripts/x402-paid-mcp-test/run.mjs`.
+Tool schemas + USD: `mcp-bazaar-tools.ts` · `recipient-mcp-bazaar-tools.ts`.  
+HTTP **402** response `accepts[0]` includes **`extensions.bazaar`** and MCP **`outputSchema`** for both URL families — built in **`x402-bazaar-accept.ts`** (Coinbase x402 Bazaar discovery).  
+Smoke test: `scripts/x402-paid-mcp-test/run.mjs` (`MCP_PATH_PREFIX=mcp-tools` or `recipient-mcp-tools`).
 
 ## 5. Discovery (for crawlers & tools)
 
@@ -55,7 +61,7 @@ Reference: `supabase/functions/_shared/mcp-bazaar-tools.ts` · `scripts/x402-pai
 - [AGENTS.md](../../AGENTS.md) — index for coding agents  
 - [../README.md](../README.md) — docs layout  
 - MCP tool ids: `src/constants/mcpToolNames.ts` (must match `loyalty-mcp/index.ts`)
-- x402 MCP tool **schemas** (Bazaar / pricing): `supabase/functions/_shared/mcp-bazaar-tools.ts`
+- x402 MCP tool **schemas** (Bazaar / pricing): `mcp-bazaar-tools.ts` (merchant) · `recipient-mcp-bazaar-tools.ts` (holder); **402 + Bazaar metadata**: `x402-bazaar-accept.ts`
 
 ## 7. Recipient agents (`rwk_`) — optional
 

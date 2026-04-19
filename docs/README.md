@@ -10,7 +10,7 @@ Start at the repo root **[AGENTS.md](../AGENTS.md)** (links to rules, APIs, and 
 
 | Path | Contents |
 |------|----------|
-| [agents/](./agents/) | [Quickstart](./agents/QUICKSTART.md), [autonomous `lsk_` (SIWE)](./agents/AUTONOMOUS_AGENT_REGISTRATION.md); x402 MCP schemas in repo `supabase/functions/_shared/mcp-bazaar-tools.ts` |
+| [agents/](./agents/) | [Quickstart](./agents/QUICKSTART.md), [autonomous `lsk_` (SIWE)](./agents/AUTONOMOUS_AGENT_REGISTRATION.md); x402 MCP: `mcp-bazaar-tools.ts`, `recipient-mcp-bazaar-tools.ts`, `x402-bazaar-accept.ts` (Bazaar metadata on 402) |
 | [development/](./development/) | Build, deploy, Capacitor; [PORTALS_AND_TEAM.md](./development/PORTALS_AND_TEAM.md) (`/merchant`, `/customer`, team RPC) |
 | [integrations/](./integrations/) | Farcaster, OpenServ, A2A, prompts, adaptation plans |
 | [pitch-deck/](./pitch-deck/) | Investor deck source notes (Markdown); live UI route: `/pitch` |
@@ -22,7 +22,7 @@ Start at the repo root **[AGENTS.md](../AGENTS.md)** (links to rules, APIs, and 
 
 ## Quick links
 
-- [AI agents — repo quickstart](./agents/QUICKSTART.md) · [SIWE `lsk_` (no web login)](./agents/AUTONOMOUS_AGENT_REGISTRATION.md) · live **[/for-agents](https://loyalspark.online/for-agents)** · paid MCP/x402 schemas: `supabase/functions/_shared/mcp-bazaar-tools.ts`
+- [AI agents — repo quickstart](./agents/QUICKSTART.md) · [SIWE `lsk_` (no web login)](./agents/AUTONOMOUS_AGENT_REGISTRATION.md) · live **[/for-agents](https://loyalspark.online/for-agents)** · paid MCP/x402: `mcp-bazaar-tools.ts`, `recipient-mcp-bazaar-tools.ts`, `x402-bazaar-accept.ts`
 - [Native / Capacitor build](./development/NATIVE_BUILD_GUIDE.md)
 - [Merchant & customer portals — header, Profile, team invites](./development/PORTALS_AND_TEAM.md)
 - [Round-Up contracts (legacy filename)](./development/DEPLOYMENT_INSTRUCTIONS.md) — Solidity deploy steps, not the web app

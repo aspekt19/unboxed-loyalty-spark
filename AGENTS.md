@@ -6,7 +6,7 @@ This file is the **entry point** for coding agents (Cursor, OpenServ, Claude Cod
 
 | What | Path |
 |------|------|
-| **Paid MCP via x402** | Tool list + schemas: [`supabase/functions/_shared/mcp-bazaar-tools.ts`](./supabase/functions/_shared/mcp-bazaar-tools.ts) · gateway accepts: [`supabase/functions/_shared/x402-bazaar-accept.ts`](./supabase/functions/_shared/x402-bazaar-accept.ts) · quickstart [`docs/agents/QUICKSTART.md`](./docs/agents/QUICKSTART.md) |
+| **Paid MCP via x402** | Merchant tools: [`mcp-bazaar-tools.ts`](./supabase/functions/_shared/mcp-bazaar-tools.ts) · recipient tools: [`recipient-mcp-bazaar-tools.ts`](./supabase/functions/_shared/recipient-mcp-bazaar-tools.ts) · HTTP 402 + **Bazaar** metadata: [`x402-bazaar-accept.ts`](./supabase/functions/_shared/x402-bazaar-accept.ts) · quickstart [`docs/agents/QUICKSTART.md`](./docs/agents/QUICKSTART.md) |
 | **Free `lsk_` without web login (SIWE)** | [`docs/agents/AUTONOMOUS_AGENT_REGISTRATION.md`](./docs/agents/AUTONOMOUS_AGENT_REGISTRATION.md) |
 | **Monetization & public pricing (merchant + agents)** | [`docs/business/MONETIZATION_AND_PRICING.md`](./docs/business/MONETIZATION_AND_PRICING.md) |
 | Repo rules for edits (stack, folders, API scopes) | [`.cursorrules`](./.cursorrules) |

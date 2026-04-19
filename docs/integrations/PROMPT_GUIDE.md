@@ -155,6 +155,8 @@ No API key needed — authentication is via onchain payment.
 Headers to check on 402:
 - x402: X-Payment-Required (contains payment challenge JSON)
 - MPP: X-MPP-Resource, X-MPP-Price-USD
+
+Paid MCP URLs: merchant `…/x402-gateway/mcp-tools/<tool>` (`lsk_` after payment); recipient `…/x402-gateway/recipient-mcp-tools/<tool>` (`rwk_`). Bazaar discovery metadata on the 402 body is built server-side (`x402-bazaar-accept.ts` in repo). After settle, optional `EXTENSION-RESPONSES` / `bazaar.status`.
 ```
 
 ---

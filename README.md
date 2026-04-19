@@ -117,7 +117,7 @@ These directories are **not** imported by the web app; they are optional helpers
 | [`scripts/traffic-bot-x402-bridge.py`](./scripts/traffic-bot-x402-bridge.py) | Example **Python → Node** subprocess hook for bots that already send loyalty txs on Base. |
 | [`scripts/agent-register-siwe/`](./scripts/agent-register-siwe/) | Helper: build SIWE message + sign + call **`agent-register-siwe`** (same as production). |
 
-Schemas for paid MCP (`mcp-tools/<name>`): **[supabase/functions/_shared/mcp-bazaar-tools.ts](./supabase/functions/_shared/mcp-bazaar-tools.ts)**. These scripts are **not** linked from the marketing homepage; primary onboarding remains [/for-agents](https://loyalspark.online/for-agents) and the merchant portal.
+Schemas for paid MCP: merchant **`mcp-tools/<name>`** — **[mcp-bazaar-tools.ts](./supabase/functions/_shared/mcp-bazaar-tools.ts)**; recipient **`recipient-mcp-tools/<name>`** — **[recipient-mcp-bazaar-tools.ts](./supabase/functions/_shared/recipient-mcp-bazaar-tools.ts)**. HTTP **402** `accepts` + Coinbase **x402 Bazaar** discovery metadata for all paid routes are built in **[x402-bazaar-accept.ts](./supabase/functions/_shared/x402-bazaar-accept.ts)**. These scripts are **not** linked from the marketing homepage; primary onboarding remains [/for-agents](https://loyalspark.online/for-agents) and the merchant portal.
 
 ### REST API
 
@@ -386,7 +386,7 @@ Agents can pay per request using onchain micropayments:
 
 Pricing: **$0.001–$0.005** per read · **$0.005–$0.05** per write · HTTP 402 challenge/response flow.
 
-**Paid MCP** uses `POST …/x402-gateway/mcp-tools/<tool_name>` (JSON-RPC `tools/call`); after settlement, pass **`x-api-key: lsk_…`** like direct MCP. Tool schemas: **`supabase/functions/_shared/mcp-bazaar-tools.ts`** · **`supabase/functions/_shared/x402-bazaar-accept.ts`** (402 `accepts` + Bazaar-oriented metadata).
+**Paid MCP (merchant):** `POST …/x402-gateway/mcp-tools/<tool_name>` (JSON-RPC `tools/call`); after settlement, pass **`x-api-key: lsk_…`** like direct MCP. **Recipient / holder MCP:** `POST …/x402-gateway/recipient-mcp-tools/<tool_name>` with **`x-api-key: rwk_…`**. Tool lists + JSON Schemas: **`mcp-bazaar-tools.ts`** · **`recipient-mcp-bazaar-tools.ts`**. **402 + Bazaar (discovery) metadata** for both families: **`x402-bazaar-accept.ts`** (`extensions.bazaar`, `outputSchema.input.type: "mcp"`). After successful settle, the CDP facilitator may return **`EXTENSION-RESPONSES`** (`bazaar.status`: success | processing | rejected).
 
 ### Catalogues & Registries
 

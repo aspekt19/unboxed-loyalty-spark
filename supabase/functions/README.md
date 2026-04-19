@@ -29,7 +29,7 @@ Each subdirectory is one deployable function (`index.ts` entry). Shared Deno mod
 | `verify-agent-plan-payment` | USDC subscription verification for **agent** and **merchant** plans (`product` in body; same `payment_settings.subscription_wallet_address`) |
 | `verify-voucher` | Voucher verification |
 | `mpp-gateway` | MPP pay-per-request proxy to `agent-api` and **`recipient-api`** (see `_shared/recipient-paid-routes.ts`) |
-| `x402-gateway` | x402 USDC on Base proxy to `agent-api`, **`recipient-api`**, **`recipient-loyalty-mcp`** (via `recipient-mcp-tools/*`) — see `_shared/recipient-paid-routes.ts` + `recipient-mcp-bazaar-tools.ts` |
+| `x402-gateway` | x402 USDC on Base proxy to `agent-api`, **`recipient-api`**, **`loyalty-mcp`** / **`recipient-loyalty-mcp`** (`mcp-tools/*`, `recipient-mcp-tools/*`). Pricing + JSON Schemas: `mcp-bazaar-tools.ts`, `recipient-mcp-bazaar-tools.ts`, `recipient-paid-routes.ts`. **Bazaar (discovery) fields** on HTTP 402: `_shared/x402-bazaar-accept.ts` — MCP routes emit `extensions.bazaar` + `outputSchema.input.type: "mcp"` for both merchant and recipient tool paths. |
 
 ## Jobs, sync, exports
 

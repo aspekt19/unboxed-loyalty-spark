@@ -68,13 +68,12 @@ curl -H "x-api-key: lsk_..." \
 
 ### Step 5 (Optional): Pay-per-call MCP via x402 (Bazaar-compatible)
 
-If the agent should **pay USDC per MCP call** instead of using subscription-only access to `loyalty-mcp`:
+If the agent should **pay USDC per MCP call** instead of using subscription-only access to `loyalty-mcp` or `recipient-loyalty-mcp`:
 
-- Use **`POST`** to  
-  `https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway/mcp-tools/<tool_name>`  
-  with JSON-RPC **`tools/call`**, same **`name`** / **`arguments`** as direct MCP, and header **`x-api-key: lsk_...`** on the **paid** retry.
-- Use an x402 client (**`@x402/fetch`**, **`@x402/evm`**) and a wallet with **USDC on Base** to satisfy **HTTP 402**.
-- **Parameter reference** (required fields, types): repository file **`supabase/functions/_shared/mcp-bazaar-tools.ts`** — keep prompts aligned with these schemas.
+- **Merchant tools:** **`POST`** `…/x402-gateway/mcp-tools/<tool_name>` — header **`x-api-key: lsk_...`** on the paid retry. Schemas: **`mcp-bazaar-tools.ts`**.
+- **Recipient / holder tools:** **`POST`** `…/x402-gateway/recipient-mcp-tools/<tool_name>` — **`x-api-key: rwk_...`**. Schemas: **`recipient-mcp-bazaar-tools.ts`**.
+- JSON-RPC **`tools/call`** with same **`name`** / **`arguments`** as direct MCP.
+- Use an x402 client (**`@x402/fetch`**, **`@x402/evm`**) and a wallet with **USDC on Base** to satisfy **HTTP 402**. The gateway adds **Bazaar**-oriented fields on **402** via **`x402-bazaar-accept.ts`** (MCP routes use `outputSchema.input.type: "mcp"` for both URL families).
 
 ### Step 6: Create Server Wallet (Optional)
 For autonomous onchain transactions, create a Coinbase MPC wallet:

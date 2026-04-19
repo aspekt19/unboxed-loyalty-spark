@@ -1,9 +1,14 @@
 /**
  * Builds x402 `accepts[0]` and matching facilitator `requirements` for verify/settle.
- * MCP routes use resource `mcp-tools/<tool>` → Bazaar + outputSchema.input type "mcp".
+ * MCP routes:
+ * - `mcp-tools/<tool>` (merchant, lsk_) — Bazaar `extensions.bazaar` + `outputSchema.input` type `mcp`
+ * - `recipient-mcp-tools/<tool>` (holder, rwk_) — same MCP shape; schemas from `recipient-mcp-bazaar-tools.ts`
+ * REST (`agent-api/*`, `recipient-api/*`) — HTTP-style Bazaar metadata.
  */
 
 import { getMcpBazaarTool, type McpBazaarTool } from "./mcp-bazaar-tools.ts";
+import { getRecipientMcpBazaarTool, type RecipientMcpBazaarTool } from "./recipient-mcp-bazaar-tools.ts";
+import { RECIPIENT_REST_ROUTE_USD } from "./recipient-paid-routes.ts";
 
 const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 
@@ -74,6 +79,32 @@ function mcpBazaarExtension(_mcp: McpBazaarTool) {
   };
 }
 
+function recipientMcpBazaarExtension(_mcp: RecipientMcpBazaarTool) {
+  return {
+    discoverable: true,
+    inputSchema: {
+      headers: {
+        "x-api-key": {
+          type: "string",
+          description: "Loyal Spark recipient API key (rwk_...). Required for holder/recipient MCP tools.",
+        },
+        Authorization: {
+          type: "string",
+          description: "Optional: Bearer rwk_... (alternative to x-api-key).",
+        },
+      },
+      body: {
+        description:
+          "JSON-RPC 2.0 for Streamable HTTP MCP (e.g. tools/call). Paid gateway forwards to recipient-loyalty-mcp.",
+      },
+    },
+    outputSchema: {
+      type: "object",
+      description: "MCP tool result (JSON-RPC response).",
+    },
+  };
+}
+
 export function buildAcceptEntry(p: BuildAcceptParams): {
   accept: Record<string, unknown>;
   resourceMethod: string;
@@ -130,6 +161,49 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
     return { accept, resourceMethod: "POST", resourceUrlForDiscovery };
   }
 
+  if (p.resource.startsWith("recipient-mcp-tools/")) {
+    const toolName = p.resource.slice("recipient-mcp-tools/".length);
+    const mcp = getRecipientMcpBazaarTool(toolName);
+    if (!mcp) {
+      throw new Error(`Unknown recipient MCP tool: ${toolName}`);
+    }
+    const recipientMcpUrl = `${p.supabaseUrl}/functions/v1/recipient-loyalty-mcp`;
+
+    const accept: Record<string, unknown> = {
+      scheme: "exact",
+      network: p.network,
+      amount,
+      maxAmountRequired,
+      maxTimeoutSeconds,
+      resource: resourceUrlForDiscovery,
+      description: `Loyal Spark Recipient MCP — ${mcp.name}: ${mcp.description}`,
+      mimeType: "application/json",
+      payTo: p.recipient,
+      asset: USDC_BASE,
+      extra: {
+        ...USDC_EIP712,
+        description:
+          `Loyal Spark Recipient MCP. After payment, POST the same JSON-RPC body to this x402 URL with PAYMENT-SIGNATURE / X-PAYMENT; gateway forwards to ${recipientMcpUrl}.`,
+        mcpServer: recipientMcpUrl,
+        mcpTool: mcp.name,
+      },
+      outputSchema: {
+        input: {
+          type: "mcp",
+          tool: mcp.name,
+          transport: "streamable-http",
+          description: mcp.description,
+          inputSchema: mcp.inputSchema,
+        },
+      },
+      extensions: {
+        bazaar: recipientMcpBazaarExtension(mcp),
+      },
+    };
+
+    return { accept, resourceMethod: "POST", resourceUrlForDiscovery };
+  }
+
   // REST agent-api routes — discoverable HTTP
   const accept: Record<string, unknown> = {
     scheme: "exact",
@@ -177,6 +251,9 @@ function getRestMethod(resource: string): string {
     "offers",
   ]);
   if (getKeys.has(resource)) return "GET";
+  if (RECIPIENT_REST_ROUTE_USD.GET && resource in RECIPIENT_REST_ROUTE_USD.GET) {
+    return "GET";
+  }
   return "POST";
 }
 
