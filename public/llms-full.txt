@@ -1,6 +1,6 @@
 # Loyal Spark — Onchain Loyalty Protocol (Full Reference)
 
-> Loyalty-as-a-Service for AI agents and merchants on Base L2. Deploy ERC-20 tokens, manage rewards, earn points from purchases, trade on P2P marketplace — via REST API, MCP Server, or pay-per-request gateways.
+> Loyalty-as-a-Service for AI agents and merchants on Base L2. Two API personas: **merchant** (`lsk_` — issue and manage loyalty programs) and **recipient** (`rwk_` — wallet that holds loyalty tokens, redeems rewards, trades P2P). Deploy ERC-20 tokens, manage rewards, earn points from purchases, trade on P2P marketplace — via REST API, MCP Server, or pay-per-request gateways (MPP / x402 v2).
 
 ## Overview
 
@@ -12,20 +12,24 @@ Loyal Spark is a dual-mode protocol: humans interact via web UI with flexible au
 - Static pointer (markdown): https://loyalspark.online/for-agents.md
 - Agent Manifest: https://loyalspark.online/.well-known/agent.json
 - OpenAPI 3.1.0: https://loyalspark.online/openapi.json
-- MCP Server: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp (Streamable HTTP)
+- MCP Server (merchant, `lsk_`, 28 tools): https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp (Streamable HTTP)
+- MCP Server (recipient, `rwk_`, 11 tools): https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp (Streamable HTTP)
+- REST (recipient, `rwk_`, 12 routes): https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-api
 - MPP Manifest: https://loyalspark.online/.well-known/mpp.json
+- x402 Resources: https://loyalspark.online/.well-known/x402.json (Bazaar-discoverable URLs for both merchant and recipient corridors)
 - AI Plugin: https://loyalspark.online/.well-known/ai-plugin.json
 - Skills Guide: https://loyalspark.online/.well-known/skills/index.md
 
 ## Authentication
 
-All API calls require an `x-api-key` header with a key prefixed `lsk_`.
+Two key prefixes for two roles:
 
-To get an API key:
-1. Visit https://loyalspark.online/merchant
-2. Sign in with email/passkey or connect a Web3 wallet
-3. Open "AI Agents" tab
-4. Register an agent and copy the key
+- **`lsk_…`** — merchant agent: issues programs, mints tokens, manages rewards. All `agent-api/*` and `loyalty-mcp` paths require `x-api-key: lsk_…` (only `GET /vouchers/status` is public).
+- **`rwk_…`** — recipient agent: a wallet that *holds* loyalty tokens. All `recipient-api/*` and `recipient-loyalty-mcp` paths require `x-api-key: rwk_…`.
+
+How to get a key:
+1. **Dashboard (humans):** sign in at https://loyalspark.online/merchant (Privy: email/phone/Google/wallet) → "AI Agents" tab → register → copy `lsk_…` (shown once).
+2. **Autonomous (no browser):** SIWE flow at `agent-register-siwe` — `POST /siwe-nonce` → sign EIP-4361 message including `Register Loyal Spark merchant agent` (or `…recipient agent`) and Chain ID 8453 → POST signature → receive `lsk_…` or `rwk_…`. Same limits as dashboard.
 
 ## REST API — 24 Endpoints
 
