@@ -89,9 +89,11 @@ function createRecipientMcpServer(
       return T(
         JSON.stringify({
           balance: {
-            current_balance: tierStatus?.current_balance ?? 0,
-            tokens_earned_total: tierStatus?.tokens_earned_total ?? 0,
-            last_updated: tierStatus?.last_calculated_at ?? null,
+            current_balance: onchain?.current_balance ?? 0,
+            raw_balance: onchain?.raw_balance ?? "0",
+            tokens_earned_total: onchain?.tokens_earned_total ?? 0,
+            last_updated: onchain?.last_calculated_at ?? null,
+            program: onchain?.program ?? null,
             tier: tierInfo,
           },
         })
