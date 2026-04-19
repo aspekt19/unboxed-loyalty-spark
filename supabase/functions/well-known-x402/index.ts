@@ -19,7 +19,8 @@ const CANONICAL_URL = "https://loyalspark.online/.well-known/x402.json";
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
 const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
-const NETWORK = "base";
+const NETWORK = "base"; // human label kept for legacy x402scan compatibility
+const NETWORK_CAIP2 = "eip155:8453"; // CAIP-2 — required by Bazaar v2 / CDP facilitator
 const PRICE_ATOMIC = "100"; // 0.0001 USDC (6 decimals) — placeholder for discovery scanners
 
 const corsHeaders = {
