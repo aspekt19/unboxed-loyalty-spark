@@ -61,12 +61,13 @@ async function loadDiscovery(): Promise<{ body: string; etag: string | null }> {
 }
 
 function buildPaymentRequired(req: Request): Response {
-  const url = new URL(req.url);
   const recipient =
     Deno.env.get("X402_RECIPIENT_ADDRESS") ||
     "0x5cc0Aa9ed773F413f81f78a62F2e94109CE26205";
 
-  const resource = `${url.origin}${url.pathname}`;
+  // Always advertise the public https URL of this function (Supabase edge sees http:// internal host).
+  const supabaseUrl = (Deno.env.get("SUPABASE_URL") || "https://bzxmejzssxjazswgwqqs.supabase.co").replace(/\/+$/, "");
+  const resource = `${supabaseUrl}/functions/v1/well-known-x402`;
 
   const accepts = [
     {
