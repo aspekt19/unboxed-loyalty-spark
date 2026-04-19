@@ -1907,6 +1907,7 @@ export type Database = {
       }
       check_expiring_subscriptions: { Args: never; Returns: undefined }
       check_program_expiration: { Args: never; Returns: undefined }
+      consume_siwe_nonce: { Args: { p_nonce: string }; Returns: string }
       generate_referral_code: {
         Args: { p_referrer_address: string; p_token_address: string }
         Returns: string
