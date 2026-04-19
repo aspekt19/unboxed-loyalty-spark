@@ -53,69 +53,65 @@ function resourcePublicOrigin(requestUrl: URL, supabaseUrl: string): string {
   return canonicalPublicOrigin(requestUrl);
 }
 
-function mcpBazaarExtension(_mcp: McpBazaarTool) {
+/** Bazaar v2 `info` shape per CDP docs: `{ input: { type, method, bodyType? }, output: { type, example, schema? } }`. */
+function mcpBazaarExtension(mcp: McpBazaarTool, kind: "merchant" | "recipient") {
+  const keyHint = kind === "merchant" ? "lsk_..." : "rwk_...";
   return {
     discoverable: true,
-    /** x402scan endpoint-only registration looks for `extensions.bazaar.info` + schema (DISCOVERY.md §C). */
+    provider: "Loyal Spark",
+    brand: "Loyal Spark",
+    website: "https://loyalspark.online",
+    documentation: "https://loyalspark.online/for-agents",
+    tags: ["loyalty", "rewards", "onchain", "base", "mcp", kind],
     info: {
-      type: "mcp",
-      tool: _mcp.name,
-      description: _mcp.description,
-      inputSchema: _mcp.inputSchema,
-    },
-    inputSchema: {
-      headers: {
-        "x-api-key": {
-          type: "string",
-          description: "Loyal Spark agent API key (lsk_...). Required for tools that access merchant data.",
-        },
-        Authorization: {
-          type: "string",
-          description: "Optional: Bearer lsk_... (alternative to x-api-key).",
-        },
-      },
-      body: {
+      input: {
+        type: "http",
+        method: "POST",
+        bodyType: "json",
         description:
-          "JSON-RPC 2.0 for Streamable HTTP MCP (e.g. tools/call with name and arguments). Paid gateway forwards the body to the MCP server.",
+          `JSON-RPC 2.0 (Streamable HTTP MCP). Authenticate with header x-api-key: ${keyHint} (or Authorization: Bearer ${keyHint}). Body: tools/call { name: "${mcp.name}", arguments: { ... } }.`,
+        mcpTool: mcp.name,
+        mcpToolDescription: mcp.description,
+        mcpToolInputSchema: mcp.inputSchema,
       },
-    },
-    outputSchema: {
-      type: "object",
-      description: "MCP tool result (JSON-RPC response).",
+      output: {
+        type: "json",
+        description: "MCP JSON-RPC 2.0 response with `result.content[]` (text/json blocks).",
+        example: {
+          jsonrpc: "2.0",
+          id: 1,
+          result: {
+            content: [{ type: "text", text: `{ "ok": true, "tool": "${mcp.name}" }` }],
+          },
+        },
+        schema: {
+          $schema: "https://json-schema.org/draft/2020-12/schema",
+          type: "object",
+          properties: {
+            jsonrpc: { type: "string", const: "2.0" },
+            id: {},
+            result: {
+              type: "object",
+              properties: {
+                content: {
+                  type: "array",
+                  items: { type: "object" },
+                },
+              },
+            },
+            error: { type: "object" },
+          },
+        },
+      },
     },
   };
 }
 
-function recipientMcpBazaarExtension(_mcp: RecipientMcpBazaarTool) {
-  return {
-    discoverable: true,
-    info: {
-      type: "mcp",
-      tool: _mcp.name,
-      description: _mcp.description,
-      inputSchema: _mcp.inputSchema,
-    },
-    inputSchema: {
-      headers: {
-        "x-api-key": {
-          type: "string",
-          description: "Loyal Spark recipient API key (rwk_...). Required for holder/recipient MCP tools.",
-        },
-        Authorization: {
-          type: "string",
-          description: "Optional: Bearer rwk_... (alternative to x-api-key).",
-        },
-      },
-      body: {
-        description:
-          "JSON-RPC 2.0 for Streamable HTTP MCP (e.g. tools/call). Paid gateway forwards to recipient-loyalty-mcp.",
-      },
-    },
-    outputSchema: {
-      type: "object",
-      description: "MCP tool result (JSON-RPC response).",
-    },
-  };
+function recipientMcpBazaarExtension(mcp: RecipientMcpBazaarTool) {
+  return mcpBazaarExtension(
+    { name: mcp.name, price: mcp.price, description: mcp.description, inputSchema: mcp.inputSchema },
+    "recipient",
+  );
 }
 
 export function buildAcceptEntry(p: BuildAcceptParams): {
