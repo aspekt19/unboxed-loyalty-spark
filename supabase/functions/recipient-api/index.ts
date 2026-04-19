@@ -191,7 +191,8 @@ Deno.serve(async (req) => {
       const { data: tiers, error } = await serviceClient
         .from("customer_tier_status")
         .select("token_address, current_balance, tokens_earned_total, current_tier_id, last_calculated_at")
-        .eq("customer_address", wallet);
+        // DB может хранить адрес в mixed-case; wallet уже lower — без ilike строки не находились (пустой balances при живом UI)
+        .ilike("customer_address", wallet);
 
       if (error) {
         await insertRecipientActivity(serviceClient, agent.agentId, "balances", {}, 500, { error: error.message }, ip);
@@ -226,8 +227,8 @@ Deno.serve(async (req) => {
       const { data: tierStatus } = await serviceClient
         .from("customer_tier_status")
         .select("current_balance, tokens_earned_total, current_tier_id, last_calculated_at")
-        .eq("token_address", tokenAddress.toLowerCase())
-        .eq("customer_address", wallet)
+        .ilike("token_address", tokenAddress.toLowerCase())
+        .ilike("customer_address", wallet)
         .maybeSingle();
 
       let tierInfo = null;
@@ -289,7 +290,7 @@ Deno.serve(async (req) => {
       let q = serviceClient
         .from("vouchers")
         .select("id, code, reward_name, cost, status, token_address, merchant_address, activated_at, used_at")
-        .eq("customer_address", wallet)
+        .ilike("customer_address", wallet)
         .order("activated_at", { ascending: false })
         .limit(limit);
 

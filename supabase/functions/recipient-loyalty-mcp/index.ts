@@ -54,7 +54,7 @@ function createRecipientMcpServer(
       const { data: tiers, error } = await db
         .from("customer_tier_status")
         .select("token_address, current_balance, tokens_earned_total, current_tier_id, last_calculated_at")
-        .eq("customer_address", w);
+        .ilike("customer_address", w);
       if (error) {
         await log("list_my_loyalty_balances", {}, 500, { error: error.message });
         return T(JSON.stringify({ error: error.message }));
@@ -85,8 +85,8 @@ function createRecipientMcpServer(
       const { data: tierStatus } = await db
         .from("customer_tier_status")
         .select("current_balance, tokens_earned_total, current_tier_id, last_calculated_at")
-        .eq("token_address", token_address.toLowerCase())
-        .eq("customer_address", w)
+        .ilike("token_address", token_address.toLowerCase())
+        .ilike("customer_address", w)
         .maybeSingle();
       let tierInfo = null;
       if (tierStatus?.current_tier_id) {
@@ -173,7 +173,7 @@ function createRecipientMcpServer(
       let q = db
         .from("vouchers")
         .select("id, code, reward_name, cost, status, token_address, merchant_address, activated_at, used_at")
-        .eq("customer_address", w)
+        .ilike("customer_address", w)
         .order("activated_at", { ascending: false })
         .limit(lim);
       if (token_address && /^0x[a-fA-F0-9]{40}$/.test(token_address)) q = q.eq("token_address", token_address.toLowerCase());
