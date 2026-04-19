@@ -13,7 +13,6 @@ Start at the repo root **[AGENTS.md](../AGENTS.md)** (links to rules, APIs, and 
 | [agents/](./agents/) | [Quickstart](./agents/QUICKSTART.md), [autonomous `lsk_` (SIWE)](./agents/AUTONOMOUS_AGENT_REGISTRATION.md); x402 MCP schemas in repo `supabase/functions/_shared/mcp-bazaar-tools.ts` |
 | [development/](./development/) | Build, deploy, Capacitor; [PORTALS_AND_TEAM.md](./development/PORTALS_AND_TEAM.md) (`/merchant`, `/customer`, team RPC) |
 | [integrations/](./integrations/) | Farcaster, OpenServ, A2A, prompts, adaptation plans |
-| [deployment/](./deployment/) | [Lovable handoff — recipient holder transfer](./deployment/LOVABLE_RECIPIENT_HOLDER_TRANSFER.md) (Edge deploy checklist; not related to local bots) |
 | [pitch-deck/](./pitch-deck/) | Investor deck source notes (Markdown); live UI route: `/pitch` |
 | [supabase/](./supabase/) | Supabase-specific runbooks (e.g. expiration cron) |
 
