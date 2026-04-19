@@ -1,22 +1,33 @@
 /**
- * x402 Discovery endpoint hosted on the same origin as the gateway.
+ * Dual-mode endpoint for x402scan / x402 discovery scanners on the same origin
+ * as our paid gateway (bzxmejzssxjazswgwqqs.supabase.co).
  *
- * x402scan и аналогичные сканеры по DISCOVERY.md привязывают ресурсы из `resources[]`
- * к origin discovery-документа. У нас x402-gateway живёт на bzxmejzssxjazswgwqqs.supabase.co,
- * а статический /.well-known/x402.json раздаётся с loyalspark.online — поэтому регистрация
- * через сайт ломалась (сканер пытался дёргать loyalspark.online/functions/v1/...).
+ * - GET / HEAD → x402 discovery document (proxied from loyalspark.online/.well-known/x402.json)
+ *   so that scanners (DISCOVERY.md) see resources[] from the same origin.
  *
- * Эта функция отдаёт тот же JSON, но с правильного origin (Supabase). Источник правды —
- * /.well-known/x402.json на сайте; здесь мы его проксируем + кэшируем на 5 минут.
+ * - POST (and any other write method scanners try) → real HTTP **402 Payment Required**
+ *   with a valid `accepts[]` array (USDC on Base, EIP-3009 / x402 v1 "exact" scheme).
+ *   x402scan's "Add Server" form posts to the URL and validates the 402 response —
+ *   without this branch it shows "No valid x402 response found".
+ *
+ * The 402 stub here is intentionally cheap ($0.0001) and points back at the same
+ * URL as `resource`, so settling against it is a no-op for the scanner. Real paid
+ * routes live under `/x402-gateway/*` and are listed in the discovery document.
  */
 
 const CANONICAL_URL = "https://loyalspark.online/.well-known/x402.json";
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
+const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+const NETWORK = "base";
+const PRICE_ATOMIC = "100"; // 0.0001 USDC (6 decimals) — placeholder for discovery scanners
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, HEAD, POST, OPTIONS",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-payment, x-payment-response",
+  "Access-Control-Expose-Headers": "x-payment-response, www-authenticate",
 };
 
 let cache: { body: string; etag: string | null; fetchedAt: number } | null = null;
@@ -36,7 +47,6 @@ async function loadDiscovery(): Promise<{ body: string; etag: string | null }> {
   }
 
   const body = await upstream.text();
-  // Sanity check — must be valid JSON with `resources` array.
   const parsed = JSON.parse(body);
   if (!parsed || !Array.isArray(parsed.resources)) {
     throw new Error("Upstream payload is not a valid x402 discovery document");
@@ -50,16 +60,68 @@ async function loadDiscovery(): Promise<{ body: string; etag: string | null }> {
   return { body, etag: cache.etag };
 }
 
+function buildPaymentRequired(req: Request): Response {
+  const url = new URL(req.url);
+  const recipient =
+    Deno.env.get("X402_RECIPIENT_ADDRESS") ||
+    "0x5cc0Aa9ed773F413f81f78a62F2e94109CE26205";
+
+  const resource = `${url.origin}${url.pathname}`;
+
+  const accepts = [
+    {
+      scheme: "exact",
+      network: NETWORK,
+      maxAmountRequired: PRICE_ATOMIC,
+      resource,
+      description:
+        "Loyal Spark x402 discovery probe. Real paid routes are listed in GET /well-known-x402 (resources[]).",
+      mimeType: "application/json",
+      payTo: recipient,
+      maxTimeoutSeconds: 60,
+      asset: USDC_BASE,
+      outputSchema: {
+        input: { type: "http", method: "POST" },
+        output: { discovery: "GET this URL with Accept: application/json" },
+      },
+      extra: { name: "USD Coin", version: "2" },
+      extensions: {
+        bazaar: {
+          discoverable: true,
+          info: {
+            type: "http",
+            method: "POST",
+            description:
+              "Discovery probe endpoint. Use GET on the same URL to fetch the full x402 resources[] list.",
+          },
+        },
+      },
+    },
+  ];
+
+  const body = JSON.stringify({
+    x402Version: 1,
+    error: "X-PAYMENT header is required",
+    accepts,
+  });
+
+  const headers = new Headers(corsHeaders);
+  headers.set("Content-Type", "application/json; charset=utf-8");
+  headers.set(
+    "WWW-Authenticate",
+    `x402 realm="loyalspark", scheme="exact", network="${NETWORK}", asset="${USDC_BASE}"`,
+  );
+  return new Response(body, { status: 402, headers });
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Any non-GET/HEAD method (POST/PUT/PATCH/DELETE) → 402 stub for x402scan probes.
   if (req.method !== "GET" && req.method !== "HEAD") {
-    return new Response(JSON.stringify({ error: "Method Not Allowed" }), {
-      status: 405,
-      headers: { ...corsHeaders, "Content-Type": "application/json", Allow: "GET, HEAD, OPTIONS" },
-    });
+    return buildPaymentRequired(req);
   }
 
   try {
