@@ -217,13 +217,40 @@ export async function marketplaceAcceptOffer(
     })
     .eq("id", offer_id);
 
+  const reqToken = (request_token_address ?? offer.request_token_address) as string;
+  const reqAmount = Number(request_amount ?? offer.request_amount);
+  const fillCalldata =
+    onchain_offer_id !== undefined && onchain_offer_id !== null
+      ? encodeEscrowFillOfferCalldata(onchain_offer_id as number | string)
+      : null;
+
   return {
     status: 200,
     body: {
       message: "Offer accepted. Execute fillOffer on the escrow contract to complete the atomic swap.",
       escrow_contract: {
+        address: ESCROW_ADDRESS,
         function: "fillOffer(uint256)",
         note: "First approve the escrow contract for request_amount of request_token, then call fillOffer with the on-chain offer ID.",
+        builder_code: BUILDER_CODE,
+        calldata: {
+          approve: {
+            to: reqToken,
+            data: encodeEscrowApproveCalldata(reqAmount),
+            description: "ERC-20 approve(escrow, request_amount) on request_token",
+          },
+          fill_offer: fillCalldata
+            ? {
+                to: ESCROW_ADDRESS,
+                data: fillCalldata,
+                description: "fillOffer(onchain_offer_id) with Builder Code suffix",
+              }
+            : {
+                to: ESCROW_ADDRESS,
+                description:
+                  "Pass onchain_offer_id (uint256 from OfferCreated event) to receive ready calldata.",
+              },
+        },
       },
       offer,
     },
