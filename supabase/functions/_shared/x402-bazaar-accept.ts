@@ -56,6 +56,13 @@ function resourcePublicOrigin(requestUrl: URL, supabaseUrl: string): string {
 function mcpBazaarExtension(_mcp: McpBazaarTool) {
   return {
     discoverable: true,
+    /** x402scan endpoint-only registration looks for `extensions.bazaar.info` + schema (DISCOVERY.md §C). */
+    info: {
+      type: "mcp",
+      tool: _mcp.name,
+      description: _mcp.description,
+      inputSchema: _mcp.inputSchema,
+    },
     inputSchema: {
       headers: {
         "x-api-key": {
@@ -82,6 +89,12 @@ function mcpBazaarExtension(_mcp: McpBazaarTool) {
 function recipientMcpBazaarExtension(_mcp: RecipientMcpBazaarTool) {
   return {
     discoverable: true,
+    info: {
+      type: "mcp",
+      tool: _mcp.name,
+      description: _mcp.description,
+      inputSchema: _mcp.inputSchema,
+    },
     inputSchema: {
       headers: {
         "x-api-key": {
@@ -223,6 +236,14 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
     extensions: {
       bazaar: {
         discoverable: true,
+        info: {
+          type: "http",
+          resource: p.resource,
+          inputSchema: {
+            type: "object",
+            description: `HTTP ${getRestMethod(p.resource)} …/x402-gateway/${p.resource} — see OpenAPI / agent-api docs for query/body.`,
+          },
+        },
         inputSchema: {
           headers: {
             "x-api-key": {
