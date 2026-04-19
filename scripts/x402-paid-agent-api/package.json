@@ -1,0 +1,11 @@
+{
+  "name": "loyalspark-x402-paid-agent-api",
+  "private": true,
+  "type": "module",
+  "description": "x402 v2 USDC → x402-gateway/<resource> → agent-api (same stack as x402-paid-mcp-test)",
+  "dependencies": {
+    "@x402/fetch": "^2.10.0",
+    "@x402/evm": "^2.10.0",
+    "viem": "^2.46.0"
+  }
+}

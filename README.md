@@ -113,6 +113,8 @@ These directories are **not** imported by the web app; they are optional helpers
 | Folder | Purpose |
 |--------|---------|
 | [`scripts/x402-paid-mcp-test/`](./scripts/x402-paid-mcp-test/) | Smoke test: paid MCP via **x402** (USDC on Base, `@x402/fetch`). |
+| [`scripts/x402-paid-agent-api/`](./scripts/x402-paid-agent-api/) | Same stack, paid **agent-api** routes (`GET/POST` to `x402-gateway/<resource>`). |
+| [`scripts/traffic-bot-x402-bridge.py`](./scripts/traffic-bot-x402-bridge.py) | Example **Python → Node** subprocess hook for bots that already send loyalty txs on Base. |
 | [`scripts/agent-register-siwe/`](./scripts/agent-register-siwe/) | Helper: build SIWE message + sign + call **`agent-register-siwe`** (same as production). |
 
 Schemas for paid MCP (`mcp-tools/<name>`): **[supabase/functions/_shared/mcp-bazaar-tools.ts](./supabase/functions/_shared/mcp-bazaar-tools.ts)**. These scripts are **not** linked from the marketing homepage; primary onboarding remains [/for-agents](https://loyalspark.online/for-agents) and the merchant portal.
