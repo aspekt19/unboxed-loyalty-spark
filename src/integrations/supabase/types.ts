@@ -1459,6 +1459,89 @@ export type Database = {
         }
         Relationships: []
       }
+      recipient_agent_activity_log: {
+        Row: {
+          action: string
+          agent_id: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          request_body: Json | null
+          response_body: Json | null
+          response_status: number | null
+        }
+        Insert: {
+          action: string
+          agent_id: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          request_body?: Json | null
+          response_body?: Json | null
+          response_status?: number | null
+        }
+        Update: {
+          action?: string
+          agent_id?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          request_body?: Json | null
+          response_body?: Json | null
+          response_status?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipient_agent_activity_log_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "recipient_agent_registry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipient_agent_registry: {
+        Row: {
+          api_key_hash: string
+          api_key_prefix: string
+          created_at: string
+          id: string
+          is_active: boolean
+          last_request_at: string | null
+          name: string
+          rate_limit_per_minute: number
+          total_requests: number
+          updated_at: string
+          wallet_address: string
+        }
+        Insert: {
+          api_key_hash: string
+          api_key_prefix: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_request_at?: string | null
+          name: string
+          rate_limit_per_minute?: number
+          total_requests?: number
+          updated_at?: string
+          wallet_address: string
+        }
+        Update: {
+          api_key_hash?: string
+          api_key_prefix?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_request_at?: string | null
+          name?: string
+          rate_limit_per_minute?: number
+          total_requests?: number
+          updated_at?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       referral_programs: {
         Row: {
           created_at: string | null
