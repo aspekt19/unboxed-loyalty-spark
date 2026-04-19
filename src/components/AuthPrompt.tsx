@@ -10,7 +10,7 @@ import { INLINE_AUTH_CTA_CLASSNAME } from '@/components/WalletConnectButton';
 import { cn } from '@/lib/utils';
 
 export function AuthPrompt() {
-  const { user, signInWithWallet, signInWithPrivy, isLoading } = useAuth();
+  const { user, signInWithWallet, signInWithPrivy, isLoading, resetManualSignOut } = useAuth();
   const { isConnected } = useAccount();
   const { connect, connectors } = useConnect();
   const {
@@ -21,6 +21,26 @@ export function AuthPrompt() {
   } = usePrivySafe();
 
   const isFarcaster = isFarcasterContext();
+
+  const handleWalletSignIn = () => {
+    resetManualSignOut();
+    void signInWithWallet();
+  };
+
+  const handlePrivySignIn = () => {
+    resetManualSignOut();
+    void signInWithPrivy();
+  };
+
+  const handlePrivyLogin = () => {
+    resetManualSignOut();
+    privyLogin();
+  };
+
+  const handleFarcasterConnect = () => {
+    resetManualSignOut();
+    connect({ connector: connectors[0] });
+  };
 
   if (isLoading || user) return null;
 
@@ -36,7 +56,7 @@ export function AuthPrompt() {
             </p>
             <Button
               variant="uds"
-              onClick={() => void signInWithWallet()}
+              onClick={handleWalletSignIn}
               disabled={isLoading}
               className={cn(INLINE_AUTH_CTA_CLASSNAME)}
             >
@@ -58,7 +78,7 @@ export function AuthPrompt() {
           </p>
           <Button
             variant="uds"
-            onClick={() => connect({ connector: connectors[0] })}
+            onClick={handleFarcasterConnect}
             className={cn(INLINE_AUTH_CTA_CLASSNAME)}
             type="button"
           >
@@ -82,7 +102,7 @@ export function AuthPrompt() {
             Sign in with email, SMS, Google, or an external wallet. Email and social sign-in do not
             require a wallet signature.
           </p>
-          <Button variant="uds" onClick={() => privyLogin()} className={cn(INLINE_AUTH_CTA_CLASSNAME)} type="button">
+          <Button variant="uds" onClick={handlePrivyLogin} className={cn(INLINE_AUTH_CTA_CLASSNAME)} type="button">
             <LogIn className="h-3.5 w-3.5 shrink-0" />
             Sign In
           </Button>
@@ -100,7 +120,7 @@ export function AuthPrompt() {
           <p className="text-sm text-muted-foreground">Finish signing in to your account.</p>
           <Button
             variant="uds"
-            onClick={() => void signInWithPrivy()}
+            onClick={handlePrivySignIn}
             disabled={isLoading}
             className={cn(INLINE_AUTH_CTA_CLASSNAME)}
             type="button"
@@ -123,7 +143,7 @@ export function AuthPrompt() {
             Choose a wallet in the Privy window. After it connects, you will sign one message (SIWE)
             to link your wallet to Loyal Spark.
           </p>
-          <Button variant="uds" onClick={() => privyLogin()} className={cn(INLINE_AUTH_CTA_CLASSNAME)} type="button">
+          <Button variant="uds" onClick={handlePrivyLogin} className={cn(INLINE_AUTH_CTA_CLASSNAME)} type="button">
             <LogIn className="h-3.5 w-3.5 shrink-0" />
             Connect wallet
           </Button>
@@ -142,7 +162,7 @@ export function AuthPrompt() {
         </p>
         <Button
           variant="uds"
-          onClick={() => void signInWithWallet()}
+          onClick={handleWalletSignIn}
           disabled={isLoading}
           className={cn(INLINE_AUTH_CTA_CLASSNAME, 'w-full sm:w-auto')}
           type="button"
