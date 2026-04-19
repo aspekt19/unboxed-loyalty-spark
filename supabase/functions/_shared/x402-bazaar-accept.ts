@@ -149,6 +149,10 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
       asset: USDC_BASE,
       extra: {
         ...USDC_EIP712,
+        provider: "Loyal Spark",
+        brand: "Loyal Spark",
+        website: "https://loyalspark.online",
+        documentation: "https://loyalspark.online/for-agents",
         description: `Loyal Spark MCP. After payment, POST the same JSON-RPC body to this x402 URL with PAYMENT-SIGNATURE / X-PAYMENT; gateway forwards to ${loyaltyMcpUrl}.`,
         mcpServer: loyaltyMcpUrl,
         mcpTool: mcp.name,
@@ -191,6 +195,10 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
       asset: USDC_BASE,
       extra: {
         ...USDC_EIP712,
+        provider: "Loyal Spark",
+        brand: "Loyal Spark",
+        website: "https://loyalspark.online",
+        documentation: "https://loyalspark.online/for-agents",
         description:
           `Loyal Spark Recipient MCP. After payment, POST the same JSON-RPC body to this x402 URL with PAYMENT-SIGNATURE / X-PAYMENT; gateway forwards to ${recipientMcpUrl}.`,
         mcpServer: recipientMcpUrl,
