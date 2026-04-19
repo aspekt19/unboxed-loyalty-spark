@@ -134,6 +134,44 @@ Auth: x-api-key header
 }
 ```
 
+## Recipient REST API (`rwk_`) — 12 Routes
+
+Base URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-api · Auth: `x-api-key: rwk_…`
+
+| Method | Path | Price | Description |
+|--------|------|-------|-------------|
+| GET | /me | free | Recipient agent profile and wallet |
+| GET | /balances | $0.001 | All loyalty balances for the bound wallet |
+| GET | /balance?token_address=0x… | $0.001 | One-token balance and tier |
+| GET | /rewards?token_address=0x… | $0.001 | Rewards available for redemption |
+| GET | /vouchers | $0.001 | Vouchers issued to this wallet |
+| GET | /offers | $0.001 | P2P marketplace offers |
+| POST | /register | free | One-time wallet registration (after SIWE) |
+| POST | /prepare-transfer | $0.005 | ERC-20 transfer calldata (holder → any address) |
+| POST | /redeem-reward | $0.01 | Redeem a reward via on-chain tx hash |
+| POST | /offers | $0.01 | Create a P2P swap intent (escrow) |
+| POST | /accept-offer | $0.01 | Accept a P2P offer (atomic swap) |
+| POST | /cancel-offer | $0.005 | Cancel your own P2P offer |
+
+## Recipient MCP Server — 11 Tools
+
+URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp · Transport: Streamable HTTP · Auth: `x-api-key: rwk_…`
+
+1. `get_recipient_profile` — Wallet identity bound to this `rwk_` key
+2. `list_my_loyalty_balances` — All loyalty balances and tiers
+3. `get_my_loyalty_balance` — One-program balance
+4. `prepare_loyalty_token_transfer` — ERC-20 transfer calldata ($0.005)
+5. `list_rewards_for_program` — Rewards available to redeem
+6. `list_my_vouchers` — Voucher inventory
+7. `redeem_my_reward` — Redeem reward (verifies tx hash, mints voucher)
+8. `list_p2p_offers` — Active marketplace offers ($0.001)
+9. `create_p2p_offer` — Lock tokens into escrow
+10. `accept_p2p_offer` — Atomic swap with escrow contract
+11. `cancel_p2p_offer` — Cancel and unlock your tokens ($0.005)
+
+Default price: $0.01 per call (matches merchant MCP). Same Bazaar metadata exposed in 402 challenges via `recipient-mcp-tools/<name>` x402 corridor.
+
+
 ## Payment Gateways
 
 ### MPP (Machine Payments Protocol)
@@ -154,8 +192,8 @@ Auth: x-api-key header
 Agents can create Coinbase CDP MPC wallets for autonomous onchain operations:
 - No private keys to manage
 - Server-side transaction signing
-- Support for `use_agent_wallet: true` in program creation
-- Create via: POST /agent-api with action `create_server_wallet`
+- Support for `use_agent_wallet: true` in program creation / mint flows
+- Endpoint: `POST https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-wallet` with `x-api-key: lsk_…` (separate Edge Function, not part of agent-api)
 
 ## Subscription Plans (AI agents, `lsk_`)
 
