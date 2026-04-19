@@ -241,6 +241,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
       brand: "Loyal Spark",
       website: "https://loyalspark.online",
       documentation: "https://loyalspark.online/for-agents",
+      builderCode: "bc_wdmnog7m",
       description: `Loyal Spark agent-api /${p.resource}`,
     },
     extensions: {
@@ -250,7 +251,8 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
         brand: "Loyal Spark",
         website: "https://loyalspark.online",
         documentation: "https://loyalspark.online/for-agents",
-        tags: ["loyalty", "rewards", "onchain", "base", "rest", "http"],
+        builderCode: "bc_wdmnog7m",
+        tags: ["loyalty", "rewards", "onchain", "base", "rest", "http", "builder:bc_wdmnog7m"],
         info: {
           input: {
             type: "http",
