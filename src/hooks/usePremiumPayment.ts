@@ -1,9 +1,10 @@
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
+import { useSendTransaction, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { parseUnits } from 'viem';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
+import { encodeWithBuilderCode } from '@/config/builder-code';
 
 // USDC contract on BASE Network
 const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as `0x${string}`;
@@ -37,7 +38,7 @@ export const usePremiumPayment = (
   const queryClient = useQueryClient();
   const [lastTxHash, setLastTxHash] = useState<`0x${string}` | undefined>();
 
-  // Check USDC balance
+  // Check USDC balance (read-only — no Builder Code needed)
   const { data: usdcBalance } = useReadContract({
     address: USDC_ADDRESS,
     abi: USDC_ABI,
@@ -48,12 +49,15 @@ export const usePremiumPayment = (
     }
   });
 
-  // Send USDC payment
+  /**
+   * Send via raw sendTransaction so we can append the Base Builder Code suffix
+   * to the calldata (writeContract overrides `data`, so it cannot carry the suffix).
+   */
   const { 
-    writeContract: sendPayment, 
+    sendTransaction, 
     data: paymentHash,
     isPending: isSending,
-  } = useWriteContract();
+  } = useSendTransaction();
 
   const { 
     isSuccess: isPaymentConfirmed, 
@@ -82,7 +86,6 @@ export const usePremiumPayment = (
       paymentAmount: number;
       paymentType: 'usdc' | 'eth';
     }) => {
-      // Create payment request with PENDING status
       const { data: requestData, error: requestError } = await supabase
         .from('premium_payment_requests')
         .insert({
@@ -108,7 +111,6 @@ export const usePremiumPayment = (
     },
   });
 
-  // Create payment request when payment is confirmed
   useEffect(() => {
     if (isPaymentConfirmed && lastTxHash && userAddress) {
       createPaymentRequest.mutate({
@@ -132,18 +134,21 @@ export const usePremiumPayment = (
     try {
       if (finalType === 'usdc') {
         const amountInUnits = parseUnits(finalAmount.toString(), 6); // USDC has 6 decimals
-        sendPayment({
-          address: USDC_ADDRESS,
-          abi: USDC_ABI,
-          functionName: 'transfer',
-          args: [adminAddress as `0x${string}`, amountInUnits],
-        } as any);
+        // ERC-20 transfer(address,uint256) calldata + Base Builder Code suffix.
+        const data = encodeWithBuilderCode(USDC_ABI, 'transfer', [
+          adminAddress as `0x${string}`,
+          amountInUnits,
+        ]);
+        sendTransaction({
+          to: USDC_ADDRESS,
+          data,
+        });
       } else {
-        // ETH native transfer
-        sendPayment({
+        // Native ETH transfer — no calldata, Builder Code suffix not applicable.
+        sendTransaction({
           to: adminAddress as `0x${string}`,
-          value: parseUnits(finalAmount.toString(), 18), // ETH has 18 decimals
-        } as any);
+          value: parseUnits(finalAmount.toString(), 18),
+        });
       }
     } catch (error: any) {
       console.error('Payment error:', error);

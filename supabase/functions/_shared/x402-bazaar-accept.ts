@@ -62,7 +62,9 @@ function mcpBazaarExtension(mcp: McpBazaarTool, kind: "merchant" | "recipient") 
     brand: "Loyal Spark",
     website: "https://loyalspark.online",
     documentation: "https://loyalspark.online/for-agents",
-    tags: ["loyalty", "rewards", "onchain", "base", "mcp", kind],
+    /** Base Builder Code (ERC-8021). Marker only — x402 USDC EIP-3009 calldata is built by the facilitator and cannot carry the suffix; we attribute by tagging discovery metadata so x402scan/Bazaar/Base attribution can credit Loyal Spark. */
+    builderCode: "bc_wdmnog7m",
+    tags: ["loyalty", "rewards", "onchain", "base", "mcp", kind, "builder:bc_wdmnog7m"],
     info: {
       input: {
         type: "http",
@@ -153,6 +155,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
         brand: "Loyal Spark",
         website: "https://loyalspark.online",
         documentation: "https://loyalspark.online/for-agents",
+        builderCode: "bc_wdmnog7m",
         description: `Loyal Spark MCP. After payment, POST the same JSON-RPC body to this x402 URL with PAYMENT-SIGNATURE / X-PAYMENT; gateway forwards to ${loyaltyMcpUrl}.`,
         mcpServer: loyaltyMcpUrl,
         mcpTool: mcp.name,
@@ -199,6 +202,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
         brand: "Loyal Spark",
         website: "https://loyalspark.online",
         documentation: "https://loyalspark.online/for-agents",
+        builderCode: "bc_wdmnog7m",
         description:
           `Loyal Spark Recipient MCP. After payment, POST the same JSON-RPC body to this x402 URL with PAYMENT-SIGNATURE / X-PAYMENT; gateway forwards to ${recipientMcpUrl}.`,
         mcpServer: recipientMcpUrl,
@@ -239,6 +243,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
       brand: "Loyal Spark",
       website: "https://loyalspark.online",
       documentation: "https://loyalspark.online/for-agents",
+      builderCode: "bc_wdmnog7m",
       description: `Loyal Spark agent-api /${p.resource}`,
     },
     extensions: {
@@ -248,7 +253,8 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
         brand: "Loyal Spark",
         website: "https://loyalspark.online",
         documentation: "https://loyalspark.online/for-agents",
-        tags: ["loyalty", "rewards", "onchain", "base", "rest", "http"],
+        builderCode: "bc_wdmnog7m",
+        tags: ["loyalty", "rewards", "onchain", "base", "rest", "http", "builder:bc_wdmnog7m"],
         info: {
           input: {
             type: "http",

@@ -123,10 +123,16 @@ function buildPaymentRequired(req: Request): Response {
     extra: {
       name: "USD Coin",
       version: "2",
+      provider: "Loyal Spark",
+      brand: "Loyal Spark",
+      website: "https://loyalspark.online",
+      documentation: "https://loyalspark.online/for-agents",
+      builderCode: "bc_wdmnog7m",
     },
     extensions: {
       bazaar: {
         info: bazaarInfo,
+        builderCode: "bc_wdmnog7m",
       },
     },
   });
@@ -142,6 +148,7 @@ function buildPaymentRequired(req: Request): Response {
       provider: "Loyal Spark",
       website: "https://loyalspark.online",
       documentation: "https://loyalspark.online/for-agents",
+      builderCode: "bc_wdmnog7m",
     },
   });
 

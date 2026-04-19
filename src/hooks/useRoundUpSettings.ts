@@ -1,9 +1,10 @@
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { ROUNDUP_CONTRACTS } from '@/config/roundup-contracts';
 import { toast } from 'sonner';
+import { encodeWithBuilderCode } from '@/config/builder-code';
 
 export const useRoundUpSettings = () => {
-  const { data: hash, writeContract, isPending } = useWriteContract();
+  const { data: hash, sendTransaction, isPending } = useSendTransaction();
   
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
@@ -15,12 +16,15 @@ export const useRoundUpSettings = () => {
     strategy: 0 | 1
   ) => {
     try {
-      await writeContract({
-        address: ROUNDUP_CONTRACTS.ROUND_UP_VAULT.address,
-        abi: ROUNDUP_CONTRACTS.ROUND_UP_VAULT.abi,
-        functionName: 'initializeSettings',
-        args: [autoInvest, BigInt(multiplier), strategy],
-      } as any);
+      const data = encodeWithBuilderCode(
+        ROUNDUP_CONTRACTS.ROUND_UP_VAULT.abi as any,
+        'initializeSettings',
+        [autoInvest, BigInt(multiplier), strategy],
+      );
+      sendTransaction({
+        to: ROUNDUP_CONTRACTS.ROUND_UP_VAULT.address,
+        data,
+      });
     } catch (error) {
       console.error('Initialize settings error:', error);
       toast.error('Failed to initialize settings');
@@ -34,12 +38,15 @@ export const useRoundUpSettings = () => {
     strategy: 0 | 1
   ) => {
     try {
-      await writeContract({
-        address: ROUNDUP_CONTRACTS.ROUND_UP_VAULT.address,
-        abi: ROUNDUP_CONTRACTS.ROUND_UP_VAULT.abi,
-        functionName: 'updateSettings',
-        args: [autoInvest, BigInt(multiplier), strategy],
-      } as any);
+      const data = encodeWithBuilderCode(
+        ROUNDUP_CONTRACTS.ROUND_UP_VAULT.abi as any,
+        'updateSettings',
+        [autoInvest, BigInt(multiplier), strategy],
+      );
+      sendTransaction({
+        to: ROUNDUP_CONTRACTS.ROUND_UP_VAULT.address,
+        data,
+      });
     } catch (error) {
       console.error('Update settings error:', error);
       toast.error('Failed to update settings');
