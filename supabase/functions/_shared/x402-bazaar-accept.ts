@@ -15,6 +15,15 @@ const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 /** EIP-712 domain for native USDC on Base (EIP-3009) — required by x402 EVM clients. */
 const USDC_EIP712 = { name: "USD Coin", version: "2" } as const;
 
+/** Shared Bazaar / Base Builder attribution (ERC-8021 marker in discovery metadata). */
+const BAZAAR_META = {
+  provider: "Loyal Spark",
+  brand: "Loyal Spark",
+  website: "https://loyalspark.online",
+  documentation: "https://loyalspark.online/for-agents",
+  builderCode: "bc_wdmnog7m",
+} as const;
+
 export type BuildAcceptParams = {
   price: string;
   resource: string;
@@ -53,18 +62,28 @@ function resourcePublicOrigin(requestUrl: URL, supabaseUrl: string): string {
   return canonicalPublicOrigin(requestUrl);
 }
 
-/** Bazaar v2 `info` shape per CDP docs: `{ input: { type, method, bodyType? }, output: { type, example, schema? } }`. */
+function restApiKeyHint(resource: string): string {
+  return resource.startsWith("recipient-api/") ? "rwk_..." : "lsk_...";
+}
+
+/**
+ * Bazaar v2 `extensions.bazaar` for MCP: `info` uses CDP-style `{ input, output }` so scanners get HTTP + schema
+ * hints; tool args remain on `mcpToolInputSchema`. x402scan §C: `extensions.bazaar.info` + input schema coverage.
+ */
 function mcpBazaarExtension(mcp: McpBazaarTool, kind: "merchant" | "recipient") {
   const keyHint = kind === "merchant" ? "lsk_..." : "rwk_...";
   return {
     discoverable: true,
-    provider: "Loyal Spark",
-    brand: "Loyal Spark",
-    website: "https://loyalspark.online",
-    documentation: "https://loyalspark.online/for-agents",
-    /** Base Builder Code (ERC-8021). Marker only — x402 USDC EIP-3009 calldata is built by the facilitator and cannot carry the suffix; we attribute by tagging discovery metadata so x402scan/Bazaar/Base attribution can credit Loyal Spark. */
-    builderCode: "bc_wdmnog7m",
-    tags: ["loyalty", "rewards", "onchain", "base", "mcp", kind, "builder:bc_wdmnog7m"],
+    ...BAZAAR_META,
+    tags: [
+      "loyalty",
+      "rewards",
+      "onchain",
+      "base",
+      "mcp",
+      kind,
+      `builder:${BAZAAR_META.builderCode}`,
+    ],
     info: {
       input: {
         type: "http",
@@ -111,7 +130,12 @@ function mcpBazaarExtension(mcp: McpBazaarTool, kind: "merchant" | "recipient") 
 
 function recipientMcpBazaarExtension(mcp: RecipientMcpBazaarTool) {
   return mcpBazaarExtension(
-    { name: mcp.name, price: mcp.price, description: mcp.description, inputSchema: mcp.inputSchema },
+    {
+      name: mcp.name,
+      price: mcp.price,
+      description: mcp.description,
+      inputSchema: mcp.inputSchema,
+    },
     "recipient",
   );
 }
@@ -151,11 +175,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
       asset: USDC_BASE,
       extra: {
         ...USDC_EIP712,
-        provider: "Loyal Spark",
-        brand: "Loyal Spark",
-        website: "https://loyalspark.online",
-        documentation: "https://loyalspark.online/for-agents",
-        builderCode: "bc_wdmnog7m",
+        ...BAZAAR_META,
         description: `Loyal Spark MCP. After payment, POST the same JSON-RPC body to this x402 URL with PAYMENT-SIGNATURE / X-PAYMENT; gateway forwards to ${loyaltyMcpUrl}.`,
         mcpServer: loyaltyMcpUrl,
         mcpTool: mcp.name,
@@ -198,11 +218,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
       asset: USDC_BASE,
       extra: {
         ...USDC_EIP712,
-        provider: "Loyal Spark",
-        brand: "Loyal Spark",
-        website: "https://loyalspark.online",
-        documentation: "https://loyalspark.online/for-agents",
-        builderCode: "bc_wdmnog7m",
+        ...BAZAAR_META,
         description:
           `Loyal Spark Recipient MCP. After payment, POST the same JSON-RPC body to this x402 URL with PAYMENT-SIGNATURE / X-PAYMENT; gateway forwards to ${recipientMcpUrl}.`,
         mcpServer: recipientMcpUrl,
@@ -225,7 +241,9 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
     return { accept, resourceMethod: "POST", resourceUrlForDiscovery };
   }
 
-  // REST agent-api routes — discoverable HTTP
+  // REST — agent-api and recipient-api (same gateway path patterns)
+  const method = getRestMethod(p.resource);
+  const keyHint = restApiKeyHint(p.resource);
   const accept: Record<string, unknown> = {
     scheme: "exact",
     network: p.network,
@@ -239,34 +257,34 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
     asset: USDC_BASE,
     extra: {
       ...USDC_EIP712,
-      provider: "Loyal Spark",
-      brand: "Loyal Spark",
-      website: "https://loyalspark.online",
-      documentation: "https://loyalspark.online/for-agents",
-      builderCode: "bc_wdmnog7m",
-      description: `Loyal Spark agent-api /${p.resource}`,
+      ...BAZAAR_META,
+      description: `Loyal Spark HTTP API /${p.resource}`,
     },
     extensions: {
       bazaar: {
         discoverable: true,
-        provider: "Loyal Spark",
-        brand: "Loyal Spark",
-        website: "https://loyalspark.online",
-        documentation: "https://loyalspark.online/for-agents",
-        builderCode: "bc_wdmnog7m",
-        tags: ["loyalty", "rewards", "onchain", "base", "rest", "http", "builder:bc_wdmnog7m"],
+        ...BAZAAR_META,
+        tags: [
+          "loyalty",
+          "rewards",
+          "onchain",
+          "base",
+          "rest",
+          "http",
+          `builder:${BAZAAR_META.builderCode}`,
+        ],
         info: {
           input: {
             type: "http",
-            method: getRestMethod(p.resource),
-            bodyType: getRestMethod(p.resource) === "POST" ? "json" : undefined,
+            method,
+            bodyType: method === "POST" ? "json" : undefined,
             description:
-              `HTTP ${getRestMethod(p.resource)} ${resourceUrlForDiscovery} — Loyal Spark agent-api /${p.resource}. Authenticate with header x-api-key: lsk_... See OpenAPI: https://loyalspark.online/openapi.json.`,
+              `HTTP ${method} ${resourceUrlForDiscovery} — x402-gateway /${p.resource}. Authenticate with header x-api-key: ${keyHint}. See OpenAPI: https://loyalspark.online/openapi.json.`,
             resource: p.resource,
           },
           output: {
             type: "json",
-            description: "JSON response from Loyal Spark agent-api. See OpenAPI for schema.",
+            description: "JSON from Loyal Spark agent-api or recipient-api. See OpenAPI for response shape.",
             example: { ok: true, resource: p.resource },
             schema: {
               $schema: "https://json-schema.org/draft/2020-12/schema",
@@ -278,7 +296,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
     },
   };
 
-  return { accept, resourceMethod: getRestMethod(p.resource), resourceUrlForDiscovery };
+  return { accept, resourceMethod: method, resourceUrlForDiscovery };
 }
 
 function getRestMethod(resource: string): string {
