@@ -235,6 +235,10 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
     asset: USDC_BASE,
     extra: {
       ...USDC_EIP712,
+      provider: "Loyal Spark",
+      brand: "Loyal Spark",
+      website: "https://loyalspark.online",
+      documentation: "https://loyalspark.online/for-agents",
       description: `Loyal Spark agent-api /${p.resource}`,
     },
     extensions: {
