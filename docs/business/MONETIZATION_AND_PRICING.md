@@ -60,6 +60,30 @@ Public **corridor** (tune for gas + facilitator):
 | Read | **~$0.001–0.005** | “**From ~$0.002** per read” |
 | Write | **~$0.005–0.05** | Publish upper bound in API docs when stable |
 
+### 4.1 Recipient agents (`rwk_`) — same corridor
+
+Buyer-side agents pay for paid routes when using **`mpp-gateway`** (MPP) or **`x402-gateway`** (USDC x402). Direct calls to `…/functions/v1/recipient-api` / `recipient-loyalty-mcp` remain **key + rate-limit only** (no USDC in-app).
+
+**REST** (`recipient-api/…` after the gateway prefix) — source: `supabase/functions/_shared/recipient-paid-routes.ts`:
+
+| Method | Route suffix | USD |
+|--------|----------------|-----|
+| GET | `recipient-api/me` | **0** |
+| GET | `recipient-api/balances`, `balance`, `rewards`, `vouchers`, `offers` | **0.001** |
+| POST | `recipient-api/register` | **0** |
+| POST | `recipient-api/prepare-transfer` | **0.005** (aligned with merchant `transfer`) |
+| POST | `recipient-api/redeem-reward`, `offers`, `accept-offer` | **0.01** |
+| POST | `recipient-api/cancel-offer` | **0.005** |
+
+**MCP** (x402 only; resource `recipient-mcp-tools/<tool>`) — source: `supabase/functions/_shared/recipient-mcp-bazaar-tools.ts`:
+
+| Tool | USD | Notes |
+|------|-----|--------|
+| `prepare_loyalty_token_transfer` | **0.005** | Same band as transfer calldata |
+| `list_p2p_offers` | **0.001** | Aligned with merchant GET `/offers` on MPP |
+| `cancel_p2p_offer` | **0.005** | Aligned with merchant cancel |
+| All other listed recipient tools | **0.01** | Same default as merchant MCP Bazaar tools |
+
 ---
 
 ## 5. Payment settlement (both merchants & agents)

@@ -1,4 +1,5 @@
 import { Mppx, tempo } from "npm:mppx@0.4.7/server";
+import { RECIPIENT_REST_ROUTE_USD } from "../_shared/recipient-paid-routes.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -264,6 +265,10 @@ function getResourceFromUrl(url: URL): string {
 }
 
 function getPrice(method: string, resource: string): string | null {
+  if (resource.startsWith("recipient-api/")) {
+    const mp = RECIPIENT_REST_ROUTE_USD[method];
+    return mp?.[resource] ?? null;
+  }
   const methodPricing = PRICING[method];
   if (!methodPricing) return null;
   return methodPricing[resource] ?? null;
@@ -290,14 +295,18 @@ Deno.serve(async (req) => {
 
     const price = getPrice(req.method, resource);
 
-    // Unknown endpoint — proxy as-is, let agent-api return 404
     if (price === null) {
+      if (resource.startsWith("recipient-api/")) {
+        return new Response(
+          JSON.stringify({ error: "Unknown or unsupported recipient-api route", resource }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
       return await proxyToAgentApi(req);
     }
 
-    // Free endpoints — proxy directly
     if (price === "0") {
-      return await proxyToAgentApi(req);
+      return await proxyToMppUpstream(req);
     }
 
     // Paid endpoint — run MPP 402 flow
@@ -341,8 +350,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Payment verified — proxy to agent-api and attach receipt
-    const apiResponse = await proxyToAgentApi(req);
+    const apiResponse = await proxyToMppUpstream(req);
     return response.withReceipt(apiResponse);
   } catch (err) {
     console.error("MPP Gateway error:", err);
@@ -359,6 +367,52 @@ Deno.serve(async (req) => {
     );
   }
 });
+
+async function proxyToMppUpstream(originalReq: Request): Promise<Response> {
+  const originalUrl = new URL(originalReq.url);
+  const resource = getResourceFromUrl(originalUrl);
+  if (resource.startsWith("recipient-api/")) {
+    return proxyToRecipientApi(originalReq);
+  }
+  return proxyToAgentApi(originalReq);
+}
+
+async function proxyToRecipientApi(originalReq: Request): Promise<Response> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const originalUrl = new URL(originalReq.url);
+  const resource = getResourceFromUrl(originalUrl);
+  const suffix = resource.replace(/^recipient-api\/?/, "");
+  const recipientApiUrl = `${supabaseUrl}/functions/v1/recipient-api/${suffix}${originalUrl.search}`;
+
+  const headers: Record<string, string> = {
+    "Content-Type": originalReq.headers.get("content-type") || "application/json",
+    Authorization: `Bearer ${serviceKey}`,
+  };
+  const apiKey = originalReq.headers.get("x-api-key");
+  if (apiKey) headers["x-api-key"] = apiKey;
+  const apikey = originalReq.headers.get("apikey");
+  if (apikey) headers["apikey"] = apikey;
+  const ip = originalReq.headers.get("x-forwarded-for") || originalReq.headers.get("cf-connecting-ip");
+  if (ip) headers["x-forwarded-for"] = ip;
+
+  let body: string | undefined;
+  if (originalReq.method === "POST" || originalReq.method === "PUT" || originalReq.method === "PATCH") {
+    body = await originalReq.text();
+  }
+
+  const proxyResp = await fetch(recipientApiUrl, {
+    method: originalReq.method,
+    headers,
+    body,
+  });
+  const respBody = await proxyResp.text();
+  const respHeaders = new Headers(proxyResp.headers);
+  for (const [k, v] of Object.entries(corsHeaders)) {
+    respHeaders.set(k, v);
+  }
+  return new Response(respBody, { status: proxyResp.status, headers: respHeaders });
+}
 
 async function proxyToAgentApi(originalReq: Request): Promise<Response> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;

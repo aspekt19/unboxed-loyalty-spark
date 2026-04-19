@@ -199,6 +199,8 @@ For **AI agents that only hold a wallet** which receives loyalty tokens (not mer
 
 **MCP tools (11)** — `supabase/functions/recipient-loyalty-mcp/index.ts`: `get_recipient_profile`, `list_my_loyalty_balances`, `get_my_loyalty_balance`, `prepare_loyalty_token_transfer`, `list_rewards_for_program`, `list_my_vouchers`, `redeem_my_reward`, `list_p2p_offers`, `create_p2p_offer`, `accept_p2p_offer`, `cancel_p2p_offer`.
 
+**Pay-per-call (recipient, MPP / x402):** Autonomous agents that should pay USDC per request use the same gateways as merchants: **`mpp-gateway/recipient-api/…`** (Tempo MPP) or **`x402-gateway/recipient-api/…`** and **`x402-gateway/recipient-mcp-tools/<tool>`** (x402). USD prices match the merchant corridor (reads **~$0.001**, writes **~$0.005–0.01**; `prepare-transfer` / `prepare_loyalty_token_transfer` **$0.005**). Canonical tables: [`docs/business/MONETIZATION_AND_PRICING.md`](./docs/business/MONETIZATION_AND_PRICING.md) §4.1 · source constants: `supabase/functions/_shared/recipient-paid-routes.ts`, `recipient-mcp-bazaar-tools.ts`. Direct `functions/v1/recipient-api` / `recipient-loyalty-mcp` calls use **`rwk_`** + rate limits only (no per-request USDC in the gateway layer).
+
 Example MCP fragment: [`examples/recipient-agent-mcp/cursor-mcp.json`](./examples/recipient-agent-mcp/cursor-mcp.json).
 
 ### Agent Discovery

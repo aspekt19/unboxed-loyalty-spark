@@ -1,6 +1,8 @@
 /**
  * MCP tools exposed by loyalty-mcp for x402 Bazaar discovery (resource = mcp-tools/<name>).
  * Keep in sync with supabase/functions/loyalty-mcp/index.ts mcpServer.tool registrations.
+ *
+ * Recipient (buyer) MCP pricing: `recipient-mcp-bazaar-tools.ts` — resources `recipient-mcp-tools/<name>`.
  */
 
 export type McpBazaarTool = {

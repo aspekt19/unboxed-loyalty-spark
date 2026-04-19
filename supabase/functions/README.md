@@ -28,8 +28,8 @@ Each subdirectory is one deployable function (`index.ts` entry). Shared Deno mod
 | `verify-payment` | Premium / subscription USDC checks |
 | `verify-agent-plan-payment` | USDC subscription verification for **agent** and **merchant** plans (`product` in body; same `payment_settings.subscription_wallet_address`) |
 | `verify-voucher` | Voucher verification |
-| `mpp-gateway` | MPP pay-per-request proxy to `agent-api` |
-| `x402-gateway` | x402 USDC on Base proxy to `agent-api` |
+| `mpp-gateway` | MPP pay-per-request proxy to `agent-api` and **`recipient-api`** (see `_shared/recipient-paid-routes.ts`) |
+| `x402-gateway` | x402 USDC on Base proxy to `agent-api`, **`recipient-api`**, **`recipient-loyalty-mcp`** (via `recipient-mcp-tools/*`) — see `_shared/recipient-paid-routes.ts` + `recipient-mcp-bazaar-tools.ts` |
 
 ## Jobs, sync, exports
 

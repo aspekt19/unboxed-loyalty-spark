@@ -1,4 +1,6 @@
 import { getMcpBazaarTool, isMcpToolResource } from "../_shared/mcp-bazaar-tools.ts";
+import { getRecipientMcpBazaarTool } from "../_shared/recipient-mcp-bazaar-tools.ts";
+import { RECIPIENT_REST_ROUTE_USD } from "../_shared/recipient-paid-routes.ts";
 import { resolveMcpApiKey } from "../_shared/mcp-http-api-key.ts";
 import { buildAcceptEntry, paymentRequirementsForFacilitator } from "../_shared/x402-bazaar-accept.ts";
 
@@ -155,6 +157,16 @@ function getPrice(method: string, resource: string): string | null {
     if (method !== "POST") return null;
     const t = getMcpBazaarTool(resource.slice("mcp-tools/".length));
     return t ? t.price : null;
+  }
+  if (resource.startsWith("recipient-mcp-tools/")) {
+    if (method !== "POST") return null;
+    const t = getRecipientMcpBazaarTool(resource.slice("recipient-mcp-tools/".length));
+    return t ? t.price : null;
+  }
+  if (resource.startsWith("recipient-api/")) {
+    const methodPricing = RECIPIENT_REST_ROUTE_USD[method];
+    if (!methodPricing) return null;
+    return methodPricing[resource] ?? null;
   }
   const methodPricing = PRICING[method];
   if (!methodPricing) return null;
@@ -324,16 +336,43 @@ Deno.serve(async (req) => {
       }
     }
 
+    if (resource.startsWith("recipient-mcp-tools/")) {
+      const toolName = resource.slice("recipient-mcp-tools/".length);
+      if (!getRecipientMcpBazaarTool(toolName)) {
+        return new Response(JSON.stringify({ error: "Unknown recipient MCP tool", tool: toolName }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (req.method !== "POST") {
+        return new Response(JSON.stringify({ error: "Method Not Allowed", detail: "Recipient MCP Bazaar routes require POST (Streamable HTTP MCP)." }), {
+          status: 405,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const price = getPrice(req.method, resource);
 
-    // Unknown endpoint — proxy as-is to agent-api
     if (price === null) {
+      if (resource.startsWith("recipient-api/") || resource.startsWith("recipient-mcp-tools/")) {
+        return new Response(
+          JSON.stringify({
+            error: "Unknown or unsupported recipient route",
+            resource,
+            docs: "See RECIPIENT_REST_ROUTE_USD / recipient-mcp-bazaar-tools in repo",
+          }),
+          {
+            status: 404,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
       return await proxyToAgentApi(req);
     }
 
-    // Free endpoints — proxy directly
     if (price === "0") {
-      return await proxyToAgentApi(req);
+      return await proxyToUpstream(req);
     }
 
     const paymentSignature =
@@ -402,6 +441,12 @@ async function proxyToUpstream(originalReq: Request): Promise<Response> {
   if (isMcpToolResource(resource)) {
     return proxyToLoyaltyMcp(originalReq);
   }
+  if (resource.startsWith("recipient-mcp-tools/")) {
+    return proxyToRecipientLoyaltyMcp(originalReq);
+  }
+  if (resource.startsWith("recipient-api/")) {
+    return proxyToRecipientApi(originalReq);
+  }
   return proxyToAgentApi(originalReq);
 }
 
@@ -432,6 +477,101 @@ async function proxyToLoyaltyMcp(originalReq: Request): Promise<Response> {
   }
 
   const proxyResp = await fetch(loyaltyMcpUrl, {
+    method: originalReq.method,
+    headers,
+    body,
+  });
+
+  const respBody = await proxyResp.text();
+
+  const respHeaders = new Headers(proxyResp.headers);
+  for (const [k, v] of Object.entries(corsHeaders)) {
+    respHeaders.set(k, v);
+  }
+
+  return new Response(respBody, {
+    status: proxyResp.status,
+    headers: respHeaders,
+  });
+}
+
+async function proxyToRecipientLoyaltyMcp(originalReq: Request): Promise<Response> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+  const originalUrl = new URL(originalReq.url);
+  const recipientMcpUrl = `${supabaseUrl}/functions/v1/recipient-loyalty-mcp${originalUrl.search}`;
+
+  const get = (name: string) => originalReq.headers.get(name) ?? undefined;
+  const rwk = resolveMcpApiKey(get, "rwk_");
+
+  const headers: Record<string, string> = {
+    "Content-Type": originalReq.headers.get("content-type") || "application/json",
+    Authorization: `Bearer ${serviceKey}`,
+  };
+  if (rwk) {
+    headers["x-api-key"] = rwk;
+  }
+
+  const ip = originalReq.headers.get("x-forwarded-for") || originalReq.headers.get("cf-connecting-ip");
+  if (ip) headers["x-forwarded-for"] = ip;
+
+  let body: string | undefined;
+  if (originalReq.method === "POST" || originalReq.method === "PUT" || originalReq.method === "PATCH") {
+    body = await originalReq.text();
+  }
+
+  const proxyResp = await fetch(recipientMcpUrl, {
+    method: originalReq.method,
+    headers,
+    body,
+  });
+
+  const respBody = await proxyResp.text();
+
+  const respHeaders = new Headers(proxyResp.headers);
+  for (const [k, v] of Object.entries(corsHeaders)) {
+    respHeaders.set(k, v);
+  }
+
+  return new Response(respBody, {
+    status: proxyResp.status,
+    headers: respHeaders,
+  });
+}
+
+async function proxyToRecipientApi(originalReq: Request): Promise<Response> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+  const originalUrl = new URL(originalReq.url);
+  const resource = getResourceFromUrl(originalUrl);
+  const suffix = resource.replace(/^recipient-api\/?/, "");
+  const recipientApiUrl = `${supabaseUrl}/functions/v1/recipient-api/${suffix}${originalUrl.search}`;
+
+  const headers: Record<string, string> = {
+    "Content-Type": originalReq.headers.get("content-type") || "application/json",
+    Authorization: `Bearer ${serviceKey}`,
+  };
+
+  const apiKey = originalReq.headers.get("x-api-key");
+  if (apiKey) {
+    headers["x-api-key"] = apiKey;
+  }
+  const apikey = originalReq.headers.get("apikey");
+  if (apikey) {
+    headers["apikey"] = apikey;
+  }
+
+  const ip = originalReq.headers.get("x-forwarded-for") || originalReq.headers.get("cf-connecting-ip");
+  if (ip) headers["x-forwarded-for"] = ip;
+
+  let body: string | undefined;
+  if (originalReq.method === "POST" || originalReq.method === "PUT" || originalReq.method === "PATCH") {
+    body = await originalReq.text();
+  }
+
+  const proxyResp = await fetch(recipientApiUrl, {
     method: originalReq.method,
     headers,
     body,
