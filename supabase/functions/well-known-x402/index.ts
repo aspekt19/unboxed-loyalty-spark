@@ -337,9 +337,48 @@ Deno.serve((req) => {
     const doc = buildDiscoveryDocument(req);
     const body = JSON.stringify(doc);
 
+    const SERVER_NAME = "Loyal Spark — Onchain Loyalty Protocol on Base";
+    const SERVER_DESC =
+      "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create ERC-20 loyalty programs, mint tokens to customer wallets, manage rewards catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics — all via paid x402 endpoints (USDC on Base). 70+ resources, Builder Code bc_wdmnog7m.";
+    const LOGO_URL = "https://loyalspark.online/new-favicon.png";
+
     const headers = new Headers(corsHeaders);
     headers.set("Content-Type", "application/json; charset=utf-8");
     headers.set("Cache-Control", "public, max-age=300");
+    // x402 / Bazaar server metadata headers (read by x402scan)
+    headers.set("X-X402-Version", "1");
+    headers.set("X-X402-Provider", "Loyal Spark");
+    headers.set("X-X402-Brand", "Loyal Spark");
+    headers.set("X-X402-Name", SERVER_NAME);
+    headers.set("X-X402-Title", SERVER_NAME);
+    headers.set("X-X402-Description", SERVER_DESC);
+    headers.set("X-X402-Website", "https://loyalspark.online");
+    headers.set("X-X402-Documentation", "https://loyalspark.online/for-agents");
+    headers.set("X-X402-Logo", LOGO_URL);
+    headers.set("X-X402-Icon", LOGO_URL);
+    headers.set("X-X402-Builder-Code", "bc_wdmnog7m");
+    headers.set("X-X402-Network", NETWORK_CAIP2);
+    headers.set("X-X402-Asset", USDC_BASE);
+    headers.set("X-X402-Tags", "loyalty,rewards,onchain,base,mcp,rest,erc20,ai-agents");
+    // Bazaar variants (some scanners use these names)
+    headers.set("X-Bazaar-Provider", "Loyal Spark");
+    headers.set("X-Bazaar-Name", SERVER_NAME);
+    headers.set("X-Bazaar-Description", SERVER_DESC);
+    headers.set("X-Bazaar-Logo", LOGO_URL);
+    headers.set("X-Bazaar-Website", "https://loyalspark.online");
+    headers.set("X-Bazaar-Builder-Code", "bc_wdmnog7m");
+    // Generic open-graph-style fallbacks
+    headers.set("X-Server-Name", SERVER_NAME);
+    headers.set("X-Server-Description", SERVER_DESC);
+    headers.set("X-Server-Logo", LOGO_URL);
+    headers.set(
+      "Link",
+      `<${LOGO_URL}>; rel="icon"; type="image/png", <https://loyalspark.online/for-agents>; rel="documentation", <https://loyalspark.online>; rel="canonical"`,
+    );
+    headers.set(
+      "Access-Control-Expose-Headers",
+      "x-payment-response, www-authenticate, x-x402-version, x-x402-provider, x-x402-brand, x-x402-name, x-x402-title, x-x402-description, x-x402-website, x-x402-documentation, x-x402-logo, x-x402-icon, x-x402-builder-code, x-x402-network, x-x402-asset, x-x402-tags, x-bazaar-provider, x-bazaar-name, x-bazaar-description, x-bazaar-logo, x-bazaar-website, x-bazaar-builder-code, x-server-name, x-server-description, x-server-logo, link",
+    );
 
     if (req.method === "HEAD") {
       return new Response(null, { status: 200, headers });
