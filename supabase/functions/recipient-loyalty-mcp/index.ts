@@ -7,10 +7,6 @@ import { walletHasEngagement } from "../_shared/recipient-queries.ts";
 import { recipientRedeemReward } from "../_shared/recipient-redeem.ts";
 import { prepareHolderLoyaltyTransfer } from "../_shared/recipient-prepare-transfer.ts";
 import {
-  loadOnchainLoyaltyBalance,
-  loadOnchainLoyaltyBalances,
-} from "../_shared/recipient-onchain-balances.ts";
-import {
   marketplaceAcceptOffer,
   marketplaceCancelOffer,
   marketplaceCreateOffer,
@@ -52,36 +48,52 @@ function createRecipientMcpServer(
   });
 
   mcpServer.tool("list_my_loyalty_balances", {
-    description: "All loyalty program balances for your wallet (live on-chain via balanceOf, same as the customer UI)",
+    description: "All loyalty program balances (tier rows) for your wallet",
     inputSchema: { type: "object" as const, properties: {} },
     handler: async () => {
-      try {
-        const balances = await loadOnchainLoyaltyBalances(db, w);
-        await log("list_my_loyalty_balances", {}, 200, { count: balances.length });
-        return T(JSON.stringify({ balances }));
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        await log("list_my_loyalty_balances", {}, 500, { error: message });
-        return T(JSON.stringify({ error: message }));
+      const { data: tiers, error } = await db
+        .from("customer_tier_status")
+        .select("token_address, current_balance, tokens_earned_total, current_tier_id, last_calculated_at")
+        .ilike("customer_address", w);
+      if (error) {
+        await log("list_my_loyalty_balances", {}, 500, { error: error.message });
+        return T(JSON.stringify({ error: error.message }));
       }
+      const tokens = [...new Set((tiers || []).map((t: { token_address: string }) => t.token_address.toLowerCase()))];
+      let programs: Record<string, unknown> = {};
+      if (tokens.length > 0) {
+        const { data: plist } = await db.from("loyalty_programs").select("token_address, name, symbol, status").in("token_address", tokens);
+        programs = Object.fromEntries((plist || []).map((p: any) => [p.token_address.toLowerCase(), p]));
+      }
+      const balances = (tiers || []).map((t: any) => ({
+        ...t,
+        program: programs[t.token_address.toLowerCase()] || null,
+      }));
+      await log("list_my_loyalty_balances", {}, 200, { count: balances.length });
+      return T(JSON.stringify({ balances }));
     },
   });
 
   mcpServer.tool("get_my_loyalty_balance", {
-    description: "Balance and tier for one loyalty token (live on-chain balanceOf for your wallet)",
+    description: "Balance and tier for one loyalty token (your wallet must be the customer)",
     inputSchema: { type: "object" as const, properties: { token_address: { type: "string", description: "ERC-20 loyalty token 0x..." } }, required: ["token_address"] },
     handler: async ({ token_address }: any) => {
       if (!/^0x[a-fA-F0-9]{40}$/.test(token_address)) {
         await log("get_my_loyalty_balance", { token_address }, 400, { error: "bad_address" });
         return T('{"error":"Invalid token_address"}');
       }
-      const onchain = await loadOnchainLoyaltyBalance(db, w, token_address);
-      let tierInfo: unknown = null;
-      if (onchain?.current_tier_id) {
+      const { data: tierStatus } = await db
+        .from("customer_tier_status")
+        .select("current_balance, tokens_earned_total, current_tier_id, last_calculated_at")
+        .ilike("token_address", token_address.toLowerCase())
+        .ilike("customer_address", w)
+        .maybeSingle();
+      let tierInfo = null;
+      if (tierStatus?.current_tier_id) {
         const { data: tier } = await db
           .from("customer_tiers")
           .select("tier_name, tier_level, badge_color, cashback_multiplier")
-          .eq("id", onchain.current_tier_id)
+          .eq("id", tierStatus.current_tier_id)
           .single();
         tierInfo = tier;
       }
@@ -89,11 +101,9 @@ function createRecipientMcpServer(
       return T(
         JSON.stringify({
           balance: {
-            current_balance: onchain?.current_balance ?? 0,
-            raw_balance: onchain?.raw_balance ?? "0",
-            tokens_earned_total: onchain?.tokens_earned_total ?? 0,
-            last_updated: onchain?.last_calculated_at ?? null,
-            program: onchain?.program ?? null,
+            current_balance: tierStatus?.current_balance ?? 0,
+            tokens_earned_total: tierStatus?.tokens_earned_total ?? 0,
+            last_updated: tierStatus?.last_calculated_at ?? null,
             tier: tierInfo,
           },
         })

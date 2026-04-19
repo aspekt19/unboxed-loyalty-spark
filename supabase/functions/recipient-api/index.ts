@@ -11,10 +11,6 @@ import { walletHasEngagement } from "../_shared/recipient-queries.ts";
 import { recipientRedeemReward } from "../_shared/recipient-redeem.ts";
 import { prepareHolderLoyaltyTransfer } from "../_shared/recipient-prepare-transfer.ts";
 import {
-  loadOnchainLoyaltyBalance,
-  loadOnchainLoyaltyBalances,
-} from "../_shared/recipient-onchain-balances.ts";
-import {
   marketplaceAcceptOffer,
   marketplaceCancelOffer,
   marketplaceCreateOffer,
@@ -192,18 +188,34 @@ Deno.serve(async (req) => {
     }
 
     if (resource === "balances" && req.method === "GET") {
-      // Aggregate from DB (tier rows + mint history) and read live on-chain
-      // balanceOf via viem — same path the UI uses on /customer. Avoids empty
-      // balances for wallets whose customer_tier_status was never backfilled.
-      try {
-        const balances = await loadOnchainLoyaltyBalances(serviceClient, wallet);
-        await insertRecipientActivity(serviceClient, agent.agentId, "balances", {}, 200, { count: balances.length }, ip);
-        return jsonResponse({ balances });
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        await insertRecipientActivity(serviceClient, agent.agentId, "balances", {}, 500, { error: message }, ip);
-        return jsonResponse({ error: "Failed to load balances", hint: message }, 500);
+      const { data: tiers, error } = await serviceClient
+        .from("customer_tier_status")
+        .select("token_address, current_balance, tokens_earned_total, current_tier_id, last_calculated_at")
+        // DB может хранить адрес в mixed-case; wallet уже lower — без ilike строки не находились (пустой balances при живом UI)
+        .ilike("customer_address", wallet);
+
+      if (error) {
+        await insertRecipientActivity(serviceClient, agent.agentId, "balances", {}, 500, { error: error.message }, ip);
+        return jsonResponse({ error: "Failed to load balances" }, 500);
       }
+
+      const tokens = [...new Set((tiers || []).map((t: { token_address: string }) => t.token_address.toLowerCase()))];
+      let programs: Record<string, { name: string; symbol: string; status: string }> = {};
+      if (tokens.length > 0) {
+        const { data: plist } = await serviceClient
+          .from("loyalty_programs")
+          .select("token_address, name, symbol, status")
+          .in("token_address", tokens);
+        programs = Object.fromEntries((plist || []).map((p: any) => [p.token_address.toLowerCase(), p]));
+      }
+
+      const balances = (tiers || []).map((t: any) => ({
+        ...t,
+        program: programs[t.token_address.toLowerCase()] || null,
+      }));
+
+      await insertRecipientActivity(serviceClient, agent.agentId, "balances", {}, 200, { count: balances.length }, ip);
+      return jsonResponse({ balances });
     }
 
     if (resource === "balance" && req.method === "GET") {
@@ -212,13 +224,19 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Missing or invalid query param: token_address" }, 400);
       }
 
-      const onchain = await loadOnchainLoyaltyBalance(serviceClient, wallet, tokenAddress);
-      let tierInfo: unknown = null;
-      if (onchain?.current_tier_id) {
+      const { data: tierStatus } = await serviceClient
+        .from("customer_tier_status")
+        .select("current_balance, tokens_earned_total, current_tier_id, last_calculated_at")
+        .ilike("token_address", tokenAddress.toLowerCase())
+        .ilike("customer_address", wallet)
+        .maybeSingle();
+
+      let tierInfo = null;
+      if (tierStatus?.current_tier_id) {
         const { data: tier } = await serviceClient
           .from("customer_tiers")
           .select("tier_name, tier_level, badge_color, cashback_multiplier")
-          .eq("id", onchain.current_tier_id)
+          .eq("id", tierStatus.current_tier_id)
           .single();
         tierInfo = tier;
       }
@@ -226,11 +244,9 @@ Deno.serve(async (req) => {
       await insertRecipientActivity(serviceClient, agent.agentId, "balance", { tokenAddress }, 200, {}, ip);
       return jsonResponse({
         balance: {
-          current_balance: onchain?.current_balance ?? 0,
-          raw_balance: onchain?.raw_balance ?? "0",
-          tokens_earned_total: onchain?.tokens_earned_total ?? 0,
-          last_updated: onchain?.last_calculated_at ?? null,
-          program: onchain?.program ?? null,
+          current_balance: tierStatus?.current_balance ?? 0,
+          tokens_earned_total: tierStatus?.tokens_earned_total ?? 0,
+          last_updated: tierStatus?.last_calculated_at ?? null,
           tier: tierInfo,
         },
       });
