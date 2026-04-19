@@ -167,18 +167,41 @@ function buildAllItems(req: Request): Array<ReturnType<typeof buildItem>> {
 
 function buildDiscoveryDocument(req: Request): Record<string, unknown> {
   const items = buildAllItems(req);
+  const name = "Loyal Spark — Onchain Loyalty Protocol on Base";
+  const description =
+    "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create ERC-20 loyalty programs, mint tokens to customer wallets, manage rewards catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics — all via paid x402 endpoints (USDC on Base). Includes 70+ resources: merchant REST (agent-api), recipient REST (recipient-api), 28 merchant MCP tools and 11 recipient MCP tools. Builder Code bc_wdmnog7m.";
   return {
     x402Version: 1,
+    name,
+    title: name,
     provider: "Loyal Spark",
     brand: "Loyal Spark",
     website: "https://loyalspark.online",
     documentation: "https://loyalspark.online/for-agents",
-    description:
-      "Loyal Spark — onchain loyalty protocol on Base. Discovery for merchant + recipient REST and MCP tools (mint, transfer, rewards, vouchers, analytics, P2P offers).",
+    description,
+    summary: description,
+    logo: "https://loyalspark.online/new-favicon.png",
+    icon: "https://loyalspark.online/new-favicon.png",
+    contact: {
+      email: "admin@loyalspark.online",
+      website: "https://loyalspark.online",
+    },
     builderCode: "bc_wdmnog7m",
     network: NETWORK_CAIP2,
     asset: USDC_BASE,
-    tags: ["loyalty", "rewards", "onchain", "base", "mcp", "rest"],
+    tags: ["loyalty", "rewards", "onchain", "base", "mcp", "rest", "erc20", "ai-agents"],
+    categories: ["loyalty", "defi", "rewards", "marketplace"],
+    metadata: {
+      name,
+      description,
+      provider: "Loyal Spark",
+      brand: "Loyal Spark",
+      website: "https://loyalspark.online",
+      documentation: "https://loyalspark.online/for-agents",
+      logo: "https://loyalspark.online/new-favicon.png",
+      builderCode: "bc_wdmnog7m",
+      tags: ["loyalty", "rewards", "onchain", "base", "mcp", "rest"],
+    },
     items,
     pagination: {
       limit: items.length,
