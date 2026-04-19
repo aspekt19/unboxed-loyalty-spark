@@ -2,13 +2,78 @@
  * Shared P2P marketplace DB intents (offers list/create/accept/cancel).
  * Used by agent-api (merchant lsk_, creator = ownerAddress) and recipient-api (buyer rwk_, creator = bound wallet).
  */
-import { BUILDER_CODE } from "./loyalspark-agent-helpers.ts";
+import { appendBuilderCode, BUILDER_CODE } from "./loyalspark-agent-helpers.ts";
 
 export type JsonBody = Record<string, unknown>;
 
 export type ServiceResult = { status: number; body: JsonBody };
 
 const ADDR = /^0x[a-fA-F0-9]{40}$/;
+
+/** Escrow contract on Base — see contracts/LoyaltyTokenEscrow.sol */
+export const ESCROW_ADDRESS = "0xA569C95AfC1BCF381c48BcF336ED9D2c014bcdDF";
+
+/** Selectors for LoyaltyTokenEscrow */
+const ESCROW_SELECTORS = {
+  // createOffer(address,uint256,address,uint256)
+  createOffer: "0a8e8e01",
+  // fillOffer(uint256)
+  fillOffer: "ca1d209d",
+  // cancelOffer(uint256)
+  cancelOffer: "ef706adf",
+  // approve(address,uint256) on ERC-20
+  approve: "095ea7b3",
+};
+
+function pad64(hexNo0x: string): string {
+  return hexNo0x.toLowerCase().padStart(64, "0");
+}
+
+function addrTo32(addr: string): string {
+  return pad64(addr.replace(/^0x/, ""));
+}
+
+function uintTo32(value: number | string | bigint): string {
+  const big = typeof value === "bigint" ? value : BigInt(value as any);
+  return pad64(big.toString(16));
+}
+
+/** ERC-20 amount in 18 decimals (loyalty tokens use 18 decimals). */
+function amountWei18(amount: number): bigint {
+  return BigInt(Math.floor(Number(amount) * 1e18));
+}
+
+export function encodeEscrowApproveCalldata(amount: number): string {
+  const sel = "0x" + ESCROW_SELECTORS.approve;
+  const data = sel + addrTo32(ESCROW_ADDRESS) + uintTo32(amountWei18(amount));
+  return appendBuilderCode(data);
+}
+
+export function encodeEscrowCreateOfferCalldata(
+  offerToken: string,
+  offerAmount: number,
+  requestToken: string,
+  requestAmount: number,
+): string {
+  const sel = "0x" + ESCROW_SELECTORS.createOffer;
+  const data =
+    sel +
+    addrTo32(offerToken) +
+    uintTo32(amountWei18(offerAmount)) +
+    addrTo32(requestToken) +
+    uintTo32(amountWei18(requestAmount));
+  return appendBuilderCode(data);
+}
+
+export function encodeEscrowFillOfferCalldata(onchainOfferId: number | string | bigint): string {
+  const sel = "0x" + ESCROW_SELECTORS.fillOffer;
+  return appendBuilderCode(sel + uintTo32(onchainOfferId));
+}
+
+export function encodeEscrowCancelOfferCalldata(onchainOfferId: number | string | bigint): string {
+  const sel = "0x" + ESCROW_SELECTORS.cancelOffer;
+  return appendBuilderCode(sel + uintTo32(onchainOfferId));
+}
 
 export async function marketplaceListOffers(
   serviceClient: { from: (t: string) => any },
