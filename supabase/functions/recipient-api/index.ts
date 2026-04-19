@@ -101,7 +101,18 @@ Deno.serve(async (req) => {
       p_nonce: nonce,
     });
 
-    if (consumeErr || !consumedNonce) {
+    if (consumeErr) {
+      console.error("consume_siwe_nonce rpc:", consumeErr);
+      return jsonResponse(
+        {
+          error: "SIWE nonce RPC failed",
+          hint: consumeErr.message ?? String(consumeErr),
+          code: consumeErr.code,
+        },
+        503,
+      );
+    }
+    if (!consumedNonce) {
       return jsonResponse({ error: "Invalid or already used nonce" }, 401);
     }
 

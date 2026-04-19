@@ -106,7 +106,21 @@ serve(async (req) => {
       p_nonce: nonce,
     });
 
-    if (consumeErr || !consumedNonce) {
+    if (consumeErr) {
+      console.error('consume_siwe_nonce rpc:', consumeErr);
+      return new Response(
+        JSON.stringify({
+          error: 'SIWE nonce RPC failed',
+          hint: consumeErr.message ?? String(consumeErr),
+          code: consumeErr.code,
+        }),
+        {
+          status: 503,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      );
+    }
+    if (!consumedNonce) {
       return new Response(JSON.stringify({ error: 'Invalid or already used nonce' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
