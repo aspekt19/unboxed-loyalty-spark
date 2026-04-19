@@ -155,10 +155,23 @@ export async function marketplaceCreateOffer(
       offer,
       message: "Offer recorded. To secure with escrow, approve and call createOffer on the escrow contract.",
       escrow_contract: {
+        address: ESCROW_ADDRESS,
         function: "createOffer(address,uint256,address,uint256)",
         params: [ota, offer_amount, rta, request_amount],
         note: "First approve the escrow contract for offer_amount of offer_token, then call createOffer.",
         builder_code: BUILDER_CODE,
+        calldata: {
+          approve: {
+            to: ota,
+            data: encodeEscrowApproveCalldata(Number(offer_amount)),
+            description: "ERC-20 approve(escrow, offer_amount) on offer_token",
+          },
+          create_offer: {
+            to: ESCROW_ADDRESS,
+            data: encodeEscrowCreateOfferCalldata(ota, Number(offer_amount), rta, Number(request_amount)),
+            description: "createOffer on escrow with Builder Code suffix",
+          },
+        },
       },
     },
   };
