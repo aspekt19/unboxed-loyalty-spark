@@ -163,7 +163,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
         },
       },
       extensions: {
-        bazaar: mcpBazaarExtension(mcp),
+        bazaar: mcpBazaarExtension(mcp, "merchant"),
       },
     };
 
@@ -232,19 +232,27 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
     extensions: {
       bazaar: {
         discoverable: true,
+        provider: "Loyal Spark",
+        brand: "Loyal Spark",
+        website: "https://loyalspark.online",
+        documentation: "https://loyalspark.online/for-agents",
+        tags: ["loyalty", "rewards", "onchain", "base", "rest", "http"],
         info: {
-          type: "http",
-          resource: p.resource,
-          inputSchema: {
-            type: "object",
-            description: `HTTP ${getRestMethod(p.resource)} …/x402-gateway/${p.resource} — see OpenAPI / agent-api docs for query/body.`,
+          input: {
+            type: "http",
+            method: getRestMethod(p.resource),
+            bodyType: getRestMethod(p.resource) === "POST" ? "json" : undefined,
+            description:
+              `HTTP ${getRestMethod(p.resource)} ${resourceUrlForDiscovery} — Loyal Spark agent-api /${p.resource}. Authenticate with header x-api-key: lsk_... See OpenAPI: https://loyalspark.online/openapi.json.`,
+            resource: p.resource,
           },
-        },
-        inputSchema: {
-          headers: {
-            "x-api-key": {
-              type: "string",
-              description: "Agent API key lsk_... (required for authenticated agent-api routes).",
+          output: {
+            type: "json",
+            description: "JSON response from Loyal Spark agent-api. See OpenAPI for schema.",
+            example: { ok: true, resource: p.resource },
+            schema: {
+              $schema: "https://json-schema.org/draft/2020-12/schema",
+              type: "object",
             },
           },
         },
