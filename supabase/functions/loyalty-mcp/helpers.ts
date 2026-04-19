@@ -4,6 +4,7 @@ import {
   BUILDER_CODE,
   computeMintFeeAmount,
   encodeMintCalldata,
+  encodeTransferCalldata,
   getAgentFeePercent,
   PLATFORM_FEE_WALLET,
 } from "../_shared/loyalspark-agent-helpers.ts";
@@ -22,6 +23,7 @@ export {
   BUILDER_CODE,
   computeMintFeeAmount,
   encodeMintCalldata,
+  encodeTransferCalldata,
   getAgentFeePercent,
   PLATFORM_FEE_WALLET,
 };
@@ -34,12 +36,6 @@ export const SELECTORS = {
   pauseUtility: "0xe7911074",
   disableMinting: "0x7e5cd5c1",
 };
-
-export function encodeTransferCalldata(to: string, amount: number): string {
-  const paddedTo = to.toLowerCase().replace("0x", "").padStart(64, "0");
-  const amtHex = BigInt(Math.floor(amount * 1e18)).toString(16).padStart(64, "0");
-  return appendBuilderCode("0xa9059cbb" + paddedTo + amtHex);
-}
 
 export function encodeCreateLoyaltyTokenCalldata(name: string, symbol: string, merchantAddress: string): string {
   const paddedAddr = merchantAddress.toLowerCase().replace("0x", "").padStart(64, "0");

@@ -3,14 +3,7 @@
  * Reuses the same encoding as merchant MCP `transfer_loyalty_tokens` (18 decimals, Builder Code suffix).
  */
 
-import { appendBuilderCode, BUILDER_CODE } from "./loyalspark-agent-helpers.ts";
-
-/** ERC-20 transfer(address,uint256) calldata with Base Builder Code suffix. Mirrors merchant MCP. */
-function encodeTransferCalldata(to: string, amount: number): string {
-  const paddedTo = to.toLowerCase().replace("0x", "").padStart(64, "0");
-  const amtHex = BigInt(Math.floor(amount * 1e18)).toString(16).padStart(64, "0");
-  return appendBuilderCode("0xa9059cbb" + paddedTo + amtHex);
-}
+import { BUILDER_CODE, encodeTransferCalldata } from "./loyalspark-agent-helpers.ts";
 
 export type PrepareHolderTransferResult =
   | { ok: true; body: Record<string, unknown> }

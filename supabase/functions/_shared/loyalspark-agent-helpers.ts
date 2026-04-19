@@ -14,6 +14,13 @@ export function appendBuilderCode(calldata: string): string {
   return calldata + BUILDER_SUFFIX;
 }
 
+/** ERC-20 transfer(address,uint256) calldata + Builder Code suffix (18 decimals). */
+export function encodeTransferCalldata(to: string, amount: number): string {
+  const paddedTo = to.toLowerCase().replace("0x", "").padStart(64, "0");
+  const amtHex = BigInt(Math.floor(amount * 1e18)).toString(16).padStart(64, "0");
+  return appendBuilderCode("0xa9059cbb" + paddedTo + amtHex);
+}
+
 export function encodeMintCalldata(to: string, amount: number): string {
   const paddedTo = to.toLowerCase().replace("0x", "").padStart(64, "0");
   const amtHex = BigInt(Math.floor(amount * 1e18)).toString(16).padStart(64, "0");
