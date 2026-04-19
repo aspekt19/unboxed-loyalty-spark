@@ -83,4 +83,4 @@ On success, **`agent_registry.plan_id`** is updated for every agent with that **
 ## See also
 
 - [QUICKSTART.md](./QUICKSTART.md)
-- Recipient-only flow (no merchant): `POST …/recipient-api/register` with `rwk_` keys
+- Recipient-only flow (no merchant): `POST …/recipient-api/register` with `rwk_` keys; to build **transfer** calldata as the holder use `POST …/recipient-api/prepare-transfer` or MCP `prepare_loyalty_token_transfer` (see [QUICKSTART](./QUICKSTART.md))

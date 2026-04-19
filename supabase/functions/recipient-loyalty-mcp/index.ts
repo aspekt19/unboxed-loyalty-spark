@@ -5,6 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { authenticateRecipientAgent, insertRecipientActivity } from "../_shared/recipient-agent-auth.ts";
 import { walletHasEngagement } from "../_shared/recipient-queries.ts";
 import { recipientRedeemReward } from "../_shared/recipient-redeem.ts";
+import { prepareHolderLoyaltyTransfer } from "../_shared/recipient-prepare-transfer.ts";
 import {
   marketplaceAcceptOffer,
   marketplaceCancelOffer,
@@ -134,6 +135,26 @@ function createRecipientMcpServer(
       }
       await log("list_rewards_for_program", { token_address }, 200, { count: rewards?.length });
       return T(JSON.stringify({ rewards: rewards || [] }));
+    },
+  });
+
+  mcpServer.tool("prepare_loyalty_token_transfer", {
+    description:
+      "Build ERC-20 transfer calldata so your bound wallet can send loyalty tokens to any recipient address (same semantics as holding ERC-20: transferable points). Program must exist on Loyal Spark. You sign and broadcast on Base.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        token_address: { type: "string", description: "Loyalty ERC-20 contract (0x...)" },
+        to: { type: "string", description: "Recipient wallet (0x...)" },
+        amount: { type: "number", description: "Human-readable token amount (calldata assumes 18 decimals)" },
+      },
+      required: ["token_address", "to", "amount"],
+    },
+    handler: async ({ token_address, to, amount }: any) => {
+      const result = await prepareHolderLoyaltyTransfer(db, w, token_address, to, amount);
+      const status = result.ok ? 200 : result.status;
+      await log("prepare_loyalty_token_transfer", { token_address, to, amount }, status, result.body);
+      return T(JSON.stringify(result.body));
     },
   });
 

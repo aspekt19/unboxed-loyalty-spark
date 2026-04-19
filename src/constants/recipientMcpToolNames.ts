@@ -3,6 +3,7 @@ export const RECIPIENT_MCP_TOOL_NAMES = [
   "get_recipient_profile",
   "list_my_loyalty_balances",
   "get_my_loyalty_balance",
+  "prepare_loyalty_token_transfer",
   "list_rewards_for_program",
   "list_my_vouchers",
   "redeem_my_reward",

@@ -9,6 +9,7 @@ import {
 } from "../_shared/recipient-agent-auth.ts";
 import { walletHasEngagement } from "../_shared/recipient-queries.ts";
 import { recipientRedeemReward } from "../_shared/recipient-redeem.ts";
+import { prepareHolderLoyaltyTransfer } from "../_shared/recipient-prepare-transfer.ts";
 import {
   marketplaceAcceptOffer,
   marketplaceCancelOffer,
@@ -314,6 +315,33 @@ Deno.serve(async (req) => {
       return jsonResponse(result.body, result.status);
     }
 
+    if (resource === "prepare-transfer" && req.method === "POST") {
+      const token_address = body.token_address as string | undefined;
+      const to = body.to as string | undefined;
+      const amount = body.amount as number | undefined;
+      if (
+        !token_address ||
+        !to ||
+        typeof amount !== "number" ||
+        !Number.isFinite(amount)
+      ) {
+        await insertRecipientActivity(serviceClient, agent.agentId, "prepare_transfer", body, 400, { error: "missing_fields" }, ip);
+        return jsonResponse({ error: "Required JSON body: token_address, to, amount (finite number)" }, 400);
+      }
+      const result = await prepareHolderLoyaltyTransfer(serviceClient, wallet, token_address, to, amount);
+      const st = result.ok ? 200 : result.status;
+      await insertRecipientActivity(
+        serviceClient,
+        agent.agentId,
+        "prepare_transfer",
+        { token_address, to, amount },
+        st,
+        result.body,
+        ip
+      );
+      return jsonResponse(result.body, st);
+    }
+
     // ==================== P2P (buyer wallet = creator / acceptor) ====================
     if (resource === "offers" && req.method === "GET") {
       const tokenAddress = url.searchParams.get("token_address");
@@ -387,6 +415,7 @@ Deno.serve(async (req) => {
           "GET /recipient-api/rewards?token_address=0x...": "Rewards catalog (requires prior activity on program)",
           "GET /recipient-api/vouchers?token_address=0x...&status=active": "Your vouchers",
           "POST /recipient-api/redeem-reward": "Body: { reward_id, transaction_hash } — customer is always your wallet",
+          "POST /recipient-api/prepare-transfer": "Body: { token_address, to, amount } — ERC-20 transfer calldata for your wallet (holder → any address)",
           "GET /recipient-api/offers?token_address=0x...": "List active P2P offers (optional filter)",
           "POST /recipient-api/offers": "Body: { offer_token_address, offer_amount, request_token_address, request_amount } — creator is your wallet",
           "POST /recipient-api/accept-offer": "Body: { offer_id }",

@@ -59,4 +59,4 @@ Reference: `supabase/functions/_shared/mcp-bazaar-tools.ts` · `scripts/x402-pai
 
 ## 7. Recipient agents (`rwk_`) — optional
 
-For agents that **only** control a wallet which receives loyalty points (not a merchant). Register with SIWE + `POST …/recipient-api/register`; see **[https://loyalspark.online/for-agents](https://loyalspark.online/for-agents)** (Recipient section) and `src/constants/recipientMcpToolNames.ts` / `recipient-loyalty-mcp/index.ts`.
+For agents that **only** control a wallet which receives loyalty points (not a merchant). Register with SIWE + `POST …/recipient-api/register`; see **[https://loyalspark.online/for-agents](https://loyalspark.online/for-agents)** (Recipient section) and `src/constants/recipientMcpToolNames.ts` / `recipient-loyalty-mcp/index.ts`. To **send** loyalty ERC-20 tokens to any address, use **`prepare_loyalty_token_transfer`** (MCP) or **`POST …/recipient-api/prepare-transfer`** (REST) — same calldata idea as merchant `transfer_loyalty_tokens`, authenticated with `rwk_`.

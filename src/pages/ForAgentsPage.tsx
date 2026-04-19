@@ -112,7 +112,16 @@ curl -sS -X POST "${RECIPIENT_REST}/register" \\
   -H "apikey: ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}" \\
   -d '{"message":"<SIWE message>","signature":"0x...","name":"optional label"}'
 
-4) Call APIs with header: x-api-key: rwk_...`;
+4) Call APIs with header: x-api-key: rwk_...
+
+5) Send loyalty tokens to any address (holder-signed ERC-20 transfer calldata; program must be active):
+curl -sS -X POST "${RECIPIENT_REST}/prepare-transfer" \\
+  -H "Content-Type: application/json" \\
+  -H "x-api-key: rwk_YOUR_RECIPIENT_KEY" \\
+  -H "apikey: ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}" \\
+  -d '{"token_address":"0x...","to":"0x...","amount":10.5}'
+
+MCP: prepare_loyalty_token_transfer`;
 
 const recipientP2PFlow = `P2P offers — recipient wallets swap loyalty tokens with each other.
 The API records intent and returns escrow contract hints. The actual on-chain
