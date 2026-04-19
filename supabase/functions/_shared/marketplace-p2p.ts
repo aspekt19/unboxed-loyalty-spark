@@ -183,7 +183,12 @@ export async function marketplaceAcceptOffer(
   body: JsonBody
 ): Promise<ServiceResult> {
   const w = acceptorAddress.toLowerCase();
-  const { offer_id } = body;
+  const { offer_id, onchain_offer_id, request_token_address, request_amount } = body as {
+    offer_id?: string;
+    onchain_offer_id?: number | string;
+    request_token_address?: string;
+    request_amount?: number;
+  };
   if (!offer_id) {
     return { status: 400, body: { error: "Missing field: offer_id" } };
   }
