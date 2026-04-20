@@ -17,6 +17,7 @@ import UseCases from '@/components/landing/UseCases';
 import LandingHero from '@/components/landing/LandingHero';
 import LandingFeatures from '@/components/landing/LandingFeatures';
 import LandingAgents from '@/components/landing/LandingAgents';
+import LandingNav from '@/components/landing/LandingNav';
 
 import LandingCTA from '@/components/landing/LandingCTA';
 import NotifyMe from '@/components/landing/NotifyMe';
@@ -96,8 +97,8 @@ const Index = () => {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="min-h-screen bg-gradient-hero">
         <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl transition-smooth">
-          <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 flex justify-between items-center">
-            <Link to="/" className="flex items-center gap-2 sm:gap-2.5 group">
+          <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 flex justify-between items-center relative">
+            <Link to="/" className="flex items-center gap-2 sm:gap-2.5 group shrink-0">
               <img 
                 src="/new-favicon.png" 
                 alt="Loyal Spark" 
@@ -105,9 +106,15 @@ const Index = () => {
               />
               <span className="text-base sm:text-xl font-bold text-foreground tracking-tight">Loyal Spark</span>
             </Link>
-            <div className="flex items-center gap-2">
-              <AdminLink />
-              <ThemeToggle />
+            <div className="flex items-center gap-1 sm:gap-2">
+              <LandingNav />
+              <div className="hidden sm:flex items-center gap-1">
+                <AdminLink />
+                <ThemeToggle />
+              </div>
+              <div className="flex sm:hidden items-center">
+                <ThemeToggle />
+              </div>
             </div>
           </div>
         </header>
