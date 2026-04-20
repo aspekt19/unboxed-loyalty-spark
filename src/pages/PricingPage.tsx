@@ -37,7 +37,7 @@ const merchantPlans: Plan[] = [
       { text: "Team & branch management", included: false },
     ],
     cta: "Start with Starter",
-    href: "/merchant",
+    href: "/merchant?tab=billing",
   },
   {
     name: "Growth",
@@ -53,7 +53,7 @@ const merchantPlans: Plan[] = [
       { text: "Priority support", included: true },
     ],
     cta: "Upgrade to Growth",
-    href: "/premium",
+    href: "/merchant?tab=billing",
     highlighted: true,
   },
   {
@@ -70,7 +70,7 @@ const merchantPlans: Plan[] = [
       { text: "Direct support channel", included: true },
     ],
     cta: "Talk to us",
-    href: "/premium",
+    href: "/merchant?tab=billing",
   },
 ];
 
@@ -105,7 +105,7 @@ const agentPlans: Plan[] = [
       { text: "Email support", included: true },
     ],
     cta: "Upgrade to Pro",
-    href: "/for-agents",
+    href: "/merchant?tab=agents",
     highlighted: true,
   },
   {
@@ -122,7 +122,7 @@ const agentPlans: Plan[] = [
       { text: "Custom integrations", included: true },
     ],
     cta: "Contact sales",
-    href: "/for-agents",
+    href: "/merchant?tab=agents",
   },
 ];
 

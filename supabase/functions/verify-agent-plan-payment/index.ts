@@ -21,6 +21,41 @@ function jsonResponse(data: any, status = 200) {
 }
 
 type Product = "agent" | "merchant";
+type BillingCycle = "monthly" | "annual";
+
+/**
+ * Annual discount per plan slug.
+ * Starter / Pro = 15% off vs 12× monthly
+ * Growth / Scale / Enterprise = 20% off vs 12× monthly
+ */
+function annualDiscountPercent(slug: string): number {
+  const s = (slug || "").toLowerCase();
+  if (s === "growth" || s === "scale" || s === "enterprise") return 20;
+  if (s === "starter" || s === "pro") return 15;
+  // Free or unknown — no discount (annual not offered)
+  return 0;
+}
+
+/** Compute the expected USD amount the user must send for the chosen cycle. */
+function expectedAmountForCycle(
+  monthlyPrice: number,
+  cycle: BillingCycle,
+  slug: string,
+): number {
+  if (cycle !== "annual") return Number(monthlyPrice);
+  const discount = annualDiscountPercent(slug);
+  const gross = Number(monthlyPrice) * 12;
+  const net = gross * (1 - discount / 100);
+  // Round to 2 decimals to keep USDC-friendly amounts
+  return Math.round(net * 100) / 100;
+}
+
+function expiresAtForCycle(cycle: BillingCycle): Date {
+  const d = new Date();
+  if (cycle === "annual") d.setFullYear(d.getFullYear() + 1);
+  else d.setMonth(d.getMonth() + 1);
+  return d;
+}
 
 /** Verify USDC transfer to subscription wallet via ERC-20 Transfer logs (6 decimals). */
 async function verifyUsdcTransferToWallet(
@@ -51,9 +86,10 @@ async function verifyUsdcTransferToWallet(
         log.topics[2]?.toLowerCase() === "0x" + walletPadded
       ) {
         const transferredAmount = parseInt(log.data, 16) / 1e6;
-        if (transferredAmount >= minAmountUsdc) {
+        // Allow tiny rounding tolerance (1¢)
+        if (transferredAmount + 0.01 >= minAmountUsdc) {
           console.log(
-            `[verify-plan] Verified: ${transferredAmount} USDC to ${subscriptionWallet}`,
+            `[verify-plan] Verified: ${transferredAmount} USDC to ${subscriptionWallet} (expected ≥ ${minAmountUsdc})`,
           );
           return {
             verified: true,
@@ -88,6 +124,7 @@ Deno.serve(async (req) => {
       owner_address,
       subscription_id,
       product = "agent",
+      billing_cycle = "monthly",
     } = body as {
       action: string;
       transaction_hash?: string;
@@ -95,7 +132,10 @@ Deno.serve(async (req) => {
       owner_address?: string;
       subscription_id?: string;
       product?: Product;
+      billing_cycle?: BillingCycle;
     };
+
+    const cycle: BillingCycle = billing_cycle === "annual" ? "annual" : "monthly";
 
     if (action === "get_payment_info") {
       const prod: Product = product === "merchant" ? "merchant" : "agent";
@@ -178,7 +218,11 @@ Deno.serve(async (req) => {
           return jsonResponse({ error: "Plan does not require payment" }, 400);
         }
 
-        const expectedAmountUSDC = Number(plan.price_usdc_monthly);
+        const expectedAmountUSDC = expectedAmountForCycle(
+          Number(plan.price_usdc_monthly),
+          cycle,
+          plan.slug,
+        );
         const { verified, method, transferred } = await verifyUsdcTransferToWallet(
           transaction_hash,
           subscriptionWallet,
@@ -186,8 +230,7 @@ Deno.serve(async (req) => {
           basescanApiKey,
         );
 
-        const expiresAt = new Date();
-        expiresAt.setMonth(expiresAt.getMonth() + 1);
+        const expiresAt = expiresAtForCycle(cycle);
 
         const { data: sub, error: subError } = await db
           .from("merchant_plan_subscriptions")
@@ -220,9 +263,11 @@ Deno.serve(async (req) => {
           verified,
           verification_method: method,
           transferred_usdc: transferred,
+          expected_usdc: expectedAmountUSDC,
+          billing_cycle: cycle,
           plan: plan.name,
           message: verified
-            ? `✅ ${plan.name} merchant plan activated.`
+            ? `✅ ${plan.name} (${cycle}) merchant plan activated.`
             : "⏳ Payment recorded. It will be verified shortly (or contact support if BaseScan key is off).",
         });
       }
@@ -243,16 +288,19 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Free plan doesn't require payment" }, 400);
       }
 
-      const expectedAmountUSDC = Number(plan.price_usdc_monthly);
-      const { verified, method } = await verifyUsdcTransferToWallet(
+      const expectedAmountUSDC = expectedAmountForCycle(
+        Number(plan.price_usdc_monthly),
+        cycle,
+        plan.slug,
+      );
+      const { verified, method, transferred } = await verifyUsdcTransferToWallet(
         transaction_hash,
         subscriptionWallet,
         expectedAmountUSDC,
         basescanApiKey,
       );
 
-      const expiresAt = new Date();
-      expiresAt.setMonth(expiresAt.getMonth() + 1);
+      const expiresAt = expiresAtForCycle(cycle);
 
       const { data: sub, error: subError } = await db
         .from("agent_plan_subscriptions")
@@ -284,9 +332,12 @@ Deno.serve(async (req) => {
         subscription: sub,
         verified,
         verification_method: method,
+        transferred_usdc: transferred,
+        expected_usdc: expectedAmountUSDC,
+        billing_cycle: cycle,
         plan: plan.name,
         message: verified
-          ? `✅ ${plan.name} plan activated! Your agents now have ${plan.name}-tier benefits.`
+          ? `✅ ${plan.name} (${cycle}) plan activated! Your agents now have ${plan.name}-tier benefits.`
           : "⏳ Payment recorded. Will be verified by admin shortly.",
       });
     }
@@ -297,8 +348,8 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Missing subscription_id" }, 400);
       }
 
-      const expiresAt = new Date();
-      expiresAt.setMonth(expiresAt.getMonth() + 1);
+      // Default admin verification = monthly cycle (backwards compatible).
+      const expiresAt = expiresAtForCycle(cycle);
 
       if (prod === "merchant") {
         const { data: sub } = await db
@@ -365,7 +416,7 @@ Deno.serve(async (req) => {
       {
         error: "Unknown action",
         available: ["get_payment_info", "verify_payment", "admin_verify"],
-        hint: 'Use body.product: "agent" (default) or "merchant" for get_payment_info, verify_payment, admin_verify',
+        hint: 'Use body.product: "agent" (default) or "merchant"; body.billing_cycle: "monthly" (default) or "annual"',
       },
       400,
     );

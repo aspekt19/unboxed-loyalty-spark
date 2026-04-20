@@ -17,6 +17,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAccount } from 'wagmi';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import {
+  BillingCycleToggle,
+  type BillingCycle,
+  priceForCycle,
+  annualDiscountPercent,
+  effectiveMonthlyPrice,
+} from '@/components/billing/BillingCycleToggle';
 
 const USDC_BASE = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
 
@@ -34,6 +41,7 @@ export function MerchantBillingDashboard() {
   const queryClient = useQueryClient();
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<MerchantPlan | null>(null);
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
   const [txHash, setTxHash] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
@@ -109,6 +117,7 @@ export function MerchantBillingDashboard() {
           transaction_hash: txHash.trim(),
           plan_slug: selectedPlan.slug,
           owner_address: address,
+          billing_cycle: billingCycle,
         },
       });
       if (error) throw error;
@@ -181,25 +190,55 @@ export function MerchantBillingDashboard() {
         </CardContent>
       </Card>
 
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h3 className="text-lg font-semibold">Choose a merchant plan</h3>
+        <BillingCycleToggle
+          value={billingCycle}
+          onChange={setBillingCycle}
+          discountLabel="Save 15–20%"
+        />
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {plans.map((plan) => {
           const isCurrent = plan.slug === currentPlanSlug;
           const isDowngrade =
             currentPlan &&
             plan.price_usdc_monthly < (currentPlan.price_usdc_monthly || 0);
+          const isFree = plan.price_usdc_monthly === 0;
+          const cyclePrice = priceForCycle(plan.price_usdc_monthly, billingCycle, plan.slug);
+          const monthlyEffective = effectiveMonthlyPrice(plan.price_usdc_monthly, billingCycle, plan.slug);
+          const discount = annualDiscountPercent(plan.slug);
+          const showAnnual = billingCycle === 'annual' && !isFree;
           return (
             <Card key={plan.id} className={isCurrent ? 'border-primary ring-1 ring-primary' : ''}>
               <CardHeader>
                 <div className="flex items-center justify-between gap-2">
                   <CardTitle className="text-lg">{plan.name}</CardTitle>
                   {isCurrent && <Badge>Current</Badge>}
+                  {showAnnual && discount > 0 && !isCurrent && (
+                    <Badge variant="secondary" className="text-[10px]">−{discount}%</Badge>
+                  )}
                 </div>
                 <CardDescription>{plan.description}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <span className="text-3xl font-bold">${plan.price_usdc_monthly}</span>
-                  <span className="text-sm text-muted-foreground">/mo USDC</span>
+                  {showAnnual ? (
+                    <>
+                      <span className="text-3xl font-bold">${monthlyEffective}</span>
+                      <span className="text-sm text-muted-foreground">/mo USDC</span>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        ${cyclePrice} billed annually{' '}
+                        <span className="line-through opacity-60">${plan.price_usdc_monthly * 12}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-3xl font-bold">${plan.price_usdc_monthly}</span>
+                      <span className="text-sm text-muted-foreground">/mo USDC</span>
+                    </>
+                  )}
                 </div>
                 <ul className="space-y-1.5 text-sm text-muted-foreground">
                   {((): string[] => {
@@ -224,14 +263,14 @@ export function MerchantBillingDashboard() {
                 <Button
                   className="w-full"
                   variant={isCurrent ? 'secondary' : 'default'}
-                  disabled={isCurrent || plan.price_usdc_monthly === 0}
+                  disabled={isCurrent || isFree}
                   onClick={() => handleUpgradeClick(plan)}
                 >
                   {isCurrent
                     ? 'Current plan'
                     : isDowngrade
                       ? 'Contact support to change'
-                      : `Pay $${plan.price_usdc_monthly} USDC`}
+                      : `Pay $${cyclePrice} USDC`}
                 </Button>
               </CardContent>
             </Card>
@@ -242,17 +281,31 @@ export function MerchantBillingDashboard() {
       <Dialog open={upgradeDialogOpen} onOpenChange={setUpgradeDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Subscribe to {selectedPlan?.name}</DialogTitle>
+            <DialogTitle>
+              Subscribe to {selectedPlan?.name}
+              {selectedPlan ? ` · ${billingCycle === 'annual' ? 'Annual' : 'Monthly'}` : ''}
+            </DialogTitle>
             <DialogDescription>
-              Send {selectedPlan?.price_usdc_monthly} USDC on Base to the platform subscription wallet (same address as
-              agent plan payments).
+              Send{' '}
+              {selectedPlan
+                ? priceForCycle(selectedPlan.price_usdc_monthly, billingCycle, selectedPlan.slug)
+                : 0}{' '}
+              USDC on Base to the platform subscription wallet (same address as agent plan payments).
+              {billingCycle === 'annual' && selectedPlan
+                ? ` Activates 12 months — save ${annualDiscountPercent(selectedPlan.slug)}%.`
+                : ''}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">Amount</Label>
-              <div className="p-2 bg-muted rounded-md font-mono font-bold">{selectedPlan?.price_usdc_monthly} USDC</div>
+              <div className="p-2 bg-muted rounded-md font-mono font-bold">
+                {selectedPlan
+                  ? priceForCycle(selectedPlan.price_usdc_monthly, billingCycle, selectedPlan.slug)
+                  : 0}{' '}
+                USDC
+              </div>
             </div>
 
             <div className="space-y-2">
