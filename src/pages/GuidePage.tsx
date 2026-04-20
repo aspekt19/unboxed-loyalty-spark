@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { BlockchainFAQ } from "@/components/onboarding/BlockchainFAQ";
 import PageTransition from "@/components/PageTransition";
 import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Repeat, UserPlus, Store } from "lucide-react";
 import { 
   Wallet, 
   Coins, 
@@ -387,6 +387,65 @@ export default function GuidePage() {
                   </Alert>
                 </CardContent>
               </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Repeat className="h-5 w-5" />
+                    Step 6: Trade on the P2P Marketplace
+                  </CardTitle>
+                  <CardDescription>Atomic onchain swaps between loyalty tokens — 0.5% protocol fee</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    The Marketplace lets merchants and holders exchange loyalty tokens through a smart-contract escrow on Base — both transfers happen in one transaction or neither does.
+                  </p>
+                  <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+                    <li>Open the <strong>Marketplace</strong> tab in the Merchant panel</li>
+                    <li>Click <strong>Create Offer</strong> — pick the token you offer and the token you want in return</li>
+                    <li>Approve the escrow contract to lock your tokens</li>
+                    <li>Browse active offers and click <strong>Accept</strong> to swap atomically</li>
+                    <li>Cancel your own stale offers anytime to unlock the escrowed tokens</li>
+                  </ol>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Store className="h-5 w-5" />
+                    Merchant Pricing
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-bold mb-1">Free</h4>
+                      <p className="text-2xl font-bold mb-2">$0<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li>• 1 active loyalty program</li>
+                        <li>• Up to 100 customers</li>
+                        <li>• Basic analytics</li>
+                        <li>• Onchain rewards on Base</li>
+                      </ul>
+                    </div>
+                    <div className="border border-primary rounded-lg p-4">
+                      <h4 className="font-bold mb-1">Pro</h4>
+                      <p className="text-2xl font-bold mb-2">$5<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li>• Unlimited programs & customers</li>
+                        <li>• RFM segmentation, campaigns, personalized offers</li>
+                        <li>• Team & branch management</li>
+                        <li>• AI automation rules + priority support</li>
+                      </ul>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Paid in USDC on Base. Full plan comparison on the{" "}
+                    <Link to="/pricing" className="underline text-primary">Pricing page</Link>.
+                  </p>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="customers" className="space-y-6">
@@ -586,6 +645,28 @@ export default function GuidePage() {
                   </div>
                 </CardContent>
               </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <UserPlus className="h-5 w-5" />
+                    Step 5: Invite Friends & Earn Bonuses
+                  </CardTitle>
+                  <CardDescription>Get bonus tokens when friends join via your referral code</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Many programs run a referral bonus — both you and the friend you invite receive extra tokens automatically when they make their first qualifying purchase.
+                  </p>
+                  <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+                    <li>Open the <strong>Referrals</strong> section in the Customer panel</li>
+                    <li>Generate or copy your unique referral code (one per program)</li>
+                    <li>Share the code with friends — by message, link or QR</li>
+                    <li>When they sign up and use it, both wallets receive bonus tokens onchain</li>
+                    <li>Track your invited friends and total bonuses in the Referral Stats card</li>
+                  </ol>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="agents" className="space-y-6">
@@ -702,37 +783,57 @@ export default function GuidePage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="grid md:grid-cols-3 gap-4">
+                  <div className="grid md:grid-cols-2 gap-4">
                     <div className="border rounded-lg p-4">
                       <h4 className="font-bold mb-1">Free</h4>
-                      <p className="text-2xl font-bold mb-2">$0</p>
+                      <p className="text-2xl font-bold mb-2">$0<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
                       <ul className="text-sm text-muted-foreground space-y-1">
-                        <li>• 200 API calls/month</li>
-                        <li>• 1 agent</li>
-                        <li>• 1.25% mint fee</li>
+                        <li>• 1 API key (lsk_ or rwk_)</li>
+                        <li>• 100 calls / day</li>
+                        <li>• All MCP & REST endpoints</li>
+                        <li>• Pay-per-call x402 (no key)</li>
                       </ul>
                     </div>
                     <div className="border border-primary rounded-lg p-4">
                       <h4 className="font-bold mb-1">Pro</h4>
-                      <p className="text-2xl font-bold mb-2">$49<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+                      <p className="text-2xl font-bold mb-2">$10<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
                       <ul className="text-sm text-muted-foreground space-y-1">
-                        <li>• 10,000 API calls/month</li>
-                        <li>• 5 agents</li>
-                        <li>• 0.5% mint fee</li>
-                      </ul>
-                    </div>
-                    <div className="border rounded-lg p-4">
-                      <h4 className="font-bold mb-1">Enterprise</h4>
-                      <p className="text-2xl font-bold mb-2">$129<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
-                      <ul className="text-sm text-muted-foreground space-y-1">
-                        <li>• Unlimited API calls</li>
-                        <li>• Unlimited agents</li>
-                        <li>• 0.25% mint fee</li>
+                        <li>• 10 API keys</li>
+                        <li>• 10,000 calls / day</li>
+                        <li>• Reduced transaction fees</li>
+                        <li>• CDP wallet provisioning</li>
+                        <li>• Priority MCP routing</li>
                       </ul>
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
-                    All payments in USDC on Base ($1 = 1 USDC). Pay on-chain — verified automatically.
+                    Subscriptions paid in USDC on Base ($1 = 1 USDC), verified on-chain. See the full breakdown on the{" "}
+                    <Link to="/pricing" className="underline text-primary">Pricing page</Link>.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <UserPlus className="h-5 w-5" />
+                    Recipient Agents (rwk_ keys)
+                  </CardTitle>
+                  <CardDescription>For agents that hold and spend tokens on behalf of a customer wallet</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    If your agent only controls a customer wallet (not a merchant), use a <code className="bg-muted px-1 rounded">rwk_</code> key instead of <code className="bg-muted px-1 rounded">lsk_</code>. Recipient agents can:
+                  </p>
+                  <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                    <li>Read balances, vouchers and personalized offers</li>
+                    <li>Redeem rewards and accept P2P offers</li>
+                    <li>Prepare ERC-20 transfer calldata for any address (<code className="bg-muted px-1 rounded">prepare_loyalty_token_transfer</code>)</li>
+                    <li>Create / cancel marketplace offers</li>
+                  </ul>
+                  <p className="text-sm text-muted-foreground">
+                    Endpoints: <code className="bg-muted px-1 rounded">/recipient-api</code> (REST) and <code className="bg-muted px-1 rounded">/recipient-loyalty-mcp</code> (MCP). Register via SIWE — see{" "}
+                    <a href="/for-agents" className="underline text-primary">/for-agents</a>.
                   </p>
                 </CardContent>
               </Card>
