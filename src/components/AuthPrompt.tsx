@@ -45,23 +45,25 @@ export function AuthPrompt() {
   if (isLoading || user) return null;
 
   if (isFarcaster) {
-    if (isConnected) {
+    // In Farcaster: connector auto-connects and AuthContext auto-runs SIWE.
+    // Show a passive status — only fall back to a manual button if something failed.
+    if (!isConnected) {
       return (
         <Alert className="mb-6 border-2 border-primary/20 bg-primary/5">
           <Shield className="h-5 w-5 text-primary" />
-          <AlertTitle className="text-lg font-semibold mb-2">Sign in to continue</AlertTitle>
+          <AlertTitle className="text-lg font-semibold mb-2">Connecting Farcaster wallet…</AlertTitle>
           <AlertDescription className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Sign in to access your rewards, track your loyalty balance, and redeem perks.
+              Signing you in automatically with your Farcaster wallet. If nothing happens, tap below.
             </p>
             <Button
               variant="uds"
-              onClick={handleWalletSignIn}
-              disabled={isLoading}
+              onClick={handleFarcasterConnect}
               className={cn(INLINE_AUTH_CTA_CLASSNAME)}
+              type="button"
             >
               <LogIn className="h-3.5 w-3.5 shrink-0" />
-              {isLoading ? 'Signing in...' : 'Continue'}
+              Connect Farcaster wallet
             </Button>
           </AlertDescription>
         </Alert>
@@ -71,19 +73,20 @@ export function AuthPrompt() {
     return (
       <Alert className="mb-6 border-2 border-primary/20 bg-primary/5">
         <Shield className="h-5 w-5 text-primary" />
-        <AlertTitle className="text-lg font-semibold mb-2">Sign in to continue</AlertTitle>
+        <AlertTitle className="text-lg font-semibold mb-2">Signing in…</AlertTitle>
         <AlertDescription className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Sign in with your Farcaster wallet to continue.
+            Verifying your Farcaster wallet. This is automatic — no signature popup needed.
           </p>
           <Button
             variant="uds"
-            onClick={handleFarcasterConnect}
+            onClick={handleWalletSignIn}
+            disabled={isLoading}
             className={cn(INLINE_AUTH_CTA_CLASSNAME)}
             type="button"
           >
             <LogIn className="h-3.5 w-3.5 shrink-0" />
-            Sign In
+            {isLoading ? 'Signing in…' : 'Retry sign in'}
           </Button>
         </AlertDescription>
       </Alert>

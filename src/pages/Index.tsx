@@ -59,30 +59,36 @@ const jsonLd = {
 
 const Index = () => {
   const [isFarcaster, setIsFarcaster] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(false);
+  const [checkedFarcaster, setCheckedFarcaster] = useState(false);
 
   useEffect(() => {
     const checkFarcasterContext = async () => {
       if (typeof window !== 'undefined') {
         try {
           const context = await sdk.context;
-          setIsFarcaster(!!context?.client?.clientFid);
+          const inFarcaster = !!context?.client?.clientFid;
+          setIsFarcaster(inFarcaster);
+          if (inFarcaster) {
+            // Auto-redirect into the app — wallet connect + SIWE happens there.
+            window.location.replace('/app');
+            return;
+          }
         } catch {
           setIsFarcaster(false);
         }
       }
+      setCheckedFarcaster(true);
     };
     checkFarcasterContext();
   }, []);
 
-  if (isFarcaster && !showWelcome) {
-    return <FarcasterSplash onLaunch={() => setShowWelcome(true)} />;
+  if (isFarcaster) {
+    // While the redirect is in flight, show the Farcaster splash so the
+    // miniapp host gets `sdk.actions.ready()` from FarcasterSplash.
+    return <FarcasterSplash onLaunch={() => window.location.replace('/app')} />;
   }
 
-  if (isFarcaster && showWelcome) {
-    window.location.href = '/app';
-    return null;
-  }
+  if (!checkedFarcaster) return null;
 
   return (
     <PageTransition>

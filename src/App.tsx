@@ -28,6 +28,7 @@ import { migrateAllData } from "./lib/migrateLocalStorageData";
 import { usePageMeta } from "./hooks/usePageMeta";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ConnectorRecoveryListener } from "./components/ConnectorRecoveryListener";
+import { FarcasterAutoConnect } from "./components/FarcasterAutoConnect";
 import { ThemeProvider } from "next-themes";
 
 const queryClient = new QueryClient();
@@ -88,6 +89,7 @@ function FarcasterProviders({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <TooltipProvider>
+            <FarcasterAutoConnect />
             <Toaster />
             <Sonner />
             {children}
