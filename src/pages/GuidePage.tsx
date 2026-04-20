@@ -418,30 +418,40 @@ export default function GuidePage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid md:grid-cols-3 gap-4">
                     <div className="border rounded-lg p-4">
-                      <h4 className="font-bold mb-1">Free</h4>
-                      <p className="text-2xl font-bold mb-2">$0<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+                      <h4 className="font-bold mb-1">Starter</h4>
+                      <p className="text-2xl font-bold mb-2">$39<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
                       <ul className="text-sm text-muted-foreground space-y-1">
-                        <li>• 1 active loyalty program</li>
-                        <li>• Up to 100 customers</li>
-                        <li>• Basic analytics</li>
-                        <li>• Onchain rewards on Base</li>
+                        <li>• Active loyalty programs on Base</li>
+                        <li>• Customer profiles & basic analytics</li>
+                        <li>• Rewards catalog & vouchers</li>
+                        <li>• Branded ERC-20 token</li>
                       </ul>
                     </div>
                     <div className="border border-primary rounded-lg p-4">
-                      <h4 className="font-bold mb-1">Pro</h4>
-                      <p className="text-2xl font-bold mb-2">$5<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+                      <h4 className="font-bold mb-1">Growth</h4>
+                      <p className="text-2xl font-bold mb-2">$79<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
                       <ul className="text-sm text-muted-foreground space-y-1">
-                        <li>• Unlimited programs & customers</li>
-                        <li>• RFM segmentation, campaigns, personalized offers</li>
+                        <li>• RFM segmentation & enhanced analytics</li>
+                        <li>• Marketing campaigns & personalized offers</li>
                         <li>• Team & branch management</li>
                         <li>• AI automation rules + priority support</li>
                       </ul>
                     </div>
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-bold mb-1">Scale</h4>
+                      <p className="text-2xl font-bold mb-2">$149<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li>• Everything in Growth</li>
+                        <li>• Priority routing & SLA</li>
+                        <li>• Dedicated onboarding</li>
+                        <li>• Custom integrations & advanced reporting</li>
+                      </ul>
+                    </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Paid in USDC on Base. Full plan comparison on the{" "}
+                    Paid in USDC on Base. Annual billing: 15–20% off. Full plan comparison on the{" "}
                     <Link to="/pricing" className="underline text-primary">Pricing page</Link>.
                   </p>
                 </CardContent>
@@ -783,26 +793,37 @@ export default function GuidePage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid md:grid-cols-3 gap-4">
                     <div className="border rounded-lg p-4">
                       <h4 className="font-bold mb-1">Free</h4>
                       <p className="text-2xl font-bold mb-2">$0<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
                       <ul className="text-sm text-muted-foreground space-y-1">
-                        <li>• 1 API key (lsk_ or rwk_)</li>
-                        <li>• 100 calls / day</li>
+                        <li>• 1 agent (lsk_ or rwk_)</li>
+                        <li>• 200 API calls / month</li>
                         <li>• All MCP & REST endpoints</li>
-                        <li>• Pay-per-call x402 (no key)</li>
+                        <li>• Mint fee 1.25%</li>
                       </ul>
                     </div>
                     <div className="border border-primary rounded-lg p-4">
                       <h4 className="font-bold mb-1">Pro</h4>
-                      <p className="text-2xl font-bold mb-2">$10<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+                      <p className="text-2xl font-bold mb-2">$49<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
                       <ul className="text-sm text-muted-foreground space-y-1">
-                        <li>• 10 API keys</li>
-                        <li>• 10,000 calls / day</li>
-                        <li>• Reduced transaction fees</li>
+                        <li>• Up to 5 agents</li>
+                        <li>• 10,000 API calls / month</li>
+                        <li>• Mint fee 0.50%</li>
                         <li>• CDP wallet provisioning</li>
                         <li>• Priority MCP routing</li>
+                      </ul>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-bold mb-1">Enterprise</h4>
+                      <p className="text-2xl font-bold mb-2">$129<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li>• Unlimited agents</li>
+                        <li>• Unlimited API calls</li>
+                        <li>• Mint fee 0.25%</li>
+                        <li>• Dedicated routing & SLA</li>
+                        <li>• Priority support</li>
                       </ul>
                     </div>
                   </div>

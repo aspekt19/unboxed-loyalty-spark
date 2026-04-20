@@ -23,37 +23,53 @@ interface Plan {
 
 const merchantPlans: Plan[] = [
   {
-    name: "Free",
-    price: "$0",
+    name: "Starter",
+    price: "$39",
     period: "/month",
-    description: "Try the protocol with one loyalty program",
+    description: "SMB entry — your first onchain loyalty program",
     features: [
-      { text: "1 active loyalty program", included: true },
-      { text: "Up to 100 customers", included: true },
-      { text: "Basic analytics", included: true },
-      { text: "Onchain rewards on Base", included: true },
-      { text: "Premium analytics", included: false },
-      { text: "AI agent access", included: false },
+      { text: "Active loyalty programs on Base", included: true },
+      { text: "Customer profiles & basic analytics", included: true },
+      { text: "Rewards catalog & vouchers", included: true },
+      { text: "Branded ERC-20 token", included: true },
+      { text: "RFM segmentation & campaigns", included: false },
+      { text: "Team & branch management", included: false },
     ],
-    cta: "Start free",
+    cta: "Start with Starter",
     href: "/merchant",
   },
   {
-    name: "Pro",
-    price: "$5",
+    name: "Growth",
+    price: "$79",
     period: "/month",
-    description: "For growing merchants who want full automation",
+    description: "Upsell for scale and depth — full CRM-light",
     features: [
-      { text: "Unlimited programs & customers", included: true },
-      { text: "Premium analytics + RFM segmentation", included: true },
+      { text: "Everything in Starter", included: true },
+      { text: "RFM segmentation & enhanced analytics", included: true },
       { text: "Marketing campaigns & personalized offers", included: true },
       { text: "Team & branch management", included: true },
       { text: "AI automation rules", included: true },
       { text: "Priority support", included: true },
     ],
-    cta: "Upgrade to Pro",
+    cta: "Upgrade to Growth",
     href: "/premium",
     highlighted: true,
+  },
+  {
+    name: "Scale",
+    price: "$149",
+    period: "/month",
+    description: "Corporate-style budgets and priority",
+    features: [
+      { text: "Everything in Growth", included: true },
+      { text: "Priority routing & SLA", included: true },
+      { text: "Dedicated onboarding", included: true },
+      { text: "Custom integrations", included: true },
+      { text: "Advanced reporting & exports", included: true },
+      { text: "Direct support channel", included: true },
+    ],
+    cta: "Talk to us",
+    href: "/premium",
   },
 ];
 
@@ -65,31 +81,47 @@ const agentPlans: Plan[] = [
     description: "For solo agents and prototypes",
     features: [
       { text: "1 API key (lsk_ or rwk_)", included: true },
-      { text: "100 calls / day", included: true },
+      { text: "200 API calls / month", included: true },
       { text: "All MCP & REST endpoints", included: true },
-      { text: "Pay-per-call x402 (no key)", included: true },
-      { text: "Multiple keys", included: false },
-      { text: "Higher rate limits", included: false },
+      { text: "Mint fee 1.25%", included: true },
+      { text: "Multiple agents", included: false },
+      { text: "Reduced mint fee", included: false },
     ],
     cta: "Generate API key",
     href: "/for-agents",
   },
   {
     name: "Pro",
-    price: "$10",
+    price: "$49",
     period: "/month",
     description: "For agent teams & autonomous swarms",
     features: [
-      { text: "10 API keys", included: true },
-      { text: "10,000 calls / day", included: true },
-      { text: "Reduced transaction fees", included: true },
+      { text: "Up to 5 agents", included: true },
+      { text: "10,000 API calls / month", included: true },
+      { text: "Mint fee 0.50%", included: true },
       { text: "CDP wallet provisioning", included: true },
       { text: "Priority MCP routing", included: true },
       { text: "Email support", included: true },
     ],
-    cta: "Upgrade agent plan",
+    cta: "Upgrade to Pro",
     href: "/for-agents",
     highlighted: true,
+  },
+  {
+    name: "Enterprise",
+    price: "$129",
+    period: "/month",
+    description: "Unlimited automation for production swarms",
+    features: [
+      { text: "Unlimited agents", included: true },
+      { text: "Unlimited API calls", included: true },
+      { text: "Mint fee 0.25%", included: true },
+      { text: "Dedicated routing & SLA", included: true },
+      { text: "Priority support", included: true },
+      { text: "Custom integrations", included: true },
+    ],
+    cta: "Contact sales",
+    href: "/for-agents",
   },
 ];
 
@@ -165,11 +197,14 @@ const PricingPage = () => {
             <Store className="h-6 w-6 text-primary" />
             <h2 className="text-2xl md:text-3xl font-bold">For Merchants</h2>
           </div>
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {merchantPlans.map((p) => (
               <PlanCard key={p.name} plan={p} />
             ))}
           </div>
+          <p className="text-xs text-muted-foreground text-center mt-4">
+            Annual billing: 15–20% off vs 12× monthly. Paid in USDC on Base.
+          </p>
         </section>
 
         {/* AI Agents */}
@@ -178,11 +213,14 @@ const PricingPage = () => {
             <Bot className="h-6 w-6 text-primary" />
             <h2 className="text-2xl md:text-3xl font-bold">For AI Agents</h2>
           </div>
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {agentPlans.map((p) => (
               <PlanCard key={p.name} plan={p} />
             ))}
           </div>
+          <p className="text-xs text-muted-foreground text-center mt-4">
+            Mint fee charged on chain volume. Subscriptions paid in USDC on Base.
+          </p>
         </section>
 
         {/* Pay-per-call */}
