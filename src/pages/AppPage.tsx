@@ -45,9 +45,9 @@ export default function AppPage() {
               {/* Buttons */}
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => isPremium ? navigate('/premium') : setShowUpgradeDialog(true)}
+                  onClick={() => setShowUpgradeDialog(true)}
                   className="p-2 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors"
-                  title={isPremium ? 'Premium активен' : 'Активировать Premium'}
+                  title={isPremium ? 'Premium active' : 'Activate Premium'}
                 >
                   <Crown className={`h-5 w-5 ${isPremium ? 'text-yellow-500' : 'text-primary'}`} />
                 </button>

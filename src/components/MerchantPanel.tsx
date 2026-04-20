@@ -38,6 +38,13 @@ interface MerchantPanelProps {
 
 export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: MerchantPanelProps = {}) {
   const { address } = useAccount();
+  // Deep-link support: /merchant?tab=billing|agents|... selects initial desktop tab.
+  const initialTabFromUrl = (() => {
+    if (typeof window === 'undefined') return undefined;
+    const t = new URLSearchParams(window.location.search).get('tab');
+    const valid = ['dashboard', 'customers', 'programs', 'rewards', 'marketing', 'billing', 'agents', 'team'];
+    return t && valid.includes(t) ? t : undefined;
+  })();
   const [selectedProgram, setSelectedProgram] = useState<{ name: string; symbol: string; tokenAddress: string; cashbackRate?: number; pointsPerDollar?: number } | null>(null);
   const [mintDialogOpen, setMintDialogOpen] = useState(false);
   const [earnDialogOpen, setEarnDialogOpen] = useState(false);
@@ -315,7 +322,7 @@ export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: Merchant
         </div>
       ) : (
         /* Own business mode: full merchant panel */
-        <Tabs {...(activeTab !== undefined ? { value: activeTab, onValueChange: onTabChange } : { defaultValue: "dashboard" })} className="w-full">
+        <Tabs {...(activeTab !== undefined ? { value: activeTab, onValueChange: onTabChange } : { defaultValue: initialTabFromUrl ?? "dashboard" })} className="w-full">
           {hideTabsList ? (
             /* Mobile: show sub-tab bar only for "Home" group tabs */
             ['dashboard', 'customers', 'marketing', 'billing', 'agents'].includes(activeTab || 'dashboard') && (
