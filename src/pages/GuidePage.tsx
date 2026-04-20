@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { BlockchainFAQ } from "@/components/onboarding/BlockchainFAQ";
 import PageTransition from "@/components/PageTransition";
 import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Repeat, UserPlus, Store } from "lucide-react";
 import { 
   Wallet, 
   Coins, 
