@@ -52,8 +52,8 @@ const LandingCTA = () => {
               <Link to="/api-docs" className="text-sm text-muted-foreground hover:text-primary transition-colors underline underline-offset-4">
                 API Documentation
               </Link>
-              <Link to="/premium" className="text-sm text-muted-foreground hover:text-primary transition-colors underline underline-offset-4">
-                Premium Plans
+              <Link to="/pricing" className="text-sm text-muted-foreground hover:text-primary transition-colors underline underline-offset-4">
+                Pricing & Plans
               </Link>
             </div>
           </motion.div>
