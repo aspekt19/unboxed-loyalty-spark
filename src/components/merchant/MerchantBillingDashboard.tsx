@@ -17,6 +17,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAccount } from 'wagmi';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import {
+  BillingCycleToggle,
+  type BillingCycle,
+  priceForCycle,
+  annualDiscountPercent,
+  effectiveMonthlyPrice,
+} from '@/components/billing/BillingCycleToggle';
 
 const USDC_BASE = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
 
@@ -34,6 +41,7 @@ export function MerchantBillingDashboard() {
   const queryClient = useQueryClient();
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<MerchantPlan | null>(null);
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
   const [txHash, setTxHash] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
@@ -109,6 +117,7 @@ export function MerchantBillingDashboard() {
           transaction_hash: txHash.trim(),
           plan_slug: selectedPlan.slug,
           owner_address: address,
+          billing_cycle: billingCycle,
         },
       });
       if (error) throw error;
