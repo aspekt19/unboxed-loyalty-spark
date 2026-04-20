@@ -645,9 +645,29 @@ export default function GuidePage() {
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
 
-            <TabsContent value="agents" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <UserPlus className="h-5 w-5" />
+                    Step 5: Invite Friends & Earn Bonuses
+                  </CardTitle>
+                  <CardDescription>Get bonus tokens when friends join via your referral code</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Many programs run a referral bonus — both you and the friend you invite receive extra tokens automatically when they make their first qualifying purchase.
+                  </p>
+                  <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+                    <li>Open the <strong>Referrals</strong> section in the Customer panel</li>
+                    <li>Generate or copy your unique referral code (one per program)</li>
+                    <li>Share the code with friends — by message, link or QR</li>
+                    <li>When they sign up and use it, both wallets receive bonus tokens onchain</li>
+                    <li>Track your invited friends and total bonuses in the Referral Stats card</li>
+                  </ol>
+                </CardContent>
+              </Card>
+            </TabsContent>
               <Alert>
                 <Bot className="h-4 w-4" />
                 <AlertDescription>
