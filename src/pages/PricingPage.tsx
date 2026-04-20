@@ -4,6 +4,7 @@ import { Check, ArrowRight, Bot, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import SiteHeader from "@/components/SiteHeader";
 
 interface PlanFeature {
   text: string;
@@ -172,6 +173,7 @@ const PlanCard = ({ plan }: { plan: Plan }) => (
 const PricingPage = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SiteHeader />
       <div className="container mx-auto px-4 py-12 md:py-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

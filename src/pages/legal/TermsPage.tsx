@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
+import SiteHeader from "@/components/SiteHeader";
 
 const TermsPage = () => (
   <div className="min-h-screen bg-background">
+    <SiteHeader />
     <div className="container mx-auto px-4 py-12 max-w-3xl">
       <Link to="/" className="text-sm text-muted-foreground hover:text-primary">
         ← Back to home
