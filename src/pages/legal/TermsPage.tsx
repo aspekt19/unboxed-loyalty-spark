@@ -109,8 +109,8 @@ const TermsPage = () => (
           <section>
             <h2 className="text-xl font-semibold">10. Contact</h2>
             <p>
-              <a href="mailto:hello@loyalspark.online" className="text-primary hover:underline">
-                hello@loyalspark.online
+              <a href="mailto:admin@loyalspark.online" className="text-primary hover:underline">
+                admin@loyalspark.online
               </a>
             </p>
           </section>
