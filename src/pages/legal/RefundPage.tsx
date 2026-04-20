@@ -54,8 +54,8 @@ const RefundPage = () => (
             <ol className="list-decimal pl-6">
               <li>
                 Email{" "}
-                <a href="mailto:hello@loyalspark.online" className="text-primary hover:underline">
-                  hello@loyalspark.online
+                <a href="mailto:admin@loyalspark.online" className="text-primary hover:underline">
+                  admin@loyalspark.online
                 </a>{" "}
                 from your account email or with your wallet address.
               </li>

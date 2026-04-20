@@ -281,7 +281,7 @@ const PricingPage = () => {
                 </p>
               </div>
               <Button asChild size="lg">
-                <a href="mailto:hello@loyalspark.online?subject=Free%20Pro%20%2B%20interview">
+                <a href="mailto:admin@loyalspark.online?subject=Free%20Pro%20%2B%20interview">
                   Apply <ArrowRight className="ml-2 h-4 w-4" />
                 </a>
               </Button>
@@ -293,7 +293,7 @@ const PricingPage = () => {
         <div className="text-center mt-16 text-sm text-muted-foreground">
           Need a custom plan?{" "}
           <a
-            href="mailto:hello@loyalspark.online"
+            href="mailto:admin@loyalspark.online"
             className="text-primary hover:underline"
           >
             Contact us
