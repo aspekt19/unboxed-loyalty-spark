@@ -19,6 +19,7 @@ import LandingFeatures from '@/components/landing/LandingFeatures';
 import LandingAgents from '@/components/landing/LandingAgents';
 
 import LandingCTA from '@/components/landing/LandingCTA';
+import NotifyMe from '@/components/landing/NotifyMe';
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -140,7 +141,10 @@ const Index = () => {
           {/* 9. Use Cases */}
           <UseCases />
 
-          {/* 10. Final CTA */}
+          {/* 10. Email capture for visitors not ready to connect a wallet */}
+          <NotifyMe source="landing" />
+
+          {/* 11. Final CTA */}
           <LandingCTA />
         </main>
 

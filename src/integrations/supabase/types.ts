@@ -1125,6 +1125,27 @@ export type Database = {
           },
         ]
       }
+      notify_me_signups: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          source: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          source?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          source?: string | null
+        }
+        Relationships: []
+      }
       payment_settings: {
         Row: {
           admin_wallet_address: string

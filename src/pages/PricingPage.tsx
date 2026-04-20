@@ -226,6 +226,31 @@ const PricingPage = () => {
           </Card>
         </section>
 
+        {/* Free Pro for first 3 — pricing experiment */}
+        <section className="max-w-4xl mx-auto mt-12">
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
+              <div>
+                <Badge className="mb-2">Limited — first 3 only</Badge>
+                <h3 className="text-xl font-bold mb-1">
+                  Get Pro free for 1 month
+                </h3>
+                <p className="text-sm text-muted-foreground max-w-xl">
+                  We're validating pricing with the first 3 merchants and 3
+                  agent developers. In exchange for a 15-minute interview about
+                  your loyalty / agent use case, we'll activate Pro for you for
+                  free.
+                </p>
+              </div>
+              <Button asChild size="lg">
+                <a href="mailto:hello@loyalspark.online?subject=Free%20Pro%20%2B%20interview">
+                  Apply <ArrowRight className="ml-2 h-4 w-4" />
+                </a>
+              </Button>
+            </CardContent>
+          </Card>
+        </section>
+
         {/* FAQ teaser */}
         <div className="text-center mt-16 text-sm text-muted-foreground">
           Need a custom plan?{" "}

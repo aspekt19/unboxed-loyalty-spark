@@ -152,10 +152,10 @@ const PremiumPage = () => {
                 <CardContent>
                   <ul className="space-y-2 sm:space-y-3">
                     {[
-                      'Access to Round-Up investments',
                       'Advanced analytics',
                       'Priority support',
-                      'Exclusive investment strategies',
+                      'Round-Up investments — in development',
+                      'Exclusive investment strategies — in development',
                       'No withdrawal fees'
                     ].map((feature, index) => (
                       <li key={index} className="flex items-center gap-2">
