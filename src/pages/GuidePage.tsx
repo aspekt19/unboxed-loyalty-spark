@@ -504,7 +504,7 @@ export default function GuidePage() {
                       <div>
                         <h4 className="font-medium text-sm mb-0.5">How is it created?</h4>
                         <p className="text-sm text-muted-foreground">
-                          When you sign in with email or passkey, a secure wallet is created for you automatically by Coinbase. 
+                          When you sign in with email, phone, or Google, a secure embedded wallet is created for you automatically by Privy.
                           You don't need to install any apps or know anything about crypto — it just works.
                         </p>
                       </div>
@@ -553,8 +553,8 @@ export default function GuidePage() {
                   <Alert className="mt-2">
                     <Shield className="h-4 w-4" />
                     <AlertDescription>
-                      <strong>Your wallet is secured by Coinbase.</strong> Your private keys are protected with multi-party computation (MPC) technology — 
-                      no single party (including Coinbase or Loyal Spark) can access your funds without your authorization.
+                      <strong>Your wallet is secured by Privy.</strong> Your private keys are protected with multi-party computation (MPC) and
+                      trusted execution environments — no single party (including Privy or Loyal Spark) can access your funds without your authorization.
                     </AlertDescription>
                   </Alert>
                 </CardContent>
