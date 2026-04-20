@@ -2,8 +2,41 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { RECIPIENT_REST_ROUTE_USD } from "../../../supabase/functions/_shared/recipient-paid-routes";
-import { RECIPIENT_MCP_BAZAAR_TOOLS } from "../../../supabase/functions/_shared/recipient-mcp-bazaar-tools";
+
+// Mirrors supabase/functions/_shared/recipient-paid-routes.ts (keep in sync).
+const RECIPIENT_REST_ROUTE_USD: Record<string, Record<string, string>> = {
+  GET: {
+    "recipient-api/me": "0",
+    "recipient-api/balances": "0.001",
+    "recipient-api/balance": "0.001",
+    "recipient-api/rewards": "0.001",
+    "recipient-api/vouchers": "0.001",
+    "recipient-api/offers": "0.001",
+  },
+  POST: {
+    "recipient-api/register": "0",
+    "recipient-api/prepare-transfer": "0.005",
+    "recipient-api/redeem-reward": "0.01",
+    "recipient-api/offers": "0.01",
+    "recipient-api/accept-offer": "0.01",
+    "recipient-api/cancel-offer": "0.005",
+  },
+};
+
+// Mirrors supabase/functions/_shared/recipient-mcp-bazaar-tools.ts (keep in sync).
+const RECIPIENT_MCP_BAZAAR_TOOLS: ReadonlyArray<{ name: string; price: string; description: string }> = [
+  { name: "get_recipient_profile", price: "0.01", description: "Recipient agent profile (rwk_ bound wallet)" },
+  { name: "list_my_loyalty_balances", price: "0.01", description: "All loyalty tier balances for your wallet" },
+  { name: "get_my_loyalty_balance", price: "0.01", description: "Balance and tier for one loyalty token" },
+  { name: "prepare_loyalty_token_transfer", price: "0.005", description: "ERC-20 transfer calldata; same band as merchant transfer" },
+  { name: "list_rewards_for_program", price: "0.01", description: "Redeemable rewards for a program" },
+  { name: "list_my_vouchers", price: "0.01", description: "Vouchers for your wallet" },
+  { name: "redeem_my_reward", price: "0.01", description: "Redeem reward with transfer tx hash" },
+  { name: "list_p2p_offers", price: "0.001", description: "List P2P offers (same band as GET /offers)" },
+  { name: "create_p2p_offer", price: "0.01", description: "Create P2P swap intent" },
+  { name: "accept_p2p_offer", price: "0.01", description: "Accept a P2P offer" },
+  { name: "cancel_p2p_offer", price: "0.005", description: "Cancel your P2P offer" },
+];
 
 /**
  * Full pay-per-call price list for AI agents.
