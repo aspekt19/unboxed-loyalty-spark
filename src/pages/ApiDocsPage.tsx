@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Copy, Check, Bot, Key, Shield, Zap, Lightbulb, Network, BadgeCheck, Users, TrendingUp, Puzzle, BookOpen, ExternalLink } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import PageTransition from '@/components/PageTransition';
 import SiteHeader from '@/components/SiteHeader';
 import McpServerSection from '@/components/api-docs/McpServerSection';
