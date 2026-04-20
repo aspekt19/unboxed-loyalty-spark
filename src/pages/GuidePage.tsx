@@ -387,9 +387,66 @@ export default function GuidePage() {
                   </Alert>
                 </CardContent>
               </Card>
-            </TabsContent>
 
-            <TabsContent value="customers" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Repeat className="h-5 w-5" />
+                    Step 6: Trade on the P2P Marketplace
+                  </CardTitle>
+                  <CardDescription>Atomic onchain swaps between loyalty tokens — 0.5% protocol fee</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    The Marketplace lets merchants and holders exchange loyalty tokens through a smart-contract escrow on Base — both transfers happen in one transaction or neither does.
+                  </p>
+                  <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+                    <li>Open the <strong>Marketplace</strong> tab in the Merchant panel</li>
+                    <li>Click <strong>Create Offer</strong> — pick the token you offer and the token you want in return</li>
+                    <li>Approve the escrow contract to lock your tokens</li>
+                    <li>Browse active offers and click <strong>Accept</strong> to swap atomically</li>
+                    <li>Cancel your own stale offers anytime to unlock the escrowed tokens</li>
+                  </ol>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Store className="h-5 w-5" />
+                    Merchant Pricing
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-bold mb-1">Free</h4>
+                      <p className="text-2xl font-bold mb-2">$0<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li>• 1 active loyalty program</li>
+                        <li>• Up to 100 customers</li>
+                        <li>• Basic analytics</li>
+                        <li>• Onchain rewards on Base</li>
+                      </ul>
+                    </div>
+                    <div className="border border-primary rounded-lg p-4">
+                      <h4 className="font-bold mb-1">Pro</h4>
+                      <p className="text-2xl font-bold mb-2">$5<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li>• Unlimited programs & customers</li>
+                        <li>• RFM segmentation, campaigns, personalized offers</li>
+                        <li>• Team & branch management</li>
+                        <li>• AI automation rules + priority support</li>
+                      </ul>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Paid in USDC on Base. Full plan comparison on the{" "}
+                    <Link to="/pricing" className="underline text-primary">Pricing page</Link>.
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
               <Alert>
                 <Wallet className="h-4 w-4" />
                 <AlertDescription>
