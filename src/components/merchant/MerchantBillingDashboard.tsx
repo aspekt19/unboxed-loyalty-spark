@@ -190,25 +190,55 @@ export function MerchantBillingDashboard() {
         </CardContent>
       </Card>
 
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h3 className="text-lg font-semibold">Choose a merchant plan</h3>
+        <BillingCycleToggle
+          value={billingCycle}
+          onChange={setBillingCycle}
+          discountLabel="Save 15–20%"
+        />
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {plans.map((plan) => {
           const isCurrent = plan.slug === currentPlanSlug;
           const isDowngrade =
             currentPlan &&
             plan.price_usdc_monthly < (currentPlan.price_usdc_monthly || 0);
+          const isFree = plan.price_usdc_monthly === 0;
+          const cyclePrice = priceForCycle(plan.price_usdc_monthly, billingCycle, plan.slug);
+          const monthlyEffective = effectiveMonthlyPrice(plan.price_usdc_monthly, billingCycle, plan.slug);
+          const discount = annualDiscountPercent(plan.slug);
+          const showAnnual = billingCycle === 'annual' && !isFree;
           return (
             <Card key={plan.id} className={isCurrent ? 'border-primary ring-1 ring-primary' : ''}>
               <CardHeader>
                 <div className="flex items-center justify-between gap-2">
                   <CardTitle className="text-lg">{plan.name}</CardTitle>
                   {isCurrent && <Badge>Current</Badge>}
+                  {showAnnual && discount > 0 && !isCurrent && (
+                    <Badge variant="secondary" className="text-[10px]">−{discount}%</Badge>
+                  )}
                 </div>
                 <CardDescription>{plan.description}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <span className="text-3xl font-bold">${plan.price_usdc_monthly}</span>
-                  <span className="text-sm text-muted-foreground">/mo USDC</span>
+                  {showAnnual ? (
+                    <>
+                      <span className="text-3xl font-bold">${monthlyEffective}</span>
+                      <span className="text-sm text-muted-foreground">/mo USDC</span>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        ${cyclePrice} billed annually{' '}
+                        <span className="line-through opacity-60">${plan.price_usdc_monthly * 12}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-3xl font-bold">${plan.price_usdc_monthly}</span>
+                      <span className="text-sm text-muted-foreground">/mo USDC</span>
+                    </>
+                  )}
                 </div>
                 <ul className="space-y-1.5 text-sm text-muted-foreground">
                   {((): string[] => {
@@ -233,14 +263,14 @@ export function MerchantBillingDashboard() {
                 <Button
                   className="w-full"
                   variant={isCurrent ? 'secondary' : 'default'}
-                  disabled={isCurrent || plan.price_usdc_monthly === 0}
+                  disabled={isCurrent || isFree}
                   onClick={() => handleUpgradeClick(plan)}
                 >
                   {isCurrent
                     ? 'Current plan'
                     : isDowngrade
                       ? 'Contact support to change'
-                      : `Pay $${plan.price_usdc_monthly} USDC`}
+                      : `Pay $${cyclePrice} USDC`}
                 </Button>
               </CardContent>
             </Card>
