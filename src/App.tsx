@@ -19,6 +19,10 @@ import InstallPage from "./pages/InstallPage";
 import PremiumPage from "./pages/PremiumPage";
 import ApiDocsPage from "./pages/ApiDocsPage";
 import ForAgentsPage from "./pages/ForAgentsPage";
+import PricingPage from "./pages/PricingPage";
+import TermsPage from "./pages/legal/TermsPage";
+import PrivacyPage from "./pages/legal/PrivacyPage";
+import RefundPage from "./pages/legal/RefundPage";
 import NotFound from "./pages/NotFound";
 import NativeShopperPage from "./pages/NativeShopperPage";
 import NativeBusinessPage from "./pages/NativeBusinessPage";
@@ -72,6 +76,10 @@ function AnimatedRoutes() {
         <Route path="/install" element={<InstallPage />} />
         <Route path="/api-docs" element={<ApiDocsPage />} />
         <Route path="/for-agents" element={<ForAgentsPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/legal/terms" element={<TermsPage />} />
+        <Route path="/legal/privacy" element={<PrivacyPage />} />
+        <Route path="/legal/refund" element={<RefundPage />} />
         {/* Native app entry points (Capacitor) */}
         <Route path="/native/shopper" element={<NativeShopperPage />} />
         <Route path="/native/business" element={<NativeBusinessPage />} />
