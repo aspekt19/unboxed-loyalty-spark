@@ -447,6 +447,8 @@ export default function GuidePage() {
                 </CardContent>
               </Card>
             </TabsContent>
+
+            <TabsContent value="customers" className="space-y-6">
               <Alert>
                 <Wallet className="h-4 w-4" />
                 <AlertDescription>
