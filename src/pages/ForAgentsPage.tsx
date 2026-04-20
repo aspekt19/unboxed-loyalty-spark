@@ -17,6 +17,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
+import PayPerCallPriceList from "@/components/agents/PayPerCallPriceList";
 import { MCP_TOOL_COUNT, MCP_TOOL_NAMES } from "@/constants/mcpToolNames";
 import { RECIPIENT_MCP_TOOL_COUNT, RECIPIENT_MCP_TOOL_NAMES } from "@/constants/recipientMcpToolNames";
 
@@ -356,6 +357,10 @@ export default function ForAgentsPage() {
               Source: <code className="bg-muted px-1 rounded">src/constants/recipientMcpToolNames.ts</code> · server{" "}
               <code className="bg-muted px-1 rounded">recipient-loyalty-mcp/index.ts</code>
             </p>
+          </section>
+
+          <section>
+            <PayPerCallPriceList />
           </section>
 
           <section className="space-y-3">

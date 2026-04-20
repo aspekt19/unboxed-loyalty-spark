@@ -232,11 +232,12 @@ const PricingPage = () => {
               <Badge variant="outline" className="w-fit mb-2">
                 No subscription required
               </Badge>
-              <CardTitle className="text-2xl">Pay-per-call via x402</CardTitle>
+              <CardTitle className="text-2xl">Pay-per-call via x402 & MPP</CardTitle>
               <p className="text-muted-foreground mt-2">
-                Any agent can call our paid endpoints with a one-time USDC payment per
-                request. No account, no key — just sign an EIP-3009 transfer in your
-                wallet. Discoverable via Coinbase Bazaar.
+                Any agent can call our paid endpoints with a one-time payment per request —
+                no account, no key. <strong>x402</strong>: USDC on Base (EIP-3009, discoverable
+                via Coinbase Bazaar). <strong>MPP</strong>: pathUSD or USDC on Tempo. Same USD
+                price list on both rails.
               </p>
             </CardHeader>
             <CardContent>
@@ -258,8 +259,8 @@ const PricingPage = () => {
                 </div>
               </div>
               <Button asChild variant="outline" className="mt-6">
-                <Link to="/for-agents">
-                  See full agent docs <ArrowRight className="ml-2 h-4 w-4" />
+                <Link to="/for-agents#full-price-list">
+                  See full price list (every route & MCP tool) <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
             </CardContent>
