@@ -281,17 +281,31 @@ export function MerchantBillingDashboard() {
       <Dialog open={upgradeDialogOpen} onOpenChange={setUpgradeDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Subscribe to {selectedPlan?.name}</DialogTitle>
+            <DialogTitle>
+              Subscribe to {selectedPlan?.name}
+              {selectedPlan ? ` · ${billingCycle === 'annual' ? 'Annual' : 'Monthly'}` : ''}
+            </DialogTitle>
             <DialogDescription>
-              Send {selectedPlan?.price_usdc_monthly} USDC on Base to the platform subscription wallet (same address as
-              agent plan payments).
+              Send{' '}
+              {selectedPlan
+                ? priceForCycle(selectedPlan.price_usdc_monthly, billingCycle, selectedPlan.slug)
+                : 0}{' '}
+              USDC on Base to the platform subscription wallet (same address as agent plan payments).
+              {billingCycle === 'annual' && selectedPlan
+                ? ` Activates 12 months — save ${annualDiscountPercent(selectedPlan.slug)}%.`
+                : ''}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">Amount</Label>
-              <div className="p-2 bg-muted rounded-md font-mono font-bold">{selectedPlan?.price_usdc_monthly} USDC</div>
+              <div className="p-2 bg-muted rounded-md font-mono font-bold">
+                {selectedPlan
+                  ? priceForCycle(selectedPlan.price_usdc_monthly, billingCycle, selectedPlan.slug)
+                  : 0}{' '}
+                USDC
+              </div>
             </div>
 
             <div className="space-y-2">
