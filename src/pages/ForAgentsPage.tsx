@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
-  ArrowLeft,
   Bot,
   Check,
   Copy,
@@ -17,6 +16,7 @@ import {
   Terminal,
   BookOpen,
 } from "lucide-react";
+import SiteHeader from "@/components/SiteHeader";
 import { MCP_TOOL_COUNT, MCP_TOOL_NAMES } from "@/constants/mcpToolNames";
 import { RECIPIENT_MCP_TOOL_COUNT, RECIPIENT_MCP_TOOL_NAMES } from "@/constants/recipientMcpToolNames";
 
@@ -182,13 +182,10 @@ export default function ForAgentsPage() {
     <PageTransition>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="min-h-screen bg-background">
-        <header className="sticky top-0 z-50 border-b border-border bg-background/85 backdrop-blur-md">
-          <div className="container max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
-            <Link to="/">
-              <Button variant="ghost" size="icon" aria-label="Back home">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
+        <SiteHeader />
+
+        <div className="border-b border-border bg-muted/30">
+          <div className="container max-w-5xl mx-auto px-4 py-4 flex flex-wrap items-center gap-3">
             <div className="flex-1 min-w-0">
               <h1 className="text-base sm:text-lg font-bold flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-primary shrink-0" />
@@ -205,7 +202,7 @@ export default function ForAgentsPage() {
               </a>
             </Button>
           </div>
-        </header>
+        </div>
 
         <main className="container max-w-5xl mx-auto px-4 py-8 space-y-10">
           <section className="text-center space-y-3 max-w-3xl mx-auto">

@@ -4,8 +4,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { BlockchainFAQ } from "@/components/onboarding/BlockchainFAQ";
 import PageTransition from "@/components/PageTransition";
+import SiteHeader from "@/components/SiteHeader";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Repeat, UserPlus, Store } from "lucide-react";
+import { Repeat, UserPlus, Store } from "lucide-react";
 import { 
   Wallet, 
   Coins, 
@@ -69,19 +70,7 @@ export default function GuidePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <div className="min-h-screen bg-background">
-        <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
-          <div className="container mx-auto px-4 py-3 flex items-center gap-4">
-            <Link to="/">
-              <Button variant="ghost" size="icon">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-lg font-bold">Loyal Spark Guide</h1>
-              <p className="text-xs text-muted-foreground">Learn how everything works</p>
-            </div>
-          </div>
-        </header>
+        <SiteHeader />
 
         <main className="container max-w-6xl mx-auto p-4 md:p-8 space-y-8">
           {/* Header */}

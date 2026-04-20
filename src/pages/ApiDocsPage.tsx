@@ -3,9 +3,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Copy, Check, Bot, Key, Shield, Zap, Lightbulb, Network, BadgeCheck, Users, TrendingUp, Puzzle, BookOpen, ExternalLink } from 'lucide-react';
+import { Copy, Check, Bot, Key, Shield, Zap, Lightbulb, Network, BadgeCheck, Users, TrendingUp, Puzzle, BookOpen, ExternalLink } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import PageTransition from '@/components/PageTransition';
+import SiteHeader from '@/components/SiteHeader';
 import McpServerSection from '@/components/api-docs/McpServerSection';
 import MppSection from '@/components/api-docs/MppSection';
 
@@ -714,28 +715,24 @@ const reward = await fetch(\`\${BASE}/rewards\`, {
     <PageTransition>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="min-h-screen bg-background">
+        <SiteHeader />
         <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
           {/* Header */}
-          <div className="flex items-start gap-2 sm:gap-3 mb-6 sm:mb-8">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="h-8 w-8 sm:h-10 sm:w-10 shrink-0 mt-0.5">
-              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-            </Button>
-            <div className="min-w-0">
-              <h1 className="text-lg sm:text-2xl font-bold flex items-center gap-2">
-                <Bot className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" />
-                <span className="truncate">Agent API Documentation</span>
-              </h1>
-              <p className="text-muted-foreground text-xs sm:text-sm">
-                REST API for AI agents to interact with Loyal Spark loyalty programs
-              </p>
-              <Link
-                to="/for-agents"
-                className="text-xs sm:text-sm text-primary font-medium inline-flex items-center gap-1 mt-1 hover:underline underline-offset-4"
-              >
-                <BookOpen className="h-3.5 w-3.5" />
-                Agent onboarding (keys, MCP, discovery)
-              </Link>
-            </div>
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-lg sm:text-2xl font-bold flex items-center gap-2">
+              <Bot className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" />
+              <span className="truncate">Agent API Documentation</span>
+            </h1>
+            <p className="text-muted-foreground text-xs sm:text-sm">
+              REST API for AI agents to interact with Loyal Spark loyalty programs
+            </p>
+            <Link
+              to="/for-agents"
+              className="text-xs sm:text-sm text-primary font-medium inline-flex items-center gap-1 mt-1 hover:underline underline-offset-4"
+            >
+              <BookOpen className="h-3.5 w-3.5" />
+              Agent onboarding (keys, MCP, discovery)
+            </Link>
           </div>
 
           {/* Why Use Loyal Spark */}
