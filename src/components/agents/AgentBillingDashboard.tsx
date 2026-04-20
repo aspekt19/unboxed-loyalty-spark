@@ -291,26 +291,50 @@ export function AgentBillingDashboard() {
           <Alert>
             <Settings className="h-4 w-4" />
             <AlertDescription>
-              Plans are paid in <strong>USDC</strong> on <strong>Base</strong> network. $1 = 1 USDC.
+              Plans are paid in <strong>USDC</strong> on <strong>Base</strong> network. Annual billing saves 15–20%.
             </AlertDescription>
           </Alert>
+          <div className="flex justify-end">
+            <BillingCycleToggle value={billingCycle} onChange={setBillingCycle} discountLabel="Save 15–20%" />
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {plans.map((plan) => {
               const isCurrent = plan.slug === currentPlanSlug;
+              const isFree = plan.price_usdc_monthly === 0;
               const isDowngrade = plan.price_usdc_monthly < (currentPlan?.price_usdc_monthly || 0);
+              const cyclePrice = priceForCycle(plan.price_usdc_monthly, billingCycle, plan.slug);
+              const monthlyEffective = effectiveMonthlyPrice(plan.price_usdc_monthly, billingCycle, plan.slug);
+              const discount = annualDiscountPercent(plan.slug);
+              const showAnnual = billingCycle === 'annual' && !isFree;
               return (
                 <Card key={plan.id} className={isCurrent ? 'border-primary ring-1 ring-primary' : ''}>
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg">{plan.name}</CardTitle>
                       {isCurrent && <Badge variant="default">Current</Badge>}
+                      {showAnnual && discount > 0 && !isCurrent && (
+                        <Badge variant="secondary" className="text-[10px]">−{discount}%</Badge>
+                      )}
                     </div>
                     <CardDescription>{plan.description}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
-                      <span className="text-3xl font-bold">${plan.price_usdc_monthly}</span>
-                      <span className="text-sm text-muted-foreground">/mo USDC</span>
+                      {showAnnual ? (
+                        <>
+                          <span className="text-3xl font-bold">${monthlyEffective}</span>
+                          <span className="text-sm text-muted-foreground">/mo USDC</span>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            ${cyclePrice} billed annually{' '}
+                            <span className="line-through opacity-60">${plan.price_usdc_monthly * 12}</span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-3xl font-bold">${plan.price_usdc_monthly}</span>
+                          <span className="text-sm text-muted-foreground">/mo USDC</span>
+                        </>
+                      )}
                     </div>
                     <div className="space-y-2 text-sm">
                       {(plan.features as string[])?.map((f, i) => (
@@ -323,10 +347,10 @@ export function AgentBillingDashboard() {
                     <Button
                       className="w-full"
                       variant={isCurrent ? 'secondary' : 'default'}
-                      disabled={isCurrent || plan.price_usdc_monthly === 0}
+                      disabled={isCurrent || isFree}
                       onClick={() => handleUpgradeClick(plan)}
                     >
-                      {isCurrent ? 'Current Plan' : isDowngrade ? 'Contact Support' : plan.price_usdc_monthly === 0 ? 'Free' : `Upgrade — $${plan.price_usdc_monthly} USDC`}
+                      {isCurrent ? 'Current Plan' : isFree ? 'Free' : isDowngrade ? 'Contact Support' : `Upgrade — $${cyclePrice} USDC`}
                     </Button>
                   </CardContent>
                 </Card>
@@ -372,21 +396,35 @@ export function AgentBillingDashboard() {
       <Dialog open={upgradeDialogOpen} onOpenChange={setUpgradeDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Upgrade to {selectedPlan?.name}</DialogTitle>
+            <DialogTitle>
+              Upgrade to {selectedPlan?.name}
+              {selectedPlan ? ` · ${billingCycle === 'annual' ? 'Annual' : 'Monthly'}` : ''}
+            </DialogTitle>
             <DialogDescription>
-              Send {selectedPlan?.price_usdc_monthly} USDC on Base to activate your plan
+              Send{' '}
+              {selectedPlan
+                ? priceForCycle(selectedPlan.price_usdc_monthly, billingCycle, selectedPlan.slug)
+                : 0}{' '}
+              USDC on Base to activate your plan
+              {billingCycle === 'annual' && selectedPlan
+                ? ` for 12 months (save ${annualDiscountPercent(selectedPlan.slug)}%).`
+                : '.'}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* Step 1: Send USDC */}
             <div className="space-y-3">
               <Label className="text-sm font-semibold">Step 1: Send USDC on Base</Label>
-              
+
               <div className="space-y-2">
                 <Label className="text-xs text-muted-foreground">Amount</Label>
                 <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
-                  <span className="font-mono font-bold text-lg">{selectedPlan?.price_usdc_monthly} USDC</span>
+                  <span className="font-mono font-bold text-lg">
+                    {selectedPlan
+                      ? priceForCycle(selectedPlan.price_usdc_monthly, billingCycle, selectedPlan.slug)
+                      : 0}{' '}
+                    USDC
+                  </span>
                 </div>
               </div>
 
