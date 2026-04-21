@@ -1,216 +1,258 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Crown, Users, DollarSign, TrendingUp } from 'lucide-react';
+import { Crown, Users, DollarSign, TrendingUp, CheckCircle2, Bot, Store } from 'lucide-react';
 import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
+import { toast } from 'sonner';
 
-export const PremiumManagement = () => {
-  const { data: subscriptions } = useQuery({
-    queryKey: ['admin-premium-subscriptions'],
+type Product = 'merchant' | 'agent';
+
+interface SubRow {
+  id: string;
+  owner_address: string;
+  status: string;
+  amount_usdc: number;
+  billing_cycle: string;
+  is_trial: boolean;
+  paid_at: string | null;
+  expires_at: string | null;
+  transaction_hash: string | null;
+  created_at: string;
+  // Joined plan
+  agent_plans?: { name: string; slug: string } | null;
+  merchant_plans?: { name: string; slug: string } | null;
+}
+
+function ProductTab({ product }: { product: Product }) {
+  const queryClient = useQueryClient();
+  const table =
+    product === 'merchant'
+      ? 'merchant_plan_subscriptions'
+      : 'agent_plan_subscriptions';
+  const planTable = product === 'merchant' ? 'merchant_plans' : 'agent_plans';
+  const queryKey = ['admin-plan-subs', product];
+
+  const { data: subs = [] } = useQuery({
+    queryKey,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('premium_subscriptions')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: paymentRequests } = useQuery({
-    queryKey: ['admin-payment-requests'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('premium_payment_requests')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: activityLogs } = useQuery({
-    queryKey: ['admin-premium-activity'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('premium_activity_log')
-        .select('*')
+        .from(table as 'agent_plan_subscriptions')
+        .select(`*, ${planTable}(name, slug)`)
         .order('created_at', { ascending: false })
-        .limit(100);
-
+        .limit(200);
       if (error) throw error;
-      return data;
+      return (data || []) as unknown as SubRow[];
     },
   });
 
-  const activeSubscriptions = subscriptions?.filter(s => s.is_active && s.subscription_status === 'active') || [];
-  const totalRevenue = paymentRequests?.filter(r => r.status === 'verified').reduce((sum, r) => sum + Number(r.amount), 0) || 0;
+  const verifyMutation = useMutation({
+    mutationFn: async ({ id, cycle }: { id: string; cycle: 'monthly' | 'annual' }) => {
+      const { data, error } = await supabase.functions.invoke(
+        'verify-agent-plan-payment',
+        {
+          body: {
+            action: 'admin_verify',
+            product,
+            subscription_id: id,
+            billing_cycle: cycle,
+          },
+        },
+      );
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Subscription activated');
+      void queryClient.invalidateQueries({ queryKey });
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : 'Activation failed');
+    },
+  });
+
+  const active = subs.filter((s) => s.status === 'active');
+  const trialing = subs.filter((s) => s.status === 'trialing');
+  const pending = subs.filter((s) => s.status === 'pending_verification' || s.status === 'pending');
+  const revenue = active.reduce((sum, s) => sum + Number(s.amount_usdc || 0), 0);
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Subscriptions</CardTitle>
-            <Crown className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{activeSubscriptions.length}</div>
-            <p className="text-xs text-muted-foreground">
-              Total: {subscriptions?.length || 0}
-            </p>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Active</p>
+            <p className="text-2xl font-bold">{active.length}</p>
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">
-              Verified payments: {paymentRequests?.filter(r => r.status === 'verified').length || 0}
-            </p>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Trialing</p>
+            <p className="text-2xl font-bold">{trialing.length}</p>
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Confirmations</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {paymentRequests?.filter(r => r.status === 'pending').length || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Require verification
-            </p>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Pending</p>
+            <p className="text-2xl font-bold">{pending.length}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground">Revenue (USDC)</p>
+            <p className="text-2xl font-bold">${revenue.toFixed(2)}</p>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="subscriptions" className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Subscriptions</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {subs.length === 0 ? (
+            <div className="py-8 text-center text-sm text-muted-foreground">
+              <Users className="h-10 w-10 mx-auto mb-2 opacity-50" />
+              No subscriptions yet
+            </div>
+          ) : (
+            subs.map((s) => {
+              const planEmbed =
+                product === 'merchant' ? s.merchant_plans : s.agent_plans;
+              const planName = planEmbed?.name || planEmbed?.slug || '—';
+              const statusVariant =
+                s.status === 'active'
+                  ? 'default'
+                  : s.status === 'trialing'
+                  ? 'secondary'
+                  : s.status === 'pending_verification'
+                  ? 'outline'
+                  : 'destructive';
+              return (
+                <div
+                  key={s.id}
+                  className="flex flex-wrap items-center justify-between gap-3 p-3 border rounded-md"
+                >
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge>{planName}</Badge>
+                      <Badge variant={statusVariant} className="capitalize">
+                        {s.status}
+                      </Badge>
+                      <Badge variant="outline" className="text-[10px] capitalize">
+                        {s.billing_cycle}
+                      </Badge>
+                      {s.is_trial && (
+                        <Badge variant="secondary" className="text-[10px]">
+                          TRIAL
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground font-mono">
+                      {s.owner_address.slice(0, 10)}…{s.owner_address.slice(-6)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      ${Number(s.amount_usdc || 0).toFixed(2)} ·{' '}
+                      {s.expires_at
+                        ? `expires ${format(new Date(s.expires_at), 'd MMM yyyy', { locale: enUS })}`
+                        : 'no expiry'}
+                    </p>
+                    {s.transaction_hash && (
+                      <a
+                        href={`https://basescan.org/tx/${s.transaction_hash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] font-mono text-primary hover:underline"
+                      >
+                        {s.transaction_hash.slice(0, 12)}…{s.transaction_hash.slice(-8)}
+                      </a>
+                    )}
+                  </div>
+                  {(s.status === 'pending' || s.status === 'pending_verification') && (
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          verifyMutation.mutate({ id: s.id, cycle: 'monthly' })
+                        }
+                        disabled={verifyMutation.isPending}
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                        Activate · monthly
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          verifyMutation.mutate({ id: s.id, cycle: 'annual' })
+                        }
+                        disabled={verifyMutation.isPending}
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                        Activate · annual
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+export const PremiumManagement = () => {
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Crown className="h-4 w-4 text-primary" />
+            Plan subscriptions
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-xs text-muted-foreground">
+          Manage merchant and agent plan subscriptions. Trials are 14 days for
+          new merchants (Growth) and new agent owners (Pro). Payments are USDC
+          on Base; pending entries can be activated manually here when
+          BaseScan-based verification is unavailable.
+        </CardContent>
+      </Card>
+
+      <Tabs defaultValue="merchant">
         <TabsList>
-          <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
-          <TabsTrigger value="payments">Payments</TabsTrigger>
-          <TabsTrigger value="activity">Activity</TabsTrigger>
+          <TabsTrigger value="merchant" className="gap-2">
+            <Store className="h-3.5 w-3.5" /> Merchants
+          </TabsTrigger>
+          <TabsTrigger value="agent" className="gap-2">
+            <Bot className="h-3.5 w-3.5" /> Agents
+          </TabsTrigger>
+          <TabsTrigger value="legacy" className="gap-2">
+            <DollarSign className="h-3.5 w-3.5" /> Legacy Round-Up
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="subscriptions" className="space-y-4">
-          {subscriptions && subscriptions.length > 0 ? (
-            subscriptions.map((sub) => (
-              <Card key={sub.id}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">
-                        {sub.wallet_address.slice(0, 6)}...{sub.wallet_address.slice(-4)}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {sub.started_at && format(new Date(sub.started_at), 'd MMMM yyyy', { locale: enUS })}
-                        {' → '}
-                        {sub.expires_at && format(new Date(sub.expires_at), 'd MMMM yyyy', { locale: enUS })}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={sub.is_active ? 'default' : 'secondary'}>
-                        {sub.subscription_status}
-                      </Badge>
-                      {sub.is_active && <Crown className="h-4 w-4 text-primary" />}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground">No subscriptions yet</p>
-              </CardContent>
-            </Card>
-          )}
+        <TabsContent value="merchant" className="mt-4">
+          <ProductTab product="merchant" />
+        </TabsContent>
+        <TabsContent value="agent" className="mt-4">
+          <ProductTab product="agent" />
         </TabsContent>
 
-        <TabsContent value="payments" className="space-y-4">
-          {paymentRequests && paymentRequests.length > 0 ? (
-            paymentRequests.map((payment) => (
-              <Card key={payment.id}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">
-                        ${payment.amount} ({payment.payment_type.toUpperCase()})
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {payment.wallet_address.slice(0, 6)}...{payment.wallet_address.slice(-4)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(payment.created_at), 'd MMMM yyyy, HH:mm', { locale: enUS })}
-                      </p>
-                    </div>
-                    <Badge 
-                      variant={
-                        payment.status === 'verified' ? 'default' : 
-                        payment.status === 'pending' ? 'secondary' : 
-                        'destructive'
-                      }
-                    >
-                      {payment.status}
-                    </Badge>
-                  </div>
-                  {payment.transaction_hash && (
-                    <p className="text-xs text-muted-foreground mt-2">
-                      TX: {payment.transaction_hash.slice(0, 10)}...{payment.transaction_hash.slice(-8)}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <DollarSign className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground">No payments yet</p>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="activity" className="space-y-4">
-          {activityLogs && activityLogs.length > 0 ? (
-            activityLogs.map((log) => (
-              <Card key={log.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">{log.activity_type}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {log.wallet_address.slice(0, 6)}...{log.wallet_address.slice(-4)}
-                      </p>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {format(new Date(log.created_at), 'd MMM, HH:mm', { locale: enUS })}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <TrendingUp className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground">Activity history is empty</p>
-              </CardContent>
-            </Card>
-          )}
+        <TabsContent value="legacy" className="mt-4">
+          <Card>
+            <CardContent className="p-6 text-center text-sm text-muted-foreground">
+              <TrendingUp className="h-10 w-10 mx-auto mb-3 opacity-50" />
+              Round-Up Premium ($10) is paused. Existing subscriptions remain
+              active in the database; no new payments are accepted via the UI.
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

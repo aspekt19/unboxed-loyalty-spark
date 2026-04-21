@@ -126,10 +126,11 @@ export function AgentBillingDashboard() {
       const { data, error } = await supabase
         .from('agent_plan_subscriptions')
         .select('*, agent_plans(*)')
-        .eq('status', 'active')
+        .eq('owner_address', (address || '').toLowerCase())
+        .in('status', ['active', 'trialing'])
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
       if (error && error.code !== 'PGRST116') return null;
       return data;
     },

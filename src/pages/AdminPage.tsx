@@ -55,7 +55,7 @@ const AdminPage = () => {
             <div>
               <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Admin Panel</h1>
               <p className="text-xs sm:text-sm text-muted-foreground">
-                Manage premium subscriptions and payment settings
+                Manage merchant & agent subscriptions, payments and platform settings
               </p>
             </div>
           </div>
@@ -64,7 +64,7 @@ const AdminPage = () => {
         <Tabs defaultValue="premium" className="space-y-4 sm:space-y-6">
           <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-2">
             <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-4 gap-1">
-              <TabsTrigger value="premium" className="text-xs sm:text-sm whitespace-nowrap flex-shrink-0">Premium</TabsTrigger>
+              <TabsTrigger value="premium" className="text-xs sm:text-sm whitespace-nowrap flex-shrink-0">Subscriptions</TabsTrigger>
               <TabsTrigger value="admins" className="text-xs sm:text-sm whitespace-nowrap flex-shrink-0">Admins</TabsTrigger>
               <TabsTrigger value="requests" className="text-xs sm:text-sm whitespace-nowrap flex-shrink-0">Requests</TabsTrigger>
               <TabsTrigger value="settings" className="text-xs sm:text-sm whitespace-nowrap flex-shrink-0">Settings</TabsTrigger>

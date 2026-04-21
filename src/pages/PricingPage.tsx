@@ -1,10 +1,18 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Check, ArrowRight, Bot, Store } from "lucide-react";
+import { Check, ArrowRight, Bot, Store, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import SiteHeader from "@/components/SiteHeader";
+import {
+  BillingCycleToggle,
+  type BillingCycle,
+  priceForCycle,
+  effectiveMonthlyPrice,
+  annualDiscountPercent,
+} from "@/components/billing/BillingCycleToggle";
 
 interface PlanFeature {
   text: string;
@@ -13,8 +21,9 @@ interface PlanFeature {
 
 interface Plan {
   name: string;
-  price: string;
-  period: string;
+  /** Slug used to compute annual discount tier (must match DB plan slug). */
+  slug: string;
+  monthlyPrice: number;
   description: string;
   features: PlanFeature[];
   cta: string;
@@ -25,8 +34,8 @@ interface Plan {
 const merchantPlans: Plan[] = [
   {
     name: "Starter",
-    price: "$39",
-    period: "/month",
+    slug: "starter",
+    monthlyPrice: 39,
     description: "SMB entry — your first onchain loyalty program",
     features: [
       { text: "Active loyalty programs on Base", included: true },
@@ -41,8 +50,8 @@ const merchantPlans: Plan[] = [
   },
   {
     name: "Growth",
-    price: "$79",
-    period: "/month",
+    slug: "growth",
+    monthlyPrice: 79,
     description: "Upsell for scale and depth — full CRM-light",
     features: [
       { text: "Everything in Starter", included: true },
@@ -58,8 +67,8 @@ const merchantPlans: Plan[] = [
   },
   {
     name: "Scale",
-    price: "$149",
-    period: "/month",
+    slug: "scale",
+    monthlyPrice: 149,
     description: "Corporate-style budgets and priority",
     features: [
       { text: "Everything in Growth", included: true },
@@ -77,8 +86,8 @@ const merchantPlans: Plan[] = [
 const agentPlans: Plan[] = [
   {
     name: "Free",
-    price: "$0",
-    period: "/month",
+    slug: "free",
+    monthlyPrice: 0,
     description: "For solo agents and prototypes",
     features: [
       { text: "1 API key (lsk_ or rwk_)", included: true },
@@ -93,8 +102,8 @@ const agentPlans: Plan[] = [
   },
   {
     name: "Pro",
-    price: "$49",
-    period: "/month",
+    slug: "pro",
+    monthlyPrice: 49,
     description: "For agent teams & autonomous swarms",
     features: [
       { text: "Up to 5 agents", included: true },
@@ -105,13 +114,13 @@ const agentPlans: Plan[] = [
       { text: "Email support", included: true },
     ],
     cta: "Upgrade to Pro",
-    href: "/merchant?tab=agents",
+    href: "/for-agents#agent-billing",
     highlighted: true,
   },
   {
     name: "Enterprise",
-    price: "$129",
-    period: "/month",
+    slug: "enterprise",
+    monthlyPrice: 129,
     description: "Unlimited automation for production swarms",
     features: [
       { text: "Unlimited agents", included: true },
@@ -122,55 +131,85 @@ const agentPlans: Plan[] = [
       { text: "Custom integrations", included: true },
     ],
     cta: "Contact sales",
-    href: "/merchant?tab=agents",
+    href: "/for-agents#agent-billing",
   },
 ];
 
-const PlanCard = ({ plan }: { plan: Plan }) => (
-  <Card
-    className={`relative h-full ${
-      plan.highlighted ? "border-primary shadow-lg shadow-primary/10" : ""
-    }`}
-  >
-    {plan.highlighted && (
-      <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">Most popular</Badge>
-    )}
-    <CardHeader>
-      <CardTitle className="text-2xl">{plan.name}</CardTitle>
-      <div className="flex items-baseline gap-1 mt-2">
-        <span className="text-4xl font-bold">{plan.price}</span>
-        <span className="text-muted-foreground">{plan.period}</span>
-      </div>
-      <p className="text-sm text-muted-foreground mt-2">{plan.description}</p>
-    </CardHeader>
-    <CardContent className="space-y-4">
-      <ul className="space-y-2">
-        {plan.features.map((f, i) => (
-          <li
-            key={i}
-            className={`flex items-start gap-2 text-sm ${
-              f.included ? "" : "text-muted-foreground line-through"
-            }`}
-          >
-            <Check
-              className={`h-4 w-4 mt-0.5 shrink-0 ${
-                f.included ? "text-primary" : "text-muted-foreground/40"
+const PlanCard = ({ plan, cycle }: { plan: Plan; cycle: BillingCycle }) => {
+  const isFree = plan.monthlyPrice === 0;
+  const cyclePrice = priceForCycle(plan.monthlyPrice, cycle, plan.slug);
+  const monthlyEffective = effectiveMonthlyPrice(plan.monthlyPrice, cycle, plan.slug);
+  const discount = annualDiscountPercent(plan.slug);
+  const showAnnual = cycle === "annual" && !isFree;
+
+  return (
+    <Card
+      className={`relative h-full ${
+        plan.highlighted ? "border-primary shadow-lg shadow-primary/10" : ""
+      }`}
+    >
+      {plan.highlighted && (
+        <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">Most popular</Badge>
+      )}
+      <CardHeader>
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-2xl">{plan.name}</CardTitle>
+          {showAnnual && discount > 0 && (
+            <Badge variant="secondary" className="text-[10px]">−{discount}%</Badge>
+          )}
+        </div>
+        {showAnnual ? (
+          <>
+            <div className="flex items-baseline gap-1 mt-2">
+              <span className="text-4xl font-bold">${monthlyEffective}</span>
+              <span className="text-muted-foreground">/mo</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              ${cyclePrice} billed annually{" "}
+              <span className="line-through opacity-60">
+                ${plan.monthlyPrice * 12}
+              </span>
+            </p>
+          </>
+        ) : (
+          <div className="flex items-baseline gap-1 mt-2">
+            <span className="text-4xl font-bold">${plan.monthlyPrice}</span>
+            <span className="text-muted-foreground">/month</span>
+          </div>
+        )}
+        <p className="text-sm text-muted-foreground mt-2">{plan.description}</p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <ul className="space-y-2">
+          {plan.features.map((f, i) => (
+            <li
+              key={i}
+              className={`flex items-start gap-2 text-sm ${
+                f.included ? "" : "text-muted-foreground line-through"
               }`}
-            />
-            <span>{f.text}</span>
-          </li>
-        ))}
-      </ul>
-      <Button asChild className="w-full" variant={plan.highlighted ? "default" : "outline"}>
-        <Link to={plan.href}>
-          {plan.cta} <ArrowRight className="ml-2 h-4 w-4" />
-        </Link>
-      </Button>
-    </CardContent>
-  </Card>
-);
+            >
+              <Check
+                className={`h-4 w-4 mt-0.5 shrink-0 ${
+                  f.included ? "text-primary" : "text-muted-foreground/40"
+                }`}
+              />
+              <span>{f.text}</span>
+            </li>
+          ))}
+        </ul>
+        <Button asChild className="w-full" variant={plan.highlighted ? "default" : "outline"}>
+          <Link to={plan.href}>
+            {plan.cta} <ArrowRight className="ml-2 h-4 w-4" />
+          </Link>
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};
 
 const PricingPage = () => {
+  const [cycle, setCycle] = useState<BillingCycle>("monthly");
+
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
@@ -179,7 +218,7 @@ const PricingPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-center max-w-3xl mx-auto mb-16"
+          className="text-center max-w-3xl mx-auto mb-10"
         >
           <Badge variant="secondary" className="mb-4">
             Simple, transparent pricing
@@ -189,9 +228,34 @@ const PricingPage = () => {
           </h1>
           <p className="text-lg text-muted-foreground">
             Loyal Spark is free to start. Upgrade when your loyalty program or AI agents
-            need more. All plans run on Base L2 with USDC payments.
+            need more. All paid plans run on Base L2 with USDC payments.
           </p>
         </motion.div>
+
+        {/* Free Trial Banner */}
+        <Card className="max-w-3xl mx-auto mb-10 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10">
+          <CardContent className="p-5 flex flex-wrap items-center gap-4 justify-between">
+            <div className="flex items-center gap-3">
+              <Sparkles className="h-6 w-6 text-primary shrink-0" />
+              <div>
+                <p className="font-semibold text-base">14-day free trial included</p>
+                <p className="text-sm text-muted-foreground">
+                  New merchants automatically get <strong>Growth</strong> for 14 days.
+                  New agent owners get <strong>Pro</strong> for 14 days. No card required.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Global billing toggle */}
+        <div className="flex justify-center mb-8">
+          <BillingCycleToggle
+            value={cycle}
+            onChange={setCycle}
+            discountLabel="Save 15–20%"
+          />
+        </div>
 
         {/* Merchants */}
         <section className="mb-20">
@@ -201,11 +265,11 @@ const PricingPage = () => {
           </div>
           <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {merchantPlans.map((p) => (
-              <PlanCard key={p.name} plan={p} />
+              <PlanCard key={p.name} plan={p} cycle={cycle} />
             ))}
           </div>
           <p className="text-xs text-muted-foreground text-center mt-4">
-            Annual billing: 15–20% off vs 12× monthly. Paid in USDC on Base.
+            Annual billing: 15% off Starter, 20% off Growth/Scale. Paid in USDC on Base.
           </p>
         </section>
 
@@ -217,11 +281,11 @@ const PricingPage = () => {
           </div>
           <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {agentPlans.map((p) => (
-              <PlanCard key={p.name} plan={p} />
+              <PlanCard key={p.name} plan={p} cycle={cycle} />
             ))}
           </div>
           <p className="text-xs text-muted-foreground text-center mt-4">
-            Mint fee charged on chain volume. Subscriptions paid in USDC on Base.
+            Annual billing: 15% off Pro, 20% off Enterprise. Mint fee charged on chain volume.
           </p>
         </section>
 
