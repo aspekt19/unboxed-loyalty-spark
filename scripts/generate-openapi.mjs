@@ -19,13 +19,14 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
 
 const PUBLIC_ORIGIN = "https://loyalspark.online";
+const API_ORIGIN = "https://api.loyalspark.online";
 const SUPABASE = "https://bzxmejzssxjazswgwqqs.supabase.co";
 const PUBLIC_GATEWAY_PATH = "/x402-gateway";
-const GATEWAY = `${PUBLIC_ORIGIN}${PUBLIC_GATEWAY_PATH}`;
+const GATEWAY = `${API_ORIGIN}${PUBLIC_GATEWAY_PATH}`;
 const DIRECT_GATEWAY = `${SUPABASE}/functions/v1/x402-gateway`;
 const AGENT_API = `${SUPABASE}/functions/v1/agent-api`;
-const MCP_URL = `${SUPABASE}/functions/v1/loyalty-mcp`;
-const RECIPIENT_MCP_URL = `${SUPABASE}/functions/v1/recipient-loyalty-mcp`;
+const MCP_URL = `${API_ORIGIN}/loyalty-mcp`;
+const RECIPIENT_MCP_URL = `${API_ORIGIN}/recipient-loyalty-mcp`;
 
 // ---- Pricing tables (kept aligned with supabase/functions/_shared/*) ----
 
@@ -276,15 +277,15 @@ for (const [method, routes] of Object.entries(RECIPIENT_REST)) {
   }
 }
 
-// Merchant MCP — paths under /functions/v1/x402-gateway/mcp-tools/<name>
+// Merchant MCP — paths under /x402-gateway/mcp-tools/<name>
 for (const [name, price, desc, props, required] of MCP_TOOLS) {
-  const p = `/functions/v1/x402-gateway/mcp-tools/${name}`;
+  const p = `${PUBLIC_GATEWAY_PATH}/mcp-tools/${name}`;
   paths[p] = { post: buildMcpOp(name, price, desc, props || {}, required, "merchant") };
 }
 
-// Recipient MCP — paths under /functions/v1/x402-gateway/recipient-mcp-tools/<name>
+// Recipient MCP — paths under /x402-gateway/recipient-mcp-tools/<name>
 for (const [name, price, desc, props, required] of RECIPIENT_MCP_TOOLS) {
-  const p = `/functions/v1/x402-gateway/recipient-mcp-tools/${name}`;
+  const p = `${PUBLIC_GATEWAY_PATH}/recipient-mcp-tools/${name}`;
   paths[p] = { post: buildMcpOp(name, price, desc, props || {}, required, "recipient") };
 }
 
