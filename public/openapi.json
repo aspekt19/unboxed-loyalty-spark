@@ -5,7 +5,7 @@
     "version": "2.2.0",
     "summary": "AI-agent-native loyalty-as-a-service protocol on Base L2 with paid x402 + MPP corridors.",
     "description": "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create ERC-20 loyalty programs, mint tokens to customer wallets, manage reward catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics — all via paid x402 endpoints (USDC on Base) or via standard REST with x-api-key. Coverage: 70 paid operations across 66 paths, including merchant REST (agent-api), recipient REST (recipient-api), 28 merchant MCP tools and 11 recipient MCP tools. Builder Code bc_wdmnog7m.",
-    "x-guidance": "Loyal Spark on Base L2 (chain 8453, USDC native).\n\nAuth modes:\n• Merchant agents — header x-api-key: lsk_... (or Authorization: Bearer lsk_...). Get a key in https://loyalspark.online/merchant → AI Agents.\n• Holder agents — header x-api-key: rwk_... (or Authorization: Bearer rwk_...). Issued via SIWE: https://loyalspark.online/.well-known/agent.json.\n• x402 corridor — pay USDC on Base per call. Discovery: https://loyalspark.online/.well-known/x402.\n\nTypical merchant flow:\n1. GET /me — profile and scopes\n2. POST /programs — factory calldata to deploy ERC-20\n3. POST /register-program — persist program\n4. POST /update-program-config — set cashback_rate / points_per_dollar\n5. POST /activate-program — unpause\n6. POST /mint or POST /earn — distribute points\n7. POST /rewards — catalog\n8. GET /analytics — metrics\n\nMCP mirrors REST: 28 merchant tools at https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp and 11 recipient tools at https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp. Each MCP tool also has a paid x402 path under /functions/v1/x402-gateway/mcp-tools/<name> and /functions/v1/x402-gateway/recipient-mcp-tools/<name>.\n\nDocs: https://loyalspark.online/api-docs · llms: https://loyalspark.online/llms.txt · agent manifest: https://loyalspark.online/.well-known/agent.json",
+    "x-guidance": "Loyal Spark on Base L2 (chain 8453, USDC native).\n\nAuth modes:\n• Merchant agents — header x-api-key: lsk_... (or Authorization: Bearer lsk_...). Get a key in https://loyalspark.online/merchant → AI Agents.\n• Holder agents — header x-api-key: rwk_... (or Authorization: Bearer rwk_...). Issued via SIWE: https://loyalspark.online/.well-known/agent.json.\n• x402 corridor — pay USDC on Base per call. Discovery: https://loyalspark.online/.well-known/x402.\n\nTypical merchant flow:\n1. GET /me — profile and scopes\n2. POST /programs — factory calldata to deploy ERC-20\n3. POST /register-program — persist program\n4. POST /update-program-config — set cashback_rate / points_per_dollar\n5. POST /activate-program — unpause\n6. POST /mint or POST /earn — distribute points\n7. POST /rewards — catalog\n8. GET /analytics — metrics\n\nMCP mirrors REST: 28 merchant tools at https://api.loyalspark.online/loyalty-mcp and 11 recipient tools at https://api.loyalspark.online/recipient-loyalty-mcp. Each MCP tool also has a paid x402 path under /x402-gateway/mcp-tools/<name> and /x402-gateway/recipient-mcp-tools/<name>.\n\nDocs: https://loyalspark.online/api-docs · llms: https://loyalspark.online/llms.txt · agent manifest: https://loyalspark.online/.well-known/agent.json",
     "contact": {
       "name": "Loyal Spark",
       "email": "admin@loyalspark.online",
@@ -23,18 +23,18 @@
     "x-brand": "Loyal Spark",
     "x-builder-code": "bc_wdmnog7m",
     "x-mcp": {
-      "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+      "url": "https://api.loyalspark.online/loyalty-mcp",
       "transport": "streamable-http",
       "tool_count": 28
     },
     "x-recipient-mcp": {
-      "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp",
+      "url": "https://api.loyalspark.online/recipient-loyalty-mcp",
       "transport": "streamable-http",
       "tool_count": 11
     },
     "x-x402-discovery": {
       "wellKnownResources": "https://loyalspark.online/.well-known/x402",
-      "gatewayBaseUrl": "https://loyalspark.online/x402-gateway",
+      "gatewayBaseUrl": "https://api.loyalspark.online/x402-gateway",
       "directGatewayBaseUrl": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway",
       "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
       "network": "eip155:8453"
@@ -42,8 +42,8 @@
   },
   "servers": [
     {
-      "url": "https://loyalspark.online",
-      "description": "Loyal Spark — canonical x402 origin for x402scan discovery. All listed paths under /functions/v1/x402-gateway/* are exposed on loyalspark.online and return live HTTP 402 with x402Version 2 payment requirements."
+      "url": "https://api.loyalspark.online",
+      "description": "Loyal Spark — canonical API origin for x402scan discovery and paid resource invocation. All listed x402 gateway paths return live HTTP 402 payment requirements."
     },
     {
       "url": "https://bzxmejzssxjazswgwqqs.supabase.co",
@@ -2164,7 +2164,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/get_platform_info": {
+    "/x402-gateway/mcp-tools/get_platform_info": {
       "post": {
         "operationId": "mcp_get_platform_info",
         "summary": "MCP tool: get_platform_info",
@@ -2180,7 +2180,7 @@
         "x-mcp": {
           "tool": "get_platform_info",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {}
@@ -2264,7 +2264,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/get_my_profile": {
+    "/x402-gateway/mcp-tools/get_my_profile": {
       "post": {
         "operationId": "mcp_get_my_profile",
         "summary": "MCP tool: get_my_profile",
@@ -2280,7 +2280,7 @@
         "x-mcp": {
           "tool": "get_my_profile",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {}
@@ -2364,7 +2364,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/list_loyalty_programs": {
+    "/x402-gateway/mcp-tools/list_loyalty_programs": {
       "post": {
         "operationId": "mcp_list_loyalty_programs",
         "summary": "MCP tool: list_loyalty_programs",
@@ -2380,7 +2380,7 @@
         "x-mcp": {
           "tool": "list_loyalty_programs",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -2472,7 +2472,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/create_loyalty_program": {
+    "/x402-gateway/mcp-tools/create_loyalty_program": {
       "post": {
         "operationId": "mcp_create_loyalty_program",
         "summary": "MCP tool: create_loyalty_program",
@@ -2488,7 +2488,7 @@
         "x-mcp": {
           "tool": "create_loyalty_program",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -2600,7 +2600,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/register_loyalty_program": {
+    "/x402-gateway/mcp-tools/register_loyalty_program": {
       "post": {
         "operationId": "mcp_register_loyalty_program",
         "summary": "MCP tool: register_loyalty_program",
@@ -2616,7 +2616,7 @@
         "x-mcp": {
           "tool": "register_loyalty_program",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -2730,7 +2730,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/activate_loyalty_program": {
+    "/x402-gateway/mcp-tools/activate_loyalty_program": {
       "post": {
         "operationId": "mcp_activate_loyalty_program",
         "summary": "MCP tool: activate_loyalty_program",
@@ -2746,7 +2746,7 @@
         "x-mcp": {
           "tool": "activate_loyalty_program",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -2844,7 +2844,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/update_program_status": {
+    "/x402-gateway/mcp-tools/update_program_status": {
       "post": {
         "operationId": "mcp_update_program_status",
         "summary": "MCP tool: update_program_status",
@@ -2860,7 +2860,7 @@
         "x-mcp": {
           "tool": "update_program_status",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -2966,7 +2966,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/update_program_config": {
+    "/x402-gateway/mcp-tools/update_program_config": {
       "post": {
         "operationId": "mcp_update_program_config",
         "summary": "MCP tool: update_program_config",
@@ -2982,7 +2982,7 @@
         "x-mcp": {
           "tool": "update_program_config",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -3092,7 +3092,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/list_rewards": {
+    "/x402-gateway/mcp-tools/list_rewards": {
       "post": {
         "operationId": "mcp_list_rewards",
         "summary": "MCP tool: list_rewards",
@@ -3108,7 +3108,7 @@
         "x-mcp": {
           "tool": "list_rewards",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -3206,7 +3206,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/create_reward": {
+    "/x402-gateway/mcp-tools/create_reward": {
       "post": {
         "operationId": "mcp_create_reward",
         "summary": "MCP tool: create_reward",
@@ -3222,7 +3222,7 @@
         "x-mcp": {
           "tool": "create_reward",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -3336,7 +3336,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/mint_loyalty_tokens": {
+    "/x402-gateway/mcp-tools/mint_loyalty_tokens": {
       "post": {
         "operationId": "mcp_mint_loyalty_tokens",
         "summary": "MCP tool: mint_loyalty_tokens",
@@ -3352,7 +3352,7 @@
         "x-mcp": {
           "tool": "mint_loyalty_tokens",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -3466,7 +3466,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/transfer_loyalty_tokens": {
+    "/x402-gateway/mcp-tools/transfer_loyalty_tokens": {
       "post": {
         "operationId": "mcp_transfer_loyalty_tokens",
         "summary": "MCP tool: transfer_loyalty_tokens",
@@ -3482,7 +3482,7 @@
         "x-mcp": {
           "tool": "transfer_loyalty_tokens",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -3596,7 +3596,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/earn_points": {
+    "/x402-gateway/mcp-tools/earn_points": {
       "post": {
         "operationId": "mcp_earn_points",
         "summary": "MCP tool: earn_points",
@@ -3612,7 +3612,7 @@
         "x-mcp": {
           "tool": "earn_points",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -3726,7 +3726,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/get_token_balance": {
+    "/x402-gateway/mcp-tools/get_token_balance": {
       "post": {
         "operationId": "mcp_get_token_balance",
         "summary": "MCP tool: get_token_balance",
@@ -3742,7 +3742,7 @@
         "x-mcp": {
           "tool": "get_token_balance",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -3848,7 +3848,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/get_program_analytics": {
+    "/x402-gateway/mcp-tools/get_program_analytics": {
       "post": {
         "operationId": "mcp_get_program_analytics",
         "summary": "MCP tool: get_program_analytics",
@@ -3864,7 +3864,7 @@
         "x-mcp": {
           "tool": "get_program_analytics",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -3962,7 +3962,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/list_marketplace_offers": {
+    "/x402-gateway/mcp-tools/list_marketplace_offers": {
       "post": {
         "operationId": "mcp_list_marketplace_offers",
         "summary": "MCP tool: list_marketplace_offers",
@@ -3978,7 +3978,7 @@
         "x-mcp": {
           "tool": "list_marketplace_offers",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -4076,7 +4076,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/redeem_reward": {
+    "/x402-gateway/mcp-tools/redeem_reward": {
       "post": {
         "operationId": "mcp_redeem_reward",
         "summary": "MCP tool: redeem_reward",
@@ -4092,7 +4092,7 @@
         "x-mcp": {
           "tool": "redeem_reward",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -4206,7 +4206,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/use_voucher": {
+    "/x402-gateway/mcp-tools/use_voucher": {
       "post": {
         "operationId": "mcp_use_voucher",
         "summary": "MCP tool: use_voucher",
@@ -4222,7 +4222,7 @@
         "x-mcp": {
           "tool": "use_voucher",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -4320,7 +4320,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/check_voucher_status": {
+    "/x402-gateway/mcp-tools/check_voucher_status": {
       "post": {
         "operationId": "mcp_check_voucher_status",
         "summary": "MCP tool: check_voucher_status",
@@ -4336,7 +4336,7 @@
         "x-mcp": {
           "tool": "check_voucher_status",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -4434,7 +4434,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/get_platform_stats": {
+    "/x402-gateway/mcp-tools/get_platform_stats": {
       "post": {
         "operationId": "mcp_get_platform_stats",
         "summary": "MCP tool: get_platform_stats",
@@ -4450,7 +4450,7 @@
         "x-mcp": {
           "tool": "get_platform_stats",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {}
@@ -4534,7 +4534,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/cancel_stale_offers": {
+    "/x402-gateway/mcp-tools/cancel_stale_offers": {
       "post": {
         "operationId": "mcp_cancel_stale_offers",
         "summary": "MCP tool: cancel_stale_offers",
@@ -4550,7 +4550,7 @@
         "x-mcp": {
           "tool": "cancel_stale_offers",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -4642,7 +4642,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/create_personalized_offer": {
+    "/x402-gateway/mcp-tools/create_personalized_offer": {
       "post": {
         "operationId": "mcp_create_personalized_offer",
         "summary": "MCP tool: create_personalized_offer",
@@ -4658,7 +4658,7 @@
         "x-mcp": {
           "tool": "create_personalized_offer",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -4764,7 +4764,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/update_reward_status": {
+    "/x402-gateway/mcp-tools/update_reward_status": {
       "post": {
         "operationId": "mcp_update_reward_status",
         "summary": "MCP tool: update_reward_status",
@@ -4780,7 +4780,7 @@
         "x-mcp": {
           "tool": "update_reward_status",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -4884,7 +4884,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/send_report": {
+    "/x402-gateway/mcp-tools/send_report": {
       "post": {
         "operationId": "mcp_send_report",
         "summary": "MCP tool: send_report",
@@ -4900,7 +4900,7 @@
         "x-mcp": {
           "tool": "send_report",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -5040,7 +5040,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/list_my_reports": {
+    "/x402-gateway/mcp-tools/list_my_reports": {
       "post": {
         "operationId": "mcp_list_my_reports",
         "summary": "MCP tool: list_my_reports",
@@ -5056,7 +5056,7 @@
         "x-mcp": {
           "tool": "list_my_reports",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {}
@@ -5140,7 +5140,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/update_report_status": {
+    "/x402-gateway/mcp-tools/update_report_status": {
       "post": {
         "operationId": "mcp_update_report_status",
         "summary": "MCP tool: update_report_status",
@@ -5156,7 +5156,7 @@
         "x-mcp": {
           "tool": "update_report_status",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -5262,7 +5262,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/delete_report": {
+    "/x402-gateway/mcp-tools/delete_report": {
       "post": {
         "operationId": "mcp_delete_report",
         "summary": "MCP tool: delete_report",
@@ -5278,7 +5278,7 @@
         "x-mcp": {
           "tool": "delete_report",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -5376,7 +5376,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/mcp-tools/export_customers": {
+    "/x402-gateway/mcp-tools/export_customers": {
       "post": {
         "operationId": "mcp_export_customers",
         "summary": "MCP tool: export_customers",
@@ -5392,7 +5392,7 @@
         "x-mcp": {
           "tool": "export_customers",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -5490,7 +5490,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/recipient-mcp-tools/get_recipient_profile": {
+    "/x402-gateway/recipient-mcp-tools/get_recipient_profile": {
       "post": {
         "operationId": "mcp_recipient_get_recipient_profile",
         "summary": "MCP tool: get_recipient_profile",
@@ -5506,7 +5506,7 @@
         "x-mcp": {
           "tool": "get_recipient_profile",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp",
+          "server": "https://api.loyalspark.online/recipient-loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {}
@@ -5590,7 +5590,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/recipient-mcp-tools/list_my_loyalty_balances": {
+    "/x402-gateway/recipient-mcp-tools/list_my_loyalty_balances": {
       "post": {
         "operationId": "mcp_recipient_list_my_loyalty_balances",
         "summary": "MCP tool: list_my_loyalty_balances",
@@ -5606,7 +5606,7 @@
         "x-mcp": {
           "tool": "list_my_loyalty_balances",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp",
+          "server": "https://api.loyalspark.online/recipient-loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {}
@@ -5690,7 +5690,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/recipient-mcp-tools/get_my_loyalty_balance": {
+    "/x402-gateway/recipient-mcp-tools/get_my_loyalty_balance": {
       "post": {
         "operationId": "mcp_recipient_get_my_loyalty_balance",
         "summary": "MCP tool: get_my_loyalty_balance",
@@ -5706,7 +5706,7 @@
         "x-mcp": {
           "tool": "get_my_loyalty_balance",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp",
+          "server": "https://api.loyalspark.online/recipient-loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -5804,7 +5804,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/recipient-mcp-tools/prepare_loyalty_token_transfer": {
+    "/x402-gateway/recipient-mcp-tools/prepare_loyalty_token_transfer": {
       "post": {
         "operationId": "mcp_recipient_prepare_loyalty_token_transfer",
         "summary": "MCP tool: prepare_loyalty_token_transfer",
@@ -5820,7 +5820,7 @@
         "x-mcp": {
           "tool": "prepare_loyalty_token_transfer",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp",
+          "server": "https://api.loyalspark.online/recipient-loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -5934,7 +5934,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/recipient-mcp-tools/list_rewards_for_program": {
+    "/x402-gateway/recipient-mcp-tools/list_rewards_for_program": {
       "post": {
         "operationId": "mcp_recipient_list_rewards_for_program",
         "summary": "MCP tool: list_rewards_for_program",
@@ -5950,7 +5950,7 @@
         "x-mcp": {
           "tool": "list_rewards_for_program",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp",
+          "server": "https://api.loyalspark.online/recipient-loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -6048,7 +6048,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/recipient-mcp-tools/list_my_vouchers": {
+    "/x402-gateway/recipient-mcp-tools/list_my_vouchers": {
       "post": {
         "operationId": "mcp_recipient_list_my_vouchers",
         "summary": "MCP tool: list_my_vouchers",
@@ -6064,7 +6064,7 @@
         "x-mcp": {
           "tool": "list_my_vouchers",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp",
+          "server": "https://api.loyalspark.online/recipient-loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {}
@@ -6148,7 +6148,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/recipient-mcp-tools/redeem_my_reward": {
+    "/x402-gateway/recipient-mcp-tools/redeem_my_reward": {
       "post": {
         "operationId": "mcp_recipient_redeem_my_reward",
         "summary": "MCP tool: redeem_my_reward",
@@ -6164,7 +6164,7 @@
         "x-mcp": {
           "tool": "redeem_my_reward",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp",
+          "server": "https://api.loyalspark.online/recipient-loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -6270,7 +6270,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/recipient-mcp-tools/list_p2p_offers": {
+    "/x402-gateway/recipient-mcp-tools/list_p2p_offers": {
       "post": {
         "operationId": "mcp_recipient_list_p2p_offers",
         "summary": "MCP tool: list_p2p_offers",
@@ -6286,7 +6286,7 @@
         "x-mcp": {
           "tool": "list_p2p_offers",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp",
+          "server": "https://api.loyalspark.online/recipient-loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -6378,7 +6378,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/recipient-mcp-tools/create_p2p_offer": {
+    "/x402-gateway/recipient-mcp-tools/create_p2p_offer": {
       "post": {
         "operationId": "mcp_recipient_create_p2p_offer",
         "summary": "MCP tool: create_p2p_offer",
@@ -6394,7 +6394,7 @@
         "x-mcp": {
           "tool": "create_p2p_offer",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp",
+          "server": "https://api.loyalspark.online/recipient-loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -6516,7 +6516,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/recipient-mcp-tools/accept_p2p_offer": {
+    "/x402-gateway/recipient-mcp-tools/accept_p2p_offer": {
       "post": {
         "operationId": "mcp_recipient_accept_p2p_offer",
         "summary": "MCP tool: accept_p2p_offer",
@@ -6532,7 +6532,7 @@
         "x-mcp": {
           "tool": "accept_p2p_offer",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp",
+          "server": "https://api.loyalspark.online/recipient-loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -6630,7 +6630,7 @@
         }
       }
     },
-    "/functions/v1/x402-gateway/recipient-mcp-tools/cancel_p2p_offer": {
+    "/x402-gateway/recipient-mcp-tools/cancel_p2p_offer": {
       "post": {
         "operationId": "mcp_recipient_cancel_p2p_offer",
         "summary": "MCP tool: cancel_p2p_offer",
@@ -6646,7 +6646,7 @@
         "x-mcp": {
           "tool": "cancel_p2p_offer",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp",
+          "server": "https://api.loyalspark.online/recipient-loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
