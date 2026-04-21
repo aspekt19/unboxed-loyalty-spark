@@ -294,7 +294,6 @@ const openapi = {
   },
   servers: [
     { url: SUPABASE, description: "Loyal Spark — paid x402 corridor (USDC on Base, eip155:8453). All paths under /functions/v1/x402-gateway/* return HTTP 402 with x402Version 2 payment requirements." },
-    { url: "https://loyalspark.online", description: "Loyal Spark — alias domain (CDN; same backend)" },
   ],
   security: [{ apiKey: [] }],
   components: {
