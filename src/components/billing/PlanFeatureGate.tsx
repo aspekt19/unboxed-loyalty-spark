@@ -31,7 +31,7 @@ export function PlanFeatureGate({ product, feature, upgradeHref, children }: Pro
 
   const href =
     upgradeHref ||
-    (product === 'merchant' ? '/merchant?tab=billing' : '/for-agents#agent-billing');
+    (product === 'merchant' ? '/merchant?tab=billing' : '/pricing');
 
   return (
     <div className="space-y-3">

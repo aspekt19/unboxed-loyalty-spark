@@ -43,6 +43,25 @@ function AnimatedRoutes() {
   // Dynamic canonical + meta per route
   usePageMeta();
 
+  // Scroll to top on route change; if URL has a hash, scroll to that element.
+  // Without this, hash links (e.g. /pricing#plans) don't scroll on mobile.
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.slice(1);
+      // Defer to allow target page to mount
+      const t = window.setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+        }
+      }, 60);
+      return () => window.clearTimeout(t);
+    }
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+  }, [location.pathname, location.hash]);
+
   // Автоматическая миграция данных из localStorage в БД при каждой загрузке
   useEffect(() => {
     const migrationKey = 'data_migrated_to_cloud';

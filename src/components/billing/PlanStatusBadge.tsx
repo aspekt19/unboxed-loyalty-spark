@@ -24,7 +24,7 @@ export function PlanStatusBadge({ product, upgradeHref }: Props) {
   if (plan.isLoading) return null;
 
   const defaultUpgrade =
-    product === 'merchant' ? '/merchant?tab=billing' : '/for-agents#agent-billing';
+    product === 'merchant' ? '/merchant?tab=billing' : '/pricing';
   const href = upgradeHref || defaultUpgrade;
 
   if (plan.isAdminOverride) {
