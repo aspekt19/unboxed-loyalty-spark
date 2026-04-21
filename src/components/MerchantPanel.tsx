@@ -7,6 +7,7 @@ import { MarketingTab } from './merchant/tabs/MarketingTab';
 import { AgentsTab } from './merchant/tabs/AgentsTab';
 import { TeamTab } from './merchant/tabs/TeamTab';
 import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMintTokens } from '@/hooks/useMintTokens';
