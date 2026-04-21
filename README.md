@@ -124,14 +124,14 @@ Schemas for paid MCP: merchant **`mcp-tools/<name>`** — **[mcp-bazaar-tools.ts
 ```bash
 # List loyalty programs
 curl -H "x-api-key: lsk_YOUR_KEY" \
-  https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/programs
+  https://api.loyalspark.online/agent-api/programs
 
 # Mint tokens (1.25% mint fee on Free plan)
 curl -X POST \
   -H "x-api-key: lsk_YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{"token_address":"0x...","recipient":"0x...","amount":100}' \
-  https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/mint
+  https://api.loyalspark.online/agent-api/mint
 ```
 
 ### API Endpoints (23 authenticated + 1 public)
@@ -173,7 +173,7 @@ Connect Claude, GPT, or any MCP-compatible agent:
 {
   "mcpServers": {
     "loyal-spark": {
-      "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+      "url": "https://api.loyalspark.online/loyalty-mcp",
       "headers": {
         "x-api-key": "lsk_YOUR_KEY"
       }
@@ -191,8 +191,8 @@ For **AI agents that only hold a wallet** which receives loyalty tokens (not mer
 
 | Piece | URL / path |
 |-------|----------------|
-| REST | `https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-api` |
-| MCP | `https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp` |
+| REST | `https://api.loyalspark.online/recipient-api` |
+| MCP | `https://api.loyalspark.online/recipient-loyalty-mcp` |
 | Register key | `POST …/recipient-api/register` with SIWE `{ message, signature }` (nonce from `siwe-nonce`) — returns `rwk_…` once. Pass Supabase `apikey` (anon/publishable) header like other public functions. |
 
 **REST (all require `x-api-key: rwk_…` except register):** `GET /me`, `GET /balances`, `GET /balance?token_address=`, `GET /rewards?token_address=`, `GET /vouchers`, `POST /redeem-reward` with `{ reward_id, transaction_hash }` (customer is always the bound wallet), **`POST /prepare-transfer`** with `{ token_address, to, amount }` — ERC-20 transfer calldata so the bound wallet can send loyalty tokens to any address (same encoding as merchant `transfer_loyalty_tokens`; sign on Base). **P2P:** `GET /offers?token_address=`, `POST /offers`, `POST /accept-offer`, `POST /cancel-offer` (same bodies as merchant `agent-api` marketplace; `creator_address` is the bound wallet).
@@ -240,7 +240,7 @@ curl -X POST \
   -H "x-api-key: lsk_YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{"action":"create_server_wallet"}' \
-  https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-wallet
+  https://api.loyalspark.online/agent-wallet
 ```
 
 Benefits:
@@ -381,8 +381,8 @@ Agents can pay per request using onchain micropayments:
 
 | Protocol | Network | Asset | Gateway |
 |----------|---------|-------|---------|
-| **x402** | Base | USDC | `https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway` |
-| **MPP** | Tempo | pathUSD / USDC | `https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway` |
+| **x402** | Base | USDC | `https://api.loyalspark.online/x402-gateway` |
+| **MPP** | Tempo | pathUSD / USDC | `https://api.loyalspark.online/mpp-gateway` |
 
 Pricing: **$0.001–$0.005** per read · **$0.005–$0.05** per write · HTTP 402 challenge/response flow.
 

@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Copy, Check, Cpu, Wrench } from 'lucide-react';
 import { MCP_TOOL_COUNT, MCP_TOOL_NAMES } from '@/constants/mcpToolNames';
 
-const MCP_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/loyalty-mcp`;
+const MCP_URL = 'https://api.loyalspark.online/loyalty-mcp';
 
 function CodeBlock({ code }: { code: string }) {
   const [copied, setCopied] = useState(false);
