@@ -337,9 +337,10 @@ Deno.serve((req) => {
     const doc = buildDiscoveryDocument(req);
     const body = JSON.stringify(doc);
 
-    const SERVER_NAME = "Loyal Spark — Onchain Loyalty Protocol on Base";
+    // NOTE: Header values must be ASCII (ByteString). Avoid em dash and other non-ASCII chars.
+    const SERVER_NAME = "Loyal Spark - Onchain Loyalty Protocol on Base";
     const SERVER_DESC =
-      "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create ERC-20 loyalty programs, mint tokens to customer wallets, manage rewards catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics — all via paid x402 endpoints (USDC on Base). 70+ resources, Builder Code bc_wdmnog7m.";
+      "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create ERC-20 loyalty programs, mint tokens to customer wallets, manage rewards catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics - all via paid x402 endpoints (USDC on Base). 70+ resources, Builder Code bc_wdmnog7m.";
     const LOGO_URL = "https://loyalspark.online/new-favicon.png";
 
     const headers = new Headers(corsHeaders);
