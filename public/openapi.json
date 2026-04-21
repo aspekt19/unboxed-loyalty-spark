@@ -41,20 +41,12 @@
   },
   "servers": [
     {
-      "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api",
-      "description": "Loyal Spark merchant REST (agent-api) — x-api-key: lsk_..."
+      "url": "https://bzxmejzssxjazswgwqqs.supabase.co",
+      "description": "Loyal Spark — paid x402 corridor (USDC on Base, eip155:8453). All paths under /functions/v1/x402-gateway/* return HTTP 402 with x402Version 2 payment requirements."
     },
     {
-      "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-api",
-      "description": "Loyal Spark recipient REST (recipient-api) — x-api-key: rwk_..."
-    },
-    {
-      "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway",
-      "description": "x402 gateway — pay-per-call (USDC on Base) for REST + MCP"
-    },
-    {
-      "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway",
-      "description": "MPP gateway — pay-per-call proxy to agent-api"
+      "url": "https://loyalspark.online",
+      "description": "Loyal Spark — alias domain (CDN; same backend)"
     }
   ],
   "security": [
@@ -97,7 +89,7 @@
     }
   ],
   "paths": {
-    "/me": {
+    "/functions/v1/x402-gateway/me": {
       "get": {
         "operationId": "get_me",
         "summary": "Get agent profile, scopes, plan and wallet",
@@ -127,7 +119,7 @@
         }
       }
     },
-    "/programs": {
+    "/functions/v1/x402-gateway/programs": {
       "get": {
         "operationId": "get_programs",
         "summary": "List loyalty programs",
@@ -234,7 +226,7 @@
         }
       }
     },
-    "/rewards": {
+    "/functions/v1/x402-gateway/rewards": {
       "get": {
         "operationId": "get_rewards",
         "summary": "List rewards for a program",
@@ -341,7 +333,7 @@
         }
       }
     },
-    "/balance": {
+    "/functions/v1/x402-gateway/balance": {
       "get": {
         "operationId": "get_balance",
         "summary": "Get token balance and tier for a wallet",
@@ -390,7 +382,7 @@
         }
       }
     },
-    "/customers": {
+    "/functions/v1/x402-gateway/customers": {
       "get": {
         "operationId": "get_customers",
         "summary": "List customers for a program",
@@ -439,7 +431,7 @@
         }
       }
     },
-    "/vouchers": {
+    "/functions/v1/x402-gateway/vouchers": {
       "get": {
         "operationId": "get_vouchers",
         "summary": "List vouchers issued by the merchant",
@@ -488,7 +480,7 @@
         }
       }
     },
-    "/vouchers/status": {
+    "/functions/v1/x402-gateway/vouchers/status": {
       "get": {
         "operationId": "get_vouchers_status",
         "summary": "Public voucher verification",
@@ -514,7 +506,7 @@
         "security": []
       }
     },
-    "/analytics": {
+    "/functions/v1/x402-gateway/analytics": {
       "get": {
         "operationId": "get_analytics",
         "summary": "Program analytics",
@@ -563,7 +555,7 @@
         }
       }
     },
-    "/offers": {
+    "/functions/v1/x402-gateway/offers": {
       "get": {
         "operationId": "get_offers",
         "summary": "List P2P marketplace offers",
@@ -670,7 +662,7 @@
         }
       }
     },
-    "/tx-receipt": {
+    "/functions/v1/x402-gateway/tx-receipt": {
       "get": {
         "operationId": "get_tx_receipt",
         "summary": "Fetch transaction receipt",
@@ -700,7 +692,7 @@
         }
       }
     },
-    "/register-program": {
+    "/functions/v1/x402-gateway/register-program": {
       "post": {
         "operationId": "post_register_program",
         "summary": "Register a deployed loyalty token in the database",
@@ -760,7 +752,7 @@
         }
       }
     },
-    "/update-program-config": {
+    "/functions/v1/x402-gateway/update-program-config": {
       "post": {
         "operationId": "post_update_program_config",
         "summary": "Update default cashback / points-per-dollar",
@@ -820,7 +812,7 @@
         }
       }
     },
-    "/activate-program": {
+    "/functions/v1/x402-gateway/activate-program": {
       "post": {
         "operationId": "post_activate_program",
         "summary": "Get activation calldata for an inactive program",
@@ -880,7 +872,7 @@
         }
       }
     },
-    "/program-status": {
+    "/functions/v1/x402-gateway/program-status": {
       "post": {
         "operationId": "post_program_status",
         "summary": "Set program status in the database",
@@ -940,7 +932,7 @@
         }
       }
     },
-    "/mint": {
+    "/functions/v1/x402-gateway/mint": {
       "post": {
         "operationId": "post_mint",
         "summary": "Mint loyalty tokens to a customer wallet",
@@ -1000,7 +992,7 @@
         }
       }
     },
-    "/earn": {
+    "/functions/v1/x402-gateway/earn": {
       "post": {
         "operationId": "post_earn",
         "summary": "Record an earn / cashback for a purchase",
@@ -1060,7 +1052,7 @@
         }
       }
     },
-    "/transfer": {
+    "/functions/v1/x402-gateway/transfer": {
       "post": {
         "operationId": "post_transfer",
         "summary": "Get transfer calldata for loyalty tokens",
@@ -1120,7 +1112,7 @@
         }
       }
     },
-    "/redeem-reward": {
+    "/functions/v1/x402-gateway/redeem-reward": {
       "post": {
         "operationId": "post_redeem_reward",
         "summary": "Redeem a reward for a customer",
@@ -1180,7 +1172,7 @@
         }
       }
     },
-    "/vouchers/use": {
+    "/functions/v1/x402-gateway/vouchers/use": {
       "post": {
         "operationId": "post_vouchers_use",
         "summary": "Mark a voucher as used",
@@ -1240,7 +1232,7 @@
         }
       }
     },
-    "/accept-offer": {
+    "/functions/v1/x402-gateway/accept-offer": {
       "post": {
         "operationId": "post_accept_offer",
         "summary": "Accept a P2P swap offer",
@@ -1300,7 +1292,7 @@
         }
       }
     },
-    "/cancel-offer": {
+    "/functions/v1/x402-gateway/cancel-offer": {
       "post": {
         "operationId": "post_cancel_offer",
         "summary": "Cancel an own P2P swap offer",
@@ -1360,7 +1352,7 @@
         }
       }
     },
-    "/recipient-api/me": {
+    "/functions/v1/x402-gateway/recipient-api/me": {
       "get": {
         "operationId": "get_recipient_api_me",
         "summary": "Get recipient agent profile",
@@ -1390,7 +1382,7 @@
         }
       }
     },
-    "/recipient-api/balances": {
+    "/functions/v1/x402-gateway/recipient-api/balances": {
       "get": {
         "operationId": "get_recipient_api_balances",
         "summary": "List all loyalty balances for the holder",
@@ -1439,7 +1431,7 @@
         }
       }
     },
-    "/recipient-api/balance": {
+    "/functions/v1/x402-gateway/recipient-api/balance": {
       "get": {
         "operationId": "get_recipient_api_balance",
         "summary": "Get balance for one loyalty token",
@@ -1488,7 +1480,7 @@
         }
       }
     },
-    "/recipient-api/rewards": {
+    "/functions/v1/x402-gateway/recipient-api/rewards": {
       "get": {
         "operationId": "get_recipient_api_rewards",
         "summary": "List rewards available to the holder",
@@ -1537,7 +1529,7 @@
         }
       }
     },
-    "/recipient-api/vouchers": {
+    "/functions/v1/x402-gateway/recipient-api/vouchers": {
       "get": {
         "operationId": "get_recipient_api_vouchers",
         "summary": "List vouchers issued to the holder",
@@ -1586,7 +1578,7 @@
         }
       }
     },
-    "/recipient-api/offers": {
+    "/functions/v1/x402-gateway/recipient-api/offers": {
       "get": {
         "operationId": "get_recipient_api_offers",
         "summary": "List P2P marketplace offers visible to the holder",
@@ -1693,7 +1685,7 @@
         }
       }
     },
-    "/recipient-api/register": {
+    "/functions/v1/x402-gateway/recipient-api/register": {
       "post": {
         "operationId": "post_recipient_api_register",
         "summary": "Register / refresh the recipient profile",
@@ -1734,7 +1726,7 @@
         }
       }
     },
-    "/recipient-api/prepare-transfer": {
+    "/functions/v1/x402-gateway/recipient-api/prepare-transfer": {
       "post": {
         "operationId": "post_recipient_api_prepare_transfer",
         "summary": "Prepare ERC-20 transfer calldata",
@@ -1794,7 +1786,7 @@
         }
       }
     },
-    "/recipient-api/redeem-reward": {
+    "/functions/v1/x402-gateway/recipient-api/redeem-reward": {
       "post": {
         "operationId": "post_recipient_api_redeem_reward",
         "summary": "Redeem a reward",
@@ -1854,7 +1846,7 @@
         }
       }
     },
-    "/recipient-api/accept-offer": {
+    "/functions/v1/x402-gateway/recipient-api/accept-offer": {
       "post": {
         "operationId": "post_recipient_api_accept_offer",
         "summary": "Accept a P2P swap offer",
@@ -1914,7 +1906,7 @@
         }
       }
     },
-    "/recipient-api/cancel-offer": {
+    "/functions/v1/x402-gateway/recipient-api/cancel-offer": {
       "post": {
         "operationId": "post_recipient_api_cancel_offer",
         "summary": "Cancel own P2P swap offer",
