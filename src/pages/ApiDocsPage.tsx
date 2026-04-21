@@ -10,7 +10,9 @@ import SiteHeader from '@/components/SiteHeader';
 import McpServerSection from '@/components/api-docs/McpServerSection';
 import MppSection from '@/components/api-docs/MppSection';
 
-const BASE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-api`;
+import { PUBLIC_REST_URL } from '@/config/publicApi';
+
+const BASE_URL = PUBLIC_REST_URL;
 
 interface Endpoint {
   method: string;

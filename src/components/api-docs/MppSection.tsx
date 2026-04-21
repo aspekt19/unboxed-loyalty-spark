@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Copy, Check, Zap, DollarSign, Shield } from 'lucide-react';
 
-const MPP_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mpp-gateway`;
-const X402_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/x402-gateway`;
+import { PUBLIC_MPP_URL, PUBLIC_X402_URL } from '@/config/publicApi';
+
+const MPP_URL = PUBLIC_MPP_URL;
+const X402_URL = PUBLIC_X402_URL;
 
 function CodeBlock({ code }: { code: string }) {
   const [copied, setCopied] = useState(false);

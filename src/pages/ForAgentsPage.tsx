@@ -21,14 +21,25 @@ import PayPerCallPriceList from "@/components/agents/PayPerCallPriceList";
 import { MCP_TOOL_COUNT, MCP_TOOL_NAMES } from "@/constants/mcpToolNames";
 import { RECIPIENT_MCP_TOOL_COUNT, RECIPIENT_MCP_TOOL_NAMES } from "@/constants/recipientMcpToolNames";
 
+import {
+  PUBLIC_REST_URL,
+  PUBLIC_MCP_URL,
+  PUBLIC_RECIPIENT_REST_URL,
+  PUBLIC_RECIPIENT_MCP_URL,
+  PUBLIC_X402_URL,
+  PUBLIC_MPP_URL,
+  PUBLIC_REGISTER_SIWE_URL,
+  PUBLIC_SIWE_NONCE_URL,
+} from "@/config/publicApi";
+
 const SITE = "https://loyalspark.online";
-const REST = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-api`;
-const MCP = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/loyalty-mcp`;
-const RECIPIENT_REST = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/recipient-api`;
-const RECIPIENT_MCP = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/recipient-loyalty-mcp`;
-const X402 = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/x402-gateway`;
-const MPP = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mpp-gateway`;
-const REGISTER_SIWE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-register-siwe`;
+const REST = PUBLIC_REST_URL;
+const MCP = PUBLIC_MCP_URL;
+const RECIPIENT_REST = PUBLIC_RECIPIENT_REST_URL;
+const RECIPIENT_MCP = PUBLIC_RECIPIENT_MCP_URL;
+const X402 = PUBLIC_X402_URL;
+const MPP = PUBLIC_MPP_URL;
+const REGISTER_SIWE = PUBLIC_REGISTER_SIWE_URL;
 
 function CodeBlock({ code }: { code: string }) {
   const [copied, setCopied] = useState(false);
@@ -84,7 +95,7 @@ const curlProbe = `curl -sS -H "x-api-key: lsk_YOUR_API_KEY" \\
 const merchantSiweFlow = `Autonomous merchant agents (lsk_) — no web login. Same SIWE nonce as everyone else.
 
 1) Nonce:
-curl -sS "${import.meta.env.VITE_SUPABASE_URL}/functions/v1/siwe-nonce" \\
+curl -sS "${PUBLIC_SIWE_NONCE_URL}" \\
   -H "apikey: ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}"
 
 2) Build EIP-4361 message for Base (8453). It MUST contain the exact phrase:
@@ -102,7 +113,7 @@ Docs: /docs/agents/AUTONOMOUS_AGENT_REGISTRATION.md in the repo.`;
 const recipientKeyFlow = `Recipient keys (rwk_) are for wallets that receive loyalty points — not merchants.
 
 1) Nonce (same as web SIWE):
-curl -sS "${import.meta.env.VITE_SUPABASE_URL}/functions/v1/siwe-nonce" \\
+curl -sS "${PUBLIC_SIWE_NONCE_URL}" \\
   -H "apikey: ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}"
 
 2) Build a standards-compliant EIP-4361 SIWE message including that nonce for the recipient wallet; sign with that wallet.
