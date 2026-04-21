@@ -172,7 +172,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
   resourceMethod: string;
   resourceUrlForDiscovery: string;
 } {
-  const pathOnGateway = `/functions/v1/x402-gateway/${p.resource}`;
+  const pathOnGateway = gatewayPath(p.resource);
   const resourceUrlForDiscovery = `${resourcePublicOrigin(p.requestUrl, p.supabaseUrl)}${pathOnGateway}`;
 
   const maxAmountRequired = Math.round(parseFloat(p.price) * 1_000_000).toString();
