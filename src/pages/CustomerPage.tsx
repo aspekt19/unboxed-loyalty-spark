@@ -118,10 +118,10 @@ const CustomerPage = () => {
                   type="button"
                   className={cn(
                     HEADER_PROFILE_BUTTON_CLASSNAME,
-                    'inline-flex items-center justify-center gap-1.5 font-bold shadow-md hover:shadow-lg transition-all duration-200',
+                    'inline-flex items-center justify-center gap-1.5 transition-smooth hover:-translate-y-0.5',
                     activeTab === 'profile'
-                      ? 'bg-uds-purple text-white hover:bg-uds-purple-light'
-                      : 'border-2 border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-primary/50',
+                      ? 'bg-primary text-primary-foreground shadow-clay-primary'
+                      : 'bg-card text-foreground/80 shadow-clay-sm hover:shadow-clay hover:text-primary',
                   )}
                 >
                   Profile
