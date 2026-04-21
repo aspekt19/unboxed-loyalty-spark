@@ -1,7 +1,7 @@
 import { WalletConnectButton } from '@/components/WalletConnectButton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Gift, TrendingUp, Users, DollarSign, Target, Zap, Shield, Globe, Wallet, Store, ShoppingBag, LineChart, Lock, Coins, BarChart3, Flame, UserPlus } from 'lucide-react';
+import { Gift, TrendingUp, Users, DollarSign, Target, Zap, Shield, Globe, Wallet, Store, ShoppingBag, LineChart, Lock, Coins, BarChart3, Bot, UserPlus, Cpu, Code2, KeyRound, Layers } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PageTransition from '@/components/PageTransition';
 
@@ -19,41 +19,41 @@ const PitchDeck = () => {
     {
       id: 'cover',
       title: 'Loyal Spark',
-      subtitle: 'Blockchain Loyalty Rewards for SMBs',
-      tagline: 'Book loyalty rewards with merchants, not middlemen',
+      subtitle: 'On-chain loyalty rewards for SMBs — operated by humans and AI agents',
+      tagline: 'Programs you own. Tokens customers truly hold. APIs agents can pay for.',
       icon: Coins,
     },
     {
       id: 'problem',
       title: 'Problem',
       items: [
-        { text: 'High monthly fees ($99-499) or revenue cuts (15-30%)', icon: DollarSign },
-        { text: 'Customers have no ownership or control of rewards', icon: Users },
-        { text: 'Siloed programs - no way to exchange or trade', icon: Lock },
+        { text: 'Legacy loyalty SaaS charges $99–499/mo or 15–30% revenue cuts', icon: DollarSign },
+        { text: 'Customers don\'t own points — they can be devalued or expire', icon: Lock },
+        { text: 'Programs are siloed and closed to AI agents and automation', icon: Bot },
       ],
     },
     {
       id: 'solution',
       title: 'Solution',
-      subtitle: 'A blockchain platform where merchants deploy loyalty tokens to:',
+      subtitle: 'A dual-mode loyalty platform for humans (portal) and AI agents (API + MCP):',
       solutionColumns: [
         {
-          title: 'SAVE',
-          subtitle: 'MONEY',
-          description: 'No monthly fees - just stake LOYAL tokens (refundable)',
+          title: 'OWN',
+          subtitle: 'YOUR PROGRAM',
+          description: 'Deploy ERC-20 loyalty token on Base. Mint, transfer, redeem on-chain.',
+          icon: Coins,
+        },
+        {
+          title: 'PAY',
+          subtitle: 'PER USE',
+          description: 'Predictable USDC SaaS plans. No revenue cut. No hidden lock-in.',
           icon: DollarSign,
         },
         {
-          title: 'EARN',
-          subtitle: 'REVENUE',
-          description: 'Unredeemed tokens stay valuable, no liability',
-          icon: TrendingUp,
-        },
-        {
-          title: 'EMPOWER',
-          subtitle: 'CUSTOMERS',
-          description: 'True ownership - customers can trade and transfer',
-          icon: Wallet,
+          title: 'AUTOMATE',
+          subtitle: 'WITH AGENTS',
+          description: 'AI agents run programs via REST + MCP, paying with x402 / MPP micropayments.',
+          icon: Bot,
         },
       ],
     },
@@ -61,87 +61,117 @@ const PitchDeck = () => {
       id: 'validation',
       title: 'Market Validation',
       stats: [
-        { value: '630,000+', label: 'SMBs using loyalty programs in US alone' },
-        { value: '$100B', label: 'Unredeemed loyalty rewards annually' },
+        { value: '630,000+', label: 'SMBs running loyalty programs in the US alone' },
+        { value: '$100B+', label: 'Loyalty rewards issued and never redeemed each year' },
       ],
     },
     {
       id: 'market-size',
       title: 'Market Size',
-      subtitle: '$200B+ Global Loyalty Market',
+      subtitle: 'Loyalty SaaS + AI-agent commerce',
       marketData: {
-        tam: { value: '$200B+', label: 'Total Available Market', description: 'Global loyalty rewards market' },
-        sam: { value: '$60B', label: 'Serviceable Available Market', description: 'SMB segment (50M merchants)' },
-        share: { value: '$150M', label: 'Target Market Share (Year 1)', description: '1,000 merchants by Q4 2027' },
+        tam: { value: '$200B+', label: 'Total Addressable Market', description: 'Global loyalty rewards (SaaS + points liability)' },
+        sam: { value: '$60B', label: 'Serviceable Addressable Market', description: 'SMB & mid-market digital loyalty' },
+        share: { value: 'Pre-revenue', label: 'Stage', description: 'Live MVP on Base, onboarding first design partners' },
       },
     },
     {
       id: 'product',
       title: 'Product',
-      subtitle: 'How it works',
+      subtitle: 'Two portals + one programmable API',
       productFlow: {
         merchant: [
-          { step: 'Deploy Token', description: 'Create custom ERC-20 loyalty token', icon: Coins },
-          { step: 'Issue Rewards', description: 'Mint tokens to customers via vouchers', icon: UserPlus },
-          { step: 'Manage Program', description: 'Track holders, create offers, earn fees', icon: BarChart3 },
+          { step: 'Deploy Program', description: 'Create ERC-20 loyalty token on Base in minutes', icon: Coins },
+          { step: 'Run Loyalty', description: 'Mint by email/phone/wallet, vouchers, tiers, RFM, automation', icon: BarChart3 },
+          { step: 'Invite Team & Agents', description: 'Branches, employees, AI agents with scoped API keys', icon: UserPlus },
         ],
         customer: [
-          { step: 'Collect Rewards', description: 'Receive loyalty tokens from merchants', icon: ShoppingBag },
-          { step: 'Redeem or Trade', description: 'Use for vouchers or swap via LOYAL hub', icon: LineChart },
-          { step: 'Own Forever', description: 'True ownership - stored in your wallet', icon: Wallet },
+          { step: 'Receive Tokens', description: 'Get loyalty tokens to a smart wallet (Privy / SIWE)', icon: ShoppingBag },
+          { step: 'Redeem & Trade', description: 'Spend on rewards or swap P2P via on-chain escrow', icon: LineChart },
+          { step: 'Truly Own', description: 'Tokens live in the customer\'s wallet, fully transferable', icon: Wallet },
         ],
       },
     },
     {
       id: 'business-model',
       title: 'Business Model',
-      revenue: [
-        { source: 'Merchant Staking', detail: '$1K - $15K refundable deposits', icon: Lock },
-        { source: 'Transaction Fees', detail: '0.5% - 8% on token swaps', icon: DollarSign },
-        { source: 'Premium Features', detail: 'API, Analytics, NFT rewards', icon: Zap },
-      ],
+      subtitle: 'Two pricing axes — merchants pay for the portal, agents pay for the API',
+      pricing: {
+        merchant: {
+          title: 'Merchant SaaS (USDC on Base)',
+          tiers: [
+            { name: 'Starter', price: '$39 / mo', detail: 'SMB entry: portal, programs, CRM-light' },
+            { name: 'Growth', price: '$79 / mo', detail: 'Scale: deeper analytics, more seats' },
+            { name: 'Scale', price: '$149 / mo', detail: 'Corporate budgets, priority support' },
+          ],
+        },
+        agents: {
+          title: 'AI Agents (API + MCP)',
+          tiers: [
+            { name: 'Free', price: '$0', detail: '200 calls/mo · 1 agent · 1.25% mint fee' },
+            { name: 'Pro', price: '$49 / mo', detail: '10,000 calls · 5 agents · 0.50% mint fee' },
+            { name: 'Enterprise', price: '$129 / mo', detail: 'Unlimited calls & agents · 0.25% mint fee' },
+          ],
+        },
+        ppc: {
+          title: 'Pay-per-call (x402 / MPP)',
+          detail: 'From ~$0.001 per read, ~$0.005–0.05 per write. USDC on Base, no API key.',
+        },
+      },
     },
     {
       id: 'adoption',
-      title: 'Adoption Strategy',
-      subtitle: 'Path to 500+ merchants by Q4 2027',
+      title: 'Go-to-Market',
+      subtitle: 'Land humans first, then unlock the agent channel',
       adoption: [
-        { phase: 'Beta (Q3-Q4 2026)', target: '10 merchants', focus: 'Product testing & feedback' },
-        { phase: 'Launch (Q1 2027)', target: '30+ merchants', focus: 'Local market penetration' },
-        { phase: 'Scale (Q2-Q3 2027)', target: '100+ merchants', focus: 'Regional expansion' },
-        { phase: 'Growth (Q3-Q4 2027)', target: '500+ merchants', focus: 'National presence' },
+        { phase: 'Now (live MVP)', target: 'First design partners', focus: 'On-chain loyalty + dashboard on Base' },
+        { phase: 'Q1–Q2 2026', target: '10–25 paying merchants', focus: 'Starter/Growth plans, case studies' },
+        { phase: 'Q3–Q4 2026', target: '100+ merchants', focus: 'Agent channel: OpenServ, MCP catalogs, x402' },
+        { phase: '2027', target: '500+ merchants', focus: 'Multi-region SaaS + agent revenue share' },
       ],
     },
     {
       id: 'competition',
       title: 'Competition',
-      subtitle: 'Traditional vs Blockchain Loyalty',
+      subtitle: 'Legacy loyalty SaaS vs Loyal Spark',
       competitive: {
-        traditional: ['Square Loyalty: $99-499/mo', 'LoyaltyLion: 15-30% fees', 'Yotpo: Enterprise only', 'Siloed programs'],
-        loyalSpark: ['Refundable stake', 'Token economics', 'SMB-friendly ($1K)', 'Interoperable'],
+        traditional: [
+          'Square Loyalty: $45–$105/mo per location',
+          'LoyaltyLion / Yotpo: $200–$700+/mo, mid-market focus',
+          'Smile.io: revenue-share & per-order fees',
+          'Closed APIs, no native AI-agent access',
+          'Points are a database row — no true ownership',
+        ],
+        loyalSpark: [
+          'Predictable USDC SaaS from $39/mo',
+          'On-chain ERC-20 tokens — customers truly own them',
+          'Agent-ready: REST + MCP, x402 / MPP micropayments',
+          'SIWE & Privy auth — no passwords, no email leaks',
+          'P2P escrow marketplace between programs',
+        ],
       },
     },
     {
       id: 'advantages',
       title: 'Competitive Advantages',
-      subtitle: 'Why we win',
+      subtitle: 'What makes us defensible',
       advantages: [
-        { point: 'Staking model - No recurring fees', icon: DollarSign },
-        { point: 'Hub-and-spoke - Trade any loyalty token', icon: Zap },
-        { point: 'Deflationary - 8% burn reduces supply', icon: Flame },
-        { point: 'BASE Network - Low cost, high speed', icon: Globe },
-        { point: 'SMB focused - $1K entry vs $10K+', icon: Store },
-        { point: 'True ownership - Customers control assets', icon: Wallet },
+        { point: 'Dual-mode platform: humans (portal) + AI agents (API + MCP)', icon: Layers },
+        { point: 'Two-bills monetization: merchant SaaS + agent API + mint fee %', icon: DollarSign },
+        { point: 'Native HTTP 402 payments via x402 and MPP — no API keys needed', icon: Cpu },
+        { point: 'Built on Base: low fees, fast finality, USDC-native', icon: Globe },
+        { point: 'Hardened security: RLS, SIWE, scoped lsk_/rwk_ API keys', icon: Shield },
+        { point: 'Open standards: OpenAPI, agent.json, MCP catalogs (Glama, Smithery, OpenServ)', icon: Code2 },
       ],
     },
     {
       id: 'traction',
       title: 'Current Status',
       metrics: [
-        { label: 'Platform', value: 'Live on BASE', icon: Zap },
-        { label: 'Contracts', value: 'Deployed & Tested', icon: Shield },
-        { label: 'Website', value: 'loyalspark.online', icon: Globe },
-        { label: 'Target', value: '100 SMBs Q1 2027', icon: Target },
+        { label: 'Platform', value: 'Live MVP on Base', icon: Zap },
+        { label: 'Surfaces', value: 'Web · PWA · Capacitor', icon: Globe },
+        { label: 'Agent API', value: '22 REST + 28 MCP tools', icon: Bot },
+        { label: 'Auth', value: 'Privy + SIWE + scoped keys', icon: KeyRound },
       ],
     },
   ];
@@ -197,7 +227,7 @@ const PitchDeck = () => {
                       <div className="pt-4 sm:pt-8 flex flex-col items-center gap-3 sm:gap-4">
                         <div className="inline-flex items-center gap-2 px-3 xxs:px-4 py-1.5 xxs:py-2 rounded-full bg-secondary border border-border">
                           <div className="h-1.5 w-1.5 xxs:h-2 xxs:w-2 rounded-full bg-foreground" />
-                          <span className="text-xs xxs:text-sm font-medium text-foreground">Built on BASE Network</span>
+                          <span className="text-xs xxs:text-sm font-medium text-foreground">Built on Base · USDC-native · Agent-ready</span>
                         </div>
                         <a href="https://loyalspark.online/" target="_blank" rel="noopener noreferrer" className="text-sm xxs:text-base font-medium text-foreground hover:underline">
                           loyalspark.online
@@ -301,7 +331,7 @@ const PitchDeck = () => {
                                   {data.description}
                                 </div>
                               </div>
-                              <div className="text-3xl xxs:text-4xl sm:text-5xl font-bold text-foreground whitespace-nowrap">
+                              <div className="text-2xl xxs:text-3xl sm:text-5xl font-bold text-foreground whitespace-nowrap">
                                 {data.value}
                               </div>
                             </div>
@@ -358,31 +388,70 @@ const PitchDeck = () => {
                     </div>
                   )}
 
-                  {/* Business Model Slide */}
+                  {/* Business Model Slide — SaaS pricing (USDC on Base) */}
                   {slide.id === 'business-model' && (
                     <div className="space-y-4 sm:space-y-8">
                       <div>
                         <div className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                           Slide {index + 1}
                         </div>
-                        <h2 className="text-2xl xxs:text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">{slide.title}</h2>
+                        <h2 className="text-2xl xxs:text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-2">{slide.title}</h2>
+                        <p className="text-base xxs:text-lg sm:text-xl text-muted-foreground">{slide.subtitle}</p>
                       </div>
-                      <div className="space-y-3 sm:space-y-4">
-                        {slide.revenue?.map((item, i) => (
-                          <div key={i} className="flex items-start gap-3 sm:gap-6 p-4 sm:p-6 md:p-8 rounded-xl border border-border bg-secondary/30">
-                            <div className="h-10 w-10 sm:h-14 sm:w-14 rounded-lg bg-foreground flex items-center justify-center flex-shrink-0">
-                              <item.icon className="h-5 w-5 sm:h-7 sm:w-7 text-background" />
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                        {/* Merchant SaaS */}
+                        <div className="p-4 sm:p-6 md:p-8 rounded-xl border border-border bg-secondary/30">
+                          <div className="flex items-center gap-3 mb-4 sm:mb-6">
+                            <div className="h-10 w-10 rounded-lg bg-foreground flex items-center justify-center">
+                              <Store className="h-5 w-5 text-background" />
                             </div>
-                            <div className="flex-1">
-                              <div className="text-base xxs:text-lg sm:text-2xl font-bold text-foreground mb-1 sm:mb-2">
-                                {item.source}
-                              </div>
-                              <div className="text-xs xxs:text-sm sm:text-base text-muted-foreground">
-                                {item.detail}
-                              </div>
-                            </div>
+                            <h3 className="text-base xxs:text-lg sm:text-xl font-bold text-foreground">{slide.pricing?.merchant.title}</h3>
                           </div>
-                        ))}
+                          <div className="space-y-2 sm:space-y-3">
+                            {slide.pricing?.merchant.tiers.map((t, i) => (
+                              <div key={i} className="flex items-start justify-between gap-3 p-3 rounded-lg bg-background border border-border">
+                                <div>
+                                  <div className="text-sm sm:text-base font-bold text-foreground">{t.name}</div>
+                                  <div className="text-xs sm:text-sm text-muted-foreground">{t.detail}</div>
+                                </div>
+                                <div className="text-sm sm:text-base font-semibold text-foreground whitespace-nowrap">{t.price}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* AI Agents */}
+                        <div className="p-4 sm:p-6 md:p-8 rounded-xl bg-foreground text-background">
+                          <div className="flex items-center gap-3 mb-4 sm:mb-6">
+                            <div className="h-10 w-10 rounded-lg bg-background/10 flex items-center justify-center">
+                              <Bot className="h-5 w-5 text-background" />
+                            </div>
+                            <h3 className="text-base xxs:text-lg sm:text-xl font-bold">{slide.pricing?.agents.title}</h3>
+                          </div>
+                          <div className="space-y-2 sm:space-y-3">
+                            {slide.pricing?.agents.tiers.map((t, i) => (
+                              <div key={i} className="flex items-start justify-between gap-3 p-3 rounded-lg bg-background/10 border border-background/20">
+                                <div>
+                                  <div className="text-sm sm:text-base font-bold">{t.name}</div>
+                                  <div className="text-xs sm:text-sm opacity-80">{t.detail}</div>
+                                </div>
+                                <div className="text-sm sm:text-base font-semibold whitespace-nowrap">{t.price}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Pay-per-call */}
+                      <div className="p-4 sm:p-6 rounded-xl border border-border bg-card flex items-start gap-3 sm:gap-4">
+                        <div className="h-10 w-10 rounded-lg bg-foreground/10 flex items-center justify-center flex-shrink-0">
+                          <Cpu className="h-5 w-5 text-foreground" />
+                        </div>
+                        <div>
+                          <div className="text-sm sm:text-base font-bold text-foreground mb-1">{slide.pricing?.ppc.title}</div>
+                          <div className="text-xs sm:text-sm text-muted-foreground">{slide.pricing?.ppc.detail}</div>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -405,7 +474,7 @@ const PitchDeck = () => {
                                 {item.phase}
                               </div>
                               <div className="text-xs xxs:text-sm sm:text-base text-muted-foreground">
-                                Target: <span className="font-semibold text-foreground">{item.target}</span> | {item.focus}
+                                Target: <span className="font-semibold text-foreground">{item.target}</span> · {item.focus}
                               </div>
                             </div>
                           </div>
@@ -426,7 +495,7 @@ const PitchDeck = () => {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
                         <div className="p-5 sm:p-6 md:p-8 rounded-xl border border-border bg-secondary/30">
-                          <h3 className="text-lg xxs:text-xl sm:text-2xl font-bold text-foreground mb-4 sm:mb-6">Traditional Solutions</h3>
+                          <h3 className="text-lg xxs:text-xl sm:text-2xl font-bold text-foreground mb-4 sm:mb-6">Legacy Loyalty SaaS</h3>
                           <ul className="space-y-2 sm:space-y-3">
                             {slide.competitive?.traditional.map((item, i) => (
                               <li key={i} className="flex items-start gap-2">
@@ -512,7 +581,7 @@ const PitchDeck = () => {
               <CardContent className="p-6 sm:p-8 md:p-12 text-center space-y-3 sm:space-y-4">
                 <h2 className="text-2xl xxs:text-3xl sm:text-4xl font-bold text-foreground">Thank You</h2>
                 <p className="text-base xxs:text-lg sm:text-xl text-muted-foreground px-2">
-                  Let's build the future of loyalty rewards together
+                  Let's build the on-chain loyalty layer for humans and AI agents
                 </p>
                 <div className="pt-2 sm:pt-4">
                   <a 
