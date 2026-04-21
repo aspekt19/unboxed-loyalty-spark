@@ -104,6 +104,14 @@ All colors MUST be HSL.
     --shadow-large: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
     --shadow-glow: 0 0 30px rgb(262 70% 68% / 0.3);
     --shadow-glow-orange: 0 0 30px rgb(24 95% 65% / 0.3);
+
+    /* Clay shadows (dark) — softer, deeper */
+    --clay-shadow: 8px 8px 20px hsl(260 50% 4% / 0.6), -4px -4px 14px hsl(var(--primary) / 0.08), inset 1px 1px 2px hsl(var(--primary) / 0.15), inset -1px -1px 2px hsl(260 50% 4% / 0.5);
+    --clay-shadow-sm: 4px 4px 10px hsl(260 50% 4% / 0.55), -2px -2px 8px hsl(var(--primary) / 0.06), inset 1px 1px 2px hsl(var(--primary) / 0.12);
+    --clay-shadow-lg: 16px 16px 36px hsl(260 50% 4% / 0.7), -8px -8px 24px hsl(var(--primary) / 0.10), inset 2px 2px 4px hsl(var(--primary) / 0.18), inset -2px -2px 4px hsl(260 50% 4% / 0.55);
+    --clay-shadow-primary: 8px 8px 20px hsl(var(--primary) / 0.5), -4px -4px 12px hsl(var(--primary) / 0.15), inset 2px 2px 3px hsl(0 0% 100% / 0.18), inset -2px -2px 3px hsl(260 50% 4% / 0.4);
+    --clay-shadow-secondary: 8px 8px 20px hsl(var(--secondary) / 0.5), -4px -4px 12px hsl(var(--secondary) / 0.15), inset 2px 2px 3px hsl(0 0% 100% / 0.18), inset -2px -2px 3px hsl(260 50% 4% / 0.4);
+    --clay-shadow-inset: inset 4px 4px 10px hsl(260 50% 4% / 0.55), inset -4px -4px 10px hsl(var(--primary) / 0.10);
     
     --gradient-primary: linear-gradient(135deg, hsl(262 70% 68%) 0%, hsl(262 60% 55%) 100%);
     --gradient-secondary: linear-gradient(135deg, hsl(24 95% 65%) 0%, hsl(30 95% 72%) 100%);
