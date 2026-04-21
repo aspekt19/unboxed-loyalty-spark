@@ -248,6 +248,28 @@ export default function GuidePage() {
                 </AlertDescription>
               </Alert>
 
+              <Card className="border-accent/40 bg-gradient-to-br from-accent/10 to-transparent">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Zap className="h-5 w-5 text-primary" />
+                    Free 14-day Trial — start instantly
+                  </CardTitle>
+                  <CardDescription>
+                    Every new merchant wallet automatically gets 14 days on the <strong>Growth</strong> plan
+                    (and every new AI agent gets 14 days on <strong>Pro</strong>) — no card, no auto-charge.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm text-muted-foreground">
+                  <ul className="list-disc list-inside space-y-1.5">
+                    <li><strong>What's included:</strong> marketing campaigns, automation rules, RFM segmentation, customer tiers, full CRM analytics, branded loyalty token deployment.</li>
+                    <li><strong>How it starts:</strong> trial is created the first time you visit the Merchant portal — nothing to click.</li>
+                    <li><strong>When it ends:</strong> paid features become read-only (your data stays visible). Renew with USDC on Base from <Link to="/merchant?tab=billing" className="text-primary underline">Merchant → Billing</Link>.</li>
+                    <li><strong>Annual billing:</strong> save 15% on Starter / Pro and 20% on Growth / Scale / Enterprise.</li>
+                    <li><strong>Already paid?</strong> Trial is skipped automatically — your active subscription wins.</li>
+                  </ul>
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
