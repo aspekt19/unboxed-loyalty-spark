@@ -333,7 +333,21 @@ export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: Merchant
         </div>
       ) : (
         /* Own business mode: full merchant panel */
-        <Tabs {...(activeTab !== undefined ? { value: activeTab, onValueChange: onTabChange } : { defaultValue: initialTabFromUrl ?? "dashboard" })} className="w-full">
+        <Tabs
+          value={activeTab !== undefined ? activeTab : internalTab}
+          onValueChange={(v) => {
+            if (activeTab !== undefined) {
+              onTabChange?.(v);
+            } else {
+              setInternalTab(v);
+              // Keep URL in sync so refresh / share links land on same tab
+              const params = new URLSearchParams(location.search);
+              params.set('tab', v);
+              navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+            }
+          }}
+          className="w-full"
+        >
           {hideTabsList ? (
             /* Mobile: show sub-tab bar only for "Home" group tabs */
             ['dashboard', 'customers', 'marketing', 'billing', 'agents'].includes(activeTab || 'dashboard') && (
