@@ -40,12 +40,12 @@ const LandingCTA = () => {
             transition={{ duration: 0.5, delay: 0.4 }}
           >
             <Link to="/app" className="inline-block w-full sm:w-auto">
-              <Button size="xl" variant="uds" className="w-full sm:w-auto font-semibold group shadow-glow">
+              <Button size="lg" variant="uds" className="w-full sm:w-auto sm:h-14 sm:px-10 sm:text-lg font-semibold group shadow-glow">
                 Open Your Loyalty Wallet
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
-            <div className="flex gap-4 justify-center mt-4">
+            <div className="flex flex-wrap gap-x-4 gap-y-2 justify-center mt-4">
               <Link to="/guide" className="text-sm text-muted-foreground hover:text-primary transition-colors underline underline-offset-4">
                 Getting Started Guide
               </Link>
