@@ -1,5 +1,3 @@
-import { Button } from '@/components/ui/button';
-import { Shield, Zap, Globe, TrendingUp, ArrowRight, Bot, Code } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PageTransition from '@/components/PageTransition';
 import FarcasterSplash from '@/components/FarcasterSplash';
@@ -7,7 +5,6 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { AdminLink } from '@/components/AdminLink';
 import { useState, useEffect } from 'react';
 import { sdk } from '@farcaster/miniapp-sdk';
-import { motion } from 'framer-motion';
 import HowItWorks from '@/components/landing/HowItWorks';
 import DualBenefits from '@/components/landing/DualBenefits';
 import OnchainSimple from '@/components/landing/OnchainSimple';
@@ -18,9 +15,9 @@ import LandingHero from '@/components/landing/LandingHero';
 import LandingFeatures from '@/components/landing/LandingFeatures';
 import LandingAgents from '@/components/landing/LandingAgents';
 import LandingNav from '@/components/landing/LandingNav';
-
 import LandingCTA from '@/components/landing/LandingCTA';
 import NotifyMe from '@/components/landing/NotifyMe';
+import { isFarcasterContext } from '@/config/wagmi';
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -59,38 +56,53 @@ const jsonLd = {
   ]
 };
 
+const FARCASTER_CONTEXT_TIMEOUT_MS = 1200;
+
 const Index = () => {
-  const [isFarcaster, setIsFarcaster] = useState(false);
-  const [checkedFarcaster, setCheckedFarcaster] = useState(false);
+  const [isFarcaster, setIsFarcaster] = useState(() => isFarcasterContext());
 
   useEffect(() => {
+    if (!isFarcasterContext()) {
+      setIsFarcaster(false);
+      return;
+    }
+
+    let cancelled = false;
+
     const checkFarcasterContext = async () => {
-      if (typeof window !== 'undefined') {
-        try {
-          const context = await sdk.context;
-          const inFarcaster = !!context?.client?.clientFid;
-          setIsFarcaster(inFarcaster);
-          if (inFarcaster) {
-            // Auto-redirect into the app — wallet connect + SIWE happens there.
-            window.location.replace('/app');
-            return;
-          }
-        } catch {
+      try {
+        const context = await Promise.race([
+          sdk.context,
+          new Promise<null>((resolve) => {
+            window.setTimeout(() => resolve(null), FARCASTER_CONTEXT_TIMEOUT_MS);
+          }),
+        ]);
+
+        if (cancelled) return;
+
+        const inFarcaster = !!context?.client?.clientFid;
+        setIsFarcaster(inFarcaster);
+
+        if (inFarcaster) {
+          window.location.replace('/app');
+        }
+      } catch {
+        if (!cancelled) {
           setIsFarcaster(false);
         }
       }
-      setCheckedFarcaster(true);
     };
-    checkFarcasterContext();
+
+    void checkFarcasterContext();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (isFarcaster) {
-    // While the redirect is in flight, show the Farcaster splash so the
-    // miniapp host gets `sdk.actions.ready()` from FarcasterSplash.
     return <FarcasterSplash onLaunch={() => window.location.replace('/app')} />;
   }
-
-  if (!checkedFarcaster) return null;
 
   return (
     <PageTransition>
@@ -120,38 +132,16 @@ const Index = () => {
         </header>
 
         <main className="container mx-auto px-4 sm:px-6 relative overflow-hidden">
-          {/* Hero */}
           <LandingHero />
-
-          {/* 1. How it works — user-facing, simple */}
           <HowItWorks />
-
-          {/* 2. For customers / For businesses */}
           <DualBenefits />
-
-          {/* 3. Onchain, but simple */}
           <OnchainSimple />
-
-          {/* 4. Why Loyal Spark — feature grid */}
           <LandingFeatures />
-
-
-          {/* 6. AI Agents Section — for developers/advanced users */}
           <LandingAgents />
-
-          {/* 7. Machine Payments */}
           <PaymentHandshake />
-
-          {/* 8. Trust & Security */}
           <TrustSecurity />
-
-          {/* 9. Use Cases */}
           <UseCases />
-
-          {/* 10. Email capture for visitors not ready to connect a wallet */}
           <NotifyMe source="landing" />
-
-          {/* 11. Final CTA */}
           <LandingCTA />
         </main>
 
