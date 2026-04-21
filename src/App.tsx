@@ -25,6 +25,7 @@ import RefundPage from "./pages/legal/RefundPage";
 import NotFound from "./pages/NotFound";
 import NativeShopperPage from "./pages/NativeShopperPage";
 import NativeBusinessPage from "./pages/NativeBusinessPage";
+import Preview3D from "./pages/Preview3D";
 import { AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
 import { migrateAllData } from "./lib/migrateLocalStorageData";
@@ -83,6 +84,7 @@ function AnimatedRoutes() {
         {/* Native app entry points (Capacitor) */}
         <Route path="/native/shopper" element={<NativeShopperPage />} />
         <Route path="/native/business" element={<NativeBusinessPage />} />
+        <Route path="/preview-3d" element={<Preview3D />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
