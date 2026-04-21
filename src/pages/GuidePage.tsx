@@ -780,14 +780,14 @@ export default function GuidePage() {
                   <p className="text-sm text-muted-foreground mb-3">Example REST API call:</p>
                   <pre className="bg-muted/50 border rounded-lg p-4 overflow-x-auto text-xs font-mono leading-relaxed">
 {`curl -H "x-api-key: lsk_YOUR_KEY" \\
-  https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/programs`}
+  https://api.loyalspark.online/agent-api/programs`}
                   </pre>
                   <p className="text-sm text-muted-foreground mt-3">Or connect via MCP (for Claude, Cursor, etc.):</p>
                   <pre className="bg-muted/50 border rounded-lg p-4 overflow-x-auto text-xs font-mono leading-relaxed">
 {`{
   "mcpServers": {
     "loyal-spark": {
-      "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+      "url": "https://api.loyalspark.online/loyalty-mcp",
       "headers": { "x-api-key": "lsk_YOUR_KEY" }
     }
   }
