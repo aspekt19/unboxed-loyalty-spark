@@ -18,8 +18,10 @@ import { dirname, resolve } from "node:path";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
 
+const PUBLIC_ORIGIN = "https://loyalspark.online";
 const SUPABASE = "https://bzxmejzssxjazswgwqqs.supabase.co";
-const GATEWAY = `${SUPABASE}/functions/v1/x402-gateway`;
+const GATEWAY = `${PUBLIC_ORIGIN}/functions/v1/x402-gateway`;
+const DIRECT_GATEWAY = `${SUPABASE}/functions/v1/x402-gateway`;
 const AGENT_API = `${SUPABASE}/functions/v1/agent-api`;
 const MCP_URL = `${SUPABASE}/functions/v1/loyalty-mcp`;
 const RECIPIENT_MCP_URL = `${SUPABASE}/functions/v1/recipient-loyalty-mcp`;
@@ -286,14 +288,16 @@ const openapi = {
     "x-mcp": { url: MCP_URL, transport: "streamable-http", tool_count: MCP_TOOLS.length },
     "x-recipient-mcp": { url: RECIPIENT_MCP_URL, transport: "streamable-http", tool_count: RECIPIENT_MCP_TOOLS.length },
     "x-x402-discovery": {
-      wellKnownResources: "https://loyalspark.online/.well-known/x402",
+      wellKnownResources: `${PUBLIC_ORIGIN}/.well-known/x402`,
       gatewayBaseUrl: GATEWAY,
+      directGatewayBaseUrl: DIRECT_GATEWAY,
       asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
       network: "eip155:8453",
     },
   },
   servers: [
-    { url: SUPABASE, description: "Loyal Spark — paid x402 corridor (USDC on Base, eip155:8453). All paths under /functions/v1/x402-gateway/* return HTTP 402 with x402Version 2 payment requirements." },
+    { url: PUBLIC_ORIGIN, description: "Loyal Spark — canonical x402 origin for x402scan discovery. All listed paths under /functions/v1/x402-gateway/* are exposed on loyalspark.online and return live HTTP 402 with x402Version 2 payment requirements." },
+    { url: SUPABASE, description: "Loyal Spark — direct backend origin for diagnostics and raw gateway access." },
   ],
   security: [{ apiKey: [] }],
   components: {
