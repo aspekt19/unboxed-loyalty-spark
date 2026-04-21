@@ -125,9 +125,9 @@ const PitchDeck = () => {
       subtitle: 'Land humans first, then unlock the agent channel',
       adoption: [
         { phase: 'Now (live MVP)', target: 'First design partners', focus: 'On-chain loyalty + dashboard on Base' },
-        { phase: 'Q1–Q2 2026', target: '10–25 paying merchants', focus: 'Starter/Growth plans, case studies' },
-        { phase: 'Q3–Q4 2026', target: '100+ merchants', focus: 'Agent channel: OpenServ, MCP catalogs, x402' },
-        { phase: '2027', target: '500+ merchants', focus: 'Multi-region SaaS + agent revenue share' },
+        { phase: 'Q3–Q4 2026', target: '10–25 paying merchants', focus: 'Starter/Growth plans, case studies' },
+        { phase: 'Q1–Q2 2027', target: '100+ merchants', focus: 'Agent channel: OpenServ, MCP catalogs, x402' },
+        { phase: 'H2 2027', target: '500+ merchants', focus: 'Multi-region SaaS + agent revenue share' },
       ],
     },
     {
