@@ -219,6 +219,7 @@ function buildDiscoveryDocument(req: Request): Record<string, unknown> {
       tags: ["loyalty", "rewards", "onchain", "base", "mcp", "rest"],
     },
     items,
+    resources: items,
     pagination: {
       limit: items.length,
       offset: 0,
