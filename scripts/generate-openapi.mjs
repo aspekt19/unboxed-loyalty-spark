@@ -228,19 +228,22 @@ function buildMcpOp(toolName, price, description, props, required, kind) {
 
 const paths = {};
 
-// Merchant REST
+// Merchant REST — emit under x402-gateway prefix so x402scan resolves to the paid gateway (returns 402)
 for (const [method, routes] of Object.entries(MERCHANT_REST)) {
   for (const [p, meta] of Object.entries(routes)) {
-    paths[p] = paths[p] || {};
-    paths[p][method.toLowerCase()] = buildRestOp(method, p, meta, "merchant");
+    const gp = `/functions/v1/x402-gateway${p}`;
+    paths[gp] = paths[gp] || {};
+    paths[gp][method.toLowerCase()] = buildRestOp(method, p, meta, "merchant");
   }
 }
 
-// Recipient REST
+// Recipient REST — same: route through x402-gateway
 for (const [method, routes] of Object.entries(RECIPIENT_REST)) {
   for (const [p, meta] of Object.entries(routes)) {
-    paths[p] = paths[p] || {};
-    paths[p][method.toLowerCase()] = buildRestOp(method, p, meta, "recipient");
+    // p already starts with "/recipient-api/..."
+    const gp = `/functions/v1/x402-gateway${p}`;
+    paths[gp] = paths[gp] || {};
+    paths[gp][method.toLowerCase()] = buildRestOp(method, p, meta, "recipient");
   }
 }
 
@@ -290,10 +293,8 @@ const openapi = {
     },
   },
   servers: [
-    { url: AGENT_API, description: "Loyal Spark merchant REST (agent-api) — x-api-key: lsk_..." },
-    { url: `${SUPABASE}/functions/v1/recipient-api`, description: "Loyal Spark recipient REST (recipient-api) — x-api-key: rwk_..." },
-    { url: GATEWAY, description: "x402 gateway — pay-per-call (USDC on Base) for REST + MCP" },
-    { url: `${SUPABASE}/functions/v1/mpp-gateway`, description: "MPP gateway — pay-per-call proxy to agent-api" },
+    { url: SUPABASE, description: "Loyal Spark — paid x402 corridor (USDC on Base, eip155:8453). All paths under /functions/v1/x402-gateway/* return HTTP 402 with x402Version 2 payment requirements." },
+    { url: "https://loyalspark.online", description: "Loyal Spark — alias domain (CDN; same backend)" },
   ],
   security: [{ apiKey: [] }],
   components: {
