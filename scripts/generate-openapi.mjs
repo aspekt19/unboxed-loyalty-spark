@@ -18,8 +18,10 @@ import { dirname, resolve } from "node:path";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
 
+const PUBLIC_ORIGIN = "https://loyalspark.online";
 const SUPABASE = "https://bzxmejzssxjazswgwqqs.supabase.co";
-const GATEWAY = `${SUPABASE}/functions/v1/x402-gateway`;
+const GATEWAY = `${PUBLIC_ORIGIN}/functions/v1/x402-gateway`;
+const DIRECT_GATEWAY = `${SUPABASE}/functions/v1/x402-gateway`;
 const AGENT_API = `${SUPABASE}/functions/v1/agent-api`;
 const MCP_URL = `${SUPABASE}/functions/v1/loyalty-mcp`;
 const RECIPIENT_MCP_URL = `${SUPABASE}/functions/v1/recipient-loyalty-mcp`;
