@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { WagmiProvider } from "wagmi";
 import { WagmiProvider as PrivyWagmiProvider } from "@privy-io/wagmi";
 import { PrivyProvider } from "@privy-io/react-auth";
@@ -16,7 +16,6 @@ import AdminPage from "./pages/AdminPage";
 import PitchDeck from "./pages/PitchDeck";
 import GuidePage from "./pages/GuidePage";
 import InstallPage from "./pages/InstallPage";
-import PremiumPage from "./pages/PremiumPage";
 import ApiDocsPage from "./pages/ApiDocsPage";
 import ForAgentsPage from "./pages/ForAgentsPage";
 import PricingPage from "./pages/PricingPage";
@@ -69,7 +68,8 @@ function AnimatedRoutes() {
         <Route path="/app" element={<AppPage />} />
         <Route path="/customer" element={<CustomerPage />} />
         <Route path="/merchant" element={<MerchantPage />} />
-        <Route path="/premium" element={<PremiumPage />} />
+        {/* /premium deprecated → redirect to public pricing */}
+        <Route path="/premium" element={<Navigate to="/pricing" replace />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/pitch" element={<PitchDeck />} />
         <Route path="/guide" element={<GuidePage />} />

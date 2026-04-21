@@ -5,8 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { PremiumStatusBadge } from '@/components/PremiumStatusBadge';
-import { PremiumExpirationAlert } from '@/components/PremiumExpirationAlert';
+import { PlanStatusBadge } from '@/components/billing/PlanStatusBadge';
 import { MerchantProfileForm } from './MerchantProfileForm';
 import { WalletQRCode } from '@/components/WalletQRCode';
 import { DexIntegration } from '@/components/DexIntegration';
@@ -18,10 +17,11 @@ import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface MerchantProfileSectionProps {
-  onUpgrade: () => void;
+  /** Optional: kept for backward compatibility (no longer used). */
+  onUpgrade?: () => void;
 }
 
-export function MerchantProfileSection({ onUpgrade }: MerchantProfileSectionProps) {
+export function MerchantProfileSection(_props: MerchantProfileSectionProps) {
   const { address } = useAccount();
   const { user, session, isLoading: authLoading } = useAuth();
   const [firstName, setFirstName] = useState('');
@@ -29,7 +29,7 @@ export function MerchantProfileSection({ onUpgrade }: MerchantProfileSectionProp
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [saving, setSaving] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  const [, setLoaded] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -99,8 +99,7 @@ export function MerchantProfileSection({ onUpgrade }: MerchantProfileSectionProp
 
   return (
     <div className="space-y-4">
-      <PremiumStatusBadge />
-      <PremiumExpirationAlert onUpgrade={onUpgrade} />
+      <PlanStatusBadge product="merchant" />
 
       {/* Personal info */}
       <Card className="border-2">
@@ -120,7 +119,7 @@ export function MerchantProfileSection({ onUpgrade }: MerchantProfileSectionProp
                 className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors font-mono"
               >
                 {address.slice(0, 6)}...{address.slice(-4)}
-                {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                {copied ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
               </button>
             </div>
           </div>

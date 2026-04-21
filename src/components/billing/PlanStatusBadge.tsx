@@ -52,11 +52,11 @@ export function PlanStatusBadge({ product, upgradeHref }: Props) {
 
   if (plan.isTrial) {
     return (
-      <Card className="border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-amber-500/10">
+      <Card className="border-accent/40 bg-gradient-to-br from-accent/10 to-accent/20">
         <CardContent className="p-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/10">
-              <Sparkles className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/20">
+              <Sparkles className="h-5 w-5 text-accent-foreground" />
             </div>
             <div>
               <Badge variant="secondary" className="mb-1 gap-1">

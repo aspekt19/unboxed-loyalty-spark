@@ -25,9 +25,9 @@ const routeMeta: Record<string, PageMeta> = {
     title: "Customer Portal - Loyal Spark",
     description: "View your loyalty tokens, redeem rewards, and track your tier status across merchants.",
   },
-  "/premium": {
-    title: "Premium Plans - Loyal Spark",
-    description: "Upgrade to Premium for advanced loyalty features, analytics, and automation tools.",
+  "/pricing": {
+    title: "Pricing - Loyal Spark",
+    description: "Transparent USDC pricing for merchants and AI agents on Base. Monthly or annual (save 15–20%). 14-day Growth/Pro trial included.",
   },
   "/api-docs": {
     title: "API Documentation - Loyal Spark",

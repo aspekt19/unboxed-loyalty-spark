@@ -3,8 +3,6 @@ import { CustomerPanel } from '@/components/CustomerPanel';
 import { CustomerFiltersPanel } from '@/components/CustomerFiltersPanel';
 import { WelcomeFlow } from '@/components/onboarding/WelcomeFlow';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { PremiumStatusBadge } from '@/components/PremiumStatusBadge';
-import { PremiumExpirationAlert } from '@/components/PremiumExpirationAlert';
 import { Gift, ArrowLeft, Store } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -13,7 +11,6 @@ import PageTransition from '@/components/PageTransition';
 import { useEffect, useState, useCallback } from 'react';
 import { initializeCleanState } from '@/lib/clearOldData';
 import { SupportBanner } from '@/components/SupportBanner';
-import { PremiumUpgradeDialog } from '@/components/roundup/PremiumUpgradeDialog';
 import { MarketplaceDashboard } from '@/components/marketplace/MarketplaceDashboard';
 import { BottomNavBar } from '@/components/mobile/BottomNavBar';
 import { CustomerProfileSection } from '@/components/customer/CustomerProfileSection';
@@ -24,7 +21,6 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 
 const CustomerPage = () => {
-  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('loyalty');
   const [selectedMerchant, setSelectedMerchant] = useState<string | null>(null);
   const isMobile = useIsMobile();
@@ -82,7 +78,7 @@ const CustomerPage = () => {
         );
       case 'profile':
         if (!user) return null;
-        return <CustomerProfileSection onUpgrade={() => setShowUpgradeDialog(true)} />;
+        return <CustomerProfileSection />;
       default:
         return null;
     }
@@ -177,7 +173,7 @@ const CustomerPage = () => {
               {user ? (
                 <TabsContent value="profile">
                   <div className="max-w-2xl mx-auto">
-                    <CustomerProfileSection onUpgrade={() => setShowUpgradeDialog(true)} />
+                    <CustomerProfileSection />
                   </div>
                 </TabsContent>
               ) : null}
@@ -202,11 +198,6 @@ const CustomerPage = () => {
             showProfileNav={Boolean(user)}
           />
         )}
-
-        <PremiumUpgradeDialog 
-          open={showUpgradeDialog}
-          onOpenChange={setShowUpgradeDialog}
-        />
       </div>
     </PageTransition>
   );
