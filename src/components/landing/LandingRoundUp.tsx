@@ -12,11 +12,14 @@ const LandingRoundUp = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
+          <div className="inline-flex items-center gap-2 mb-3 px-3 py-1 rounded-full border border-yellow-500/50 bg-yellow-500/10">
+            <span className="text-xs font-semibold text-yellow-700 dark:text-yellow-400 uppercase tracking-wide">Beta · Not Live</span>
+          </div>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 tracking-tight">
             Round-Up Investment
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
-            Automatically invest your spare change into DeFi strategies. Every transaction rounds up and grows your portfolio.
+            Automatically invest your spare change into DeFi strategies. Every transaction rounds up and grows your portfolio. <span className="text-yellow-700 dark:text-yellow-400 font-medium">Currently in public beta — use at your own risk.</span>
           </p>
         </motion.div>
 

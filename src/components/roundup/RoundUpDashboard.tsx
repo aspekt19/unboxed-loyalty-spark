@@ -1,6 +1,8 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Coins, TrendingUp, Wallet, ArrowUpRight } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Coins, TrendingUp, Wallet, ArrowUpRight, AlertTriangle } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { useRoundUp } from '@/hooks/useRoundUp';
 import { useRoundUpInvest } from '@/hooks/useRoundUpInvest';
@@ -51,9 +53,23 @@ export const RoundUpDashboard = () => {
 
   return (
     <div className="space-y-6">
+      <Alert variant="default" className="border-yellow-500/50 bg-yellow-500/5">
+        <AlertTriangle className="h-4 w-4 text-yellow-600" />
+        <AlertTitle className="flex items-center gap-2">
+          Beta · Not Live
+          <Badge variant="outline" className="border-yellow-500/50 text-yellow-700 dark:text-yellow-400 text-[10px]">EXPERIMENTAL</Badge>
+        </AlertTitle>
+        <AlertDescription className="text-xs sm:text-sm">
+          Round-Up Investment is in public beta. Smart contracts have not undergone a full third-party audit. Use small amounts at your own risk and do not deposit funds you cannot afford to lose.
+        </AlertDescription>
+      </Alert>
+
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold">Round-Up Investment</h2>
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            Round-Up Investment
+            <Badge variant="outline" className="border-yellow-500/50 text-yellow-700 dark:text-yellow-400 text-xs">Beta</Badge>
+          </h2>
           <p className="text-sm text-muted-foreground mt-1">
             Put your spare change to work. Every transaction rounds up to the nearest whole number, and the difference is automatically invested into DeFi yield strategies on Base.
           </p>
