@@ -567,7 +567,7 @@ Deno.serve(async (req) => {
       return jsonResponse({
         message: `Program status updated from '${program.status}' to '${status}'`,
         program: { id: program.id, name: program.name, previous_status: program.status, new_status: status },
-        ...(onchain_calls ? { onchain_calls, note: "Execute these transactions to pause the program onchain as well." } : {}),,
+        ...(onchain_calls ? { onchain_calls, note: "Execute these transactions to pause the program onchain as well." } : {}),
       });
     }
 
