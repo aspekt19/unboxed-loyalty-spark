@@ -34,7 +34,17 @@ export type BuildAcceptParams = {
   supabaseUrl: string;
 };
 
-/** Edge often sees `http://`; clients and facilitators use the public `https://` origin. */
+/**
+ * Public canonical origin used in x402 `resource` URLs and Bazaar discovery.
+ * Order of preference:
+ *   1. `PUBLIC_BASE_URL` env (e.g. `https://api.loyalspark.online`) — branded host that proxies
+ *      to Supabase Edge Functions; this is what x402scan / agents should hit.
+ *   2. `SUPABASE_URL` env when the request actually arrived on that host.
+ *   3. Request origin (https-normalised for `*.supabase.co`).
+ *
+ * When `PUBLIC_BASE_URL` is set, gateway paths get `/functions/v1` stripped because the proxy
+ * mounts edge functions at the root.
+ */
 function canonicalPublicOrigin(requestUrl: URL): string {
   const host = requestUrl.hostname;
   if (host.endsWith(".supabase.co") && requestUrl.protocol === "http:") {
@@ -43,11 +53,20 @@ function canonicalPublicOrigin(requestUrl: URL): string {
   return requestUrl.origin;
 }
 
-/**
- * Prefer `SUPABASE_URL` origin when the request hits the same project host — env is always `https`
- * and matches what verify/settle and Bazaar discovery must use.
- */
+function getPublicBaseUrl(): { origin: string; stripFunctionsPrefix: boolean } | null {
+  const raw = (Deno.env.get("PUBLIC_BASE_URL") || "").trim();
+  if (!raw) return null;
+  try {
+    const u = new URL(raw);
+    return { origin: u.origin, stripFunctionsPrefix: true };
+  } catch {
+    return null;
+  }
+}
+
 function resourcePublicOrigin(requestUrl: URL, supabaseUrl: string): string {
+  const pub = getPublicBaseUrl();
+  if (pub) return pub.origin;
   const raw = supabaseUrl.trim();
   if (raw) {
     try {
@@ -60,6 +79,14 @@ function resourcePublicOrigin(requestUrl: URL, supabaseUrl: string): string {
     }
   }
   return canonicalPublicOrigin(requestUrl);
+}
+
+function gatewayPath(resource: string): string {
+  const pub = getPublicBaseUrl();
+  if (pub?.stripFunctionsPrefix) {
+    return `/x402-gateway/${resource}`;
+  }
+  return `/functions/v1/x402-gateway/${resource}`;
 }
 
 function restApiKeyHint(resource: string): string {
