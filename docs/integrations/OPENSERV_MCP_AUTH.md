@@ -1,5 +1,7 @@
 # OpenServ (and other hosts) — MCP auth for Loyal Spark
 
+> **Canonical MCP URL for agents:** `https://api.loyalspark.online/loyalty-mcp` (use this in catalogs and production configs). The `…supabase.co/functions/v1/loyalty-mcp` URL referenced below is the underlying Edge Function origin and is shown only for low-level diagnostics.
+
 ## Symptom
 
 Tool calls return:
