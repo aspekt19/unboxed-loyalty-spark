@@ -19,7 +19,7 @@ const PitchDeck = () => {
     {
       id: 'cover',
       title: 'Loyal Spark',
-      subtitle: 'On-chain loyalty rewards for SMBs — operated by humans and AI agents',
+      subtitle: 'Onchain loyalty rewards for SMBs — operated by humans and AI agents',
       tagline: 'Programs you own. Tokens customers truly hold. APIs agents can pay for.',
       icon: Coins,
     },
@@ -40,7 +40,7 @@ const PitchDeck = () => {
         {
           title: 'OWN',
           subtitle: 'YOUR PROGRAM',
-          description: 'Deploy ERC-20 loyalty token on Base. Mint, transfer, redeem on-chain.',
+          description: 'Deploy ERC-20 loyalty token on Base. Mint, transfer, redeem onchain.',
           icon: Coins,
         },
         {
@@ -87,7 +87,7 @@ const PitchDeck = () => {
         ],
         customer: [
           { step: 'Receive Tokens', description: 'Get loyalty tokens to a smart wallet (Privy / SIWE)', icon: ShoppingBag },
-          { step: 'Redeem & Trade', description: 'Spend on rewards or swap P2P via on-chain escrow', icon: LineChart },
+          { step: 'Redeem & Trade', description: 'Spend on rewards or swap P2P via onchain escrow', icon: LineChart },
           { step: 'Truly Own', description: 'Tokens live in the customer\'s wallet, fully transferable', icon: Wallet },
         ],
       },
@@ -124,7 +124,7 @@ const PitchDeck = () => {
       title: 'Go-to-Market',
       subtitle: 'Land humans first, then unlock the agent channel',
       adoption: [
-        { phase: 'Now (live MVP)', target: 'First design partners', focus: 'On-chain loyalty + dashboard on Base' },
+        { phase: 'Now (live MVP)', target: 'First design partners', focus: 'Onchain loyalty + dashboard on Base' },
         { phase: 'Q3–Q4 2026', target: '10–25 paying merchants', focus: 'Starter/Growth plans, case studies' },
         { phase: 'Q1–Q2 2027', target: '100+ merchants', focus: 'Agent channel: OpenServ, MCP catalogs, x402' },
         { phase: 'H2 2027', target: '500+ merchants', focus: 'Multi-region SaaS + agent revenue share' },
@@ -144,7 +144,7 @@ const PitchDeck = () => {
         ],
         loyalSpark: [
           'Predictable USDC SaaS from $39/mo',
-          'On-chain ERC-20 tokens — customers truly own them',
+          'Onchain ERC-20 tokens — customers truly own them',
           'Agent-ready: REST + MCP, x402 / MPP micropayments',
           'SIWE & Privy auth — no passwords, no email leaks',
           'P2P escrow marketplace between programs',
@@ -581,7 +581,7 @@ const PitchDeck = () => {
               <CardContent className="p-6 sm:p-8 md:p-12 text-center space-y-3 sm:space-y-4">
                 <h2 className="text-2xl xxs:text-3xl sm:text-4xl font-bold text-foreground">Thank You</h2>
                 <p className="text-base xxs:text-lg sm:text-xl text-muted-foreground px-2">
-                  Let's build the on-chain loyalty layer for humans and AI agents
+                  Let's build the onchain loyalty layer for humans and AI agents
                 </p>
                 <div className="pt-2 sm:pt-4">
                   <a 
