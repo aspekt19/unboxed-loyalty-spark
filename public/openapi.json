@@ -113,6 +113,11 @@
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
         },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Query parameters for this request."
+        },
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -136,7 +141,22 @@
           "type": "apiKey",
           "header": "x-api-key",
           "prefix": "lsk_"
-        }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "style": "deepObject",
+            "explode": true,
+            "description": "Query parameters passed through to the paid GET endpoint.",
+            "schema": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Query parameters for this request."
+            }
+          }
+        ]
       },
       "post": {
         "operationId": "post_programs",
@@ -159,6 +179,11 @@
           "402": {
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
+        },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON body for this request."
         },
         "x-payment-info": {
           "price": {
@@ -190,7 +215,8 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "additionalProperties": true
+                "additionalProperties": true,
+                "description": "JSON body for this request."
               }
             }
           }
@@ -220,6 +246,11 @@
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
         },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Query parameters for this request."
+        },
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -243,7 +274,22 @@
           "type": "apiKey",
           "header": "x-api-key",
           "prefix": "lsk_"
-        }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "style": "deepObject",
+            "explode": true,
+            "description": "Query parameters passed through to the paid GET endpoint.",
+            "schema": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Query parameters for this request."
+            }
+          }
+        ]
       },
       "post": {
         "operationId": "post_rewards",
@@ -266,6 +312,11 @@
           "402": {
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
+        },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON body for this request."
         },
         "x-payment-info": {
           "price": {
@@ -297,7 +348,8 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "additionalProperties": true
+                "additionalProperties": true,
+                "description": "JSON body for this request."
               }
             }
           }
@@ -327,6 +379,11 @@
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
         },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Query parameters for this request."
+        },
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -350,7 +407,22 @@
           "type": "apiKey",
           "header": "x-api-key",
           "prefix": "lsk_"
-        }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "style": "deepObject",
+            "explode": true,
+            "description": "Query parameters passed through to the paid GET endpoint.",
+            "schema": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Query parameters for this request."
+            }
+          }
+        ]
       }
     },
     "/x402-gateway/customers": {
@@ -376,6 +448,11 @@
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
         },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Query parameters for this request."
+        },
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -399,7 +476,22 @@
           "type": "apiKey",
           "header": "x-api-key",
           "prefix": "lsk_"
-        }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "style": "deepObject",
+            "explode": true,
+            "description": "Query parameters passed through to the paid GET endpoint.",
+            "schema": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Query parameters for this request."
+            }
+          }
+        ]
       }
     },
     "/x402-gateway/vouchers": {
@@ -425,6 +517,11 @@
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
         },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Query parameters for this request."
+        },
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -448,7 +545,22 @@
           "type": "apiKey",
           "header": "x-api-key",
           "prefix": "lsk_"
-        }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "style": "deepObject",
+            "explode": true,
+            "description": "Query parameters passed through to the paid GET endpoint.",
+            "schema": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Query parameters for this request."
+            }
+          }
+        ]
       }
     },
     "/x402-gateway/analytics": {
@@ -474,6 +586,11 @@
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
         },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Query parameters for this request."
+        },
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -497,7 +614,22 @@
           "type": "apiKey",
           "header": "x-api-key",
           "prefix": "lsk_"
-        }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "style": "deepObject",
+            "explode": true,
+            "description": "Query parameters passed through to the paid GET endpoint.",
+            "schema": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Query parameters for this request."
+            }
+          }
+        ]
       }
     },
     "/x402-gateway/offers": {
@@ -523,6 +655,11 @@
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
         },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Query parameters for this request."
+        },
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -546,7 +683,22 @@
           "type": "apiKey",
           "header": "x-api-key",
           "prefix": "lsk_"
-        }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "style": "deepObject",
+            "explode": true,
+            "description": "Query parameters passed through to the paid GET endpoint.",
+            "schema": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Query parameters for this request."
+            }
+          }
+        ]
       },
       "post": {
         "operationId": "post_offers",
@@ -569,6 +721,11 @@
           "402": {
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
+        },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON body for this request."
         },
         "x-payment-info": {
           "price": {
@@ -600,7 +757,8 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "additionalProperties": true
+                "additionalProperties": true,
+                "description": "JSON body for this request."
               }
             }
           }
@@ -630,6 +788,11 @@
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
         },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON body for this request."
+        },
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -660,7 +823,8 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "additionalProperties": true
+                "additionalProperties": true,
+                "description": "JSON body for this request."
               }
             }
           }
@@ -690,6 +854,11 @@
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
         },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON body for this request."
+        },
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -720,7 +889,8 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "additionalProperties": true
+                "additionalProperties": true,
+                "description": "JSON body for this request."
               }
             }
           }
@@ -750,6 +920,11 @@
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
         },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON body for this request."
+        },
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -780,7 +955,8 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "additionalProperties": true
+                "additionalProperties": true,
+                "description": "JSON body for this request."
               }
             }
           }
@@ -810,6 +986,11 @@
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
         },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON body for this request."
+        },
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -840,7 +1021,8 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "additionalProperties": true
+                "additionalProperties": true,
+                "description": "JSON body for this request."
               }
             }
           }
@@ -870,6 +1052,11 @@
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
         },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON body for this request."
+        },
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -900,7 +1087,8 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "additionalProperties": true
+                "additionalProperties": true,
+                "description": "JSON body for this request."
               }
             }
           }
@@ -930,6 +1118,11 @@
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
         },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON body for this request."
+        },
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -960,7 +1153,8 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "additionalProperties": true
+                "additionalProperties": true,
+                "description": "JSON body for this request."
               }
             }
           }
@@ -990,6 +1184,11 @@
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
         },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON body for this request."
+        },
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -1020,7 +1219,8 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "additionalProperties": true
+                "additionalProperties": true,
+                "description": "JSON body for this request."
               }
             }
           }
@@ -1050,6 +1250,11 @@
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
         },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON body for this request."
+        },
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -1080,7 +1285,8 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "additionalProperties": true
+                "additionalProperties": true,
+                "description": "JSON body for this request."
               }
             }
           }
@@ -1110,6 +1316,11 @@
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
         },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON body for this request."
+        },
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -1140,7 +1351,8 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "additionalProperties": true
+                "additionalProperties": true,
+                "description": "JSON body for this request."
               }
             }
           }
@@ -1170,6 +1382,11 @@
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
         },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON body for this request."
+        },
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -1200,7 +1417,8 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "additionalProperties": true
+                "additionalProperties": true,
+                "description": "JSON body for this request."
               }
             }
           }
@@ -1230,6 +1448,11 @@
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
         },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON body for this request."
+        },
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -1260,7 +1483,8 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "additionalProperties": true
+                "additionalProperties": true,
+                "description": "JSON body for this request."
               }
             }
           }
@@ -1290,6 +1514,11 @@
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
         },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Query parameters for this request."
+        },
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -1313,7 +1542,22 @@
           "type": "apiKey",
           "header": "x-api-key",
           "prefix": "rwk_"
-        }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "style": "deepObject",
+            "explode": true,
+            "description": "Query parameters passed through to the paid GET endpoint.",
+            "schema": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Query parameters for this request."
+            }
+          }
+        ]
       }
     },
     "/x402-gateway/recipient-api/balance": {
@@ -1339,6 +1583,11 @@
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
         },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Query parameters for this request."
+        },
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -1362,7 +1611,22 @@
           "type": "apiKey",
           "header": "x-api-key",
           "prefix": "rwk_"
-        }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "style": "deepObject",
+            "explode": true,
+            "description": "Query parameters passed through to the paid GET endpoint.",
+            "schema": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Query parameters for this request."
+            }
+          }
+        ]
       }
     },
     "/x402-gateway/recipient-api/rewards": {
@@ -1388,6 +1652,11 @@
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
         },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Query parameters for this request."
+        },
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -1411,7 +1680,22 @@
           "type": "apiKey",
           "header": "x-api-key",
           "prefix": "rwk_"
-        }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "style": "deepObject",
+            "explode": true,
+            "description": "Query parameters passed through to the paid GET endpoint.",
+            "schema": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Query parameters for this request."
+            }
+          }
+        ]
       }
     },
     "/x402-gateway/recipient-api/vouchers": {
@@ -1437,6 +1721,11 @@
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
         },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Query parameters for this request."
+        },
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -1460,7 +1749,22 @@
           "type": "apiKey",
           "header": "x-api-key",
           "prefix": "rwk_"
-        }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "style": "deepObject",
+            "explode": true,
+            "description": "Query parameters passed through to the paid GET endpoint.",
+            "schema": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Query parameters for this request."
+            }
+          }
+        ]
       }
     },
     "/x402-gateway/recipient-api/offers": {
@@ -1486,6 +1790,11 @@
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
         },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Query parameters for this request."
+        },
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -1509,7 +1818,22 @@
           "type": "apiKey",
           "header": "x-api-key",
           "prefix": "rwk_"
-        }
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "style": "deepObject",
+            "explode": true,
+            "description": "Query parameters passed through to the paid GET endpoint.",
+            "schema": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Query parameters for this request."
+            }
+          }
+        ]
       },
       "post": {
         "operationId": "post_recipient_api_offers",
@@ -1532,6 +1856,11 @@
           "402": {
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
+        },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON body for this request."
         },
         "x-payment-info": {
           "price": {
@@ -1563,7 +1892,8 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "additionalProperties": true
+                "additionalProperties": true,
+                "description": "JSON body for this request."
               }
             }
           }
@@ -1593,6 +1923,11 @@
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
         },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON body for this request."
+        },
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -1623,7 +1958,8 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "additionalProperties": true
+                "additionalProperties": true,
+                "description": "JSON body for this request."
               }
             }
           }
@@ -1653,6 +1989,11 @@
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
         },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON body for this request."
+        },
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -1683,7 +2024,8 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "additionalProperties": true
+                "additionalProperties": true,
+                "description": "JSON body for this request."
               }
             }
           }
@@ -1713,6 +2055,11 @@
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
         },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON body for this request."
+        },
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -1743,7 +2090,8 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "additionalProperties": true
+                "additionalProperties": true,
+                "description": "JSON body for this request."
               }
             }
           }
@@ -1772,6 +2120,11 @@
           "402": {
             "description": "Payment Required — returns x402 challenge with `accepts[]`"
           }
+        },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON body for this request."
         },
         "x-payment-info": {
           "price": {
@@ -1803,7 +2156,8 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "additionalProperties": true
+                "additionalProperties": true,
+                "description": "JSON body for this request."
               }
             }
           }
