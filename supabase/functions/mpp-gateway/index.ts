@@ -30,6 +30,7 @@ const PRICING: Record<string, Record<string, string>> = {
     "program-status": "0.005",
     rewards: "0.01",
     mint: "0.01",
+    earn: "0.01",
     transfer: "0.005",
     "redeem-reward": "0.01",
     "vouchers/use": "0.005",
