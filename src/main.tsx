@@ -24,3 +24,16 @@ window.addEventListener('error', (event) => {
 });
 
 createRoot(document.getElementById("root")!).render(<App />);
+
+// Notify Farcaster / Base App webview that the UI is ready as early as possible.
+// If we wait for Privy/wagmi to initialize, slow iframe loads keep the host
+// splash screen up and the user sees a white screen. This is safe outside of
+// Farcaster clients — the SDK no-ops when not embedded.
+(async () => {
+  try {
+    const { sdk } = await import('@farcaster/miniapp-sdk');
+    await sdk.actions.ready();
+  } catch {
+    // Not in a Farcaster/Base client, or SDK unavailable — ignore.
+  }
+})();
