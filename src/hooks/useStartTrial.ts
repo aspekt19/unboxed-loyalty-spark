@@ -17,7 +17,10 @@ export function useAutoStartTrial(product: PlanProduct) {
   const { user } = useAuth();
   const plan = useEffectivePlan(product);
   const queryClient = useQueryClient();
-  const triggered = useRef(false);
+  // Track the last wallet address we already triggered the trial RPC for.
+  // Using the address (instead of a boolean) ensures that if the user switches
+  // wallets within the same tab, the trial is re-evaluated for the new address.
+  const triggeredFor = useRef<string | null>(null);
 
   useEffect(() => {
     if (!address || !user) return;
@@ -25,9 +28,10 @@ export function useAutoStartTrial(product: PlanProduct) {
     if (plan.isAdminOverride) return; // admins don't need trial
     if (plan.hasPaidAccess) return; // already on a plan
     if (plan.isExpired) return; // expired trial — don't restart
-    if (triggered.current) return;
+    const normalizedAddress = address.toLowerCase();
+    if (triggeredFor.current === normalizedAddress) return;
 
-    triggered.current = true;
+    triggeredFor.current = normalizedAddress;
     const fn =
       product === 'merchant' ? 'start_merchant_trial' : 'start_agent_trial';
 
@@ -36,6 +40,10 @@ export function useAutoStartTrial(product: PlanProduct) {
       .then(({ error }) => {
         if (error) {
           // Silent fail — trial creation is opportunistic.
+          // Reset so a future re-render can retry for this address.
+          if (triggeredFor.current === normalizedAddress) {
+            triggeredFor.current = null;
+          }
           console.warn(`[trial] ${fn} failed:`, error.message);
           return;
         }
