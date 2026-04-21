@@ -205,8 +205,17 @@ All colors MUST be HSL.
     background: var(--gradient-hero);
   }
   
+  /* Any block using bg-gradient-card automatically gets the 3D claymorphism look */
   .bg-gradient-card {
     background: var(--gradient-card);
+    box-shadow: var(--clay-shadow);
+    border-color: transparent !important;
+    transition: var(--transition-smooth);
+  }
+  .bg-gradient-card.hover-lift:hover,
+  .bg-gradient-card:hover {
+    box-shadow: var(--clay-shadow-lg);
+    transform: translateY(-2px);
   }
   
   /* Shadow utilities */
