@@ -20,7 +20,8 @@ const ROOT = resolve(__dirname, "..");
 
 const PUBLIC_ORIGIN = "https://loyalspark.online";
 const SUPABASE = "https://bzxmejzssxjazswgwqqs.supabase.co";
-const GATEWAY = `${PUBLIC_ORIGIN}/functions/v1/x402-gateway`;
+const PUBLIC_GATEWAY_PATH = "/x402-gateway";
+const GATEWAY = `${PUBLIC_ORIGIN}${PUBLIC_GATEWAY_PATH}`;
 const DIRECT_GATEWAY = `${SUPABASE}/functions/v1/x402-gateway`;
 const AGENT_API = `${SUPABASE}/functions/v1/agent-api`;
 const MCP_URL = `${SUPABASE}/functions/v1/loyalty-mcp`;
@@ -146,6 +147,10 @@ function paid402() {
   return { description: "Payment Required — returns x402 challenge with `accepts[]`" };
 }
 
+function isPaidRoute(meta) {
+  return meta?.price && meta.price !== "0";
+}
+
 function buildRestOp(method, path, meta, kind) {
   const op = {
     operationId: `${method.toLowerCase()}_${path.replace(/[^a-z0-9]+/gi, "_").replace(/^_+|_+$/g, "")}`,
@@ -230,20 +235,21 @@ function buildMcpOp(toolName, price, description, props, required, kind) {
 
 const paths = {};
 
-// Merchant REST — emit under x402-gateway prefix so x402scan resolves to the paid gateway (returns 402)
+// Merchant REST — only paid x402 routes
 for (const [method, routes] of Object.entries(MERCHANT_REST)) {
   for (const [p, meta] of Object.entries(routes)) {
-    const gp = `/functions/v1/x402-gateway${p}`;
+    if (!isPaidRoute(meta)) continue;
+    const gp = `${PUBLIC_GATEWAY_PATH}${p}`;
     paths[gp] = paths[gp] || {};
     paths[gp][method.toLowerCase()] = buildRestOp(method, p, meta, "merchant");
   }
 }
 
-// Recipient REST — same: route through x402-gateway
+// Recipient REST — only paid x402 routes
 for (const [method, routes] of Object.entries(RECIPIENT_REST)) {
   for (const [p, meta] of Object.entries(routes)) {
-    // p already starts with "/recipient-api/..."
-    const gp = `/functions/v1/x402-gateway${p}`;
+    if (!isPaidRoute(meta)) continue;
+    const gp = `${PUBLIC_GATEWAY_PATH}${p}`;
     paths[gp] = paths[gp] || {};
     paths[gp][method.toLowerCase()] = buildRestOp(method, p, meta, "recipient");
   }
@@ -320,13 +326,14 @@ writeFileSync(resolve(ROOT, "public/openapi.json"), JSON.stringify(openapi, null
 // /.well-known/x402 — METHOD /full-url entries per spec sample
 const wellKnownResources = [];
 for (const [method, routes] of Object.entries(MERCHANT_REST)) {
-  for (const p of Object.keys(routes)) {
+  for (const [p, meta] of Object.entries(routes)) {
+    if (!isPaidRoute(meta)) continue;
     wellKnownResources.push(`${method} ${GATEWAY}${p.startsWith("/") ? p : `/${p}`}`);
   }
 }
 for (const [method, routes] of Object.entries(RECIPIENT_REST)) {
-  for (const p of Object.keys(routes)) {
-    // recipient-api/* paths already include the prefix — strip leading slash duplication
+  for (const [p, meta] of Object.entries(routes)) {
+    if (!isPaidRoute(meta)) continue;
     wellKnownResources.push(`${method} ${GATEWAY}${p}`);
   }
 }
