@@ -1,6 +1,4 @@
 import { WalletQRCode } from '@/components/WalletQRCode';
-import { PremiumStatusBadge } from '@/components/PremiumStatusBadge';
-import { PremiumExpirationAlert } from '@/components/PremiumExpirationAlert';
 import { ReferralCard } from '@/components/referral/ReferralCard';
 import { ReferralCodeInput } from '@/components/referral/ReferralCodeInput';
 import { CustomerReviewsSection } from '@/components/reviews/CustomerReviewsSection';
@@ -12,10 +10,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { AuthPrompt } from '@/components/AuthPrompt';
 
 interface MobileProfileTabProps {
-  onUpgrade: () => void;
+  /** Optional callback (legacy). */
+  onUpgrade?: () => void;
 }
 
-export function MobileProfileTab({ onUpgrade }: MobileProfileTabProps) {
+export function MobileProfileTab(_props: MobileProfileTabProps) {
   const { address } = useAccount();
   const { user, session, isLoading } = useAuth();
 
@@ -39,8 +38,6 @@ export function MobileProfileTab({ onUpgrade }: MobileProfileTabProps) {
 
   return (
     <div className="space-y-4">
-      <PremiumStatusBadge />
-      <PremiumExpirationAlert onUpgrade={onUpgrade} />
       <WalletQRCode />
       <ReferralCodeInput />
       <ReferralCard />

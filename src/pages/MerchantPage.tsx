@@ -4,7 +4,8 @@ import { SupportBanner } from '@/components/SupportBanner';
 import { IssuedTokensHistory } from '@/components/IssuedTokensHistory';
 import { WelcomeFlow } from '@/components/onboarding/WelcomeFlow';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { PremiumStatusBadge } from '@/components/PremiumStatusBadge';
+import { PlanStatusBadge } from '@/components/billing/PlanStatusBadge';
+import { useAutoStartTrial } from '@/hooks/useStartTrial';
 import { MerchantProfileSection } from '@/components/merchant/MerchantProfileSection';
 
 import { ArrowLeft, LayoutDashboard, Package, Gift, Users, User } from 'lucide-react';
@@ -39,6 +40,9 @@ const MerchantPage = () => {
   const [showProfile, setShowProfile] = useState(false);
   const [mobileTab, setMobileTab] = useState('dashboard');
 
+  // Auto-start 14-day Growth trial on first merchant visit (idempotent)
+  useAutoStartTrial('merchant');
+
   useEffect(() => {
     if (!user) {
       setShowProfile(false);
@@ -65,7 +69,7 @@ const MerchantPage = () => {
   ) : (
     <>
       <div className="mb-6">
-        <PremiumStatusBadge />
+        <PlanStatusBadge product="merchant" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6">
@@ -91,7 +95,7 @@ const MerchantPage = () => {
     return (
       <>
         <div className="mb-4">
-          <PremiumStatusBadge />
+          <PlanStatusBadge product="merchant" />
         </div>
         <div className="max-w-4xl">
           <MerchantPanel

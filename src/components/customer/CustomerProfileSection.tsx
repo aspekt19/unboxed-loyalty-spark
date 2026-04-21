@@ -5,10 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { WalletQRCode } from '@/components/WalletQRCode';
-import { PremiumStatusBadge } from '@/components/PremiumStatusBadge';
-import { PremiumExpirationAlert } from '@/components/PremiumExpirationAlert';
 import { ReferralCard } from '@/components/referral/ReferralCard';
 import { ReferralCodeInput } from '@/components/referral/ReferralCodeInput';
 import { CustomerReviewsSection } from '@/components/reviews/CustomerReviewsSection';
@@ -16,15 +13,11 @@ import { DexIntegration } from '@/components/DexIntegration';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthPrompt } from '@/components/AuthPrompt';
-import { User, Mail, Phone, Wallet, Save, Copy, Check } from 'lucide-react';
+import { Mail, Phone, Wallet, Save, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-interface CustomerProfileSectionProps {
-  onUpgrade: () => void;
-}
-
-export function CustomerProfileSection({ onUpgrade }: CustomerProfileSectionProps) {
+export function CustomerProfileSection() {
   const { address } = useAccount();
   const { user, session, isLoading: authLoading } = useAuth();
   const [firstName, setFirstName] = useState('');
@@ -32,7 +25,7 @@ export function CustomerProfileSection({ onUpgrade }: CustomerProfileSectionProp
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [saving, setSaving] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  const [, setLoaded] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -68,8 +61,8 @@ export function CustomerProfileSection({ onUpgrade }: CustomerProfileSectionProp
     );
   }
 
-  const initials = firstName && lastName 
-    ? `${firstName[0]}${lastName[0]}`.toUpperCase() 
+  const initials = firstName && lastName
+    ? `${firstName[0]}${lastName[0]}`.toUpperCase()
     : address.slice(2, 4).toUpperCase();
 
   const handleSave = async () => {
@@ -102,9 +95,6 @@ export function CustomerProfileSection({ onUpgrade }: CustomerProfileSectionProp
 
   return (
     <div className="space-y-4">
-      <PremiumStatusBadge />
-      <PremiumExpirationAlert onUpgrade={onUpgrade} />
-
       <Card className="border-2">
         <CardHeader className="pb-3">
           <div className="flex items-center gap-3">
@@ -117,12 +107,12 @@ export function CustomerProfileSection({ onUpgrade }: CustomerProfileSectionProp
               <CardTitle className="text-lg">
                 {firstName || lastName ? `${firstName} ${lastName}`.trim() : 'My Profile'}
               </CardTitle>
-              <button 
+              <button
                 onClick={handleCopyAddress}
                 className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors font-mono"
               >
                 {address.slice(0, 6)}...{address.slice(-4)}
-                {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                {copied ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
               </button>
             </div>
           </div>
@@ -131,18 +121,18 @@ export function CustomerProfileSection({ onUpgrade }: CustomerProfileSectionProp
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">First Name</Label>
-              <Input 
-                value={firstName} 
-                onChange={e => setFirstName(e.target.value)} 
+              <Input
+                value={firstName}
+                onChange={e => setFirstName(e.target.value)}
                 placeholder="Jane"
                 className="h-9"
               />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Last Name</Label>
-              <Input 
-                value={lastName} 
-                onChange={e => setLastName(e.target.value)} 
+              <Input
+                value={lastName}
+                onChange={e => setLastName(e.target.value)}
                 placeholder="Doe"
                 className="h-9"
               />
@@ -150,9 +140,9 @@ export function CustomerProfileSection({ onUpgrade }: CustomerProfileSectionProp
           </div>
           <div className="space-y-1">
             <Label className="text-xs flex items-center gap-1"><Mail className="h-3 w-3" /> Email</Label>
-            <Input 
-              value={email} 
-              onChange={e => setEmail(e.target.value)} 
+            <Input
+              value={email}
+              onChange={e => setEmail(e.target.value)}
               placeholder="jane@example.com"
               type="email"
               className="h-9"
@@ -160,9 +150,9 @@ export function CustomerProfileSection({ onUpgrade }: CustomerProfileSectionProp
           </div>
           <div className="space-y-1">
             <Label className="text-xs flex items-center gap-1"><Phone className="h-3 w-3" /> Phone</Label>
-            <Input 
-              value={phone} 
-              onChange={e => setPhone(e.target.value)} 
+            <Input
+              value={phone}
+              onChange={e => setPhone(e.target.value)}
               placeholder="+1 234 567 8900"
               className="h-9"
             />
