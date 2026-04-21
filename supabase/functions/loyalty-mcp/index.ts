@@ -138,7 +138,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure) {
   });
 
   mcpServer.tool("update_program_status", {
-    description: "Update program status in database after on-chain activation/pause",
+    description: "Update program status in database after onchain activation/pause",
     inputSchema: { type: "object" as const, properties: { token_address: { type: "string", description: "Token contract address" }, status: { type: "string", description: "New status: active, paused, or inactive" } }, required: ["token_address", "status"] },
     handler: async ({ token_address, status }: any) => {
       const err = authGuard(["mint", "create_program"]);
@@ -361,7 +361,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure) {
       properties: {
         reward_id: { type: "string", description: "UUID of the reward to redeem" },
         customer_address: { type: "string", description: "Wallet address of the customer who transferred tokens" },
-        transaction_hash: { type: "string", description: "On-chain tx hash of the token transfer from customer to merchant" },
+        transaction_hash: { type: "string", description: "Onchain tx hash of the token transfer from customer to merchant" },
       },
       required: ["reward_id", "customer_address", "transaction_hash"],
     },
@@ -390,7 +390,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure) {
         await new Promise(r => setTimeout(r, 2500));
       }
       if (!receipt) return T(JSON.stringify({ error: "Transaction not confirmed yet", retryable: true }));
-      if (receipt.status && receipt.status !== "0x1") return T(JSON.stringify({ error: "Transaction failed on-chain" }));
+      if (receipt.status && receipt.status !== "0x1") return T(JSON.stringify({ error: "Transaction failed onchain" }));
 
       const ERC20 = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
       const logs = Array.isArray(receipt.logs) ? receipt.logs : [];
