@@ -839,7 +839,7 @@ export default function GuidePage() {
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
-                    Subscriptions paid in USDC on Base ($1 = 1 USDC), verified on-chain. See the full breakdown on the{" "}
+                    Subscriptions paid in USDC on Base ($1 = 1 USDC), verified onchain. See the full breakdown on the{" "}
                     <Link to="/pricing" className="underline text-primary">Pricing page</Link>.
                   </p>
                 </CardContent>

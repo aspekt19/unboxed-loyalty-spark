@@ -84,7 +84,7 @@ export const PaymentSettingsManagement = () => {
             className="font-mono text-sm"
           />
           <p className="text-xs text-muted-foreground">
-            Receives on-chain transaction fees from agent mints
+            Receives onchain transaction fees from agent mints
           </p>
         </div>
 

@@ -489,7 +489,7 @@ export function AgentBillingDashboard() {
               >
                 {isVerifying ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Verifying on-chain...
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Verifying onchain...
                   </>
                 ) : (
                   'Verify Payment & Activate Plan'

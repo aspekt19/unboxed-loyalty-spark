@@ -337,7 +337,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ==================== REGISTER PROGRAM (after on-chain deploy) ====================
+    // ==================== REGISTER PROGRAM (after onchain deploy) ====================
     if (resource === "register-program" && req.method === "POST") {
       if (!hasScope(agent, "mint") && !hasScope(agent, "create_program")) {
         await logActivity(serviceClient, agent.agentId, "register_program", body, 403, { error: "Insufficient scope" }, ip);
@@ -484,7 +484,7 @@ Deno.serve(async (req) => {
 
       await logActivity(serviceClient, agent.agentId, "activate_program", body, 200, { token_address }, ip);
       return jsonResponse({
-        message: "Activation requires 2 on-chain transactions. Execute them in order.",
+        message: "Activation requires 2 onchain transactions. Execute them in order.",
         program: { id: program.id, name: program.name, symbol: program.symbol, status: program.status },
         transactions: [
           {
@@ -567,7 +567,7 @@ Deno.serve(async (req) => {
       return jsonResponse({
         message: `Program status updated from '${program.status}' to '${status}'`,
         program: { id: program.id, name: program.name, previous_status: program.status, new_status: status },
-        ...(onchain_calls ? { onchain_calls, note: "Execute these transactions to pause the program on-chain as well." } : {}),
+        ...(onchain_calls ? { onchain_calls, note: "Execute these transactions to pause the program onchain as well." } : {}),,
       });
     }
 
@@ -730,7 +730,7 @@ Deno.serve(async (req) => {
         recipient_calldata: recipientCalldata,
         fee_calldata: feeCalldata,
         message:
-          "Mint intent recorded. To complete on-chain, send recipient_calldata and fee_calldata to the token contract (two transactions).",
+          "Mint intent recorded. To complete onchain, send recipient_calldata and fee_calldata to the token contract (two transactions).",,
         contract: {
           token_address,
           function: "mint(address,uint256)",
@@ -833,7 +833,7 @@ Deno.serve(async (req) => {
         fee_wallet: PLATFORM_FEE_WALLET,
         recipient_calldata: recipientCalldata,
         fee_calldata: feeCalldata,
-        message: `Customer earns ${tokensToMint} ${program.symbol} tokens for a $${purchase_amount} purchase (${rate}% cashback). Send two transactions to complete on-chain.`,
+        message: `Customer earns ${tokensToMint} ${program.symbol} tokens for a $${purchase_amount} purchase (${rate}% cashback). Send two transactions to complete onchain.`,
         contract: {
           token_address,
           function: "mint(address,uint256)",
@@ -1314,7 +1314,7 @@ Deno.serve(async (req) => {
 
       await logActivity(serviceClient, agent.agentId, "transfer_tokens", body, 200, { token_address, to_address, amount }, ip);
       return jsonResponse({
-        message: "Transfer intent recorded. Send the provided calldata to execute on-chain.",
+        message: "Transfer intent recorded. Send the provided calldata to execute onchain.",
         contract: {
           token_address,
           function: "transfer(address,uint256)",
