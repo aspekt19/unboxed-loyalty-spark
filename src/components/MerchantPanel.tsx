@@ -7,6 +7,7 @@ import { MarketingTab } from './merchant/tabs/MarketingTab';
 import { AgentsTab } from './merchant/tabs/AgentsTab';
 import { TeamTab } from './merchant/tabs/TeamTab';
 import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMintTokens } from '@/hooks/useMintTokens';
@@ -38,13 +39,23 @@ interface MerchantPanelProps {
 
 export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: MerchantPanelProps = {}) {
   const { address } = useAccount();
-  // Deep-link support: /merchant?tab=billing|agents|... selects initial desktop tab.
-  const initialTabFromUrl = (() => {
-    if (typeof window === 'undefined') return undefined;
-    const t = new URLSearchParams(window.location.search).get('tab');
-    const valid = ['dashboard', 'customers', 'programs', 'rewards', 'marketing', 'billing', 'agents', 'team'];
-    return t && valid.includes(t) ? t : undefined;
+  const location = useLocation();
+  const navigate = useNavigate();
+  const VALID_TABS = ['dashboard', 'customers', 'programs', 'rewards', 'marketing', 'billing', 'agents', 'team'];
+  const tabFromUrl = (() => {
+    const t = new URLSearchParams(location.search).get('tab');
+    return t && VALID_TABS.includes(t) ? t : null;
   })();
+  const [internalTab, setInternalTab] = useState<string>(tabFromUrl ?? 'dashboard');
+
+  // Sync internal tab with URL changes (e.g., when user clicks <Link to="/merchant?tab=billing">)
+  useEffect(() => {
+    if (tabFromUrl && tabFromUrl !== internalTab) {
+      setInternalTab(tabFromUrl);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabFromUrl]);
+
   const [selectedProgram, setSelectedProgram] = useState<{ name: string; symbol: string; tokenAddress: string; cashbackRate?: number; pointsPerDollar?: number } | null>(null);
   const [mintDialogOpen, setMintDialogOpen] = useState(false);
   const [earnDialogOpen, setEarnDialogOpen] = useState(false);
@@ -322,7 +333,21 @@ export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: Merchant
         </div>
       ) : (
         /* Own business mode: full merchant panel */
-        <Tabs {...(activeTab !== undefined ? { value: activeTab, onValueChange: onTabChange } : { defaultValue: initialTabFromUrl ?? "dashboard" })} className="w-full">
+        <Tabs
+          value={activeTab !== undefined ? activeTab : internalTab}
+          onValueChange={(v) => {
+            if (activeTab !== undefined) {
+              onTabChange?.(v);
+            } else {
+              setInternalTab(v);
+              // Keep URL in sync so refresh / share links land on same tab
+              const params = new URLSearchParams(location.search);
+              params.set('tab', v);
+              navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+            }
+          }}
+          className="w-full"
+        >
           {hideTabsList ? (
             /* Mobile: show sub-tab bar only for "Home" group tabs */
             ['dashboard', 'customers', 'marketing', 'billing', 'agents'].includes(activeTab || 'dashboard') && (

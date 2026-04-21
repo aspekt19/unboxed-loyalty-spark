@@ -44,6 +44,16 @@ const MerchantPage = () => {
   // Auto-start 14-day Growth trial on first merchant visit (idempotent)
   useAutoStartTrial('merchant');
 
+  // Sync mobile tab with ?tab= query param so deep links from banners work
+  useEffect(() => {
+    const t = new URLSearchParams(location.search).get('tab');
+    const valid = ['dashboard', 'customers', 'programs', 'rewards', 'marketing', 'billing', 'agents', 'team'];
+    if (t && valid.includes(t)) {
+      setMobileTab(t);
+      setShowProfile(false);
+    }
+  }, [location.search]);
+
   useEffect(() => {
     if (!user) {
       setShowProfile(false);
