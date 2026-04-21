@@ -53,8 +53,11 @@ function canonicalPublicOrigin(requestUrl: URL): string {
   return requestUrl.origin;
 }
 
+/** Default to the branded CF Worker proxy host so x402scan / agents see canonical URLs. */
+const DEFAULT_PUBLIC_BASE_URL = "https://api.loyalspark.online";
+
 function getPublicBaseUrl(): { origin: string; stripFunctionsPrefix: boolean } | null {
-  const raw = (Deno.env.get("PUBLIC_BASE_URL") || "").trim();
+  const raw = (Deno.env.get("PUBLIC_BASE_URL") || DEFAULT_PUBLIC_BASE_URL).trim();
   if (!raw) return null;
   try {
     const u = new URL(raw);
