@@ -17,7 +17,7 @@ Query a customer's token balance and tier status to personalize interactions.
 
 ```bash
 curl -H "x-api-key: lsk_..." \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/balance?token_address=0x...&customer_address=0x..."
+  "https://api.loyalspark.online/agent-api/balance?token_address=0x...&customer_address=0x..."
 ```
 
 **MCP equivalent:** `get_token_balance`
@@ -42,7 +42,7 @@ curl -H "x-api-key: lsk_..." \
 
 ```bash
 curl -H "x-api-key: lsk_..." \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/customers?token_address=0x..."
+  "https://api.loyalspark.online/agent-api/customers?token_address=0x..."
 ```
 
 ### Step 3: Use Tier Data for Decisions

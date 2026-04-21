@@ -27,14 +27,14 @@ List your programs to find the `token_address` and current `cashback_rate`:
 
 ```bash
 curl -H "x-api-key: lsk_..." \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/programs"
+  "https://api.loyalspark.online/agent-api/programs"
 ```
 
 ### Step 2: Earn Points via REST API
 
 ```bash
 curl -X POST \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/earn" \
+  "https://api.loyalspark.online/agent-api/earn" \
   -H "x-api-key: lsk_..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -90,7 +90,7 @@ Same as minting — the response returns two calldata values:
 
 ```bash
 curl -H "x-api-key: lsk_..." \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/balance?token_address=0x...&customer_address=0x..."
+  "https://api.loyalspark.online/agent-api/balance?token_address=0x...&customer_address=0x..."
 ```
 
 ## Cashback Rate Examples

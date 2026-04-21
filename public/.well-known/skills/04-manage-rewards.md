@@ -17,7 +17,7 @@ Create and manage redeemable rewards that customers can claim by burning loyalty
 
 ```bash
 curl -H "x-api-key: lsk_..." \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/rewards?token_address=0xYourToken"
+  "https://api.loyalspark.online/agent-api/rewards?token_address=0xYourToken"
 ```
 
 **MCP equivalent:** `list_rewards` with `token_address` parameter
@@ -26,7 +26,7 @@ curl -H "x-api-key: lsk_..." \
 
 ```bash
 curl -X POST \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/rewards" \
+  "https://api.loyalspark.online/agent-api/rewards" \
   -H "x-api-key: lsk_..." \
   -H "Content-Type: application/json" \
   -d '{

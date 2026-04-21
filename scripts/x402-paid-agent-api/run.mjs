@@ -30,7 +30,7 @@ import { privateKeyToAccount } from "viem/accounts";
 
 const GATEWAY =
   process.env.X402_GATEWAY_URL ||
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway";
+  "https://api.loyalspark.online/x402-gateway";
 const LSK = process.env.LOYAL_SPARK_API_KEY;
 const RESOURCE = process.env.X402_RESOURCE || "programs";
 const QUERY = process.env.X402_QUERY?.trim() || "";

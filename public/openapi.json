@@ -5,7 +5,7 @@
     "version": "2.2.0",
     "summary": "AI-agent-native loyalty-as-a-service protocol on Base L2 with paid x402 + MPP corridors.",
     "description": "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create ERC-20 loyalty programs, mint tokens to customer wallets, manage reward catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics — all via paid x402 endpoints (USDC on Base) or via standard REST with x-api-key. Coverage: 75 paid operations across 71 paths, including merchant REST (agent-api), recipient REST (recipient-api), 28 merchant MCP tools and 11 recipient MCP tools. Builder Code bc_wdmnog7m.",
-    "x-guidance": "Loyal Spark on Base L2 (chain 8453, USDC native).\n\nAuth modes:\n• Merchant agents — header x-api-key: lsk_... (or Authorization: Bearer lsk_...). Get a key in https://loyalspark.online/merchant → AI Agents.\n• Holder agents — header x-api-key: rwk_... (or Authorization: Bearer rwk_...). Issued via SIWE: https://loyalspark.online/.well-known/agent.json.\n• x402 corridor — pay USDC on Base per call. Discovery: https://loyalspark.online/.well-known/x402.\n\nTypical merchant flow:\n1. GET /me — profile and scopes\n2. POST /programs — factory calldata to deploy ERC-20\n3. POST /register-program — persist program\n4. POST /update-program-config — set cashback_rate / points_per_dollar\n5. POST /activate-program — unpause\n6. POST /mint or POST /earn — distribute points\n7. POST /rewards — catalog\n8. GET /analytics — metrics\n\nMCP mirrors REST: 28 merchant tools at https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp and 11 recipient tools at https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp. Each MCP tool also has a paid x402 path under /functions/v1/x402-gateway/mcp-tools/<name> and /functions/v1/x402-gateway/recipient-mcp-tools/<name>.\n\nDocs: https://loyalspark.online/api-docs · llms: https://loyalspark.online/llms.txt · agent manifest: https://loyalspark.online/.well-known/agent.json",
+    "x-guidance": "Loyal Spark on Base L2 (chain 8453, USDC native).\n\nAuth modes:\n• Merchant agents — header x-api-key: lsk_... (or Authorization: Bearer lsk_...). Get a key in https://loyalspark.online/merchant → AI Agents.\n• Holder agents — header x-api-key: rwk_... (or Authorization: Bearer rwk_...). Issued via SIWE: https://loyalspark.online/.well-known/agent.json.\n• x402 corridor — pay USDC on Base per call. Discovery: https://loyalspark.online/.well-known/x402.\n\nTypical merchant flow:\n1. GET /me — profile and scopes\n2. POST /programs — factory calldata to deploy ERC-20\n3. POST /register-program — persist program\n4. POST /update-program-config — set cashback_rate / points_per_dollar\n5. POST /activate-program — unpause\n6. POST /mint or POST /earn — distribute points\n7. POST /rewards — catalog\n8. GET /analytics — metrics\n\nMCP mirrors REST: 28 merchant tools at https://api.loyalspark.online/loyalty-mcp and 11 recipient tools at https://api.loyalspark.online/recipient-loyalty-mcp. Each MCP tool also has a paid x402 path under /functions/v1/x402-gateway/mcp-tools/<name> and /functions/v1/x402-gateway/recipient-mcp-tools/<name>.\n\nDocs: https://loyalspark.online/api-docs · llms: https://loyalspark.online/llms.txt · agent manifest: https://loyalspark.online/.well-known/agent.json",
     "contact": {
       "name": "Loyal Spark",
       "email": "admin@loyalspark.online",
@@ -23,19 +23,19 @@
     "x-brand": "Loyal Spark",
     "x-builder-code": "bc_wdmnog7m",
     "x-mcp": {
-      "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+      "url": "https://api.loyalspark.online/loyalty-mcp",
       "transport": "streamable-http",
       "tool_count": 28
     },
     "x-recipient-mcp": {
-      "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp",
+      "url": "https://api.loyalspark.online/recipient-loyalty-mcp",
       "transport": "streamable-http",
       "tool_count": 11
     },
     "x-x402-discovery": {
       "wellKnownResources": "https://loyalspark.online/.well-known/x402",
       "gatewayBaseUrl": "https://loyalspark.online/functions/v1/x402-gateway",
-      "directGatewayBaseUrl": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway",
+      "directGatewayBaseUrl": "https://api.loyalspark.online/x402-gateway",
       "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
       "network": "eip155:8453"
     }
@@ -1983,7 +1983,7 @@
         "x-mcp": {
           "tool": "get_platform_info",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {}
@@ -2083,7 +2083,7 @@
         "x-mcp": {
           "tool": "get_my_profile",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {}
@@ -2183,7 +2183,7 @@
         "x-mcp": {
           "tool": "list_loyalty_programs",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -2291,7 +2291,7 @@
         "x-mcp": {
           "tool": "create_loyalty_program",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -2419,7 +2419,7 @@
         "x-mcp": {
           "tool": "register_loyalty_program",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -2549,7 +2549,7 @@
         "x-mcp": {
           "tool": "activate_loyalty_program",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -2663,7 +2663,7 @@
         "x-mcp": {
           "tool": "update_program_status",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -2785,7 +2785,7 @@
         "x-mcp": {
           "tool": "update_program_config",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -2911,7 +2911,7 @@
         "x-mcp": {
           "tool": "list_rewards",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -3025,7 +3025,7 @@
         "x-mcp": {
           "tool": "create_reward",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -3155,7 +3155,7 @@
         "x-mcp": {
           "tool": "mint_loyalty_tokens",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -3285,7 +3285,7 @@
         "x-mcp": {
           "tool": "transfer_loyalty_tokens",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -3415,7 +3415,7 @@
         "x-mcp": {
           "tool": "earn_points",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -3545,7 +3545,7 @@
         "x-mcp": {
           "tool": "get_token_balance",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -3667,7 +3667,7 @@
         "x-mcp": {
           "tool": "get_program_analytics",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -3781,7 +3781,7 @@
         "x-mcp": {
           "tool": "list_marketplace_offers",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -3895,7 +3895,7 @@
         "x-mcp": {
           "tool": "redeem_reward",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -4025,7 +4025,7 @@
         "x-mcp": {
           "tool": "use_voucher",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -4139,7 +4139,7 @@
         "x-mcp": {
           "tool": "check_voucher_status",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -4253,7 +4253,7 @@
         "x-mcp": {
           "tool": "get_platform_stats",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {}
@@ -4353,7 +4353,7 @@
         "x-mcp": {
           "tool": "cancel_stale_offers",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -4461,7 +4461,7 @@
         "x-mcp": {
           "tool": "create_personalized_offer",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -4583,7 +4583,7 @@
         "x-mcp": {
           "tool": "update_reward_status",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -4703,7 +4703,7 @@
         "x-mcp": {
           "tool": "send_report",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -4859,7 +4859,7 @@
         "x-mcp": {
           "tool": "list_my_reports",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {}
@@ -4959,7 +4959,7 @@
         "x-mcp": {
           "tool": "update_report_status",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -5081,7 +5081,7 @@
         "x-mcp": {
           "tool": "delete_report",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -5195,7 +5195,7 @@
         "x-mcp": {
           "tool": "export_customers",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -5309,7 +5309,7 @@
         "x-mcp": {
           "tool": "get_recipient_profile",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp",
+          "server": "https://api.loyalspark.online/recipient-loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {}
@@ -5409,7 +5409,7 @@
         "x-mcp": {
           "tool": "list_my_loyalty_balances",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp",
+          "server": "https://api.loyalspark.online/recipient-loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {}
@@ -5509,7 +5509,7 @@
         "x-mcp": {
           "tool": "get_my_loyalty_balance",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp",
+          "server": "https://api.loyalspark.online/recipient-loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -5623,7 +5623,7 @@
         "x-mcp": {
           "tool": "prepare_loyalty_token_transfer",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp",
+          "server": "https://api.loyalspark.online/recipient-loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -5753,7 +5753,7 @@
         "x-mcp": {
           "tool": "list_rewards_for_program",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp",
+          "server": "https://api.loyalspark.online/recipient-loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -5867,7 +5867,7 @@
         "x-mcp": {
           "tool": "list_my_vouchers",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp",
+          "server": "https://api.loyalspark.online/recipient-loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {}
@@ -5967,7 +5967,7 @@
         "x-mcp": {
           "tool": "redeem_my_reward",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp",
+          "server": "https://api.loyalspark.online/recipient-loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -6089,7 +6089,7 @@
         "x-mcp": {
           "tool": "list_p2p_offers",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp",
+          "server": "https://api.loyalspark.online/recipient-loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -6197,7 +6197,7 @@
         "x-mcp": {
           "tool": "create_p2p_offer",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp",
+          "server": "https://api.loyalspark.online/recipient-loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -6335,7 +6335,7 @@
         "x-mcp": {
           "tool": "accept_p2p_offer",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp",
+          "server": "https://api.loyalspark.online/recipient-loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -6449,7 +6449,7 @@
         "x-mcp": {
           "tool": "cancel_p2p_offer",
           "transport": "streamable-http",
-          "server": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp",
+          "server": "https://api.loyalspark.online/recipient-loyalty-mcp",
           "inputSchema": {
             "type": "object",
             "properties": {

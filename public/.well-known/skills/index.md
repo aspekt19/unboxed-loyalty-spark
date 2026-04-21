@@ -35,8 +35,8 @@ Scopes mirror the REST API: program lifecycle accepts **`mint` or `create_progra
 
 ## API Endpoints
 
-- **REST API**: `https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api`
-- **MCP Server**: `https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp`
+- **REST API**: `https://api.loyalspark.online/agent-api`
+- **MCP Server**: `https://api.loyalspark.online/loyalty-mcp`
 
 ## Discovery
 

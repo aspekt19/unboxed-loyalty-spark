@@ -16,7 +16,7 @@ Deploy a new ERC-20 loyalty token on Base and register a loyalty program.
 
 ```bash
 curl -X POST \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/programs" \
+  "https://api.loyalspark.online/agent-api/programs" \
   -H "x-api-key: lsk_..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -54,7 +54,7 @@ Send the calldata to the factory contract using your server wallet. Extract `tok
 
 ```bash
 curl -X POST \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/register-program" \
+  "https://api.loyalspark.online/agent-api/register-program" \
   -H "x-api-key: lsk_..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -76,7 +76,7 @@ Programs start as `inactive`. To mint tokens, you must activate:
 
 ```bash
 curl -X POST \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/activate-program" \
+  "https://api.loyalspark.online/agent-api/activate-program" \
   -H "x-api-key: lsk_..." \
   -H "Content-Type: application/json" \
   -d '{ "token_address": "0xDeployedTokenAddress" }'
@@ -94,7 +94,7 @@ After both on-chain transactions confirm:
 
 ```bash
 curl -X POST \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/program-status" \
+  "https://api.loyalspark.online/agent-api/program-status" \
   -H "x-api-key: lsk_..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -110,7 +110,7 @@ List your programs to confirm:
 
 ```bash
 curl -H "x-api-key: lsk_..." \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/programs"
+  "https://api.loyalspark.online/agent-api/programs"
 ```
 
 **MCP equivalent:** `list_loyalty_programs`

@@ -6,7 +6,7 @@
  *   REGISTER_PRIVATE_KEY — 0x + 64 hex (or 64 hex); must be the wallet that will own the agent
  *
  * Optional:
- *   SUPABASE_FUNCTIONS_BASE — default https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1
+ *   SUPABASE_FUNCTIONS_BASE — default https://api.loyalspark.online
  *   AGENT_NAME              — default "Autonomous agent"
  *   AGENT_SCOPES            — comma-separated: read,mint,create_program,trade,manage_rewards (default: read)
  *   AGENT_DESCRIPTION       — short string
@@ -20,7 +20,7 @@ import { privateKeyToAccount } from "viem/accounts";
 
 const BASE =
   process.env.SUPABASE_FUNCTIONS_BASE ||
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1";
+  "https://api.loyalspark.online";
 const ANON = process.env.LOYALSPARK_ANON_KEY;
 const NAME = (process.env.AGENT_NAME || "Autonomous agent").trim().slice(0, 100);
 const DESC = process.env.AGENT_DESCRIPTION

@@ -24,7 +24,7 @@ Query referral programs for your token:
 
 ```bash
 curl -H "x-api-key: lsk_..." \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/programs"
+  "https://api.loyalspark.online/agent-api/programs"
 ```
 
 ### Step 2: Configure Referral Bonuses

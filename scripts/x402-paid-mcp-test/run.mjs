@@ -33,7 +33,7 @@ import { privateKeyToAccount } from "viem/accounts";
 
 const GATEWAY =
   process.env.X402_GATEWAY_URL ||
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway";
+  "https://api.loyalspark.online/x402-gateway";
 const TOOL = process.env.MCP_TOOL || "get_platform_info";
 const PATH_PREFIX = (process.env.MCP_PATH_PREFIX || "mcp-tools").replace(/\/+$/, "");
 const LSK = process.env.LOYAL_SPARK_API_KEY;

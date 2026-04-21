@@ -37,7 +37,7 @@ Full lifecycle management of vouchers — from redeeming rewards (burning tokens
 ### Step 1: List Available Rewards
 ```bash
 curl -H "x-api-key: lsk_..." \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/rewards?token_address=0x..."
+  "https://api.loyalspark.online/agent-api/rewards?token_address=0x..."
 ```
 
 ### Step 2: Transfer Tokens (On-Chain)
@@ -46,7 +46,7 @@ Use the `/transfer` endpoint to get the calldata:
 
 ```bash
 curl -X POST \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/transfer" \
+  "https://api.loyalspark.online/agent-api/transfer" \
   -H "x-api-key: lsk_..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -61,7 +61,7 @@ After the transfer is confirmed on-chain, create a voucher:
 
 ```bash
 curl -X POST \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/redeem-reward" \
+  "https://api.loyalspark.online/agent-api/redeem-reward" \
   -H "x-api-key: lsk_..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -91,7 +91,7 @@ When the customer presents the voucher, the merchant agent marks it as used:
 
 ```bash
 curl -X POST \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/vouchers/use" \
+  "https://api.loyalspark.online/agent-api/vouchers/use" \
   -H "x-api-key: lsk_..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -108,7 +108,7 @@ Or by voucher ID:
 Anyone (customer, agent, or third party) can check a voucher's status:
 
 ```bash
-curl "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/vouchers/status?code=LOYAL-AB12-CD34-EF56-GH78"
+curl "https://api.loyalspark.online/agent-api/vouchers/status?code=LOYAL-AB12-CD34-EF56-GH78"
 ```
 
 Response:
@@ -133,7 +133,7 @@ Query vouchers for your program:
 
 ```bash
 curl -H "x-api-key: lsk_..." \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/vouchers?token_address=0x...&status=active"
+  "https://api.loyalspark.online/agent-api/vouchers?token_address=0x...&status=active"
 ```
 
 ### Step 6: Track Redemption Metrics

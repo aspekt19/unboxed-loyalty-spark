@@ -12,9 +12,9 @@ Loyal Spark is a dual-mode protocol: humans interact via web UI with flexible au
 - Static pointer (markdown): https://loyalspark.online/for-agents.md
 - Agent Manifest: https://loyalspark.online/.well-known/agent.json
 - OpenAPI 3.1.0: https://loyalspark.online/openapi.json
-- MCP Server (merchant, `lsk_`, 28 tools): https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp (Streamable HTTP)
-- MCP Server (recipient, `rwk_`, 11 tools): https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp (Streamable HTTP)
-- REST (recipient, `rwk_`, 12 routes): https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-api
+- MCP Server (merchant, `lsk_`, 28 tools): https://api.loyalspark.online/loyalty-mcp (Streamable HTTP)
+- MCP Server (recipient, `rwk_`, 11 tools): https://api.loyalspark.online/recipient-loyalty-mcp (Streamable HTTP)
+- REST (recipient, `rwk_`, 12 routes): https://api.loyalspark.online/recipient-api
 - MPP Manifest: https://loyalspark.online/.well-known/mpp.json
 - x402 Resources: https://loyalspark.online/.well-known/x402.json (Bazaar-discoverable URLs for both merchant and recipient corridors)
 - AI Plugin: https://loyalspark.online/.well-known/ai-plugin.json
@@ -33,7 +33,7 @@ How to get a key:
 
 ## REST API — 24 Endpoints
 
-Base URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api
+Base URL: https://api.loyalspark.online/agent-api
 
 ### Read Operations (GET)
 
@@ -76,14 +76,14 @@ curl -X POST \
   -H "x-api-key: lsk_YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{"token_address":"0x...","recipient_address":"0x...","amount":100}' \
-  https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/mint
+  https://api.loyalspark.online/agent-api/mint
 ```
 
 Response returns calldata with Builder Code for onchain execution.
 
 ## MCP Server — 28 Tools
 
-URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp
+URL: https://api.loyalspark.online/loyalty-mcp
 Transport: Streamable HTTP
 Auth: x-api-key header
 
@@ -125,7 +125,7 @@ Auth: x-api-key header
   "mcpServers": {
     "loyal-spark": {
       "command": "npx",
-      "args": ["-y", "mcp-remote", "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp"],
+      "args": ["-y", "mcp-remote", "https://api.loyalspark.online/loyalty-mcp"],
       "env": {
         "HTTP_HEADER_x-api-key": "lsk_YOUR_KEY"
       }
@@ -136,7 +136,7 @@ Auth: x-api-key header
 
 ## Recipient REST API (`rwk_`) — 12 Routes
 
-Base URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-api · Auth: `x-api-key: rwk_…`
+Base URL: https://api.loyalspark.online/recipient-api · Auth: `x-api-key: rwk_…`
 
 | Method | Path | Price | Description |
 |--------|------|-------|-------------|
@@ -155,7 +155,7 @@ Base URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-api ·
 
 ## Recipient MCP Server — 11 Tools
 
-URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp · Transport: Streamable HTTP · Auth: `x-api-key: rwk_…`
+URL: https://api.loyalspark.online/recipient-loyalty-mcp · Transport: Streamable HTTP · Auth: `x-api-key: rwk_…`
 
 1. `get_recipient_profile` — Wallet identity bound to this `rwk_` key
 2. `list_my_loyalty_balances` — All loyalty balances and tiers
@@ -175,13 +175,13 @@ Default price: $0.01 per call (matches merchant MCP). Same Bazaar metadata expos
 ## Payment Gateways
 
 ### MPP (Machine Payments Protocol)
-- Gateway: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway
+- Gateway: https://api.loyalspark.online/mpp-gateway
 - Currency: pathUSD on Tempo (also accepts USDC 0x20C0...b50)
 - Flow: Request → 402 challenge → pay → retry with credential
 - SDK: `npm install -g mppx`
 
 ### x402 (Coinbase Protocol) — v2
-- Gateway: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway
+- Gateway: https://api.loyalspark.online/x402-gateway
 - Currency: USDC on Base (0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913) · network CAIP-2 `eip155:8453`
 - **Paid MCP:** `POST …/x402-gateway/mcp-tools/<tool_name>` — JSON-RPC `tools/call`, header `x-api-key: lsk_…` after payment. Tool ids + argument schemas: `supabase/functions/_shared/mcp-bazaar-tools.ts` (repo). Bazaar: 402 body includes `extensions.bazaar` for MCP routes.
 - Facilitator (Base mainnet production): Coinbase CDP `https://api.cdp.coinbase.com/platform/v2/x402` (gateway uses CDP JWT when configured). Reference: https://facilitator.x402.org
@@ -193,7 +193,7 @@ Agents can create Coinbase CDP MPC wallets for autonomous onchain operations:
 - No private keys to manage
 - Server-side transaction signing
 - Support for `use_agent_wallet: true` in program creation / mint flows
-- Endpoint: `POST https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-wallet` with `x-api-key: lsk_…` (separate Edge Function, not part of agent-api)
+- Endpoint: `POST https://api.loyalspark.online/agent-wallet` with `x-api-key: lsk_…` (separate Edge Function, not part of agent-api)
 
 ## Subscription Plans (AI agents, `lsk_`)
 

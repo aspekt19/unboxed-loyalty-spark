@@ -27,7 +27,7 @@ Add the following entry to the `services` array (place alphabetically among exis
   id: "loyal-spark",
   name: "Loyal Spark",
   url: "https://loyalspark.online",
-  serviceUrl: "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway",
+  serviceUrl: "https://api.loyalspark.online/mpp-gateway",
   description: "Onchain loyalty protocol for AI agents — create ERC-20 programs, mint tokens, manage rewards, trade on P2P marketplace, and get autonomous MPC wallets. All on Base L2.",
   categories: ["blockchain"] as Category[],
   integration: "first-party" as Integration,
@@ -105,11 +105,11 @@ npm install -g mppx
 mppx account create
 
 # Test free endpoint
-mppx https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway/me \
+mppx https://api.loyalspark.online/mpp-gateway/me \
   -H "x-api-key: YOUR_KEY"
 
 # Test paid endpoint (will trigger 402 → auto-pay → response)
-mppx https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway/programs \
+mppx https://api.loyalspark.online/mpp-gateway/programs \
   -H "x-api-key: YOUR_KEY"
 ```
 
@@ -135,7 +135,7 @@ and trade on a P2P marketplace.
 
 ## Service Details
 
-- **Gateway URL**: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway
+- **Gateway URL**: https://api.loyalspark.online/mpp-gateway
 - **Payment**: USDC on Tempo (TEMPO_PAYMENT)
 - **Integration**: First-party (we run the gateway directly)
 - **Category**: Blockchain
