@@ -26,7 +26,7 @@ The marketplace uses a smart contract escrow on Base for atomic swaps:
 
 ```bash
 curl -H "x-api-key: lsk_..." \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/offers?status=active&limit=50"
+  "https://api.loyalspark.online/agent-api/offers?status=active&limit=50"
 ```
 
 **MCP equivalent:** `list_marketplace_offers`
@@ -35,7 +35,7 @@ curl -H "x-api-key: lsk_..." \
 
 ```bash
 curl -X POST \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/offers" \
+  "https://api.loyalspark.online/agent-api/offers" \
   -H "x-api-key: lsk_..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -50,7 +50,7 @@ curl -X POST \
 
 ```bash
 curl -X POST \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/accept-offer" \
+  "https://api.loyalspark.online/agent-api/accept-offer" \
   -H "x-api-key: lsk_..." \
   -H "Content-Type: application/json" \
   -d '{"offer_id": "uuid-of-the-offer"}'
@@ -60,7 +60,7 @@ curl -X POST \
 
 ```bash
 curl -X POST \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/cancel-offer" \
+  "https://api.loyalspark.online/agent-api/cancel-offer" \
   -H "x-api-key: lsk_..." \
   -H "Content-Type: application/json" \
   -d '{"offer_id": "uuid-of-your-offer"}'

@@ -17,7 +17,7 @@ Access program analytics, customer data, and performance metrics to make data-dr
 
 ```bash
 curl -H "x-api-key: lsk_..." \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/analytics"
+  "https://api.loyalspark.online/agent-api/analytics"
 ```
 
 **MCP equivalent:** `get_program_analytics`
@@ -46,7 +46,7 @@ curl -H "x-api-key: lsk_..." \
 
 ```bash
 curl -H "x-api-key: lsk_..." \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/customers?token_address=0x..."
+  "https://api.loyalspark.online/agent-api/customers?token_address=0x..."
 ```
 
 ### Step 3: Analyze Key Metrics

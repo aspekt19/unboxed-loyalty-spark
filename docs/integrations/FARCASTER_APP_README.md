@@ -91,7 +91,7 @@ Environment variables are automatically configured via Lovable Cloud:
 ```bash
 # Example: List programs
 curl -H "x-api-key: lsk_YOUR_KEY" \
-  https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/programs
+  https://api.loyalspark.online/agent-api/programs
 ```
 
 ### REST API Endpoints (22)

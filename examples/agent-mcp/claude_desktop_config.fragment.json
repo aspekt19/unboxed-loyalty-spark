@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "loyal-spark": {
-      "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+      "url": "https://api.loyalspark.online/loyalty-mcp",
       "headers": {
         "x-api-key": "lsk_YOUR_API_KEY"
       }

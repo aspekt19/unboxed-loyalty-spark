@@ -23,12 +23,12 @@
     "prefix": "lsk_",
     "registration_url": "https://loyalspark.online/merchant",
     "registration_note": "Sign in with email, phone, Google, or Web3 wallet (via Privy) to register an agent",
-    "siwe_registration_url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-register-siwe",
+    "siwe_registration_url": "https://api.loyalspark.online/agent-register-siwe",
     "siwe_registration_note": "Autonomous agents: POST /siwe-nonce, sign EIP-4361 message including exact phrase 'Register Loyal Spark merchant agent' and Chain ID 8453, then POST to siwe_registration_url. Free key; same limits as dashboard. Doc: https://github.com/aspekt19/unboxed-loyalty-spark/blob/main/docs/agents/AUTONOMOUS_AGENT_REGISTRATION.md",
     "docs_url": "https://loyalspark.online/api-docs"
   },
   "api": {
-    "base_url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api",
+    "base_url": "https://api.loyalspark.online/agent-api",
     "authentication_summary": "All routes except GET /vouchers/status require header x-api-key: lsk_...",
     "endpoints": [
       {
@@ -224,7 +224,7 @@
   "wallets": {
     "type": "cdp_mpc",
     "description": "Coinbase CDP MPC wallets on Base — agents get their own server wallet for autonomous onchain operations. No private keys to manage.",
-    "create_endpoint": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-wallet (POST JSON body per function docs; x-api-key required)",
+    "create_endpoint": "https://api.loyalspark.online/agent-wallet (POST JSON body per function docs; x-api-key required)",
     "chain": "Base (8453)",
     "features": [
       "Automatic wallet creation",
@@ -268,7 +268,7 @@
     "payment": "On-chain USDC transfer to platform wallet, verified automatically",
     "pay_per_request": {
       "protocol": "MPP (Machine Payments Protocol)",
-      "gateway_url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway",
+      "gateway_url": "https://api.loyalspark.online/mpp-gateway",
       "currency": "pathUSD on Tempo",
       "description": "Pay per API call without a subscription. Uses HTTP 402 Payment Required flow.",
       "prices_usd": {
@@ -307,7 +307,7 @@
     "builder_code": "bc_wdmnog7m"
   },
   "mcp": {
-    "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+    "url": "https://api.loyalspark.online/loyalty-mcp",
     "tool_count": 28,
     "transport": "streamable-http",
     "authentication": {
@@ -348,8 +348,8 @@
   },
   "recipient_api": {
     "description": "Wallet-bound API for agents that HOLD loyalty tokens (not merchants). Authenticated with x-api-key: rwk_… Register via SIWE (POST /siwe-nonce → sign EIP-4361 'Register Loyal Spark recipient agent' Chain ID 8453 → POST /agent-register-siwe).",
-    "rest_base_url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-api",
-    "mcp_url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp",
+    "rest_base_url": "https://api.loyalspark.online/recipient-api",
+    "mcp_url": "https://api.loyalspark.online/recipient-loyalty-mcp",
     "mcp_transport": "streamable-http",
     "mcp_tool_count": 11,
     "mcp_tools": [
@@ -380,28 +380,28 @@
       { "method": "POST", "path": "/cancel-offer",      "price_usd": "0.005", "description": "Cancel your own P2P offer" }
     ],
     "x402_corridor": {
-      "rest_url_template": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway/recipient-api/{path}",
-      "mcp_url_template": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway/recipient-mcp-tools/{tool_name}",
+      "rest_url_template": "https://api.loyalspark.online/x402-gateway/recipient-api/{path}",
+      "mcp_url_template": "https://api.loyalspark.online/x402-gateway/recipient-mcp-tools/{tool_name}",
       "bazaar": "Same extensions.bazaar metadata as merchant corridor; tools schemas in supabase/functions/_shared/recipient-mcp-bazaar-tools.ts"
     }
   },
   "mpp": {
     "description": "Machine Payments Protocol — pay per API request with HTTP 402 flow. No subscription needed.",
-    "gateway_url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway",
+    "gateway_url": "https://api.loyalspark.online/mpp-gateway",
     "currency": "pathUSD on Tempo",
     "protocol_spec": "https://mpp.dev",
     "llms_txt": "https://loyalspark.online/llms.txt",
     "how_to_use": [
       "1. Install mppx: npm install -g mppx",
       "2. Create account: mppx account create",
-      "3. Make paid request: mppx https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway/programs -H 'x-api-key: lsk_YOUR_KEY'",
+      "3. Make paid request: mppx https://api.loyalspark.online/mpp-gateway/programs -H 'x-api-key: lsk_YOUR_KEY'",
       "4. Payment is handled automatically via 402 challenge/credential flow"
     ]
   },
   "x402": {
     "description": "Coinbase x402 Payment Protocol — pay per request with USDC on Base. HTTP 402 with x402 v2 accepts; on-chain verify/settle for Base mainnet via Coinbase CDP when gateway secrets are set.",
     "x402_version": 2,
-    "gateway_url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway",
+    "gateway_url": "https://api.loyalspark.online/x402-gateway",
     "currency": "USDC on Base",
     "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
     "network": "eip155:8453",
@@ -410,7 +410,7 @@
     "facilitator_base_mainnet_cdp": "https://api.cdp.coinbase.com/platform/v2/x402",
     "facilitator_note": "Production Base mainnet settlement uses CDP x402 API (JWT) when CDP_API_KEY_ID/CDP_API_KEY_SECRET are configured on the gateway. Public x402.org/facilitator listings differ (e.g. Sepolia v2 exact).",
     "mcp_paid": {
-      "url_template": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway/mcp-tools/{tool_name}",
+      "url_template": "https://api.loyalspark.online/x402-gateway/mcp-tools/{tool_name}",
       "method": "POST",
       "body": "JSON-RPC 2.0: method tools/call, params.name = tool_name, params.arguments = object per tool schema",
       "headers_after_payment": ["x-api-key: lsk_...", "Content-Type: application/json"],
@@ -514,7 +514,7 @@
       "2. Open 'AI Agents' tab → Register an agent → Get API key (lsk_...)",
       "3. Read the Skills guide: https://loyalspark.online/.well-known/skills/00-getting-started.md",
       "4. Use the API key in x-api-key header for REST or MCP calls",
-      "5. Create a server wallet: POST https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-wallet (see Edge Function docs)",
+      "5. Create a server wallet: POST https://api.loyalspark.online/agent-wallet (see Edge Function docs)",
       "6. Start minting tokens, creating rewards, and managing programs!"
     ]
   },

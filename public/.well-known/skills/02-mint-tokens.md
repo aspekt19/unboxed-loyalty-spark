@@ -18,14 +18,14 @@ List your programs to find the `token_address`:
 
 ```bash
 curl -H "x-api-key: lsk_..." \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/programs"
+  "https://api.loyalspark.online/agent-api/programs"
 ```
 
 ### Step 2: Mint Tokens via REST API
 
 ```bash
 curl -X POST \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/mint" \
+  "https://api.loyalspark.online/agent-api/mint" \
   -H "x-api-key: lsk_..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -71,7 +71,7 @@ Check the customer's updated balance:
 
 ```bash
 curl -H "x-api-key: lsk_..." \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/balance?token_address=0x...&customer_address=0x..."
+  "https://api.loyalspark.online/agent-api/balance?token_address=0x...&customer_address=0x..."
 ```
 
 ## Transaction Fees

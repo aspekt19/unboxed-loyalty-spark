@@ -16,14 +16,14 @@
 
 ### MPP (Machine Payments Protocol)
 Pay per request with USDC or pathUSD on Tempo chain. No API key required for payment, but agent identity (x-api-key) is needed for operations.
-- Gateway: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway
+- Gateway: https://api.loyalspark.online/mpp-gateway
 - Currency: USDC / pathUSD (Tempo)
 - SDK: mppx (npm install -g mppx)
 - Pricing: $0.001–$0.05 per request
 
 ### x402 (Coinbase Payment Protocol) — v2
 Pay per request with USDC on Base. HTTP **402** with **x402 v2** `accepts` (CAIP-2 `eip155:8453`). Verify/settle on Base **mainnet** use **Coinbase CDP** (`https://api.cdp.coinbase.com/platform/v2/x402`) when the gateway is configured with CDP API keys (see repo `supabase/functions/x402-gateway`).
-- Gateway: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway
+- Gateway: https://api.loyalspark.online/x402-gateway
 - **Paid MCP (Bazaar-oriented metadata in 402 body):** `POST …/x402-gateway/mcp-tools/<tool_name>` — JSON-RPC `tools/call`, header `x-api-key: lsk_…` after payment. Tool ids + argument schemas: repo `supabase/functions/_shared/mcp-bazaar-tools.ts`
 - Currency: USDC on Base (0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
 - Public facilitator reference: https://x402.org/facilitator (Sepolia-focused v2 listings differ from Base mainnet CDP)
@@ -66,8 +66,8 @@ Merchant SaaS (portal): Starter $39 / Growth $79 / Scale $149 per month — see 
 - POST /cancel-offer — Cancel offer ($0.005)
 
 ## MCP Servers
-- **Merchant** (`lsk_`, 28 tools): https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp
-- **Recipient** (`rwk_`, 11 tools): https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/recipient-loyalty-mcp
+- **Merchant** (`lsk_`, 28 tools): https://api.loyalspark.online/loyalty-mcp
+- **Recipient** (`rwk_`, 11 tools): https://api.loyalspark.online/recipient-loyalty-mcp
 - Transport: Streamable HTTP · Auth: `x-api-key` header
 - Recipient tools: `get_recipient_profile`, `list_my_loyalty_balances`, `get_my_loyalty_balance`, `prepare_loyalty_token_transfer` ($0.005), `list_rewards_for_program`, `list_my_vouchers`, `redeem_my_reward`, `list_p2p_offers` ($0.001), `create_p2p_offer`, `accept_p2p_offer`, `cancel_p2p_offer` ($0.005). Default $0.01.
 
@@ -87,7 +87,7 @@ Merchant SaaS (portal): Starter $39 / Growth $79 / Scale $149 per month — see 
 - Builder Code: bc_wdmnog7m
 
 ## x402 Gateway (Coinbase)
-- URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway
+- URL: https://api.loyalspark.online/x402-gateway
 - Currency: USDC on Base · **x402 v2**
 - Facilitator (Base mainnet production): Coinbase CDP `https://api.cdp.coinbase.com/platform/v2/x402` (gateway uses CDP JWT when configured)
 - Paid MCP URL pattern: `…/x402-gateway/mcp-tools/<tool_name>`

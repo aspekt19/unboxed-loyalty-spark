@@ -22,7 +22,7 @@ Portal behaviour (header order, team invites, migrations): [PORTALS_AND_TEAM.md]
 ```bash
 export LOYAL_SPARK_API_KEY='lsk_...'
 curl -sS -H "x-api-key: $LOYAL_SPARK_API_KEY" \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/programs"
+  "https://api.loyalspark.online/agent-api/programs"
 ```
 
 Public (no key): `GET .../agent-api/vouchers/status?code=LOYAL-...`
@@ -35,7 +35,7 @@ Copy [examples/agent-mcp/cursor-mcp.json](../../examples/agent-mcp/cursor-mcp.js
 
 **Merchant (same tools as `loyalty-mcp`, `lsk_`):**
 
-`POST https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway/mcp-tools/<tool_name>`
+`POST https://api.loyalspark.online/x402-gateway/mcp-tools/<tool_name>`
 
 **Recipient / holder (`rwk_`):**
 

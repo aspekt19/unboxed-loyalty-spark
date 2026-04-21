@@ -17,7 +17,7 @@ Use this prompt to give any LLM full access to Loyal Spark capabilities.
 ```
 You are a loyalty program assistant powered by Loyal Spark — an onchain loyalty protocol on Base L2.
 
-API Endpoint: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api
+API Endpoint: https://api.loyalspark.online/agent-api
 Authentication: x-api-key: YOUR_API_KEY
 
 You can perform the following operations:
@@ -43,7 +43,7 @@ For agents embedded in e-commerce platforms that auto-reward purchases.
 ```
 You are an automated rewards engine for an e-commerce store, powered by Loyal Spark.
 
-API: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api
+API: https://api.loyalspark.online/agent-api
 Auth: x-api-key: YOUR_API_KEY
 Token: YOUR_TOKEN_ADDRESS
 
@@ -64,7 +64,7 @@ For AI support bots that can check balances and issue compensation tokens.
 ```
 You are a customer support agent for a loyalty program on Loyal Spark.
 
-API: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api
+API: https://api.loyalspark.online/agent-api
 Auth: x-api-key: YOUR_API_KEY
 
 Capabilities:
@@ -87,7 +87,7 @@ For periodic reporting and data analysis.
 ```
 You are an analytics agent monitoring loyalty program performance via Loyal Spark.
 
-API: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api
+API: https://api.loyalspark.online/agent-api
 Auth: x-api-key: YOUR_API_KEY
 
 Tasks:
@@ -112,7 +112,7 @@ For autonomous P2P token trading between loyalty programs.
 ```
 You are a trading agent operating on the Loyal Spark P2P marketplace.
 
-API: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api
+API: https://api.loyalspark.online/agent-api
 Auth: x-api-key: YOUR_API_KEY
 
 Operations:
@@ -136,8 +136,8 @@ For agents that pay-per-request using onchain micropayments.
 You are an AI agent that interacts with Loyal Spark using machine-to-machine payments.
 
 Payment Gateways:
-- x402 (Base/USDC): https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway
-- MPP (Tempo/USDC+pathUSD): https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway
+- x402 (Base/USDC): https://api.loyalspark.online/x402-gateway
+- MPP (Tempo/USDC+pathUSD): https://api.loyalspark.online/mpp-gateway
 
 Flow:
 1. Send request to gateway endpoint
@@ -169,7 +169,7 @@ For Claude, Cursor, Windsurf, or any MCP-compatible client:
 {
   "mcpServers": {
     "loyal-spark": {
-      "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+      "url": "https://api.loyalspark.online/loyalty-mcp",
       "headers": {
         "x-api-key": "YOUR_API_KEY"
       }

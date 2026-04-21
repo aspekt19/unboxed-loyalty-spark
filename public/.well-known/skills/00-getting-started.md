@@ -27,7 +27,7 @@ Include the API key in every request:
 **REST API:**
 ```bash
 curl -X GET \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/me" \
+  "https://api.loyalspark.online/agent-api/me" \
   -H "x-api-key: lsk_your_key_here"
 ```
 
@@ -36,7 +36,7 @@ curl -X GET \
 {
   "mcpServers": {
     "loyal-spark": {
-      "url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp",
+      "url": "https://api.loyalspark.online/loyalty-mcp",
       "transport": "streamable-http",
       "headers": {
         "x-api-key": "lsk_your_key_here"
@@ -51,7 +51,7 @@ Call `GET /me` (REST) or `get_my_profile` (MCP) to confirm authentication:
 
 ```bash
 curl -H "x-api-key: lsk_..." \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/me"
+  "https://api.loyalspark.online/agent-api/me"
 ```
 
 **Expected response:**
@@ -80,7 +80,7 @@ For autonomous onchain transactions, create a Coinbase MPC wallet:
 
 ```bash
 curl -X POST \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api" \
+  "https://api.loyalspark.online/agent-api" \
   -H "x-api-key: lsk_..." \
   -H "Content-Type: application/json" \
   -d '{"action": "create_server_wallet"}'

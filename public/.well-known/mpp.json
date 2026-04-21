@@ -24,8 +24,8 @@
     }
   ],
   "gateway": {
-    "mpp": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway",
-    "x402": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway"
+    "mpp": "https://api.loyalspark.online/mpp-gateway",
+    "x402": "https://api.loyalspark.online/x402-gateway"
   },
   "openapi": "https://loyalspark.online/openapi.json",
   "authentication": {
@@ -36,7 +36,7 @@
       "rwk_": "Recipient agent (wallet holder) — recipient-api/* and recipient-loyalty-mcp"
     },
     "registration_url": "https://loyalspark.online/merchant",
-    "siwe_url": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-register-siwe"
+    "siwe_url": "https://api.loyalspark.online/agent-register-siwe"
   },
   "pricing": {
     "model": "pay-per-request",

@@ -6,7 +6,7 @@
 
 В **текущем** GitHub-репозитории (`aspekt19/unboxed-loyalty-spark`) **нет** каталога `agents/`, файла `setup-agents.sh` и `docker-compose.yml` из примеров ниже — это **референс-архитектура**, которую можно воспроизвести в отдельном репо или у себя локально. Для интеграции с Loyal Spark достаточно любого OpenServ-агента (один сервис), которому заданы:
 
-- `LOYAL_SPARK_API` = `https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api` (или ваш кастомный деплой)
+- `LOYAL_SPARK_API` = `https://api.loyalspark.online/agent-api` (или ваш кастомный деплой)
 - `LOYAL_SPARK_API_KEY` = ключ `lsk_...` из [loyalspark.online/merchant](https://loyalspark.online/merchant) → войти через **Sign In** в шапке (кнопка **Profile** только после сессии) → вкладка **AI Agents**
 
 Общая карта для агентов: [AGENTS.md](../../AGENTS.md). Порталы и приглашения в команду: [PORTALS_AND_TEAM.md](../development/PORTALS_AND_TEAM.md).
@@ -79,7 +79,7 @@ loyal-spark-agents/
 import { Agent, z } from "@openserv-labs/sdk";
 
 const LOYAL_SPARK_API = process.env.LOYAL_SPARK_API_URL 
-  || "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api";
+  || "https://api.loyalspark.online/agent-api";
 const API_KEY = process.env.LOYAL_SPARK_API_KEY || "";
 
 async function callLoyalSparkAPI(endpoint: string) {
@@ -487,7 +487,7 @@ export default growth.handler();
 import { Agent, z } from "@openserv-labs/sdk";
 
 const LOYAL_SPARK_API = process.env.LOYAL_SPARK_API_URL 
-  || "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api";
+  || "https://api.loyalspark.online/agent-api";
 const API_KEY = process.env.LOYAL_SPARK_API_KEY || "";
 
 async function callAPI(endpoint: string) {
@@ -681,7 +681,7 @@ CMD ["npm", "start"]
 OPENSERV_API_KEY=your_openserv_api_key_here
 OPENSERV_SECRET_KEY=yuri-loyalty-spark-AGENT_NAME
 LOYAL_SPARK_API_KEY=lsk_your_key_here
-LOYAL_SPARK_API_URL=https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api
+LOYAL_SPARK_API_URL=https://api.loyalspark.online/agent-api
 PORT=AGENT_PORT
 ```
 
@@ -799,7 +799,7 @@ EOF
 OPENSERV_API_KEY=REPLACE_WITH_YOUR_OPENSERV_KEY
 OPENSERV_SECRET_KEY=yuri-loyalty-spark-$AGENT
 LOYAL_SPARK_API_KEY=lsk_REPLACE_WITH_YOUR_KEY
-LOYAL_SPARK_API_URL=https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api
+LOYAL_SPARK_API_URL=https://api.loyalspark.online/agent-api
 PORT=$PORT
 EOF
 
@@ -869,7 +869,7 @@ Lovable реализует рекомендации ──> коммит в пр
 ```typescript
 // Добавь в КАЖДОГО агента после остальных capabilities
 const REPORTS_URL = process.env.LOYAL_SPARK_REPORTS_URL
-  || "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-reports";
+  || "https://api.loyalspark.online/agent-reports";
 
 agent.addCapability({
   name: "send_to_developer",
@@ -947,7 +947,7 @@ Lovable: реализует → PATCH статус на done
 ### Добавь в .env каждого агента
 
 ```env
-LOYAL_SPARK_REPORTS_URL=https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-reports
+LOYAL_SPARK_REPORTS_URL=https://api.loyalspark.online/agent-reports
 ```
 
 ---

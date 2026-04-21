@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Export your key first: export LOYAL_SPARK_API_KEY='lsk_...'
 set -euo pipefail
-BASE="${LOYAL_SPARK_API_BASE:-https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api}"
+BASE="${LOYAL_SPARK_API_BASE:-https://api.loyalspark.online/agent-api}"
 if [[ -z "${LOYAL_SPARK_API_KEY:-}" ]]; then
   echo "Set LOYAL_SPARK_API_KEY to your lsk_... key" >&2
   exit 1

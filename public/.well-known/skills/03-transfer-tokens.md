@@ -18,14 +18,14 @@ Ensure the token belongs to your program:
 
 ```bash
 curl -H "x-api-key: lsk_..." \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/programs"
+  "https://api.loyalspark.online/agent-api/programs"
 ```
 
 ### Step 2: Transfer via REST API
 
 ```bash
 curl -X POST \
-  "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api/transfer" \
+  "https://api.loyalspark.online/agent-api/transfer" \
   -H "x-api-key: lsk_..." \
   -H "Content-Type: application/json" \
   -d '{
