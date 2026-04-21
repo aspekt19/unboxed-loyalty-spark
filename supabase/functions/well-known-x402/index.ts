@@ -126,12 +126,18 @@ function buildItem(req: Request, method: string, resource: string, _price: strin
 }
 
 /** Enumerate every paid Loyal Spark resource (~70 entries). */
+function isPaidPrice(price: string): boolean {
+  const n = Number(price);
+  return Number.isFinite(n) && n > 0;
+}
+
 function buildAllItems(req: Request): Array<ReturnType<typeof buildItem>> {
   const items: Array<ReturnType<typeof buildItem>> = [];
 
-  // Merchant REST (agent-api)
+  // Merchant REST (agent-api) — only paid resources go into Bazaar discovery.
   for (const [method, routes] of Object.entries(MERCHANT_REST_ROUTE_USD)) {
     for (const [resource, price] of Object.entries(routes)) {
+      if (!isPaidPrice(price)) continue;
       items.push(buildItem(req, method, resource, price));
     }
   }
@@ -139,6 +145,7 @@ function buildAllItems(req: Request): Array<ReturnType<typeof buildItem>> {
   // Recipient REST (recipient-api)
   for (const [method, routes] of Object.entries(RECIPIENT_REST_ROUTE_USD)) {
     for (const [resource, price] of Object.entries(routes)) {
+      if (!isPaidPrice(price)) continue;
       items.push(buildItem(req, method, resource, price));
     }
   }
@@ -212,6 +219,7 @@ function buildDiscoveryDocument(req: Request): Record<string, unknown> {
       tags: ["loyalty", "rewards", "onchain", "base", "mcp", "rest"],
     },
     items,
+    resources: items,
     pagination: {
       limit: items.length,
       offset: 0,
