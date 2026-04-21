@@ -152,12 +152,21 @@ function isPaidRoute(meta) {
 }
 
 function buildRestOp(method, path, meta, kind) {
+  const flexibleInputSchema = {
+    type: "object",
+    additionalProperties: true,
+    description: method === "GET"
+      ? "Query parameters for this request."
+      : "JSON body for this request.",
+  };
+
   const op = {
     operationId: `${method.toLowerCase()}_${path.replace(/[^a-z0-9]+/gi, "_").replace(/^_+|_+$/g, "")}`,
     summary: meta.summary,
     description: meta.desc,
     tags: [kind === "merchant" ? "Merchant REST" : "Recipient REST"],
     responses: { "200": jsonOk(), "402": paid402() },
+    "x-input-schema": flexibleInputSchema,
   };
   if (meta.price && meta.price !== "0") {
     op["x-payment-info"] = paymentInfo(meta.price);
@@ -172,8 +181,20 @@ function buildRestOp(method, path, meta, kind) {
   if (method === "POST") {
     op.requestBody = {
       required: false,
-      content: { "application/json": { schema: { type: "object", additionalProperties: true } } },
+      content: { "application/json": { schema: flexibleInputSchema } },
     };
+  } else {
+    op.parameters = [
+      {
+        name: "query",
+        in: "query",
+        required: false,
+        style: "deepObject",
+        explode: true,
+        description: "Query parameters passed through to the paid GET endpoint.",
+        schema: flexibleInputSchema,
+      },
+    ];
   }
   return op;
 }
