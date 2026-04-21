@@ -39,6 +39,14 @@ All colors MUST be HSL.
     --shadow-large: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
     --shadow-glow: 0 0 20px rgb(262 83% 58% / 0.15);
     --shadow-glow-orange: 0 0 20px rgb(24 100% 62% / 0.15);
+
+    /* Clay (3D claymorphism) shadow stacks — used by Button/Card/Nav */
+    --clay-shadow: 8px 8px 20px hsl(var(--primary) / 0.12), -6px -6px 16px hsl(0 0% 100% / 0.75), inset 1px 1px 2px hsl(0 0% 100% / 0.55), inset -1px -1px 2px hsl(var(--primary) / 0.04);
+    --clay-shadow-sm: 4px 4px 10px hsl(var(--primary) / 0.10), -3px -3px 8px hsl(0 0% 100% / 0.7), inset 1px 1px 2px hsl(0 0% 100% / 0.5);
+    --clay-shadow-lg: 16px 16px 36px hsl(var(--primary) / 0.15), -10px -10px 28px hsl(0 0% 100% / 0.8), inset 2px 2px 4px hsl(0 0% 100% / 0.55), inset -2px -2px 4px hsl(var(--primary) / 0.05);
+    --clay-shadow-primary: 8px 8px 20px hsl(var(--primary) / 0.4), -4px -4px 12px hsl(0 0% 100% / 0.45), inset 2px 2px 3px hsl(0 0% 100% / 0.4), inset -2px -2px 3px hsl(var(--primary) / 0.4);
+    --clay-shadow-secondary: 8px 8px 20px hsl(var(--secondary) / 0.4), -4px -4px 12px hsl(0 0% 100% / 0.45), inset 2px 2px 3px hsl(0 0% 100% / 0.4), inset -2px -2px 3px hsl(var(--secondary) / 0.4);
+    --clay-shadow-inset: inset 4px 4px 10px hsl(var(--primary) / 0.15), inset -4px -4px 10px hsl(0 0% 100% / 0.7);
     
     --gradient-primary: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(262 70% 68%) 100%);
     --gradient-secondary: linear-gradient(135deg, hsl(24 100% 62%) 0%, hsl(30 100% 70%) 100%);
