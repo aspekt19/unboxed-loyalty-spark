@@ -99,8 +99,20 @@ function buildItem(req: Request, method: string, resource: string, _price: strin
   const isMcp =
     resource.startsWith("mcp-tools/") || resource.startsWith("recipient-mcp-tools/");
 
+  // x402scan / Bazaar v2 scanners look for `description`, `mimeType` and `name`
+  // on the resource item itself (not only inside accepts[]). Hoist them so the
+  // indexer doesn't skip / fail entries.
+  const description = (accept as { description?: string }).description ??
+    `Loyal Spark ${isMcp ? "MCP tool" : "API"} — ${resource}`;
+  const name = isMcp
+    ? resource.replace(/^.*\//, "")
+    : `${method} /${resource}`;
+
   return {
     resource: resourceUrlForDiscovery,
+    name,
+    description,
+    mimeType: "application/json",
     type: isMcp ? "mcp" : "http",
     x402Version: 1,
     accepts: [accept, legacyAccept],
@@ -113,6 +125,9 @@ function buildItem(req: Request, method: string, resource: string, _price: strin
       builderCode: "bc_wdmnog7m",
       method,
       resource,
+      name,
+      description,
+      mimeType: "application/json",
       tags: [
         "loyalty",
         "rewards",
