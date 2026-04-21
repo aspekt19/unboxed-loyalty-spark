@@ -96,6 +96,21 @@ function restApiKeyHint(resource: string): string {
   return resource.startsWith("recipient-api/") ? "rwk_..." : "lsk_...";
 }
 
+function getRestInputSchema(method: string): Record<string, unknown> {
+  if (method === "POST") {
+    return {
+      type: "object",
+      additionalProperties: true,
+    };
+  }
+
+  return {
+    type: "object",
+    additionalProperties: true,
+    description: "Query parameters for the HTTP request.",
+  };
+}
+
 /**
  * Bazaar v2 `extensions.bazaar` for MCP: `info` uses CDP-style `{ input, output }` so scanners get HTTP + schema
  * hints; tool args remain on `mcpToolInputSchema`. x402scan §C: `extensions.bazaar.info` + input schema coverage.
@@ -283,6 +298,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
   // REST — agent-api and recipient-api (same gateway path patterns)
   const method = getRestMethod(p.resource);
   const keyHint = restApiKeyHint(p.resource);
+  const inputSchema = getRestInputSchema(method);
   const accept: Record<string, unknown> = {
     scheme: "exact",
     network: p.network,
@@ -298,6 +314,24 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
       ...USDC_EIP712,
       ...BAZAAR_META,
       description: `Loyal Spark HTTP API /${p.resource}`,
+    },
+    outputSchema: {
+      input: {
+        type: "http",
+        method,
+        bodyType: method === "POST" ? "json" : "query",
+        description:
+          `HTTP ${method} ${resourceUrlForDiscovery} — x402-gateway /${p.resource}. Authenticate with header x-api-key: ${keyHint}.`,
+        inputSchema,
+      },
+      output: {
+        type: "json",
+        description: "JSON from Loyal Spark agent-api or recipient-api. See OpenAPI for response shape.",
+        schema: {
+          $schema: "https://json-schema.org/draft/2020-12/schema",
+          type: "object",
+        },
+      },
     },
     extensions: {
       bazaar: {
@@ -320,6 +354,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
             description:
               `HTTP ${method} ${resourceUrlForDiscovery} — x402-gateway /${p.resource}. Authenticate with header x-api-key: ${keyHint}. See OpenAPI: https://loyalspark.online/openapi.json.`,
             resource: p.resource,
+            inputSchema,
           },
           output: {
             type: "json",
