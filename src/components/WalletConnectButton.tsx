@@ -10,22 +10,22 @@ import { getPrivyLinkedAccounts, getPrivyPrimaryEmail, shouldUsePrivyTokenAuth }
 import { cn } from '@/lib/utils';
 
 /**
- * Header row: wallet / Sign in (fixed width for alignment with truncated address).
+ * Header row: wallet / Sign in. Matches landing nav clay-pill style (rounded-full pills).
  */
 export const HEADER_CLUSTER_ACTION_CLASSNAME =
-  'h-8 min-h-8 w-[8.75rem] sm:w-[9.25rem] shrink-0 justify-center rounded-md px-2.5 text-sm font-semibold leading-none';
+  'h-9 min-h-9 w-[8.75rem] sm:w-[9.25rem] shrink-0 justify-center rounded-full px-4 text-sm font-semibold leading-none';
 
 /**
- * Header “Profile” only: same height as wallet chip, width hugs label, minimal horizontal padding.
+ * Header "Profile" only: same clay-pill rhythm, width hugs label.
  */
 export const HEADER_PROFILE_BUTTON_CLASSNAME =
-  'h-8 min-h-8 w-auto shrink-0 rounded-md px-2 sm:px-2.5 text-sm font-semibold leading-none';
+  'h-9 min-h-9 w-auto shrink-0 rounded-full px-4 text-sm font-semibold leading-none';
 
 /**
- * Same vertical rhythm as header actions; width follows label (cards, alerts).
+ * Inline (cards/alerts) auth CTA — same clay-pill style as the header.
  */
 export const INLINE_AUTH_CTA_CLASSNAME =
-  'h-8 min-h-8 px-3 rounded-md text-sm font-semibold leading-none inline-flex items-center justify-center gap-2 shadow-md';
+  'h-9 min-h-9 px-4 rounded-full text-sm font-semibold leading-none inline-flex items-center justify-center gap-2 shadow-clay';
 
 export function WalletConnectButton() {
   const { connect, connectors } = useConnect();
@@ -214,7 +214,7 @@ export function WalletConnectButton() {
   const headerAuthButtonClass = (extra: string) =>
     cn(
       HEADER_CLUSTER_ACTION_CLASSNAME,
-      'inline-flex items-center gap-2 whitespace-nowrap shadow-md transition-smooth hover:shadow-lg',
+      'inline-flex items-center gap-2 whitespace-nowrap transition-smooth hover:-translate-y-0.5',
       extra,
     );
 
@@ -225,7 +225,7 @@ export function WalletConnectButton() {
           onClick={handleConnect}
           type="button"
           className={headerAuthButtonClass(
-            'bg-gradient-uds text-white hover:opacity-90 disabled:pointer-events-none disabled:opacity-50',
+            'bg-primary text-primary-foreground shadow-clay-primary hover:shadow-clay-primary disabled:pointer-events-none disabled:opacity-50',
           )}
         >
           <LogIn className="h-3.5 w-3.5 flex-shrink-0" />
@@ -239,7 +239,7 @@ export function WalletConnectButton() {
         onClick={handleDisconnect}
         type="button"
         className={headerAuthButtonClass(
-          'justify-start bg-gradient-uds text-white hover:opacity-90 shadow-lg hover:shadow-xl gap-2 min-w-0',
+          'justify-start bg-primary text-primary-foreground shadow-clay-primary gap-2 min-w-0',
         )}
       >
         {(farcasterUser?.pfpUrl || farcasterUser?.username) && (
@@ -265,7 +265,7 @@ export function WalletConnectButton() {
         onClick={handleConnect}
         type="button"
         className={headerAuthButtonClass(
-          'bg-gradient-uds text-white hover:opacity-90 disabled:pointer-events-none disabled:opacity-50',
+          'bg-primary text-primary-foreground shadow-clay-primary hover:shadow-clay-primary disabled:pointer-events-none disabled:opacity-50',
         )}
       >
         <LogIn className="h-3.5 w-3.5 flex-shrink-0" />
@@ -280,7 +280,7 @@ export function WalletConnectButton() {
         disabled
         type="button"
         className={headerAuthButtonClass(
-          'bg-gradient-uds text-white opacity-90 disabled:pointer-events-none disabled:opacity-50',
+          'bg-primary text-primary-foreground shadow-clay-primary opacity-90 disabled:pointer-events-none disabled:opacity-50',
         )}
       >
         <LogIn className="h-3.5 w-3.5 animate-pulse flex-shrink-0" />
@@ -297,7 +297,7 @@ export function WalletConnectButton() {
       onClick={handleDisconnect}
       type="button"
       className={headerAuthButtonClass(
-        'min-w-0 justify-start bg-uds-purple text-white hover:bg-uds-purple-light gap-1.5',
+        'min-w-0 justify-start bg-primary text-primary-foreground shadow-clay-primary gap-1.5',
       )}
     >
       <User className="h-3.5 w-3.5 flex-shrink-0" />
