@@ -176,7 +176,16 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
   resourceUrlForDiscovery: string;
 } {
   const pathOnGateway = gatewayPath(p.resource);
-  const resourceUrlForDiscovery = `${resourcePublicOrigin(p.requestUrl, p.supabaseUrl)}${pathOnGateway}`;
+  // Compute method first so we can disambiguate REST GET vs POST that share the same path
+  // (e.g. `/programs`, `/rewards`, `/offers`, `/vouchers`). x402scan dedupes by URL only,
+  // so without a method-qualifier it silently drops one of each pair.
+  const isMcp = p.resource.startsWith("mcp-tools/") ||
+    p.resource.startsWith("recipient-mcp-tools/");
+  const restMethod = isMcp ? "POST" : getRestMethod(p.resource);
+  const baseUrl = `${resourcePublicOrigin(p.requestUrl, p.supabaseUrl)}${pathOnGateway}`;
+  const resourceUrlForDiscovery = isMcp
+    ? baseUrl
+    : `${baseUrl}?method=${restMethod}`;
 
   const maxAmountRequired = Math.round(parseFloat(p.price) * 1_000_000).toString();
   /** x402 v2 schema uses `amount` (same micro‑USDC string); EIP‑3009 client reads `amount`, not `maxAmountRequired`. */
