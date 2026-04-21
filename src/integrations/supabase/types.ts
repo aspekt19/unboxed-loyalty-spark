@@ -102,9 +102,11 @@ export type Database = {
       agent_plan_subscriptions: {
         Row: {
           amount_usdc: number
+          billing_cycle: string
           created_at: string | null
           expires_at: string | null
           id: string
+          is_trial: boolean
           owner_address: string
           paid_at: string | null
           plan_id: string
@@ -114,9 +116,11 @@ export type Database = {
         }
         Insert: {
           amount_usdc: number
+          billing_cycle?: string
           created_at?: string | null
           expires_at?: string | null
           id?: string
+          is_trial?: boolean
           owner_address: string
           paid_at?: string | null
           plan_id: string
@@ -126,9 +130,11 @@ export type Database = {
         }
         Update: {
           amount_usdc?: number
+          billing_cycle?: string
           created_at?: string | null
           expires_at?: string | null
           id?: string
+          is_trial?: boolean
           owner_address?: string
           paid_at?: string | null
           plan_id?: string
@@ -954,9 +960,11 @@ export type Database = {
       merchant_plan_subscriptions: {
         Row: {
           amount_usdc: number
+          billing_cycle: string
           created_at: string | null
           expires_at: string | null
           id: string
+          is_trial: boolean
           owner_address: string
           paid_at: string | null
           plan_id: string
@@ -966,9 +974,11 @@ export type Database = {
         }
         Insert: {
           amount_usdc: number
+          billing_cycle?: string
           created_at?: string | null
           expires_at?: string | null
           id?: string
+          is_trial?: boolean
           owner_address: string
           paid_at?: string | null
           plan_id: string
@@ -978,9 +988,11 @@ export type Database = {
         }
         Update: {
           amount_usdc?: number
+          billing_cycle?: string
           created_at?: string | null
           expires_at?: string | null
           id?: string
+          is_trial?: boolean
           owner_address?: string
           paid_at?: string | null
           plan_id?: string
@@ -2012,6 +2024,7 @@ export type Database = {
       check_expiring_subscriptions: { Args: never; Returns: undefined }
       check_program_expiration: { Args: never; Returns: undefined }
       consume_siwe_nonce: { Args: { p_nonce: string }; Returns: string }
+      expire_plan_subscriptions: { Args: never; Returns: undefined }
       generate_referral_code: {
         Args: { p_referrer_address: string; p_token_address: string }
         Returns: string
@@ -2080,6 +2093,11 @@ export type Database = {
           p_token_address: string
         }
         Returns: boolean
+      }
+      start_agent_trial: { Args: { p_owner_address: string }; Returns: string }
+      start_merchant_trial: {
+        Args: { p_owner_address: string }
+        Returns: string
       }
       update_customer_rfm_score: { Args: never; Returns: undefined }
       update_customer_tier: {
