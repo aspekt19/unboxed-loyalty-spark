@@ -1,5 +1,6 @@
 import { createConfig as createWagmiConfig } from 'wagmi';
 import { createConfig as createPrivyWagmiConfig } from '@privy-io/wagmi';
+import { injected } from 'wagmi/connectors';
 import { base } from 'wagmi/chains';
 import { http } from 'viem';
 import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
@@ -41,6 +42,16 @@ export const privyWagmiConfig = createPrivyWagmiConfig({
   transports: {
     [base.id]: transport,
   },
+});
+
+// Preview fallback: render the app even if Privy iframe init fails inside Lovable preview.
+export const browserPreviewWagmiConfig = createWagmiConfig({
+  chains: [base],
+  transports: {
+    [base.id]: transport,
+  },
+  connectors: [injected()],
+  ssr: false,
 });
 
 // Legacy export for backward compatibility

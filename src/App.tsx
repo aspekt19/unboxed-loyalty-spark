@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-route
 import { WagmiProvider } from "wagmi";
 import { WagmiProvider as PrivyWagmiProvider } from "@privy-io/wagmi";
 import { PrivyProvider } from "@privy-io/react-auth";
-import { isFarcasterContext, farcasterWagmiConfig, privyWagmiConfig } from "./config/wagmi";
+import { browserPreviewWagmiConfig, isFarcasterContext, farcasterWagmiConfig, privyWagmiConfig } from "./config/wagmi";
 import { PRIVY_APP_ID, privyConfig } from "./config/privy";
 import Index from "./pages/Index";
 import AppPage from "./pages/AppPage";
@@ -130,10 +130,35 @@ function BrowserProviders({ children }: { children: React.ReactNode }) {
   );
 }
 
+function PreviewBrowserProviders({ children }: { children: React.ReactNode }) {
+  return (
+    <WagmiProvider config={browserPreviewWagmiConfig}>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <TooltipProvider>
+            <ConnectorRecoveryListener />
+            <Toaster />
+            <Sonner />
+            {children}
+          </TooltipProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
+  );
+}
+
 const isFarcaster = isFarcasterContext();
+const isLovablePreviewHost =
+  typeof window !== "undefined" &&
+  (window.location.hostname.endsWith(".lovableproject.com") ||
+    window.location.hostname.startsWith("id-preview--"));
 
 const App = () => {
-  const Providers = isFarcaster ? FarcasterProviders : BrowserProviders;
+  const Providers = isFarcaster
+    ? FarcasterProviders
+    : isLovablePreviewHost
+      ? PreviewBrowserProviders
+      : BrowserProviders;
 
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} storageKey="loyal-spark-theme">
