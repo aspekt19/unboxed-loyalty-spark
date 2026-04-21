@@ -5,6 +5,7 @@ import { IssuedTokensHistory } from '@/components/IssuedTokensHistory';
 import { WelcomeFlow } from '@/components/onboarding/WelcomeFlow';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { PlanStatusBadge } from '@/components/billing/PlanStatusBadge';
+import { TrialWelcomeBanner } from '@/components/onboarding/TrialWelcomeBanner';
 import { useAutoStartTrial } from '@/hooks/useStartTrial';
 import { MerchantProfileSection } from '@/components/merchant/MerchantProfileSection';
 
@@ -68,6 +69,7 @@ const MerchantPage = () => {
     </div>
   ) : (
     <>
+      <TrialWelcomeBanner product="merchant" />
       <div className="mb-6">
         <PlanStatusBadge product="merchant" />
       </div>
@@ -94,6 +96,7 @@ const MerchantPage = () => {
 
     return (
       <>
+        <TrialWelcomeBanner product="merchant" />
         <div className="mb-4">
           <PlanStatusBadge product="merchant" />
         </div>

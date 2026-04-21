@@ -7,6 +7,7 @@ import { ReferralManagement } from '@/components/referral/ReferralManagement';
 import { ReviewsList } from '@/components/reviews/ReviewsList';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { PlanFeatureGate } from '@/components/billing/PlanFeatureGate';
 
 interface MarketingTabProps {
   selectedProgram: { tokenAddress: string } | null;
@@ -17,9 +18,13 @@ export function MarketingTab({ selectedProgram, merchantAddress }: MarketingTabP
   return (
     <div className="space-y-6">
       <TierManagement />
-      <CreateCampaign />
-      <CampaignList />
-      <AutomationDashboard />
+      <PlanFeatureGate product="merchant" feature="Marketing campaigns">
+        <CreateCampaign />
+        <CampaignList />
+      </PlanFeatureGate>
+      <PlanFeatureGate product="merchant" feature="Automation rules">
+        <AutomationDashboard />
+      </PlanFeatureGate>
       <ReferralStats />
       <ReferralManagement />
       {selectedProgram ? (
