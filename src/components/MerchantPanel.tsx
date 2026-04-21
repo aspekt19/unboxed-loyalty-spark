@@ -39,13 +39,23 @@ interface MerchantPanelProps {
 
 export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: MerchantPanelProps = {}) {
   const { address } = useAccount();
-  // Deep-link support: /merchant?tab=billing|agents|... selects initial desktop tab.
-  const initialTabFromUrl = (() => {
-    if (typeof window === 'undefined') return undefined;
-    const t = new URLSearchParams(window.location.search).get('tab');
-    const valid = ['dashboard', 'customers', 'programs', 'rewards', 'marketing', 'billing', 'agents', 'team'];
-    return t && valid.includes(t) ? t : undefined;
+  const location = useLocation();
+  const navigate = useNavigate();
+  const VALID_TABS = ['dashboard', 'customers', 'programs', 'rewards', 'marketing', 'billing', 'agents', 'team'];
+  const tabFromUrl = (() => {
+    const t = new URLSearchParams(location.search).get('tab');
+    return t && VALID_TABS.includes(t) ? t : null;
   })();
+  const [internalTab, setInternalTab] = useState<string>(tabFromUrl ?? 'dashboard');
+
+  // Sync internal tab with URL changes (e.g., when user clicks <Link to="/merchant?tab=billing">)
+  useEffect(() => {
+    if (tabFromUrl && tabFromUrl !== internalTab) {
+      setInternalTab(tabFromUrl);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabFromUrl]);
+
   const [selectedProgram, setSelectedProgram] = useState<{ name: string; symbol: string; tokenAddress: string; cashbackRate?: number; pointsPerDollar?: number } | null>(null);
   const [mintDialogOpen, setMintDialogOpen] = useState(false);
   const [earnDialogOpen, setEarnDialogOpen] = useState(false);
