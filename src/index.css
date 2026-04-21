@@ -217,6 +217,29 @@ All colors MUST be HSL.
   .shadow-glow-orange {
     box-shadow: var(--shadow-glow-orange);
   }
+
+  /* === Claymorphism utilities (3D soft puffy look) === */
+  .shadow-clay {
+    box-shadow: var(--clay-shadow);
+  }
+  .shadow-clay-sm {
+    box-shadow: var(--clay-shadow-sm);
+  }
+  .shadow-clay-lg {
+    box-shadow: var(--clay-shadow-lg);
+  }
+  .shadow-clay-primary {
+    box-shadow: var(--clay-shadow-primary);
+  }
+  .shadow-clay-secondary {
+    box-shadow: var(--clay-shadow-secondary);
+  }
+  .shadow-clay-inset {
+    box-shadow: var(--clay-shadow-inset);
+  }
+  .hover\:shadow-clay-lg:hover {
+    box-shadow: var(--clay-shadow-lg);
+  }
   
   /* Hover effects */
   .hover-lift {
