@@ -35,7 +35,7 @@ export function TrialWelcomeBanner({ product }: Props) {
   };
 
   const upgradeHref =
-    product === 'merchant' ? '/merchant?tab=billing' : '/for-agents#agent-billing';
+    product === 'merchant' ? '/merchant?tab=billing' : '/pricing';
   const productLabel = product === 'merchant' ? 'Growth' : 'Pro';
   const featureLine =
     product === 'merchant'

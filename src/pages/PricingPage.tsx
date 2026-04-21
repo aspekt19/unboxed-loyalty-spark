@@ -114,7 +114,7 @@ const agentPlans: Plan[] = [
       { text: "Email support", included: true },
     ],
     cta: "Upgrade to Pro",
-    href: "/for-agents#agent-billing",
+    href: "/for-agents",
     highlighted: true,
   },
   {
@@ -131,7 +131,7 @@ const agentPlans: Plan[] = [
       { text: "Custom integrations", included: true },
     ],
     cta: "Contact sales",
-    href: "/for-agents#agent-billing",
+    href: "/for-agents",
   },
 ];
 
