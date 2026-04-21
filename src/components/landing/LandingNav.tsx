@@ -17,8 +17,8 @@ const LandingNav = () => {
 
   return (
     <>
-      {/* Desktop nav */}
-      <nav className="hidden md:flex items-center gap-1">
+      {/* Desktop nav — clay pills */}
+      <nav className="hidden md:flex items-center gap-2">
         {navLinks.map((link) => {
           const active = location.pathname === link.href;
           return (
@@ -26,8 +26,10 @@ const LandingNav = () => {
               key={link.href}
               to={link.href}
               className={cn(
-                "px-3 py-2 rounded-md text-sm font-medium transition-smooth hover:text-primary hover:bg-primary/5",
-                active ? "text-primary" : "text-foreground/80"
+                "px-4 py-2 rounded-full text-sm font-semibold transition-smooth hover:-translate-y-0.5",
+                active
+                  ? "bg-primary text-primary-foreground shadow-clay-primary"
+                  : "bg-card text-foreground/80 shadow-clay-sm hover:shadow-clay hover:text-primary"
               )}
             >
               {link.label}
