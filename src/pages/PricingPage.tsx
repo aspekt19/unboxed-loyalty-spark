@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Check, ArrowRight, Bot, Store, Sparkles } from "lucide-react";
+import { Check, ArrowRight, Bot, Store, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -236,7 +236,7 @@ const PricingPage = () => {
         <Card className="max-w-3xl mx-auto mb-10 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10">
           <CardContent className="p-5 flex flex-wrap items-center gap-4 justify-between">
             <div className="flex items-center gap-3">
-              <Sparkles className="h-6 w-6 text-primary shrink-0" />
+              <Gift className="h-6 w-6 text-primary shrink-0" />
               <div>
                 <p className="font-semibold text-base">14-day free trial included</p>
                 <p className="text-sm text-muted-foreground">

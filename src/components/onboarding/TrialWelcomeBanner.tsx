@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useEffectivePlan, type PlanProduct } from '@/hooks/useEffectivePlan';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Sparkles, X, ArrowRight } from 'lucide-react';
+import { Gift, X, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAccount } from 'wagmi';
 
@@ -54,7 +54,7 @@ export function TrialWelcomeBanner({ product }: Props) {
       </button>
       <CardContent className="p-5 flex flex-col md:flex-row md:items-center gap-4">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/20 shrink-0">
-          <Sparkles className="h-6 w-6 text-accent-foreground" />
+          <Gift className="h-6 w-6 text-accent-foreground" />
         </div>
         <div className="flex-1 space-y-1">
           <p className="font-semibold text-base">
