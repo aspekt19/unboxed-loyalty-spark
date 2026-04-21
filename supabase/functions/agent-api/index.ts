@@ -730,7 +730,7 @@ Deno.serve(async (req) => {
         recipient_calldata: recipientCalldata,
         fee_calldata: feeCalldata,
         message:
-          "Mint intent recorded. To complete onchain, send recipient_calldata and fee_calldata to the token contract (two transactions).",,
+          "Mint intent recorded. To complete onchain, send recipient_calldata and fee_calldata to the token contract (two transactions).",
         contract: {
           token_address,
           function: "mint(address,uint256)",
