@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -18,8 +18,6 @@ import {
   Gift,
   MapPin,
   Loader2,
-  ChevronLeft,
-  ChevronRight,
   Sparkles,
   Filter,
   Compass,
