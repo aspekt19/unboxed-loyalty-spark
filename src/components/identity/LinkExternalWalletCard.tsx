@@ -201,8 +201,8 @@ export function LinkExternalWalletCard() {
           Подключить кошелёк
         </Button>
 
-        <Alert variant="default" className="border-amber-500/40 bg-amber-500/5">
-          <AlertTriangle className="h-4 w-4 text-amber-600" />
+        <Alert variant="default" className="border-muted-foreground/30">
+          <AlertTriangle className="h-4 w-4" />
           <AlertDescription className="text-[11px]">
             Если Privy скажет «This account has already been linked to another user» — это значит,
             что выбранный кошелёк уже принадлежит другому Loyal Spark аккаунту. В этом случае
