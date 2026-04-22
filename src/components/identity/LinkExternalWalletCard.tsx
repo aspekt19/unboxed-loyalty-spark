@@ -63,13 +63,13 @@ export function LinkExternalWalletCard() {
         try {
           await persistLink(addr);
           if (!cancelled) {
-            toast.success(`Привязан кошелёк ${shortAddr(addr)}`);
+            toast.success(`Wallet ${shortAddr(addr)} linked`);
             baselineRef.current!.add(addr);
           }
         } catch (e: any) {
           console.error('auto-link failed:', e);
           if (!cancelled) {
-            const msg = e?.message ?? 'Не удалось привязать';
+            const msg = e?.message ?? 'Failed to link wallet';
             toast.error(msg);
             // Don't retry on next render
             baselineRef.current!.add(addr);
