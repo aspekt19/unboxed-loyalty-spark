@@ -41,7 +41,7 @@ interface RewardsSelectionProps {
 
 export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
   const { address } = useAccount();
-  const { isWalletMismatch } = useActiveWallet();
+  const { activeWallet, isWalletMismatch } = useActiveWallet();
   const { user, session, signInWithWallet, isLoading: authLoading } = useAuth();
   const isFarcaster = isFarcasterContext();
   const [tokens, setTokens] = useState<TokenInfo[]>([]);
@@ -53,7 +53,7 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [programSearch, setProgramSearch] = useState('');
 
-  const { balances, isLoading: balancesLoading, refetch } = useMultiTokenBalance(tokens);
+  const { balances, isLoading: balancesLoading, refetch } = useMultiTokenBalance(tokens, activeWallet);
   const { burnTokens, isPending, isSuccess, hash } = useBurnTokens();
   const { approveTokens, isPending: isApproving, isSuccess: isApproved } = useApproveTokens();
 
@@ -95,7 +95,7 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
 
   // ── Pre-verify profile status (no async in activate handler) ──
   useEffect(() => {
-    if (!address || !session) {
+    if (!activeWallet || !session) {
       setProfileVerified(false);
       return;
     }
@@ -105,7 +105,7 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('wallet_address')
-          .eq('wallet_address', address.toLowerCase())
+            .eq('wallet_address', activeWallet.toLowerCase())
           .maybeSingle();
         
         setProfileVerified(!error && !!profile);
@@ -123,7 +123,7 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
       window.removeEventListener('profileMigrated', handleProfileUpdate);
       window.removeEventListener('sessionReady', handleProfileUpdate);
     };
-  }, [address, session]);
+  }, [activeWallet, session]);
 
   // ── Auto-auth on wallet connect ──
   useEffect(() => {

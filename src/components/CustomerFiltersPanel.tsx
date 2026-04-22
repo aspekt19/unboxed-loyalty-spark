@@ -16,6 +16,7 @@ import { format } from 'date-fns';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useFarcasterHaptics } from '@/hooks/useFarcasterHaptics';
+import { useActiveWallet } from '@/contexts/ActiveWalletContext';
 
 interface LoyaltyProgram {
   id: string;
@@ -42,6 +43,7 @@ interface CustomerFiltersPanelProps {
 
 export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelProps) {
   const { address } = useAccount();
+  const { activeWallet } = useActiveWallet();
   const [programs, setPrograms] = useState<TokenInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -79,7 +81,7 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
     };
   }, [emblaApi, onSelect]);
 
-  const { balances, isLoading: balancesLoading, refetch } = useMultiTokenBalance(programs);
+  const { balances, isLoading: balancesLoading, refetch } = useMultiTokenBalance(programs, activeWallet);
 
   const loadActivePrograms = useCallback(async () => {
     setIsLoading(true);
@@ -112,7 +114,7 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
 
   // Load active programs from Supabase
   useEffect(() => {
-    if (!address) {
+    if (!activeWallet) {
       setPrograms([]);
       return;
     }
@@ -131,7 +133,7 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [address, loadActivePrograms]);
+  }, [activeWallet, loadActivePrograms]);
 
   // Listen for token balance updates
   useEffect(() => {
@@ -143,12 +145,12 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
 
   // Auto-refresh balances every 5 seconds
   useEffect(() => {
-    if (!address || programs.length === 0) return;
+    if (!activeWallet || programs.length === 0) return;
 
     const interval = setInterval(() => refetch(true), 5000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address, programs.length]);
+  }, [activeWallet, programs.length]);
 
   // Filter programs with non-zero balance, then by merchant and search
   const programsWithBalance = useMemo(() => {

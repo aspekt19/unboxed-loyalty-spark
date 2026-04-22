@@ -5,6 +5,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { useAccount } from 'wagmi';
 import { QrCode, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { useActiveWallet } from '@/contexts/ActiveWalletContext';
 import {
   Dialog,
   DialogContent,
@@ -16,18 +17,20 @@ import {
 
 export function WalletQRCode() {
   const { address } = useAccount();
+  const { activeWallet } = useActiveWallet();
   const [copied, setCopied] = useState(false);
+  const walletAddress = activeWallet ?? address;
 
-  if (!address) return null;
+  if (!walletAddress) return null;
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(address);
+    await navigator.clipboard.writeText(walletAddress);
     setCopied(true);
     toast.success('Wallet address copied!');
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const shortAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
+  const shortAddress = `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
 
   return (
     <Card className="border-2 border-dashed border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10">
@@ -45,7 +48,7 @@ export function WalletQRCode() {
           <DialogTrigger asChild>
             <button className="bg-background p-3 rounded-xl shadow-sm border cursor-pointer hover:shadow-md transition-shadow">
               <QRCodeSVG
-                value={address}
+                value={walletAddress}
                 size={120}
                 level="M"
                 includeMargin={false}
@@ -65,14 +68,14 @@ export function WalletQRCode() {
             <div className="flex flex-col items-center gap-4 py-4">
               <div className="bg-background p-4 rounded-xl border">
                 <QRCodeSVG
-                  value={address}
+                  value={walletAddress}
                   size={240}
                   level="H"
                   includeMargin
                 />
               </div>
               <p className="text-xs text-muted-foreground font-mono text-center break-all px-4">
-                {address}
+                {walletAddress}
               </p>
               <Button variant="outline" size="sm" onClick={handleCopy} className="gap-2">
                 {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -87,7 +90,7 @@ export function WalletQRCode() {
           <div className="flex-1 min-w-0">
             <p className="text-[10px] text-muted-foreground mb-0.5">Your wallet address</p>
             <p className="text-xs font-mono text-foreground truncate sm:hidden">{shortAddress}</p>
-            <p className="text-xs font-mono text-foreground break-all hidden sm:block">{address}</p>
+            <p className="text-xs font-mono text-foreground break-all hidden sm:block">{walletAddress}</p>
           </div>
           <Button variant="ghost" size="icon" onClick={handleCopy} className="h-7 w-7 flex-shrink-0">
             {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
