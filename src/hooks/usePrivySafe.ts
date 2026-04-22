@@ -14,6 +14,8 @@ interface PrivySafeResult {
   getAccessToken: () => Promise<string | null>;
   linkEmail: () => void;
   unlinkEmail: (email: string) => Promise<unknown>;
+  linkWallet: () => void;
+  unlinkWallet: (address: string) => Promise<unknown>;
 }
 
 const noopResult: PrivySafeResult = {
@@ -25,6 +27,8 @@ const noopResult: PrivySafeResult = {
   getAccessToken: async () => null,
   linkEmail: () => {},
   unlinkEmail: async () => {},
+  linkWallet: () => {},
+  unlinkWallet: async () => {},
 };
 
 function isLovablePreviewHost(): boolean {
@@ -51,6 +55,8 @@ export function usePrivySafe(): PrivySafeResult {
       getAccessToken: privy.getAccessToken,
       linkEmail: privy.linkEmail,
       unlinkEmail: privy.unlinkEmail,
+      linkWallet: privy.linkWallet,
+      unlinkWallet: privy.unlinkWallet,
     };
   } catch {
     return noopResult;

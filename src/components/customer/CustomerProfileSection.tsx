@@ -31,6 +31,7 @@ import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PrimaryWalletSelector } from '@/components/identity/PrimaryWalletSelector';
 import { LinkedWalletsSummary } from '@/components/identity/LinkedWalletsSummary';
+import { LinkExternalWalletCard } from '@/components/identity/LinkExternalWalletCard';
 import { SecondaryWalletNotice } from '@/components/identity/SecondaryWalletNotice';
 
 export function CustomerProfileSection() {
@@ -346,6 +347,7 @@ export function CustomerProfileSection() {
 
       <PrimaryWalletSelector />
       <LinkedWalletsSummary />
+      <LinkExternalWalletCard />
 
       <WalletQRCode />
       <ReferralCodeInput />
