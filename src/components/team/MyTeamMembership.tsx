@@ -39,15 +39,26 @@ export function MyTeamMembership() {
       if (error) throw error;
 
       // Enrich with merchant profile info
-      const merchantAddresses = [...new Set(data.map((d: any) => d.merchant_address))];
+      type EmployeeRow = {
+        id: string;
+        merchant_address: string;
+        role: string;
+        merchant_branches?: { branch_name?: string } | null;
+      };
+      const rows = (data ?? []) as EmployeeRow[];
+      const merchantAddresses = [...new Set(rows.map((d) => d.merchant_address))];
       const { data: profiles } = await supabase
         .from('merchant_profiles')
         .select('merchant_address, business_name')
         .in('merchant_address', merchantAddresses);
 
-      const profileMap = new Map((profiles || []).map((p: any) => [p.merchant_address, p.business_name]));
+      const profileMap = new Map(
+        ((profiles ?? []) as Array<{ merchant_address: string; business_name: string }>).map(
+          (p) => [p.merchant_address, p.business_name],
+        ),
+      );
 
-      return data.map((d: any) => ({
+      return rows.map((d) => ({
         ...d,
         business_name: profileMap.get(d.merchant_address) || `${d.merchant_address.slice(0, 6)}...${d.merchant_address.slice(-4)}`,
       }));
@@ -66,8 +77,9 @@ export function MyTeamMembership() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        {memberships.map((m: any) => {
+        {memberships.map((m) => {
           const RoleIcon = roleIcons[m.role] || ShoppingCart;
+          const branchName = m.merchant_branches?.branch_name;
           return (
             <div key={m.id} className="flex items-center justify-between border rounded-lg p-3 bg-background">
               <div className="min-w-0 flex-1">
@@ -77,10 +89,10 @@ export function MyTeamMembership() {
                     <RoleIcon className="h-3 w-3 mr-1" />
                     {roleLabels[m.role] || m.role}
                   </Badge>
-                  {(m as any).merchant_branches?.branch_name && (
+                  {branchName && (
                     <span className="text-xs text-muted-foreground flex items-center gap-1">
                       <Building2 className="h-3 w-3" />
-                      {(m as any).merchant_branches.branch_name}
+                      {branchName}
                     </span>
                   )}
                 </div>

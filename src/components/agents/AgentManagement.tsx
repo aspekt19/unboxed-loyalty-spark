@@ -101,8 +101,9 @@ export function AgentManagement() {
       setDescription('');
       setSelectedScopes(['read']);
       setShowCreate(false);
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to create agent');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to create agent';
+      toast.error(message);
     } finally {
       setIsCreating(false);
     }
@@ -179,8 +180,9 @@ export function AgentManagement() {
       if (data?.error) throw new Error(data.error);
       toast.success(`Server wallet created (${data?.wallet?.wallet_type || 'mock'} mode)`);
       queryClient.invalidateQueries({ queryKey: ['agents'] });
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to create wallet');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to create wallet';
+      toast.error(message);
     } finally {
       setCreatingWalletFor(null);
     }
@@ -197,8 +199,9 @@ export function AgentManagement() {
       toast.success('Agent renamed');
       queryClient.invalidateQueries({ queryKey: ['agents'] });
       setEditingNameId(null);
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to rename');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to rename';
+      toast.error(message);
     }
   };
 

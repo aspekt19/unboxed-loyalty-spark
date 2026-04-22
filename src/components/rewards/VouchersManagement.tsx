@@ -54,7 +54,7 @@ export function VouchersManagement() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'vouchers' },
         (payload) => {
-          const voucherData = (payload.new || payload.old) as any;
+          const voucherData = (payload.new || payload.old) as { merchant_address?: string } | null;
           if (voucherData?.merchant_address === address.toLowerCase()) {
             loadMerchantVouchers();
           }
@@ -78,9 +78,12 @@ export function VouchersManagement() {
     }
   };
 
-  const handleQrScan = (result: any) => {
-    if (result?.text) {
-      const scannedCode = result.text.trim();
+  const handleQrScan = (result: unknown) => {
+    const text =
+      (result as { text?: string } | null | undefined)?.text ??
+      (result as { getText?: () => string } | null | undefined)?.getText?.();
+    if (text) {
+      const scannedCode = text.trim();
       setShowScanner(false);
       setSearchCode(scannedCode);
       

@@ -42,8 +42,20 @@ interface LoyaltyProgram {
   pointsPerDollar?: number;
 }
 
+interface DbProgramRow {
+  id: string;
+  name: string;
+  symbol: string;
+  created_at: string;
+  token_address: string;
+  expiration_date?: string;
+  status?: string;
+  cashback_rate?: number;
+  points_per_dollar?: number;
+}
+
 /** Map DB row to LoyaltyProgram */
-function mapDbProgram(prog: any): LoyaltyProgram {
+function mapDbProgram(prog: DbProgramRow): LoyaltyProgram {
   return {
     id: prog.id,
     name: prog.name,

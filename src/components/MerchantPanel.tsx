@@ -81,15 +81,26 @@ export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: Merchant
         .order('created_at', { ascending: false });
       if (error) throw error;
 
-      const merchantAddresses = [...new Set(data.map((d: any) => d.merchant_address))];
+      type EmployeeRow = {
+        merchant_address: string;
+        role: string;
+        branch_id: string | null;
+        merchant_branches?: { branch_name?: string } | null;
+      };
+      const rows = (data ?? []) as EmployeeRow[];
+      const merchantAddresses = [...new Set(rows.map((d) => d.merchant_address))];
       const { data: profiles } = await supabase
         .from('merchant_profiles')
         .select('merchant_address, business_name')
         .in('merchant_address', merchantAddresses);
 
-      const profileMap = new Map((profiles || []).map((p: any) => [p.merchant_address, p.business_name]));
+      const profileMap = new Map(
+        ((profiles ?? []) as Array<{ merchant_address: string; business_name: string }>).map(
+          (p) => [p.merchant_address, p.business_name],
+        ),
+      );
 
-      return data.map((d: any) => ({
+      return rows.map((d) => ({
         merchant_address: d.merchant_address,
         role: d.role,
         branch_id: d.branch_id,

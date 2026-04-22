@@ -53,7 +53,7 @@ export function CreateReward() {
       }
 
       if (programs && programs.length > 0) {
-        const activePrograms = programs.map((p: any) => ({
+        const activePrograms = programs.map((p) => ({
           address: p.token_address,
           name: p.name,
           symbol: p.symbol,
