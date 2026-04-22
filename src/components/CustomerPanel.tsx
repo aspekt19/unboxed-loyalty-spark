@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { AuthPrompt } from './AuthPrompt';
 import { useMultiTokenBalance, type TokenInfo } from '@/hooks/useMultiTokenBalance';
 import { supabase } from '@/integrations/supabase/client';
+import { WalletMismatchBanner } from './identity/WalletMismatchBanner';
 
 interface CustomerPanelProps {
   selectedMerchant: string | null;
@@ -84,6 +85,8 @@ export function CustomerPanel({ selectedMerchant, onMerchantSelect, onClearMerch
 
   return (
     <div className="space-y-6">
+      <WalletMismatchBanner />
+
       {/* Browse merchants — only those whose tokens user owns */}
       <MerchantCardGrid
         onMerchantSelect={handleMerchantSelect}
