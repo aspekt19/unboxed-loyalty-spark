@@ -40,9 +40,11 @@ interface MerchantCard {
 interface MerchantCardGridProps {
   onMerchantSelect?: (merchantAddress: string) => void;
   selectedMerchant?: string | null;
+  /** If provided, only merchants whose address is in this set will be shown. */
+  restrictToMerchants?: Set<string> | null;
 }
 
-export function MerchantCardGrid({ onMerchantSelect, selectedMerchant }: MerchantCardGridProps) {
+export function MerchantCardGrid({ onMerchantSelect, selectedMerchant, restrictToMerchants }: MerchantCardGridProps) {
   const [merchants, setMerchants] = useState<MerchantCard[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
