@@ -27,6 +27,8 @@ interface AuthContextType {
   isLoading: boolean;
   signInWithWallet: () => Promise<void>;
   signInWithPrivy: () => Promise<void>;
+  /** Clears rate-limit/back-off refs and re-triggers Privy sign-in. Used by "Try again". */
+  retrySignIn: () => Promise<void>;
   signOut: (options?: SignOutOptions) => Promise<void>;
   resetManualSignOut: () => void;
 }
@@ -385,6 +387,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStoredManualSignOut(false);
   }, []);
 
+  /**
+   * Reset rate-limit / failure back-off refs and re-trigger Privy sign-in.
+   * Used by the "Try again" affordance when the first sign-in stalls
+   * (common for brand-new Google users while the embedded wallet is still
+   * being provisioned).
+   */
+  const retrySignIn = useCallback(async () => {
+    lastFailureAtRef.current = 0;
+    lastSignInAttemptAtRef.current = 0;
+    retryBlockedUntilRef.current = 0;
+    signingInRef.current = false;
+    manualSignOutRef.current = false;
+    setStoredManualSignOut(false);
+
+    const privyUser = (window as any).__privyUser;
+    if (privyUser && shouldUsePrivyTokenAuth(privyUser)) {
+      await signInWithPrivy();
+      return;
+    }
+    if (isConnected && address) {
+      await signInWithWallet();
+    }
+  }, [address, isConnected, signInWithPrivy, signInWithWallet]);
+
   useEffect(() => {
     if (!isConnected || !address || manualSignOutRef.current) return;
 
@@ -532,7 +558,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [isConnected, address, session, signInWithWallet]);
 
   return (
-    <AuthContext.Provider value={{ user, session, isLoading, signInWithWallet, signInWithPrivy, signOut, resetManualSignOut }}>
+    <AuthContext.Provider value={{ user, session, isLoading, signInWithWallet, signInWithPrivy, retrySignIn, signOut, resetManualSignOut }}>
       {children}
     </AuthContext.Provider>
   );

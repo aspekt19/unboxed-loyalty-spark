@@ -6,29 +6,28 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useState, useEffect } from 'react';
 import { useAccount, useBalance } from 'wagmi';
 import { useRoundUp } from '@/hooks/useRoundUp';
-import { Send, TrendingUp, Info } from 'lucide-react';
-import { isAddress, parseEther, formatEther } from 'viem';
+import { Send, TrendingUp, Info, Loader2 } from 'lucide-react';
+import { parseEther, formatEther } from 'viem';
 import { z } from 'zod';
 import { toast } from 'sonner';
+import { RecipientInput, type RecipientInputType } from '@/components/shared/RecipientInput';
+import { useResolveRecipient } from '@/hooks/useResolveRecipient';
 
-const sendSchema = z.object({
-  recipient: z.string().refine((val) => isAddress(val), {
-    message: "Invalid Ethereum address",
-  }),
-  amount: z.string().refine((val) => {
-    const num = parseFloat(val);
-    return !isNaN(num) && num > 0;
-  }, {
-    message: "Amount must be greater than 0",
-  }),
+const amountSchema = z.string().refine((val) => {
+  const num = parseFloat(val);
+  return !isNaN(num) && num > 0;
+}, {
+  message: "Amount must be greater than 0",
 });
 
 export const SendWithRoundUp = () => {
   const { address } = useAccount();
   const { data: balance } = useBalance({ address });
   const { roundUp, isPending } = useRoundUp(address);
+  const { resolveRecipient, isResolving } = useResolveRecipient();
 
   const [recipient, setRecipient] = useState('');
+  const [recipientInputType, setRecipientInputType] = useState<RecipientInputType>('wallet');
   const [amount, setAmount] = useState('');
   const [errors, setErrors] = useState<{ recipient?: string; amount?: string }>({});
   const [ethPriceUsd, setEthPriceUsd] = useState<number>(0);
@@ -84,19 +83,14 @@ export const SendWithRoundUp = () => {
   const handleSend = async () => {
     setErrors({});
 
-    // Validate inputs
-    const validation = sendSchema.safeParse({ recipient, amount });
-    
-    if (!validation.success) {
-      const fieldErrors: { recipient?: string; amount?: string } = {};
-      validation.error.errors.forEach((err) => {
-        if (err.path[0] === 'recipient') {
-          fieldErrors.recipient = err.message;
-        } else if (err.path[0] === 'amount') {
-          fieldErrors.amount = err.message;
-        }
-      });
-      setErrors(fieldErrors);
+    if (!recipient.trim()) {
+      setErrors({ recipient: 'Recipient is required' });
+      return;
+    }
+
+    const amountValidation = amountSchema.safeParse(amount);
+    if (!amountValidation.success) {
+      setErrors({ amount: amountValidation.error.errors[0]?.message ?? 'Invalid amount' });
       return;
     }
 
@@ -106,8 +100,15 @@ export const SendWithRoundUp = () => {
       return;
     }
 
+    // Resolve email/phone → wallet address (or pass through if already 0x...)
+    const resolved = await resolveRecipient(recipient);
+    if (!resolved) {
+      setErrors({ recipient: 'Could not resolve recipient' });
+      return;
+    }
+
     try {
-      await roundUp(recipient as `0x${string}`, totalAmount);
+      await roundUp(resolved as `0x${string}`, totalAmount);
       setRecipient('');
       setAmount('');
     } catch (error) {
@@ -130,18 +131,18 @@ export const SendWithRoundUp = () => {
       </div>
 
       <div className="space-y-4">
-        {/* Recipient Address */}
-        <div className="space-y-2">
-          <Label htmlFor="recipient">Recipient Address</Label>
-          <Input
+        {/* Recipient (wallet / email / phone) */}
+        <div className="space-y-1">
+          <RecipientInput
             id="recipient"
-            placeholder="0x..."
             value={recipient}
-            onChange={(e) => {
-              setRecipient(e.target.value.trim());
+            onChange={(v) => {
+              setRecipient(v);
               setErrors((prev) => ({ ...prev, recipient: undefined }));
             }}
-            className={errors.recipient ? 'border-destructive' : ''}
+            inputType={recipientInputType}
+            onInputTypeChange={setRecipientInputType}
+            disabled={isPending || isResolving}
           />
           {errors.recipient && (
             <p className="text-xs text-destructive">{errors.recipient}</p>
@@ -229,9 +230,10 @@ export const SendWithRoundUp = () => {
         <Button
           className="w-full"
           onClick={handleSend}
-          disabled={isPending || loadingPrice || !recipient || !amount || parseFloat(amount) <= 0}
+          disabled={isPending || isResolving || loadingPrice || !recipient || !amount || parseFloat(amount) <= 0}
         >
-          {isPending ? 'Sending...' : loadingPrice ? 'Loading...' : 'Send with Round-Up'}
+          {(isPending || isResolving) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isResolving ? 'Looking up recipient...' : isPending ? 'Sending...' : loadingPrice ? 'Loading...' : 'Send with Round-Up'}
         </Button>
       </div>
     </Card>
