@@ -6,6 +6,7 @@ import { PaymentRequestsManagement } from '@/components/admin/PaymentRequestsMan
 import { PaymentSettingsManagement } from '@/components/admin/PaymentSettingsManagement';
 import { PremiumManagement } from '@/components/admin/PremiumManagement';
 import { AdminManagement } from '@/components/admin/AdminManagement';
+import { UserManagement } from '@/components/admin/UserManagement';
 import { Shield, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -63,8 +64,9 @@ const AdminPage = () => {
 
         <Tabs defaultValue="premium" className="space-y-4 sm:space-y-6">
           <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-2">
-            <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-4 gap-1">
+            <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-5 gap-1">
               <TabsTrigger value="premium" className="text-xs sm:text-sm whitespace-nowrap flex-shrink-0">Subscriptions</TabsTrigger>
+              <TabsTrigger value="users" className="text-xs sm:text-sm whitespace-nowrap flex-shrink-0">Users</TabsTrigger>
               <TabsTrigger value="admins" className="text-xs sm:text-sm whitespace-nowrap flex-shrink-0">Admins</TabsTrigger>
               <TabsTrigger value="requests" className="text-xs sm:text-sm whitespace-nowrap flex-shrink-0">Requests</TabsTrigger>
               <TabsTrigger value="settings" className="text-xs sm:text-sm whitespace-nowrap flex-shrink-0">Settings</TabsTrigger>
@@ -73,6 +75,10 @@ const AdminPage = () => {
 
           <TabsContent value="premium">
             <PremiumManagement />
+          </TabsContent>
+
+          <TabsContent value="users">
+            <UserManagement />
           </TabsContent>
 
           <TabsContent value="admins">
