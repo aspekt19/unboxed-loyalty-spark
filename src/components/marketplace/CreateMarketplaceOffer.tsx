@@ -15,8 +15,6 @@ import { CONTRACTS } from '@/config/contracts';
 import { Loader2, ArrowRightLeft, Shield, Info, CheckCircle2 } from 'lucide-react';
 import { z } from 'zod';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useActiveWallet } from '@/contexts/ActiveWalletContext';
-import { WalletMismatchBanner } from '@/components/identity/WalletMismatchBanner';
 
 interface TokenInfo {
   address: string;
@@ -36,7 +34,6 @@ type Step = 'form' | 'approving' | 'creating';
 
 export function CreateMarketplaceOffer() {
   const { address } = useAccount();
-  const { isWalletMismatch } = useActiveWallet();
   const [tokens, setTokens] = useState<TokenInfo[]>([]);
   const [offerTokenAddress, setOfferTokenAddress] = useState('');
   const [offerAmount, setOfferAmount] = useState('');
@@ -94,10 +91,6 @@ export function CreateMarketplaceOffer() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isWalletMismatch) {
-      toast.error('Reconnect your primary wallet to sign the swap');
-      return;
-    }
     if (!address) {
       toast.error('Please connect your wallet');
       return;
@@ -208,8 +201,7 @@ export function CreateMarketplaceOffer() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <WalletMismatchBanner />
-        <Alert className="mb-4 mt-4 border-green-500/50 bg-green-500/5">
+        <Alert className="mb-4 border-green-500/50 bg-green-500/5">
           <Shield className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-sm">
             <strong>Escrow Protected:</strong> Your tokens are locked in a smart contract. The swap is atomic — either both transfers happen, or neither does.
@@ -300,15 +292,10 @@ export function CreateMarketplaceOffer() {
           <Button
             type="submit"
             className="w-full"
-            disabled={isProcessing || !offerTokenAddress || !offerAmount || !requestTokenAddress || !requestAmount || balancesLoading || isWalletMismatch}
-            title={isWalletMismatch ? 'Reconnect your primary wallet to sign' : undefined}
+            disabled={isProcessing || !offerTokenAddress || !offerAmount || !requestTokenAddress || !requestAmount || balancesLoading}
           >
             {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isWalletMismatch
-              ? 'Reconnect primary wallet'
-              : isProcessing
-                ? 'Processing...'
-                : 'Create Escrow Offer'}
+            {isProcessing ? 'Processing...' : 'Create Escrow Offer'}
           </Button>
         </form>
       </CardContent>

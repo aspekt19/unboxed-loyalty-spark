@@ -3,19 +3,13 @@ import { isFarcasterContext } from '@/config/wagmi';
 
 const isFarcaster = isFarcasterContext();
 
-type LoginOptions = Parameters<ReturnType<typeof usePrivyOriginal>['login']>[0];
-
 interface PrivySafeResult {
-  login: (options?: LoginOptions) => void;
+  login: () => void;
   logout: () => Promise<void>;
   authenticated: boolean;
   user: any;
   ready: boolean;
   getAccessToken: () => Promise<string | null>;
-  linkEmail: () => void;
-  unlinkEmail: (email: string) => Promise<unknown>;
-  linkWallet: () => void;
-  unlinkWallet: (address: string) => Promise<unknown>;
 }
 
 const noopResult: PrivySafeResult = {
@@ -25,10 +19,6 @@ const noopResult: PrivySafeResult = {
   user: null,
   ready: false,
   getAccessToken: async () => null,
-  linkEmail: () => {},
-  unlinkEmail: async () => {},
-  linkWallet: () => {},
-  unlinkWallet: async () => {},
 };
 
 function isLovablePreviewHost(): boolean {
@@ -53,10 +43,6 @@ export function usePrivySafe(): PrivySafeResult {
       user: privy.user,
       ready: privy.ready,
       getAccessToken: privy.getAccessToken,
-      linkEmail: privy.linkEmail,
-      unlinkEmail: privy.unlinkEmail,
-      linkWallet: privy.linkWallet,
-      unlinkWallet: privy.unlinkWallet,
     };
   } catch {
     return noopResult;

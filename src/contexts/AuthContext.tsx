@@ -158,6 +158,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { data: { session: existingSession } } = await supabase.auth.getSession();
       if (existingSession) {
+        const isExpired = existingSession.expires_at
+          ? new Date(existingSession.expires_at * 1000) < new Date()
+          : false;
+
+        if (!isExpired) {
+          setSession(existingSession);
+          setUser(existingSession.user);
+          setIsLoading(false);
+          window.dispatchEvent(new Event('sessionReady'));
+          return;
+        }
+
         await supabase.auth.signOut();
       }
 
@@ -224,21 +236,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         access_token = authPayload.access_token;
         refresh_token = authPayload.refresh_token;
         lastTransientError = null;
-
-        // Stash secondary-wallet notice for the UI banner
-        try {
-          if (authPayload.secondary_wallet_linked && typeof window !== 'undefined') {
-            window.localStorage.setItem(
-              'loyalspark:secondary-wallet-notice',
-              JSON.stringify({
-                wallet: authPayload.secondary_wallet_linked,
-                at: Date.now(),
-              })
-            );
-          }
-        } catch {
-          // ignore storage errors
-        }
         break;
       }
 

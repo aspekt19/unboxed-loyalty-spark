@@ -23,8 +23,6 @@ import { ProgramExpirationInfo } from '@/components/ProgramExpirationInfo';
 import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
 import { isFarcasterContext } from '@/config/wagmi';
 import { Input } from '@/components/ui/input';
-import { useActiveWallet } from '@/contexts/ActiveWalletContext';
-import { WalletMismatchBanner } from '@/components/identity/WalletMismatchBanner';
 
 interface TokenInfo {
   address: string;
@@ -41,7 +39,6 @@ interface RewardsSelectionProps {
 
 export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
   const { address } = useAccount();
-  const { activeWallet, isWalletMismatch } = useActiveWallet();
   const { user, session, signInWithWallet, isLoading: authLoading } = useAuth();
   const isFarcaster = isFarcasterContext();
   const [tokens, setTokens] = useState<TokenInfo[]>([]);
@@ -53,7 +50,7 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [programSearch, setProgramSearch] = useState('');
 
-  const { balances, isLoading: balancesLoading, refetch } = useMultiTokenBalance(tokens, activeWallet);
+  const { balances, isLoading: balancesLoading, refetch } = useMultiTokenBalance(tokens);
   const { burnTokens, isPending, isSuccess, hash } = useBurnTokens();
   const { approveTokens, isPending: isApproving, isSuccess: isApproved } = useApproveTokens();
 
@@ -95,7 +92,7 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
 
   // ── Pre-verify profile status (no async in activate handler) ──
   useEffect(() => {
-    if (!activeWallet || !session) {
+    if (!address || !session) {
       setProfileVerified(false);
       return;
     }
@@ -105,7 +102,7 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('wallet_address')
-            .eq('wallet_address', activeWallet.toLowerCase())
+          .eq('wallet_address', address.toLowerCase())
           .maybeSingle();
         
         setProfileVerified(!error && !!profile);
@@ -123,7 +120,7 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
       window.removeEventListener('profileMigrated', handleProfileUpdate);
       window.removeEventListener('sessionReady', handleProfileUpdate);
     };
-  }, [activeWallet, session]);
+  }, [address, session]);
 
   // ── Auto-auth on wallet connect ──
   useEffect(() => {
@@ -265,7 +262,6 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
 
   // ── Activate handler — SYNCHRONOUS to preserve popup gesture chain ──
   const handleActivate = useCallback(() => {
-    if (isWalletMismatch) { toast.error('Reconnect your primary wallet to redeem'); return; }
     if (!address) { toast.error('Please connect your wallet'); return; }
     if (!session || !profileVerified) { toast.error('Please sign in first'); return; }
     if (isProgramPaused) { toast.error('This loyalty program is currently inactive.'); return; }
@@ -294,7 +290,7 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
       CONTRACTS.LOYAL_SPARK_ERC20.abi,
       reward.merchantAddress,
     );
-  }, [isWalletMismatch, address, session, profileVerified, isProgramPaused, selectedTokenAddress, selectedRewardId, availableRewards, balances, burnTokens]);
+  }, [address, session, profileVerified, isProgramPaused, selectedTokenAddress, selectedRewardId, availableRewards, balances, burnTokens]);
 
   const needsApproval = () => false;
 
@@ -378,7 +374,6 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
           </Alert>
         ) : (
           <div className="space-y-4">
-            <WalletMismatchBanner />
             {/* Verification alerts */}
             <VerificationStatusAlerts
               verification={verification}
@@ -513,16 +508,11 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
                   <Button
                     type="button"
                     onClick={handleActivate}
-                    disabled={!selectedRewardId || isPending || balancesLoading || isProgramPaused || isLoadingRewards || isWalletMismatch}
+                    disabled={!selectedRewardId || isPending || balancesLoading || isProgramPaused || isLoadingRewards}
                     className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
-                    title={isWalletMismatch ? 'Reconnect your primary wallet to sign' : undefined}
                   >
                     {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {isWalletMismatch
-                      ? 'Reconnect primary wallet'
-                      : isProgramPaused
-                        ? 'Program Inactive'
-                        : 'Activate Voucher'}
+                    {isProgramPaused ? 'Program Inactive' : 'Activate Voucher'}
                   </Button>
                 )}
               </>

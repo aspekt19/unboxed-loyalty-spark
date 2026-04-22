@@ -17,9 +17,8 @@ export interface TokenBalance extends TokenInfo {
   rawBalance: bigint;
 }
 
-export function useMultiTokenBalance(tokens: TokenInfo[], overrideAddress?: string | null) {
-  const { address: connectedAddress } = useAccount();
-  const address = (overrideAddress ?? connectedAddress) as `0x${string}` | undefined;
+export function useMultiTokenBalance(tokens: TokenInfo[]) {
+  const { address } = useAccount();
   const publicClient = usePublicClient();
   const [balances, setBalances] = useState<TokenBalance[]>([]);
   const [isLoading, setIsLoading] = useState(false);

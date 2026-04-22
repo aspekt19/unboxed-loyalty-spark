@@ -20,8 +20,6 @@ import { mintTokensSchema } from '@/lib/validationSchemas';
 import { useQuery } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { WalletMismatchBanner } from '@/components/identity/WalletMismatchBanner';
-import { useActiveWallet } from '@/contexts/ActiveWalletContext';
 
 interface TeamMembership {
   merchant_address: string;
@@ -66,7 +64,6 @@ export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: Merchant
   const [workspace, setWorkspace] = useState<string>('own');
   
   const { mintTokens, isPending, isSuccess, reset, hash } = useMintTokens();
-  const { isWalletMismatch } = useActiveWallet();
   const { isPaused, isMintingActive } = useCheckProgramStatus(
     selectedProgram?.tokenAddress as `0x${string}` | undefined
   );
@@ -133,10 +130,6 @@ export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: Merchant
   }, [workspace]);
 
   const handleMintSubmit = async (recipientAddress: string, amount: string) => {
-    if (isWalletMismatch) {
-      toast.error('Reconnect your primary wallet to sign on-chain actions');
-      return;
-    }
     if (!selectedProgram) {
       toast.error('Please select a loyalty program first');
       return;
@@ -205,7 +198,6 @@ export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: Merchant
 
   return (
     <div className="space-y-4">
-      <WalletMismatchBanner />
       {showWorkspaceSwitcher && (
         <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
           <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground flex-shrink-0">

@@ -25,8 +25,6 @@ import {
 } from '@/components/ui/dialog';
 import { RecipientInput, type RecipientInputType } from '@/components/shared/RecipientInput';
 import { useResolveRecipient } from '@/hooks/useResolveRecipient';
-import { useActiveWallet } from '@/contexts/ActiveWalletContext';
-import { WalletMismatchBanner } from '@/components/identity/WalletMismatchBanner';
 
 interface TokenListProps {
   selectedProgram: string | null;
@@ -51,8 +49,7 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, 
   const [searchQuery, setSearchQuery] = useState('');
   const publicClient = usePublicClient();
   const { address: walletAddress } = useAccount();
-  const { activeWallet, isWalletMismatch } = useActiveWallet();
-  const { balances, isLoading, refetch } = useMultiTokenBalance(allTokens, activeWallet);
+  const { balances, isLoading, refetch } = useMultiTokenBalance(allTokens);
   const { transferTokens, isPending, isSuccess } = useTransferTokens();
   const isMobile = useIsMobile();
   const { selectionChanged } = useFarcasterHaptics();
@@ -387,10 +384,6 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, 
   const handleTransfer = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (isWalletMismatch) {
-      toast.error('Reconnect your primary wallet to sign the transfer');
-      return;
-    }
     if (!selectedToken || !recipientAddress || !transferAmount) {
       toast.error('Please fill all fields');
       return;
@@ -574,7 +567,6 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, 
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleTransfer} className="space-y-4 mt-4">
-              <WalletMismatchBanner />
               <RecipientInput
                 id="recipient"
                 value={recipientAddress}
@@ -597,18 +589,9 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, 
                   Available: {selectedToken ? parseFloat(balances.find(b => b.address === selectedToken.address)?.balance || '0').toFixed(2) : '0.00'} {selectedToken?.symbol}
                 </p>
               </div>
-              <Button
-                type="submit"
-                disabled={isPending || isResolving || isWalletMismatch}
-                className="w-full"
-                title={isWalletMismatch ? 'Reconnect your primary wallet to sign' : undefined}
-              >
+              <Button type="submit" disabled={isPending || isResolving} className="w-full">
                 {(isPending || isResolving) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isWalletMismatch
-                  ? 'Reconnect primary wallet'
-                  : isResolving
-                    ? 'Looking up recipient...'
-                    : 'Transfer Tokens'}
+                {isResolving ? 'Looking up recipient...' : 'Transfer Tokens'}
               </Button>
             </form>
           </DialogContent>
