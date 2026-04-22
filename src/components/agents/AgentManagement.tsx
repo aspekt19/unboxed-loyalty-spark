@@ -25,6 +25,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAccount } from 'wagmi';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AgentActivityLog } from './AgentActivityLog';
+import { PUBLIC_MCP_URL } from '@/config/publicApi';
 
 const AVAILABLE_SCOPES = [
   { value: 'read', label: 'Read', description: 'View programs, rewards, balances' },
