@@ -6,21 +6,18 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useState, useEffect } from 'react';
 import { useAccount, useBalance } from 'wagmi';
 import { useRoundUp } from '@/hooks/useRoundUp';
-import { Send, TrendingUp, Info } from 'lucide-react';
-import { isAddress, parseEther, formatEther } from 'viem';
+import { Send, TrendingUp, Info, Loader2 } from 'lucide-react';
+import { parseEther, formatEther } from 'viem';
 import { z } from 'zod';
 import { toast } from 'sonner';
+import { RecipientInput, type RecipientInputType } from '@/components/shared/RecipientInput';
+import { useResolveRecipient } from '@/hooks/useResolveRecipient';
 
-const sendSchema = z.object({
-  recipient: z.string().refine((val) => isAddress(val), {
-    message: "Invalid Ethereum address",
-  }),
-  amount: z.string().refine((val) => {
-    const num = parseFloat(val);
-    return !isNaN(num) && num > 0;
-  }, {
-    message: "Amount must be greater than 0",
-  }),
+const amountSchema = z.string().refine((val) => {
+  const num = parseFloat(val);
+  return !isNaN(num) && num > 0;
+}, {
+  message: "Amount must be greater than 0",
 });
 
 export const SendWithRoundUp = () => {
