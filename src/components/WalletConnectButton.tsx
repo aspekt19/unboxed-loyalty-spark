@@ -8,6 +8,7 @@ import { isFarcasterContext } from '@/config/wagmi';
 import { usePrivySafe } from '@/hooks/usePrivySafe';
 import { getPrivyLinkedAccounts, getPrivyPrimaryEmail, shouldUsePrivyTokenAuth } from '@/lib/privyAuth';
 import { cn } from '@/lib/utils';
+import { SigningInButton } from '@/components/auth/SigningInButton';
 
 /**
  * Header row: wallet / Sign in. Matches landing nav clay-pill style (rounded-full pills).
@@ -138,28 +139,9 @@ export function WalletConnectButton() {
     signInWithPrivy,
   ]);
 
-  // Wallet-only Privy login: after wagmi is connected, complete app auth with SIWE.
-  useEffect(() => {
-    if (isFarcaster || !privyReady || user || isManuallyDisconnected || !privyAuthenticated || !privyUserId) return;
-    if (useTokenAuth) return;
-    if (!isConnected || !address) return;
-
-    const t = window.setTimeout(() => {
-      void signInWithWallet();
-    }, 400);
-    return () => window.clearTimeout(t);
-  }, [
-    isFarcaster,
-    privyReady,
-    user,
-    isManuallyDisconnected,
-    privyAuthenticated,
-    privyUserId,
-    useTokenAuth,
-    isConnected,
-    address,
-    signInWithWallet,
-  ]);
+  // Wallet-only Privy login: do NOT auto-trigger SIWE on mount/focus.
+  // Signature requests must only happen on an explicit user gesture (handleConnect),
+  // otherwise users see the wallet popup unexpectedly when revisiting the app.
 
   const handleDisconnect = async () => {
     try {
@@ -275,18 +257,9 @@ export function WalletConnectButton() {
   }
 
   if (!user) {
-    return (
-      <button
-        disabled
-        type="button"
-        className={headerAuthButtonClass(
-          'bg-primary text-primary-foreground shadow-clay-primary opacity-90 disabled:pointer-events-none disabled:opacity-50',
-        )}
-      >
-        <LogIn className="h-3.5 w-3.5 animate-pulse flex-shrink-0" />
-        <span className="truncate">Signing in...</span>
-      </button>
-    );
+    return <SigningInButton onTimeout={handleDisconnect} className={headerAuthButtonClass(
+      'bg-primary text-primary-foreground shadow-clay-primary opacity-90 disabled:pointer-events-none disabled:opacity-50',
+    )} />;
   }
 
   const displayAddress = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : '';

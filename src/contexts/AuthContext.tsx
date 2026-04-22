@@ -406,9 +406,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await signInWithWallet();
           } else if (isPrivySocial) {
             await signInWithPrivy();
-          } else if (isConnected && address) {
-            await signInWithWallet();
           } else {
+            // Wallet-only (non-Farcaster): do NOT auto-trigger SIWE.
+            // Signature must come from an explicit user click on Sign In.
             setSession(null);
             setUser(null);
           }
@@ -424,9 +424,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               await signInWithWallet();
             } else if (isPrivySocial) {
               await signInWithPrivy();
-            } else if (isConnected && address) {
-              await signInWithWallet();
             }
+            // Wallet-only (non-Farcaster): no auto-SIWE here either.
           }
           return;
         }
@@ -450,9 +449,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await signInWithWallet();
           } else if (isPrivySocial) {
             await signInWithPrivy();
-          } else if (isConnected && address) {
-            await signInWithWallet();
           }
+          // Wallet-only (non-Farcaster): no auto-SIWE — wait for explicit click.
         }
       } catch (error) {
         console.error('[AuthProvider] Session check error:', error);
@@ -503,6 +501,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
 
         if (!currentSession && isConnected && address) {
+          // Farcaster only: auto re-sign is acceptable inside the embedded wallet.
           setTimeout(() => signInWithWallet(), 500);
         } else if (currentSession) {
           setSession(currentSession);
