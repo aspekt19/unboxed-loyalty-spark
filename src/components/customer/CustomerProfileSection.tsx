@@ -72,6 +72,53 @@ export function CustomerProfileSection() {
     load();
   }, [address, privyVerifiedEmail]);
 
+  const emailIsVerified =
+    !!email && !!privyVerifiedEmail && email.toLowerCase() === privyVerifiedEmail.toLowerCase();
+
+  // After Privy verifies an email, persist it. MUST be before any early return.
+  useEffect(() => {
+    if (!user || !address || !privyVerifiedEmail) return;
+    if (email.toLowerCase() === privyVerifiedEmail.toLowerCase()) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const { error: cpErr } = await supabase
+          .from('customer_profiles')
+          .upsert(
+            { wallet_address: address.toLowerCase(), email: privyVerifiedEmail },
+            { onConflict: 'wallet_address' }
+          );
+
+        if (cpErr) {
+          const code = (cpErr as { code?: string }).code;
+          const msg = cpErr.message ?? '';
+          if (code === '23505' || /duplicate key|unique/i.test(msg)) {
+            if (!cancelled) {
+              setConflictedEmail(privyVerifiedEmail);
+              setConflictDialogOpen(true);
+            }
+            return;
+          }
+          throw cpErr;
+        }
+
+        await supabase.from('profiles').update({ email: privyVerifiedEmail }).eq('user_id', user.id);
+
+        if (!cancelled) {
+          setEmail(privyVerifiedEmail);
+          toast.success('Email verified and saved');
+        }
+      } catch (err) {
+        console.error('Failed to persist verified email:', err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [privyVerifiedEmail, user, address, email]);
+
   if (authLoading) return null;
 
   if (!address || !user || !session) {
@@ -89,9 +136,6 @@ export function CustomerProfileSection() {
   const initials = firstName && lastName
     ? `${firstName[0]}${lastName[0]}`.toUpperCase()
     : address.slice(2, 4).toUpperCase();
-
-  const emailIsVerified =
-    !!email && !!privyVerifiedEmail && email.toLowerCase() === privyVerifiedEmail.toLowerCase();
 
   const handleSaveProfile = async () => {
     setSaving(true);
