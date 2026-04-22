@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import type * as React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -78,5 +78,5 @@ export function isLikelyWalletAddress(value: string): boolean {
   return /^0x[a-fA-F0-9]{40}$/.test(value.trim());
 }
 
-// Re-export useState type-friendly helper for callers
-export const _internal_useState_for_typecheck = useState;
+// Type marker keeps React import retained even after JSX transpile.
+export type { React };
