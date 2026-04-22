@@ -70,6 +70,29 @@ Nonce: ${nonce}
 Issued At: ${issuedAt}`;
 }
 
+const PRIVY_AUTH_RETRY_DELAYS_MS = [0, 1200, 2500, 4500] as const;
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+function isTransientPrivyAuthIssue(message: string, status?: number): boolean {
+  const normalized = message.toLowerCase();
+
+  if (normalized.includes('identity mismatch')) return false;
+
+  return (
+    status === 401 ||
+    status === 408 ||
+    status === 429 ||
+    (status !== undefined && status >= 500) ||
+    normalized.includes('privy access token not available') ||
+    normalized.includes('invalid privy token') ||
+    normalized.includes('network') ||
+    normalized.includes('fetch failed')
+  );
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -152,37 +175,74 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setIsLoading(true);
 
-      const privyAccessToken = await getAccessToken();
-      if (!privyAccessToken) {
-        throw new Error('Privy access token not available');
-      }
-
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const response = await fetch(`${supabaseUrl}/functions/v1/privy-auth`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
-        body: JSON.stringify({
-          privyToken: privyAccessToken,
-          privyDid: privyUser.id,
-          email: getPrivyPrimaryEmail(privyUser),
-          walletAddress: address?.toLowerCase()
-            ?? privyUser?.wallet?.address?.toLowerCase()
-            ?? getPrivyLinkedAccounts(privyUser)
-              .find((a: PrivyLinkedAccount) => a.type === 'wallet' || a.type === 'smart_wallet')
-              ?.address?.toLowerCase()
-            ?? null,
-        }),
-      });
+      let access_token: string | null = null;
+      let refresh_token: string | null = null;
+      let lastTransientError: Error | null = null;
 
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Privy authentication failed');
+      for (let attempt = 0; attempt < PRIVY_AUTH_RETRY_DELAYS_MS.length; attempt += 1) {
+        if (attempt > 0) {
+          await wait(PRIVY_AUTH_RETRY_DELAYS_MS[attempt]);
+        }
+
+        const privyAccessToken = await getAccessToken();
+        if (!privyAccessToken) {
+          lastTransientError = new Error('Privy access token not available');
+          continue;
+        }
+
+        const response = await fetch(`${supabaseUrl}/functions/v1/privy-auth`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({
+            privyToken: privyAccessToken,
+            privyDid: privyUser.id,
+            email: getPrivyPrimaryEmail(privyUser),
+            walletAddress: address?.toLowerCase()
+              ?? privyUser?.wallet?.address?.toLowerCase()
+              ?? getPrivyLinkedAccounts(privyUser)
+                .find((a: PrivyLinkedAccount) => a.type === 'wallet' || a.type === 'smart_wallet')
+                ?.address?.toLowerCase()
+              ?? null,
+          }),
+        });
+
+        if (!response.ok) {
+          let errorMessage = 'Privy authentication failed';
+          try {
+            const err = await response.json();
+            errorMessage = err.error || errorMessage;
+          } catch {
+            try {
+              const raw = await response.text();
+              if (raw) errorMessage = raw;
+            } catch {
+              // keep fallback message
+            }
+          }
+
+          if (attempt < PRIVY_AUTH_RETRY_DELAYS_MS.length - 1 && isTransientPrivyAuthIssue(errorMessage, response.status)) {
+            lastTransientError = new Error(errorMessage);
+            continue;
+          }
+
+          throw new Error(errorMessage);
+        }
+
+        const authPayload = await response.json();
+        access_token = authPayload.access_token;
+        refresh_token = authPayload.refresh_token;
+        lastTransientError = null;
+        break;
       }
 
-      const { access_token, refresh_token } = await response.json();
+      if (!access_token || !refresh_token) {
+        throw lastTransientError ?? new Error('Privy authentication failed');
+      }
+
       const { error: setSessionError } = await supabase.auth.setSession({ access_token, refresh_token });
       if (setSessionError) throw setSessionError;
 
