@@ -250,7 +250,7 @@ export function AgentManagement() {
                 <Bot className="h-3.5 w-3.5 flex-shrink-0" /> <span className="truncate">Agent Card</span> <ExternalLink className="h-3 w-3 flex-shrink-0" />
               </Button>
             </a>
-            <a href="https://api.loyalspark.online/loyalty-mcp" target="_blank" rel="noopener noreferrer">
+            <a href={PUBLIC_MCP_URL} target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm" className="gap-1 w-full sm:w-auto text-xs sm:text-sm">
                 <Cpu className="h-3.5 w-3.5 flex-shrink-0" /> <span className="truncate">MCP Server</span> <ExternalLink className="h-3 w-3 flex-shrink-0" />
               </Button>
