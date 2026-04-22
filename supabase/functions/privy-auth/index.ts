@@ -257,16 +257,60 @@ serve(async (req) => {
     //   overwrite the existing primary wallet's profile row).
     // ──────────────────────────────────────────────────────────────────
     if (!mergedWithExistingAccount && resolvedWalletAddress) {
-      const { error: profileError } = await supabaseAdmin.from("profiles").upsert(
+      // 3a. First, ensure a profiles row exists for this wallet (without email,
+      //     so the unique-email index can never block creation).
+      const { error: baseProfileError } = await supabaseAdmin.from("profiles").upsert(
         {
           user_id: userId,
           wallet_address: resolvedWalletAddress,
-          email: resolvedEmail,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "wallet_address" }
       );
-      if (profileError) console.error("Profile upsert error:", profileError);
+      if (baseProfileError) console.error("Base profile upsert error:", baseProfileError);
+
+      // 3b. Then try to attach the verified email. If unique(email) blocks it,
+      //     log and continue — the row itself is already in place.
+      if (resolvedEmail) {
+        const { error: emailError } = await supabaseAdmin
+          .from("profiles")
+          .update({ email: resolvedEmail, updated_at: new Date().toISOString() })
+          .eq("user_id", userId);
+        if (emailError) {
+          const code = (emailError as { code?: string }).code;
+          const msg = emailError.message ?? "";
+          if (code === "23505" || /duplicate key|unique/i.test(msg)) {
+            console.warn(
+              `Email ${resolvedEmail} already attached to another profile — skipping email write for ${userId}`
+            );
+          } else {
+            console.error("Profile email update error:", emailError);
+          }
+        } else {
+          // Mirror to customer_profiles too, so the verified email shows up in the form
+          const { error: cpError } = await supabaseAdmin
+            .from("customer_profiles")
+            .upsert(
+              {
+                wallet_address: resolvedWalletAddress,
+                email: resolvedEmail,
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: "wallet_address" }
+            );
+          if (cpError) {
+            const code = (cpError as { code?: string }).code;
+            const msg = cpError.message ?? "";
+            if (code === "23505" || /duplicate key|unique/i.test(msg)) {
+              console.warn(
+                `Email ${resolvedEmail} already in customer_profiles — skipping mirror for ${resolvedWalletAddress}`
+              );
+            } else {
+              console.error("customer_profiles email upsert error:", cpError);
+            }
+          }
+        }
+      }
 
       // Mark first wallet as primary in identity_links
       const { error: linkError } = await supabaseAdmin.from("identity_links").upsert(
