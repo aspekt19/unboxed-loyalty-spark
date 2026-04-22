@@ -81,8 +81,19 @@ export function CustomerProfileSection() {
         }, { onConflict: 'wallet_address' });
       if (error) throw error;
       toast.success('Profile saved');
-    } catch {
-      toast.error('Failed to save profile');
+    } catch (e: unknown) {
+      const err = e as { code?: string; message?: string } | null;
+      const msg = err?.message ?? '';
+      const isUnique = err?.code === '23505' || /duplicate key|unique/i.test(msg);
+      if (isUnique && /email/i.test(msg)) {
+        toast.error('This email is already used by another account');
+      } else if (isUnique && /phone/i.test(msg)) {
+        toast.error('This phone is already used by another account');
+      } else if (isUnique) {
+        toast.error('This contact is already used by another account');
+      } else {
+        toast.error('Failed to save profile');
+      }
     } finally {
       setSaving(false);
     }
