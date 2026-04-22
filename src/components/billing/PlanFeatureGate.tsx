@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { useEffectivePlan, type PlanProduct } from '@/hooks/useEffectivePlan';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Lock, Sparkles } from 'lucide-react';
+import { Lock, Rocket } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface Props {
@@ -39,7 +39,7 @@ export function PlanFeatureGate({ product, feature, upgradeHref, children }: Pro
         {plan.isExpired ? (
           <Lock className="h-4 w-4" />
         ) : (
-          <Sparkles className="h-4 w-4" />
+          <Rocket className="h-4 w-4" />
         )}
         <AlertTitle className="flex items-center justify-between gap-3 flex-wrap">
           <span>

@@ -78,6 +78,7 @@ export function MerchantDiscoverPanel() {
   const [sortMode, setSortMode] = useState<SortMode>('newest');
   const [onlyNew, setOnlyNew] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   useIsMobile();
 
@@ -258,7 +259,10 @@ export function MerchantDiscoverPanel() {
           <button
             key={cat.value}
             type="button"
-            onClick={() => setCategory(cat.value)}
+            onClick={() => {
+              setCategory(cat.value);
+              setMobileSheetOpen(false);
+            }}
             className={cn(
               'w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm transition-colors',
               isActive
@@ -322,7 +326,7 @@ export function MerchantDiscoverPanel() {
             </div>
 
             {/* Mobile: open categories sheet */}
-            <Sheet>
+            <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
               <SheetTrigger asChild>
                 <Button
                   variant="outline"
@@ -391,7 +395,7 @@ export function MerchantDiscoverPanel() {
               className="h-8 text-xs"
               onClick={() => setOnlyNew((v) => !v)}
             >
-              <Sparkles className="h-3.5 w-3.5 mr-1" />
+              <Flame className="h-3.5 w-3.5 mr-1" />
               New (30 days)
             </Button>
             {(category !== 'all' ||
