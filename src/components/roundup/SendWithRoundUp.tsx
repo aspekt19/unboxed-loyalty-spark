@@ -83,19 +83,14 @@ export const SendWithRoundUp = () => {
   const handleSend = async () => {
     setErrors({});
 
-    // Validate inputs
-    const validation = sendSchema.safeParse({ recipient, amount });
-    
-    if (!validation.success) {
-      const fieldErrors: { recipient?: string; amount?: string } = {};
-      validation.error.errors.forEach((err) => {
-        if (err.path[0] === 'recipient') {
-          fieldErrors.recipient = err.message;
-        } else if (err.path[0] === 'amount') {
-          fieldErrors.amount = err.message;
-        }
-      });
-      setErrors(fieldErrors);
+    if (!recipient.trim()) {
+      setErrors({ recipient: 'Recipient is required' });
+      return;
+    }
+
+    const amountValidation = amountSchema.safeParse(amount);
+    if (!amountValidation.success) {
+      setErrors({ amount: amountValidation.error.errors[0]?.message ?? 'Invalid amount' });
       return;
     }
 
@@ -105,8 +100,15 @@ export const SendWithRoundUp = () => {
       return;
     }
 
+    // Resolve email/phone → wallet address (or pass through if already 0x...)
+    const resolved = await resolveRecipient(recipient);
+    if (!resolved) {
+      setErrors({ recipient: 'Could not resolve recipient' });
+      return;
+    }
+
     try {
-      await roundUp(recipient as `0x${string}`, totalAmount);
+      await roundUp(resolved as `0x${string}`, totalAmount);
       setRecipient('');
       setAmount('');
     } catch (error) {
@@ -129,18 +131,18 @@ export const SendWithRoundUp = () => {
       </div>
 
       <div className="space-y-4">
-        {/* Recipient Address */}
-        <div className="space-y-2">
-          <Label htmlFor="recipient">Recipient Address</Label>
-          <Input
+        {/* Recipient (wallet / email / phone) */}
+        <div className="space-y-1">
+          <RecipientInput
             id="recipient"
-            placeholder="0x..."
             value={recipient}
-            onChange={(e) => {
-              setRecipient(e.target.value.trim());
+            onChange={(v) => {
+              setRecipient(v);
               setErrors((prev) => ({ ...prev, recipient: undefined }));
             }}
-            className={errors.recipient ? 'border-destructive' : ''}
+            inputType={recipientInputType}
+            onInputTypeChange={setRecipientInputType}
+            disabled={isPending || isResolving}
           />
           {errors.recipient && (
             <p className="text-xs text-destructive">{errors.recipient}</p>
