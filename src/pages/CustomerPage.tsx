@@ -3,7 +3,7 @@ import { CustomerPanel } from '@/components/CustomerPanel';
 import { CustomerFiltersPanel } from '@/components/CustomerFiltersPanel';
 import { WelcomeFlow } from '@/components/onboarding/WelcomeFlow';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { Gift, ArrowLeft, Store } from 'lucide-react';
+import { Gift, ArrowLeft, Store, Compass } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -14,6 +14,7 @@ import { SupportBanner } from '@/components/SupportBanner';
 import { MarketplaceDashboard } from '@/components/marketplace/MarketplaceDashboard';
 import { BottomNavBar } from '@/components/mobile/BottomNavBar';
 import { CustomerProfileSection } from '@/components/customer/CustomerProfileSection';
+import { MerchantDiscoverPanel } from '@/components/customer/MerchantDiscoverPanel';
 import { PullToRefresh } from '@/components/mobile/PullToRefresh';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useQueryClient } from '@tanstack/react-query';
@@ -68,6 +69,12 @@ const CustomerPage = () => {
                 onClearMerchantFilter={() => setSelectedMerchant(null)}
               />
             </div>
+          </div>
+        );
+      case 'discover':
+        return (
+          <div className="max-w-5xl mx-auto">
+            <MerchantDiscoverPanel />
           </div>
         );
       case 'marketplace':
@@ -138,10 +145,14 @@ const CustomerPage = () => {
           {/* Desktop: tabs at the top */}
           {!isMobile ? (
             <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-              <TabsList className="grid w-full max-w-md grid-cols-2">
+              <TabsList className="grid w-full max-w-xl grid-cols-3">
                 <TabsTrigger value="loyalty" className="gap-2">
                   <Gift className="h-4 w-4" />
                   Loyalty
+                </TabsTrigger>
+                <TabsTrigger value="discover" className="gap-2">
+                  <Compass className="h-4 w-4" />
+                  Discover
                 </TabsTrigger>
                 <TabsTrigger value="marketplace" className="gap-2">
                   <Store className="h-4 w-4" />
@@ -161,6 +172,12 @@ const CustomerPage = () => {
                       onClearMerchantFilter={() => setSelectedMerchant(null)}
                     />
                   </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="discover">
+                <div className="max-w-5xl mx-auto">
+                  <MerchantDiscoverPanel />
                 </div>
               </TabsContent>
 

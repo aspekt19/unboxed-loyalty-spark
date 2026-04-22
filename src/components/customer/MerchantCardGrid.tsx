@@ -40,9 +40,11 @@ interface MerchantCard {
 interface MerchantCardGridProps {
   onMerchantSelect?: (merchantAddress: string) => void;
   selectedMerchant?: string | null;
+  /** If provided, only merchants whose address is in this set will be shown. */
+  restrictToMerchants?: Set<string> | null;
 }
 
-export function MerchantCardGrid({ onMerchantSelect, selectedMerchant }: MerchantCardGridProps) {
+export function MerchantCardGrid({ onMerchantSelect, selectedMerchant, restrictToMerchants }: MerchantCardGridProps) {
   const [merchants, setMerchants] = useState<MerchantCard[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -140,6 +142,10 @@ export function MerchantCardGrid({ onMerchantSelect, selectedMerchant }: Merchan
 
   const filtered = useMemo(() => {
     let result = merchants;
+    if (restrictToMerchants) {
+      const lowered = new Set(Array.from(restrictToMerchants).map(a => a.toLowerCase()));
+      result = result.filter(m => lowered.has(m.merchant_address.toLowerCase()));
+    }
     if (categoryFilter !== 'all') {
       result = result.filter(m => m.category === categoryFilter);
     }
@@ -153,7 +159,7 @@ export function MerchantCardGrid({ onMerchantSelect, selectedMerchant }: Merchan
       );
     }
     return result;
-  }, [merchants, searchQuery, categoryFilter]);
+  }, [merchants, searchQuery, categoryFilter, restrictToMerchants]);
 
   if (isLoading) {
     return (
@@ -166,6 +172,12 @@ export function MerchantCardGrid({ onMerchantSelect, selectedMerchant }: Merchan
 
   if (merchants.length === 0) {
     return null; // No merchants with profiles yet — don't show anything
+  }
+
+  // When the parent restricts to a specific set (e.g. owned tokens) and there's
+  // nothing to show, render nothing instead of an empty search panel.
+  if (restrictToMerchants && filtered.length === 0) {
+    return null;
   }
 
   return (

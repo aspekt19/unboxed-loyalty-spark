@@ -1,4 +1,4 @@
-import { Gift, Store, User } from 'lucide-react';
+import { Gift, Store, User, Compass } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -10,6 +10,7 @@ export interface NavItem {
 
 const defaultNavItems: NavItem[] = [
   { id: 'loyalty', label: 'Loyalty', icon: Gift },
+  { id: 'discover', label: 'Discover', icon: Compass },
   { id: 'marketplace', label: 'Exchange', icon: Store },
   { id: 'profile', label: 'Profile', icon: User },
 ];
@@ -37,7 +38,7 @@ export function BottomNavBar({ activeTab, onTabChange, showProfileNav = true, na
                 key={item.id}
                 onClick={() => onTabChange(item.id)}
                 className={cn(
-                  'relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-colors min-w-[64px]',
+                  'relative flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-colors min-w-[56px]',
                   'active:scale-[0.96] transition-transform duration-100',
                   isActive ? 'text-primary' : 'text-muted-foreground'
                 )}
