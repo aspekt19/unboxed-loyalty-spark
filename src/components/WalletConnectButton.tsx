@@ -32,7 +32,7 @@ export function WalletConnectButton() {
   const { connect, connectors } = useConnect();
   const { disconnectAsync } = useDisconnect();
   const { address, isConnected } = useAccount();
-  const { user, signOut, signInWithWallet, signInWithPrivy, resetManualSignOut } = useAuth();
+  const { user, signOut, signInWithWallet, signInWithPrivy, retrySignIn, resetManualSignOut } = useAuth();
   const [isManuallyDisconnected, setIsManuallyDisconnected] = useState(false);
   const [farcasterUser, setFarcasterUser] = useState<{
     username?: string;
@@ -257,7 +257,7 @@ export function WalletConnectButton() {
   }
 
   if (!user) {
-    return <SigningInButton onTimeout={handleDisconnect} className={headerAuthButtonClass(
+    return <SigningInButton onTimeout={retrySignIn} className={headerAuthButtonClass(
       'bg-primary text-primary-foreground shadow-clay-primary opacity-90 disabled:pointer-events-none disabled:opacity-50',
     )} />;
   }
