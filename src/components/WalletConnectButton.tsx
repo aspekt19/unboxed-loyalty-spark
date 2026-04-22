@@ -256,18 +256,9 @@ export function WalletConnectButton() {
   }
 
   if (!user) {
-    return (
-      <button
-        disabled
-        type="button"
-        className={headerAuthButtonClass(
-          'bg-primary text-primary-foreground shadow-clay-primary opacity-90 disabled:pointer-events-none disabled:opacity-50',
-        )}
-      >
-        <LogIn className="h-3.5 w-3.5 animate-pulse flex-shrink-0" />
-        <span className="truncate">Signing in...</span>
-      </button>
-    );
+    return <SigningInButton onTimeout={handleDisconnect} className={headerAuthButtonClass(
+      'bg-primary text-primary-foreground shadow-clay-primary opacity-90 disabled:pointer-events-none disabled:opacity-50',
+    )} />;
   }
 
   const displayAddress = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : '';
