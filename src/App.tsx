@@ -34,6 +34,19 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ConnectorRecoveryListener } from "./components/ConnectorRecoveryListener";
 import { FarcasterAutoConnect } from "./components/FarcasterAutoConnect";
 import { ThemeProvider } from "next-themes";
+import { useBanStatus } from "./hooks/useBanStatus";
+import { BannedScreen } from "./components/BannedScreen";
+
+function BanGate({ children }: { children: React.ReactNode }) {
+  const { isBanned, reason, bannedAt, isLoading } = useBanStatus();
+  const location = useLocation();
+  // Allow admin route through (admins can't be banned anyway, but failsafe)
+  if (isLoading) return <>{children}</>;
+  if (isBanned && location.pathname !== '/admin') {
+    return <BannedScreen reason={reason} bannedAt={bannedAt} />;
+  }
+  return <>{children}</>;
+}
 
 const queryClient = new QueryClient();
 
