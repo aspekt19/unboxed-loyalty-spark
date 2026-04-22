@@ -251,46 +251,6 @@ serve(async (req) => {
         mergedWithExistingAccount = true;
 
         // Link every Privy-owned wallet to the existing account as SECONDARY
-        const { data: existingPrimary } = await supabaseAdmin
-          .from("identity_links")
-          .select("wallet_address")
-          .eq("user_id", existingUserId)
-          .eq("is_primary", true)
-          .maybeSingle();
-
-        for (const wallet of allPrivyWallets) {
-          const shouldBePrimary = !existingPrimary?.wallet_address && wallet === resolvedWalletAddress;
-          const { error: linkError } = await supabaseAdmin
-            .from("identity_links")
-            .upsert(
-              {
-                user_id: existingUserId,
-                wallet_address: wallet,
-                is_primary: shouldBePrimary,
-                linked_via: "privy_email_auto",
-                verified_at: new Date().toISOString(),
-              },
-              { onConflict: "wallet_address" }
-            );
-          if (linkError) {
-            console.error("identity_links upsert error:", linkError, { wallet });
-          }
-          if (!secondaryWalletLinked) secondaryWalletLinked = wallet;
-        }
-
-        if (resolvedWalletAddress) {
-          const { error: mergedProfileError } = await supabaseAdmin.from("profiles").upsert(
-            {
-              user_id: existingUserId,
-              wallet_address: resolvedWalletAddress,
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: "wallet_address" }
-          );
-          if (mergedProfileError) {
-            console.error("Merged profile upsert error:", mergedProfileError);
-          }
-        }
       } else {
         // ── Brand-new user: create the standard Privy DID account ──
         const { error: createError } = await supabaseAdmin.auth.admin.createUser({
