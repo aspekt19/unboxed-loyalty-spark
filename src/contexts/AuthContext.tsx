@@ -501,6 +501,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
 
         if (!currentSession && isConnected && address) {
+          // Farcaster only: auto re-sign is acceptable inside the embedded wallet.
           setTimeout(() => signInWithWallet(), 500);
         } else if (currentSession) {
           setSession(currentSession);
