@@ -338,11 +338,16 @@ export function MerchantDiscoverPanel() {
                   </Badge>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[85vw] sm:w-[320px]">
-                <SheetHeader>
+              <SheetContent
+                side="left"
+                className="w-[85vw] sm:w-[320px] flex flex-col p-0"
+              >
+                <SheetHeader className="px-6 pt-6 pb-2 flex-shrink-0">
                   <SheetTitle>Categories</SheetTitle>
                 </SheetHeader>
-                <div className="mt-4">{categoryList}</div>
+                <div className="flex-1 overflow-y-auto overscroll-contain px-6 pb-[env(safe-area-inset-bottom,16px)] pt-2">
+                  {categoryList}
+                </div>
               </SheetContent>
             </Sheet>
 
