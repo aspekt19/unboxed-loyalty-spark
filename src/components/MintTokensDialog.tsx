@@ -140,7 +140,11 @@ export function MintTokensDialog({
               />
             </div>
             
-            <Button type="submit" disabled={isPending || isResolving} className="w-full">
+            <Button
+              type="submit"
+              disabled={isPending || isResolving}
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-md"
+            >
               {isResolving ? (
                 <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Looking up recipient...</>
               ) : (
