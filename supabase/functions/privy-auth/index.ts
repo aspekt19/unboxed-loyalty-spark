@@ -319,6 +319,62 @@ serve(async (req) => {
       throw new Error("Failed to establish session");
     }
 
+    if (mergedWithExistingAccount) {
+      const { data: existingPrimary } = await supabaseAdmin
+        .from("identity_links")
+        .select("wallet_address")
+        .eq("user_id", userId)
+        .eq("is_primary", true)
+        .maybeSingle();
+
+      for (const wallet of allPrivyWallets) {
+        const { data: existingLinkForWallet } = await supabaseAdmin
+          .from("identity_links")
+          .select("user_id, is_primary")
+          .eq("wallet_address", wallet)
+          .maybeSingle();
+
+        const shouldBePrimary = !existingPrimary?.wallet_address && wallet === resolvedWalletAddress;
+        const { error: linkError } = await supabaseAdmin
+          .from("identity_links")
+          .upsert(
+            {
+              user_id: userId,
+              wallet_address: wallet,
+              is_primary: existingLinkForWallet?.is_primary || shouldBePrimary,
+              linked_via: "privy_email_auto",
+              verified_at: new Date().toISOString(),
+            },
+            { onConflict: "wallet_address" }
+          );
+        if (linkError) {
+          console.error("identity_links upsert error:", linkError, { wallet });
+        }
+
+        if (
+          !secondaryWalletLinked &&
+          !shouldBePrimary &&
+          (!existingLinkForWallet || existingLinkForWallet.user_id !== userId)
+        ) {
+          secondaryWalletLinked = wallet;
+        }
+      }
+
+      if (resolvedWalletAddress) {
+        const { error: mergedProfileError } = await supabaseAdmin.from("profiles").upsert(
+          {
+            user_id: userId,
+            wallet_address: resolvedWalletAddress,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "wallet_address" }
+        );
+        if (mergedProfileError) {
+          console.error("Merged profile upsert error:", mergedProfileError);
+        }
+      }
+    }
+
     // ──────────────────────────────────────────────────────────────────
     // STEP 3: Profile + identity_links upserts (only when NOT merged —
     //   merged path already handled identity_links, and we must NOT
