@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const PAGE_SIZE = 6;
+const SCROLL_THRESHOLD_PX = 400;
 
 interface CategoryDef {
   value: string;
