@@ -33,7 +33,7 @@ function getPrivyWalletAddresses(privyUser: any): string[] {
 export function LinkExternalWalletCard() {
   const { session } = useAuth();
   const privy = usePrivySafe();
-  const { linkedWallets, refresh } = useActiveWallet();
+  const { linkedWallets, refresh, activeWallet } = useActiveWallet();
   const [busy, setBusy] = useState(false);
   const baselineRef = useRef<Set<string> | null>(null);
   const linkedAddressSet = useMemo(
@@ -43,7 +43,9 @@ export function LinkExternalWalletCard() {
 
   // Wallets known to Privy but not yet stored as identity_links
   const privyWallets = getPrivyWalletAddresses(privy.user);
-  const unlinkedFromPrivy = privyWallets.filter((a) => !linkedAddressSet.has(a));
+  const unlinkedFromPrivy = privyWallets.filter(
+    (a) => !linkedAddressSet.has(a) && a !== activeWallet?.toLowerCase(),
+  );
 
   // Auto-link any wallet that Privy added since baseline
   useEffect(() => {
