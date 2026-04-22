@@ -133,12 +133,14 @@ function FarcasterProviders({ children }: { children: React.ReactNode }) {
     <WagmiProvider config={farcasterWagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <TooltipProvider>
-            <FarcasterAutoConnect />
-            <Toaster />
-            <Sonner />
-            {children}
-          </TooltipProvider>
+          <ActiveWalletProvider>
+            <TooltipProvider>
+              <FarcasterAutoConnect />
+              <Toaster />
+              <Sonner />
+              {children}
+            </TooltipProvider>
+          </ActiveWalletProvider>
         </AuthProvider>
       </QueryClientProvider>
     </WagmiProvider>
@@ -152,12 +154,14 @@ function BrowserProviders({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <PrivyWagmiProvider config={privyWagmiConfig}>
           <AuthProvider>
-            <TooltipProvider>
-              <ConnectorRecoveryListener />
-              <Toaster />
-              <Sonner />
-              {children}
-            </TooltipProvider>
+            <ActiveWalletProvider>
+              <TooltipProvider>
+                <ConnectorRecoveryListener />
+                <Toaster />
+                <Sonner />
+                {children}
+              </TooltipProvider>
+            </ActiveWalletProvider>
           </AuthProvider>
         </PrivyWagmiProvider>
       </QueryClientProvider>
@@ -170,12 +174,14 @@ function PreviewBrowserProviders({ children }: { children: React.ReactNode }) {
     <WagmiProvider config={browserPreviewWagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <TooltipProvider>
-            <ConnectorRecoveryListener />
-            <Toaster />
-            <Sonner />
-            {children}
-          </TooltipProvider>
+          <ActiveWalletProvider>
+            <TooltipProvider>
+              <ConnectorRecoveryListener />
+              <Toaster />
+              <Sonner />
+              {children}
+            </TooltipProvider>
+          </ActiveWalletProvider>
         </AuthProvider>
       </QueryClientProvider>
     </WagmiProvider>
