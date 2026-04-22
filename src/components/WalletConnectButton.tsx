@@ -138,28 +138,9 @@ export function WalletConnectButton() {
     signInWithPrivy,
   ]);
 
-  // Wallet-only Privy login: after wagmi is connected, complete app auth with SIWE.
-  useEffect(() => {
-    if (isFarcaster || !privyReady || user || isManuallyDisconnected || !privyAuthenticated || !privyUserId) return;
-    if (useTokenAuth) return;
-    if (!isConnected || !address) return;
-
-    const t = window.setTimeout(() => {
-      void signInWithWallet();
-    }, 400);
-    return () => window.clearTimeout(t);
-  }, [
-    isFarcaster,
-    privyReady,
-    user,
-    isManuallyDisconnected,
-    privyAuthenticated,
-    privyUserId,
-    useTokenAuth,
-    isConnected,
-    address,
-    signInWithWallet,
-  ]);
+  // Wallet-only Privy login: do NOT auto-trigger SIWE on mount/focus.
+  // Signature requests must only happen on an explicit user gesture (handleConnect),
+  // otherwise users see the wallet popup unexpectedly when revisiting the app.
 
   const handleDisconnect = async () => {
     try {
