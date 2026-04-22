@@ -142,7 +142,13 @@ export function CustomerProfileSection() {
     try {
       // Save name + phone always; email only if it's verified by Privy.
       // Unverified email entry must go through "Verify email" flow below.
-      const payload: Record<string, string | null> = {
+      const payload: {
+        wallet_address: string;
+        first_name: string | null;
+        last_name: string | null;
+        phone: string | null;
+        email?: string | null;
+      } = {
         wallet_address: address.toLowerCase(),
         first_name: firstName || null,
         last_name: lastName || null,
