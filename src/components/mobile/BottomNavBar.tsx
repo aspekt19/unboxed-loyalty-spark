@@ -38,7 +38,7 @@ export function BottomNavBar({ activeTab, onTabChange, showProfileNav = true, na
                 key={item.id}
                 onClick={() => onTabChange(item.id)}
                 className={cn(
-                  'relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-colors min-w-[64px]',
+                  'relative flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-colors min-w-[56px]',
                   'active:scale-[0.96] transition-transform duration-100',
                   isActive ? 'text-primary' : 'text-muted-foreground'
                 )}
