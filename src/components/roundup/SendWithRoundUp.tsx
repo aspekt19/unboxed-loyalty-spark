@@ -24,8 +24,10 @@ export const SendWithRoundUp = () => {
   const { address } = useAccount();
   const { data: balance } = useBalance({ address });
   const { roundUp, isPending } = useRoundUp(address);
+  const { resolveRecipient, isResolving } = useResolveRecipient();
 
   const [recipient, setRecipient] = useState('');
+  const [recipientInputType, setRecipientInputType] = useState<RecipientInputType>('wallet');
   const [amount, setAmount] = useState('');
   const [errors, setErrors] = useState<{ recipient?: string; amount?: string }>({});
   const [ethPriceUsd, setEthPriceUsd] = useState<number>(0);
