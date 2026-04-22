@@ -563,20 +563,18 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, 
             <DialogHeader>
               <DialogTitle>Transfer {selectedToken?.symbol}</DialogTitle>
               <DialogDescription>
-                Send {selectedToken?.name} tokens to another address
+                Send {selectedToken?.name} tokens by wallet address, email, or phone number
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleTransfer} className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label htmlFor="recipient">Recipient Address</Label>
-                <Input
-                  id="recipient"
-                  placeholder="0x..."
-                  value={recipientAddress}
-                  onChange={(e) => setRecipientAddress(e.target.value)}
-                  disabled={isPending}
-                />
-              </div>
+              <RecipientInput
+                id="recipient"
+                value={recipientAddress}
+                onChange={setRecipientAddress}
+                inputType={recipientInputType}
+                onInputTypeChange={setRecipientInputType}
+                disabled={isPending || isResolving}
+              />
               <div className="space-y-2">
                 <Label htmlFor="transfer-amount">Amount</Label>
                 <Input
@@ -585,15 +583,15 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, 
                   placeholder="0.00"
                   value={transferAmount}
                   onChange={(e) => setTransferAmount(e.target.value)}
-                  disabled={isPending}
+                  disabled={isPending || isResolving}
                 />
                 <p className="text-xs text-muted-foreground">
                   Available: {selectedToken ? parseFloat(balances.find(b => b.address === selectedToken.address)?.balance || '0').toFixed(2) : '0.00'} {selectedToken?.symbol}
                 </p>
               </div>
-              <Button type="submit" disabled={isPending} className="w-full">
-                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Transfer Tokens
+              <Button type="submit" disabled={isPending || isResolving} className="w-full">
+                {(isPending || isResolving) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isResolving ? 'Looking up recipient...' : 'Transfer Tokens'}
               </Button>
             </form>
           </DialogContent>
