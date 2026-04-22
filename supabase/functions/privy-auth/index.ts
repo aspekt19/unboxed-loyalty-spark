@@ -127,6 +127,38 @@ serve(async (req) => {
     const privyAuthEmail = `${privyDid.replace(/^did:privy:/, "")}@privy.auth`;
     const privyPassword = await generateDeterministicPassword(privyDid, serviceRoleKey);
 
+    let canonicalProfileUserId: string | null = null;
+    let canonicalProfileAuthEmail: string | null = null;
+
+    if (resolvedEmail) {
+      const { data: emailProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("user_id")
+        .ilike("email", resolvedEmail)
+        .maybeSingle();
+      if (emailProfile?.user_id) {
+        canonicalProfileUserId = emailProfile.user_id;
+      }
+    }
+
+    if (!canonicalProfileUserId && resolvedWalletAddress) {
+      const { data: walletProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("user_id")
+        .eq("wallet_address", resolvedWalletAddress)
+        .maybeSingle();
+      if (walletProfile?.user_id) {
+        canonicalProfileUserId = walletProfile.user_id;
+      }
+    }
+
+    if (canonicalProfileUserId) {
+      const { data: canonicalAuthUser } = await supabaseAdmin.auth.admin.getUserById(
+        canonicalProfileUserId
+      );
+      canonicalProfileAuthEmail = canonicalAuthUser?.user?.email ?? null;
+    }
+
     // ──────────────────────────────────────────────────────────────────
     // STEP 1: Try sign-in with the Privy DID account (existing returning user)
     // ──────────────────────────────────────────────────────────────────
@@ -142,6 +174,39 @@ serve(async (req) => {
 
     if (session && signInResult.data.user) {
       userId = signInResult.data.user.id;
+
+      if (
+        canonicalProfileUserId &&
+        canonicalProfileAuthEmail &&
+        canonicalProfileUserId !== userId
+      ) {
+        const mergedPassword = await generateDeterministicPassword(
+          `merged:${canonicalProfileUserId}`,
+          serviceRoleKey
+        );
+
+        const { error: pwUpdateError } = await supabaseAdmin.auth.admin.updateUserById(
+          canonicalProfileUserId,
+          { password: mergedPassword }
+        );
+        if (pwUpdateError) {
+          console.error("Failed to set merge password:", pwUpdateError);
+          throw new Error(`Cannot link to existing account: ${pwUpdateError.message}`);
+        }
+
+        const mergedSignIn = await supabaseAuth.auth.signInWithPassword({
+          email: canonicalProfileAuthEmail,
+          password: mergedPassword,
+        });
+        if (mergedSignIn.error || !mergedSignIn.data.session) {
+          console.error("Merged sign-in failed:", mergedSignIn.error);
+          throw new Error("Failed to log into existing account");
+        }
+
+        userId = canonicalProfileUserId;
+        session = mergedSignIn.data.session;
+        mergedWithExistingAccount = true;
+      }
     } else {
       // ──────────────────────────────────────────────────────────────
       // STEP 2: No Privy account yet. Check if this verified email
@@ -149,27 +214,8 @@ serve(async (req) => {
       //   If yes → log into THAT account and link Privy wallet as
       //   secondary instead of creating a duplicate.
       // ──────────────────────────────────────────────────────────────
-      let existingUserId: string | null = null;
-      let existingUserAuthEmail: string | null = null;
-
-      if (resolvedEmail) {
-        const { data: existingProfile } = await supabaseAdmin
-          .from("profiles")
-          .select("user_id")
-          .ilike("email", resolvedEmail)
-          .maybeSingle();
-
-        if (existingProfile?.user_id) {
-          // Find the auth.users row to get its synthetic @privy.auth email
-          const { data: existingAuthUser } = await supabaseAdmin.auth.admin.getUserById(
-            existingProfile.user_id
-          );
-          if (existingAuthUser?.user?.email) {
-            existingUserId = existingProfile.user_id;
-            existingUserAuthEmail = existingAuthUser.user.email;
-          }
-        }
-      }
+      const existingUserId = canonicalProfileUserId;
+      const existingUserAuthEmail = canonicalProfileAuthEmail;
 
       if (existingUserId && existingUserAuthEmail) {
         // ── Variant B: log the user into the EXISTING account ──
@@ -205,24 +251,6 @@ serve(async (req) => {
         mergedWithExistingAccount = true;
 
         // Link every Privy-owned wallet to the existing account as SECONDARY
-        for (const wallet of allPrivyWallets) {
-          const { error: linkError } = await supabaseAdmin
-            .from("identity_links")
-            .upsert(
-              {
-                user_id: existingUserId,
-                wallet_address: wallet,
-                is_primary: false,
-                linked_via: "privy_email_auto",
-                verified_at: new Date().toISOString(),
-              },
-              { onConflict: "user_id,wallet_address" }
-            );
-          if (linkError) {
-            console.error("identity_links upsert error:", linkError, { wallet });
-          }
-          if (!secondaryWalletLinked) secondaryWalletLinked = wallet;
-        }
       } else {
         // ── Brand-new user: create the standard Privy DID account ──
         const { error: createError } = await supabaseAdmin.auth.admin.createUser({
@@ -249,6 +277,62 @@ serve(async (req) => {
 
     if (!userId || !session) {
       throw new Error("Failed to establish session");
+    }
+
+    if (mergedWithExistingAccount) {
+      const { data: existingPrimary } = await supabaseAdmin
+        .from("identity_links")
+        .select("wallet_address")
+        .eq("user_id", userId)
+        .eq("is_primary", true)
+        .maybeSingle();
+
+      for (const wallet of allPrivyWallets) {
+        const { data: existingLinkForWallet } = await supabaseAdmin
+          .from("identity_links")
+          .select("user_id, is_primary")
+          .eq("wallet_address", wallet)
+          .maybeSingle();
+
+        const shouldBePrimary = !existingPrimary?.wallet_address && wallet === resolvedWalletAddress;
+        const { error: linkError } = await supabaseAdmin
+          .from("identity_links")
+          .upsert(
+            {
+              user_id: userId,
+              wallet_address: wallet,
+              is_primary: existingLinkForWallet?.is_primary || shouldBePrimary,
+              linked_via: "privy_email_auto",
+              verified_at: new Date().toISOString(),
+            },
+            { onConflict: "wallet_address" }
+          );
+        if (linkError) {
+          console.error("identity_links upsert error:", linkError, { wallet });
+        }
+
+        if (
+          !secondaryWalletLinked &&
+          !shouldBePrimary &&
+          (!existingLinkForWallet || existingLinkForWallet.user_id !== userId)
+        ) {
+          secondaryWalletLinked = wallet;
+        }
+      }
+
+      if (resolvedWalletAddress) {
+        const { error: mergedProfileError } = await supabaseAdmin.from("profiles").upsert(
+          {
+            user_id: userId,
+            wallet_address: resolvedWalletAddress,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "wallet_address" }
+        );
+        if (mergedProfileError) {
+          console.error("Merged profile upsert error:", mergedProfileError);
+        }
+      }
     }
 
     // ──────────────────────────────────────────────────────────────────
