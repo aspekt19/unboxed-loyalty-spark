@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent } from '@/components/ui/card';
 import { Award } from 'lucide-react';
+import { useActiveWallet } from '@/contexts/ActiveWalletContext';
 
 interface TokenInfo {
   address: string;
@@ -20,14 +21,15 @@ interface CustomerTiersSectionProps {
 
 export function CustomerTiersSection({ selectedProgram }: CustomerTiersSectionProps) {
   const { address } = useAccount();
+  const { activeWallet } = useActiveWallet();
   const [programs, setPrograms] = useState<TokenInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [tierName, setTierName] = useState<string>('');
 
-  const { balances } = useMultiTokenBalance(programs);
+  const { balances } = useMultiTokenBalance(programs, activeWallet);
 
   useEffect(() => {
-    if (!address) {
+    if (!activeWallet) {
       setPrograms([]);
       return;
     }
@@ -58,10 +60,10 @@ export function CustomerTiersSection({ selectedProgram }: CustomerTiersSectionPr
     };
 
     loadPrograms();
-  }, [address]);
+  }, [activeWallet]);
 
   useEffect(() => {
-    if (!selectedProgram || !address) {
+    if (!selectedProgram || !activeWallet) {
       setTierName('');
       return;
     }
@@ -100,7 +102,7 @@ export function CustomerTiersSection({ selectedProgram }: CustomerTiersSectionPr
     };
 
     loadTierName();
-  }, [selectedProgram, address, balances]);
+  }, [selectedProgram, activeWallet, balances]);
 
   if (!address) {
     return null;

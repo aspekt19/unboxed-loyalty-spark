@@ -10,28 +10,29 @@ import { getCustomerVouchers } from '@/lib/vouchers';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useActiveWallet } from '@/contexts/ActiveWalletContext';
 
 export function MyVouchers() {
   const { address } = useAccount();
+  const { activeWallet } = useActiveWallet();
   const { session } = useAuth();
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
 
   const loadVouchers = async () => {
-    if (!address || !session) return;
-    const customerVouchers = await getCustomerVouchers(address);
+    if (!activeWallet || !session) return;
+    const customerVouchers = await getCustomerVouchers(activeWallet);
     setVouchers(customerVouchers);
   };
 
-  // Очищаем ваучеры при отключении кошелька
+  // Очищаем ваучеры при отключении/смене активного кошелька
   useEffect(() => {
-    if (!address) {
+    if (!activeWallet) {
       setVouchers([]);
     }
-  }, [address]);
+  }, [activeWallet]);
 
   useEffect(() => {
-    // Загружаем ваучеры только если есть адрес и пользователь авторизован
-    if (!address || !session) return;
+    if (!activeWallet || !session) return;
     
     loadVouchers();
     
@@ -53,7 +54,7 @@ export function MyVouchers() {
           event: '*',
           schema: 'public',
           table: 'vouchers',
-          filter: `customer_address=eq.${address.toLowerCase()}`,
+          filter: `customer_address=eq.${activeWallet.toLowerCase()}`,
         },
         (payload) => {
           console.log('Voucher status changed:', payload);
@@ -68,7 +69,7 @@ export function MyVouchers() {
       window.removeEventListener('profileMigrated', handleSessionReady);
       supabase.removeChannel(channel);
     };
-  }, [address, session]);
+  }, [activeWallet, session]);
 
   if (!address) {
     return null;

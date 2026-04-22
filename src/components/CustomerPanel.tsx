@@ -12,6 +12,7 @@ import { AuthPrompt } from './AuthPrompt';
 import { useMultiTokenBalance, type TokenInfo } from '@/hooks/useMultiTokenBalance';
 import { supabase } from '@/integrations/supabase/client';
 import { WalletMismatchBanner } from './identity/WalletMismatchBanner';
+import { useActiveWallet } from '@/contexts/ActiveWalletContext';
 
 interface CustomerPanelProps {
   selectedMerchant: string | null;
@@ -21,13 +22,14 @@ interface CustomerPanelProps {
 
 export function CustomerPanel({ selectedMerchant, onMerchantSelect, onClearMerchantFilter }: CustomerPanelProps) {
   const { address } = useAccount();
+  const { activeWallet } = useActiveWallet();
   const { user, session, isLoading } = useAuth();
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
   const [allPrograms, setAllPrograms] = useState<TokenInfo[]>([]);
 
   // Load all active programs to compute owned-merchants set
   useEffect(() => {
-    if (!address) return;
+    if (!activeWallet) return;
     let cancelled = false;
     (async () => {
       const { data, error } = await supabase
@@ -47,9 +49,9 @@ export function CustomerPanel({ selectedMerchant, onMerchantSelect, onClearMerch
     return () => {
       cancelled = true;
     };
-  }, [address]);
+  }, [activeWallet]);
 
-  const { balances } = useMultiTokenBalance(allPrograms);
+  const { balances } = useMultiTokenBalance(allPrograms, activeWallet);
 
   const ownedMerchantAddresses = useMemo(() => {
     const set = new Set<string>();
