@@ -18,7 +18,7 @@ import {
   Gift,
   MapPin,
   Loader2,
-  Sparkles,
+  Flame,
   Filter,
   Compass,
 } from 'lucide-react';
