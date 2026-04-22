@@ -54,7 +54,7 @@ export function ActiveWalletProvider({ children }: { children: ReactNode }) {
     try {
       const { data, error } = await supabase.rpc('get_my_identity_summary');
       if (error) throw error;
-      const payload = data as { ok: boolean; primary_wallet: string | null; linked_wallets: LinkedWallet[]; email: string | null; phone: string | null };
+      const payload = data as unknown as { ok: boolean; primary_wallet: string | null; linked_wallets: LinkedWallet[]; email: string | null; phone: string | null };
       if (payload?.ok) {
         setSummary({
           primary_wallet: payload.primary_wallet,
@@ -81,7 +81,7 @@ export function ActiveWalletProvider({ children }: { children: ReactNode }) {
         p_wallet_address: walletAddress,
       });
       if (error) return { ok: false, error: error.message };
-      const payload = data as { ok: boolean; error?: string };
+      const payload = data as unknown as { ok: boolean; error?: string };
       if (payload?.ok) {
         await refresh();
         return { ok: true };

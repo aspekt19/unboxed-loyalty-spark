@@ -31,6 +31,7 @@ import { useEffect } from "react";
 import { migrateAllData } from "./lib/migrateLocalStorageData";
 import { usePageMeta } from "./hooks/usePageMeta";
 import { AuthProvider } from "./contexts/AuthContext";
+import { ActiveWalletProvider } from "./contexts/ActiveWalletContext";
 import { ConnectorRecoveryListener } from "./components/ConnectorRecoveryListener";
 import { FarcasterAutoConnect } from "./components/FarcasterAutoConnect";
 import { ThemeProvider } from "next-themes";
