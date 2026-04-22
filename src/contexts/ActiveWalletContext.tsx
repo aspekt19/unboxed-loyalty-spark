@@ -91,7 +91,8 @@ export function ActiveWalletProvider({ children }: { children: ReactNode }) {
     [refresh],
   );
 
-  const activeWallet = summary?.primary_wallet ?? connectedWallet;
+  const firstLinkedWallet = summary?.linked_wallets?.[0]?.wallet_address ?? null;
+  const activeWallet = summary?.primary_wallet ?? firstLinkedWallet ?? connectedWallet;
   const isWalletMismatch = Boolean(
     activeWallet && connectedWallet && activeWallet !== connectedWallet,
   );
