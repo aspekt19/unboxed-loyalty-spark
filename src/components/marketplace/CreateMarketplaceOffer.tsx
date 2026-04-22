@@ -15,6 +15,8 @@ import { CONTRACTS } from '@/config/contracts';
 import { Loader2, ArrowRightLeft, Shield, Info, CheckCircle2 } from 'lucide-react';
 import { z } from 'zod';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useActiveWallet } from '@/contexts/ActiveWalletContext';
+import { WalletMismatchBanner } from '@/components/identity/WalletMismatchBanner';
 
 interface TokenInfo {
   address: string;
@@ -34,6 +36,7 @@ type Step = 'form' | 'approving' | 'creating';
 
 export function CreateMarketplaceOffer() {
   const { address } = useAccount();
+  const { isWalletMismatch } = useActiveWallet();
   const [tokens, setTokens] = useState<TokenInfo[]>([]);
   const [offerTokenAddress, setOfferTokenAddress] = useState('');
   const [offerAmount, setOfferAmount] = useState('');
