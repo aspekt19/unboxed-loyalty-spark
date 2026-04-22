@@ -94,6 +94,10 @@ export function CreateMarketplaceOffer() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isWalletMismatch) {
+      toast.error('Reconnect your primary wallet to sign the swap');
+      return;
+    }
     if (!address) {
       toast.error('Please connect your wallet');
       return;
@@ -204,7 +208,8 @@ export function CreateMarketplaceOffer() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Alert className="mb-4 border-green-500/50 bg-green-500/5">
+        <WalletMismatchBanner />
+        <Alert className="mb-4 mt-4 border-green-500/50 bg-green-500/5">
           <Shield className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-sm">
             <strong>Escrow Protected:</strong> Your tokens are locked in a smart contract. The swap is atomic — either both transfers happen, or neither does.
@@ -295,10 +300,15 @@ export function CreateMarketplaceOffer() {
           <Button
             type="submit"
             className="w-full"
-            disabled={isProcessing || !offerTokenAddress || !offerAmount || !requestTokenAddress || !requestAmount || balancesLoading}
+            disabled={isProcessing || !offerTokenAddress || !offerAmount || !requestTokenAddress || !requestAmount || balancesLoading || isWalletMismatch}
+            title={isWalletMismatch ? 'Reconnect your primary wallet to sign' : undefined}
           >
             {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isProcessing ? 'Processing...' : 'Create Escrow Offer'}
+            {isWalletMismatch
+              ? 'Reconnect primary wallet'
+              : isProcessing
+                ? 'Processing...'
+                : 'Create Escrow Offer'}
           </Button>
         </form>
       </CardContent>
