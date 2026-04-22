@@ -15,7 +15,7 @@ interface SigningInButtonProps {
   timeoutMs?: number;
 }
 
-export function SigningInButton({ className, onTimeout, timeoutMs = 12000 }: SigningInButtonProps) {
+export function SigningInButton({ className, onTimeout, timeoutMs = 20000 }: SigningInButtonProps) {
   const [stuck, setStuck] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
 
