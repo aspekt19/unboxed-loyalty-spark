@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Gift, ShoppingCart, TrendingUp, Sparkles, Zap, Coins, Wallet } from 'lucide-react';
+import { Gift, ShoppingCart, TrendingUp, Wand2, Zap, Coins, Wallet } from 'lucide-react';
 
 /**
  * Preview-only page exploring a 3D "claymorphism" aesthetic
@@ -29,7 +29,7 @@ const Preview3D = () => {
         {/* Preview banner */}
         <div className="mb-8 flex items-center justify-between">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border shadow-sm">
-            <Sparkles className="h-4 w-4 text-primary" />
+            <Wand2 className="h-4 w-4 text-primary" />
             <span className="text-xs font-semibold text-foreground">3D Claymorphism Preview</span>
           </div>
           <Link to="/" className="text-xs text-muted-foreground hover:text-primary transition-colors">

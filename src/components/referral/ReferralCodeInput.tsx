@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Gift, Check, AlertCircle, Sparkles } from 'lucide-react';
+import { Gift, Check, AlertCircle, PartyPopper } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -196,7 +196,7 @@ export function ReferralCodeInput() {
     <Card className="border-2 border-primary/20 bg-gradient-to-br from-card to-primary/5">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-primary" />
+          <PartyPopper className="h-5 w-5 text-primary" />
           Have a Referral Code?
         </CardTitle>
         <CardDescription>

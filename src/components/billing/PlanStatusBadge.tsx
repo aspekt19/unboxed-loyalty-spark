@@ -2,7 +2,7 @@ import { useEffectivePlan, type PlanProduct } from '@/hooks/useEffectivePlan';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Crown, Clock, Sparkles, AlertTriangle } from 'lucide-react';
+import { Crown, Clock, Rocket, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface Props {
@@ -56,7 +56,7 @@ export function PlanStatusBadge({ product, upgradeHref }: Props) {
         <CardContent className="p-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/20">
-              <Sparkles className="h-5 w-5 text-accent-foreground" />
+              <Rocket className="h-5 w-5 text-accent-foreground" />
             </div>
             <div>
               <Badge variant="secondary" className="mb-1 gap-1">

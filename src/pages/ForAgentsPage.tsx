@@ -12,7 +12,7 @@ import {
   ExternalLink,
   Key,
   Link2,
-  Sparkles,
+  Rocket,
   Terminal,
   BookOpen,
 } from "lucide-react";
@@ -200,7 +200,7 @@ export default function ForAgentsPage() {
           <div className="container max-w-5xl mx-auto px-4 py-4 flex flex-wrap items-center gap-3">
             <div className="flex-1 min-w-0">
               <h1 className="text-base sm:text-lg font-bold flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary shrink-0" />
+                <Rocket className="h-5 w-5 text-primary shrink-0" />
                 <span>For AI agents</span>
               </h1>
               <p className="text-xs text-muted-foreground truncate sm:whitespace-normal">
