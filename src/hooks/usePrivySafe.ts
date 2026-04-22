@@ -13,7 +13,7 @@ interface PrivySafeResult {
   ready: boolean;
   getAccessToken: () => Promise<string | null>;
   linkEmail: () => void;
-  unlinkEmail: (email: string) => Promise<void>;
+  unlinkEmail: (email: string) => Promise<unknown>;
 }
 
 const noopResult: PrivySafeResult = {
