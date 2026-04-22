@@ -773,6 +773,36 @@ export type Database = {
         }
         Relationships: []
       }
+      identity_links: {
+        Row: {
+          created_at: string
+          id: string
+          is_primary: boolean
+          linked_via: string
+          user_id: string
+          verified_at: string
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          linked_via?: string
+          user_id: string
+          verified_at?: string
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          linked_via?: string
+          user_id?: string
+          verified_at?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       loyalty_programs: {
         Row: {
           cashback_rate: number
@@ -2278,6 +2308,7 @@ export type Database = {
         Args: { p_merchant_address: string; p_wallet_address: string }
         Returns: Database["public"]["Enums"]["merchant_employee_role"]
       }
+      get_my_identity_summary: { Args: never; Returns: Json }
       has_premium_access: {
         Args: { p_wallet_address: string }
         Returns: boolean
@@ -2341,6 +2372,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      set_primary_wallet: { Args: { p_wallet_address: string }; Returns: Json }
       start_agent_trial: { Args: { p_owner_address: string }; Returns: string }
       start_merchant_trial: {
         Args: { p_owner_address: string }
