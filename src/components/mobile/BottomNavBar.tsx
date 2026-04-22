@@ -1,4 +1,4 @@
-import { Gift, Store, User } from 'lucide-react';
+import { Gift, Store, User, Compass } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -10,6 +10,7 @@ export interface NavItem {
 
 const defaultNavItems: NavItem[] = [
   { id: 'loyalty', label: 'Loyalty', icon: Gift },
+  { id: 'discover', label: 'Discover', icon: Compass },
   { id: 'marketplace', label: 'Exchange', icon: Store },
   { id: 'profile', label: 'Profile', icon: User },
 ];
