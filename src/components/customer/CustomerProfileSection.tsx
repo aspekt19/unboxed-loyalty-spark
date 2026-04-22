@@ -16,6 +16,8 @@ import { AuthPrompt } from '@/components/AuthPrompt';
 import { Mail, Phone, Wallet, Save, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { PrimaryWalletSelector } from '@/components/identity/PrimaryWalletSelector';
+import { LinkedWalletsSummary } from '@/components/identity/LinkedWalletsSummary';
 
 export function CustomerProfileSection() {
   const { address } = useAccount();
@@ -163,6 +165,9 @@ export function CustomerProfileSection() {
           </Button>
         </CardContent>
       </Card>
+
+      <PrimaryWalletSelector />
+      <LinkedWalletsSummary />
 
       <WalletQRCode />
       <ReferralCodeInput />
