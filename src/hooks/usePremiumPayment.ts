@@ -150,7 +150,7 @@ export const usePremiumPayment = (
           value: parseUnits(finalAmount.toString(), 18),
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Payment error:', error);
       toast.error('Failed to send payment');
     }

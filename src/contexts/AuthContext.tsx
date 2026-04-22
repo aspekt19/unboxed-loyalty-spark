@@ -190,14 +190,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.dispatchEvent(new Event('profileMigrated'));
       window.dispatchEvent(new Event('sessionReady'));
       toast.success('Successfully signed in');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[AuthProvider] Privy sign in error:', error);
       lastFailureAtRef.current = Date.now();
       const msg = walletConnectorFailureText(error);
       if (isWalletConnectorFailureMessage(msg)) {
         dispatchWalletConnectorRecovery();
       } else {
-        toast.error(error.message || 'Failed to sign in');
+        const message = error instanceof Error ? error.message : 'Failed to sign in';
+        toast.error(message);
       }
     } finally {
       signingInRef.current = false;
@@ -319,11 +320,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.dispatchEvent(new Event('profileMigrated'));
       window.dispatchEvent(new Event('sessionReady'));
       toast.success('Successfully signed in with wallet');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[AuthProvider] SIWE sign in error:', error);
       lastFailureAtRef.current = Date.now();
 
-      if (error.status === 429 || error.code === 'over_request_rate_limit') {
+      const errObj = error as { status?: number; code?: string; name?: string; message?: string };
+      if (errObj.status === 429 || errObj.code === 'over_request_rate_limit') {
         retryBlockedUntilRef.current = Date.now() + 30000;
         const shouldShowRateLimitToast = Date.now() - lastRateLimitToastAtRef.current > 8000;
         if (shouldShowRateLimitToast) {
@@ -331,9 +333,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           lastRateLimitToastAtRef.current = Date.now();
         }
       } else if (
-        error.name === 'UserRejectedRequestError' ||
-        error.message?.includes('rejected') ||
-        error.message?.includes('denied')
+        errObj.name === 'UserRejectedRequestError' ||
+        errObj.message?.includes('rejected') ||
+        errObj.message?.includes('denied')
       ) {
         toast.error('Signature request was rejected');
       } else {
@@ -341,7 +343,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (isWalletConnectorFailureMessage(msg)) {
           dispatchWalletConnectorRecovery();
         } else {
-          toast.error(error.message || 'Failed to sign in');
+          toast.error(errObj.message || 'Failed to sign in');
         }
       }
     } finally {
@@ -372,7 +374,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         toast.success('Signed out successfully');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[AuthProvider] Sign out error:', error);
       toast.error('Failed to sign out');
     }

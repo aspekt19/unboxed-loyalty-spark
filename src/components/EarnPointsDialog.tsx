@@ -157,7 +157,7 @@ export function EarnPointsDialog({
     [recipientInput, purchaseAmount, tokensToEarn, onSubmit, resolveRecipient, resolvedAddress],
   );
 
-  const handleScan = useCallback((result: any) => {
+  const handleScan = useCallback((result: { text?: string } | null | undefined) => {
     if (result?.text) {
       setRecipientInput(result.text);
       setInputType('wallet');

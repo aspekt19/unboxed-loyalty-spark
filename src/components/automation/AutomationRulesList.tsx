@@ -9,13 +9,19 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Trash2, Activity, TrendingUp, Gift, Clock, Cake } from "lucide-react";
 import { toast } from "sonner";
 
+interface AutomationProgramOption {
+  token_address: string;
+  name: string;
+  symbol?: string;
+}
+
 interface AutomationRulesListProps {
-  programs: any[];
+  programs: AutomationProgramOption[];
   selectedProgram: string;
   onProgramChange: (program: string) => void;
 }
 
-const ruleTypeIcons: Record<string, any> = {
+const ruleTypeIcons: Record<string, typeof TrendingUp> = {
   at_risk_offer: TrendingUp,
   tier_upgrade: Activity,
   voucher_expiring: Clock,

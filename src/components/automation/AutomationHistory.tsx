@@ -7,8 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
 import { format } from "date-fns";
 
+interface AutomationProgramOption {
+  token_address: string;
+  name: string;
+  symbol?: string;
+}
+
 interface AutomationHistoryProps {
-  programs: any[];
+  programs: AutomationProgramOption[];
   selectedProgram: string;
   onProgramChange: (program: string) => void;
 }

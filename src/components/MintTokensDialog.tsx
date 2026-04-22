@@ -50,7 +50,7 @@ export function MintTokensDialog({
     setShowScanner(false);
   };
 
-  const handleScan = (result: any) => {
+  const handleScan = (result: { text?: string } | null | undefined) => {
     if (result?.text) {
       setRecipientInput(result.text);
       setInputType('wallet');
@@ -58,7 +58,7 @@ export function MintTokensDialog({
     }
   };
 
-  const handleError = (error: any) => {
+  const handleError = (error: unknown) => {
     console.error('QR scan error:', error);
   };
 
