@@ -236,6 +236,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         access_token = authPayload.access_token;
         refresh_token = authPayload.refresh_token;
         lastTransientError = null;
+
+        // Stash secondary-wallet notice for the UI banner
+        try {
+          if (authPayload.secondary_wallet_linked && typeof window !== 'undefined') {
+            window.localStorage.setItem(
+              'loyalspark:secondary-wallet-notice',
+              JSON.stringify({
+                wallet: authPayload.secondary_wallet_linked,
+                at: Date.now(),
+              })
+            );
+          }
+        } catch {
+          // ignore storage errors
+        }
         break;
       }
 
