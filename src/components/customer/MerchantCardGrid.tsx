@@ -174,6 +174,12 @@ export function MerchantCardGrid({ onMerchantSelect, selectedMerchant, restrictT
     return null; // No merchants with profiles yet — don't show anything
   }
 
+  // When the parent restricts to a specific set (e.g. owned tokens) and there's
+  // nothing to show, render nothing instead of an empty search panel.
+  if (restrictToMerchants && filtered.length === 0) {
+    return null;
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-3">
