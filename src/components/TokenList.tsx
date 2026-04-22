@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/dialog';
 import { RecipientInput, type RecipientInputType } from '@/components/shared/RecipientInput';
 import { useResolveRecipient } from '@/hooks/useResolveRecipient';
+import { useActiveWallet } from '@/contexts/ActiveWalletContext';
 
 interface TokenListProps {
   selectedProgram: string | null;
@@ -49,7 +50,8 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, 
   const [searchQuery, setSearchQuery] = useState('');
   const publicClient = usePublicClient();
   const { address: walletAddress } = useAccount();
-  const { balances, isLoading, refetch } = useMultiTokenBalance(allTokens);
+  const { activeWallet } = useActiveWallet();
+  const { balances, isLoading, refetch } = useMultiTokenBalance(allTokens, activeWallet);
   const { transferTokens, isPending, isSuccess } = useTransferTokens();
   const isMobile = useIsMobile();
   const { selectionChanged } = useFarcasterHaptics();
