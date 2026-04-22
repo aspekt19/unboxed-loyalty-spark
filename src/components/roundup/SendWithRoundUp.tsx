@@ -230,9 +230,10 @@ export const SendWithRoundUp = () => {
         <Button
           className="w-full"
           onClick={handleSend}
-          disabled={isPending || loadingPrice || !recipient || !amount || parseFloat(amount) <= 0}
+          disabled={isPending || isResolving || loadingPrice || !recipient || !amount || parseFloat(amount) <= 0}
         >
-          {isPending ? 'Sending...' : loadingPrice ? 'Loading...' : 'Send with Round-Up'}
+          {(isPending || isResolving) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isResolving ? 'Looking up recipient...' : isPending ? 'Sending...' : loadingPrice ? 'Loading...' : 'Send with Round-Up'}
         </Button>
       </div>
     </Card>
