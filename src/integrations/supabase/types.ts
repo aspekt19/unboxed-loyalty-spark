@@ -1461,9 +1461,13 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ban_reason: string | null
+          banned_at: string | null
+          banned_by: string | null
           created_at: string
           email: string | null
           id: string
+          is_banned: boolean
           phone: string | null
           role: string | null
           updated_at: string
@@ -1471,9 +1475,13 @@ export type Database = {
           wallet_address: string
         }
         Insert: {
+          ban_reason?: string | null
+          banned_at?: string | null
+          banned_by?: string | null
           created_at?: string
           email?: string | null
           id?: string
+          is_banned?: boolean
           phone?: string | null
           role?: string | null
           updated_at?: string
@@ -1481,9 +1489,13 @@ export type Database = {
           wallet_address: string
         }
         Update: {
+          ban_reason?: string | null
+          banned_at?: string | null
+          banned_by?: string | null
           created_at?: string
           email?: string | null
           id?: string
+          is_banned?: boolean
           phone?: string | null
           role?: string | null
           updated_at?: string
@@ -1892,6 +1904,42 @@ export type Database = {
           },
         ]
       }
+      user_moderation_log: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          performed_by_user_id: string | null
+          performed_by_wallet: string
+          reason: string | null
+          target_role: string
+          target_wallet_address: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          performed_by_user_id?: string | null
+          performed_by_wallet: string
+          reason?: string | null
+          target_role: string
+          target_wallet_address: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          performed_by_user_id?: string | null
+          performed_by_wallet?: string
+          reason?: string | null
+          target_role?: string
+          target_wallet_address?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -2017,6 +2065,67 @@ export type Database = {
         Args: { p_request_id: string; p_wallet_address: string }
         Returns: boolean
       }
+      admin_ban_user: {
+        Args: {
+          p_reason?: string
+          p_target_role: string
+          p_wallet_address: string
+        }
+        Returns: Json
+      }
+      admin_delete_user: {
+        Args: {
+          p_reason?: string
+          p_target_role: string
+          p_wallet_address: string
+        }
+        Returns: Json
+      }
+      admin_list_customers: {
+        Args: never
+        Returns: {
+          ban_reason: string
+          banned_at: string
+          created_at: string
+          email: string
+          first_name: string
+          is_banned: boolean
+          last_name: string
+          wallet_address: string
+        }[]
+      }
+      admin_list_merchants: {
+        Args: never
+        Returns: {
+          ban_reason: string
+          banned_at: string
+          business_name: string
+          category: string
+          created_at: string
+          email: string
+          is_banned: boolean
+          wallet_address: string
+        }[]
+      }
+      admin_unban_user: {
+        Args: {
+          p_reason?: string
+          p_target_role: string
+          p_wallet_address: string
+        }
+        Returns: Json
+      }
+      admin_user_moderation_history: {
+        Args: { p_wallet: string }
+        Returns: {
+          action: string
+          created_at: string
+          id: string
+          performed_by_wallet: string
+          reason: string
+          target_role: string
+        }[]
+      }
       cancel_stale_marketplace_offers: {
         Args: { p_max_age_days?: number }
         Returns: number
@@ -2062,11 +2171,13 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_current_user_banned: { Args: never; Returns: boolean }
       is_merchant_member: {
         Args: { p_merchant_address: string; p_wallet_address: string }
         Returns: boolean
       }
       is_unrestricted_merchant: { Args: { p_wallet: string }; Returns: boolean }
+      is_wallet_banned: { Args: { p_wallet: string }; Returns: boolean }
       log_premium_activity: {
         Args: {
           p_activity_data?: Json
