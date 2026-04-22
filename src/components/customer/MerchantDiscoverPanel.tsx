@@ -77,8 +77,9 @@ export function MerchantDiscoverPanel() {
   const [locationFilter, setLocationFilter] = useState('all');
   const [sortMode, setSortMode] = useState<SortMode>('newest');
   const [onlyNew, setOnlyNew] = useState(false);
-  const [page, setPage] = useState(0);
-  const isMobile = useIsMobile();
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  useIsMobile();
 
   const loadMerchants = useCallback(async () => {
     setIsLoading(true);
@@ -156,9 +157,9 @@ export function MerchantDiscoverPanel() {
     loadMerchants();
   }, [loadMerchants]);
 
-  // Reset page on filter changes
+  // Reset visible count on filter changes
   useEffect(() => {
-    setPage(0);
+    setVisibleCount(PAGE_SIZE);
   }, [category, searchQuery, locationFilter, sortMode, onlyNew]);
 
   // Per-category counts (full dataset, ignoring category filter)
@@ -225,12 +226,25 @@ export function MerchantDiscoverPanel() {
     return sorted;
   }, [merchants, category, locationFilter, onlyNew, searchQuery, sortMode]);
 
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const safePage = Math.min(page, pageCount - 1);
-  const pageItems = filtered.slice(
-    safePage * PAGE_SIZE,
-    safePage * PAGE_SIZE + PAGE_SIZE,
-  );
+  const pageItems = filtered.slice(0, visibleCount);
+  const hasMore = visibleCount < filtered.length;
+
+  // Infinite scroll via IntersectionObserver
+  useEffect(() => {
+    if (!hasMore) return;
+    const node = sentinelRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setVisibleCount((c) => Math.min(c + PAGE_SIZE, filtered.length));
+        }
+      },
+      { rootMargin: `0px 0px ${SCROLL_THRESHOLD_PX}px 0px` },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasMore, filtered.length]);
 
   const activeCategoryLabel =
     CATEGORIES.find((c) => c.value === category)?.label || 'All';
@@ -429,30 +443,18 @@ export function MerchantDiscoverPanel() {
                 ))}
               </div>
 
-              {pageCount > 1 && (
-                <div className="flex items-center justify-between pt-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={safePage === 0}
-                    onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  >
-                    <ChevronLeft className="h-4 w-4 mr-1" />
-                    Prev
-                  </Button>
-                  <span className="text-xs text-muted-foreground">
-                    Page {safePage + 1} of {pageCount}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={safePage >= pageCount - 1}
-                    onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
-                  >
-                    Next
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
+              {hasMore && (
+                <div
+                  ref={sentinelRef}
+                  className="flex items-center justify-center py-6"
+                >
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                 </div>
+              )}
+              {!hasMore && filtered.length > PAGE_SIZE && (
+                <p className="text-center text-xs text-muted-foreground pt-2">
+                  You've reached the end • {filtered.length} merchants
+                </p>
               )}
             </>
           )}
