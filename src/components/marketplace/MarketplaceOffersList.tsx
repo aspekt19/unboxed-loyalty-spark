@@ -332,19 +332,29 @@ export function MarketplaceOffersList() {
                       variant="destructive"
                       className="w-full"
                       onClick={() => handleCancelOffer(offer.id)}
-                      disabled={isProcessing || cancelPending}
+                      disabled={isProcessing || cancelPending || isWalletMismatch}
+                      title={isWalletMismatch ? 'Reconnect your primary wallet to sign' : undefined}
                     >
                       {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <X className="mr-2 h-4 w-4" />}
-                      {isProcessing ? 'Cancelling...' : 'Cancel & Return Tokens'}
+                      {isWalletMismatch
+                        ? 'Reconnect primary wallet'
+                        : isProcessing
+                          ? 'Cancelling...'
+                          : 'Cancel & Return Tokens'}
                     </Button>
                   ) : (
                     <Button
                       className="w-full"
                       onClick={() => handleAcceptOffer(offer)}
-                      disabled={isProcessing || approvePending || fillPending}
+                      disabled={isProcessing || approvePending || fillPending || isWalletMismatch}
+                      title={isWalletMismatch ? 'Reconnect your primary wallet to sign' : undefined}
                     >
                       {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      {isProcessing ? 'Processing Atomic Swap...' : 'Accept Escrow Exchange'}
+                      {isWalletMismatch
+                        ? 'Reconnect primary wallet'
+                        : isProcessing
+                          ? 'Processing Atomic Swap...'
+                          : 'Accept Escrow Exchange'}
                     </Button>
                   )}
                 </div>
