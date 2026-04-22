@@ -78,9 +78,12 @@ export function VouchersManagement() {
     }
   };
 
-  const handleQrScan = (result: { text?: string } | null | undefined) => {
-    if (result?.text) {
-      const scannedCode = result.text.trim();
+  const handleQrScan = (result: unknown) => {
+    const text =
+      (result as { text?: string } | null | undefined)?.text ??
+      (result as { getText?: () => string } | null | undefined)?.getText?.();
+    if (text) {
+      const scannedCode = text.trim();
       setShowScanner(false);
       setSearchCode(scannedCode);
       

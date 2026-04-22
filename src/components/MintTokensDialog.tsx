@@ -50,9 +50,12 @@ export function MintTokensDialog({
     setShowScanner(false);
   };
 
-  const handleScan = (result: { text?: string } | null | undefined) => {
-    if (result?.text) {
-      setRecipientInput(result.text);
+  const handleScan = (result: unknown) => {
+    const text =
+      (result as { text?: string } | null | undefined)?.text ??
+      (result as { getText?: () => string } | null | undefined)?.getText?.();
+    if (text) {
+      setRecipientInput(text);
       setInputType('wallet');
       setShowScanner(false);
     }

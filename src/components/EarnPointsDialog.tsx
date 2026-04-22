@@ -157,14 +157,17 @@ export function EarnPointsDialog({
     [recipientInput, purchaseAmount, tokensToEarn, onSubmit, resolveRecipient, resolvedAddress],
   );
 
-  const handleScan = useCallback((result: { text?: string } | null | undefined) => {
-    if (result?.text) {
-      setRecipientInput(result.text);
+  const handleScan = useCallback((result: unknown) => {
+    const text =
+      (result as { text?: string } | null | undefined)?.text ??
+      (result as { getText?: () => string } | null | undefined)?.getText?.();
+    if (text) {
+      setRecipientInput(text);
       setInputType('wallet');
       setShowScanner(false);
       // Auto-resolve scanned address
       (async () => {
-        const wallet = await resolveRecipient(result.text);
+        const wallet = await resolveRecipient(text);
         if (wallet) setResolvedAddress(wallet);
       })();
     }
