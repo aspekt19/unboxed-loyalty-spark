@@ -95,32 +95,34 @@ function AnimatedRoutes() {
   }, []);
 
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<Index />} />
-        <Route path="/app" element={<AppPage />} />
-        <Route path="/customer" element={<CustomerPage />} />
-        <Route path="/merchant" element={<MerchantPage />} />
-        {/* /premium deprecated → redirect to public pricing */}
-        <Route path="/premium" element={<Navigate to="/pricing" replace />} />
-        <Route path="/admin" element={<AdminPage />} />
-        <Route path="/pitch" element={<PitchDeck />} />
-        <Route path="/guide" element={<GuidePage />} />
-        <Route path="/install" element={<InstallPage />} />
-        <Route path="/api-docs" element={<ApiDocsPage />} />
-        <Route path="/for-agents" element={<ForAgentsPage />} />
-        <Route path="/pricing" element={<PricingPage />} />
-        <Route path="/legal/terms" element={<TermsPage />} />
-        <Route path="/legal/privacy" element={<PrivacyPage />} />
-        <Route path="/legal/refund" element={<RefundPage />} />
-        {/* Native app entry points (Capacitor) */}
-        <Route path="/native/shopper" element={<NativeShopperPage />} />
-        <Route path="/native/business" element={<NativeBusinessPage />} />
-        <Route path="/preview-3d" element={<Preview3D />} />
-        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </AnimatePresence>
+    <BanGate>
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<Index />} />
+          <Route path="/app" element={<AppPage />} />
+          <Route path="/customer" element={<CustomerPage />} />
+          <Route path="/merchant" element={<MerchantPage />} />
+          {/* /premium deprecated → redirect to public pricing */}
+          <Route path="/premium" element={<Navigate to="/pricing" replace />} />
+          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/pitch" element={<PitchDeck />} />
+          <Route path="/guide" element={<GuidePage />} />
+          <Route path="/install" element={<InstallPage />} />
+          <Route path="/api-docs" element={<ApiDocsPage />} />
+          <Route path="/for-agents" element={<ForAgentsPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/legal/terms" element={<TermsPage />} />
+          <Route path="/legal/privacy" element={<PrivacyPage />} />
+          <Route path="/legal/refund" element={<RefundPage />} />
+          {/* Native app entry points (Capacitor) */}
+          <Route path="/native/shopper" element={<NativeShopperPage />} />
+          <Route path="/native/business" element={<NativeBusinessPage />} />
+          <Route path="/preview-3d" element={<Preview3D />} />
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </AnimatePresence>
+    </BanGate>
   );
 }
 
