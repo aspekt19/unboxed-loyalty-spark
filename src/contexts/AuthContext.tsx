@@ -27,6 +27,8 @@ interface AuthContextType {
   isLoading: boolean;
   signInWithWallet: () => Promise<void>;
   signInWithPrivy: () => Promise<void>;
+  /** Clears rate-limit/back-off refs and re-triggers Privy sign-in. Used by "Try again". */
+  retrySignIn: () => Promise<void>;
   signOut: (options?: SignOutOptions) => Promise<void>;
   resetManualSignOut: () => void;
 }
