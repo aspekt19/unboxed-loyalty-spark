@@ -33,11 +33,14 @@ import { PrimaryWalletSelector } from '@/components/identity/PrimaryWalletSelect
 import { LinkedWalletsSummary } from '@/components/identity/LinkedWalletsSummary';
 import { LinkExternalWalletCard } from '@/components/identity/LinkExternalWalletCard';
 import { SecondaryWalletNotice } from '@/components/identity/SecondaryWalletNotice';
+import { useActiveWallet } from '@/contexts/ActiveWalletContext';
 
 export function CustomerProfileSection() {
   const { address } = useAccount();
+  const { activeWallet } = useActiveWallet();
   const { user, session, isLoading: authLoading, signOut } = useAuth();
   const privy = usePrivySafe();
+  const profileWallet = activeWallet ?? address;
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -52,12 +55,12 @@ export function CustomerProfileSection() {
   const privyVerifiedEmail = getPrivyPrimaryEmail(privy.user);
 
   useEffect(() => {
-    if (!address) return;
+    if (!profileWallet) return;
     const load = async () => {
       const { data } = await supabase
         .from('customer_profiles')
         .select('first_name, last_name, email, phone')
-        .eq('wallet_address', address.toLowerCase())
+        .eq('wallet_address', profileWallet.toLowerCase())
         .maybeSingle();
       if (data) {
         setFirstName(data.first_name || '');
@@ -71,14 +74,14 @@ export function CustomerProfileSection() {
       setLoaded(true);
     };
     load();
-  }, [address, privyVerifiedEmail]);
+  }, [profileWallet, privyVerifiedEmail]);
 
   const emailIsVerified =
     !!email && !!privyVerifiedEmail && email.toLowerCase() === privyVerifiedEmail.toLowerCase();
 
   // After Privy verifies an email, persist it. MUST be before any early return.
   useEffect(() => {
-    if (!user || !address || !privyVerifiedEmail) return;
+    if (!user || !profileWallet || !privyVerifiedEmail) return;
     if (email.toLowerCase() === privyVerifiedEmail.toLowerCase()) return;
 
     let cancelled = false;
@@ -87,7 +90,7 @@ export function CustomerProfileSection() {
         const { error: cpErr } = await supabase
           .from('customer_profiles')
           .upsert(
-            { wallet_address: address.toLowerCase(), email: privyVerifiedEmail },
+            { wallet_address: profileWallet.toLowerCase(), email: privyVerifiedEmail },
             { onConflict: 'wallet_address' }
           );
 
@@ -118,11 +121,11 @@ export function CustomerProfileSection() {
     return () => {
       cancelled = true;
     };
-  }, [privyVerifiedEmail, user, address, email]);
+  }, [privyVerifiedEmail, user, profileWallet, email]);
 
   if (authLoading) return null;
 
-  if (!address || !user || !session) {
+  if (!profileWallet || !user || !session) {
     return (
       <div className="space-y-4">
         <AuthPrompt />
@@ -136,7 +139,7 @@ export function CustomerProfileSection() {
 
   const initials = firstName && lastName
     ? `${firstName[0]}${lastName[0]}`.toUpperCase()
-    : address.slice(2, 4).toUpperCase();
+    : profileWallet.slice(2, 4).toUpperCase();
 
   const handleSaveProfile = async () => {
     setSaving(true);
@@ -150,7 +153,7 @@ export function CustomerProfileSection() {
         phone: string | null;
         email?: string | null;
       } = {
-        wallet_address: address.toLowerCase(),
+        wallet_address: profileWallet.toLowerCase(),
         first_name: firstName || null,
         last_name: lastName || null,
         phone: phone || null,
@@ -234,7 +237,7 @@ export function CustomerProfileSection() {
   };
 
   const handleCopyAddress = () => {
-    navigator.clipboard.writeText(address);
+    navigator.clipboard.writeText(profileWallet);
     setCopied(true);
     toast.success('Address copied');
     setTimeout(() => setCopied(false), 2000);
@@ -260,7 +263,7 @@ export function CustomerProfileSection() {
                 onClick={handleCopyAddress}
                 className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors font-mono"
               >
-                {address.slice(0, 6)}...{address.slice(-4)}
+                 {profileWallet.slice(0, 6)}...{profileWallet.slice(-4)}
                 {copied ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
               </button>
             </div>
