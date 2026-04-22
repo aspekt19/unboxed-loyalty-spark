@@ -10,6 +10,8 @@ import { parseUnits } from 'viem';
 import { encodeWithBuilderCode } from '@/config/builder-code';
 import { CONTRACTS } from '@/config/contracts';
 import { Loader2, ArrowRightLeft, X, Shield, Info, CheckCircle2 } from 'lucide-react';
+import { useActiveWallet } from '@/contexts/ActiveWalletContext';
+import { WalletMismatchBanner } from '@/components/identity/WalletMismatchBanner';
 
 interface MarketplaceOffer {
   id: string;
@@ -30,6 +32,7 @@ interface TokenInfo {
 
 export function MarketplaceOffersList() {
   const { address } = useAccount();
+  const { isWalletMismatch } = useActiveWallet();
   const [offers, setOffers] = useState<MarketplaceOffer[]>([]);
   const [tokens, setTokens] = useState<Record<string, TokenInfo>>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -110,6 +113,10 @@ export function MarketplaceOffersList() {
   };
 
   const handleAcceptOffer = async (offer: MarketplaceOffer) => {
+    if (isWalletMismatch) {
+      toast.error('Reconnect your primary wallet to sign the swap');
+      return;
+    }
     if (!address) {
       toast.error('Please connect your wallet');
       return;
@@ -181,6 +188,10 @@ export function MarketplaceOffersList() {
   };
 
   const handleCancelOffer = async (offerId: string) => {
+    if (isWalletMismatch) {
+      toast.error('Reconnect your primary wallet to cancel the swap');
+      return;
+    }
     setProcessingOfferId(offerId);
 
     try {
@@ -235,6 +246,7 @@ export function MarketplaceOffersList() {
 
   return (
     <div className="space-y-4">
+      <WalletMismatchBanner />
       {offers.length > 0 && (
         <Alert className="border-green-500/50 bg-green-500/5">
           <Shield className="h-4 w-4 text-green-600" />
@@ -320,19 +332,29 @@ export function MarketplaceOffersList() {
                       variant="destructive"
                       className="w-full"
                       onClick={() => handleCancelOffer(offer.id)}
-                      disabled={isProcessing || cancelPending}
+                      disabled={isProcessing || cancelPending || isWalletMismatch}
+                      title={isWalletMismatch ? 'Reconnect your primary wallet to sign' : undefined}
                     >
                       {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <X className="mr-2 h-4 w-4" />}
-                      {isProcessing ? 'Cancelling...' : 'Cancel & Return Tokens'}
+                      {isWalletMismatch
+                        ? 'Reconnect primary wallet'
+                        : isProcessing
+                          ? 'Cancelling...'
+                          : 'Cancel & Return Tokens'}
                     </Button>
                   ) : (
                     <Button
                       className="w-full"
                       onClick={() => handleAcceptOffer(offer)}
-                      disabled={isProcessing || approvePending || fillPending}
+                      disabled={isProcessing || approvePending || fillPending || isWalletMismatch}
+                      title={isWalletMismatch ? 'Reconnect your primary wallet to sign' : undefined}
                     >
                       {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      {isProcessing ? 'Processing Atomic Swap...' : 'Accept Escrow Exchange'}
+                      {isWalletMismatch
+                        ? 'Reconnect primary wallet'
+                        : isProcessing
+                          ? 'Processing Atomic Swap...'
+                          : 'Accept Escrow Exchange'}
                     </Button>
                   )}
                 </div>
