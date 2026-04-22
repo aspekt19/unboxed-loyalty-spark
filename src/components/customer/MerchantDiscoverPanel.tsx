@@ -349,7 +349,7 @@ export function MerchantDiscoverPanel() {
                 <SheetHeader className="px-6 pt-6 pb-2 flex-shrink-0">
                   <SheetTitle>Categories</SheetTitle>
                 </SheetHeader>
-                <div className="flex-1 overflow-y-auto overscroll-contain px-6 pb-[env(safe-area-inset-bottom,16px)] pt-2">
+                <div className="flex-1 overflow-y-auto overscroll-contain px-6 pt-2 pb-[calc(env(safe-area-inset-bottom,0px)+96px)]">
                   {categoryList}
                 </div>
               </SheetContent>
