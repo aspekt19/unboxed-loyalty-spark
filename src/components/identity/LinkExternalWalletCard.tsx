@@ -87,7 +87,7 @@ export function LinkExternalWalletCard() {
 
   const persistLink = async (walletAddress: string) => {
     const privyToken = await privy.getAccessToken();
-    if (!privyToken) throw new Error('Сессия Privy не готова — обновите страницу');
+    if (!privyToken) throw new Error('Privy session not ready — please refresh the page');
 
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const res = await fetch(`${supabaseUrl}/functions/v1/link-secondary-wallet`, {
@@ -109,20 +109,20 @@ export function LinkExternalWalletCard() {
       }
       if (payload.error === 'wallet_owned_by_other_account') {
         throw new Error(
-          'Этот кошелёк уже привязан к другому Loyal Spark аккаунту. Войдите тем аккаунтом, чтобы объединить.',
+          'This wallet is already linked to another Loyal Spark account. Sign in with that account to merge.',
         );
       }
-      throw new Error(payload.message || payload.error || 'Не удалось привязать кошелёк');
+      throw new Error(payload.message || payload.error || 'Failed to link wallet');
     }
   };
 
   const handleLink = async () => {
     if (!privy.ready) {
-      toast.error('Сервис входа ещё не готов');
+      toast.error('Login service is not ready yet');
       return;
     }
     if (!privy.authenticated) {
-      toast.error('Сначала войдите через email/Google');
+      toast.error('Please sign in with email/Google first');
       return;
     }
     setBusy(true);
@@ -130,10 +130,10 @@ export function LinkExternalWalletCard() {
       // Remember current set so the auto-link effect can detect what's new
       baselineRef.current = new Set(privyWallets);
       privy.linkWallet();
-      toast.info('Подтвердите подключение в окне Privy');
+      toast.info('Confirm the connection in the Privy popup');
     } catch (e: any) {
       console.error('linkWallet failed:', e);
-      toast.error(e?.message ?? 'Не удалось открыть выбор кошелька');
+      toast.error(e?.message ?? 'Failed to open wallet picker');
     } finally {
       setBusy(false);
     }
@@ -143,10 +143,10 @@ export function LinkExternalWalletCard() {
     setBusy(true);
     try {
       await persistLink(addr);
-      toast.success(`Привязан кошелёк ${shortAddr(addr)}`);
+      toast.success(`Wallet ${shortAddr(addr)} linked`);
       await refresh();
     } catch (e: any) {
-      toast.error(e?.message ?? 'Не удалось привязать');
+      toast.error(e?.message ?? 'Failed to link wallet');
     } finally {
       setBusy(false);
     }
@@ -159,11 +159,11 @@ export function LinkExternalWalletCard() {
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
           <Plus className="h-4 w-4 text-primary" />
-          Привязать внешний кошелёк
+          Link external wallet
         </CardTitle>
         <p className="text-xs text-muted-foreground">
-          Добавьте MetaMask, Coinbase Wallet или другой внешний кошелёк к этому аккаунту.
-          После привязки вы сможете выбрать его как основной.
+          Add MetaMask, Coinbase Wallet, or another external wallet to this account.
+          Once linked, you can set it as your primary wallet.
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -172,8 +172,8 @@ export function LinkExternalWalletCard() {
             <ShieldCheck className="h-4 w-4" />
             <AlertDescription className="text-xs space-y-2">
               <p>
-                Privy уже знает о {unlinkedFromPrivy.length === 1 ? 'кошельке' : 'кошельках'}, ещё
-                не записанных в ваш аккаунт:
+                Privy already knows about {unlinkedFromPrivy.length === 1 ? 'a wallet' : 'wallets'} that
+                {unlinkedFromPrivy.length === 1 ? ' is' : ' are'} not yet saved to your account:
               </p>
               {unlinkedFromPrivy.map((a) => (
                 <div key={a} className="flex items-center justify-between gap-2">
@@ -184,7 +184,7 @@ export function LinkExternalWalletCard() {
                     onClick={() => handlePersistKnown(a)}
                     disabled={busy}
                   >
-                    Подтвердить
+                    Confirm
                   </Button>
                 </div>
               ))}
@@ -198,16 +198,16 @@ export function LinkExternalWalletCard() {
           ) : (
             <Wallet className="h-4 w-4 mr-1.5" />
           )}
-          Подключить кошелёк
+          Connect wallet
         </Button>
 
         <Alert variant="default" className="border-muted-foreground/30">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription className="text-[11px]">
-            Если Privy скажет «This account has already been linked to another user» — это значит,
-            что выбранный кошелёк уже принадлежит другому Loyal Spark аккаунту. В этом случае
-            выйдите и войдите тем аккаунтом — например, через MetaMask напрямую — а затем
-            привяжите свою почту с этой страницы.
+            If Privy says "This account has already been linked to another user" — it means the
+            selected wallet already belongs to a different Loyal Spark account. In that case, sign
+            out and sign in with that account directly (e.g. via MetaMask), then link your email
+            from this page.
           </AlertDescription>
         </Alert>
       </CardContent>
