@@ -142,6 +142,10 @@ export function MerchantCardGrid({ onMerchantSelect, selectedMerchant, restrictT
 
   const filtered = useMemo(() => {
     let result = merchants;
+    if (restrictToMerchants) {
+      const lowered = new Set(Array.from(restrictToMerchants).map(a => a.toLowerCase()));
+      result = result.filter(m => lowered.has(m.merchant_address.toLowerCase()));
+    }
     if (categoryFilter !== 'all') {
       result = result.filter(m => m.category === categoryFilter);
     }
@@ -155,7 +159,7 @@ export function MerchantCardGrid({ onMerchantSelect, selectedMerchant, restrictT
       );
     }
     return result;
-  }, [merchants, searchQuery, categoryFilter]);
+  }, [merchants, searchQuery, categoryFilter, restrictToMerchants]);
 
   if (isLoading) {
     return (
