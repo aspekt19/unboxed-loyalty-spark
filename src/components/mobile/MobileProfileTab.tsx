@@ -8,6 +8,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Wallet } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthPrompt } from '@/components/AuthPrompt';
+import { PrimaryWalletSelector } from '@/components/identity/PrimaryWalletSelector';
+import { LinkedWalletsSummary } from '@/components/identity/LinkedWalletsSummary';
 
 interface MobileProfileTabProps {
   /** Optional callback (legacy). */
@@ -38,6 +40,8 @@ export function MobileProfileTab(_props: MobileProfileTabProps) {
 
   return (
     <div className="space-y-4">
+      <PrimaryWalletSelector />
+      <LinkedWalletsSummary />
       <WalletQRCode />
       <ReferralCodeInput />
       <ReferralCard />
