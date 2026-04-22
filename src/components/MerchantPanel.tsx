@@ -21,6 +21,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { WalletMismatchBanner } from '@/components/identity/WalletMismatchBanner';
+import { useActiveWallet } from '@/contexts/ActiveWalletContext';
 
 interface TeamMembership {
   merchant_address: string;
@@ -65,6 +66,7 @@ export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: Merchant
   const [workspace, setWorkspace] = useState<string>('own');
   
   const { mintTokens, isPending, isSuccess, reset, hash } = useMintTokens();
+  const { isWalletMismatch } = useActiveWallet();
   const { isPaused, isMintingActive } = useCheckProgramStatus(
     selectedProgram?.tokenAddress as `0x${string}` | undefined
   );
@@ -131,6 +133,10 @@ export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: Merchant
   }, [workspace]);
 
   const handleMintSubmit = async (recipientAddress: string, amount: string) => {
+    if (isWalletMismatch) {
+      toast.error('Reconnect your primary wallet to sign on-chain actions');
+      return;
+    }
     if (!selectedProgram) {
       toast.error('Please select a loyalty program first');
       return;
