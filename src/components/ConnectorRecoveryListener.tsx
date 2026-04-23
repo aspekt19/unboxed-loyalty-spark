@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useContext, useEffect, useRef } from 'react';
 import { useConfig, useDisconnect } from 'wagmi';
-import { useAuth } from '@/contexts/AuthContext';
+import { AuthContext } from '@/contexts/AuthContext';
 import { usePrivySafe } from '@/hooks/usePrivySafe';
 import { isFarcasterContext } from '@/config/wagmi';
 import { WALLET_CONNECTOR_ERROR_EVENT } from '@/constants/walletConnectorRecovery';
