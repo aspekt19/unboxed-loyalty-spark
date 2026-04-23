@@ -4,47 +4,44 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { VoucherCard } from './VoucherCard';
 import { Ticket, AlertCircle } from 'lucide-react';
-import { useAccount } from 'wagmi';
 import { Voucher } from '@/types/rewards';
 import { getCustomerVouchers } from '@/lib/vouchers';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useActiveCustomerWallet } from '@/hooks/useActiveCustomerWallet';
 
 export function MyVouchers() {
-  const { address } = useAccount();
+  const { activeAddress } = useActiveCustomerWallet();
   const { session } = useAuth();
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
 
   const loadVouchers = async () => {
-    if (!address || !session) return;
-    const customerVouchers = await getCustomerVouchers(address);
+    if (!activeAddress || !session) return;
+    const customerVouchers = await getCustomerVouchers(activeAddress);
     setVouchers(customerVouchers);
   };
 
-  // Очищаем ваучеры при отключении кошелька
   useEffect(() => {
-    if (!address) {
+    if (!activeAddress) {
       setVouchers([]);
     }
-  }, [address]);
+  }, [activeAddress]);
 
   useEffect(() => {
-    // Загружаем ваучеры только если есть адрес и пользователь авторизован
-    if (!address || !session) return;
-    
+    if (!activeAddress || !session) return;
+
     loadVouchers();
-    
+
     const handleSessionReady = () => {
       console.log('[MyVouchers] Session ready, reloading vouchers...');
       loadVouchers();
     };
-    
+
     window.addEventListener('vouchersUpdated', loadVouchers);
     window.addEventListener('sessionReady', handleSessionReady);
     window.addEventListener('profileMigrated', handleSessionReady);
-    
-    // Подписка на изменения в таблице vouchers для реалтайм обновлений
+
     const channel = supabase
       .channel('vouchers_changes')
       .on(
@@ -53,7 +50,7 @@ export function MyVouchers() {
           event: '*',
           schema: 'public',
           table: 'vouchers',
-          filter: `customer_address=eq.${address.toLowerCase()}`,
+          filter: `customer_address=eq.${activeAddress.toLowerCase()}`,
         },
         (payload) => {
           console.log('Voucher status changed:', payload);
@@ -61,16 +58,17 @@ export function MyVouchers() {
         }
       )
       .subscribe();
-    
+
     return () => {
       window.removeEventListener('vouchersUpdated', loadVouchers);
       window.removeEventListener('sessionReady', handleSessionReady);
       window.removeEventListener('profileMigrated', handleSessionReady);
       supabase.removeChannel(channel);
     };
-  }, [address, session]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeAddress, session]);
 
-  if (!address) {
+  if (!activeAddress) {
     return null;
   }
 
@@ -108,7 +106,7 @@ export function MyVouchers() {
                 Used ({usedVouchers.length})
               </TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="active" className="mt-4">
               {activeVouchers.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
@@ -124,7 +122,7 @@ export function MyVouchers() {
                 </ScrollArea>
               )}
             </TabsContent>
-            
+
             <TabsContent value="inactive" className="mt-4">
               {inactiveVouchers.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
@@ -142,7 +140,7 @@ export function MyVouchers() {
                 </ScrollArea>
               )}
             </TabsContent>
-            
+
             <TabsContent value="used" className="mt-4">
               {usedVouchers.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
