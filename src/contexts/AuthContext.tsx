@@ -148,6 +148,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const getAccessToken = (window as any).__privyGetAccessToken as (() => Promise<string | null>) | undefined;
     if (!privyUser || !getAccessToken) return;
 
+    const expectedPrivyAuthEmail = `${String(privyUser.id ?? '').replace(/^did:privy:/, '')}@privy.auth`;
+    const privyLinkedWalletAddress =
+      privyUser?.wallet?.address?.toLowerCase()
+      ?? getPrivyLinkedAccounts(privyUser)
+        .find((a: PrivyLinkedAccount) => a.type === 'wallet' || a.type === 'smart_wallet')
+        ?.address?.toLowerCase()
+      ?? null;
+
     const now = Date.now();
     if (now < retryBlockedUntilRef.current) return;
     if (now - lastSignInAttemptAtRef.current < 4000) return;
@@ -161,8 +169,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const isExpired = existingSession.expires_at
           ? new Date(existingSession.expires_at * 1000) < new Date()
           : false;
+        const belongsToCurrentPrivyIdentity = existingSession.user.email === expectedPrivyAuthEmail;
 
-        if (!isExpired) {
+        if (!isExpired && belongsToCurrentPrivyIdentity) {
           setSession(existingSession);
           setUser(existingSession.user);
           setIsLoading(false);
@@ -171,6 +180,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         await supabase.auth.signOut();
+        setSession(null);
+        setUser(null);
       }
 
       setIsLoading(true);
@@ -201,12 +212,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             privyToken: privyAccessToken,
             privyDid: privyUser.id,
             email: getPrivyPrimaryEmail(privyUser),
-            walletAddress: address?.toLowerCase()
-              ?? privyUser?.wallet?.address?.toLowerCase()
-              ?? getPrivyLinkedAccounts(privyUser)
-                .find((a: PrivyLinkedAccount) => a.type === 'wallet' || a.type === 'smart_wallet')
-                ?.address?.toLowerCase()
-              ?? null,
+            walletAddress: privyLinkedWalletAddress,
           }),
         });
 
