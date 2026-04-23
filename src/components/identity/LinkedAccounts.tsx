@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { getPrivyLinkedAccounts, getPrivyPrimaryEmail } from '@/lib/privyAuth';
 import { usePrivySafe } from '@/hooks/usePrivySafe';
+import { mergeIdentityWallets, syncPrivyIdentityLinks } from '@/lib/identitySync';
 
 interface IdentityLink {
   id: string;
@@ -55,7 +56,7 @@ export function LinkedAccounts() {
   const { session, user } = useAuth();
   const { address: connectedAddress } = useAccount();
   const { signMessageAsync } = useSignMessage();
-  const { user: privyUser, connectWallet, authenticated: privyAuthenticated } = usePrivySafe();
+  const { user: privyUser, connectWallet, authenticated: privyAuthenticated, getAccessToken } = usePrivySafe();
 
   const [summary, setSummary] = useState<IdentitySummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -93,6 +94,33 @@ export function LinkedAccounts() {
   useEffect(() => {
     loadSummary();
   }, [loadSummary]);
+
+  useEffect(() => {
+    if (!user || !session || !privyUser || !summary) return;
+
+    const mergedWallets = mergeIdentityWallets(summary.wallets, privyUser, summary.primary_wallet);
+    const hasUnsyncedWallet = mergedWallets.some((wallet) => !wallet.is_synced);
+    if (!hasUnsyncedWallet) return;
+
+    let cancelled = false;
+
+    const syncWallets = async () => {
+      const result = await syncPrivyIdentityLinks({
+        privyUser,
+        getAccessToken,
+        fallbackWallet: normalizedConnectedAddress,
+      });
+
+      if (!result.ok || cancelled) return;
+      await loadSummary();
+    };
+
+    void syncWallets();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, session, privyUser, summary, getAccessToken, normalizedConnectedAddress, loadSummary]);
 
   const handleSetPrimary = async (linkType: 'wallet' | 'email', value: string) => {
     setBusy(`primary-${value}`);
@@ -257,7 +285,7 @@ export function LinkedAccounts() {
 
   if (!user || !session) return null;
 
-  const linkedWallets = summary?.wallets ?? [];
+  const linkedWallets = mergeIdentityWallets(summary?.wallets ?? [], privyUser, summary?.primary_wallet ?? null);
   const linkedEmails = summary?.emails ?? [];
   const isConnectedWalletLinked = normalizedConnectedAddress
     ? linkedWallets.some((wallet) => wallet.value === normalizedConnectedAddress)
@@ -297,7 +325,7 @@ export function LinkedAccounts() {
               </div>
 
               <div className="space-y-2">
-                {linkedWallets.map((w) => (
+                 {linkedWallets.map((w) => (
                   <div
                     key={w.id}
                     className="flex items-center justify-between gap-2 rounded-lg border bg-card p-3"
@@ -315,6 +343,9 @@ export function LinkedAccounts() {
                       <p className="text-xs text-muted-foreground mt-0.5">
                         via {w.verified_via}
                       </p>
+                       {'is_synced' in w && !w.is_synced ? (
+                         <p className="text-[11px] text-muted-foreground mt-1">Syncing from Privy…</p>
+                       ) : null}
                     </div>
                     <div className="flex items-center gap-1">
                       {!w.is_primary && (
