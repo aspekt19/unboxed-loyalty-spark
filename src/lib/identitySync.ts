@@ -66,7 +66,7 @@ export function mergeIdentityWallets(
 export async function syncPrivyIdentityLinks({
   privyUser,
   getAccessToken,
-  fallbackWallet,
+  fallbackWallet: _fallbackWallet,
 }: {
   privyUser: PrivyUserLike | null | undefined;
   getAccessToken?: (() => Promise<string | null>) | null;
@@ -81,7 +81,7 @@ export async function syncPrivyIdentityLinks({
     return { ok: false, error: 'Privy access token not available' };
   }
 
-  const walletAddress = fallbackWallet ?? getPrivyWalletAddresses(privyUser)[0] ?? null;
+  const walletAddress = getPrivyWalletAddresses(privyUser)[0] ?? null;
   const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/privy-auth`, {
     method: 'POST',
     headers: {
