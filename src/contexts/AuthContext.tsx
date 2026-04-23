@@ -212,9 +212,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (!response.ok) {
           let errorMessage = 'Privy authentication failed';
+          let errorCode: string | null = null;
           try {
             const err = await response.json();
-            errorMessage = err.error || errorMessage;
+            errorMessage = err.message || err.error || errorMessage;
+            errorCode = err.error || null;
           } catch {
             try {
               const raw = await response.text();
@@ -222,6 +224,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             } catch {
               // keep fallback message
             }
+          }
+
+          // Hard conflict: stop retrying, stop auto-relogin, surface to user.
+          if (response.status === 409 || errorCode === 'wallet_belongs_to_another_account') {
+            manualSignOutRef.current = true;
+            setStoredManualSignOut(true);
+            retryBlockedUntilRef.current = Date.now() + 60_000;
+            toast.error(errorMessage, { duration: 8000 });
+            setIsLoading(false);
+            return;
           }
 
           if (attempt < PRIVY_AUTH_RETRY_DELAYS_MS.length - 1 && isTransientPrivyAuthIssue(errorMessage, response.status)) {
