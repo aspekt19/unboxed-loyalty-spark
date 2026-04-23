@@ -353,52 +353,47 @@ serve(async (req) => {
     const session = signInResult.data.session!;
     userId = signInResult.data.user!.id;
 
-    // STEP 4: Sync wallet — only if it's free or already belongs to this user
-    let walletConflict: { address: string; owner_user_id: string } | null = null;
+    // STEP 4: Sync wallets — for EVERY wallet from Privy:
+    //   - if it is free or already ours → upsert into identity_links (so the
+    //     user can see it under "Linked Accounts" and pick a primary)
+    //   - if it belongs to ANOTHER user → skip ONLY that wallet and report
+    //     it as a soft conflict (do NOT abort the whole session)
+    // This is what makes manually-added external wallets persist across
+    // future Google logins instead of disappearing into 409s.
+    const walletConflicts: Array<{ address: string; owner_user_id: string }> = [];
+    const syncableWallets: string[] = [];
 
-    if (resolvedWalletAddress) {
-      for (const wallet of resolvedWalletAddresses) {
-        const { data: existingWalletLink } = await supabaseAdmin
-          .from("identity_links")
-          .select("user_id, is_primary")
-          .eq("link_type", "wallet")
-          .eq("value_normalized", wallet)
-          .maybeSingle();
+    for (const wallet of resolvedWalletAddresses) {
+      const { data: existingWalletLink } = await supabaseAdmin
+        .from("identity_links")
+        .select("user_id")
+        .eq("link_type", "wallet")
+        .eq("value_normalized", wallet)
+        .maybeSingle();
 
-        if (existingWalletLink && existingWalletLink.user_id !== userId) {
-          walletConflict = { address: wallet, owner_user_id: existingWalletLink.user_id };
-          console.warn(
-            `Privy wallet ${wallet} is already linked to user ${existingWalletLink.user_id}; refusing to issue session for ${userId}.`
-          );
-
-          try { await supabaseAuth.auth.signOut(); } catch {}
-
-          return new Response(
-            JSON.stringify({
-              error: "wallet_belongs_to_another_account",
-              message:
-                "This wallet is already linked to another account. Please disconnect this wallet, or sign in with the account that owns it.",
-              wallet_address: wallet,
-            }),
-            {
-              status: 409,
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            }
-          );
-        }
+      if (existingWalletLink && existingWalletLink.user_id !== userId) {
+        walletConflicts.push({ address: wallet, owner_user_id: existingWalletLink.user_id });
+        continue;
       }
+      syncableWallets.push(wallet);
+    }
+
+    if (syncableWallets.length > 0) {
+      const primaryCandidate = syncableWallets.includes(resolvedWalletAddress ?? "")
+        ? resolvedWalletAddress!
+        : syncableWallets[0];
 
       const { data: existingProfile } = await supabaseAdmin
         .from("profiles")
         .select("user_id")
-        .eq("wallet_address", resolvedWalletAddress)
+        .eq("wallet_address", primaryCandidate)
         .maybeSingle();
 
       if (!existingProfile || existingProfile.user_id === userId) {
         const { error: profileError } = await supabaseAdmin.from("profiles").upsert(
           {
             user_id: userId,
-            wallet_address: resolvedWalletAddress,
+            wallet_address: primaryCandidate,
             email: resolvedEmail,
             updated_at: new Date().toISOString(),
           },
@@ -418,33 +413,55 @@ serve(async (req) => {
         .eq("is_primary", true)
         .maybeSingle();
 
-      for (const wallet of resolvedWalletAddresses) {
+      for (const wallet of syncableWallets) {
         const walletAccount = linkedAccounts.find((account) => account?.address?.toLowerCase() === wallet);
         const verifiedVia = walletAccount?.type === "smart_wallet" ? "privy_smart_wallet" : "privy_embedded";
 
-        const { error: linkErr } = await supabaseAdmin.from("identity_links").upsert({
-          user_id: userId,
-          link_type: "wallet",
-          value: wallet,
-          value_normalized: wallet,
-          verified_via: verifiedVia,
-          is_primary: false,
-        }, { onConflict: "link_type,value_normalized" });
+        // IMPORTANT: do NOT clobber is_primary on rows that already exist —
+        // the user picks primary themselves via set_primary_identity().
+        const { data: existing } = await supabaseAdmin
+          .from("identity_links")
+          .select("id")
+          .eq("link_type", "wallet")
+          .eq("value_normalized", wallet)
+          .eq("user_id", userId)
+          .maybeSingle();
 
-        if (linkErr && !linkErr.message?.includes("duplicate")) {
-          console.error("Wallet identity_link upsert error:", linkErr);
+        if (existing) {
+          // Refresh verified_via only; leave is_primary alone.
+          const { error: updErr } = await supabaseAdmin
+            .from("identity_links")
+            .update({ verified_via: verifiedVia })
+            .eq("id", existing.id);
+          if (updErr) console.error("Wallet identity_link update error:", updErr);
+        } else {
+          const { error: insErr } = await supabaseAdmin.from("identity_links").insert({
+            user_id: userId,
+            link_type: "wallet",
+            value: wallet,
+            value_normalized: wallet,
+            verified_via: verifiedVia,
+            is_primary: false,
+          });
+          if (insErr && !insErr.message?.includes("duplicate")) {
+            console.error("Wallet identity_link insert error:", insErr);
+          }
         }
       }
 
+      // Only auto-promote a primary when the user has NONE — never override
+      // a primary the user explicitly chose.
       if (!hasPrimary) {
         await supabaseAdmin
           .from("identity_links")
           .update({ is_primary: true })
           .eq("user_id", userId)
           .eq("link_type", "wallet")
-          .eq("value_normalized", resolvedWalletAddress);
+          .eq("value_normalized", primaryCandidate);
       }
     }
+
+    const walletConflict = walletConflicts[0] ?? null;
 
     // STEP 5: Sync email as identity_link (best effort, non-fatal)
     if (resolvedEmail) {
