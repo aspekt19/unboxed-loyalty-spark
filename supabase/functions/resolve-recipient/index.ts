@@ -12,7 +12,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Validate JWT
     const authHeader = req.headers.get("authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Missing authorization" }), {
@@ -25,7 +24,6 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Verify the user is authenticated
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -47,8 +45,8 @@ Deno.serve(async (req) => {
 
     const trimmed = identifier.trim().toLowerCase();
 
-    // If it's already a wallet address, return as-is
-   if (/^0x[a-fA-F0-9]{40}$/.test(trimmed)) {
+    // Direct wallet address — return as-is
+    if (/^0x[a-fA-F0-9]{40}$/.test(trimmed)) {
       return new Response(
         JSON.stringify({ wallet_address: trimmed, resolved_by: "address" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -57,21 +55,79 @@ Deno.serve(async (req) => {
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
-    // Try email lookup
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
+    const isPhone = !isEmail && /^\+?[\d\s\-()]{7,}$/.test(trimmed);
+
+    // Helper: given a user_id, return their primary wallet from identity_links,
+    // falling back to profiles.wallet_address if no primary link exists.
+    async function primaryWalletForUser(userId: string): Promise<string | null> {
+      const { data: link } = await adminClient
+        .from("identity_links")
+        .select("value_normalized")
+        .eq("user_id", userId)
+        .eq("link_type", "wallet")
+        .eq("is_primary", true)
+        .maybeSingle();
+      if (link?.value_normalized) return link.value_normalized;
+
+      const { data: profile } = await adminClient
+        .from("profiles")
+        .select("wallet_address")
+        .eq("user_id", userId)
+        .maybeSingle();
+      return profile?.wallet_address?.toLowerCase() ?? null;
+    }
+
     if (isEmail) {
+      // 1) identity_links → primary wallet of the same user_id
+      const { data: emailLink } = await adminClient
+        .from("identity_links")
+        .select("user_id")
+        .eq("link_type", "email")
+        .eq("value_normalized", trimmed)
+        .maybeSingle();
+
+      if (emailLink?.user_id) {
+        const wallet = await primaryWalletForUser(emailLink.user_id);
+        if (wallet) {
+          return new Response(
+            JSON.stringify({ wallet_address: wallet, resolved_by: "email", source: "identity_links" }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+
+      // 2) Legacy: profiles.email
       const { data: profile } = await adminClient
         .from("profiles")
         .select("wallet_address")
         .ilike("email", trimmed)
         .limit(1)
         .maybeSingle();
-
       if (profile?.wallet_address) {
         return new Response(
           JSON.stringify({
-            wallet_address: profile.wallet_address,
+            wallet_address: profile.wallet_address.toLowerCase(),
             resolved_by: "email",
+            source: "profiles",
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // 3) Legacy: customer_profiles.email
+      const { data: cp } = await adminClient
+        .from("customer_profiles")
+        .select("wallet_address")
+        .ilike("email", trimmed)
+        .limit(1)
+        .maybeSingle();
+      if (cp?.wallet_address) {
+        return new Response(
+          JSON.stringify({
+            wallet_address: cp.wallet_address.toLowerCase(),
+            resolved_by: "email",
+            source: "customer_profiles",
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
@@ -83,23 +139,40 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Try phone lookup (starts with + or contains only digits)
-    const isPhone = /^\+?[\d\s\-()]{7,}$/.test(trimmed);
     if (isPhone) {
-      // Normalize: keep only digits and leading +
       const normalized = trimmed.replace(/[\s\-()]/g, "");
+
+      // profiles.phone
       const { data: profile } = await adminClient
         .from("profiles")
         .select("wallet_address")
         .eq("phone", normalized)
         .limit(1)
         .maybeSingle();
-
       if (profile?.wallet_address) {
         return new Response(
           JSON.stringify({
-            wallet_address: profile.wallet_address,
+            wallet_address: profile.wallet_address.toLowerCase(),
             resolved_by: "phone",
+            source: "profiles",
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // customer_profiles.phone
+      const { data: cp } = await adminClient
+        .from("customer_profiles")
+        .select("wallet_address")
+        .eq("phone", normalized)
+        .limit(1)
+        .maybeSingle();
+      if (cp?.wallet_address) {
+        return new Response(
+          JSON.stringify({
+            wallet_address: cp.wallet_address.toLowerCase(),
+            resolved_by: "phone",
+            source: "customer_profiles",
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );

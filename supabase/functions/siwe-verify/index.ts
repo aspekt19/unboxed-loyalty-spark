@@ -30,6 +30,11 @@ async function generateDeterministicPassword(address: string, secret: string): P
   return btoa(String.fromCharCode(...new Uint8Array(sig)));
 }
 
+const ADMIN_WALLETS = [
+  '0x5cc0aa9ed773f413f81f78a62f2e94109ce26205',
+  '0x40a8cdd6a10ec1a8cb3dfb2834675e7a2cf4ad8b',
+];
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -45,7 +50,7 @@ serve(async (req) => {
       });
     }
 
-    // Parse address from SIWE message (second line after header)
+    // Parse address from SIWE message
     const lines = message.split('\n');
     const addressLine = lines.find((line: string) => /^0x[a-fA-F0-9]{40}$/.test(line.trim()));
     if (!addressLine) {
@@ -56,15 +61,12 @@ serve(async (req) => {
     }
     const address = addressLine.trim().toLowerCase();
 
-    // Verify the cryptographic signature.
-    // Use the public client action so ERC-1271 / ERC-6492 smart wallets
-    // (including Coinbase Smart Wallet) verify correctly.
+    // Cryptographic verification (ERC-1271 / ERC-6492 aware)
     const isValid = await publicClient.verifyMessage({
       address: address as `0x${string}`,
       message,
       signature: signature as `0x${string}`,
     });
-
     if (!isValid) {
       return new Response(JSON.stringify({ error: 'Invalid signature' }), {
         status: 401,
@@ -72,7 +74,7 @@ serve(async (req) => {
       });
     }
 
-    // Check Issued At timestamp (reject messages older than 5 minutes)
+    // Issued At freshness
     const issuedAtMatch = message.match(/Issued At: (.+)/);
     if (issuedAtMatch) {
       const issuedAt = new Date(issuedAtMatch[1].trim());
@@ -85,7 +87,7 @@ serve(async (req) => {
       }
     }
 
-    // Extract nonce from SIWE message
+    // Nonce
     const nonceMatch = message.match(/Nonce: (.+)/);
     if (!nonceMatch) {
       return new Response(JSON.stringify({ error: 'Missing nonce in message' }), {
@@ -95,7 +97,6 @@ serve(async (req) => {
     }
     const nonce = nonceMatch[1].trim().toLowerCase();
 
-    // Setup Supabase clients
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('SUPABASE_PUBLISHABLE_KEY')!;
@@ -105,7 +106,6 @@ serve(async (req) => {
     const { data: consumedNonce, error: consumeErr } = await supabaseAdmin.rpc('consume_siwe_nonce', {
       p_nonce: nonce,
     });
-
     if (consumeErr) {
       console.error('consume_siwe_nonce rpc:', consumeErr);
       return new Response(
@@ -114,10 +114,7 @@ serve(async (req) => {
           hint: consumeErr.message ?? String(consumeErr),
           code: consumeErr.code,
         }),
-        {
-          status: 503,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        },
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
     if (!consumedNonce) {
@@ -127,28 +124,94 @@ serve(async (req) => {
       });
     }
 
-    const supabaseAuth = createClient(supabaseUrl, anonKey);
+    // ============================================================
+    // LINK MODE: caller is already authenticated. Attach wallet to
+    // their existing user_id instead of creating a new account.
+    // ============================================================
+    const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
+    if (authHeader?.toLowerCase().startsWith('bearer ')) {
+      const jwt = authHeader.slice(7).trim();
+      // Verify JWT without our service role key — use anon client + user JWT
+      const supabaseUser = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: `Bearer ${jwt}` } },
+      });
+      const { data: userData, error: userErr } = await supabaseUser.auth.getUser();
 
+      if (!userErr && userData?.user) {
+        const callerUserId = userData.user.id;
+
+        // Check ownership of the wallet via identity_links
+        const { data: existingLink } = await supabaseAdmin
+          .from('identity_links')
+          .select('user_id')
+          .eq('link_type', 'wallet')
+          .eq('value_normalized', address)
+          .maybeSingle();
+
+        if (existingLink && existingLink.user_id !== callerUserId) {
+          return new Response(
+            JSON.stringify({
+              mode: 'link',
+              ok: false,
+              error: 'wallet_belongs_to_another_account',
+              message: 'This wallet is already linked to a different account.',
+            }),
+            { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+          );
+        }
+
+        if (!existingLink) {
+          const { data: hasPrimary } = await supabaseAdmin
+            .from('identity_links')
+            .select('id')
+            .eq('user_id', callerUserId)
+            .eq('link_type', 'wallet')
+            .eq('is_primary', true)
+            .maybeSingle();
+
+          const { error: insertErr } = await supabaseAdmin.from('identity_links').insert({
+            user_id: callerUserId,
+            link_type: 'wallet',
+            value: address,
+            value_normalized: address,
+            verified_via: 'siwe',
+            is_primary: !hasPrimary,
+          });
+          if (insertErr) {
+            console.error('SIWE link insert error:', insertErr);
+            return new Response(
+              JSON.stringify({ mode: 'link', ok: false, error: insertErr.message }),
+              { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+            );
+          }
+        }
+
+        return new Response(
+          JSON.stringify({ mode: 'link', ok: true, wallet_address: address }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
+      // Fall through to login mode if JWT was invalid
+    }
+
+    // ============================================================
+    // LOGIN MODE: no JWT — sign in or create account by wallet
+    // ============================================================
+    const supabaseAuth = createClient(supabaseUrl, anonKey);
     const email = `${address}@wallet.siwe`;
     const password = await generateDeterministicPassword(address, serviceRoleKey);
 
-    // Try to sign in (user may already exist from previous SIWE auth)
     let signInResult = await supabaseAuth.auth.signInWithPassword({ email, password });
-
     if (signInResult.error) {
-      // User doesn't exist yet — create with admin API
       const { error: createError } = await supabaseAdmin.auth.admin.createUser({
         email,
         password,
         email_confirm: true,
       });
-
       if (createError && !createError.message?.includes('already registered')) {
         console.error('User creation error:', createError);
         throw new Error(`Failed to create user: ${createError.message}`);
       }
-
-      // Sign in with the newly created user
       signInResult = await supabaseAuth.auth.signInWithPassword({ email, password });
       if (signInResult.error) {
         throw new Error(`Sign-in failed: ${signInResult.error.message}`);
@@ -158,28 +221,40 @@ serve(async (req) => {
     const session = signInResult.data.session!;
     const userId = signInResult.data.user!.id;
 
-    // Upsert profile — associates wallet address with this Supabase user
+    // Profile upsert (legacy column wallet_address remains source of truth for "primary")
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .upsert(
-        {
-          user_id: userId,
-          wallet_address: address,
-          updated_at: new Date().toISOString(),
-        },
+        { user_id: userId, wallet_address: address, updated_at: new Date().toISOString() },
         { onConflict: 'wallet_address' }
       );
-
     if (profileError) {
       console.error('Profile upsert error:', profileError);
-      // Non-fatal: session is still valid
     }
 
-    // Check admin wallets and assign role if applicable
-    const ADMIN_WALLETS = [
-      '0x5cc0aa9ed773f413f81f78a62f2e94109ce26205',
-      '0x40a8cdd6a10ec1a8cb3dfb2834675e7a2cf4ad8b',
-    ];
+    // Ensure wallet identity_link
+    const { data: existingLink } = await supabaseAdmin
+      .from('identity_links')
+      .select('id, user_id')
+      .eq('link_type', 'wallet')
+      .eq('value_normalized', address)
+      .maybeSingle();
+
+    if (!existingLink) {
+      await supabaseAdmin.from('identity_links').insert({
+        user_id: userId,
+        link_type: 'wallet',
+        value: address,
+        value_normalized: address,
+        verified_via: 'siwe',
+        is_primary: true,
+      });
+    } else if (existingLink.user_id !== userId) {
+      console.warn(
+        `SIWE login: wallet ${address} is in identity_links under different user ${existingLink.user_id}; session belongs to ${userId}.`
+      );
+    }
+
     if (ADMIN_WALLETS.includes(address)) {
       await supabaseAdmin
         .from('user_roles')
@@ -191,21 +266,17 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
+        mode: 'login',
         access_token: session.access_token,
         refresh_token: session.refresh_token,
       }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
     console.error('SIWE verify error:', error);
     return new Response(
       JSON.stringify({ error: error.message || 'Verification failed' }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
