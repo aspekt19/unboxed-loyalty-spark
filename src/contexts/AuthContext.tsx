@@ -33,7 +33,7 @@ interface AuthContextType {
   resetManualSignOut: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const MANUAL_SIGN_OUT_STORAGE_KEY = 'loyalspark:manual-signout';
 const MANUAL_SIGN_OUT_EVENT = 'loyalspark:manual-signout-changed';
