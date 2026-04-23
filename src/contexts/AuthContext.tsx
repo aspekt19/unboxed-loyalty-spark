@@ -504,6 +504,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const checkSession = async () => {
+      if (manualSignOutRef.current) return;
       try {
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
 
@@ -528,20 +529,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await clearSessionState();
             if (isFarcasterContext.current) {
               await signInWithWallet();
-            } else if (isPrivySocial) {
+            } else if (isPrivySocial && !manualSignOutRef.current) {
               await signInWithPrivy();
             }
-            // Wallet-only (non-Farcaster): no auto-SIWE here either.
           }
           return;
         }
 
-        if (!isFarcasterContext.current && isPrivySocial) {
+        // Privy social session: do NOT validate against wagmi wallet_address.
+        // The user may have a different wallet connected in MetaMask than the one
+        // bound to their Supabase profile — that's fine, the JWT is still valid.
+        if (!isFarcasterContext.current && currentSession.user.email?.endsWith('@privy.auth')) {
           setSession(currentSession);
           setUser(currentSession.user);
           return;
         }
 
+        // Wallet-only (SIWE) sessions still require profile/wallet match.
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('id')
@@ -553,8 +557,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await clearSessionState();
           if (isFarcasterContext.current) {
             await signInWithWallet();
-          } else if (isPrivySocial) {
-            await signInWithPrivy();
           }
           // Wallet-only (non-Farcaster): no auto-SIWE — wait for explicit click.
         }
