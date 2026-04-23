@@ -686,6 +686,123 @@ export type Database = {
           },
         ]
       }
+      email_send_log: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          message_id: string | null
+          metadata: Json | null
+          recipient_email: string
+          status: string
+          template_name: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          recipient_email: string
+          status: string
+          template_name: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          recipient_email?: string
+          status?: string
+          template_name?: string
+        }
+        Relationships: []
+      }
+      email_send_state: {
+        Row: {
+          auth_email_ttl_minutes: number
+          batch_size: number
+          id: number
+          retry_after_until: string | null
+          send_delay_ms: number
+          transactional_email_ttl_minutes: number
+          updated_at: string
+        }
+        Insert: {
+          auth_email_ttl_minutes?: number
+          batch_size?: number
+          id?: number
+          retry_after_until?: string | null
+          send_delay_ms?: number
+          transactional_email_ttl_minutes?: number
+          updated_at?: string
+        }
+        Update: {
+          auth_email_ttl_minutes?: number
+          batch_size?: number
+          id?: number
+          retry_after_until?: string | null
+          send_delay_ms?: number
+          transactional_email_ttl_minutes?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      email_unsubscribe_tokens: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          token: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
+      identity_links: {
+        Row: {
+          created_at: string
+          id: string
+          is_primary: boolean
+          linked_via: string
+          user_id: string
+          verified_at: string
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          linked_via?: string
+          user_id: string
+          verified_at?: string
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          linked_via?: string
+          user_id?: string
+          verified_at?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       loyalty_programs: {
         Row: {
           cashback_rate: number
@@ -1804,6 +1921,30 @@ export type Database = {
         }
         Relationships: []
       }
+      suppressed_emails: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          metadata: Json | null
+          reason: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          metadata?: Json | null
+          reason: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          metadata?: Json | null
+          reason?: string
+        }
+        Relationships: []
+      }
       token_mint_history: {
         Row: {
           amount: number
@@ -2133,6 +2274,14 @@ export type Database = {
       check_expiring_subscriptions: { Args: never; Returns: undefined }
       check_program_expiration: { Args: never; Returns: undefined }
       consume_siwe_nonce: { Args: { p_nonce: string }; Returns: string }
+      delete_email: {
+        Args: { message_id: number; queue_name: string }
+        Returns: boolean
+      }
+      enqueue_email: {
+        Args: { payload: Json; queue_name: string }
+        Returns: number
+      }
       expire_plan_subscriptions: { Args: never; Returns: undefined }
       generate_referral_code: {
         Args: { p_referrer_address: string; p_token_address: string }
@@ -2159,6 +2308,7 @@ export type Database = {
         Args: { p_merchant_address: string; p_wallet_address: string }
         Returns: Database["public"]["Enums"]["merchant_employee_role"]
       }
+      get_my_identity_summary: { Args: never; Returns: Json }
       has_premium_access: {
         Args: { p_wallet_address: string }
         Returns: boolean
@@ -2197,6 +2347,15 @@ export type Database = {
           profile_wallet_address: string
         }[]
       }
+      move_to_dlq: {
+        Args: {
+          dlq_name: string
+          message_id: number
+          payload: Json
+          source_queue: string
+        }
+        Returns: number
+      }
       process_referral: {
         Args: {
           p_referee_address: string
@@ -2205,6 +2364,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      read_email_batch: {
+        Args: { batch_size: number; queue_name: string; vt: number }
+        Returns: {
+          message: Json
+          msg_id: number
+          read_ct: number
+        }[]
+      }
+      set_primary_wallet: { Args: { p_wallet_address: string }; Returns: Json }
       start_agent_trial: { Args: { p_owner_address: string }; Returns: string }
       start_merchant_trial: {
         Args: { p_owner_address: string }
