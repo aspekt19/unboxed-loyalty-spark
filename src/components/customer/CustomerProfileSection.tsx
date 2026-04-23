@@ -126,6 +126,11 @@ export function CustomerProfileSection() {
     load();
   }, [displayAddress]);
 
+  const visibleWallets = useMemo(
+    () => mergeIdentityWallets(linkedWallets, privyUser, primaryWallet),
+    [linkedWallets, privyUser, primaryWallet],
+  );
+
   if (authLoading) return null;
 
   if (!displayAddress || !user || !session) {
@@ -143,11 +148,6 @@ export function CustomerProfileSection() {
   const initials = firstName && lastName
     ? `${firstName[0]}${lastName[0]}`.toUpperCase()
     : displayAddress.slice(2, 4).toUpperCase();
-
-  const visibleWallets = useMemo(
-    () => mergeIdentityWallets(linkedWallets, privyUser, primaryWallet),
-    [linkedWallets, privyUser, primaryWallet],
-  );
 
   const handleSetPrimaryWallet = async (walletAddress: string) => {
     setSwitchingPrimary(walletAddress);
