@@ -18,8 +18,20 @@ import { AuthPrompt } from '@/components/AuthPrompt';
 import { Mail, Phone, Wallet, Save, Copy, Check, Star, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { getPrivyPrimaryEmail } from '@/lib/privyAuth';
+import { getPrivyLinkedAccounts, getPrivyPrimaryEmail } from '@/lib/privyAuth';
 import { usePrivySafe } from '@/hooks/usePrivySafe';
+
+interface WalletSummaryItem {
+  id: string;
+  value: string;
+  verified_via: string;
+  is_primary: boolean;
+}
+
+interface IdentitySummaryResponse {
+  primary_wallet: string | null;
+  wallets?: WalletSummaryItem[];
+}
 
 export function CustomerProfileSection() {
   const { address } = useAccount();
@@ -32,8 +44,13 @@ export function CustomerProfileSection() {
   const [, setLoaded] = useState(false);
   const [copied, setCopied] = useState(false);
   const [primaryWallet, setPrimaryWallet] = useState<string | null>(null);
+  const [linkedWallets, setLinkedWallets] = useState<WalletSummaryItem[]>([]);
 
   const identityEmail = getPrivyPrimaryEmail(privyUser);
+  const privyWallets = getPrivyLinkedAccounts(privyUser)
+    .filter((account) => account.type === 'wallet' || account.type === 'smart_wallet')
+    .map((account) => account.address?.toLowerCase())
+    .filter((value): value is string => Boolean(value));
   const connectedLower = address?.toLowerCase() ?? null;
   // Show the user's chosen primary wallet from identity_links so the original
   // (embedded) address remains visible after they connect an external wallet.
@@ -46,10 +63,24 @@ export function CustomerProfileSection() {
     if (!user || !session) return;
     const loadPrimary = async () => {
       const { data } = await supabase.rpc('get_my_identity_summary');
-      const summary = data as { primary_wallet: string | null } | null;
-      if (summary?.primary_wallet) setPrimaryWallet(summary.primary_wallet);
+      const summary = data as unknown as IdentitySummaryResponse | null;
+      setPrimaryWallet(summary?.primary_wallet ?? null);
+      setLinkedWallets(summary?.wallets ?? []);
     };
+
     loadPrimary();
+
+    const handleIdentityRefresh = () => {
+      void loadPrimary();
+    };
+
+    window.addEventListener('sessionReady', handleIdentityRefresh);
+    window.addEventListener('profileMigrated', handleIdentityRefresh);
+
+    return () => {
+      window.removeEventListener('sessionReady', handleIdentityRefresh);
+      window.removeEventListener('profileMigrated', handleIdentityRefresh);
+    };
   }, [user, session]);
 
   useEffect(() => {
@@ -87,6 +118,17 @@ export function CustomerProfileSection() {
   const initials = firstName && lastName
     ? `${firstName[0]}${lastName[0]}`.toUpperCase()
     : displayAddress.slice(2, 4).toUpperCase();
+
+  const visibleWallets = Array.from(
+    new Map(
+      [...linkedWallets, ...privyWallets.map((value) => ({
+        id: `privy-${value}`,
+        value,
+        verified_via: 'privy',
+        is_primary: value === primaryWallet,
+      }))].map((wallet) => [wallet.value, wallet])
+    ).values()
+  );
 
   const handleSave = async () => {
     setSaving(true);
@@ -155,6 +197,29 @@ export function CustomerProfileSection() {
                 Use “Linked Accounts” below to switch primary or link this wallet.
               </AlertDescription>
             </Alert>
+          )}
+          {visibleWallets.length > 1 && (
+            <div className="mt-3 space-y-2">
+              <p className="text-xs font-medium text-muted-foreground">Linked wallet addresses</p>
+              <div className="flex flex-wrap gap-2">
+                {visibleWallets.map((wallet) => {
+                  const isWalletPrimary = wallet.is_primary || wallet.value === primaryWallet;
+                  return (
+                    <div
+                      key={wallet.id}
+                      className="inline-flex items-center gap-2 rounded-md border bg-muted/40 px-2.5 py-1.5 text-xs"
+                    >
+                      <span className="font-mono text-foreground">
+                        {wallet.value.slice(0, 6)}...{wallet.value.slice(-4)}
+                      </span>
+                      {isWalletPrimary ? (
+                        <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">Primary</Badge>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           )}
         </CardHeader>
         <CardContent className="space-y-3">

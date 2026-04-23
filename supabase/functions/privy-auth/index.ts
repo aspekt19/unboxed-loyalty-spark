@@ -183,17 +183,27 @@ function extractEmail(privyUser: any, fallback?: string | null): string | null {
 }
 
 function extractWalletAddress(privyUser: any, fallback?: string | null): string | null {
-  const explicitWallet = fallback?.trim().toLowerCase();
-  if (explicitWallet) return explicitWallet;
+  const wallets = extractWalletAddresses(privyUser, fallback);
+  return wallets[0] ?? null;
+}
+
+function extractWalletAddresses(privyUser: any, fallback?: string | null): string[] {
   const linkedAccounts = getLinkedAccounts(privyUser);
-  const linkedWallet = linkedAccounts.find(
-    (account) => account?.type === "wallet" || account?.type === "smart_wallet"
-  );
-  return (
-    privyUser?.wallet?.address?.toLowerCase() ??
-    privyUser?.smartWallet?.address?.toLowerCase() ??
-    linkedWallet?.address?.toLowerCase() ??
-    null
+  const candidates = [
+    fallback,
+    privyUser?.wallet?.address,
+    privyUser?.smartWallet?.address,
+    ...linkedAccounts
+      .filter((account) => account?.type === "wallet" || account?.type === "smart_wallet")
+      .map((account) => account?.address),
+  ];
+
+  return Array.from(
+    new Set(
+      candidates
+        .map((value) => value?.trim().toLowerCase())
+        .filter((value): value is string => Boolean(value))
+    )
   );
 }
 
@@ -245,7 +255,8 @@ serve(async (req) => {
     }
 
     const resolvedEmail = extractEmail(verifiedUser, email);
-    const resolvedWalletAddress = extractWalletAddress(verifiedUser, walletAddress);
+    const resolvedWalletAddresses = extractWalletAddresses(verifiedUser, walletAddress);
+    const resolvedWalletAddress = resolvedWalletAddresses[0] ?? null;
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -265,14 +276,18 @@ serve(async (req) => {
       .maybeSingle();
 
     let walletUserId: string | null = null;
-    if (resolvedWalletAddress) {
+    for (const walletCandidate of resolvedWalletAddresses) {
       const { data: existingWalletLink } = await supabaseAdmin
         .from("identity_links")
         .select("user_id")
         .eq("link_type", "wallet")
-        .eq("value_normalized", resolvedWalletAddress)
+        .eq("value_normalized", walletCandidate)
         .maybeSingle();
-      walletUserId = existingWalletLink?.user_id ?? null;
+
+      if (existingWalletLink?.user_id) {
+        walletUserId = existingWalletLink.user_id;
+        break;
+      }
     }
 
     let emailUserId: string | null = null;
@@ -338,95 +353,92 @@ serve(async (req) => {
     let walletConflict: { address: string; owner_user_id: string } | null = null;
 
     if (resolvedWalletAddress) {
-      const { data: existingWalletLink } = await supabaseAdmin
-        .from("identity_links")
-        .select("user_id, is_primary")
-        .eq("link_type", "wallet")
-        .eq("value_normalized", resolvedWalletAddress)
-        .maybeSingle();
-
-      if (existingWalletLink && existingWalletLink.user_id !== userId) {
-        // Hijack-safe: another account already owns this wallet.
-        walletConflict = { address: resolvedWalletAddress, owner_user_id: existingWalletLink.user_id };
-        console.warn(
-          `Privy wallet ${resolvedWalletAddress} is already linked to user ${existingWalletLink.user_id}; refusing to issue session for ${userId}.`
-        );
-
-        // Refuse to issue a session — otherwise the client gets stuck in a re-auth loop
-        // (wagmi address points to a wallet that doesn't belong to this Supabase user).
-        // Sign the just-created session out before responding.
-        try { await supabaseAuth.auth.signOut(); } catch {}
-
-        return new Response(
-          JSON.stringify({
-            error: "wallet_belongs_to_another_account",
-            message:
-              "This wallet is already linked to another account. Please disconnect this wallet, or sign in with the account that owns it.",
-            wallet_address: resolvedWalletAddress,
-          }),
-          {
-            status: 409,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      } else {
-        // Safe to upsert profile + ensure identity_link row
-        const { data: existingProfile } = await supabaseAdmin
-          .from("profiles")
-          .select("user_id")
-          .eq("wallet_address", resolvedWalletAddress)
+      for (const wallet of resolvedWalletAddresses) {
+        const { data: existingWalletLink } = await supabaseAdmin
+          .from("identity_links")
+          .select("user_id, is_primary")
+          .eq("link_type", "wallet")
+          .eq("value_normalized", wallet)
           .maybeSingle();
 
-        if (!existingProfile || existingProfile.user_id === userId) {
-          const { error: profileError } = await supabaseAdmin.from("profiles").upsert(
-            {
-              user_id: userId,
-              wallet_address: resolvedWalletAddress,
-              email: resolvedEmail,
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: "user_id" }
+        if (existingWalletLink && existingWalletLink.user_id !== userId) {
+          walletConflict = { address: wallet, owner_user_id: existingWalletLink.user_id };
+          console.warn(
+            `Privy wallet ${wallet} is already linked to user ${existingWalletLink.user_id}; refusing to issue session for ${userId}.`
           );
-          if (profileError) {
-            console.error("Profile upsert error:", profileError);
-          }
-        }
 
-        // Ensure wallet identity_link exists for this user
-        if (!existingWalletLink) {
-          const verifiedVia =
-            getLinkedAccounts(verifiedUser).find((a) => a?.type === "smart_wallet")
-              ? "privy_smart_wallet"
-              : "privy_embedded";
-          const { error: linkErr } = await supabaseAdmin.from("identity_links").insert({
+          try { await supabaseAuth.auth.signOut(); } catch {}
+
+          return new Response(
+            JSON.stringify({
+              error: "wallet_belongs_to_another_account",
+              message:
+                "This wallet is already linked to another account. Please disconnect this wallet, or sign in with the account that owns it.",
+              wallet_address: wallet,
+            }),
+            {
+              status: 409,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            }
+          );
+        }
+      }
+
+      const { data: existingProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("user_id")
+        .eq("wallet_address", resolvedWalletAddress)
+        .maybeSingle();
+
+      if (!existingProfile || existingProfile.user_id === userId) {
+        const { error: profileError } = await supabaseAdmin.from("profiles").upsert(
+          {
             user_id: userId,
-            link_type: "wallet",
-            value: resolvedWalletAddress,
-            value_normalized: resolvedWalletAddress,
-            verified_via: verifiedVia,
-            is_primary: false, // promoted to primary only via set_primary_identity
-          });
-          if (linkErr && !linkErr.message?.includes("duplicate")) {
-            console.error("Wallet identity_link insert error:", linkErr);
-          }
-
-          // Promote to primary if user has no primary wallet yet
-          const { data: hasPrimary } = await supabaseAdmin
-            .from("identity_links")
-            .select("id")
-            .eq("user_id", userId)
-            .eq("link_type", "wallet")
-            .eq("is_primary", true)
-            .maybeSingle();
-          if (!hasPrimary) {
-            await supabaseAdmin
-              .from("identity_links")
-              .update({ is_primary: true })
-              .eq("user_id", userId)
-              .eq("link_type", "wallet")
-              .eq("value_normalized", resolvedWalletAddress);
-          }
+            wallet_address: resolvedWalletAddress,
+            email: resolvedEmail,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id" }
+        );
+        if (profileError) {
+          console.error("Profile upsert error:", profileError);
         }
+      }
+
+      const linkedAccounts = getLinkedAccounts(verifiedUser);
+      const { data: hasPrimary } = await supabaseAdmin
+        .from("identity_links")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("link_type", "wallet")
+        .eq("is_primary", true)
+        .maybeSingle();
+
+      for (const wallet of resolvedWalletAddresses) {
+        const walletAccount = linkedAccounts.find((account) => account?.address?.toLowerCase() === wallet);
+        const verifiedVia = walletAccount?.type === "smart_wallet" ? "privy_smart_wallet" : "privy_embedded";
+
+        const { error: linkErr } = await supabaseAdmin.from("identity_links").upsert({
+          user_id: userId,
+          link_type: "wallet",
+          value: wallet,
+          value_normalized: wallet,
+          verified_via: verifiedVia,
+          is_primary: false,
+        }, { onConflict: "link_type,value_normalized" });
+
+        if (linkErr && !linkErr.message?.includes("duplicate")) {
+          console.error("Wallet identity_link upsert error:", linkErr);
+        }
+      }
+
+      if (!hasPrimary) {
+        await supabaseAdmin
+          .from("identity_links")
+          .update({ is_primary: true })
+          .eq("user_id", userId)
+          .eq("link_type", "wallet")
+          .eq("value_normalized", resolvedWalletAddress);
       }
     }
 
