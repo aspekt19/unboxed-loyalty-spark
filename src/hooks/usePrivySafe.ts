@@ -1,4 +1,4 @@
-import { usePrivy as usePrivyOriginal } from '@privy-io/react-auth';
+import { usePrivy as usePrivyOriginal, useConnectWallet as useConnectWalletOriginal } from '@privy-io/react-auth';
 import { isFarcasterContext } from '@/config/wagmi';
 
 const isFarcaster = isFarcasterContext();
@@ -10,6 +10,7 @@ interface PrivySafeResult {
   user: any;
   ready: boolean;
   getAccessToken: () => Promise<string | null>;
+  connectWallet: () => void;
 }
 
 const noopResult: PrivySafeResult = {
@@ -19,6 +20,7 @@ const noopResult: PrivySafeResult = {
   user: null,
   ready: false,
   getAccessToken: async () => null,
+  connectWallet: () => {},
 };
 
 function isLovablePreviewHost(): boolean {
@@ -35,6 +37,8 @@ export function usePrivySafe(): PrivySafeResult {
   try {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const privy = usePrivyOriginal();
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { connectWallet } = useConnectWalletOriginal();
 
     return {
       login: privy.login,
@@ -43,6 +47,7 @@ export function usePrivySafe(): PrivySafeResult {
       user: privy.user,
       ready: privy.ready,
       getAccessToken: privy.getAccessToken,
+      connectWallet,
     };
   } catch {
     return noopResult;
