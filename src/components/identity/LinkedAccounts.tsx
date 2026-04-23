@@ -373,6 +373,37 @@ export function LinkedAccounts() {
                     </AlertDescription>
                   </Alert>
                 )}
+
+              {!normalizedConnectedAddress && (
+                <div className="rounded-lg border border-dashed bg-muted/30 p-3 space-y-2">
+                  <div className="flex items-start gap-2">
+                    <Link2 className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Connect an external wallet</p>
+                      <p className="text-xs text-muted-foreground">
+                        Link MetaMask, Coinbase Wallet, or any WalletConnect-compatible wallet to your account.
+                        You'll sign one message to confirm ownership.
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="default"
+                    className="w-full sm:w-auto"
+                    disabled={busy !== null}
+                    onClick={handleConnectExternalWallet}
+                  >
+                    {busy === 'connect-external' ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <>
+                        <Plus className="h-3.5 w-3.5 mr-1" />
+                        Connect external wallet
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
             </section>
 
             {/* Emails */}
