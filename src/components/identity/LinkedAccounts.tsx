@@ -191,6 +191,37 @@ export function LinkedAccounts() {
     }
   };
 
+  const handleConnectExternalWallet = () => {
+    if (!connectWallet) {
+      toast.error('Wallet connector unavailable');
+      return;
+    }
+    autoLinkAttemptedRef.current = null;
+    setBusy('connect-external');
+    try {
+      connectWallet();
+    } catch (err) {
+      console.error('[LinkedAccounts] connectWallet error', err);
+      toast.error('Failed to open wallet picker');
+    } finally {
+      // connectWallet is fire-and-forget; the effect below handles SIWE
+      window.setTimeout(() => setBusy((b) => (b === 'connect-external' ? null : b)), 1500);
+    }
+  };
+
+  // After Privy connects an external wallet, auto-trigger SIWE link once.
+  useEffect(() => {
+    if (!normalizedConnectedAddress || !session || !summary) return;
+    if (autoLinkAttemptedRef.current === normalizedConnectedAddress) return;
+    if (busy && busy !== 'connect-external') return;
+    if (summary.wallets.some((w) => w.value === normalizedConnectedAddress)) return;
+    if (!privyAuthenticated) return;
+
+    autoLinkAttemptedRef.current = normalizedConnectedAddress;
+    void handleLinkCurrentWallet();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [normalizedConnectedAddress, session, summary, privyAuthenticated]);
+
   const handleAddEmail = async () => {
     const email = newEmail.trim().toLowerCase();
     if (!email || !email.includes('@')) {
