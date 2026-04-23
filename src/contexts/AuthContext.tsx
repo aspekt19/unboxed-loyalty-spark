@@ -302,6 +302,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (isExpired) {
           await supabase.auth.signOut();
+          } else if (!isFarcasterContext.current && existingSession.user.email?.endsWith('@privy.auth')) {
+            setSession(existingSession);
+            setUser(existingSession.user);
+            setIsLoading(false);
+            window.dispatchEvent(new Event('sessionReady'));
+            return;
         } else {
           const { data: profile, error: profileError } = await supabase
             .from('profiles')

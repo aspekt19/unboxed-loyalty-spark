@@ -119,6 +119,20 @@ serve(async (req) => {
 
     let userId: string | null = didLink?.user_id ?? null;
 
+    if (!userId && resolvedEmail) {
+      const emailNorm = resolvedEmail.trim().toLowerCase();
+      const { data: existingEmailLink } = await supabaseAdmin
+        .from("identity_links")
+        .select("user_id")
+        .eq("link_type", "email")
+        .eq("value_normalized", emailNorm)
+        .maybeSingle();
+
+      if (existingEmailLink?.user_id) {
+        userId = existingEmailLink.user_id;
+      }
+    }
+
     // STEP 2: If no DID link yet, create or find Supabase auth user via stable per-DID email
     const authEmail = `${privyDid.replace(/^did:privy:/, "")}@privy.auth`;
     const password = await generateDeterministicPassword(privyDid, serviceRoleKey);
@@ -149,6 +163,31 @@ serve(async (req) => {
       }
 
       userId = signInResult.data.user!.id;
+
+      // Persist DID as an identity link (service role bypasses RLS)
+      const { error: didInsertError } = await supabaseAdmin
+        .from("identity_links")
+        .insert({
+          user_id: userId,
+          link_type: "privy_did",
+          value: privyDid,
+          value_normalized: didNorm,
+          verified_via: "privy_token",
+          is_primary: true,
+        });
+      if (didInsertError && !didInsertError.message?.includes("duplicate")) {
+        console.error("DID identity_link insert error:", didInsertError);
+      }
+    } else {
+      const { error: updateAuthError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+        email: authEmail,
+        password,
+        email_confirm: true,
+      });
+
+      if (updateAuthError && !updateAuthError.message?.toLowerCase().includes("email address")) {
+        console.error("Existing auth user update error:", updateAuthError);
+      }
 
       // Persist DID as an identity link (service role bypasses RLS)
       const { error: didInsertError } = await supabaseAdmin

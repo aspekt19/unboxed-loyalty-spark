@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAccount, useConnect } from 'wagmi';
 import { isFarcasterContext } from '@/config/wagmi';
 import { usePrivySafe } from '@/hooks/usePrivySafe';
-import { shouldUsePrivyTokenAuth } from '@/lib/privyAuth';
+import { getPrivyPrimaryEmail, shouldUsePrivyTokenAuth } from '@/lib/privyAuth';
 import { INLINE_AUTH_CTA_CLASSNAME } from '@/components/WalletConnectButton';
 import { cn } from '@/lib/utils';
 
@@ -118,19 +118,14 @@ export function AuthPrompt() {
     return (
       <Alert className="mb-6 border-2 border-primary/20 bg-primary/5">
         <Shield className="h-5 w-5 text-primary" />
-        <AlertTitle className="text-lg font-semibold mb-2">Almost there</AlertTitle>
+        <AlertTitle className="text-lg font-semibold mb-2">Signing in…</AlertTitle>
         <AlertDescription className="space-y-4">
-          <p className="text-sm text-muted-foreground">Finish signing in to your account.</p>
-          <Button
-            variant="uds"
-            onClick={handlePrivySignIn}
-            disabled={isLoading}
-            className={cn(INLINE_AUTH_CTA_CLASSNAME)}
-            type="button"
-          >
-            <LogIn className="h-3.5 w-3.5 shrink-0" />
-            {isLoading ? 'Signing in...' : 'Continue'}
-          </Button>
+          <p className="text-sm text-muted-foreground">
+            {getPrivyPrimaryEmail(privyUser)
+              ? `You are signing in as ${getPrivyPrimaryEmail(privyUser)}.`
+              : 'Completing sign-in with your email or social account.'}
+          </p>
+          <p className="text-sm text-muted-foreground">No extra confirmation is required.</p>
         </AlertDescription>
       </Alert>
     );
