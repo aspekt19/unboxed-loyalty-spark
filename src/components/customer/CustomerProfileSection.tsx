@@ -18,6 +18,16 @@ import { AuthPrompt } from '@/components/AuthPrompt';
 import { Mail, Phone, Wallet, Save, Copy, Check, Star, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { getPrivyPrimaryEmail } from '@/lib/privyAuth';
 import { usePrivySafe } from '@/hooks/usePrivySafe';
 import { mergeIdentityWallets, syncPrivyIdentityLinks, type IdentityWalletLink } from '@/lib/identitySync';
@@ -40,6 +50,7 @@ export function CustomerProfileSection() {
   const [primaryWallet, setPrimaryWallet] = useState<string | null>(null);
   const [linkedWallets, setLinkedWallets] = useState<IdentityWalletLink[]>([]);
   const [switchingPrimary, setSwitchingPrimary] = useState<string | null>(null);
+  const [pendingPrimary, setPendingPrimary] = useState<string | null>(null);
 
   const identityEmail = getPrivyPrimaryEmail(privyUser);
   const connectedLower = address?.toLowerCase() ?? null;
@@ -149,7 +160,9 @@ export function CustomerProfileSection() {
     ? `${firstName[0]}${lastName[0]}`.toUpperCase()
     : displayAddress.slice(2, 4).toUpperCase();
 
-  const handleSetPrimaryWallet = async (walletAddress: string) => {
+  const confirmSetPrimaryWallet = async () => {
+    if (!pendingPrimary) return;
+    const walletAddress = pendingPrimary;
     setSwitchingPrimary(walletAddress);
     try {
       const { data, error } = await supabase.rpc('set_primary_wallet', {
@@ -167,11 +180,14 @@ export function CustomerProfileSection() {
       })));
       window.dispatchEvent(new Event('profileMigrated'));
       window.dispatchEvent(new Event('sessionReady'));
-      toast.success('Primary wallet updated');
+      toast.success('Primary wallet updated', {
+        description: `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)} is now your primary address.`,
+      });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to change primary wallet');
     } finally {
       setSwitchingPrimary(null);
+      setPendingPrimary(null);
     }
   };
 
@@ -266,7 +282,7 @@ export function CustomerProfileSection() {
                           size="sm"
                           className="h-5 px-1.5 text-[10px]"
                           disabled={switchingPrimary !== null}
-                          onClick={() => handleSetPrimaryWallet(wallet.value)}
+                          onClick={() => setPendingPrimary(wallet.value)}
                         >
                           {switchingPrimary === wallet.value ? '...' : 'Make primary'}
                         </Button>
@@ -330,6 +346,40 @@ export function CustomerProfileSection() {
       <ReferralCard />
       <CustomerReviewsSection />
       <DexIntegration />
+
+      <AlertDialog
+        open={pendingPrimary !== null}
+        onOpenChange={(open) => {
+          if (!open && switchingPrimary === null) setPendingPrimary(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Switch primary wallet?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your loyalty balances, vouchers, and rewards will be loaded for{' '}
+              <span className="font-mono">
+                {pendingPrimary
+                  ? `${pendingPrimary.slice(0, 6)}...${pendingPrimary.slice(-4)}`
+                  : ''}
+              </span>
+              . You can switch back at any time from your profile.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={switchingPrimary !== null}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={switchingPrimary !== null}
+              onClick={(event) => {
+                event.preventDefault();
+                void confirmSetPrimaryWallet();
+              }}
+            >
+              {switchingPrimary !== null ? 'Updating...' : 'Make primary'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
