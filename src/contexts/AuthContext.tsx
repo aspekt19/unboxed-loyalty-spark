@@ -445,6 +445,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       manualSignOutRef.current = true;
       setStoredManualSignOut(true);
+      // Reset back-off / signing refs so a stale "in flight" flag does not
+      // block a future fresh sign-in after the user clicks Sign in again.
+      signingInRef.current = false;
+      lastSignInAttemptAtRef.current = 0;
+      lastFailureAtRef.current = 0;
+      retryBlockedUntilRef.current = 0;
       setUser(null);
       setSession(null);
       setIsLoading(false);
@@ -453,6 +459,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         window.localStorage.removeItem('customerTokens');
         (window as any).__privyUser = null;
         (window as any).__privyGetAccessToken = null;
+        // Ask the Privy-aware UI layer (WalletConnectButton) to also call
+        // privyLogout(), regardless of whether signOut was triggered from
+        // the disconnect button or programmatically (banned screen, 409, etc).
+        window.dispatchEvent(new CustomEvent('loyalspark:request-privy-logout'));
       }
 
       const { error } = await supabase.auth.signOut({ scope: 'global' });
