@@ -10,6 +10,7 @@ import { ReferralCard } from '@/components/referral/ReferralCard';
 import { ReferralCodeInput } from '@/components/referral/ReferralCodeInput';
 import { CustomerReviewsSection } from '@/components/reviews/CustomerReviewsSection';
 import { DexIntegration } from '@/components/DexIntegration';
+import { LinkedAccounts } from '@/components/identity/LinkedAccounts';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthPrompt } from '@/components/AuthPrompt';
@@ -165,6 +166,7 @@ export function CustomerProfileSection() {
       </Card>
 
       <WalletQRCode />
+      <LinkedAccounts />
       <ReferralCodeInput />
       <ReferralCard />
       <CustomerReviewsSection />
