@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useContext, useEffect, useRef } from 'react';
 import { useConfig, useDisconnect } from 'wagmi';
-import { useAuth } from '@/contexts/AuthContext';
+import { AuthContext } from '@/contexts/AuthContext';
 import { usePrivySafe } from '@/hooks/usePrivySafe';
 import { isFarcasterContext } from '@/config/wagmi';
 import { WALLET_CONNECTOR_ERROR_EVENT } from '@/constants/walletConnectorRecovery';
@@ -11,7 +11,8 @@ import { WALLET_CONNECTOR_ERROR_EVENT } from '@/constants/walletConnectorRecover
  */
 export function ConnectorRecoveryListener() {
   const isFarcaster = isFarcasterContext();
-  const { signOut } = useAuth();
+  const auth = useContext(AuthContext);
+  const signOut = auth?.signOut;
   const { disconnectAsync } = useDisconnect();
   const config = useConfig();
   const { logout: privyLogout } = usePrivySafe();
@@ -53,7 +54,7 @@ export function ConnectorRecoveryListener() {
         }
       }
 
-      await signOut({ variant: 'connector_recovery' });
+      await signOut?.({ variant: 'connector_recovery' });
 
       try {
         await privyLogout();
