@@ -11,7 +11,8 @@ import { WALLET_CONNECTOR_ERROR_EVENT } from '@/constants/walletConnectorRecover
  */
 export function ConnectorRecoveryListener() {
   const isFarcaster = isFarcasterContext();
-  const { signOut } = useAuth();
+  const auth = useContext(AuthContext);
+  const signOut = auth?.signOut;
   const { disconnectAsync } = useDisconnect();
   const config = useConfig();
   const { logout: privyLogout } = usePrivySafe();
