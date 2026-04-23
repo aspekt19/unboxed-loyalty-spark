@@ -183,17 +183,27 @@ function extractEmail(privyUser: any, fallback?: string | null): string | null {
 }
 
 function extractWalletAddress(privyUser: any, fallback?: string | null): string | null {
-  const explicitWallet = fallback?.trim().toLowerCase();
-  if (explicitWallet) return explicitWallet;
+  const wallets = extractWalletAddresses(privyUser, fallback);
+  return wallets[0] ?? null;
+}
+
+function extractWalletAddresses(privyUser: any, fallback?: string | null): string[] {
   const linkedAccounts = getLinkedAccounts(privyUser);
-  const linkedWallet = linkedAccounts.find(
-    (account) => account?.type === "wallet" || account?.type === "smart_wallet"
-  );
-  return (
-    privyUser?.wallet?.address?.toLowerCase() ??
-    privyUser?.smartWallet?.address?.toLowerCase() ??
-    linkedWallet?.address?.toLowerCase() ??
-    null
+  const candidates = [
+    fallback,
+    privyUser?.wallet?.address,
+    privyUser?.smartWallet?.address,
+    ...linkedAccounts
+      .filter((account) => account?.type === "wallet" || account?.type === "smart_wallet")
+      .map((account) => account?.address),
+  ];
+
+  return Array.from(
+    new Set(
+      candidates
+        .map((value) => value?.trim().toLowerCase())
+        .filter((value): value is string => Boolean(value))
+    )
   );
 }
 
@@ -245,7 +255,8 @@ serve(async (req) => {
     }
 
     const resolvedEmail = extractEmail(verifiedUser, email);
-    const resolvedWalletAddress = extractWalletAddress(verifiedUser, walletAddress);
+    const resolvedWalletAddresses = extractWalletAddresses(verifiedUser, walletAddress);
+    const resolvedWalletAddress = resolvedWalletAddresses[0] ?? null;
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -265,14 +276,18 @@ serve(async (req) => {
       .maybeSingle();
 
     let walletUserId: string | null = null;
-    if (resolvedWalletAddress) {
+    for (const walletCandidate of resolvedWalletAddresses) {
       const { data: existingWalletLink } = await supabaseAdmin
         .from("identity_links")
         .select("user_id")
         .eq("link_type", "wallet")
-        .eq("value_normalized", resolvedWalletAddress)
+        .eq("value_normalized", walletCandidate)
         .maybeSingle();
-      walletUserId = existingWalletLink?.user_id ?? null;
+
+      if (existingWalletLink?.user_id) {
+        walletUserId = existingWalletLink.user_id;
+        break;
+      }
     }
 
     let emailUserId: string | null = null;
