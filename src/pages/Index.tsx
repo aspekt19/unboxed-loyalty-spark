@@ -28,7 +28,7 @@ const jsonLd = {
       "url": "https://loyalspark.online",
       "applicationCategory": "BusinessApplication",
       "operatingSystem": "Web",
-      "description": "Loyalty tokens that earn, invest and multiply onchain. Get rewarded for purchases, save automatically, and grow your rewards in DeFi.",
+      "description": "Onchain loyalty protocol on Base. Merchants launch branded ERC-20 reward programs; customers earn, redeem, and trade tokens P2P; AI agents automate it via REST API and MCP.",
       "offers": {
         "@type": "Offer",
         "price": "0",

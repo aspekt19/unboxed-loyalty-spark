@@ -31,7 +31,7 @@ const LandingCTA = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.3 }}
           >
-            Earn onchain loyalty tokens every time you shop. Swap or invest your points like real crypto assets.
+            Earn onchain loyalty tokens every time you shop. Redeem rewards or swap your points P2P like real crypto assets.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 20 }}

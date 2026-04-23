@@ -3,14 +3,14 @@ import { Gift, Wallet, BarChart3, Users, ShieldCheck, Repeat, Star, Zap } from '
 
 const customerBenefits = [
   { icon: Gift, text: 'Earn real tokens for every purchase — not just points in someone else\'s database' },
-  { icon: Wallet, text: 'Own your rewards. Transfer, trade, or invest them however you want' },
-  { icon: BarChart3, text: 'Grow idle tokens with DeFi yield — your loyalty rewards appreciate over time' },
+  { icon: Wallet, text: 'Own your rewards. Transfer or trade them P2P with other holders' },
+  { icon: BarChart3, text: 'Track balances and history across every merchant in one wallet' },
   { icon: Star, text: 'Unlock tier-based perks: discounts, early access, and VIP experiences' },
 ];
 
 const businessBenefits = [
   { icon: Users, text: 'Boost retention with token-based rewards that customers actually value' },
-  { icon: Repeat, text: 'Increase average order value through automatic round-up savings' },
+  { icon: Repeat, text: 'Drive repeat visits with vouchers, tiers, and personalized offers' },
   { icon: ShieldCheck, text: 'Zero infrastructure cost — deploy a loyalty program in minutes, not months' },
   { icon: Zap, text: 'AI-ready APIs let you automate campaigns, segmentation, and rewards at scale' },
 ];
