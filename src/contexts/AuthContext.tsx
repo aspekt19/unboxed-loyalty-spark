@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import { sdk } from '@farcaster/miniapp-sdk';
+import { isFarcasterContext as detectFarcasterContext } from '@/config/wagmi';
 import {
   getPrivyPrimaryEmail,
   getPrivyLinkedAccounts,
@@ -71,6 +72,7 @@ Issued At: ${issuedAt}`;
 }
 
 const PRIVY_AUTH_RETRY_DELAYS_MS = [0, 1200, 2500, 4500] as const;
+const FARCASTER_CONTEXT_TIMEOUT_MS = 1200;
 
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
@@ -113,16 +115,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    try {
-      const hasContext = !!(sdk as any)?.context;
-      const urlParams = new URLSearchParams(window.location.search);
-      const hasFarcasterParam = urlParams.has('farcaster') || urlParams.has('fc');
-      const isFarcasterPath = window.location.pathname.includes('/frame');
-      const hasFarcasterUA = /farcaster/i.test(navigator.userAgent);
-      isFarcasterContext.current = hasContext || hasFarcasterParam || isFarcasterPath || hasFarcasterUA;
-    } catch {
-      isFarcasterContext.current = false;
+    let cancelled = false;
+
+    isFarcasterContext.current = detectFarcasterContext();
+
+    if (!isFarcasterContext.current) {
+      return () => {
+        cancelled = true;
+      };
     }
+
+    const confirmFarcasterContext = async () => {
+      try {
+        const context = await Promise.race([
+          sdk.context,
+          new Promise<null>((resolve) => {
+            window.setTimeout(() => resolve(null), FARCASTER_CONTEXT_TIMEOUT_MS);
+          }),
+        ]);
+
+        if (cancelled) return;
+
+        isFarcasterContext.current = Boolean(context?.client?.clientFid) || detectFarcasterContext();
+      } catch {
+        if (!cancelled) {
+          isFarcasterContext.current = detectFarcasterContext();
+        }
+      }
+    };
+
+    void confirmFarcasterContext();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
