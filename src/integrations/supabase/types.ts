@@ -778,28 +778,40 @@ export type Database = {
           created_at: string
           id: string
           is_primary: boolean
+          link_type: string
           linked_via: string
           user_id: string
+          value: string
+          value_normalized: string
           verified_at: string
-          wallet_address: string
+          verified_via: string
+          wallet_address: string | null
         }
         Insert: {
           created_at?: string
           id?: string
           is_primary?: boolean
+          link_type: string
           linked_via?: string
           user_id: string
+          value: string
+          value_normalized: string
           verified_at?: string
-          wallet_address: string
+          verified_via: string
+          wallet_address?: string | null
         }
         Update: {
           created_at?: string
           id?: string
           is_primary?: boolean
+          link_type?: string
           linked_via?: string
           user_id?: string
+          value?: string
+          value_normalized?: string
           verified_at?: string
-          wallet_address?: string
+          verified_via?: string
+          wallet_address?: string | null
         }
         Relationships: []
       }
@@ -2328,6 +2340,10 @@ export type Database = {
       }
       is_unrestricted_merchant: { Args: { p_wallet: string }; Returns: boolean }
       is_wallet_banned: { Args: { p_wallet: string }; Returns: boolean }
+      link_identity: {
+        Args: { p_link_type: string; p_value: string; p_verified_via: string }
+        Returns: Json
+      }
       log_premium_activity: {
         Args: {
           p_activity_data?: Json
@@ -2372,12 +2388,17 @@ export type Database = {
           read_ct: number
         }[]
       }
+      set_primary_identity: {
+        Args: { p_link_type: string; p_value: string }
+        Returns: Json
+      }
       set_primary_wallet: { Args: { p_wallet_address: string }; Returns: Json }
       start_agent_trial: { Args: { p_owner_address: string }; Returns: string }
       start_merchant_trial: {
         Args: { p_owner_address: string }
         Returns: string
       }
+      unlink_identity: { Args: { p_id: string }; Returns: Json }
       update_customer_rfm_score: { Args: never; Returns: undefined }
       update_customer_tier: {
         Args: {
