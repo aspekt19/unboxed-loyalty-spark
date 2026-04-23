@@ -266,7 +266,10 @@ serve(async (req) => {
     const supabaseAuth = createClient(supabaseUrl, anonKey);
 
     // STEP 1: Resolve the canonical user for this Privy identity.
-    // Wallet ownership wins, then email ownership, then existing DID link.
+    // Wallet ownership wins, then existing DID link, then email ownership.
+    // The DID is the most stable identity key for social logins; if we prefer
+    // a stale email link over an existing DID link, users can land back in an
+    // older split account where manually linked wallets appear to be missing.
     const didNorm = privyDid.toLowerCase();
     const { data: didLink } = await supabaseAdmin
       .from("identity_links")
@@ -293,6 +296,14 @@ serve(async (req) => {
     let emailUserId: string | null = null;
     if (resolvedEmail) {
       const emailNorm = resolvedEmail.trim().toLowerCase();
+      const { data: hasPrimaryEmail } = await supabaseAdmin
+        .from("identity_links")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("link_type", "email")
+        .eq("is_primary", true)
+        .maybeSingle();
+
       const { data: existingEmailLink } = await supabaseAdmin
         .from("identity_links")
         .select("user_id")
@@ -302,7 +313,7 @@ serve(async (req) => {
       emailUserId = existingEmailLink?.user_id ?? null;
     }
 
-    let userId: string | null = walletUserId ?? emailUserId ?? didLink?.user_id ?? null;
+    let userId: string | null = walletUserId ?? didLink?.user_id ?? emailUserId ?? null;
 
     // STEP 2: Create a new auth user only when this is a truly new Privy identity.
     const authEmail = `${privyDid.replace(/^did:privy:/, "")}@privy.auth`;
@@ -465,9 +476,19 @@ serve(async (req) => {
           console.error("Email identity_link insert error:", emailLinkErr);
         }
       } else if (existingEmailLink.user_id !== userId) {
-        console.warn(
-          `Email ${emailNorm} already linked to another account ${existingEmailLink.user_id}; skipping link for ${userId}.`
-        );
+        const { error: moveEmailErr } = await supabaseAdmin
+          .from("identity_links")
+          .update({
+            user_id: userId,
+            verified_via: "privy_oauth",
+            is_primary: !hasPrimaryEmail,
+          })
+          .eq("link_type", "email")
+          .eq("value_normalized", emailNorm);
+
+        if (moveEmailErr) {
+          console.error(`Email identity_link move error for ${emailNorm}:`, moveEmailErr);
+        }
       }
     }
 
