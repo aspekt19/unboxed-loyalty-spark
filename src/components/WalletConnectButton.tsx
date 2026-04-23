@@ -176,7 +176,7 @@ export function WalletConnectButton() {
     };
   }, []);
 
-  const handleConnect = () => {
+  const handleConnect = async () => {
     setIsManuallyDisconnected(false);
     resetManualSignOut();
 
@@ -188,9 +188,17 @@ export function WalletConnectButton() {
       return;
     }
 
-    if (!privyUser) {
-      privyLogin();
+    if (privyUser && !user) {
+      try {
+        await signOut();
+      } catch {}
+
+      try {
+        await privyLogout();
+      } catch {}
     }
+
+    privyLogin();
   };
 
   const headerAuthButtonClass = (extra: string) =>
@@ -204,7 +212,7 @@ export function WalletConnectButton() {
     if (!isConnected || isManuallyDisconnected) {
       return (
         <button
-          onClick={handleConnect}
+          onClick={() => void handleConnect()}
           type="button"
           className={headerAuthButtonClass(
             'bg-primary text-primary-foreground shadow-clay-primary hover:shadow-clay-primary disabled:pointer-events-none disabled:opacity-50',
@@ -244,7 +252,7 @@ export function WalletConnectButton() {
   if (!privyUser || isManuallyDisconnected) {
     return (
       <button
-        onClick={handleConnect}
+        onClick={() => void handleConnect()}
         type="button"
         className={headerAuthButtonClass(
           'bg-primary text-primary-foreground shadow-clay-primary hover:shadow-clay-primary disabled:pointer-events-none disabled:opacity-50',
