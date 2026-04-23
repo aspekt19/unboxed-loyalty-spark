@@ -72,7 +72,7 @@ export function CustomerProfileSection() {
 
   if (authLoading) return null;
 
-  if (!address || !user || !session) {
+  if (!displayAddress || !user || !session) {
     return (
       <div className="space-y-4">
         <AuthPrompt />
@@ -86,7 +86,7 @@ export function CustomerProfileSection() {
 
   const initials = firstName && lastName
     ? `${firstName[0]}${lastName[0]}`.toUpperCase()
-    : address.slice(2, 4).toUpperCase();
+    : displayAddress.slice(2, 4).toUpperCase();
 
   const handleSave = async () => {
     setSaving(true);
@@ -94,7 +94,7 @@ export function CustomerProfileSection() {
       const { error } = await supabase
         .from('customer_profiles')
         .upsert({
-          wallet_address: address.toLowerCase(),
+          wallet_address: displayAddress,
           first_name: firstName || null,
           last_name: lastName || null,
           phone: phone || null,
@@ -109,7 +109,7 @@ export function CustomerProfileSection() {
   };
 
   const handleCopyAddress = () => {
-    navigator.clipboard.writeText(address);
+    navigator.clipboard.writeText(displayAddress);
     setCopied(true);
     toast.success('Address copied');
     setTimeout(() => setCopied(false), 2000);
@@ -129,15 +129,33 @@ export function CustomerProfileSection() {
               <CardTitle className="text-lg">
                 {firstName || lastName ? `${firstName} ${lastName}`.trim() : 'My Profile'}
               </CardTitle>
-              <button
-                onClick={handleCopyAddress}
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors font-mono"
-              >
-                {address.slice(0, 6)}...{address.slice(-4)}
-                {copied ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
-              </button>
+              <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                <button
+                  onClick={handleCopyAddress}
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors font-mono"
+                >
+                  {displayAddress.slice(0, 6)}...{displayAddress.slice(-4)}
+                  {copied ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
+                </button>
+                {primaryWallet && (
+                  <Badge variant="secondary" className="text-[10px] gap-0.5 h-5 px-1.5">
+                    <Star className="h-2.5 w-2.5" />
+                    Primary
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
+          {isMismatch && connectedLower && (
+            <Alert className="mt-3">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription className="text-xs">
+                Connected wallet differs from primary:{' '}
+                <span className="font-mono">{connectedLower.slice(0, 6)}...{connectedLower.slice(-4)}</span>.
+                Use “Linked Accounts” below to switch primary or link this wallet.
+              </AlertDescription>
+            </Alert>
+          )}
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
