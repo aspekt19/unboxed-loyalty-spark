@@ -287,6 +287,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [address]);
 
   const signInWithWallet = useCallback(async () => {
+    // Hard guard: never auto- or manually-trigger SIWE while the user is in
+    // an explicit signed-out state. The user must click "Sign in" again,
+    // which calls resetManualSignOut() before invoking this function.
+    if (manualSignOutRef.current || signingInRef.current) return;
+
     const privyUser = (window as any).__privyUser;
 
     if (!isFarcasterContext.current && privyUser && shouldUsePrivyTokenAuth(privyUser)) {
@@ -298,8 +303,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast.error('Please connect your wallet first');
       return;
     }
-
-    if (manualSignOutRef.current || signingInRef.current) return;
 
     const now = Date.now();
     if (now < retryBlockedUntilRef.current) return;
