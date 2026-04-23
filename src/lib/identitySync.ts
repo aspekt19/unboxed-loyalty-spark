@@ -72,6 +72,8 @@ export async function syncPrivyIdentityLinks({
   getAccessToken?: (() => Promise<string | null>) | null;
   fallbackWallet?: string | null;
 }): Promise<{ ok: boolean; error?: string }> {
+  void _fallbackWallet;
+
   if (!privyUser?.id || !getAccessToken) {
     return { ok: false, error: 'Privy session unavailable' };
   }

@@ -296,6 +296,14 @@ serve(async (req) => {
     let emailUserId: string | null = null;
     if (resolvedEmail) {
       const emailNorm = resolvedEmail.trim().toLowerCase();
+      const { data: hasPrimaryEmail } = await supabaseAdmin
+        .from("identity_links")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("link_type", "email")
+        .eq("is_primary", true)
+        .maybeSingle();
+
       const { data: existingEmailLink } = await supabaseAdmin
         .from("identity_links")
         .select("user_id")
@@ -470,7 +478,11 @@ serve(async (req) => {
       } else if (existingEmailLink.user_id !== userId) {
         const { error: moveEmailErr } = await supabaseAdmin
           .from("identity_links")
-          .update({ user_id: userId, verified_via: "privy_oauth", is_primary: true })
+          .update({
+            user_id: userId,
+            verified_via: "privy_oauth",
+            is_primary: !hasPrimaryEmail,
+          })
           .eq("link_type", "email")
           .eq("value_normalized", emailNorm);
 
