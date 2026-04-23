@@ -1,0 +1,425 @@
+import { useCallback, useEffect, useState } from 'react';
+import { useAccount, useSignMessage } from 'wagmi';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, Wallet, Mail, Star, Trash2, Plus, Shield } from 'lucide-react';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+
+interface IdentityLink {
+  id: string;
+  value: string;
+  verified_via: string;
+  is_primary: boolean;
+  verified_at: string;
+}
+
+interface IdentitySummary {
+  ok: boolean;
+  primary_wallet: string | null;
+  primary_email: string | null;
+  wallets: IdentityLink[];
+  emails: IdentityLink[];
+  profile_email: string | null;
+  profile_phone: string | null;
+}
+
+function shorten(addr: string): string {
+  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+}
+
+function constructLinkSiweMessage(address: string, nonce: string): string {
+  const domain = window.location.host;
+  const origin = window.location.origin;
+  const issuedAt = new Date().toISOString();
+  return `${domain} wants you to sign in with your Ethereum account:
+${address}
+
+Link this wallet to your Loyal Spark account
+
+URI: ${origin}
+Version: 1
+Chain ID: 8453
+Nonce: ${nonce}
+Issued At: ${issuedAt}`;
+}
+
+export function LinkedAccounts() {
+  const { session, user } = useAuth();
+  const { address: connectedAddress } = useAccount();
+  const { signMessageAsync } = useSignMessage();
+
+  const [summary, setSummary] = useState<IdentitySummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState<string | null>(null);
+
+  // Add email form
+  const [newEmail, setNewEmail] = useState('');
+
+  const loadSummary = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('get_my_identity_summary');
+      if (error) throw error;
+      setSummary(data as unknown as IdentitySummary);
+    } catch (err) {
+      console.error('[LinkedAccounts] load failed', err);
+      toast.error('Failed to load linked accounts');
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    loadSummary();
+  }, [loadSummary]);
+
+  const handleSetPrimary = async (linkType: 'wallet' | 'email', value: string) => {
+    setBusy(`primary-${value}`);
+    try {
+      const { data, error } = await supabase.rpc('set_primary_identity', {
+        p_link_type: linkType,
+        p_value: value,
+      });
+      if (error) throw error;
+      const result = data as { ok: boolean; error?: string };
+      if (!result.ok) throw new Error(result.error || 'Failed');
+      toast.success('Primary updated');
+      await loadSummary();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleUnlink = async (id: string) => {
+    setBusy(`unlink-${id}`);
+    try {
+      const { data, error } = await supabase.rpc('unlink_identity', { p_id: id });
+      if (error) throw error;
+      const result = data as { ok: boolean; error?: string };
+      if (!result.ok) {
+        const msg = result.error === 'cannot_remove_last_wallet'
+          ? 'Cannot remove your last wallet'
+          : result.error === 'cannot_remove_primary_without_replacement'
+          ? 'Set another as primary first'
+          : result.error || 'Failed';
+        throw new Error(msg);
+      }
+      toast.success('Removed');
+      await loadSummary();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleLinkCurrentWallet = async () => {
+    if (!connectedAddress || !session) {
+      toast.error('Connect a wallet first');
+      return;
+    }
+    const lower = connectedAddress.toLowerCase();
+    if (summary?.wallets.some(w => w.value === lower)) {
+      toast.info('This wallet is already linked');
+      return;
+    }
+
+    setBusy('link-wallet');
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const apikey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      const nonceRes = await fetch(`${supabaseUrl}/functions/v1/siwe-nonce`, {
+        headers: { apikey },
+      });
+      if (!nonceRes.ok) throw new Error('Failed to get nonce');
+      const { nonce } = await nonceRes.json();
+
+      const message = constructLinkSiweMessage(connectedAddress, nonce);
+      const signature = await signMessageAsync({ account: connectedAddress, message });
+
+      const verifyRes = await fetch(`${supabaseUrl}/functions/v1/siwe-verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey,
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ message, signature, mode: 'link' }),
+      });
+
+      if (!verifyRes.ok) {
+        const err = await verifyRes.json().catch(() => ({}));
+        if (verifyRes.status === 409) {
+          throw new Error('This wallet is already linked to another account');
+        }
+        throw new Error(err.error || 'Verification failed');
+      }
+
+      toast.success('Wallet linked');
+      await loadSummary();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to link wallet';
+      if (!msg.toLowerCase().includes('reject')) {
+        toast.error(msg);
+      }
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleAddEmail = async () => {
+    const email = newEmail.trim().toLowerCase();
+    if (!email || !email.includes('@')) {
+      toast.error('Enter a valid email');
+      return;
+    }
+    setBusy('add-email');
+    try {
+      const { data, error } = await supabase.rpc('link_identity', {
+        p_link_type: 'email',
+        p_value: email,
+        p_verified_via: 'manual',
+      });
+      if (error) throw error;
+      const result = data as { ok: boolean; error?: string };
+      if (!result.ok) {
+        const msg = result.error === 'identity_taken'
+          ? 'This email is already linked to another account'
+          : result.error === 'invalid_email_format'
+          ? 'Invalid email format'
+          : result.error || 'Failed';
+        throw new Error(msg);
+      }
+      toast.success('Email linked');
+      setNewEmail('');
+      await loadSummary();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  if (!user || !session) return null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <Shield className="h-5 w-5 text-primary" />
+          Linked Accounts
+        </CardTitle>
+        <CardDescription>
+          Manage the wallets and email addresses connected to your account.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {loading ? (
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <>
+            {/* Wallets */}
+            <section className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  <Wallet className="h-4 w-4" />
+                  Wallets
+                </h3>
+                <Badge variant="secondary" className="text-xs">
+                  {summary?.wallets.length ?? 0}
+                </Badge>
+              </div>
+
+              <div className="space-y-2">
+                {summary?.wallets.map((w) => (
+                  <div
+                    key={w.id}
+                    className="flex items-center justify-between gap-2 rounded-lg border bg-card p-3"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-sm">{shorten(w.value)}</span>
+                        {w.is_primary && (
+                          <Badge variant="default" className="text-[10px] gap-1">
+                            <Star className="h-3 w-3" />
+                            Primary
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        via {w.verified_via}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {!w.is_primary && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={busy !== null}
+                          onClick={() => handleSetPrimary('wallet', w.value)}
+                        >
+                          {busy === `primary-${w.value}` ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            'Make primary'
+                          )}
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={busy !== null || (summary?.wallets.length ?? 0) <= 1}
+                        onClick={() => handleUnlink(w.id)}
+                        title={(summary?.wallets.length ?? 0) <= 1 ? 'Last wallet — cannot remove' : 'Remove'}
+                      >
+                        {busy === `unlink-${w.id}` ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {connectedAddress &&
+                !summary?.wallets.some((w) => w.value === connectedAddress.toLowerCase()) && (
+                  <Alert>
+                    <Wallet className="h-4 w-4" />
+                    <AlertDescription className="flex items-center justify-between gap-2">
+                      <span className="text-sm">
+                        Link currently connected wallet: <span className="font-mono">{shorten(connectedAddress)}</span>
+                      </span>
+                      <Button
+                        size="sm"
+                        disabled={busy !== null}
+                        onClick={handleLinkCurrentWallet}
+                      >
+                        {busy === 'link-wallet' ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <>
+                            <Plus className="h-3.5 w-3.5 mr-1" />
+                            Link
+                          </>
+                        )}
+                      </Button>
+                    </AlertDescription>
+                  </Alert>
+                )}
+            </section>
+
+            {/* Emails */}
+            <section className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  Emails
+                </h3>
+                <Badge variant="secondary" className="text-xs">
+                  {summary?.emails.length ?? 0}
+                </Badge>
+              </div>
+
+              <div className="space-y-2">
+                {summary?.emails.map((e) => (
+                  <div
+                    key={e.id}
+                    className="flex items-center justify-between gap-2 rounded-lg border bg-card p-3"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm truncate">{e.value}</span>
+                        {e.is_primary && (
+                          <Badge variant="default" className="text-[10px] gap-1">
+                            <Star className="h-3 w-3" />
+                            Primary
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        via {e.verified_via}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {!e.is_primary && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={busy !== null}
+                          onClick={() => handleSetPrimary('email', e.value)}
+                        >
+                          {busy === `primary-${e.value}` ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            'Make primary'
+                          )}
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={busy !== null}
+                        onClick={() => handleUnlink(e.id)}
+                      >
+                        {busy === `unlink-${e.id}` ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs">Add email address</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="email"
+                    placeholder="you@example.com"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    disabled={busy !== null}
+                    className="h-9"
+                  />
+                  <Button
+                    size="sm"
+                    disabled={busy !== null || !newEmail.trim()}
+                    onClick={handleAddEmail}
+                  >
+                    {busy === 'add-email' ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <>
+                        <Plus className="h-3.5 w-3.5 mr-1" />
+                        Add
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Note: emails added here are stored as additional identifiers. Verification flow will be added in a future update.
+                </p>
+              </div>
+            </section>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
