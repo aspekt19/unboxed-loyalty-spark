@@ -112,12 +112,34 @@ export function WalletConnectButton() {
   }, [isFarcaster, isConnected, isManuallyDisconnected, connectors, connect]);
 
   useEffect(() => {
-    if (isFarcaster && isConnected && address && !isManuallyDisconnected) {
+    if (isFarcaster && isConnected && address && !isManuallyDisconnected && !user) {
       setTimeout(() => {
         signInWithWallet();
       }, 300);
     }
-  }, [isFarcaster, isConnected, address, isManuallyDisconnected, signInWithWallet]);
+  }, [isFarcaster, isConnected, address, isManuallyDisconnected, user, signInWithWallet]);
+
+  // Privy keeps its own session in cookies. If anything (signOut from the
+  // banned screen, a 409 conflict, or the user pressing Sign out) clears the
+  // app session, also tear down Privy so it cannot silently auto-relink an
+  // external wallet and trigger an unexpected SIWE popup.
+  useEffect(() => {
+    if (isFarcaster) return;
+    const handleRequestPrivyLogout = () => {
+      void (async () => {
+        try {
+          await privyLogout();
+        } catch {}
+        try {
+          await disconnectAsync?.();
+        } catch {}
+      })();
+    };
+    window.addEventListener('loyalspark:request-privy-logout', handleRequestPrivyLogout);
+    return () => {
+      window.removeEventListener('loyalspark:request-privy-logout', handleRequestPrivyLogout);
+    };
+  }, [isFarcaster, privyLogout, disconnectAsync]);
 
   // Email / SMS / OAuth: Supabase via Privy token only — never SIWE here.
   useEffect(() => {
