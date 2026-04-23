@@ -180,8 +180,14 @@ export function CustomerProfileSection() {
       })));
       window.dispatchEvent(new Event('profileMigrated'));
       window.dispatchEvent(new Event('sessionReady'));
+      // Refresh tokens, vouchers and rewards so the profile reflects the new
+      // primary wallet immediately without a manual reload.
+      window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
+      window.dispatchEvent(new Event('tokenBalancesUpdated'));
+      window.dispatchEvent(new Event('vouchersUpdated'));
+      window.dispatchEvent(new Event('rewardsUpdated'));
       toast.success('Primary wallet updated', {
-        description: `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)} is now your primary address.`,
+        description: `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)} is now your primary address. Refreshing your data...`,
       });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to change primary wallet');
