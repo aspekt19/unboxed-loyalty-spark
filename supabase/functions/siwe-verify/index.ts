@@ -49,6 +49,11 @@ async function findAuthUserByEmail(supabaseAdmin: ReturnType<typeof createClient
   return null;
 }
 
+function isAlreadyRegisteredAuthError(message?: string | null): boolean {
+  const normalized = message?.toLowerCase() ?? '';
+  return normalized.includes('already registered') || normalized.includes('already been registered');
+}
+
 async function ensureAuthUserWithPassword(
   supabaseAdmin: ReturnType<typeof createClient>,
   supabaseAuth: ReturnType<typeof createClient>,
@@ -64,12 +69,12 @@ async function ensureAuthUserWithPassword(
     email_confirm: true,
   });
 
-  if (createError && !createError.message?.toLowerCase().includes('already registered')) {
+  if (createError && !isAlreadyRegisteredAuthError(createError.message)) {
     console.error('User creation error:', createError);
     throw new Error(`Failed to create user: ${createError.message}`);
   }
 
-  if (createError?.message?.toLowerCase().includes('already registered')) {
+  if (isAlreadyRegisteredAuthError(createError?.message)) {
     const existingUser = await findAuthUserByEmail(supabaseAdmin, email);
     if (!existingUser) {
       throw new Error('Auth user exists but could not be recovered by email');
