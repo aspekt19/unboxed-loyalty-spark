@@ -201,22 +201,12 @@ serve(async (req) => {
     const email = `${address}@wallet.siwe`;
     const password = await generateDeterministicPassword(address, serviceRoleKey);
 
-    let signInResult = await supabaseAuth.auth.signInWithPassword({ email, password });
-    if (signInResult.error) {
-      const { error: createError } = await supabaseAdmin.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-      });
-      if (createError && !createError.message?.includes('already registered')) {
-        console.error('User creation error:', createError);
-        throw new Error(`Failed to create user: ${createError.message}`);
-      }
-      signInResult = await supabaseAuth.auth.signInWithPassword({ email, password });
-      if (signInResult.error) {
-        throw new Error(`Sign-in failed: ${signInResult.error.message}`);
-      }
-    }
+    const signInResult = await ensureAuthUserWithPassword(
+      supabaseAdmin,
+      supabaseAuth,
+      email,
+      password
+    );
 
     const session = signInResult.data.session!;
     const userId = signInResult.data.user!.id;
