@@ -17,15 +17,16 @@ export interface TokenBalance extends TokenInfo {
   rawBalance: bigint;
 }
 
-export function useMultiTokenBalance(tokens: TokenInfo[]) {
-  const { address } = useAccount();
+export function useMultiTokenBalance(tokens: TokenInfo[], overrideAddress?: string | null) {
+  const { address: connectedAddress } = useAccount();
   const publicClient = usePublicClient();
   const [balances, setBalances] = useState<TokenBalance[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const isInitialLoadRef = useRef(true);
-  
+
   const tokenAddressesRef = useRef<string>('');
   const currentAddresses = tokens.map(t => t.address).sort().join(',');
+  const address = (overrideAddress ?? connectedAddress) as `0x${string}` | undefined;
 
   const fetchBalances = useCallback(async (silent = false) => {
     if (!address || !publicClient || tokens.length === 0) {
