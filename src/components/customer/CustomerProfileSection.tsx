@@ -63,7 +63,7 @@ export function CustomerProfileSection() {
     if (!user || !session) return;
     const loadPrimary = async () => {
       const { data } = await supabase.rpc('get_my_identity_summary');
-      const summary = data as IdentitySummaryResponse | null;
+      const summary = data as unknown as IdentitySummaryResponse | null;
       setPrimaryWallet(summary?.primary_wallet ?? null);
       setLinkedWallets(summary?.wallets ?? []);
     };
