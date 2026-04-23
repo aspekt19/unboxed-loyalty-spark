@@ -30,6 +30,70 @@ async function generateDeterministicPassword(address: string, secret: string): P
   return btoa(String.fromCharCode(...new Uint8Array(sig)));
 }
 
+async function findAuthUserByEmail(supabaseAdmin: ReturnType<typeof createClient>, email: string): Promise<{ id: string; email?: string | null } | null> {
+  let page = 1;
+  const perPage = 200;
+
+  while (page <= 10) {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+    if (error) throw error;
+
+    const users = data?.users ?? [];
+    const matched = users.find((user) => user.email?.toLowerCase() === email.toLowerCase());
+    if (matched) return { id: matched.id, email: matched.email };
+
+    if (users.length < perPage) break;
+    page += 1;
+  }
+
+  return null;
+}
+
+async function ensureAuthUserWithPassword(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAuth: ReturnType<typeof createClient>,
+  email: string,
+  password: string
+) {
+  let signInResult = await supabaseAuth.auth.signInWithPassword({ email, password });
+  if (!signInResult.error) return signInResult;
+
+  const { error: createError } = await supabaseAdmin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+  });
+
+  if (createError && !createError.message?.toLowerCase().includes('already registered')) {
+    console.error('User creation error:', createError);
+    throw new Error(`Failed to create user: ${createError.message}`);
+  }
+
+  if (createError?.message?.toLowerCase().includes('already registered')) {
+    const existingUser = await findAuthUserByEmail(supabaseAdmin, email);
+    if (!existingUser) {
+      throw new Error('Auth user exists but could not be recovered by email');
+    }
+
+    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+      email,
+      password,
+      email_confirm: true,
+    });
+    if (updateError) {
+      console.error('Auth user password repair error:', updateError);
+      throw new Error(`Failed to repair existing user: ${updateError.message}`);
+    }
+  }
+
+  signInResult = await supabaseAuth.auth.signInWithPassword({ email, password });
+  if (signInResult.error) {
+    throw new Error(`Sign-in failed: ${signInResult.error.message}`);
+  }
+
+  return signInResult;
+}
+
 const ADMIN_WALLETS = [
   '0x5cc0aa9ed773f413f81f78a62f2e94109ce26205',
   '0x40a8cdd6a10ec1a8cb3dfb2834675e7a2cf4ad8b',
@@ -201,22 +265,12 @@ serve(async (req) => {
     const email = `${address}@wallet.siwe`;
     const password = await generateDeterministicPassword(address, serviceRoleKey);
 
-    let signInResult = await supabaseAuth.auth.signInWithPassword({ email, password });
-    if (signInResult.error) {
-      const { error: createError } = await supabaseAdmin.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-      });
-      if (createError && !createError.message?.includes('already registered')) {
-        console.error('User creation error:', createError);
-        throw new Error(`Failed to create user: ${createError.message}`);
-      }
-      signInResult = await supabaseAuth.auth.signInWithPassword({ email, password });
-      if (signInResult.error) {
-        throw new Error(`Sign-in failed: ${signInResult.error.message}`);
-      }
-    }
+    const signInResult = await ensureAuthUserWithPassword(
+      supabaseAdmin,
+      supabaseAuth,
+      email,
+      password
+    );
 
     const session = signInResult.data.session!;
     const userId = signInResult.data.user!.id;
