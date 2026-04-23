@@ -30,7 +30,7 @@ async function generateDeterministicPassword(address: string, secret: string): P
   return btoa(String.fromCharCode(...new Uint8Array(sig)));
 }
 
-async function findAuthUserByEmail(supabaseAdmin: ReturnType<typeof createClient>, email: string): Promise<{ id: string; email?: string | null } | null> {
+async function findAuthUserByEmail(supabaseAdmin: any, email: string): Promise<{ id: string; email?: string | null } | null> {
   let page = 1;
   const perPage = 200;
 
@@ -55,8 +55,8 @@ function isAlreadyRegisteredAuthError(message?: string | null): boolean {
 }
 
 async function ensureAuthUserWithPassword(
-  supabaseAdmin: ReturnType<typeof createClient>,
-  supabaseAuth: ReturnType<typeof createClient>,
+  supabaseAdmin: any,
+  supabaseAuth: any,
   email: string,
   password: string
 ) {
