@@ -10,6 +10,7 @@ import { Wallet } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthPrompt } from './AuthPrompt';
 import { useMultiTokenBalance, type TokenInfo } from '@/hooks/useMultiTokenBalance';
+import { useActiveCustomerWallet } from '@/hooks/useActiveCustomerWallet';
 import { supabase } from '@/integrations/supabase/client';
 
 interface CustomerPanelProps {
@@ -20,13 +21,14 @@ interface CustomerPanelProps {
 
 export function CustomerPanel({ selectedMerchant, onMerchantSelect, onClearMerchantFilter }: CustomerPanelProps) {
   const { address } = useAccount();
+  const { activeAddress } = useActiveCustomerWallet();
   const { user, session, isLoading } = useAuth();
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
   const [allPrograms, setAllPrograms] = useState<TokenInfo[]>([]);
 
   // Load all active programs to compute owned-merchants set
   useEffect(() => {
-    if (!address) return;
+    if (!activeAddress) return;
     let cancelled = false;
     (async () => {
       const { data, error } = await supabase
@@ -46,9 +48,9 @@ export function CustomerPanel({ selectedMerchant, onMerchantSelect, onClearMerch
     return () => {
       cancelled = true;
     };
-  }, [address]);
+  }, [activeAddress]);
 
-  const { balances } = useMultiTokenBalance(allPrograms);
+  const { balances } = useMultiTokenBalance(allPrograms, activeAddress);
 
   const ownedMerchantAddresses = useMemo(() => {
     const set = new Set<string>();

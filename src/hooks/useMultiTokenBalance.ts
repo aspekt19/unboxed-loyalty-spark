@@ -17,15 +17,16 @@ export interface TokenBalance extends TokenInfo {
   rawBalance: bigint;
 }
 
-export function useMultiTokenBalance(tokens: TokenInfo[]) {
-  const { address } = useAccount();
+export function useMultiTokenBalance(tokens: TokenInfo[], overrideAddress?: string | null) {
+  const { address: connectedAddress } = useAccount();
   const publicClient = usePublicClient();
   const [balances, setBalances] = useState<TokenBalance[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const isInitialLoadRef = useRef(true);
-  
+
   const tokenAddressesRef = useRef<string>('');
   const currentAddresses = tokens.map(t => t.address).sort().join(',');
+  const address = (overrideAddress ?? connectedAddress) as `0x${string}` | undefined;
 
   const fetchBalances = useCallback(async (silent = false) => {
     if (!address || !publicClient || tokens.length === 0) {
@@ -77,6 +78,17 @@ export function useMultiTokenBalance(tokens: TokenInfo[]) {
       fetchBalances();
     }
   }, [currentAddresses, fetchBalances]);
+
+  // Refetch when the active address itself changes (e.g. user switches their
+  // primary wallet via the profile UI). Skips initial render — the effect
+  // above already handles the very first load.
+  const lastAddressRef = useRef<string | undefined>(address);
+  useEffect(() => {
+    if (lastAddressRef.current === address) return;
+    lastAddressRef.current = address;
+    isInitialLoadRef.current = true;
+    void fetchBalances();
+  }, [address, fetchBalances]);
 
   // Listen for balance update events
   useEffect(() => {

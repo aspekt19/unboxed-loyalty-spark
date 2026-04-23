@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useAccount } from 'wagmi';
 import { supabase } from '@/integrations/supabase/client';
 import { useMultiTokenBalance } from '@/hooks/useMultiTokenBalance';
+import { useActiveCustomerWallet } from '@/hooks/useActiveCustomerWallet';
 import { CustomerTierDisplay } from './CustomerTierDisplay';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -19,12 +19,13 @@ interface CustomerTiersSectionProps {
 }
 
 export function CustomerTiersSection({ selectedProgram }: CustomerTiersSectionProps) {
-  const { address } = useAccount();
+  const { activeAddress } = useActiveCustomerWallet();
+  const address = activeAddress;
   const [programs, setPrograms] = useState<TokenInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [tierName, setTierName] = useState<string>('');
 
-  const { balances } = useMultiTokenBalance(programs);
+  const { balances } = useMultiTokenBalance(programs, activeAddress);
 
   useEffect(() => {
     if (!address) {

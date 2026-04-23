@@ -12,6 +12,7 @@ import { useAccount } from 'wagmi';
 import { useBurnTokens } from '@/hooks/useBurnTokens';
 import { useApproveTokens, useCheckAllowance } from '@/hooks/useApproveTokens';
 import { useMultiTokenBalance } from '@/hooks/useMultiTokenBalance';
+import { useActiveCustomerWallet } from '@/hooks/useActiveCustomerWallet';
 import { useVoucherVerification } from '@/hooks/useVoucherVerification';
 import { VerificationStatusAlerts } from '@/components/rewards/VerificationStatusAlerts';
 import { CONTRACTS } from '@/config/contracts';
@@ -50,7 +51,8 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [programSearch, setProgramSearch] = useState('');
 
-  const { balances, isLoading: balancesLoading, refetch } = useMultiTokenBalance(tokens);
+  const { activeAddress } = useActiveCustomerWallet();
+  const { balances, isLoading: balancesLoading, refetch } = useMultiTokenBalance(tokens, activeAddress);
   const { burnTokens, isPending, isSuccess, hash } = useBurnTokens();
   const { approveTokens, isPending: isApproving, isSuccess: isApproved } = useApproveTokens();
 

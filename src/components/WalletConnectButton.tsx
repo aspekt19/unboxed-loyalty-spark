@@ -161,9 +161,36 @@ export function WalletConnectButton() {
     signInWithPrivy,
   ]);
 
-  // Wallet-only Privy login: do NOT auto-trigger SIWE on mount/focus.
-  // Signature requests must only happen on an explicit user gesture (handleConnect),
-  // otherwise users see the wallet popup unexpectedly when revisiting the app.
+  // Wallet-only Privy login (external wallet, no email/social):
+  // Privy already required an explicit user gesture (clicking "Sign In" → wallet
+  // picker → wagmi connect). Treat that gesture as continuous with SIWE so the
+  // user does not have to press a second "Sign in with wallet" button. We only
+  // auto-trigger when the user has just opted into Privy AND a wallet is now
+  // connected — never on a passive page revisit (manualSignOut guard handles
+  // that case via signingInRef + lastSignInAttemptAtRef in AuthContext).
+  useEffect(() => {
+    if (isFarcaster) return;
+    if (!privyReady || !privyAuthenticated || !privyUser) return;
+    if (user || isManuallyDisconnected) return;
+    if (useTokenAuth) return; // social/email path handled by the effect above
+    if (!isConnected || !address) return;
+
+    const t = window.setTimeout(() => {
+      void signInWithWallet();
+    }, 400);
+    return () => window.clearTimeout(t);
+  }, [
+    isFarcaster,
+    privyReady,
+    privyAuthenticated,
+    privyUser,
+    user,
+    isManuallyDisconnected,
+    useTokenAuth,
+    isConnected,
+    address,
+    signInWithWallet,
+  ]);
 
   const handleDisconnect = async () => {
     try {
