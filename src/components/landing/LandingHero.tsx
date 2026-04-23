@@ -49,7 +49,7 @@ const LandingHero = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.4 }}
       >
-        Get loyalty tokens every time you shop. Save automatically, swap on exchanges, or invest in DeFi — all from one simple wallet.
+        Onchain loyalty protocol on Base: merchants launch branded reward programs, customers earn and redeem tokens, and AI agents automate it all via REST API and MCP.
       </motion.p>
 
       <motion.p
