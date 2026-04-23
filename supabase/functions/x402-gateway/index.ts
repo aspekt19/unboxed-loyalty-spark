@@ -185,7 +185,7 @@ function buildPaymentRequired(price: string, resource: string, requestUrl: URL):
     supabaseUrl,
   });
 
-  const paymentRequirements = {
+  const paymentRequirements: Record<string, unknown> = {
     x402Version: 2,
     accepts: [accept],
     error: "X-PAYMENT header is required",
@@ -195,6 +195,10 @@ function buildPaymentRequired(price: string, resource: string, requestUrl: URL):
       mimeType: "application/json",
     },
   };
+  /** v2 optional root `extensions` — `@x402/fetch` merges this into `paymentPayload.extensions` for settle; some facilitators index Bazaar from that path, not only `accepts[0].extensions`. */
+  if (accept.extensions && typeof accept.extensions === "object" && !Array.isArray(accept.extensions)) {
+    paymentRequirements.extensions = { ...(accept.extensions as Record<string, unknown>) };
+  }
 
   const jsonStr = JSON.stringify(paymentRequirements);
   const encoded = btoa(Array.from(new TextEncoder().encode(jsonStr), (b) => String.fromCharCode(b)).join(""));
