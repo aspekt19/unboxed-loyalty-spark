@@ -54,7 +54,7 @@ export function ConnectorRecoveryListener() {
         }
       }
 
-      await signOut({ variant: 'connector_recovery' });
+      await signOut?.({ variant: 'connector_recovery' });
 
       try {
         await privyLogout();
