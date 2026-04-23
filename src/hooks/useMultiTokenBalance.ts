@@ -79,6 +79,17 @@ export function useMultiTokenBalance(tokens: TokenInfo[], overrideAddress?: stri
     }
   }, [currentAddresses, fetchBalances]);
 
+  // Refetch when the active address itself changes (e.g. user switches their
+  // primary wallet via the profile UI). Skips initial render — the effect
+  // above already handles the very first load.
+  const lastAddressRef = useRef<string | undefined>(address);
+  useEffect(() => {
+    if (lastAddressRef.current === address) return;
+    lastAddressRef.current = address;
+    isInitialLoadRef.current = true;
+    void fetchBalances();
+  }, [address, fetchBalances]);
+
   // Listen for balance update events
   useEffect(() => {
     const handleBalanceUpdate = () => fetchBalances(true);
