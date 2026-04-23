@@ -17,30 +17,33 @@ import { AuthPrompt } from '@/components/AuthPrompt';
 import { Mail, Phone, Wallet, Save, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { getPrivyPrimaryEmail } from '@/lib/privyAuth';
+import { usePrivySafe } from '@/hooks/usePrivySafe';
 
 export function CustomerProfileSection() {
   const { address } = useAccount();
   const { user, session, isLoading: authLoading } = useAuth();
+  const { user: privyUser } = usePrivySafe();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [saving, setSaving] = useState(false);
   const [, setLoaded] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  const identityEmail = getPrivyPrimaryEmail(privyUser);
 
   useEffect(() => {
     if (!address) return;
     const load = async () => {
       const { data } = await supabase
         .from('customer_profiles')
-        .select('first_name, last_name, email, phone')
+        .select('first_name, last_name, phone')
         .eq('wallet_address', address.toLowerCase())
         .maybeSingle();
       if (data) {
         setFirstName(data.first_name || '');
         setLastName(data.last_name || '');
-        setEmail(data.email || '');
         setPhone(data.phone || '');
       }
       setLoaded(true);
@@ -75,7 +78,6 @@ export function CustomerProfileSection() {
           wallet_address: address.toLowerCase(),
           first_name: firstName || null,
           last_name: lastName || null,
-          email: email || null,
           phone: phone || null,
         }, { onConflict: 'wallet_address' });
       if (error) throw error;
@@ -139,16 +141,12 @@ export function CustomerProfileSection() {
               />
             </div>
           </div>
-          <div className="space-y-1">
-            <Label className="text-xs flex items-center gap-1"><Mail className="h-3 w-3" /> Email</Label>
-            <Input
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="jane@example.com"
-              type="email"
-              className="h-9"
-            />
-          </div>
+          {identityEmail && (
+            <div className="space-y-1">
+              <Label className="text-xs flex items-center gap-1"><Mail className="h-3 w-3" /> Sign-in Email</Label>
+              <Input value={identityEmail} readOnly className="h-9" />
+            </div>
+          )}
           <div className="space-y-1">
             <Label className="text-xs flex items-center gap-1"><Phone className="h-3 w-3" /> Phone</Label>
             <Input
