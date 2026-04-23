@@ -294,16 +294,9 @@ serve(async (req) => {
     }
 
     let emailUserId: string | null = null;
+    let emailNorm: string | null = null;
     if (resolvedEmail) {
-      const emailNorm = resolvedEmail.trim().toLowerCase();
-      const { data: hasPrimaryEmail } = await supabaseAdmin
-        .from("identity_links")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("link_type", "email")
-        .eq("is_primary", true)
-        .maybeSingle();
-
+      emailNorm = resolvedEmail.trim().toLowerCase();
       const { data: existingEmailLink } = await supabaseAdmin
         .from("identity_links")
         .select("user_id")
@@ -476,6 +469,14 @@ serve(async (req) => {
           console.error("Email identity_link insert error:", emailLinkErr);
         }
       } else if (existingEmailLink.user_id !== userId) {
+        const { data: hasPrimaryEmail } = await supabaseAdmin
+          .from("identity_links")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("link_type", "email")
+          .eq("is_primary", true)
+          .maybeSingle();
+
         const { error: moveEmailErr } = await supabaseAdmin
           .from("identity_links")
           .update({
