@@ -43,6 +43,71 @@ async function findAuthUserByEmail(
   return null;
 }
 
+async function findAuthUserById(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  userId: string
+): Promise<{ id: string; email?: string | null } | null> {
+  const { data, error } = await supabaseAdmin.auth.admin.getUserById(userId);
+  if (error) throw error;
+  if (!data?.user) return null;
+  return { id: data.user.id, email: data.user.email };
+}
+
+async function reserveAuthEmailForUser(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  userId: string,
+  email: string
+) {
+  const existingUser = await findAuthUserByEmail(supabaseAdmin, email);
+  if (!existingUser || existingUser.id === userId) return;
+
+  const tombstoneEmail = `${existingUser.id}.${Date.now()}@merged.privy.auth`;
+  const { error } = await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+    email: tombstoneEmail,
+    email_confirm: true,
+  });
+  if (error) {
+    throw new Error(`Failed to free auth email: ${error.message}`);
+  }
+}
+
+async function upsertPrivyDidLink(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  userId: string,
+  privyDid: string,
+  didNorm: string
+) {
+  const { data: existingDidLink } = await supabaseAdmin
+    .from("identity_links")
+    .select("id, user_id")
+    .eq("link_type", "privy_did")
+    .eq("value_normalized", didNorm)
+    .maybeSingle();
+
+  if (!existingDidLink) {
+    const { error } = await supabaseAdmin.from("identity_links").insert({
+      user_id: userId,
+      link_type: "privy_did",
+      value: privyDid,
+      value_normalized: didNorm,
+      verified_via: "privy_token",
+      is_primary: true,
+    });
+    if (error && !error.message?.includes("duplicate")) {
+      throw error;
+    }
+    return;
+  }
+
+  if (existingDidLink.user_id !== userId) {
+    const { error } = await supabaseAdmin
+      .from("identity_links")
+      .update({ user_id: userId, verified_via: "privy_token", is_primary: true })
+      .eq("id", existingDidLink.id);
+    if (error) throw error;
+  }
+}
+
 async function ensureAuthUserWithPassword(
   supabaseAdmin: ReturnType<typeof createClient>,
   supabaseAuth: ReturnType<typeof createClient>,
@@ -97,12 +162,17 @@ function getLinkedAccounts(privyUser: any): any[] {
 function extractEmail(privyUser: any, fallback?: string | null): string | null {
   if (fallback) return fallback;
   const linkedAccounts = getLinkedAccounts(privyUser);
+  const linkedEmailAccount = linkedAccounts.find((account) => {
+    const type = String(account?.type ?? "").toLowerCase();
+    return ["email", "google", "google_oauth", "apple", "apple_oauth", "oauth", "oauth_account"].includes(type);
+  });
+
   return (
     privyUser?.email?.address ??
     privyUser?.google?.email ??
-    linkedAccounts.find((account) => account?.type === "email")?.address ??
-    linkedAccounts.find((account) => account?.type === "google_oauth")?.email ??
-    linkedAccounts.find((account) => account?.type === "apple_oauth")?.email ??
+    privyUser?.apple?.email ??
+    linkedEmailAccount?.address ??
+    linkedEmailAccount?.email ??
     null
   );
 }
@@ -179,18 +249,29 @@ serve(async (req) => {
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
     const supabaseAuth = createClient(supabaseUrl, anonKey);
 
-    // STEP 1: Lookup by Privy DID via identity_links — primary source of truth
+    // STEP 1: Resolve the canonical user for this Privy identity.
+    // Wallet ownership wins, then email ownership, then existing DID link.
     const didNorm = privyDid.toLowerCase();
     const { data: didLink } = await supabaseAdmin
       .from("identity_links")
-      .select("user_id")
+      .select("id, user_id")
       .eq("link_type", "privy_did")
       .eq("value_normalized", didNorm)
       .maybeSingle();
 
-    let userId: string | null = didLink?.user_id ?? null;
+    let walletUserId: string | null = null;
+    if (resolvedWalletAddress) {
+      const { data: existingWalletLink } = await supabaseAdmin
+        .from("identity_links")
+        .select("user_id")
+        .eq("link_type", "wallet")
+        .eq("value_normalized", resolvedWalletAddress)
+        .maybeSingle();
+      walletUserId = existingWalletLink?.user_id ?? null;
+    }
 
-    if (!userId && resolvedEmail) {
+    let emailUserId: string | null = null;
+    if (resolvedEmail) {
       const emailNorm = resolvedEmail.trim().toLowerCase();
       const { data: existingEmailLink } = await supabaseAdmin
         .from("identity_links")
@@ -198,13 +279,12 @@ serve(async (req) => {
         .eq("link_type", "email")
         .eq("value_normalized", emailNorm)
         .maybeSingle();
-
-      if (existingEmailLink?.user_id) {
-        userId = existingEmailLink.user_id;
-      }
+      emailUserId = existingEmailLink?.user_id ?? null;
     }
 
-    // STEP 2: If no DID link yet, create or find Supabase auth user via stable per-DID email
+    let userId: string | null = walletUserId ?? emailUserId ?? didLink?.user_id ?? null;
+
+    // STEP 2: Create a new auth user only when this is a truly new Privy identity.
     const authEmail = `${privyDid.replace(/^did:privy:/, "")}@privy.auth`;
     const password = await generateDeterministicPassword(privyDid, serviceRoleKey);
 
@@ -215,51 +295,30 @@ serve(async (req) => {
         authEmail,
         password
       );
-
       userId = signInResult.data.user!.id;
-
-      // Persist DID as an identity link (service role bypasses RLS)
-      const { error: didInsertError } = await supabaseAdmin
-        .from("identity_links")
-        .insert({
-          user_id: userId,
-          link_type: "privy_did",
-          value: privyDid,
-          value_normalized: didNorm,
-          verified_via: "privy_token",
-          is_primary: true,
-        });
-      if (didInsertError && !didInsertError.message?.includes("duplicate")) {
-        console.error("DID identity_link insert error:", didInsertError);
-      }
     } else {
+      await reserveAuthEmailForUser(supabaseAdmin, userId, authEmail);
+
+      const existingAuthUser = await findAuthUserById(supabaseAdmin, userId);
+      if (!existingAuthUser) {
+        throw new Error(`Canonical auth user ${userId} was not found`);
+      }
+
       const { error: updateAuthError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
         email: authEmail,
         password,
         email_confirm: true,
       });
-
-      if (updateAuthError && !updateAuthError.message?.toLowerCase().includes("email address")) {
+      if (updateAuthError) {
         console.error("Existing auth user update error:", updateAuthError);
-      }
-
-      // Persist DID as an identity link (service role bypasses RLS)
-      const { error: didInsertError } = await supabaseAdmin
-        .from("identity_links")
-        .insert({
-          user_id: userId,
-          link_type: "privy_did",
-          value: privyDid,
-          value_normalized: didNorm,
-          verified_via: "privy_token",
-          is_primary: true,
-        });
-      if (didInsertError && !didInsertError.message?.includes("duplicate")) {
-        console.error("DID identity_link insert error:", didInsertError);
+        throw new Error(`Failed to bind Privy identity: ${updateAuthError.message}`);
       }
     }
 
-    // STEP 3: Sign the user in (always, to return a fresh session)
+    // STEP 3: Make sure the DID points to the canonical user, even if an old split account exists.
+    await upsertPrivyDidLink(supabaseAdmin, userId, privyDid, didNorm);
+
+    // STEP 4: Sign the canonical user in with the stable Privy credentials.
     const signInResult = await supabaseAuth.auth.signInWithPassword({
       email: authEmail,
       password,
