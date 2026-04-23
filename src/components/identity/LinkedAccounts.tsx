@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAccount, useSignMessage } from 'wagmi';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,8 @@ import { Loader2, Wallet, Mail, Star, Trash2, Plus, Shield } from 'lucide-react'
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { getPrivyLinkedAccounts, getPrivyPrimaryEmail } from '@/lib/privyAuth';
+import { usePrivySafe } from '@/hooks/usePrivySafe';
 
 interface IdentityLink {
   id: string;
@@ -53,6 +55,7 @@ export function LinkedAccounts() {
   const { session, user } = useAuth();
   const { address: connectedAddress } = useAccount();
   const { signMessageAsync } = useSignMessage();
+  const { user: privyUser } = usePrivySafe();
 
   const [summary, setSummary] = useState<IdentitySummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -60,6 +63,16 @@ export function LinkedAccounts() {
 
   // Add email form
   const [newEmail, setNewEmail] = useState('');
+
+  const normalizedConnectedAddress = connectedAddress?.toLowerCase() ?? null;
+  const privyPrimaryEmail = useMemo(() => getPrivyPrimaryEmail(privyUser), [privyUser]);
+  const privyWallets = useMemo(
+    () => getPrivyLinkedAccounts(privyUser)
+      .filter((account) => account.type === 'wallet' || account.type === 'smart_wallet')
+      .map((account) => account.address?.toLowerCase())
+      .filter((value): value is string => Boolean(value)),
+    [privyUser],
+  );
 
   const loadSummary = useCallback(async () => {
     if (!user) return;
@@ -194,7 +207,7 @@ export function LinkedAccounts() {
       const result = data as { ok: boolean; error?: string };
       if (!result.ok) {
         const msg = result.error === 'identity_taken'
-          ? 'This email is already linked to another account'
+          ? 'This email is already linked to another account. Please sign in with that email instead.'
           : result.error === 'invalid_email_format'
           ? 'Invalid email format'
           : result.error || 'Failed';
@@ -211,6 +224,15 @@ export function LinkedAccounts() {
   };
 
   if (!user || !session) return null;
+
+  const linkedWallets = summary?.wallets ?? [];
+  const linkedEmails = summary?.emails ?? [];
+  const isConnectedWalletLinked = normalizedConnectedAddress
+    ? linkedWallets.some((wallet) => wallet.value === normalizedConnectedAddress)
+    : false;
+  const isPrivyWalletAlreadyKnown = normalizedConnectedAddress
+    ? privyWallets.includes(normalizedConnectedAddress)
+    : false;
 
   return (
     <Card>
@@ -238,12 +260,12 @@ export function LinkedAccounts() {
                   Wallets
                 </h3>
                 <Badge variant="secondary" className="text-xs">
-                  {summary?.wallets.length ?? 0}
+                  {linkedWallets.length}
                 </Badge>
               </div>
 
               <div className="space-y-2">
-                {summary?.wallets.map((w) => (
+                {linkedWallets.map((w) => (
                   <div
                     key={w.id}
                     className="flex items-center justify-between gap-2 rounded-lg border bg-card p-3"
@@ -280,9 +302,9 @@ export function LinkedAccounts() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        disabled={busy !== null || (summary?.wallets.length ?? 0) <= 1}
+                        disabled={busy !== null || linkedWallets.length <= 1}
                         onClick={() => handleUnlink(w.id)}
-                        title={(summary?.wallets.length ?? 0) <= 1 ? 'Last wallet — cannot remove' : 'Remove'}
+                        title={linkedWallets.length <= 1 ? 'Last wallet — cannot remove' : 'Remove'}
                       >
                         {busy === `unlink-${w.id}` ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -295,13 +317,12 @@ export function LinkedAccounts() {
                 ))}
               </div>
 
-              {connectedAddress &&
-                !summary?.wallets.some((w) => w.value === connectedAddress.toLowerCase()) && (
+              {normalizedConnectedAddress && !isConnectedWalletLinked && !isPrivyWalletAlreadyKnown && (
                   <Alert>
                     <Wallet className="h-4 w-4" />
                     <AlertDescription className="flex items-center justify-between gap-2">
                       <span className="text-sm">
-                        Link currently connected wallet: <span className="font-mono">{shorten(connectedAddress)}</span>
+                        Link currently connected wallet: <span className="font-mono">{shorten(normalizedConnectedAddress)}</span>
                       </span>
                       <Button
                         size="sm"
@@ -330,12 +351,12 @@ export function LinkedAccounts() {
                   Emails
                 </h3>
                 <Badge variant="secondary" className="text-xs">
-                  {summary?.emails.length ?? 0}
+                  {linkedEmails.length}
                 </Badge>
               </div>
 
               <div className="space-y-2">
-                {summary?.emails.map((e) => (
+                {linkedEmails.map((e) => (
                   <div
                     key={e.id}
                     className="flex items-center justify-between gap-2 rounded-lg border bg-card p-3"
@@ -386,6 +407,15 @@ export function LinkedAccounts() {
                 ))}
               </div>
 
+              {!linkedEmails.length && privyPrimaryEmail && (
+                <Alert>
+                  <Mail className="h-4 w-4" />
+                  <AlertDescription className="text-sm">
+                    Signed in as <span className="font-medium">{privyPrimaryEmail}</span>. This email will appear here after identity sync completes.
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <div className="space-y-2">
                 <Label className="text-xs">Add email address</Label>
                 <div className="flex gap-2">
@@ -413,7 +443,7 @@ export function LinkedAccounts() {
                   </Button>
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  Note: emails added here are stored as additional identifiers. Verification flow will be added in a future update.
+                  Use this to add an extra email. If it already belongs to another account, sign out and log in with that email instead.
                 </p>
               </div>
             </section>
