@@ -49,7 +49,7 @@ const LandingHero = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.4 }}
       >
-        Launch a branded rewards program in minutes, turn every purchase into real value for your customers, and let AI agents handle the rest.
+        Businesses launch branded rewards in minutes. Customers earn real value with every purchase. AI agents automate the rest.
       </motion.p>
 
       <motion.p
