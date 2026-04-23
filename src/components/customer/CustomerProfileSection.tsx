@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { WalletQRCode } from '@/components/WalletQRCode';
 import { ReferralCard } from '@/components/referral/ReferralCard';
 import { ReferralCodeInput } from '@/components/referral/ReferralCodeInput';
@@ -14,7 +15,7 @@ import { LinkedAccounts } from '@/components/identity/LinkedAccounts';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthPrompt } from '@/components/AuthPrompt';
-import { Mail, Phone, Wallet, Save, Copy, Check } from 'lucide-react';
+import { Mail, Phone, Wallet, Save, Copy, Check, Star, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getPrivyPrimaryEmail } from '@/lib/privyAuth';
@@ -30,16 +31,34 @@ export function CustomerProfileSection() {
   const [saving, setSaving] = useState(false);
   const [, setLoaded] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [primaryWallet, setPrimaryWallet] = useState<string | null>(null);
 
   const identityEmail = getPrivyPrimaryEmail(privyUser);
+  const connectedLower = address?.toLowerCase() ?? null;
+  // Show the user's chosen primary wallet from identity_links so the original
+  // (embedded) address remains visible after they connect an external wallet.
+  const displayAddress = primaryWallet ?? connectedLower;
+  const isMismatch = Boolean(
+    primaryWallet && connectedLower && primaryWallet !== connectedLower,
+  );
 
   useEffect(() => {
-    if (!address) return;
+    if (!user || !session) return;
+    const loadPrimary = async () => {
+      const { data } = await supabase.rpc('get_my_identity_summary');
+      const summary = data as { primary_wallet: string | null } | null;
+      if (summary?.primary_wallet) setPrimaryWallet(summary.primary_wallet);
+    };
+    loadPrimary();
+  }, [user, session]);
+
+  useEffect(() => {
+    if (!displayAddress) return;
     const load = async () => {
       const { data } = await supabase
         .from('customer_profiles')
         .select('first_name, last_name, phone')
-        .eq('wallet_address', address.toLowerCase())
+        .eq('wallet_address', displayAddress)
         .maybeSingle();
       if (data) {
         setFirstName(data.first_name || '');
@@ -49,11 +68,11 @@ export function CustomerProfileSection() {
       setLoaded(true);
     };
     load();
-  }, [address]);
+  }, [displayAddress]);
 
   if (authLoading) return null;
 
-  if (!address || !user || !session) {
+  if (!displayAddress || !user || !session) {
     return (
       <div className="space-y-4">
         <AuthPrompt />
@@ -67,7 +86,7 @@ export function CustomerProfileSection() {
 
   const initials = firstName && lastName
     ? `${firstName[0]}${lastName[0]}`.toUpperCase()
-    : address.slice(2, 4).toUpperCase();
+    : displayAddress.slice(2, 4).toUpperCase();
 
   const handleSave = async () => {
     setSaving(true);
@@ -75,7 +94,7 @@ export function CustomerProfileSection() {
       const { error } = await supabase
         .from('customer_profiles')
         .upsert({
-          wallet_address: address.toLowerCase(),
+          wallet_address: displayAddress,
           first_name: firstName || null,
           last_name: lastName || null,
           phone: phone || null,
@@ -90,7 +109,7 @@ export function CustomerProfileSection() {
   };
 
   const handleCopyAddress = () => {
-    navigator.clipboard.writeText(address);
+    navigator.clipboard.writeText(displayAddress);
     setCopied(true);
     toast.success('Address copied');
     setTimeout(() => setCopied(false), 2000);
@@ -110,15 +129,33 @@ export function CustomerProfileSection() {
               <CardTitle className="text-lg">
                 {firstName || lastName ? `${firstName} ${lastName}`.trim() : 'My Profile'}
               </CardTitle>
-              <button
-                onClick={handleCopyAddress}
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors font-mono"
-              >
-                {address.slice(0, 6)}...{address.slice(-4)}
-                {copied ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
-              </button>
+              <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                <button
+                  onClick={handleCopyAddress}
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors font-mono"
+                >
+                  {displayAddress.slice(0, 6)}...{displayAddress.slice(-4)}
+                  {copied ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
+                </button>
+                {primaryWallet && (
+                  <Badge variant="secondary" className="text-[10px] gap-0.5 h-5 px-1.5">
+                    <Star className="h-2.5 w-2.5" />
+                    Primary
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
+          {isMismatch && connectedLower && (
+            <Alert className="mt-3">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription className="text-xs">
+                Connected wallet differs from primary:{' '}
+                <span className="font-mono">{connectedLower.slice(0, 6)}...{connectedLower.slice(-4)}</span>.
+                Use “Linked Accounts” below to switch primary or link this wallet.
+              </AlertDescription>
+            </Alert>
+          )}
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
