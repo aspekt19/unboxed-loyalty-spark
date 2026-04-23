@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAccount, useSignMessage } from 'wagmi';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Wallet, Mail, Star, Trash2, Plus, Shield } from 'lucide-react';
+import { Loader2, Wallet, Mail, Star, Trash2, Plus, Shield, Link2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -55,7 +55,7 @@ export function LinkedAccounts() {
   const { session, user } = useAuth();
   const { address: connectedAddress } = useAccount();
   const { signMessageAsync } = useSignMessage();
-  const { user: privyUser } = usePrivySafe();
+  const { user: privyUser, connectWallet, authenticated: privyAuthenticated } = usePrivySafe();
 
   const [summary, setSummary] = useState<IdentitySummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -73,6 +73,7 @@ export function LinkedAccounts() {
       .filter((value): value is string => Boolean(value)),
     [privyUser],
   );
+  const autoLinkAttemptedRef = useRef<string | null>(null);
 
   const loadSummary = useCallback(async () => {
     if (!user) return;
@@ -189,6 +190,37 @@ export function LinkedAccounts() {
       setBusy(null);
     }
   };
+
+  const handleConnectExternalWallet = () => {
+    if (!connectWallet) {
+      toast.error('Wallet connector unavailable');
+      return;
+    }
+    autoLinkAttemptedRef.current = null;
+    setBusy('connect-external');
+    try {
+      connectWallet();
+    } catch (err) {
+      console.error('[LinkedAccounts] connectWallet error', err);
+      toast.error('Failed to open wallet picker');
+    } finally {
+      // connectWallet is fire-and-forget; the effect below handles SIWE
+      window.setTimeout(() => setBusy((b) => (b === 'connect-external' ? null : b)), 1500);
+    }
+  };
+
+  // After Privy connects an external wallet, auto-trigger SIWE link once.
+  useEffect(() => {
+    if (!normalizedConnectedAddress || !session || !summary) return;
+    if (autoLinkAttemptedRef.current === normalizedConnectedAddress) return;
+    if (busy && busy !== 'connect-external') return;
+    if (summary.wallets.some((w) => w.value === normalizedConnectedAddress)) return;
+    if (!privyAuthenticated) return;
+
+    autoLinkAttemptedRef.current = normalizedConnectedAddress;
+    void handleLinkCurrentWallet();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [normalizedConnectedAddress, session, summary, privyAuthenticated]);
 
   const handleAddEmail = async () => {
     const email = newEmail.trim().toLowerCase();
@@ -341,6 +373,37 @@ export function LinkedAccounts() {
                     </AlertDescription>
                   </Alert>
                 )}
+
+              {!normalizedConnectedAddress && (
+                <div className="rounded-lg border border-dashed bg-muted/30 p-3 space-y-2">
+                  <div className="flex items-start gap-2">
+                    <Link2 className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Connect an external wallet</p>
+                      <p className="text-xs text-muted-foreground">
+                        Link MetaMask, Coinbase Wallet, or any WalletConnect-compatible wallet to your account.
+                        You'll sign one message to confirm ownership.
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="default"
+                    className="w-full sm:w-auto"
+                    disabled={busy !== null}
+                    onClick={handleConnectExternalWallet}
+                  >
+                    {busy === 'connect-external' ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <>
+                        <Plus className="h-3.5 w-3.5 mr-1" />
+                        Connect external wallet
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
             </section>
 
             {/* Emails */}
