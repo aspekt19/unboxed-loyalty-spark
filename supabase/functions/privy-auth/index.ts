@@ -228,10 +228,28 @@ serve(async (req) => {
         .maybeSingle();
 
       if (existingWalletLink && existingWalletLink.user_id !== userId) {
-        // Hijack-safe: another account already owns this wallet. Don't touch profiles.
+        // Hijack-safe: another account already owns this wallet.
         walletConflict = { address: resolvedWalletAddress, owner_user_id: existingWalletLink.user_id };
         console.warn(
-          `Privy wallet ${resolvedWalletAddress} is already linked to user ${existingWalletLink.user_id}; current Privy user ${userId} will not overwrite.`
+          `Privy wallet ${resolvedWalletAddress} is already linked to user ${existingWalletLink.user_id}; refusing to issue session for ${userId}.`
+        );
+
+        // Refuse to issue a session — otherwise the client gets stuck in a re-auth loop
+        // (wagmi address points to a wallet that doesn't belong to this Supabase user).
+        // Sign the just-created session out before responding.
+        try { await supabaseAuth.auth.signOut(); } catch {}
+
+        return new Response(
+          JSON.stringify({
+            error: "wallet_belongs_to_another_account",
+            message:
+              "This wallet is already linked to another account. Please disconnect this wallet, or sign in with the account that owns it.",
+            wallet_address: resolvedWalletAddress,
+          }),
+          {
+            status: 409,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
         );
       } else {
         // Safe to upsert profile + ensure identity_link row
