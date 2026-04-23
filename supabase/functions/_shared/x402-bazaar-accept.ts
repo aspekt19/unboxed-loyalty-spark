@@ -176,13 +176,13 @@ function bazaarSchemaMcp(): Record<string, unknown> {
         type: "object",
         properties: {
           type: { type: "string", const: "mcp" },
-          tool: { type: "string" },
+          toolName: { type: "string" },
           description: { type: "string" },
           transport: { type: "string", enum: ["streamable-http", "sse"] },
           inputSchema: { type: "object" },
           example: { type: "object" },
         },
-        required: ["type", "tool", "inputSchema"],
+        required: ["type", "toolName", "inputSchema"],
         additionalProperties: false,
       },
       output: {
@@ -229,17 +229,18 @@ function getRestInputSchema(method: string): Record<string, unknown> {
 }
 
 /**
- * Bazaar `extensions.bazaar` for MCP — spec requires `input.type: "mcp"`, `tool`, `inputSchema`, plus `schema`
- * that validates `info`. CDP previously rejected with `invalid discovery configuration` — likely caused by
- * `example` in `info.input` not conforming to `inputSchema.required`. Omit optional fields (`example`, `transport`)
- * to stay minimal; `transport` defaults to `streamable-http` per spec.
+ * Bazaar `extensions.bazaar` for MCP. CDP (canonical Go SDK) uses `toolName` (camelCase),
+ * NOT `tool` — see `coinbase/x402/go/extensions/types/types.go McpInput.ToolName (json:"toolName")`
+ * and `resource_service.go DeclareMcpDiscoveryExtension` required `["type","toolName","inputSchema"]`.
+ * The docs.cdp.coinbase.com page showed `tool` which is outdated; emitting `tool` caused
+ * `rejected: invalid discovery configuration` against `additionalProperties:false` schema.
  */
 function mcpBazaarExtension(mcp: McpBazaarTool) {
   return {
     info: {
       input: {
         type: "mcp",
-        tool: mcp.name,
+        toolName: mcp.name,
         description: mcp.description,
         inputSchema: mcp.inputSchema,
       },
@@ -312,7 +313,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
       outputSchema: {
         input: {
           type: "mcp",
-          tool: mcp.name,
+          toolName: mcp.name,
           transport: "streamable-http",
           description: mcp.description,
           inputSchema: mcp.inputSchema,
@@ -356,7 +357,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
       outputSchema: {
         input: {
           type: "mcp",
-          tool: mcp.name,
+          toolName: mcp.name,
           transport: "streamable-http",
           description: mcp.description,
           inputSchema: mcp.inputSchema,
