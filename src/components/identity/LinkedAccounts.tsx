@@ -374,14 +374,14 @@ export function LinkedAccounts() {
                   </Alert>
                 )}
 
-              {!normalizedConnectedAddress && (
+              {connectWallet && (
                 <div className="rounded-lg border border-dashed bg-muted/30 p-3 space-y-2">
                   <div className="flex items-start gap-2">
                     <Link2 className="h-4 w-4 mt-0.5 text-muted-foreground" />
                     <div className="flex-1">
-                      <p className="text-sm font-medium">Connect an external wallet</p>
+                      <p className="text-sm font-medium">Link an external wallet</p>
                       <p className="text-xs text-muted-foreground">
-                        Link MetaMask, Coinbase Wallet, or any WalletConnect-compatible wallet to your account.
+                        Add MetaMask, Coinbase Wallet, Rabby, or any WalletConnect-compatible wallet.
                         You'll sign one message to confirm ownership.
                       </p>
                     </div>
@@ -398,7 +398,7 @@ export function LinkedAccounts() {
                     ) : (
                       <>
                         <Plus className="h-3.5 w-3.5 mr-1" />
-                        Connect external wallet
+                        {normalizedConnectedAddress ? 'Connect another wallet' : 'Connect external wallet'}
                       </>
                     )}
                   </Button>
