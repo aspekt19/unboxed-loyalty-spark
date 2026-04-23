@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAccount } from 'wagmi';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,25 +18,19 @@ import { AuthPrompt } from '@/components/AuthPrompt';
 import { Mail, Phone, Wallet, Save, Copy, Check, Star, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { getPrivyLinkedAccounts, getPrivyPrimaryEmail } from '@/lib/privyAuth';
+import { getPrivyPrimaryEmail } from '@/lib/privyAuth';
 import { usePrivySafe } from '@/hooks/usePrivySafe';
-
-interface WalletSummaryItem {
-  id: string;
-  value: string;
-  verified_via: string;
-  is_primary: boolean;
-}
+import { mergeIdentityWallets, syncPrivyIdentityLinks, type IdentityWalletLink } from '@/lib/identitySync';
 
 interface IdentitySummaryResponse {
   primary_wallet: string | null;
-  wallets?: WalletSummaryItem[];
+  wallets?: IdentityWalletLink[];
 }
 
 export function CustomerProfileSection() {
   const { address } = useAccount();
   const { user, session, isLoading: authLoading } = useAuth();
-  const { user: privyUser } = usePrivySafe();
+  const { user: privyUser, getAccessToken } = usePrivySafe();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
@@ -44,13 +38,10 @@ export function CustomerProfileSection() {
   const [, setLoaded] = useState(false);
   const [copied, setCopied] = useState(false);
   const [primaryWallet, setPrimaryWallet] = useState<string | null>(null);
-  const [linkedWallets, setLinkedWallets] = useState<WalletSummaryItem[]>([]);
+  const [linkedWallets, setLinkedWallets] = useState<IdentityWalletLink[]>([]);
+  const [switchingPrimary, setSwitchingPrimary] = useState<string | null>(null);
 
   const identityEmail = getPrivyPrimaryEmail(privyUser);
-  const privyWallets = getPrivyLinkedAccounts(privyUser)
-    .filter((account) => account.type === 'wallet' || account.type === 'smart_wallet')
-    .map((account) => account.address?.toLowerCase())
-    .filter((value): value is string => Boolean(value));
   const connectedLower = address?.toLowerCase() ?? null;
   // Show the user's chosen primary wallet from identity_links so the original
   // (embedded) address remains visible after they connect an external wallet.
@@ -84,6 +75,40 @@ export function CustomerProfileSection() {
   }, [user, session]);
 
   useEffect(() => {
+    if (!user || !session || !privyUser) return;
+
+    const visibleWallets = mergeIdentityWallets(linkedWallets, privyUser, primaryWallet);
+    const hasUnsyncedWallet = visibleWallets.some((wallet) => !wallet.is_synced);
+    if (!hasUnsyncedWallet) return;
+
+    let cancelled = false;
+
+    const syncWallets = async () => {
+      const result = await syncPrivyIdentityLinks({
+        privyUser,
+        getAccessToken,
+        fallbackWallet: connectedLower,
+      });
+
+      if (!result.ok || cancelled) return;
+
+      const { data } = await supabase.rpc('get_my_identity_summary');
+      const summary = data as unknown as IdentitySummaryResponse | null;
+      if (cancelled) return;
+      setPrimaryWallet(summary?.primary_wallet ?? null);
+      setLinkedWallets(summary?.wallets ?? []);
+      window.dispatchEvent(new Event('profileMigrated'));
+      window.dispatchEvent(new Event('sessionReady'));
+    };
+
+    void syncWallets();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, session, privyUser, linkedWallets, primaryWallet, getAccessToken, connectedLower]);
+
+  useEffect(() => {
     if (!displayAddress) return;
     const load = async () => {
       const { data } = await supabase
@@ -100,6 +125,11 @@ export function CustomerProfileSection() {
     };
     load();
   }, [displayAddress]);
+
+  const visibleWallets = useMemo(
+    () => mergeIdentityWallets(linkedWallets, privyUser, primaryWallet),
+    [linkedWallets, privyUser, primaryWallet],
+  );
 
   if (authLoading) return null;
 
@@ -119,16 +149,31 @@ export function CustomerProfileSection() {
     ? `${firstName[0]}${lastName[0]}`.toUpperCase()
     : displayAddress.slice(2, 4).toUpperCase();
 
-  const visibleWallets = Array.from(
-    new Map(
-      [...linkedWallets, ...privyWallets.map((value) => ({
-        id: `privy-${value}`,
-        value,
-        verified_via: 'privy',
-        is_primary: value === primaryWallet,
-      }))].map((wallet) => [wallet.value, wallet])
-    ).values()
-  );
+  const handleSetPrimaryWallet = async (walletAddress: string) => {
+    setSwitchingPrimary(walletAddress);
+    try {
+      const { data, error } = await supabase.rpc('set_primary_wallet', {
+        p_wallet_address: walletAddress,
+      });
+      if (error) throw error;
+
+      const result = data as { ok: boolean; error?: string };
+      if (!result.ok) throw new Error(result.error || 'Failed to change primary wallet');
+
+      setPrimaryWallet(walletAddress);
+      setLinkedWallets((current) => current.map((wallet) => ({
+        ...wallet,
+        is_primary: wallet.value === walletAddress,
+      })));
+      window.dispatchEvent(new Event('profileMigrated'));
+      window.dispatchEvent(new Event('sessionReady'));
+      toast.success('Primary wallet updated');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to change primary wallet');
+    } finally {
+      setSwitchingPrimary(null);
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -214,6 +259,20 @@ export function CustomerProfileSection() {
                       </span>
                       {isWalletPrimary ? (
                         <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">Primary</Badge>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 px-1.5 text-[10px]"
+                          disabled={switchingPrimary !== null}
+                          onClick={() => handleSetPrimaryWallet(wallet.value)}
+                        >
+                          {switchingPrimary === wallet.value ? '...' : 'Make primary'}
+                        </Button>
+                      )}
+                      {!wallet.is_synced ? (
+                        <Badge variant="outline" className="h-5 px-1.5 text-[10px]">Syncing</Badge>
                       ) : null}
                     </div>
                   );
