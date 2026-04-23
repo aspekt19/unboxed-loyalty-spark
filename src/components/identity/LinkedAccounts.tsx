@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAccount, useSignMessage } from 'wagmi';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -74,8 +74,6 @@ export function LinkedAccounts() {
       .filter((value): value is string => Boolean(value)),
     [privyUser],
   );
-  const autoLinkAttemptedRef = useRef<string | null>(null);
-
   const loadSummary = useCallback(async () => {
     if (!user) return;
     setLoading(true);
@@ -224,7 +222,6 @@ export function LinkedAccounts() {
       toast.error('Wallet connector unavailable');
       return;
     }
-    autoLinkAttemptedRef.current = null;
     setBusy('connect-external');
     try {
       connectWallet();
@@ -236,19 +233,6 @@ export function LinkedAccounts() {
       window.setTimeout(() => setBusy((b) => (b === 'connect-external' ? null : b)), 1500);
     }
   };
-
-  // After Privy connects an external wallet, auto-trigger SIWE link once.
-  useEffect(() => {
-    if (!normalizedConnectedAddress || !session || !summary) return;
-    if (autoLinkAttemptedRef.current === normalizedConnectedAddress) return;
-    if (busy && busy !== 'connect-external') return;
-    if (summary.wallets.some((w) => w.value === normalizedConnectedAddress)) return;
-    if (!privyAuthenticated) return;
-
-    autoLinkAttemptedRef.current = normalizedConnectedAddress;
-    void handleLinkCurrentWallet();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [normalizedConnectedAddress, session, summary, privyAuthenticated]);
 
   const handleAddEmail = async () => {
     const email = newEmail.trim().toLowerCase();
