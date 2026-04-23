@@ -56,7 +56,7 @@ export function LinkedAccounts() {
   const { session, user } = useAuth();
   const { address: connectedAddress } = useAccount();
   const { signMessageAsync } = useSignMessage();
-  const { user: privyUser, connectWallet, authenticated: privyAuthenticated, getAccessToken } = usePrivySafe();
+  const { user: privyUser, connectWallet, getAccessToken } = usePrivySafe();
 
   const [summary, setSummary] = useState<IdentitySummary | null>(null);
   const [loading, setLoading] = useState(true);
