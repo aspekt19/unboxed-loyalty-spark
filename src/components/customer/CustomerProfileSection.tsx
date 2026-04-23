@@ -31,16 +31,34 @@ export function CustomerProfileSection() {
   const [saving, setSaving] = useState(false);
   const [, setLoaded] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [primaryWallet, setPrimaryWallet] = useState<string | null>(null);
 
   const identityEmail = getPrivyPrimaryEmail(privyUser);
+  const connectedLower = address?.toLowerCase() ?? null;
+  // Show the user's chosen primary wallet from identity_links so the original
+  // (embedded) address remains visible after they connect an external wallet.
+  const displayAddress = primaryWallet ?? connectedLower;
+  const isMismatch = Boolean(
+    primaryWallet && connectedLower && primaryWallet !== connectedLower,
+  );
 
   useEffect(() => {
-    if (!address) return;
+    if (!user || !session) return;
+    const loadPrimary = async () => {
+      const { data } = await supabase.rpc('get_my_identity_summary');
+      const summary = data as { primary_wallet: string | null } | null;
+      if (summary?.primary_wallet) setPrimaryWallet(summary.primary_wallet);
+    };
+    loadPrimary();
+  }, [user, session]);
+
+  useEffect(() => {
+    if (!displayAddress) return;
     const load = async () => {
       const { data } = await supabase
         .from('customer_profiles')
         .select('first_name, last_name, phone')
-        .eq('wallet_address', address.toLowerCase())
+        .eq('wallet_address', displayAddress)
         .maybeSingle();
       if (data) {
         setFirstName(data.first_name || '');
@@ -50,7 +68,7 @@ export function CustomerProfileSection() {
       setLoaded(true);
     };
     load();
-  }, [address]);
+  }, [displayAddress]);
 
   if (authLoading) return null;
 
