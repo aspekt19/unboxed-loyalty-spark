@@ -173,7 +173,7 @@ export function LinkedAccounts() {
       if (!verifyRes.ok) {
         const err = await verifyRes.json().catch(() => ({}));
         if (verifyRes.status === 409) {
-          throw new Error('This wallet is already linked to another account');
+          throw new Error('This wallet is already linked to another account. Please sign in with that wallet instead.');
         }
         throw new Error(err.error || 'Verification failed');
       }
