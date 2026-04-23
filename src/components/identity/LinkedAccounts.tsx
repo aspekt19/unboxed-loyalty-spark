@@ -55,7 +55,7 @@ export function LinkedAccounts() {
   const { session, user } = useAuth();
   const { address: connectedAddress } = useAccount();
   const { signMessageAsync } = useSignMessage();
-  const { user: privyUser } = usePrivySafe();
+  const { user: privyUser, connectWallet, authenticated: privyAuthenticated } = usePrivySafe();
 
   const [summary, setSummary] = useState<IdentitySummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -73,6 +73,7 @@ export function LinkedAccounts() {
       .filter((value): value is string => Boolean(value)),
     [privyUser],
   );
+  const autoLinkAttemptedRef = useRef<string | null>(null);
 
   const loadSummary = useCallback(async () => {
     if (!user) return;
