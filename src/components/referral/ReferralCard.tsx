@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useAccount } from 'wagmi';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,6 +12,7 @@ import { Users, Copy, Gift, Check, ChevronDown, ChevronLeft, ChevronRight } from
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useFarcasterHaptics } from '@/hooks/useFarcasterHaptics';
+import { useActiveCustomerWallet } from '@/hooks/useActiveCustomerWallet';
 
 interface ReferralProgram {
   token_address: string;
@@ -26,7 +26,8 @@ interface ReferralProgram {
 }
 
 export function ReferralCard() {
-  const { address } = useAccount();
+  const { activeAddress } = useActiveCustomerWallet();
+  const address = activeAddress;
   const [programs, setPrograms] = useState<ReferralProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState<string | null>(null);
@@ -39,6 +40,7 @@ export function ReferralCard() {
   useEffect(() => {
     if (!address) return;
     loadReferralPrograms();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address]);
 
   useEffect(() => {

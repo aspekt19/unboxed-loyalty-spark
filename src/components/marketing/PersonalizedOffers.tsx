@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useAccount } from 'wagmi';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Gift, Calendar, Percent, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { format } from 'date-fns';
+import { useActiveCustomerWallet } from '@/hooks/useActiveCustomerWallet';
 
 interface Offer {
   id: string;
@@ -36,14 +36,14 @@ function setDismissed(ids: string[]) {
 }
 
 export function PersonalizedOffers() {
-  const { address } = useAccount();
+  const { activeAddress } = useActiveCustomerWallet();
   const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
   const [dismissed, setDismissedState] = useState<string[]>(getDismissed());
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
-    if (!address) return;
+    if (!activeAddress) return;
 
     loadOffers();
 
@@ -55,7 +55,7 @@ export function PersonalizedOffers() {
           event: '*',
           schema: 'public',
           table: 'personalized_offers',
-          filter: `customer_address=eq.${address.toLowerCase()}`,
+          filter: `customer_address=eq.${activeAddress.toLowerCase()}`,
         },
         () => {
           loadOffers();
@@ -66,17 +66,18 @@ export function PersonalizedOffers() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [address]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeAddress]);
 
   const loadOffers = async () => {
-    if (!address) return;
+    if (!activeAddress) return;
 
     try {
       setLoading(true);
       const { data, error } = await supabase
         .from('personalized_offers')
         .select('*')
-        .eq('customer_address', address.toLowerCase())
+        .eq('customer_address', activeAddress.toLowerCase())
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
