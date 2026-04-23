@@ -93,28 +93,32 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
   });
 
   // ── Pre-verify profile status (no async in activate handler) ──
+  // Profile is bound to the authenticated user_id, not to a specific wallet.
+  // After switching primary wallet, the session's profile row is still valid
+  // (its `wallet_address` is the original sign-in wallet). So we look it up
+  // by `user_id` instead of by the currently connected address.
   useEffect(() => {
-    if (!address || !session) {
+    if (!user || !session) {
       setProfileVerified(false);
       return;
     }
-    
+
     const checkProfile = async () => {
       try {
         const { data: profile, error } = await supabase
           .from('profiles')
-          .select('wallet_address')
-          .eq('wallet_address', address.toLowerCase())
+          .select('id')
+          .eq('user_id', user.id)
           .maybeSingle();
-        
+
         setProfileVerified(!error && !!profile);
       } catch {
         setProfileVerified(false);
       }
     };
-    
+
     checkProfile();
-    
+
     const handleProfileUpdate = () => checkProfile();
     window.addEventListener('profileMigrated', handleProfileUpdate);
     window.addEventListener('sessionReady', handleProfileUpdate);
@@ -122,7 +126,7 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
       window.removeEventListener('profileMigrated', handleProfileUpdate);
       window.removeEventListener('sessionReady', handleProfileUpdate);
     };
-  }, [address, session]);
+  }, [user, session]);
 
   // ── Auto-auth on wallet connect ──
   useEffect(() => {
