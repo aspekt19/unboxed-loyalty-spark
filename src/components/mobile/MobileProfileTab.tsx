@@ -3,6 +3,7 @@ import { ReferralCard } from '@/components/referral/ReferralCard';
 import { ReferralCodeInput } from '@/components/referral/ReferralCodeInput';
 import { CustomerReviewsSection } from '@/components/reviews/CustomerReviewsSection';
 import { DexIntegration } from '@/components/DexIntegration';
+import { LinkedAccounts } from '@/components/identity/LinkedAccounts';
 import { useAccount } from 'wagmi';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Wallet } from 'lucide-react';
@@ -39,6 +40,7 @@ export function MobileProfileTab(_props: MobileProfileTabProps) {
   return (
     <div className="space-y-4">
       <WalletQRCode />
+      <LinkedAccounts />
       <ReferralCodeInput />
       <ReferralCard />
       <CustomerReviewsSection />

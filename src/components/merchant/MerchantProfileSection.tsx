@@ -9,6 +9,7 @@ import { PlanStatusBadge } from '@/components/billing/PlanStatusBadge';
 import { MerchantProfileForm } from './MerchantProfileForm';
 import { WalletQRCode } from '@/components/WalletQRCode';
 import { DexIntegration } from '@/components/DexIntegration';
+import { LinkedAccounts } from '@/components/identity/LinkedAccounts';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthPrompt } from '@/components/AuthPrompt';
@@ -175,6 +176,7 @@ export function MerchantProfileSection(_props: MerchantProfileSectionProps) {
       <MerchantProfileForm />
 
       <WalletQRCode />
+      <LinkedAccounts />
       <DexIntegration />
     </div>
   );
