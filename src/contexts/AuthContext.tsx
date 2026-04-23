@@ -287,6 +287,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [address]);
 
   const signInWithWallet = useCallback(async () => {
+    // Hard guard: never auto- or manually-trigger SIWE while the user is in
+    // an explicit signed-out state. The user must click "Sign in" again,
+    // which calls resetManualSignOut() before invoking this function.
+    if (manualSignOutRef.current || signingInRef.current) return;
+
     const privyUser = (window as any).__privyUser;
 
     if (!isFarcasterContext.current && privyUser && shouldUsePrivyTokenAuth(privyUser)) {
@@ -298,8 +303,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast.error('Please connect your wallet first');
       return;
     }
-
-    if (manualSignOutRef.current || signingInRef.current) return;
 
     const now = Date.now();
     if (now < retryBlockedUntilRef.current) return;
@@ -442,6 +445,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       manualSignOutRef.current = true;
       setStoredManualSignOut(true);
+      // Reset back-off / signing refs so a stale "in flight" flag does not
+      // block a future fresh sign-in after the user clicks Sign in again.
+      signingInRef.current = false;
+      lastSignInAttemptAtRef.current = 0;
+      lastFailureAtRef.current = 0;
+      retryBlockedUntilRef.current = 0;
       setUser(null);
       setSession(null);
       setIsLoading(false);
@@ -450,6 +459,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         window.localStorage.removeItem('customerTokens');
         (window as any).__privyUser = null;
         (window as any).__privyGetAccessToken = null;
+        // Ask the Privy-aware UI layer (WalletConnectButton) to also call
+        // privyLogout(), regardless of whether signOut was triggered from
+        // the disconnect button or programmatically (banned screen, 409, etc).
+        window.dispatchEvent(new CustomEvent('loyalspark:request-privy-logout'));
       }
 
       const { error } = await supabase.auth.signOut({ scope: 'global' });
