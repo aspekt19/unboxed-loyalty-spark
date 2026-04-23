@@ -49,7 +49,7 @@ const LandingHero = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.4 }}
       >
-        Onchain loyalty protocol on Base: merchants launch branded reward programs, customers earn and redeem tokens, and AI agents automate it all via REST API and MCP.
+        Launch a branded rewards program in minutes, turn every purchase into real value for your customers, and let AI agents handle the rest.
       </motion.p>
 
       <motion.p
