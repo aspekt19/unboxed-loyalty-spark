@@ -125,16 +125,7 @@ export function AuthPrompt() {
               ? `You are signing in as ${getPrivyPrimaryEmail(privyUser)}.`
               : 'Completing sign-in with your email or social account.'}
           </p>
-          <Button
-            variant="uds"
-            onClick={handlePrivySignIn}
-            disabled={isLoading}
-            className={cn(INLINE_AUTH_CTA_CLASSNAME)}
-            type="button"
-          >
-            <LogIn className="h-3.5 w-3.5 shrink-0" />
-            {isLoading ? 'Signing in...' : 'Retry sign in'}
-          </Button>
+          <p className="text-sm text-muted-foreground">No extra confirmation is required.</p>
         </AlertDescription>
       </Alert>
     );
