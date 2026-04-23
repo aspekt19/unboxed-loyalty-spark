@@ -230,7 +230,9 @@ function getRestInputSchema(method: string): Record<string, unknown> {
 
 /**
  * Bazaar `extensions.bazaar` for MCP — spec requires `input.type: "mcp"`, `tool`, `inputSchema`, plus `schema`
- * that validates `info` (CDP rejects with `invalid discovery configuration` otherwise).
+ * that validates `info`. CDP previously rejected with `invalid discovery configuration` — likely caused by
+ * `example` in `info.input` not conforming to `inputSchema.required`. Omit optional fields (`example`, `transport`)
+ * to stay minimal; `transport` defaults to `streamable-http` per spec.
  */
 function mcpBazaarExtension(mcp: McpBazaarTool) {
   return {
@@ -239,19 +241,10 @@ function mcpBazaarExtension(mcp: McpBazaarTool) {
         type: "mcp",
         tool: mcp.name,
         description: mcp.description,
-        transport: "streamable-http",
         inputSchema: mcp.inputSchema,
-        example: {},
       },
       output: {
         type: "json",
-        example: {
-          jsonrpc: "2.0",
-          id: 1,
-          result: {
-            content: [{ type: "text", text: `{ "ok": true, "tool": "${mcp.name}" }` }],
-          },
-        },
       },
     },
     schema: bazaarSchemaMcp(),
