@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useAccount } from 'wagmi';
+import { useAccount, useSignMessage } from 'wagmi';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -39,6 +39,7 @@ interface IdentitySummaryResponse {
 
 export function CustomerProfileSection() {
   const { address } = useAccount();
+  const { signMessageAsync } = useSignMessage();
   const { user, session, isLoading: authLoading } = useAuth();
   const { user: privyUser, getAccessToken } = usePrivySafe();
   const [firstName, setFirstName] = useState('');
@@ -161,10 +162,60 @@ export function CustomerProfileSection() {
     : displayAddress.slice(2, 4).toUpperCase();
 
   const confirmSetPrimaryWallet = async () => {
-    if (!pendingPrimary) return;
+    if (!pendingPrimary || !session) return;
     const walletAddress = pendingPrimary;
+    const targetLower = walletAddress.toLowerCase();
+
+    // Require the target wallet to be the currently connected wagmi account so
+    // we can ask it to sign a fresh SIWE message proving ownership before we
+    // promote it to primary. This prevents anyone from making a wallet primary
+    // without re-proving control of it.
+    if (!connectedLower || connectedLower !== targetLower) {
+      toast.error('Switch your wallet to this address first', {
+        description: `Connect ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)} in your wallet, then try again.`,
+      });
+      setPendingPrimary(null);
+      return;
+    }
+
     setSwitchingPrimary(walletAddress);
     try {
+      // 1) Ask the new primary wallet to sign a SIWE-style "link" message.
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const apikey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const nonceRes = await fetch(`${supabaseUrl}/functions/v1/siwe-nonce`, {
+        headers: { apikey },
+      });
+      if (!nonceRes.ok) throw new Error('Failed to get nonce');
+      const { nonce } = await nonceRes.json();
+
+      const domain = window.location.host;
+      const origin = window.location.origin;
+      const issuedAt = new Date().toISOString();
+      const message = `${domain} wants you to sign in with your Ethereum account:\n${walletAddress}\n\nSet this wallet as primary on Loyal Spark\n\nURI: ${origin}\nVersion: 1\nChain ID: 8453\nNonce: ${nonce}\nIssued At: ${issuedAt}`;
+
+      const signature = await signMessageAsync({
+        account: walletAddress as `0x${string}`,
+        message,
+      });
+
+      // 2) Verify (mode: 'link') so the wallet is upserted into identity_links
+      // for the current user. Idempotent if already linked.
+      const verifyRes = await fetch(`${supabaseUrl}/functions/v1/siwe-verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey,
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ message, signature, mode: 'link' }),
+      });
+      if (!verifyRes.ok && verifyRes.status !== 409) {
+        const err = await verifyRes.json().catch(() => ({}));
+        throw new Error(err.error || 'Wallet ownership verification failed');
+      }
+
+      // 3) Promote to primary now that ownership is freshly proven.
       const { data, error } = await supabase.rpc('set_primary_wallet', {
         p_wallet_address: walletAddress,
       });
@@ -180,8 +231,6 @@ export function CustomerProfileSection() {
       })));
       window.dispatchEvent(new Event('profileMigrated'));
       window.dispatchEvent(new Event('sessionReady'));
-      // Refresh tokens, vouchers and rewards so the profile reflects the new
-      // primary wallet immediately without a manual reload.
       window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
       window.dispatchEvent(new Event('tokenBalancesUpdated'));
       window.dispatchEvent(new Event('vouchersUpdated'));
@@ -190,7 +239,10 @@ export function CustomerProfileSection() {
         description: `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)} is now your primary address. Refreshing your data...`,
       });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to change primary wallet');
+      const msg = error instanceof Error ? error.message : 'Failed to change primary wallet';
+      if (!/reject|denied/i.test(msg)) {
+        toast.error(msg);
+      }
     } finally {
       setSwitchingPrimary(null);
       setPendingPrimary(null);
