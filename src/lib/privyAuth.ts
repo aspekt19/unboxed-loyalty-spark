@@ -2,18 +2,31 @@ const NON_WALLET_LOGIN_TYPES = new Set([
   'email',
   'phone',
   'sms',
+  'google',
   'google_oauth',
+  'apple',
   'apple_oauth',
+  'twitter',
   'twitter_oauth',
+  'discord',
   'discord_oauth',
+  'github',
   'github_oauth',
+  'spotify',
   'spotify_oauth',
+  'instagram',
   'instagram_oauth',
+  'tiktok',
   'tiktok_oauth',
+  'line',
   'line_oauth',
+  'twitch',
   'twitch_oauth',
+  'linkedin',
   'linkedin_oauth',
   'custom_auth',
+  'oauth',
+  'oauth_account',
   'farcaster',
   'passkey',
   'telegram',
@@ -44,7 +57,7 @@ export function getPrivyLinkedAccounts(privyUser: PrivyUserLike | null | undefin
 }
 
 function isNonWalletLinkedType(type: string | undefined): boolean {
-  return type !== undefined && NON_WALLET_LOGIN_TYPES.has(type);
+  return type !== undefined && NON_WALLET_LOGIN_TYPES.has(type.toLowerCase());
 }
 
 /**
@@ -74,14 +87,17 @@ export function getPrivyPrimaryEmail(privyUser: PrivyUserLike | null | undefined
   if (!privyUser) return null;
 
   const linkedAccounts = getPrivyLinkedAccounts(privyUser);
+  const linkedEmail = linkedAccounts.find((account) => {
+    const type = account.type?.toLowerCase();
+    return type === 'email' || type === 'google' || type === 'google_oauth' || type === 'apple' || type === 'apple_oauth' || type === 'oauth' || type === 'oauth_account';
+  });
+
   return (
     privyUser.email?.address ??
     privyUser.google?.email ??
     privyUser.apple?.email ??
-    linkedAccounts.find((account) => account.type === 'email')?.address ??
-    linkedAccounts.find((account) => account.type === 'email')?.email ??
-    linkedAccounts.find((account) => account.type === 'google_oauth')?.email ??
-    linkedAccounts.find((account) => account.type === 'apple_oauth')?.email ??
+    linkedEmail?.address ??
+    linkedEmail?.email ??
     null
   );
 }
