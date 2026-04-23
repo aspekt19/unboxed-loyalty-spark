@@ -92,6 +92,123 @@ function gatewayPath(resource: string): string {
   return `/functions/v1/x402-gateway/${resource}`;
 }
 
+/** CDP validates `extensions.bazaar.info` against `extensions.bazaar.schema` (x402 bazaar spec). */
+const JSON_SCHEMA_2020_12 = "https://json-schema.org/draft/2020-12/schema" as const;
+
+function bazaarSchemaHttpQuery(method: "GET" | "HEAD" | "DELETE"): Record<string, unknown> {
+  return {
+    $schema: JSON_SCHEMA_2020_12,
+    type: "object",
+    properties: {
+      input: {
+        type: "object",
+        properties: {
+          type: { type: "string", const: "http" },
+          method: { type: "string", enum: ["GET", "HEAD", "DELETE"] },
+          queryParams: {
+            type: "object",
+            additionalProperties: { type: "string" },
+          },
+          headers: {
+            type: "object",
+            additionalProperties: { type: "string" },
+          },
+        },
+        required: ["type", "method"],
+        additionalProperties: false,
+      },
+      output: {
+        type: "object",
+        properties: {
+          type: { type: "string" },
+          example: {},
+        },
+        required: ["type"],
+      },
+    },
+    required: ["input"],
+  };
+}
+
+function bazaarSchemaHttpBody(): Record<string, unknown> {
+  return {
+    $schema: JSON_SCHEMA_2020_12,
+    type: "object",
+    properties: {
+      input: {
+        type: "object",
+        properties: {
+          type: { type: "string", const: "http" },
+          method: { type: "string", enum: ["POST", "PUT", "PATCH"] },
+          bodyType: { type: "string", enum: ["json", "form-data", "text"] },
+          body: { type: "object" },
+          queryParams: {
+            type: "object",
+            additionalProperties: { type: "string" },
+          },
+          headers: {
+            type: "object",
+            additionalProperties: { type: "string" },
+          },
+        },
+        required: ["type", "method", "bodyType", "body"],
+        additionalProperties: false,
+      },
+      output: {
+        type: "object",
+        properties: {
+          type: { type: "string" },
+          example: {},
+        },
+        required: ["type"],
+      },
+    },
+    required: ["input"],
+  };
+}
+
+function bazaarSchemaMcp(): Record<string, unknown> {
+  return {
+    $schema: JSON_SCHEMA_2020_12,
+    type: "object",
+    properties: {
+      input: {
+        type: "object",
+        properties: {
+          type: { type: "string", const: "mcp" },
+          tool: { type: "string" },
+          description: { type: "string" },
+          transport: { type: "string", enum: ["streamable-http", "sse"] },
+          inputSchema: { type: "object" },
+          example: { type: "object" },
+        },
+        required: ["type", "tool", "inputSchema"],
+        additionalProperties: false,
+      },
+      output: {
+        type: "object",
+        properties: {
+          type: { type: "string" },
+          example: {},
+        },
+        required: ["type"],
+      },
+    },
+    required: ["input"],
+  };
+}
+
+/** Example query string keys for smoke/agent callers (discovery only). */
+function restBazaarQueryParams(resource: string): Record<string, string> {
+  if (resource.startsWith("recipient-api/")) {
+    return { token: "0x0000000000000000000000000000000000000001" };
+  }
+  return {
+    token: "0x0000000000000000000000000000000000000001",
+    customer: "0x0000000000000000000000000000000000000002",
+  };
+}
+
 function restApiKeyHint(resource: string): string {
   return resource.startsWith("recipient-api/") ? "rwk_..." : "lsk_...";
 }
@@ -112,37 +229,22 @@ function getRestInputSchema(method: string): Record<string, unknown> {
 }
 
 /**
- * Bazaar v2 `extensions.bazaar` for MCP: `info` uses CDP-style `{ input, output }` so scanners get HTTP + schema
- * hints; tool args remain on `mcpToolInputSchema`. x402scan §C: `extensions.bazaar.info` + input schema coverage.
+ * Bazaar `extensions.bazaar` for MCP — spec requires `input.type: "mcp"`, `tool`, `inputSchema`, plus `schema`
+ * that validates `info` (CDP rejects with `invalid discovery configuration` otherwise).
  */
-function mcpBazaarExtension(mcp: McpBazaarTool, kind: "merchant" | "recipient") {
-  const keyHint = kind === "merchant" ? "lsk_..." : "rwk_...";
+function mcpBazaarExtension(mcp: McpBazaarTool) {
   return {
-    discoverable: true,
-    ...BAZAAR_META,
-    tags: [
-      "loyalty",
-      "rewards",
-      "onchain",
-      "base",
-      "mcp",
-      kind,
-      `builder:${BAZAAR_META.builderCode}`,
-    ],
     info: {
       input: {
-        type: "http",
-        method: "POST",
-        bodyType: "json",
-        description:
-          `JSON-RPC 2.0 (Streamable HTTP MCP). Authenticate with header x-api-key: ${keyHint} (or Authorization: Bearer ${keyHint}). Body: tools/call { name: "${mcp.name}", arguments: { ... } }.`,
-        mcpTool: mcp.name,
-        mcpToolDescription: mcp.description,
-        mcpToolInputSchema: mcp.inputSchema,
+        type: "mcp",
+        tool: mcp.name,
+        description: mcp.description,
+        transport: "streamable-http",
+        inputSchema: mcp.inputSchema,
+        example: {},
       },
       output: {
         type: "json",
-        description: "MCP JSON-RPC 2.0 response with `result.content[]` (text/json blocks).",
         example: {
           jsonrpc: "2.0",
           id: 1,
@@ -150,39 +252,19 @@ function mcpBazaarExtension(mcp: McpBazaarTool, kind: "merchant" | "recipient") 
             content: [{ type: "text", text: `{ "ok": true, "tool": "${mcp.name}" }` }],
           },
         },
-        schema: {
-          $schema: "https://json-schema.org/draft/2020-12/schema",
-          type: "object",
-          properties: {
-            jsonrpc: { type: "string", const: "2.0" },
-            id: {},
-            result: {
-              type: "object",
-              properties: {
-                content: {
-                  type: "array",
-                  items: { type: "object" },
-                },
-              },
-            },
-            error: { type: "object" },
-          },
-        },
       },
     },
+    schema: bazaarSchemaMcp(),
   };
 }
 
 function recipientMcpBazaarExtension(mcp: RecipientMcpBazaarTool) {
-  return mcpBazaarExtension(
-    {
-      name: mcp.name,
-      price: mcp.price,
-      description: mcp.description,
-      inputSchema: mcp.inputSchema,
-    },
-    "recipient",
-  );
+  return mcpBazaarExtension({
+    name: mcp.name,
+    price: mcp.price,
+    description: mcp.description,
+    inputSchema: mcp.inputSchema,
+  });
 }
 
 export function buildAcceptEntry(p: BuildAcceptParams): {
@@ -244,7 +326,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
         },
       },
       extensions: {
-        bazaar: mcpBazaarExtension(mcp, "merchant"),
+        bazaar: mcpBazaarExtension(mcp),
       },
     };
 
@@ -334,39 +416,35 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
       },
     },
     extensions: {
-      bazaar: {
-        discoverable: true,
-        ...BAZAAR_META,
-        tags: [
-          "loyalty",
-          "rewards",
-          "onchain",
-          "base",
-          "rest",
-          "http",
-          `builder:${BAZAAR_META.builderCode}`,
-        ],
-        info: {
-          input: {
-            type: "http",
+      bazaar: (() => {
+        const isQuery = method === "GET" || method === "HEAD" || method === "DELETE";
+        const input = isQuery
+          ? {
+            type: "http" as const,
             method,
-            bodyType: method === "POST" ? "json" : undefined,
-            description:
-              `HTTP ${method} ${resourceUrlForDiscovery} — x402-gateway /${p.resource}. Authenticate with header x-api-key: ${keyHint}. See OpenAPI: https://loyalspark.online/openapi.json.`,
-            resource: p.resource,
-            inputSchema,
-          },
-          output: {
-            type: "json",
-            description: "JSON from Loyal Spark agent-api or recipient-api. See OpenAPI for response shape.",
-            example: { ok: true, resource: p.resource },
-            schema: {
-              $schema: "https://json-schema.org/draft/2020-12/schema",
-              type: "object",
+            queryParams: restBazaarQueryParams(p.resource),
+            headers: { "x-api-key": keyHint },
+          }
+          : {
+            type: "http" as const,
+            method,
+            bodyType: "json" as const,
+            body: {},
+            headers: { "x-api-key": keyHint },
+          };
+        return {
+          info: {
+            input,
+            output: {
+              type: "json",
+              example: { ok: true, resource: p.resource },
             },
           },
-        },
-      },
+          schema: isQuery
+            ? bazaarSchemaHttpQuery(method as "GET" | "HEAD" | "DELETE")
+            : bazaarSchemaHttpBody(),
+        };
+      })(),
     },
   };
 
