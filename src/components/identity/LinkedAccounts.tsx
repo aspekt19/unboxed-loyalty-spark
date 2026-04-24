@@ -342,6 +342,18 @@ export function LinkedAccounts() {
                        ) : null}
                     </div>
                     <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleCopy(w.id, w.value)}
+                        title="Copy address"
+                      >
+                        {copiedId === w.id ? (
+                          <Check className="h-3.5 w-3.5 text-primary" />
+                        ) : (
+                          <Copy className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
                       {!w.is_primary && (
                         <Button
                           variant="ghost"
