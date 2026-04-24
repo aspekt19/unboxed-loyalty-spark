@@ -61,6 +61,16 @@ export function LinkedAccounts() {
   const [summary, setSummary] = useState<IdentitySummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopy = (id: string, value: string) => {
+    navigator.clipboard.writeText(value);
+    setCopiedId(id);
+    toast.success('Copied');
+    window.setTimeout(() => {
+      setCopiedId((current) => (current === id ? null : current));
+    }, 1500);
+  };
 
   // Add email form
   const [newEmail, setNewEmail] = useState('');
