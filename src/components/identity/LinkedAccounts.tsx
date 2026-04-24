@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Wallet, Mail, Star, Trash2, Plus, Shield, Link2 } from 'lucide-react';
+import { Loader2, Wallet, Mail, Star, Trash2, Plus, Shield, Link2, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -61,6 +61,16 @@ export function LinkedAccounts() {
   const [summary, setSummary] = useState<IdentitySummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopy = (id: string, value: string) => {
+    navigator.clipboard.writeText(value);
+    setCopiedId(id);
+    toast.success('Copied');
+    window.setTimeout(() => {
+      setCopiedId((current) => (current === id ? null : current));
+    }, 1500);
+  };
 
   // Add email form
   const [newEmail, setNewEmail] = useState('');
@@ -332,6 +342,18 @@ export function LinkedAccounts() {
                        ) : null}
                     </div>
                     <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleCopy(w.id, w.value)}
+                        title="Copy address"
+                      >
+                        {copiedId === w.id ? (
+                          <Check className="h-3.5 w-3.5 text-primary" />
+                        ) : (
+                          <Copy className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
                       {!w.is_primary && (
                         <Button
                           variant="ghost"
@@ -454,6 +476,18 @@ export function LinkedAccounts() {
                       </p>
                     </div>
                     <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleCopy(e.id, e.value)}
+                        title="Copy email"
+                      >
+                        {copiedId === e.id ? (
+                          <Check className="h-3.5 w-3.5 text-primary" />
+                        ) : (
+                          <Copy className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
                       {!e.is_primary && (
                         <Button
                           variant="ghost"

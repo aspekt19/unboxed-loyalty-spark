@@ -321,37 +321,31 @@ export function CustomerProfileSection() {
             <div className="mt-3 space-y-2">
               <p className="text-xs font-medium text-muted-foreground">Linked wallet addresses</p>
               <div className="flex flex-wrap gap-2">
-                {visibleWallets.map((wallet) => {
-                  const isWalletPrimary = wallet.is_primary || wallet.value === primaryWallet;
-                  return (
-                    <div
+                {visibleWallets
+                  .filter((wallet) => wallet.value !== displayAddress)
+                  .map((wallet) => (
+                    <button
                       key={wallet.id}
-                      className="inline-flex items-center gap-2 rounded-md border bg-muted/40 px-2.5 py-1.5 text-xs"
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(wallet.value);
+                        toast.success('Address copied');
+                      }}
+                      className="inline-flex items-center gap-2 rounded-md border bg-muted/40 px-2.5 py-1.5 text-xs hover:bg-muted transition-colors"
                     >
                       <span className="font-mono text-foreground">
                         {wallet.value.slice(0, 6)}...{wallet.value.slice(-4)}
                       </span>
-                      {isWalletPrimary ? (
-                        <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">Primary</Badge>
-                      ) : (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-5 px-1.5 text-[10px]"
-                          disabled={switchingPrimary !== null}
-                          onClick={() => setPendingPrimary(wallet.value)}
-                        >
-                          {switchingPrimary === wallet.value ? '...' : 'Make primary'}
-                        </Button>
-                      )}
+                      <Copy className="h-3 w-3 text-muted-foreground" />
                       {!wallet.is_synced ? (
                         <Badge variant="outline" className="h-5 px-1.5 text-[10px]">Syncing</Badge>
                       ) : null}
-                    </div>
-                  );
-                })}
+                    </button>
+                  ))}
               </div>
+              <p className="text-[11px] text-muted-foreground">
+                Manage primary wallet in “Linked Accounts” below.
+              </p>
             </div>
           )}
         </CardHeader>
