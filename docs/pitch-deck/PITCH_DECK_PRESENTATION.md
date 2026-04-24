@@ -1,215 +1,162 @@
 # Loyal Spark
-## Authentic blockchain loyalty rewards with guaranteed merchant buyback
+## Onchain loyalty rewards for SMBs — operated by humans and AI agents
 
-Total Slides: 11
+Programs you own. Tokens customers truly hold. APIs agents can pay for.
+
+Total Slides: 12
 
 ---
 
-## Slide 1: Welcome
+## Slide 1: Cover
 
 # Loyal Spark
 
-**Authentic blockchain loyalty rewards with guaranteed merchant buyback**
+**Onchain loyalty rewards for SMBs — operated by humans and AI agents**
 
-🌐 https://loyalspark.online/  
-🔗 Built on BASE Network
+*Programs you own. Tokens customers truly hold. APIs agents can pay for.*
+
+🌐 https://loyalspark.online/
+🔗 Built on Base · USDC-native · Agent-ready
 
 ---
 
 ## Slide 2: Problem
 
-**Traditional loyalty programs have trust and value issues**
-
-Points can be devalued or canceled by companies at any time
-
-No proof of authenticity — vulnerable to fraud and manipulation
-
-$100B in loyalty points expire unused every year
+- 💸 Legacy loyalty SaaS charges **$99–499/mo** or **15–30% revenue cuts**
+- 🔒 Customers don't own points — they can be devalued or expire
+- 🤖 Programs are siloed and closed to AI agents and automation
 
 ---
 
 ## Slide 3: Solution
 
-**A blockchain platform that guarantees authenticity and transferability:**
+**A dual-mode loyalty platform for humans (portal) and AI agents (API + MCP):**
 
-| AUTHENTICITY | TRANSFERABILITY | NO SUBSCRIPTIONS |
-|------------|--------------|-------------------|
-| Blockchain verification<br/>Fraud-proof rewards<br/>Transparent supply | True ownership<br/>Trade P2P anytime<br/>Gift or sell freely | **Deposit, don't pay monthly**<br/>80% refund guaranteed<br/>Reserve Fund protection |
-
-### Key Advantage: Refundable Deposit Model
-
-**Merchants don't pay monthly fees** — they deposit $1K-15K LOYAL as collateral  
-**80% guaranteed return** when exiting the platform  
-**Reserve Fund** in stablecoins & major currencies ensures refund security  
-Fund continuously replenished from platform revenue
+| OWN YOUR PROGRAM | PAY PER USE | AUTOMATE WITH AGENTS |
+|------------------|-------------|----------------------|
+| Deploy ERC-20 loyalty token on Base. Mint, transfer, redeem onchain. | Predictable USDC SaaS plans. No revenue cut. No hidden lock-in. | AI agents run programs via REST + MCP, paying with x402 / MPP micropayments. |
 
 ---
 
 ## Slide 4: Market Validation
 
-**4.5 billion** people are in loyalty programs worldwide
+**630,000+** SMBs running loyalty programs in the US alone
 
-**$48 billion** in points issued but never redeemed annually
-
-**90%** of consumers actively use loyalty programs
-
-**50M+** businesses need transparent solutions
+**$100B+** loyalty rewards issued and never redeemed each year
 
 ---
 
 ## Slide 5: Market Size
 
-### $200B Global Loyalty Industry
+**Loyalty SaaS + AI-agent commerce**
 
-| Market Segment | Size | Our Focus |
-|----------------|------|-----------|
-| **Total Addressable Market** | 50M+ merchants worldwide | Growing 15% annually |
-| **Serviceable Market** | 10M digital-first businesses | Enterprise & mid-market |
-| **Target Market (Year 1)** | 100+ merchants | BASE ecosystem |
+| Segment | Size | Detail |
+|---------|------|--------|
+| **Total Addressable Market** | $200B+ | Global loyalty rewards (SaaS + points liability) |
+| **Serviceable Addressable Market** | $60B | SMB & mid-market digital loyalty |
+| **Stage** | Pre-revenue | Live MVP on Base, onboarding first design partners |
 
 ---
 
 ## Slide 6: Product
 
-**Authentic. Transferable. Liquid.**
+**Two portals + one programmable API**
 
-### 1️⃣ DEPLOY TOKEN
-Create custom ERC-20 loyalty token  
-Stake $1K-15K LOYAL as collateral  
-Launch in minutes on BASE
+### Merchant flow
+1. **Deploy Program** — Create ERC-20 loyalty token on Base in minutes
+2. **Run Loyalty** — Mint by email/phone/wallet, vouchers, tiers, RFM, automation
+3. **Invite Team & Agents** — Branches, employees, AI agents with scoped API keys
 
-### 2️⃣ ISSUE & VERIFY
-Reward customers with blockchain proof  
-Fully transferable between wallets  
-P2P trading enabled
-
-### 3️⃣ BUYBACK MECHANISM
-Merchants set buyback price  
-20% penalty incentivizes in-store redemption  
-Optional liquidity via LOYAL hub
+### Customer flow
+1. **Receive Tokens** — Get loyalty tokens to a smart wallet (Privy / SIWE)
+2. **Redeem & Trade** — Spend on rewards or swap P2P via onchain escrow
+3. **Truly Own** — Tokens live in the customer's wallet, fully transferable
 
 ---
 
 ## Slide 7: Business Model
 
-**Merchant Staking Tiers**
+**Two pricing axes — merchants pay for the portal, agents pay for the API**
 
-| Tier | Stake | Refund | Features |
-|------|-------|--------|----------|
-| Basic | $1,000 LOYAL | 80% guaranteed | Core loyalty + DAO voting |
-| Pro | $5,000 LOYAL | 80% guaranteed | Analytics + API + NFT rewards |
-| Enterprise | $15,000 LOYAL | 80% guaranteed | White label + dedicated support |
+### Merchant SaaS (USDC on Base)
+| Tier | Price | Detail |
+|------|-------|--------|
+| Starter | $39 / mo | SMB entry: portal, programs, CRM-light |
+| Growth | $79 / mo | Scale: deeper analytics, more seats |
+| Scale | $149 / mo | Corporate budgets, priority support |
 
-**Transaction Revenue**
-- 20% penalty on customer token sales (revenue share with platform)
-- 0.5% platform fee on LOYAL conversions
+### AI Agents (API + MCP)
+| Tier | Price | Detail |
+|------|-------|--------|
+| Free | $0 | 200 calls/mo · 1 agent · 1.25% mint fee |
+| Pro | $49 / mo | 10,000 calls · 5 agents · 0.50% mint fee |
+| Enterprise | $129 / mo | Unlimited calls & agents · 0.25% mint fee |
 
----
-
-## Slide 8: Competitive Advantage
-
-**Key Differentiator: Deposit Model vs. Subscription Fees**
-
-| Traditional Loyalty | Loyal Spark |
-|-----------------|-------------|
-| **Monthly subscription fees** | **Refundable deposit (80% guaranteed)** |
-| Points can be devalued | Immutable blockchain records |
-| Vulnerable to fraud | Cryptographically verified |
-| No transferability | Fully transferable & tradeable |
-| Vendor lock-in | Exit anytime with guaranteed refund |
-| Opaque terms | Transparent on BASE |
-
-**Reserve Fund Protection:**  
-Dedicated fund in stablecoins (USDC/USDT) + major cryptocurrencies  
-Continuously replenished from platform revenue  
-Ensures 80% refund guarantee for all merchants
+### Pay-per-call (x402 / MPP)
+From ~$0.001 per read, ~$0.005–0.05 per write. USDC on Base, no API key.
 
 ---
 
-## Slide 9: Roadmap
+## Slide 8: Go-to-Market
 
-**Q1 2026**
-✅ MVP live on BASE Network  
-✅ Smart contract audits completed  
-🎯 Onboard first 5-10 enterprise merchants
+**Land humans first, then unlock the agent channel**
 
-**Q2-Q3 2026**
-🎯 Launch LOYAL token TGE  
-🎯 Reach 100 active merchants  
-🎯 Integrate DEX liquidity pools
-
-**Q4 2026 - Q1 2027**
-🎯 Scale to 1,000+ merchants  
-🎯 Multi-chain expansion (Ethereum, Polygon)  
-🎯 Prepare for Series A
+| Phase | Target | Focus |
+|-------|--------|-------|
+| Now (live MVP) | First design partners | Onchain loyalty + dashboard on Base |
+| Q3–Q4 2026 | 10–25 paying merchants | Starter/Growth plans, case studies |
+| Q1–Q2 2027 | 100+ merchants | Agent channel: OpenServ, MCP catalogs, x402 |
+| H2 2027 | 500+ merchants | Multi-region SaaS + agent revenue share |
 
 ---
 
-## Slide 10: Team & Funding
+## Slide 9: Competition
 
-**Core Team (6 Key Roles)**
+**Legacy loyalty SaaS vs Loyal Spark**
 
-| Role | Monthly | Focus |
-|------|---------|-------|
-| CEO / Product Lead | $18K | Vision, fundraising, partnerships |
-| CTO / Lead Architect | $16K | Smart contracts, oracles, security |
-| Sr. Smart Contract Dev | $14K | Solidity development & testing |
-| Full-Stack Developer | $12K | Web UI, merchant dashboard, API |
-| Marketing & Community | $8K | Token marketing, DAO community |
-| Operations & Legal | $7K | Compliance, financial reporting |
-
-**Annual Personnel:** $900K | **Operations:** $525K | **Total:** $1.425M
+| Traditional | Loyal Spark |
+|-------------|-------------|
+| Square Loyalty: $45–$105/mo per location | Predictable USDC SaaS from $39/mo |
+| LoyaltyLion / Yotpo: $200–$700+/mo, mid-market focus | Onchain ERC-20 tokens — customers truly own them |
+| Smile.io: revenue-share & per-order fees | Agent-ready: REST + MCP, x402 / MPP micropayments |
+| Closed APIs, no native AI-agent access | SIWE & Privy auth — no passwords, no email leaks |
+| Points are a database row — no true ownership | P2P escrow marketplace between programs |
 
 ---
 
-## Slide 11: The Ask
+## Slide 10: Competitive Advantages
 
-# Raising $1.425M Seed Round
+**What makes us defensible**
 
-**12-month runway to launch and scale**
-
-### Use of Funds
-
-**Personnel (63%)** - $900K  
-6-person core team for development and operations
-
-**Smart Contract Audits (4%)** - $60K  
-Security audits for LOYAL, Staking Vault, Factory
-
-**Initial Liquidity (7%)** - $100K  
-LOYAL/USDC pool for price stability
-
-**Marketing & Partnerships (11%)** - $150K  
-Onboard first 5-10 enterprise merchants
-
-**Legal & Compliance (4%)** - $50K  
-DAO formation, token sale compliance
-
-**Cloud & Tools (2%)** - $30K  
-Hosting, nodes, SaaS subscriptions
-
-**Reserve Fund (9%)** - $135K  
-Risk buffer for 80% refund guarantee
-
-### Expected Outcomes
-
-✅ 100+ merchants onboarded in Year 1  
-✅ $100K+ in staking deposits  
-✅ LOYAL token TGE and DEX listing  
-✅ Enterprise-ready platform with API  
-✅ Path to profitability via transaction fees
+- 🧱 **Dual-mode platform**: humans (portal) + AI agents (API + MCP)
+- 💰 **Two-bills monetization**: merchant SaaS + agent API + mint fee %
+- ⚡ **Native HTTP 402 payments** via x402 and MPP — no API keys needed
+- 🌐 **Built on Base**: low fees, fast finality, USDC-native
+- 🛡️ **Hardened security**: RLS, SIWE, scoped `lsk_` / `rwk_` API keys
+- 🔓 **Open standards**: OpenAPI, agent.json, MCP catalogs (Glama, Smithery, OpenServ)
 
 ---
 
-## Thank You
+## Slide 11: Current Status
 
-# Let's Revolutionize Loyalty for Small Business
-
-🌐 **https://loyalspark.online/**  
-🔗 **Built on BASE Network**
-
-**Join us in transforming how 50 million merchants reward customers**
+| Metric | Value |
+|--------|-------|
+| **Platform** | Live MVP on Base |
+| **Surfaces** | Web · PWA · Capacitor |
+| **Agent API** | 22 REST + 28 MCP tools |
+| **Auth** | Privy + SIWE + scoped keys |
 
 ---
 
-**© 2025 Loyal Spark. All rights reserved.**
+## Slide 12: Thank You
+
+# Let's make loyalty programmable
+
+🌐 **https://loyalspark.online/**
+🔗 **Built on Base · USDC-native · Agent-ready**
+
+**Join us in opening loyalty to the next 50 million SMBs — and the AI agents working alongside them.**
+
+---
+
+**© 2026 Loyal Spark. All rights reserved.**
