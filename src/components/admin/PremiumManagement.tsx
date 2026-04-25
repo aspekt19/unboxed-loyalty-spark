@@ -218,7 +218,7 @@ export const PremiumManagement = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="text-xs text-muted-foreground">
-          Manage merchant and agent plan subscriptions. Trials are 14 days for
+          Manage merchant and agent plan subscriptions. Trials are 45 days for
           new merchants (Growth) and new agent owners (Pro). Payments are USDC
           on Base; pending entries can be activated manually here when
           BaseScan-based verification is unavailable.

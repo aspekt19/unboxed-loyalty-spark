@@ -238,10 +238,10 @@ const PricingPage = () => {
             <div className="flex items-center gap-3">
               <Gift className="h-6 w-6 text-primary shrink-0" />
               <div>
-                <p className="font-semibold text-base">14-day free trial included</p>
+                <p className="font-semibold text-base">45-day free trial included</p>
                 <p className="text-sm text-muted-foreground">
-                  New merchants automatically get <strong>Growth</strong> for 14 days.
-                  New agent owners get <strong>Pro</strong> for 14 days. No card required.
+                  New merchants automatically get <strong>Growth</strong> for 45 days.
+                  New agent owners get <strong>Pro</strong> for 45 days. No card required.
                 </p>
               </div>
             </div>

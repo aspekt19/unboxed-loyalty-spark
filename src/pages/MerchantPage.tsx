@@ -41,7 +41,7 @@ const MerchantPage = () => {
   const [showProfile, setShowProfile] = useState(false);
   const [mobileTab, setMobileTab] = useState('dashboard');
 
-  // Auto-start 14-day Growth trial on first merchant visit (idempotent)
+  // Auto-start 45-day Growth trial on first merchant visit (idempotent)
   useAutoStartTrial('merchant');
 
   // Sync mobile tab with ?tab= query param so deep links from banners work

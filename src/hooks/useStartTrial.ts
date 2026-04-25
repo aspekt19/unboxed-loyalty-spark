@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEffectivePlan, type PlanProduct } from './useEffectivePlan';
 
 /**
- * Auto-start a 14-day trial the first time an authenticated wallet
+ * Auto-start a 45-day trial the first time an authenticated wallet
  * lands on a portal that has no subscription yet.
  *
  * Idempotent — the underlying SQL function checks for any existing
