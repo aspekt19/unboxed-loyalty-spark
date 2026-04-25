@@ -11,7 +11,7 @@ interface Props {
 }
 
 /**
- * One-time welcome banner for new merchants/agents on their 14-day trial.
+ * One-time welcome banner for new merchants/agents on their 45-day trial.
  * Explains what Trial includes and how to upgrade. Dismissible per wallet.
  */
 export function TrialWelcomeBanner({ product }: Props) {
@@ -58,7 +58,7 @@ export function TrialWelcomeBanner({ product }: Props) {
         </div>
         <div className="flex-1 space-y-1">
           <p className="font-semibold text-base">
-            🎉 You're on a free 14-day {productLabel} trial
+            🎉 You're on a free 45-day {productLabel} trial
             {plan.daysRemaining != null ? ` · ${plan.daysRemaining} days left` : ''}
           </p>
           <p className="text-sm text-muted-foreground">

@@ -27,7 +27,7 @@ const routeMeta: Record<string, PageMeta> = {
   },
   "/pricing": {
     title: "Pricing - Loyal Spark",
-    description: "Transparent USDC pricing for merchants and AI agents on Base. Monthly or annual (save 15–20%). 14-day Growth/Pro trial included.",
+    description: "Transparent USDC pricing for merchants and AI agents on Base. Monthly or annual (save 15–20%). 45-day Growth/Pro trial included.",
   },
   "/api-docs": {
     title: "API Documentation - Loyal Spark",

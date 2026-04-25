@@ -252,11 +252,11 @@ export default function GuidePage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Zap className="h-5 w-5 text-primary" />
-                    Free 14-day Trial — start instantly
+                    Free 45-day Trial — start instantly
                   </CardTitle>
                   <CardDescription>
-                    Every new merchant wallet automatically gets 14 days on the <strong>Growth</strong> plan
-                    (and every new AI agent gets 14 days on <strong>Pro</strong>) — no card, no auto-charge.
+                    Every new merchant wallet automatically gets 45 days on the <strong>Growth</strong> plan
+                    (and every new AI agent gets 45 days on <strong>Pro</strong>) — no card, no auto-charge.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm text-muted-foreground">

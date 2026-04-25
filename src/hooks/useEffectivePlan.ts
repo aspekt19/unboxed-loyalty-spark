@@ -14,7 +14,7 @@ export interface EffectivePlan {
   isAdminOverride: boolean;
   /** True when an active or trialing paid plan is present. */
   hasPaidAccess: boolean;
-  /** True when user is on the 14-day trial. */
+  /** True when user is on the 45-day trial. */
   isTrial: boolean;
   /** ISO date when trial / subscription expires (null = no expiry). */
   expiresAt: string | null;
