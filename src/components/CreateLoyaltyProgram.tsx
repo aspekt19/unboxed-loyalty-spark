@@ -57,6 +57,17 @@ export function CreateLoyaltyProgram() {
       return;
     }
 
+    const cashbackNum = parseFloat(cashbackRate);
+    const pointsNum = parseFloat(pointsPerDollar);
+    if (isNaN(cashbackNum) || cashbackNum < 1 || cashbackNum > 50) {
+      toast.error('Cashback rate must be between 1% and 50%');
+      return;
+    }
+    if (isNaN(pointsNum) || pointsNum <= 0 || pointsNum > 1000) {
+      toast.error('Points per dollar must be between 0.01 and 1000');
+      return;
+    }
+
     // Verify user profile exists and matches wallet
     try {
       const { data: session } = await supabase.auth.getSession();
