@@ -29,6 +29,8 @@ export function CreateLoyaltyProgram() {
       setProgramName('');
       setTokenSymbol('');
       setExpirationDate(undefined);
+      setCashbackRate('5');
+      setPointsPerDollar('1');
     }
   }, [address]);
 
