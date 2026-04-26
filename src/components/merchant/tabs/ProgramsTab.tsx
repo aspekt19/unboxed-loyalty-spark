@@ -106,8 +106,7 @@ export function ProgramsTab({
             <Button
               onClick={() => setMintDialogOpen(true)}
               disabled={!selectedProgram || isPaused || !isMintingActive}
-              className="w-full"
-              variant="outline"
+              className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
             >
               {selectedProgram ? `Issue ${selectedProgram.symbol}` : 'Issue Tokens'}
             </Button>

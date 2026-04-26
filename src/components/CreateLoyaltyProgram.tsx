@@ -18,6 +18,8 @@ export function CreateLoyaltyProgram() {
   const [programName, setProgramName] = useState('');
   const [tokenSymbol, setTokenSymbol] = useState('');
   const [expirationDate, setExpirationDate] = useState<Date>();
+  const [cashbackRate, setCashbackRate] = useState<string>('5');
+  const [pointsPerDollar, setPointsPerDollar] = useState<string>('1');
   const { deployToken, isPending, isSuccess, deployedTokenAddress } = useDeployLoyaltyToken();
   const savedRef = useRef(false);
 
@@ -27,6 +29,8 @@ export function CreateLoyaltyProgram() {
       setProgramName('');
       setTokenSymbol('');
       setExpirationDate(undefined);
+      setCashbackRate('5');
+      setPointsPerDollar('1');
     }
   }, [address]);
 
@@ -50,6 +54,17 @@ export function CreateLoyaltyProgram() {
 
     if (expirationDate <= new Date()) {
       toast.error('Expiration date must be in the future');
+      return;
+    }
+
+    const cashbackNum = parseFloat(cashbackRate);
+    const pointsNum = parseFloat(pointsPerDollar);
+    if (isNaN(cashbackNum) || cashbackNum < 1 || cashbackNum > 50) {
+      toast.error('Cashback rate must be between 1% and 50%');
+      return;
+    }
+    if (isNaN(pointsNum) || pointsNum <= 0 || pointsNum > 1000) {
+      toast.error('Points per dollar must be between 0.01 and 1000');
       return;
     }
 
@@ -116,6 +131,8 @@ export function CreateLoyaltyProgram() {
               symbol: tokenSymbol,
               expiration_date: expirationDate.toISOString(),
               status: 'inactive',
+              cashback_rate: parseFloat(cashbackRate),
+              points_per_dollar: parseFloat(pointsPerDollar),
             });
 
           if (error) {
@@ -148,6 +165,8 @@ export function CreateLoyaltyProgram() {
             setProgramName('');
             setTokenSymbol('');
             setExpirationDate(undefined);
+            setCashbackRate('5');
+            setPointsPerDollar('1');
           }, 500);
           
           window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
@@ -160,7 +179,7 @@ export function CreateLoyaltyProgram() {
       savedRef.current = true;
       saveToDatabase();
     }
-  }, [isSuccess, programName, tokenSymbol, deployedTokenAddress, expirationDate, address]);
+  }, [isSuccess, programName, tokenSymbol, deployedTokenAddress, expirationDate, cashbackRate, pointsPerDollar, address]);
 
   return (
     <Card className="border-2 bg-gradient-to-br from-card to-muted/30">
@@ -225,6 +244,38 @@ export function CreateLoyaltyProgram() {
             <p className="text-xs text-muted-foreground">
               After this date, you'll have 24 hours to extend or close the program
             </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="cashback-rate">Cashback Rate (%)</Label>
+              <Input
+                id="cashback-rate"
+                type="number"
+                min="1"
+                max="50"
+                step="0.5"
+                placeholder="5"
+                value={cashbackRate}
+                onChange={(e) => setCashbackRate(e.target.value)}
+                disabled={isPending}
+              />
+              <p className="text-xs text-muted-foreground">% of purchase returned as tokens (1–50)</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="points-per-dollar">Points per $1</Label>
+              <Input
+                id="points-per-dollar"
+                type="number"
+                min="0.01"
+                max="1000"
+                step="0.1"
+                placeholder="1"
+                value={pointsPerDollar}
+                onChange={(e) => setPointsPerDollar(e.target.value)}
+                disabled={isPending}
+              />
+              <p className="text-xs text-muted-foreground">Token value relative to $1</p>
+            </div>
           </div>
           <Button 
             type="submit" 
