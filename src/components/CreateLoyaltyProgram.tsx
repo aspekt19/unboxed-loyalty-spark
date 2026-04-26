@@ -8,7 +8,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useDeployLoyaltyToken } from '@/hooks/useDeployLoyaltyToken';
 import { useAccount } from 'wagmi';
 import { toast } from 'sonner';
-import { Loader2, Plus, CalendarIcon } from 'lucide-react';
+import { Loader2, Plus, CalendarIcon, Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
