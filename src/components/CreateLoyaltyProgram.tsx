@@ -131,6 +131,8 @@ export function CreateLoyaltyProgram() {
               symbol: tokenSymbol,
               expiration_date: expirationDate.toISOString(),
               status: 'inactive',
+              cashback_rate: parseFloat(cashbackRate),
+              points_per_dollar: parseFloat(pointsPerDollar),
             });
 
           if (error) {
