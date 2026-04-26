@@ -165,6 +165,8 @@ export function CreateLoyaltyProgram() {
             setProgramName('');
             setTokenSymbol('');
             setExpirationDate(undefined);
+            setCashbackRate('5');
+            setPointsPerDollar('1');
           }, 500);
           
           window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
@@ -177,7 +179,7 @@ export function CreateLoyaltyProgram() {
       savedRef.current = true;
       saveToDatabase();
     }
-  }, [isSuccess, programName, tokenSymbol, deployedTokenAddress, expirationDate, address]);
+  }, [isSuccess, programName, tokenSymbol, deployedTokenAddress, expirationDate, cashbackRate, pointsPerDollar, address]);
 
   return (
     <Card className="border-2 bg-gradient-to-br from-card to-muted/30">
