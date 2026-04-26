@@ -18,6 +18,8 @@ export function CreateLoyaltyProgram() {
   const [programName, setProgramName] = useState('');
   const [tokenSymbol, setTokenSymbol] = useState('');
   const [expirationDate, setExpirationDate] = useState<Date>();
+  const [cashbackRate, setCashbackRate] = useState<string>('5');
+  const [pointsPerDollar, setPointsPerDollar] = useState<string>('1');
   const { deployToken, isPending, isSuccess, deployedTokenAddress } = useDeployLoyaltyToken();
   const savedRef = useRef(false);
 
