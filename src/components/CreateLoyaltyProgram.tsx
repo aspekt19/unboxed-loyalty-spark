@@ -8,7 +8,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useDeployLoyaltyToken } from '@/hooks/useDeployLoyaltyToken';
 import { useAccount } from 'wagmi';
 import { toast } from 'sonner';
-import { Loader2, Plus, CalendarIcon } from 'lucide-react';
+import { Loader2, Plus, CalendarIcon, Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -245,38 +246,80 @@ export function CreateLoyaltyProgram() {
               After this date, you'll have 24 hours to extend or close the program
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="cashback-rate">Cashback Rate (%)</Label>
-              <Input
-                id="cashback-rate"
-                type="number"
-                min="1"
-                max="50"
-                step="0.5"
-                placeholder="5"
-                value={cashbackRate}
-                onChange={(e) => setCashbackRate(e.target.value)}
-                disabled={isPending}
-              />
-              <p className="text-xs text-muted-foreground">% of purchase returned as tokens (1–50)</p>
+          <TooltipProvider delayDuration={150}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5">
+                  <Label htmlFor="cashback-rate">Cashback Rate (%)</Label>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button type="button" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Cashback rate info">
+                        <Info className="h-3.5 w-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs">
+                      <p className="text-xs leading-relaxed">
+                        Percentage of each purchase returned as loyalty tokens.
+                        <br />
+                        <span className="text-muted-foreground">Allowed: 1% – 50% · step 0.5%</span>
+                        <br />
+                        Example: 5% on a $20 purchase → 1 token credited.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <Input
+                  id="cashback-rate"
+                  type="number"
+                  min="1"
+                  max="50"
+                  step="0.5"
+                  placeholder="5"
+                  value={cashbackRate}
+                  onChange={(e) => setCashbackRate(e.target.value)}
+                  disabled={isPending}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Range: <span className="font-medium text-foreground">1–50%</span> · Default 5% · Unit: percent of purchase
+                </p>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5">
+                  <Label htmlFor="points-per-dollar">Points per $1</Label>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button type="button" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Points per dollar info">
+                        <Info className="h-3.5 w-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs">
+                      <p className="text-xs leading-relaxed">
+                        How many tokens equal $1 of value when crediting cashback.
+                        <br />
+                        <span className="text-muted-foreground">Allowed: 0.01 – 1000 tokens/$ · step 0.1</span>
+                        <br />
+                        Formula: amount × (cashback / 100) × points_per_$1.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <Input
+                  id="points-per-dollar"
+                  type="number"
+                  min="0.01"
+                  max="1000"
+                  step="0.1"
+                  placeholder="1"
+                  value={pointsPerDollar}
+                  onChange={(e) => setPointsPerDollar(e.target.value)}
+                  disabled={isPending}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Range: <span className="font-medium text-foreground">0.01–1000</span> · Default 1 · Unit: tokens per $1
+                </p>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="points-per-dollar">Points per $1</Label>
-              <Input
-                id="points-per-dollar"
-                type="number"
-                min="0.01"
-                max="1000"
-                step="0.1"
-                placeholder="1"
-                value={pointsPerDollar}
-                onChange={(e) => setPointsPerDollar(e.target.value)}
-                disabled={isPending}
-              />
-              <p className="text-xs text-muted-foreground">Token value relative to $1</p>
-            </div>
-          </div>
+          </TooltipProvider>
           <Button 
             type="submit" 
             disabled={isPending} 
