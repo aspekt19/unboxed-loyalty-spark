@@ -245,6 +245,38 @@ export function CreateLoyaltyProgram() {
               After this date, you'll have 24 hours to extend or close the program
             </p>
           </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="cashback-rate">Cashback Rate (%)</Label>
+              <Input
+                id="cashback-rate"
+                type="number"
+                min="1"
+                max="50"
+                step="0.5"
+                placeholder="5"
+                value={cashbackRate}
+                onChange={(e) => setCashbackRate(e.target.value)}
+                disabled={isPending}
+              />
+              <p className="text-xs text-muted-foreground">% of purchase returned as tokens (1–50)</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="points-per-dollar">Points per $1</Label>
+              <Input
+                id="points-per-dollar"
+                type="number"
+                min="0.01"
+                max="1000"
+                step="0.1"
+                placeholder="1"
+                value={pointsPerDollar}
+                onChange={(e) => setPointsPerDollar(e.target.value)}
+                disabled={isPending}
+              />
+              <p className="text-xs text-muted-foreground">Token value relative to $1</p>
+            </div>
+          </div>
           <Button 
             type="submit" 
             disabled={isPending} 
