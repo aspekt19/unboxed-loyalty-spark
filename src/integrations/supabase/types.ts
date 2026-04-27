@@ -2351,6 +2351,7 @@ export type Database = {
       }
       check_expiring_subscriptions: { Args: never; Returns: undefined }
       check_program_expiration: { Args: never; Returns: undefined }
+      claim_gift_certificate: { Args: { p_code: string }; Returns: Json }
       consume_siwe_nonce: { Args: { p_nonce: string }; Returns: string }
       delete_email: {
         Args: { message_id: number; queue_name: string }
@@ -2438,6 +2439,10 @@ export type Database = {
           token_symbol: string
           usd_amount: number
         }[]
+      }
+      mark_certificate_minted: {
+        Args: { p_certificate_id: string; p_tx_hash: string }
+        Returns: Json
       }
       mask_email: { Args: { email: string }; Returns: string }
       mask_phone: { Args: { phone: string }; Returns: string }
