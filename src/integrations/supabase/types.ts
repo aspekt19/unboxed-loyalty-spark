@@ -773,6 +773,72 @@ export type Database = {
         }
         Relationships: []
       }
+      gift_certificates: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          expires_at: string | null
+          id: string
+          image_url: string | null
+          max_redemption_percent: number
+          merchant_address: string
+          mint_tx_hash: string | null
+          points_per_dollar: number
+          redeemed_at: string | null
+          redeemed_by: string | null
+          status: string
+          title: string
+          token_address: string
+          token_amount: number
+          token_symbol: string | null
+          updated_at: string
+          usd_amount: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          image_url?: string | null
+          max_redemption_percent?: number
+          merchant_address: string
+          mint_tx_hash?: string | null
+          points_per_dollar: number
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          status?: string
+          title?: string
+          token_address: string
+          token_amount: number
+          token_symbol?: string | null
+          updated_at?: string
+          usd_amount: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          image_url?: string | null
+          max_redemption_percent?: number
+          merchant_address?: string
+          mint_tx_hash?: string | null
+          points_per_dollar?: number
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          status?: string
+          title?: string
+          token_address?: string
+          token_amount?: number
+          token_symbol?: string | null
+          updated_at?: string
+          usd_amount?: number
+        }
+        Relationships: []
+      }
       identity_links: {
         Row: {
           created_at: string
@@ -2285,6 +2351,7 @@ export type Database = {
       }
       check_expiring_subscriptions: { Args: never; Returns: undefined }
       check_program_expiration: { Args: never; Returns: undefined }
+      claim_gift_certificate: { Args: { p_code: string }; Returns: Json }
       consume_siwe_nonce: { Args: { p_nonce: string }; Returns: string }
       delete_email: {
         Args: { message_id: number; queue_name: string }
@@ -2295,6 +2362,7 @@ export type Database = {
         Returns: number
       }
       expire_plan_subscriptions: { Args: never; Returns: undefined }
+      generate_certificate_code: { Args: never; Returns: string }
       generate_referral_code: {
         Args: { p_referrer_address: string; p_token_address: string }
         Returns: string
@@ -2351,6 +2419,30 @@ export type Database = {
           p_wallet_address: string
         }
         Returns: undefined
+      }
+      lookup_certificate: {
+        Args: { p_code: string }
+        Returns: {
+          code: string
+          created_at: string
+          description: string
+          expires_at: string
+          id: string
+          image_url: string
+          max_redemption_percent: number
+          merchant_address: string
+          points_per_dollar: number
+          status: string
+          title: string
+          token_address: string
+          token_amount: number
+          token_symbol: string
+          usd_amount: number
+        }[]
+      }
+      mark_certificate_minted: {
+        Args: { p_certificate_id: string; p_tx_hash: string }
+        Returns: Json
       }
       mask_email: { Args: { email: string }; Returns: string }
       mask_phone: { Args: { phone: string }; Returns: string }
