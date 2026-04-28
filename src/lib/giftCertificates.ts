@@ -48,6 +48,21 @@ export async function createGiftCertificate(input: CreateCertificateInput): Prom
   return mapCertificateRow(data as never);
 }
 
+/** Create a batch of certificates with identical parameters. Returns the created rows. */
+export async function createGiftCertificatesBatch(
+  input: CreateCertificateInput,
+  quantity: number,
+): Promise<GiftCertificate[]> {
+  const qty = Math.max(1, Math.min(100, Math.floor(quantity)));
+  const created: GiftCertificate[] = [];
+  for (let i = 0; i < qty; i++) {
+    // eslint-disable-next-line no-await-in-loop
+    const cert = await createGiftCertificate(input);
+    created.push(cert);
+  }
+  return created;
+}
+
 export async function listMerchantCertificates(merchantAddress: string): Promise<GiftCertificate[]> {
   const { data, error } = await supabase
     .from('gift_certificates')
