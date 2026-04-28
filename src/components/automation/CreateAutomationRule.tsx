@@ -33,6 +33,10 @@ export const CreateAutomationRule = ({
   const [usdAmount, setUsdAmount] = useState("");
   const [maxRedemptionPercent, setMaxRedemptionPercent] = useState("");
   const [expiresInDays, setExpiresInDays] = useState("");
+  const [autoSend, setAutoSend] = useState(false);
+  const [audience, setAudience] = useState<"all" | "rfm" | "tier">("all");
+  const [rfmSegment, setRfmSegment] = useState<string>("new_customer");
+  const [tierLevel, setTierLevel] = useState<string>("1");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
