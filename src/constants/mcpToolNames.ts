@@ -28,6 +28,8 @@ export const MCP_TOOL_NAMES = [
   "list_my_reports",
   "update_report_status",
   "delete_report",
+  "create_gift_certificate",
+  "list_gift_certificates",
 ] as const;
 
 export const MCP_TOOL_COUNT = MCP_TOOL_NAMES.length;
