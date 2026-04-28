@@ -172,6 +172,7 @@ async function processWelcomeGiftCertificates(supabase: any, rule: AutomationRul
   const expiresAt = expiresInDays > 0 ? new Date(Date.now() + expiresInDays * 86400000).toISOString() : null;
 
   for (const customer of candidates) {
+    if (allowed && !allowed.has(customer)) continue;
     // Skip if any cert already issued for this customer by this rule
     const { data: existing } = await supabase
       .from('automation_triggers_history')
