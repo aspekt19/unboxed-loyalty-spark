@@ -910,6 +910,128 @@ function createMcpServer(agent: any, authFailure: AuthFailure) {
     },
   });
 
+  mcpServer.tool("create_gift_certificate", {
+    description: "Create a gift / welcome certificate (UDS-style) with a unique 6-character redemption code (LOYAL-XXXXXX). Customer redeems via QR or by entering the code; merchant then mints tokens on-chain. Use for welcome bonuses, promo campaigns, partnership gifts.",
+    inputSchema: {
+      type: "object" as const,
+      required: ["token_address", "usd_amount"],
+      properties: {
+        token_address: { type: "string", description: "ERC-20 loyalty token address (must belong to the agent's merchant)" },
+        usd_amount: { type: "number", description: "Certificate face value in USD (positive)" },
+        points_per_dollar: { type: "number", description: "Optional override of program rate (e.g. 10 = 10 tokens per $1). Defaults to program's points_per_dollar." },
+        max_redemption_percent: { type: "number", description: "Max % of any future purchase the customer can pay with these tokens (5–100). Default 50." },
+        title: { type: "string", description: "Display title (default: 'Gift Certificate')" },
+        description: { type: "string", description: "Optional descriptive text shown to the customer" },
+        expires_in_days: { type: "number", description: "Validity period in days (omit for no expiry)" },
+        image_url: { type: "string", description: "Optional public image URL for the cert design" },
+        quantity: { type: "number", description: "Number of certificates to create as a batch (1–100, default 1)" },
+      },
+    },
+    handler: async (args: any) => {
+      const err = authGuard(["write"]);
+      if (err) return T(err);
+      const d = db();
+      const tokenAddress = String(args.token_address || "").toLowerCase();
+      const usdAmount = Number(args.usd_amount);
+      if (!tokenAddress || !/^0x[a-f0-9]{40}$/.test(tokenAddress)) return T('{"error":"Invalid token_address"}');
+      if (!Number.isFinite(usdAmount) || usdAmount <= 0) return T('{"error":"usd_amount must be positive"}');
+
+      // Verify program ownership + fetch defaults
+      const { data: program } = await d
+        .from("loyalty_programs")
+        .select("token_address,symbol,points_per_dollar,merchant_address,status")
+        .ilike("token_address", tokenAddress)
+        .ilike("merchant_address", agent.ownerAddress)
+        .maybeSingle();
+      if (!program) return T('{"error":"Program not found or not owned by your merchant"}');
+
+      const rate = Number.isFinite(Number(args.points_per_dollar)) && Number(args.points_per_dollar) > 0
+        ? Number(args.points_per_dollar)
+        : Number(program.points_per_dollar) || 1;
+      const maxPct = Number.isFinite(Number(args.max_redemption_percent))
+        ? Math.max(5, Math.min(100, Number(args.max_redemption_percent)))
+        : 50;
+      const tokenAmount = Number((usdAmount * rate).toFixed(8));
+      const title = String(args.title || "Gift Certificate").slice(0, 60);
+      const description = args.description ? String(args.description).slice(0, 300) : null;
+      const imageUrl = args.image_url ? String(args.image_url).slice(0, 500) : null;
+      const expiresAt = Number.isFinite(Number(args.expires_in_days)) && Number(args.expires_in_days) > 0
+        ? new Date(Date.now() + Number(args.expires_in_days) * 86400000).toISOString()
+        : null;
+      const quantity = Math.max(1, Math.min(100, Number(args.quantity) || 1));
+
+      const created: Array<{ id: string; code: string }> = [];
+      for (let i = 0; i < quantity; i++) {
+        const { data: codeData, error: codeErr } = await d.rpc("generate_certificate_code");
+        if (codeErr || !codeData) {
+          return T(JSON.stringify({ error: "code_generation_failed", detail: codeErr?.message, created }));
+        }
+        const code = String(codeData);
+        const { data: row, error: insErr } = await d
+          .from("gift_certificates")
+          .insert({
+            code,
+            merchant_address: agent.ownerAddress,
+            token_address: tokenAddress,
+            token_symbol: program.symbol,
+            usd_amount: usdAmount,
+            points_per_dollar: rate,
+            token_amount: tokenAmount,
+            max_redemption_percent: maxPct,
+            title,
+            description,
+            image_url: imageUrl,
+            expires_at: expiresAt,
+          })
+          .select("id,code")
+          .single();
+        if (insErr) {
+          return T(JSON.stringify({ error: "insert_failed", detail: insErr.message, created }));
+        }
+        created.push({ id: row.id, code: row.code });
+      }
+
+      return T(JSON.stringify({
+        ok: true,
+        quantity: created.length,
+        usd_amount: usdAmount,
+        token_amount: tokenAmount,
+        token_symbol: program.symbol,
+        max_redemption_percent: maxPct,
+        expires_at: expiresAt,
+        certificates: created,
+      }));
+    },
+  });
+
+  mcpServer.tool("list_gift_certificates", {
+    description: "List gift certificates issued by the agent's merchant (with status and redemption info).",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        token_address: { type: "string", description: "Filter by program token address (optional)" },
+        status: { type: "string", description: "Filter by status: active, pending_mint, redeemed, expired, revoked" },
+        limit: { type: "number", description: "Max rows (default 50, max 200)" },
+      },
+    },
+    handler: async (args: any) => {
+      const err = authGuard(["read"]);
+      if (err) return T(err);
+      const d = db();
+      let q = d.from("gift_certificates")
+        .select("id,code,token_address,token_symbol,usd_amount,token_amount,max_redemption_percent,title,status,redeemed_by,redeemed_at,mint_tx_hash,expires_at,created_at")
+        .ilike("merchant_address", agent.ownerAddress)
+        .order("created_at", { ascending: false });
+      if (args.token_address) q = q.ilike("token_address", String(args.token_address));
+      if (args.status) q = q.eq("status", String(args.status));
+      const limit = Math.max(1, Math.min(200, Number(args.limit) || 50));
+      q = q.limit(limit);
+      const { data, error } = await q;
+      if (error) return T(JSON.stringify({ error: error.message }));
+      return T(JSON.stringify({ count: data?.length || 0, certificates: data || [] }));
+    },
+  });
+
   return mcpServer;
 }
 

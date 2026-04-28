@@ -29,6 +29,9 @@ export const CreateAutomationRule = ({
   const [discountPercentage, setDiscountPercentage] = useState("");
   const [bonusTokens, setBonusTokens] = useState("");
   const [daysInactive, setDaysInactive] = useState("");
+  const [usdAmount, setUsdAmount] = useState("");
+  const [maxRedemptionPercent, setMaxRedemptionPercent] = useState("");
+  const [expiresInDays, setExpiresInDays] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -56,6 +59,11 @@ export const CreateAutomationRule = ({
     if (bonusTokens) {
       actionConfig.bonus_tokens = parseInt(bonusTokens);
     }
+    if (ruleType === "welcome_gift_certificate") {
+      if (usdAmount) actionConfig.usd_amount = parseFloat(usdAmount);
+      if (maxRedemptionPercent) actionConfig.max_redemption_percent = parseInt(maxRedemptionPercent);
+      if (expiresInDays) actionConfig.expires_in_days = parseInt(expiresInDays);
+    }
 
     const { error } = await supabase.from("automation_rules").insert({
       merchant_address: address.toLowerCase(),
@@ -79,6 +87,9 @@ export const CreateAutomationRule = ({
       setDiscountPercentage("");
       setBonusTokens("");
       setDaysInactive("");
+      setUsdAmount("");
+      setMaxRedemptionPercent("");
+      setExpiresInDays("");
       onRuleCreated();
     }
   };
@@ -119,6 +130,7 @@ export const CreateAutomationRule = ({
                 <SelectItem value="at_risk_offer">At-Risk Customer Offers</SelectItem>
                 <SelectItem value="tier_upgrade">Tier Upgrade Congratulations</SelectItem>
                 <SelectItem value="inactive_reminder">Inactive Customer Reminders</SelectItem>
+                <SelectItem value="welcome_gift_certificate">Welcome Gift Certificate (auto-issue to new customers)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -184,6 +196,49 @@ export const CreateAutomationRule = ({
               />
               <p className="text-sm text-muted-foreground">
                 Trigger this rule for customers inactive for this many days
+              </p>
+            </div>
+          )}
+
+          {ruleType === "welcome_gift_certificate" && (
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="usdAmount">Certificate Value (USD)</Label>
+                <Input
+                  id="usdAmount"
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  value={usdAmount}
+                  onChange={(e) => setUsdAmount(e.target.value)}
+                  placeholder="10"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="maxPct">Max % off purchase</Label>
+                <Input
+                  id="maxPct"
+                  type="number"
+                  min="5"
+                  max="100"
+                  value={maxRedemptionPercent}
+                  onChange={(e) => setMaxRedemptionPercent(e.target.value)}
+                  placeholder="50"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="expDays">Valid for (days)</Label>
+                <Input
+                  id="expDays"
+                  type="number"
+                  min="1"
+                  value={expiresInDays}
+                  onChange={(e) => setExpiresInDays(e.target.value)}
+                  placeholder="90"
+                />
+              </div>
+              <p className="col-span-3 text-xs text-muted-foreground">
+                A unique certificate will be auto-issued (every hour) to each new customer who has activity in the last 24h. Mint button appears in your Certificates tab once they redeem.
               </p>
             </div>
           )}
