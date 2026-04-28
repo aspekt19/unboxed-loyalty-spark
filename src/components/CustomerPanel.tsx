@@ -4,6 +4,8 @@ import { RewardsSelection } from './rewards/RewardsSelection';
 import { MyVouchers } from './rewards/MyVouchers';
 import { PersonalizedOffers } from './marketing/PersonalizedOffers';
 import { MerchantCardGrid } from './customer/MerchantCardGrid';
+import { RedeemCertificate } from './certificates/RedeemCertificate';
+import { MyCertificates } from './certificates/MyCertificates';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAccount } from 'wagmi';
 import { Wallet } from 'lucide-react';
@@ -94,6 +96,12 @@ export function CustomerPanel({ selectedMerchant, onMerchantSelect, onClearMerch
       />
 
       <PersonalizedOffers />
+
+      {/* Redeem a gift certificate */}
+      <RedeemCertificate />
+
+      {/* My activated certificates */}
+      <MyCertificates />
 
       {/* View earned tokens with inline tier status */}
       <TokenList
