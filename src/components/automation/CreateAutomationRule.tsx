@@ -92,7 +92,7 @@ export const CreateAutomationRule = ({
       toast.error("Failed to create automation rule");
       console.error(error);
     } else {
-      toast.success("Automation rule created successfully!");
+      // success toast emitted below after computing message
       setRuleType("");
       setTitle("");
       setDescription("");
