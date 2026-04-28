@@ -99,8 +99,102 @@ async function processRule(supabase: any, rule: AutomationRule) {
     case 'birthday_bonus':
       await processBirthdayBonuses(supabase, rule);
       break;
+    case 'welcome_gift_certificate':
+      await processWelcomeGiftCertificates(supabase, rule);
+      break;
     default:
       console.log(`Unknown rule type: ${rule.rule_type}`);
+  }
+}
+
+async function processWelcomeGiftCertificates(supabase: any, rule: AutomationRule) {
+  // Find recently-active customers (last 24h) for this merchant who haven't yet
+  // received a welcome cert from this rule.
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+  // Pull program defaults
+  const { data: program } = await supabase
+    .from('loyalty_programs')
+    .select('symbol, points_per_dollar')
+    .eq('token_address', rule.token_address)
+    .maybeSingle();
+  if (!program) return;
+
+  // Recent unique customers via vouchers OR mint history
+  const { data: recentVouchers } = await supabase
+    .from('vouchers')
+    .select('customer_address, activated_at')
+    .eq('merchant_address', rule.merchant_address)
+    .eq('token_address', rule.token_address)
+    .gte('activated_at', since);
+
+  const { data: recentMints } = await supabase
+    .from('token_mint_history')
+    .select('recipient_address, created_at')
+    .eq('merchant_address', rule.merchant_address)
+    .eq('token_address', rule.token_address)
+    .gte('created_at', since);
+
+  const candidates = new Set<string>([
+    ...((recentVouchers || []).map((r: any) => r.customer_address.toLowerCase())),
+    ...((recentMints || []).map((r: any) => r.recipient_address.toLowerCase())),
+  ]);
+  if (!candidates.size) return;
+
+  const usdAmount = Number(rule.action_config?.usd_amount) || 10;
+  const rate = Number(rule.action_config?.points_per_dollar) || Number(program.points_per_dollar) || 1;
+  const tokenAmount = Number((usdAmount * rate).toFixed(8));
+  const maxPct = Math.max(5, Math.min(100, Number(rule.action_config?.max_redemption_percent) || 50));
+  const title = String(rule.action_config?.title || 'Welcome Gift').slice(0, 60);
+  const description = rule.action_config?.description ? String(rule.action_config.description).slice(0, 300) : null;
+  const expiresInDays = Number(rule.action_config?.expires_in_days) || 90;
+  const expiresAt = expiresInDays > 0 ? new Date(Date.now() + expiresInDays * 86400000).toISOString() : null;
+
+  for (const customer of candidates) {
+    // Skip if any cert already issued for this customer by this rule
+    const { data: existing } = await supabase
+      .from('automation_triggers_history')
+      .select('id')
+      .eq('rule_id', rule.id)
+      .eq('customer_address', customer)
+      .eq('action_taken', 'issued_welcome_certificate')
+      .limit(1)
+      .maybeSingle();
+    if (existing) continue;
+
+    const { data: codeData } = await supabase.rpc('generate_certificate_code');
+    if (!codeData) continue;
+
+    const { data: cert, error: insErr } = await supabase
+      .from('gift_certificates')
+      .insert({
+        code: codeData,
+        merchant_address: rule.merchant_address,
+        token_address: rule.token_address,
+        token_symbol: program.symbol,
+        usd_amount: usdAmount,
+        points_per_dollar: rate,
+        token_amount: tokenAmount,
+        max_redemption_percent: maxPct,
+        title,
+        description,
+        expires_at: expiresAt,
+      })
+      .select('id, code')
+      .single();
+
+    await supabase.from('automation_triggers_history').insert({
+      rule_id: rule.id,
+      merchant_address: rule.merchant_address,
+      customer_address: customer,
+      action_taken: 'issued_welcome_certificate',
+      result: cert ? { certificate_id: cert.id, code: cert.code, usd_amount: usdAmount } : { error: insErr?.message },
+      success: !insErr,
+    });
+
+    if (!insErr) {
+      console.log(`Issued welcome certificate ${cert?.code} to ${customer}`);
+    }
   }
 }
 
