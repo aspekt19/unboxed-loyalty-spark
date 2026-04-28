@@ -250,8 +250,68 @@ export const CreateAutomationRule = ({
                 />
               </div>
               <p className="col-span-3 text-xs text-muted-foreground">
-                A unique certificate will be auto-issued (every hour) to each new customer who has activity in the last 24h. Mint button appears in your Certificates tab once they redeem.
+                A unique certificate will be auto-issued (every hour) to qualifying customers who had activity in the last 24h. Mint button appears in your Certificates tab once they redeem.
               </p>
+            </div>
+          )}
+
+          {ruleType === "welcome_gift_certificate" && (
+            <div className="space-y-4 rounded-lg border border-border bg-muted/30 p-4">
+              <div className="space-y-2">
+                <Label>Audience</Label>
+                <Select value={audience} onValueChange={(v) => setAudience(v as "all" | "rfm" | "tier")}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All new customers (last 24h activity)</SelectItem>
+                    <SelectItem value="rfm">By RFM segment</SelectItem>
+                    <SelectItem value="tier">By minimum tier level</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {audience === "rfm" && (
+                <div className="space-y-2">
+                  <Label>RFM Segment</Label>
+                  <Select value={rfmSegment} onValueChange={setRfmSegment}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="new_customer">New Customers</SelectItem>
+                      <SelectItem value="champions">Champions</SelectItem>
+                      <SelectItem value="loyal">Loyal</SelectItem>
+                      <SelectItem value="at_risk">At Risk</SelectItem>
+                      <SelectItem value="lost">Lost</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {audience === "tier" && (
+                <div className="space-y-2">
+                  <Label>Minimum Tier Level</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={tierLevel}
+                    onChange={(e) => setTierLevel(e.target.value)}
+                  />
+                </div>
+              )}
+
+              <div className="flex items-start justify-between gap-4 rounded-md border border-border bg-background p-3">
+                <div className="space-y-1">
+                  <Label htmlFor="autoSend" className="text-sm font-medium">
+                    Enable automatic sending
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Off by default. Turn on only after you've reviewed the value, audience and expiration above. You can pause anytime from the rules list.
+                  </p>
+                </div>
+                <Switch id="autoSend" checked={autoSend} onCheckedChange={setAutoSend} />
+              </div>
             </div>
           )}
 
