@@ -68,13 +68,20 @@ export const CreateAutomationRule = ({
       if (usdAmount) actionConfig.usd_amount = parseFloat(usdAmount);
       if (maxRedemptionPercent) actionConfig.max_redemption_percent = parseInt(maxRedemptionPercent);
       if (expiresInDays) actionConfig.expires_in_days = parseInt(expiresInDays);
+      actionConfig.audience = audience;
+      if (audience === "rfm") actionConfig.rfm_segment = rfmSegment;
+      if (audience === "tier") actionConfig.min_tier_level = parseInt(tierLevel);
     }
+
+    // Welcome certs require explicit opt-in via the auto-send switch.
+    // Other rules default to active on creation.
+    const isActive = ruleType === "welcome_gift_certificate" ? autoSend : true;
 
     const { error } = await supabase.from("automation_rules").insert({
       merchant_address: address.toLowerCase(),
       token_address: selectedProgram,
       rule_type: ruleType,
-      is_active: true,
+      is_active: isActive,
       trigger_condition: triggerCondition,
       action_config: actionConfig,
     });
