@@ -141,6 +141,27 @@ async function processWelcomeGiftCertificates(supabase: any, rule: AutomationRul
   ]);
   if (!candidates.size) return;
 
+  // Audience filtering — merchant explicitly chooses who gets the cert
+  const audience = String(rule.action_config?.audience || 'all');
+  let allowed: Set<string> | null = null;
+
+  if (audience === 'rfm') {
+    const segment = String(rule.action_config?.rfm_segment || 'new_customer');
+    const { data: profs } = await supabase
+      .from('customer_profiles')
+      .select('wallet_address')
+      .eq('rfm_score', segment);
+    allowed = new Set((profs || []).map((p: any) => p.wallet_address.toLowerCase()));
+  } else if (audience === 'tier') {
+    const minLevel = Number(rule.action_config?.min_tier_level) || 1;
+    const { data: tiers } = await supabase
+      .from('customer_tier_status')
+      .select('customer_address, customer_tiers!inner(tier_level)')
+      .eq('token_address', rule.token_address)
+      .gte('customer_tiers.tier_level', minLevel);
+    allowed = new Set((tiers || []).map((t: any) => t.customer_address.toLowerCase()));
+  }
+
   const usdAmount = Number(rule.action_config?.usd_amount) || 10;
   const rate = Number(rule.action_config?.points_per_dollar) || Number(program.points_per_dollar) || 1;
   const tokenAmount = Number((usdAmount * rate).toFixed(8));
@@ -151,6 +172,7 @@ async function processWelcomeGiftCertificates(supabase: any, rule: AutomationRul
   const expiresAt = expiresInDays > 0 ? new Date(Date.now() + expiresInDays * 86400000).toISOString() : null;
 
   for (const customer of candidates) {
+    if (allowed && !allowed.has(customer)) continue;
     // Skip if any cert already issued for this customer by this rule
     const { data: existing } = await supabase
       .from('automation_triggers_history')

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
 interface CreateAutomationRuleProps {
@@ -32,6 +33,10 @@ export const CreateAutomationRule = ({
   const [usdAmount, setUsdAmount] = useState("");
   const [maxRedemptionPercent, setMaxRedemptionPercent] = useState("");
   const [expiresInDays, setExpiresInDays] = useState("");
+  const [autoSend, setAutoSend] = useState(false);
+  const [audience, setAudience] = useState<"all" | "rfm" | "tier">("all");
+  const [rfmSegment, setRfmSegment] = useState<string>("new_customer");
+  const [tierLevel, setTierLevel] = useState<string>("1");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,13 +68,20 @@ export const CreateAutomationRule = ({
       if (usdAmount) actionConfig.usd_amount = parseFloat(usdAmount);
       if (maxRedemptionPercent) actionConfig.max_redemption_percent = parseInt(maxRedemptionPercent);
       if (expiresInDays) actionConfig.expires_in_days = parseInt(expiresInDays);
+      actionConfig.audience = audience;
+      if (audience === "rfm") actionConfig.rfm_segment = rfmSegment;
+      if (audience === "tier") actionConfig.min_tier_level = parseInt(tierLevel);
     }
+
+    // Welcome certs require explicit opt-in via the auto-send switch.
+    // Other rules default to active on creation.
+    const isActive = ruleType === "welcome_gift_certificate" ? autoSend : true;
 
     const { error } = await supabase.from("automation_rules").insert({
       merchant_address: address.toLowerCase(),
       token_address: selectedProgram,
       rule_type: ruleType,
-      is_active: true,
+      is_active: isActive,
       trigger_condition: triggerCondition,
       action_config: actionConfig,
     });
@@ -80,7 +92,7 @@ export const CreateAutomationRule = ({
       toast.error("Failed to create automation rule");
       console.error(error);
     } else {
-      toast.success("Automation rule created successfully!");
+      // success toast emitted below after computing message
       setRuleType("");
       setTitle("");
       setDescription("");
@@ -90,6 +102,14 @@ export const CreateAutomationRule = ({
       setUsdAmount("");
       setMaxRedemptionPercent("");
       setExpiresInDays("");
+      setAutoSend(false);
+      setAudience("all");
+      setRfmSegment("new_customer");
+      setTierLevel("1");
+      const successMsg = ruleType === "welcome_gift_certificate" && !autoSend
+        ? "Rule saved as inactive. Toggle 'Active' in the rules list when ready."
+        : "Automation rule created successfully!";
+      toast.success(successMsg);
       onRuleCreated();
     }
   };
@@ -238,8 +258,68 @@ export const CreateAutomationRule = ({
                 />
               </div>
               <p className="col-span-3 text-xs text-muted-foreground">
-                A unique certificate will be auto-issued (every hour) to each new customer who has activity in the last 24h. Mint button appears in your Certificates tab once they redeem.
+                A unique certificate will be auto-issued (every hour) to qualifying customers who had activity in the last 24h. Mint button appears in your Certificates tab once they redeem.
               </p>
+            </div>
+          )}
+
+          {ruleType === "welcome_gift_certificate" && (
+            <div className="space-y-4 rounded-lg border border-border bg-muted/30 p-4">
+              <div className="space-y-2">
+                <Label>Audience</Label>
+                <Select value={audience} onValueChange={(v) => setAudience(v as "all" | "rfm" | "tier")}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All new customers (last 24h activity)</SelectItem>
+                    <SelectItem value="rfm">By RFM segment</SelectItem>
+                    <SelectItem value="tier">By minimum tier level</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {audience === "rfm" && (
+                <div className="space-y-2">
+                  <Label>RFM Segment</Label>
+                  <Select value={rfmSegment} onValueChange={setRfmSegment}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="new_customer">New Customers</SelectItem>
+                      <SelectItem value="champions">Champions</SelectItem>
+                      <SelectItem value="loyal">Loyal</SelectItem>
+                      <SelectItem value="at_risk">At Risk</SelectItem>
+                      <SelectItem value="lost">Lost</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {audience === "tier" && (
+                <div className="space-y-2">
+                  <Label>Minimum Tier Level</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={tierLevel}
+                    onChange={(e) => setTierLevel(e.target.value)}
+                  />
+                </div>
+              )}
+
+              <div className="flex items-start justify-between gap-4 rounded-md border border-border bg-background p-3">
+                <div className="space-y-1">
+                  <Label htmlFor="autoSend" className="text-sm font-medium">
+                    Enable automatic sending
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Off by default. Turn on only after you've reviewed the value, audience and expiration above. You can pause anytime from the rules list.
+                  </p>
+                </div>
+                <Switch id="autoSend" checked={autoSend} onCheckedChange={setAutoSend} />
+              </div>
             </div>
           )}
 
