@@ -102,6 +102,14 @@ export const CreateAutomationRule = ({
       setUsdAmount("");
       setMaxRedemptionPercent("");
       setExpiresInDays("");
+      setAutoSend(false);
+      setAudience("all");
+      setRfmSegment("new_customer");
+      setTierLevel("1");
+      const successMsg = ruleType === "welcome_gift_certificate" && !autoSend
+        ? "Rule saved as inactive. Toggle 'Active' in the rules list when ready."
+        : "Automation rule created successfully!";
+      toast.success(successMsg);
       onRuleCreated();
     }
   };
