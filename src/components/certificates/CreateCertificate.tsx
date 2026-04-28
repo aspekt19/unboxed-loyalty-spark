@@ -325,6 +325,35 @@ export function CreateCertificate({ onCreated }: { onCreated?: () => void }) {
           )}
         </div>
 
+        {/* Quantity (batch) */}
+        <div className="space-y-2">
+          <Label>Quantity (1–100)</Label>
+          <div className="flex flex-wrap gap-2 items-center">
+            {[1, 5, 10, 25, 50, 100].map((q) => (
+              <Button
+                key={q}
+                type="button"
+                size="sm"
+                variant={quantity === q ? 'default' : 'outline'}
+                onClick={() => setQuantity(q)}
+              >
+                {q}
+              </Button>
+            ))}
+            <Input
+              type="number"
+              min={1}
+              max={100}
+              value={quantity}
+              onChange={(e) => setQuantity(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
+              className="w-24"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Each certificate gets its own unique 6-character code. After creation you can download all codes as CSV for printing or distribution.
+          </p>
+        </div>
+
         {/* Preview summary */}
         <div className="rounded-lg border bg-muted/30 p-3 text-sm space-y-1">
           <div className="flex justify-between">
@@ -339,6 +368,12 @@ export function CreateCertificate({ onCreated }: { onCreated?: () => void }) {
             <span className="text-muted-foreground">Customer receives:</span>
             <strong className="text-primary">{finalTokens} {program?.symbol}</strong>
           </div>
+          {quantity > 1 && (
+            <div className="flex justify-between border-t pt-1 mt-1">
+              <span className="text-muted-foreground">Total batch value:</span>
+              <strong>${(finalUsd * quantity).toFixed(2)} ({quantity} codes)</strong>
+            </div>
+          )}
           {lifetimeDays && (
             <div className="flex justify-between">
               <span className="text-muted-foreground">Expires:</span>
@@ -353,11 +388,23 @@ export function CreateCertificate({ onCreated }: { onCreated?: () => void }) {
           className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
         >
           {submitting ? (
-            <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creating...</>
+            <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creating {quantity > 1 ? `${quantity} certificates` : ''}...</>
           ) : (
-            <><Gift className="h-4 w-4 mr-2" /> Create Certificate</>
+            <><Gift className="h-4 w-4 mr-2" /> {quantity > 1 ? `Create ${quantity} Certificates` : 'Create Certificate'}</>
           )}
         </Button>
+
+        {lastBatch && lastBatch.length > 0 && (
+          <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-3 space-y-2">
+            <p className="text-sm font-medium">
+              ✓ {lastBatch.length} {lastBatch.length === 1 ? 'certificate' : 'certificates'} created
+            </p>
+            <Button onClick={downloadBatchCsv} variant="outline" size="sm" className="w-full">
+              <Download className="h-4 w-4 mr-2" />
+              Download codes as CSV
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
