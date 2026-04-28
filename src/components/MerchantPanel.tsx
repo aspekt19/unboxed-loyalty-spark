@@ -6,6 +6,7 @@ import { RewardsTab } from './merchant/tabs/RewardsTab';
 import { MarketingTab } from './merchant/tabs/MarketingTab';
 import { AgentsTab } from './merchant/tabs/AgentsTab';
 import { TeamTab } from './merchant/tabs/TeamTab';
+import { CertificatesTab } from './merchant/tabs/CertificatesTab';
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -13,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMintTokens } from '@/hooks/useMintTokens';
 import { useAccount } from 'wagmi';
 import { toast } from 'sonner';
-import { Wallet, Bot, Users, Building2, Briefcase, CreditCard, LayoutDashboard, UserSearch, Megaphone } from 'lucide-react';
+import { Wallet, Bot, Users, Building2, Briefcase, CreditCard, LayoutDashboard, UserSearch, Megaphone, Gift } from 'lucide-react';
 import { MerchantBillingDashboard } from '@/components/merchant/MerchantBillingDashboard';
 import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
 import { mintTokensSchema } from '@/lib/validationSchemas';
@@ -41,7 +42,7 @@ export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: Merchant
   const { address } = useAccount();
   const location = useLocation();
   const navigate = useNavigate();
-  const VALID_TABS = ['dashboard', 'customers', 'programs', 'rewards', 'marketing', 'billing', 'agents', 'team'];
+  const VALID_TABS = ['dashboard', 'customers', 'programs', 'rewards', 'certificates', 'marketing', 'billing', 'agents', 'team'];
   const tabFromUrl = (() => {
     const t = new URLSearchParams(location.search).get('tab');
     return t && VALID_TABS.includes(t) ? t : null;
@@ -389,6 +390,9 @@ export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: Merchant
                 <TabsTrigger value="customers" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Customers</TabsTrigger>
                 <TabsTrigger value="programs" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Programs</TabsTrigger>
                 <TabsTrigger value="rewards" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Rewards</TabsTrigger>
+                <TabsTrigger value="certificates" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">
+                  <Gift className="h-3.5 w-3.5 mr-1" />Certificates
+                </TabsTrigger>
                 <TabsTrigger value="marketing" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Marketing</TabsTrigger>
                 <TabsTrigger value="billing" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">
                   <CreditCard className="h-3.5 w-3.5 mr-1" />Billing
@@ -425,6 +429,9 @@ export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: Merchant
           </TabsContent>
           <TabsContent value="rewards" className="mt-6">
             <RewardsTab />
+          </TabsContent>
+          <TabsContent value="certificates" className="mt-6">
+            <CertificatesTab />
           </TabsContent>
           <TabsContent value="marketing" className="mt-6">
             <MarketingTab
