@@ -9,7 +9,7 @@ import { TrialWelcomeBanner } from '@/components/onboarding/TrialWelcomeBanner';
 import { useAutoStartTrial } from '@/hooks/useStartTrial';
 import { MerchantProfileSection } from '@/components/merchant/MerchantProfileSection';
 
-import { ArrowLeft, LayoutDashboard, Package, Gift, Users, User } from 'lucide-react';
+import { ArrowLeft, LayoutDashboard, Package, Gift, Users, User, Ticket } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import PageTransition from '@/components/PageTransition';
@@ -28,6 +28,7 @@ const merchantNavItems: NavItem[] = [
   { id: 'dashboard', label: 'Home', icon: LayoutDashboard },
   { id: 'programs', label: 'Programs', icon: Package },
   { id: 'rewards', label: 'Rewards', icon: Gift },
+  { id: 'certificates', label: 'Certs', icon: Ticket },
   { id: 'team', label: 'Team', icon: Users },
   { id: 'profile', label: 'Profile', icon: User },
 ];
@@ -47,7 +48,7 @@ const MerchantPage = () => {
   // Sync mobile tab with ?tab= query param so deep links from banners work
   useEffect(() => {
     const t = new URLSearchParams(location.search).get('tab');
-    const valid = ['dashboard', 'customers', 'programs', 'rewards', 'marketing', 'billing', 'agents', 'team'];
+    const valid = ['dashboard', 'customers', 'programs', 'rewards', 'certificates', 'marketing', 'billing', 'agents', 'team'];
     if (t && valid.includes(t)) {
       setMobileTab(t);
       setShowProfile(false);
