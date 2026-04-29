@@ -287,7 +287,7 @@ export const CreateAutomationRule = ({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="new_customer">New Customers</SelectItem>
+                      <SelectItem value="new">New Customers</SelectItem>
                       <SelectItem value="champions">Champions</SelectItem>
                       <SelectItem value="loyal">Loyal</SelectItem>
                       <SelectItem value="at_risk">At Risk</SelectItem>
