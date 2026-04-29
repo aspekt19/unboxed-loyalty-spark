@@ -35,7 +35,7 @@ export const CreateAutomationRule = ({
   const [expiresInDays, setExpiresInDays] = useState("");
   const [autoSend, setAutoSend] = useState(false);
   const [audience, setAudience] = useState<"all" | "rfm" | "tier">("all");
-  const [rfmSegment, setRfmSegment] = useState<string>("new_customer");
+  const [rfmSegment, setRfmSegment] = useState<string>("new");
   const [tierLevel, setTierLevel] = useState<string>("1");
   const [loading, setLoading] = useState(false);
 
@@ -104,7 +104,7 @@ export const CreateAutomationRule = ({
       setExpiresInDays("");
       setAutoSend(false);
       setAudience("all");
-      setRfmSegment("new_customer");
+      setRfmSegment("new");
       setTierLevel("1");
       const successMsg = ruleType === "welcome_gift_certificate" && !autoSend
         ? "Rule saved as inactive. Toggle 'Active' in the rules list when ready."
@@ -287,7 +287,7 @@ export const CreateAutomationRule = ({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="new_customer">New Customers</SelectItem>
+                      <SelectItem value="new">New Customers</SelectItem>
                       <SelectItem value="champions">Champions</SelectItem>
                       <SelectItem value="loyal">Loyal</SelectItem>
                       <SelectItem value="at_risk">At Risk</SelectItem>

@@ -146,7 +146,17 @@ async function processWelcomeGiftCertificates(supabase: any, rule: AutomationRul
   let allowed: Set<string> | null = null;
 
   if (audience === 'rfm') {
-    const segment = String(rule.action_config?.rfm_segment || 'new_customer');
+    // UI uses "new_customer" as the friendly label, but DB constraint stores it as "new"
+    const RFM_UI_TO_DB: Record<string, string> = {
+      new_customer: 'new',
+      new: 'new',
+      champions: 'champions',
+      loyal: 'loyal',
+      at_risk: 'at_risk',
+      lost: 'lost',
+    };
+    const uiSegment = String(rule.action_config?.rfm_segment || 'new_customer');
+    const segment = RFM_UI_TO_DB[uiSegment] ?? uiSegment;
     const { data: profs } = await supabase
       .from('customer_profiles')
       .select('wallet_address')
@@ -221,15 +231,41 @@ async function processWelcomeGiftCertificates(supabase: any, rule: AutomationRul
 }
 
 async function processAtRiskOffers(supabase: any, rule: AutomationRule) {
-  // Find customers with "at_risk" RFM score
+  // FIRST: scope to THIS merchant's customers only.
+  // customer_profiles is a global table (no merchant/token), so without scoping
+  // we'd send offers to people who never interacted with this merchant.
+  const { data: vouchers } = await supabase
+    .from('vouchers')
+    .select('customer_address')
+    .eq('merchant_address', rule.merchant_address)
+    .eq('token_address', rule.token_address);
+  const { data: mints } = await supabase
+    .from('token_mint_history')
+    .select('recipient_address')
+    .eq('merchant_address', rule.merchant_address)
+    .eq('token_address', rule.token_address);
+
+  const merchantCustomers = new Set<string>([
+    ...((vouchers || []).map((r: any) => r.customer_address?.toLowerCase()).filter(Boolean)),
+    ...((mints || []).map((r: any) => r.recipient_address?.toLowerCase()).filter(Boolean)),
+  ]);
+
+  if (merchantCustomers.size === 0) {
+    console.log(`Rule ${rule.id}: no customers found for this merchant/token`);
+    return;
+  }
+
+  // THEN: intersect with global at_risk RFM segment
+  const merchantCustomerArray = Array.from(merchantCustomers);
   const { data: customers } = await supabase
     .from('customer_profiles')
     .select('wallet_address, email, first_name, last_name')
-    .eq('rfm_score', 'at_risk');
+    .eq('rfm_score', 'at_risk')
+    .in('wallet_address', merchantCustomerArray);
 
   if (!customers || customers.length === 0) return;
 
-  console.log(`Found ${customers.length} at-risk customers for rule ${rule.id}`);
+  console.log(`Found ${customers.length} at-risk customers (scoped to merchant) for rule ${rule.id}`);
 
   for (const customer of customers) {
     // Check if offer already exists for this customer
