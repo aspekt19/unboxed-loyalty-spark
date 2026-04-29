@@ -146,7 +146,17 @@ async function processWelcomeGiftCertificates(supabase: any, rule: AutomationRul
   let allowed: Set<string> | null = null;
 
   if (audience === 'rfm') {
-    const segment = String(rule.action_config?.rfm_segment || 'new_customer');
+    // UI uses "new_customer" as the friendly label, but DB constraint stores it as "new"
+    const RFM_UI_TO_DB: Record<string, string> = {
+      new_customer: 'new',
+      new: 'new',
+      champions: 'champions',
+      loyal: 'loyal',
+      at_risk: 'at_risk',
+      lost: 'lost',
+    };
+    const uiSegment = String(rule.action_config?.rfm_segment || 'new_customer');
+    const segment = RFM_UI_TO_DB[uiSegment] ?? uiSegment;
     const { data: profs } = await supabase
       .from('customer_profiles')
       .select('wallet_address')
