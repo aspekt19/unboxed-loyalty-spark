@@ -3,11 +3,12 @@ import { useAccount } from 'wagmi';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { QRCodeSVG } from 'qrcode.react';
-import { Gift, Loader2, ExternalLink, QrCode, ChevronRight } from 'lucide-react';
+import { Gift, Loader2, ExternalLink, ChevronRight, X } from 'lucide-react';
 import { format } from 'date-fns';
+import { enUS } from 'date-fns/locale';
 import { GiftCertificate } from '@/types/certificates';
 import { listCustomerCertificates } from '@/lib/giftCertificates';
 
@@ -20,6 +21,17 @@ const STATUS_LABEL: Record<GiftCertificate['status'], string> = {
 };
 
 const isShowable = (s: GiftCertificate['status']) => s === 'active' || s === 'pending_mint';
+
+// Strip "LOYAL-" prefix and format like UDS: "380 859"
+function shortCode(code: string): string {
+  return code.replace(/^LOYAL-/, '');
+}
+function formatCodeForDisplay(code: string): string {
+  const c = shortCode(code);
+  if (c.length <= 3) return c;
+  const half = Math.ceil(c.length / 2);
+  return `${c.slice(0, half)} ${c.slice(half)}`;
+}
 
 export function MyCertificates() {
   const { address } = useAccount();
@@ -44,46 +56,40 @@ export function MyCertificates() {
   const active = certs.filter((c) => isShowable(c.status));
   const archive = certs.filter((c) => !isShowable(c.status));
 
-  const renderCard = (c: GiftCertificate) => {
-    const shortCode = c.code.replace('LOYAL-', '');
-    return (
-      <button
-        key={c.id}
-        onClick={() => setSelected(c)}
-        className="w-full text-left rounded-2xl bg-card border hover:shadow-lg transition-all overflow-hidden group"
-      >
-        {/* Image header (gift-box style — UDS-like) */}
-        <div className="relative aspect-[16/9] bg-gradient-to-br from-primary/10 via-primary/5 to-secondary/10 flex items-center justify-center overflow-hidden">
-          {c.imageUrl ? (
-            <img src={c.imageUrl} alt={c.title} className="w-full h-full object-cover" />
-          ) : (
-            <Gift className="h-20 w-20 text-primary/60 group-hover:scale-110 transition-transform" />
-          )}
-        </div>
-        {/* Body */}
-        <div className="p-4 flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="text-2xl font-bold leading-tight">
-              {c.tokenAmount} <span className="text-base font-medium text-muted-foreground">{c.tokenSymbol}</span>
-            </div>
-            <div className="text-xs uppercase tracking-wider text-muted-foreground mt-1 truncate">
-              {c.title}
-            </div>
-            <div className="text-xs text-primary/80 mt-1.5">
-              up to {c.maxRedemptionPercent}% off purchase
-            </div>
+  // UDS-style row card: image on top, value + merchant + cap below
+  const renderCard = (c: GiftCertificate) => (
+    <button
+      key={c.id}
+      onClick={() => setSelected(c)}
+      className="w-full text-left rounded-2xl bg-card border hover:shadow-md transition-all overflow-hidden group"
+    >
+      <div className="relative aspect-[16/9] bg-gradient-to-br from-rose-50 via-white to-rose-50 dark:from-rose-950/20 dark:via-background dark:to-rose-950/20 flex items-center justify-center overflow-hidden">
+        {c.imageUrl ? (
+          <img src={c.imageUrl} alt={c.title} className="w-full h-full object-cover" />
+        ) : (
+          <Gift className="h-24 w-24 text-rose-500/70 group-hover:scale-105 transition-transform" strokeWidth={1.5} />
+        )}
+      </div>
+      <div className="p-4 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-2xl font-bold leading-tight">${c.usdAmount}</div>
+          <div className="text-xs uppercase tracking-wider text-muted-foreground mt-1 truncate">
+            {c.title}
           </div>
-          <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1 group-hover:translate-x-0.5 transition-transform" />
+          <div className="text-xs text-primary/80 mt-1.5">
+            up to {c.maxRedemptionPercent}% off purchase
+          </div>
         </div>
-        <div className="px-4 pb-3 flex items-center justify-between text-[11px] text-muted-foreground">
-          <span>{c.expiresAt ? `Until ${format(new Date(c.expiresAt), 'PP')}` : 'No expiry'}</span>
-          <Badge variant={c.status === 'pending_mint' ? 'default' : 'secondary'} className="text-[10px]">
-            {STATUS_LABEL[c.status]}
-          </Badge>
-        </div>
-      </button>
-    );
-  };
+        <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1 group-hover:translate-x-0.5 transition-transform" />
+      </div>
+      <div className="px-4 pb-3 flex items-center justify-between text-[11px] text-muted-foreground border-t pt-2">
+        <span>{c.expiresAt ? `Until ${format(new Date(c.expiresAt), 'PP', { locale: enUS })}` : 'No expiry'}</span>
+        <Badge variant={c.status === 'pending_mint' ? 'default' : 'secondary'} className="text-[10px]">
+          {STATUS_LABEL[c.status]}
+        </Badge>
+      </div>
+    </button>
+  );
 
   return (
     <>
@@ -94,7 +100,7 @@ export function MyCertificates() {
             My Gift Certificates
           </CardTitle>
           <CardDescription>
-            Tap a certificate, then show the QR or 6-digit code to the cashier.
+            Tap a certificate, then show the QR or read the 6 digits to the cashier.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -112,6 +118,7 @@ export function MyCertificates() {
                   Archive {archive.length > 0 && <span className="ml-1.5 text-[10px] bg-muted rounded-full px-1.5 py-0.5">{archive.length}</span>}
                 </TabsTrigger>
               </TabsList>
+
               <TabsContent value="active" className="pt-4">
                 {active.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-6">
@@ -123,6 +130,7 @@ export function MyCertificates() {
                   </div>
                 )}
               </TabsContent>
+
               <TabsContent value="archive" className="pt-4">
                 {archive.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-6">No history yet.</p>
@@ -133,8 +141,8 @@ export function MyCertificates() {
                         <div className="min-w-0">
                           <p className="text-sm font-medium truncate">{c.title}</p>
                           <p className="text-xs text-muted-foreground">
-                            {c.tokenAmount} {c.tokenSymbol}
-                            {c.redeemedAt && ` · ${format(new Date(c.redeemedAt), 'PP')}`}
+                            ${c.usdAmount}
+                            {c.redeemedAt && ` · ${format(new Date(c.redeemedAt), 'PP', { locale: enUS })}`}
                           </p>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
@@ -155,87 +163,93 @@ export function MyCertificates() {
         </CardContent>
       </Card>
 
-      {/* Detail dialog — UDS-style: large QR + big readable code */}
+      {/* UDS-style certificate detail */}
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md p-0 gap-0 overflow-hidden">
           {selected && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="text-center">Certificate</DialogTitle>
-                <DialogDescription className="text-center">
-                  Show this screen to the cashier
-                </DialogDescription>
+            <div className="max-h-[90vh] overflow-y-auto">
+              {/* Header with merchant title (like UDS top bar) */}
+              <DialogHeader className="px-5 pt-5 pb-3 border-b">
+                <DialogTitle className="text-center text-base">Certificate</DialogTitle>
               </DialogHeader>
 
-              <div className="space-y-4 pt-2">
-                {/* Image */}
-                <div className="rounded-2xl overflow-hidden bg-gradient-to-br from-primary/10 to-secondary/10 aspect-[16/9] flex items-center justify-center">
+              {/* Merchant strip */}
+              <div className="px-5 py-3 flex items-center gap-3 border-b">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shrink-0">
+                  {selected.title.slice(0, 2).toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-sm truncate uppercase tracking-wide">{selected.title}</p>
+                  {selected.description && (
+                    <p className="text-xs text-muted-foreground truncate">{selected.description}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Image */}
+              <div className="px-5 pt-4">
+                <div className="rounded-2xl overflow-hidden bg-gradient-to-br from-rose-50 via-white to-rose-50 dark:from-rose-950/20 dark:via-background dark:to-rose-950/20 aspect-[16/10] flex items-center justify-center">
                   {selected.imageUrl ? (
                     <img src={selected.imageUrl} alt={selected.title} className="w-full h-full object-cover" />
                   ) : (
-                    <Gift className="h-24 w-24 text-primary/60" />
+                    <Gift className="h-28 w-28 text-rose-500/70" strokeWidth={1.4} />
                   )}
                 </div>
+              </div>
 
-                {/* Value + cap */}
-                <div className="text-center">
-                  <div className="text-3xl font-bold">${selected.usdAmount}</div>
-                  <div className="text-sm text-primary font-medium mt-1">
-                    {selected.tokenAmount} {selected.tokenSymbol}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Pay up to {selected.maxRedemptionPercent}% of the bill
-                  </div>
-                </div>
+              {/* Value + cap */}
+              <div className="px-5 pt-5 text-center">
+                <div className="text-4xl font-bold tracking-tight">${selected.usdAmount}</div>
+                <p className="text-sm text-muted-foreground mt-1.5">
+                  Pay up to <span className="text-primary font-medium">{selected.maxRedemptionPercent}%</span> of the bill
+                </p>
+              </div>
 
-                {/* QR */}
-                <div className="flex justify-center bg-white p-4 rounded-2xl border">
+              {/* QR */}
+              <div className="px-5 pt-5">
+                <div className="flex justify-center bg-white rounded-2xl p-5 border">
                   <QRCodeSVG value={selected.code} size={200} level="H" />
                 </div>
+                {/* Big readable code, UDS-style */}
+                <p className="text-center text-3xl font-bold font-mono tracking-[0.3em] mt-4 select-all">
+                  {formatCodeForDisplay(selected.code)}
+                </p>
+              </div>
 
-                {/* 6-digit code (large, spaced — like UDS) */}
-                <div className="text-center">
-                  <p className="text-[11px] uppercase tracking-widest text-muted-foreground mb-1">
-                    Or dictate this code
-                  </p>
-                  <p className="text-3xl font-bold font-mono tracking-[0.4em] select-all">
-                    {shortFormat(selected.code.replace('LOYAL-', ''))}
+              {/* Validity + description blocks */}
+              <div className="px-5 pt-5 pb-4 space-y-3">
+                <div className="rounded-xl bg-muted/40 p-4 text-center">
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Valid until</p>
+                  <p className="text-sm font-medium">
+                    {selected.expiresAt
+                      ? format(new Date(selected.expiresAt), 'PP', { locale: enUS })
+                      : 'No expiry'}
                   </p>
                 </div>
 
-                {/* Validity / description */}
-                <div className="rounded-xl border bg-muted/30 p-3 text-xs text-center space-y-1">
-                  <p className="text-muted-foreground">Valid until</p>
-                  <p className="font-medium">
-                    {selected.expiresAt ? format(new Date(selected.expiresAt), 'PP') : 'No expiry'}
-                  </p>
-                  {selected.description && (
-                    <p className="text-muted-foreground pt-2 border-t mt-2">{selected.description}</p>
-                  )}
-                </div>
-
-                {selected.status === 'pending_mint' && (
-                  <p className="text-xs text-center text-primary/80">
-                    <QrCode className="h-3 w-3 inline mr-1" />
-                    Tokens will be sent to your wallet right after the cashier scans.
-                  </p>
+                {selected.description && (
+                  <div className="rounded-xl bg-muted/40 p-4 text-center">
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Description</p>
+                    <p className="text-sm">{selected.description}</p>
+                  </div>
                 )}
 
+                {selected.status === 'pending_mint' && (
+                  <p className="text-xs text-center text-muted-foreground px-2">
+                    Tokens will land in your wallet right after the cashier confirms.
+                  </p>
+                )}
+              </div>
+
+              <div className="sticky bottom-0 bg-background/95 backdrop-blur border-t px-5 py-3">
                 <Button variant="outline" className="w-full" onClick={() => setSelected(null)}>
-                  Close
+                  <X className="h-4 w-4 mr-2" /> Close
                 </Button>
               </div>
-            </>
+            </div>
           )}
         </DialogContent>
       </Dialog>
     </>
   );
-}
-
-// Format 6-char code as "ABC DEF" for easier reading/dictation (UDS-style)
-function shortFormat(code: string): string {
-  if (code.length <= 3) return code;
-  const half = Math.ceil(code.length / 2);
-  return `${code.slice(0, half)} ${code.slice(half)}`;
 }
