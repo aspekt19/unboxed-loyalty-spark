@@ -38,7 +38,12 @@ export async function detectFarcasterMiniApp(timeoutMs = FARCASTER_DETECTION_TIM
   try {
     const { sdk } = await import('@farcaster/miniapp-sdk');
     const isMiniApp = typeof sdk.isInMiniApp === 'function'
-      ? await sdk.isInMiniApp(timeoutMs)
+      ? await Promise.race<boolean>([
+          sdk.isInMiniApp(),
+          new Promise<boolean>((resolve) => {
+            window.setTimeout(() => resolve(false), timeoutMs);
+          }),
+        ]).catch(() => false)
       : await Promise.race<boolean>([
           sdk.context.then((context) => Boolean(context?.client?.clientFid)),
           new Promise<boolean>((resolve) => {
