@@ -4,7 +4,6 @@ import FarcasterSplash from '@/components/FarcasterSplash';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { AdminLink } from '@/components/AdminLink';
 import { useState, useEffect } from 'react';
-import { sdk } from '@farcaster/miniapp-sdk';
 import HowItWorks from '@/components/landing/HowItWorks';
 import DualBenefits from '@/components/landing/DualBenefits';
 import OnchainSimple from '@/components/landing/OnchainSimple';
