@@ -1,8 +1,6 @@
 import { usePrivy as usePrivyOriginal, useConnectWallet as useConnectWalletOriginal } from '@privy-io/react-auth';
 import { isFarcasterContext } from '@/config/wagmi';
 
-const isFarcaster = isFarcasterContext();
-
 interface PrivySafeResult {
   login: () => void;
   logout: () => Promise<void>;
@@ -30,6 +28,8 @@ function isLovablePreviewHost(): boolean {
 }
 
 export function usePrivySafe(): PrivySafeResult {
+  const isFarcaster = isFarcasterContext();
+
   if (isFarcaster || isLovablePreviewHost()) {
     return noopResult;
   }

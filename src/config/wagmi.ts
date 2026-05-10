@@ -5,20 +5,61 @@ import { base } from 'wagmi/chains';
 import { http } from 'viem';
 import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
 
-// Detect if running inside Farcaster miniapp
-export const isFarcasterContext = () => {
+declare global {
+  interface Window {
+    __LOYALSPARK_CONFIRMED_MINIAPP__?: boolean;
+  }
+}
+
+const FARCASTER_DETECTION_TIMEOUT_MS = 250;
+
+function hasExplicitFarcasterHint(): boolean {
   if (typeof window === 'undefined') return false;
   try {
     const urlParams = new URLSearchParams(window.location.search);
-    const hasFarcasterParam = urlParams.has('farcaster') || urlParams.has('fc');
-    const isFarcasterPath = window.location.pathname.includes('/frame');
-    const hasFarcasterUA = /farcaster/i.test(navigator.userAgent);
-
-    return hasFarcasterParam || isFarcasterPath || hasFarcasterUA;
+    return urlParams.has('farcaster') || urlParams.has('fc') || window.location.pathname.includes('/frame');
   } catch {
     return false;
   }
+}
+
+// Detect if running inside a confirmed Farcaster/Base miniapp context.
+// Do not rely on user-agent alone: BaseApp's in-app browser can include
+// Farcaster markers even for normal web pages, which causes false positives.
+export const isFarcasterContext = () => {
+  if (typeof window === 'undefined') return false;
+  return window.__LOYALSPARK_CONFIRMED_MINIAPP__ === true || hasExplicitFarcasterHint();
 };
+
+export async function detectFarcasterMiniApp(timeoutMs = FARCASTER_DETECTION_TIMEOUT_MS): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
+  if (window.__LOYALSPARK_CONFIRMED_MINIAPP__ === true) return true;
+
+  try {
+    const { sdk } = await import('@farcaster/miniapp-sdk');
+    const isMiniApp = typeof sdk.isInMiniApp === 'function'
+      ? await Promise.race<boolean>([
+          sdk.isInMiniApp(),
+          new Promise<boolean>((resolve) => {
+            window.setTimeout(() => resolve(false), timeoutMs);
+          }),
+        ]).catch(() => false)
+      : await Promise.race<boolean>([
+          sdk.context.then((context) => Boolean(context?.client?.clientFid)),
+          new Promise<boolean>((resolve) => {
+            window.setTimeout(() => resolve(false), timeoutMs);
+          }),
+        ]).catch(() => false);
+
+    if (isMiniApp) {
+      window.__LOYALSPARK_CONFIRMED_MINIAPP__ = true;
+    }
+
+    return Boolean(isMiniApp);
+  } catch {
+    return false;
+  }
+}
 
 const transport = http('https://base-rpc.publicnode.com', {
   batch: false,
