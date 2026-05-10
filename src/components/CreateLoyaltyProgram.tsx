@@ -308,8 +308,9 @@ export function CreateLoyaltyProgram() {
                   type="number"
                   min="0.01"
                   max="1000"
-                  step="0.1"
+                  step="any"
                   placeholder="1"
+                  lang="en"
                   value={pointsPerDollar}
                   onChange={(e) => setPointsPerDollar(e.target.value)}
                   disabled={isPending}
