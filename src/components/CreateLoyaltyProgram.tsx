@@ -273,8 +273,9 @@ export function CreateLoyaltyProgram() {
                   type="number"
                   min="1"
                   max="50"
-                  step="0.5"
+                  step="any"
                   placeholder="5"
+                  lang="en"
                   value={cashbackRate}
                   onChange={(e) => setCashbackRate(e.target.value)}
                   disabled={isPending}
