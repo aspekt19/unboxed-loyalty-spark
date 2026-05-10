@@ -112,13 +112,14 @@ export function ActivateCertificate({ onActivated }: ActivateCertificateProps) {
             </TabsContent>
 
             <TabsContent value="code" className="space-y-3 pt-3">
-              <Label className="text-xs">6-character code</Label>
+              <Label className="text-xs">6-digit code from the customer</Label>
               <div className="flex gap-2">
                 <Input
-                  placeholder="e.g. AB23CD"
+                  placeholder="380 859"
+                  inputMode="numeric"
                   value={code}
                   onChange={(e) => setCode(e.target.value.toUpperCase().replace(/\s/g, ''))}
-                  className="font-mono tracking-[0.3em] text-center uppercase"
+                  className="font-mono tracking-[0.4em] text-center text-lg"
                   maxLength={12}
                 />
                 <Button onClick={() => handleLookup(code)} disabled={looking || !code}>
