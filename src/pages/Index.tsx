@@ -17,7 +17,7 @@ import LandingAgents from '@/components/landing/LandingAgents';
 import LandingNav from '@/components/landing/LandingNav';
 import LandingCTA from '@/components/landing/LandingCTA';
 import NotifyMe from '@/components/landing/NotifyMe';
-import { isFarcasterContext } from '@/config/wagmi';
+import { detectFarcasterMiniApp, isFarcasterContext } from '@/config/wagmi';
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -71,16 +71,10 @@ const Index = () => {
 
     const checkFarcasterContext = async () => {
       try {
-        const context = await Promise.race([
-          sdk.context,
-          new Promise<null>((resolve) => {
-            window.setTimeout(() => resolve(null), FARCASTER_CONTEXT_TIMEOUT_MS);
-          }),
-        ]);
+        const hinted = isFarcasterContext();
+        const inFarcaster = hinted || await detectFarcasterMiniApp(FARCASTER_CONTEXT_TIMEOUT_MS);
 
         if (cancelled) return;
-
-        const inFarcaster = !!context?.client?.clientFid;
         setIsFarcaster(inFarcaster);
 
         if (inFarcaster) {
