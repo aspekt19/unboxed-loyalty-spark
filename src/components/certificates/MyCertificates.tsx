@@ -14,7 +14,7 @@ import { listCustomerCertificates } from '@/lib/giftCertificates';
 
 const STATUS_LABEL: Record<GiftCertificate['status'], string> = {
   active: 'Active',
-  pending_mint: 'Show to cashier',
+  pending_mint: 'Ready to show',
   redeemed: 'Redeemed',
   expired: 'Expired',
   revoked: 'Revoked',
@@ -100,7 +100,7 @@ export function MyCertificates() {
             My Gift Certificates
           </CardTitle>
           <CardDescription>
-            Tap a certificate, then show the QR or read the 6 digits to the cashier.
+            Open any certificate and show its QR or tell the code to the cashier.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -122,7 +122,7 @@ export function MyCertificates() {
               <TabsContent value="active" className="pt-4">
                 {active.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-6">
-                    No active certificates yet. Got a gift code? Activate it above.
+                    No certificates available right now.
                   </p>
                 ) : (
                   <div className="grid gap-3 sm:grid-cols-2">
