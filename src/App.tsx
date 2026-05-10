@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-route
 import { WagmiProvider } from "wagmi";
 import { WagmiProvider as PrivyWagmiProvider } from "@privy-io/wagmi";
 import { PrivyProvider } from "@privy-io/react-auth";
-import { browserPreviewWagmiConfig, isFarcasterContext, farcasterWagmiConfig, privyWagmiConfig } from "./config/wagmi";
+import { browserPreviewWagmiConfig, detectFarcasterMiniApp, isFarcasterContext, farcasterWagmiConfig, privyWagmiConfig } from "./config/wagmi";
 import { PRIVY_APP_ID, privyConfig } from "./config/privy";
 import Index from "./pages/Index";
 import AppPage from "./pages/AppPage";
@@ -27,7 +27,7 @@ import NativeShopperPage from "./pages/NativeShopperPage";
 import NativeBusinessPage from "./pages/NativeBusinessPage";
 import Preview3D from "./pages/Preview3D";
 import { AnimatePresence } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { migrateAllData } from "./lib/migrateLocalStorageData";
 import { usePageMeta } from "./hooks/usePageMeta";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -181,13 +181,37 @@ function PreviewBrowserProviders({ children }: { children: React.ReactNode }) {
   );
 }
 
-const isFarcaster = isFarcasterContext();
 const isLovablePreviewHost =
   typeof window !== "undefined" &&
   (window.location.hostname.endsWith(".lovableproject.com") ||
     window.location.hostname.startsWith("id-preview--"));
 
 const App = () => {
+  const [isFarcaster, setIsFarcaster] = useState<boolean | null>(() => {
+    if (isLovablePreviewHost) return false;
+    return isFarcasterContext() ? true : null;
+  });
+
+  useEffect(() => {
+    if (isLovablePreviewHost || isFarcaster !== null) return;
+
+    let cancelled = false;
+
+    void detectFarcasterMiniApp().then((result) => {
+      if (!cancelled) {
+        setIsFarcaster(result);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isFarcaster]);
+
+  if (isFarcaster === null) {
+    return <div className="min-h-screen bg-background" />;
+  }
+
   const Providers = isFarcaster
     ? FarcasterProviders
     : isLovablePreviewHost
