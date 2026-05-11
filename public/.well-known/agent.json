@@ -355,7 +355,7 @@
     "rest_base_url": "https://api.loyalspark.online/recipient-api",
     "mcp_url": "https://api.loyalspark.online/recipient-loyalty-mcp",
     "mcp_transport": "streamable-http",
-    "mcp_tool_count": 11,
+    "mcp_tool_count": 14,
     "mcp_tools": [
       "get_recipient_profile",
       "list_my_loyalty_balances",
@@ -367,7 +367,10 @@
       "list_p2p_offers",
       "create_p2p_offer",
       "accept_p2p_offer",
-      "cancel_p2p_offer"
+      "cancel_p2p_offer",
+      "lookup_gift_certificate",
+      "claim_gift_certificate",
+      "list_my_gift_certificates"
     ],
     "rest_endpoints": [
       { "method": "GET",  "path": "/me",                "price_usd": "free",  "description": "Recipient profile and bound wallet" },
