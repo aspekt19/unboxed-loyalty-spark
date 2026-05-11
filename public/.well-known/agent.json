@@ -308,7 +308,7 @@
   },
   "mcp": {
     "url": "https://api.loyalspark.online/loyalty-mcp",
-    "tool_count": 28,
+    "tool_count": 32,
     "transport": "streamable-http",
     "authentication": {
       "type": "api_key",
