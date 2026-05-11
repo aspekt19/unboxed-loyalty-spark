@@ -110,6 +110,10 @@ const MCP_TOOLS = [
   ["update_report_status", "0.01", "Update report status", { report_id: { type: "string" }, status: { type: "string" } }, ["report_id", "status"]],
   ["delete_report", "0.01", "Delete a report", { report_id: { type: "string" } }, ["report_id"]],
   ["export_customers", "0.01", "Export customers for a program", { token_address: { type: "string" } }, ["token_address"]],
+  ["create_gift_certificate", "0.01", "Create gift / welcome certificate (LOYAL-XXXXXX); single or batch up to 100", { token_address: { type: "string" }, usd_amount: { type: "number" }, points_per_dollar: { type: "number" }, max_redemption_percent: { type: "number" }, title: { type: "string" }, description: { type: "string" }, expires_in_days: { type: "number" }, image_url: { type: "string" }, quantity: { type: "number" } }, ["token_address", "usd_amount"]],
+  ["list_gift_certificates", "0.01", "List gift certificates issued by your merchant", { token_address: { type: "string" }, status: { type: "string" }, limit: { type: "number" } }],
+  ["revoke_gift_certificate", "0.01", "Revoke an active gift certificate (active → revoked)", { certificate_id: { type: "string" } }, ["certificate_id"]],
+  ["mark_gift_certificate_minted", "0.01", "Mark claimed certificate as minted with on-chain mint tx hash (pending_mint → redeemed)", { certificate_id: { type: "string" }, transaction_hash: { type: "string" } }, ["certificate_id", "transaction_hash"]],
 ];
 
 // Recipient MCP tools — keep in sync with recipient-mcp-bazaar-tools.ts
