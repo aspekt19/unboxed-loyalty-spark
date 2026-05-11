@@ -46,6 +46,10 @@ export const MCP_BAZAAR_TOOLS: readonly McpBazaarTool[] = [
   { name: "update_report_status", price: P, description: "Update report status", inputSchema: { type: "object", properties: { report_id: { type: "string" }, status: { type: "string" } }, required: ["report_id", "status"] } },
   { name: "delete_report", price: P, description: "Delete a report", inputSchema: { type: "object", properties: { report_id: { type: "string" } }, required: ["report_id"] } },
   { name: "export_customers", price: P, description: "Export customers for a program", inputSchema: { type: "object", properties: { token_address: { type: "string" } }, required: ["token_address"] } },
+  { name: "create_gift_certificate", price: P, description: "Create gift / welcome certificate (LOYAL-XXXXXX) — single or batch up to 100", inputSchema: { type: "object", properties: { token_address: { type: "string" }, usd_amount: { type: "number" }, points_per_dollar: { type: "number" }, max_redemption_percent: { type: "number" }, title: { type: "string" }, description: { type: "string" }, expires_in_days: { type: "number" }, image_url: { type: "string" }, quantity: { type: "number" } }, required: ["token_address", "usd_amount"] } },
+  { name: "list_gift_certificates", price: P, description: "List gift certificates issued by your merchant", inputSchema: { type: "object", properties: { token_address: { type: "string" }, status: { type: "string" }, limit: { type: "number" } } } },
+  { name: "revoke_gift_certificate", price: P, description: "Revoke an active gift certificate (active → revoked)", inputSchema: { type: "object", properties: { certificate_id: { type: "string" } }, required: ["certificate_id"] } },
+  { name: "mark_gift_certificate_minted", price: P, description: "Mark claimed certificate as minted with on-chain mint tx hash (pending_mint → redeemed)", inputSchema: { type: "object", properties: { certificate_id: { type: "string" }, transaction_hash: { type: "string" } }, required: ["certificate_id", "transaction_hash"] } },
 ];
 
 const byName = new Map(MCP_BAZAAR_TOOLS.map((t) => [t.name, t] as const));

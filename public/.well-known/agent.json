@@ -1,6 +1,6 @@
 {
   "name": "Loyal Spark",
-  "description": "Onchain loyalty protocol on Base L2. Two agent personas: MERCHANT (lsk_, 23 REST routes + 1 public + 28 MCP tools at /loyalty-mcp) issues programs, mints ERC-20, manages rewards, P2P trading, CDP MPC wallets, POST /earn cashback. RECIPIENT (rwk_, 12 REST routes at /recipient-api + 11 MCP tools at /recipient-loyalty-mcp) holds tokens, redeems rewards, P2P swaps, prepare_loyalty_token_transfer. Pay-per-call via MPP (pathUSD/USDC on Tempo) or x402 v2 (USDC on Base) — both gateways relay merchant + recipient corridors with Coinbase Bazaar discovery metadata.",
+  "description": "Onchain loyalty protocol on Base L2. Two agent personas: MERCHANT (lsk_, 23 REST routes + 1 public + 32 MCP tools at /loyalty-mcp) issues programs, mints ERC-20, manages rewards, P2P trading, gift certificates (LOYAL-XXXXXX), CDP MPC wallets, POST /earn cashback. RECIPIENT (rwk_, 12 REST routes at /recipient-api + 14 MCP tools at /recipient-loyalty-mcp) holds tokens, redeems rewards, P2P swaps, claims gift certificates, prepare_loyalty_token_transfer. Pay-per-call via MPP (pathUSD/USDC on Tempo) or x402 v2 (USDC on Base) — both gateways relay merchant + recipient corridors with Coinbase Bazaar discovery metadata.",
   "url": "https://loyalspark.online",
   "version": "2.1.0",
   "protocol": "a2a-loyalty",
@@ -308,7 +308,7 @@
   },
   "mcp": {
     "url": "https://api.loyalspark.online/loyalty-mcp",
-    "tool_count": 28,
+    "tool_count": 32,
     "transport": "streamable-http",
     "authentication": {
       "type": "api_key",
@@ -343,7 +343,11 @@
       "send_report",
       "list_my_reports",
       "update_report_status",
-      "delete_report"
+      "delete_report",
+      "create_gift_certificate",
+      "list_gift_certificates",
+      "revoke_gift_certificate",
+      "mark_gift_certificate_minted"
     ]
   },
   "recipient_api": {
@@ -351,7 +355,7 @@
     "rest_base_url": "https://api.loyalspark.online/recipient-api",
     "mcp_url": "https://api.loyalspark.online/recipient-loyalty-mcp",
     "mcp_transport": "streamable-http",
-    "mcp_tool_count": 11,
+    "mcp_tool_count": 14,
     "mcp_tools": [
       "get_recipient_profile",
       "list_my_loyalty_balances",
@@ -363,7 +367,10 @@
       "list_p2p_offers",
       "create_p2p_offer",
       "accept_p2p_offer",
-      "cancel_p2p_offer"
+      "cancel_p2p_offer",
+      "lookup_gift_certificate",
+      "claim_gift_certificate",
+      "list_my_gift_certificates"
     ],
     "rest_endpoints": [
       { "method": "GET",  "path": "/me",                "price_usd": "free",  "description": "Recipient profile and bound wallet" },

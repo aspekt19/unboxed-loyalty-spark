@@ -12,7 +12,8 @@ Loyal Spark is a dual-mode protocol: humans interact via web UI with flexible au
 - Static pointer (markdown): https://loyalspark.online/for-agents.md
 - Agent Manifest: https://loyalspark.online/.well-known/agent.json
 - OpenAPI 3.1.0: https://loyalspark.online/openapi.json
-- MCP Server (merchant, `lsk_`, 28 tools): https://api.loyalspark.online/loyalty-mcp (Streamable HTTP)
+- MCP Server (merchant, `lsk_`, 32 tools): https://api.loyalspark.online/loyalty-mcp (Streamable HTTP)
+- Recipient MCP Server (`rwk_`, 14 tools): https://api.loyalspark.online/recipient-loyalty-mcp (Streamable HTTP)
 - MCP Server (recipient, `rwk_`, 11 tools): https://api.loyalspark.online/recipient-loyalty-mcp (Streamable HTTP)
 - REST (recipient, `rwk_`, 12 routes): https://api.loyalspark.online/recipient-api
 - MPP Manifest: https://loyalspark.online/.well-known/mpp.json
@@ -81,7 +82,7 @@ curl -X POST \
 
 Response returns calldata with Builder Code for onchain execution.
 
-## MCP Server — 28 Tools
+## MCP Server — 32 Tools (Merchant)
 
 URL: https://api.loyalspark.online/loyalty-mcp
 Transport: Streamable HTTP
@@ -117,6 +118,29 @@ Auth: x-api-key header
 26. `list_my_reports` — View previously submitted reports
 27. `update_report_status` — Update report status (reviewed/done)
 28. `delete_report` — Delete an outdated report
+29. `create_gift_certificate` — Issue gift / welcome certificate (LOYAL-XXXXXX), single or batch up to 100
+30. `list_gift_certificates` — List certificates issued by your merchant (with status + redemption info)
+31. `revoke_gift_certificate` — Revoke an active gift certificate (active → revoked)
+32. `mark_gift_certificate_minted` — Mark a claimed certificate as minted with the on-chain mint tx (pending_mint → redeemed)
+
+## Recipient MCP Server — 14 Tools (Holder, `rwk_`)
+
+URL: https://api.loyalspark.online/recipient-loyalty-mcp
+
+1. `get_recipient_profile` — Bound wallet + agent metadata
+2. `list_my_loyalty_balances` — All loyalty token balances for the wallet
+3. `get_my_loyalty_balance` — Balance + tier for one token
+4. `prepare_loyalty_token_transfer` — ERC-20 transfer calldata (holder → any address)
+5. `list_rewards_for_program` — Rewards available where you have activity
+6. `list_my_vouchers` — Your vouchers
+7. `redeem_my_reward` — Redeem reward via on-chain transfer tx hash
+8. `list_p2p_offers` — Active P2P swap offers
+9. `create_p2p_offer` — Record P2P swap intent (escrow on-chain)
+10. `accept_p2p_offer` — Accept P2P swap by id
+11. `cancel_p2p_offer` — Cancel your own P2P offer
+12. `lookup_gift_certificate` — Preview a gift certificate by code (LOYAL-XXXXXX)
+13. `claim_gift_certificate` — Claim by code; binds it to your wallet (active → pending_mint)
+14. `list_my_gift_certificates` — Certificates claimed by your wallet
 
 ### MCP Configuration for Claude/Cursor
 

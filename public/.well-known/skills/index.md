@@ -14,7 +14,7 @@ Loyal Spark provides a complete loyalty infrastructure via REST API and MCP Serv
 - **Chain**: Base L2 (Chain ID: 8453)
 - **Token Standard**: ERC-20
 
-## Available Skills (12 files: `00`–`11`)
+## Available Skills (13 files: `00`–`12`)
 
 Scopes mirror the REST API: program lifecycle accepts **`mint` or `create_program`**.
 
@@ -32,6 +32,7 @@ Scopes mirror the REST API: program lifecycle accepts **`mint` or `create_progra
 | [09-vouchers.md](./09-vouchers.md) | Voucher Management | `read`, `manage_rewards` |
 | [10-server-wallets.md](./10-server-wallets.md) | Server Wallets (CDP MPC) | — |
 | [11-earn-points.md](./11-earn-points.md) | Earn Points (Cashback) | `mint` |
+| [12-gift-certificates.md](./12-gift-certificates.md) | Gift Certificates (LOYAL-XXXXXX) | `read`, `write` |
 
 ## API Endpoints
 

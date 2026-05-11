@@ -265,6 +265,116 @@ function createRecipientMcpServer(
     },
   });
 
+  mcpServer.tool("lookup_gift_certificate", {
+    description: "Preview a gift certificate by its 6-character code (LOYAL-XXXXXX). Returns title, USD/token amount, merchant, expiry and status — without claiming it. Anyone can preview.",
+    inputSchema: {
+      type: "object" as const,
+      required: ["code"],
+      properties: {
+        code: { type: "string", description: "Certificate code, with or without LOYAL- prefix" },
+      },
+    },
+    handler: async ({ code }: any) => {
+      const raw = String(code || "").trim().toUpperCase();
+      const fullCode = raw.startsWith("LOYAL-") ? raw : `LOYAL-${raw}`;
+      const { data, error } = await db.rpc("lookup_certificate", { p_code: fullCode });
+      if (error) {
+        await log("lookup_gift_certificate", { code: fullCode }, 500, { error: error.message });
+        return T(JSON.stringify({ error: error.message }));
+      }
+      const row = Array.isArray(data) ? data[0] : data;
+      if (!row) {
+        await log("lookup_gift_certificate", { code: fullCode }, 404, { error: "not_found" });
+        return T(JSON.stringify({ error: "Certificate not found" }));
+      }
+      await log("lookup_gift_certificate", { code: fullCode }, 200, { found: true });
+      return T(JSON.stringify({ certificate: row }));
+    },
+  });
+
+  mcpServer.tool("claim_gift_certificate", {
+    description: "Claim an active gift certificate by code; binds it to your wallet (status active → pending_mint). After this, the issuing merchant mints loyalty tokens to your wallet on-chain.",
+    inputSchema: {
+      type: "object" as const,
+      required: ["code"],
+      properties: {
+        code: { type: "string", description: "Certificate code, with or without LOYAL- prefix" },
+      },
+    },
+    handler: async ({ code }: any) => {
+      const raw = String(code || "").trim().toUpperCase();
+      const fullCode = raw.startsWith("LOYAL-") ? raw : `LOYAL-${raw}`;
+      // claim_gift_certificate RPC binds redeemed_by to auth.uid(); recipient agents authenticate via service role + wallet,
+      // so we replicate the bind explicitly using the wallet column.
+      const { data: cert, error: lookupErr } = await db
+        .from("gift_certificates")
+        .select("id, token_address, token_amount, merchant_address, title, status, expires_at")
+        .eq("code", fullCode)
+        .maybeSingle();
+      if (lookupErr) {
+        await log("claim_gift_certificate", { code: fullCode }, 500, { error: lookupErr.message });
+        return T(JSON.stringify({ ok: false, error: lookupErr.message }));
+      }
+      if (!cert) {
+        await log("claim_gift_certificate", { code: fullCode }, 404, { error: "not_found" });
+        return T(JSON.stringify({ ok: false, error: "Certificate not found" }));
+      }
+      if (cert.status !== "active") {
+        await log("claim_gift_certificate", { code: fullCode }, 409, { error: "not_active", status: cert.status });
+        return T(JSON.stringify({ ok: false, error: `Certificate is ${cert.status}` }));
+      }
+      if (cert.expires_at && new Date(cert.expires_at).getTime() < Date.now()) {
+        await log("claim_gift_certificate", { code: fullCode }, 410, { error: "expired" });
+        return T(JSON.stringify({ ok: false, error: "Certificate expired" }));
+      }
+      const { data: updated, error: updErr } = await db
+        .from("gift_certificates")
+        .update({ status: "pending_mint", redeemed_by: w, redeemed_at: new Date().toISOString() })
+        .eq("id", cert.id)
+        .eq("status", "active")
+        .select("id,code,token_address,token_amount,merchant_address,title,status,redeemed_at")
+        .maybeSingle();
+      if (updErr || !updated) {
+        await log("claim_gift_certificate", { code: fullCode }, 409, { error: updErr?.message || "race" });
+        return T(JSON.stringify({ ok: false, error: updErr?.message || "Already claimed" }));
+      }
+      await log("claim_gift_certificate", { code: fullCode }, 200, { id: updated.id });
+      return T(JSON.stringify({
+        ok: true,
+        certificate: updated,
+        next_step: "Show the merchant your wallet address. Merchant calls mint_loyalty_tokens, then mark_gift_certificate_minted.",
+      }));
+    },
+  });
+
+  mcpServer.tool("list_my_gift_certificates", {
+    description: "List gift certificates claimed by your wallet (status pending_mint, redeemed, expired, or revoked).",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        status: { type: "string", description: "Filter by status (e.g. pending_mint, redeemed)" },
+        limit: { type: "number", description: "Max rows (default 50, max 200)" },
+      },
+    },
+    handler: async ({ status, limit }: any) => {
+      let q = db
+        .from("gift_certificates")
+        .select("id,code,token_address,token_symbol,usd_amount,token_amount,max_redemption_percent,title,status,redeemed_at,mint_tx_hash,expires_at,merchant_address")
+        .ilike("redeemed_by", w)
+        .order("redeemed_at", { ascending: false });
+      if (status) q = q.eq("status", String(status));
+      const lim = Math.max(1, Math.min(200, Number(limit) || 50));
+      q = q.limit(lim);
+      const { data, error } = await q;
+      if (error) {
+        await log("list_my_gift_certificates", {}, 500, { error: error.message });
+        return T(JSON.stringify({ error: error.message }));
+      }
+      await log("list_my_gift_certificates", {}, 200, { count: data?.length });
+      return T(JSON.stringify({ count: data?.length || 0, certificates: data || [] }));
+    },
+  });
+
   return mcpServer;
 }
 
