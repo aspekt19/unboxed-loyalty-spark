@@ -377,7 +377,7 @@ const wellKnown = {
   version: 1,
   name: "Loyal Spark — Onchain Loyalty Protocol on Base",
   description:
-    "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. 70+ paid x402 resources: merchant REST, recipient REST, ${MCP_TOOLS.length} merchant MCP tools, ${RECIPIENT_MCP_TOOLS.length} recipient MCP tools. USDC on Base. Builder Code bc_wdmnog7m.",
+    `Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. ${wellKnownResources.length}+ paid x402 resources: merchant REST, recipient REST, ${MCP_TOOLS.length} merchant MCP tools, ${RECIPIENT_MCP_TOOLS.length} recipient MCP tools. USDC on Base. Builder Code bc_wdmnog7m.`,
   provider: "Loyal Spark",
   website: "https://loyalspark.online",
   documentation: "https://loyalspark.online/for-agents",
