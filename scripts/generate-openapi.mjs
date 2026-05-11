@@ -129,6 +129,9 @@ const RECIPIENT_MCP_TOOLS = [
   ["create_p2p_offer", "0.01", "Create P2P swap intent", { offer_token_address: { type: "string" }, offer_amount: { type: "number" }, request_token_address: { type: "string" }, request_amount: { type: "number" } }, ["offer_token_address", "offer_amount", "request_token_address", "request_amount"]],
   ["accept_p2p_offer", "0.01", "Accept a P2P offer", { offer_id: { type: "string" } }, ["offer_id"]],
   ["cancel_p2p_offer", "0.005", "Cancel your P2P offer", { offer_id: { type: "string" } }, ["offer_id"]],
+  ["lookup_gift_certificate", "0.01", "Preview a gift certificate by code (LOYAL-XXXXXX) without claiming", { code: { type: "string" } }, ["code"]],
+  ["claim_gift_certificate", "0.01", "Claim an active gift certificate by code (binds it to your wallet)", { code: { type: "string" } }, ["code"]],
+  ["list_my_gift_certificates", "0.01", "List gift certificates claimed by your wallet", { status: { type: "string" }, limit: { type: "number" } }],
 ];
 
 // ---- Builders ----
