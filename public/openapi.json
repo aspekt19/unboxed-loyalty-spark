@@ -4,8 +4,8 @@
     "title": "Loyal Spark — Onchain Loyalty Protocol on Base",
     "version": "2.2.0",
     "summary": "AI-agent-native loyalty-as-a-service protocol on Base L2 with paid x402 + MPP corridors.",
-    "description": "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create ERC-20 loyalty programs, mint tokens to customer wallets, manage reward catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics — all via paid x402 endpoints (USDC on Base) or via standard REST with x-api-key. Coverage: 70 paid operations across 66 paths, including merchant REST (agent-api), recipient REST (recipient-api), 28 merchant MCP tools and 11 recipient MCP tools. Builder Code bc_wdmnog7m.",
-    "x-guidance": "Loyal Spark on Base L2 (chain 8453, USDC native).\n\nAuth modes:\n• Merchant agents — header x-api-key: lsk_... (or Authorization: Bearer lsk_...). Get a key in https://loyalspark.online/merchant → AI Agents.\n• Holder agents — header x-api-key: rwk_... (or Authorization: Bearer rwk_...). Issued via SIWE: https://loyalspark.online/.well-known/agent.json.\n• x402 corridor — pay USDC on Base per call. Discovery: https://loyalspark.online/.well-known/x402.\n\nTypical merchant flow:\n1. GET /me — profile and scopes\n2. POST /programs — factory calldata to deploy ERC-20\n3. POST /register-program — persist program\n4. POST /update-program-config — set cashback_rate / points_per_dollar\n5. POST /activate-program — unpause\n6. POST /mint or POST /earn — distribute points\n7. POST /rewards — catalog\n8. GET /analytics — metrics\n\nMCP mirrors REST: 28 merchant tools at https://api.loyalspark.online/loyalty-mcp and 11 recipient tools at https://api.loyalspark.online/recipient-loyalty-mcp. Each MCP tool also has a paid x402 path under /x402-gateway/mcp-tools/<name> and /x402-gateway/recipient-mcp-tools/<name>.\n\nDocs: https://loyalspark.online/api-docs · llms: https://loyalspark.online/llms.txt · agent manifest: https://loyalspark.online/.well-known/agent.json",
+    "description": "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create ERC-20 loyalty programs, mint tokens to customer wallets, manage reward catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics — all via paid x402 endpoints (USDC on Base) or via standard REST with x-api-key. Coverage: 77 paid operations across 73 paths, including merchant REST (agent-api), recipient REST (recipient-api), 32 merchant MCP tools and 14 recipient MCP tools. Builder Code bc_wdmnog7m.",
+    "x-guidance": "Loyal Spark on Base L2 (chain 8453, USDC native).\n\nAuth modes:\n• Merchant agents — header x-api-key: lsk_... (or Authorization: Bearer lsk_...). Get a key in https://loyalspark.online/merchant → AI Agents.\n• Holder agents — header x-api-key: rwk_... (or Authorization: Bearer rwk_...). Issued via SIWE: https://loyalspark.online/.well-known/agent.json.\n• x402 corridor — pay USDC on Base per call. Discovery: https://loyalspark.online/.well-known/x402.\n\nTypical merchant flow:\n1. GET /me — profile and scopes\n2. POST /programs — factory calldata to deploy ERC-20\n3. POST /register-program — persist program\n4. POST /update-program-config — set cashback_rate / points_per_dollar\n5. POST /activate-program — unpause\n6. POST /mint or POST /earn — distribute points\n7. POST /rewards — catalog\n8. GET /analytics — metrics\n\nMCP mirrors REST: 32 merchant tools at https://api.loyalspark.online/loyalty-mcp and 14 recipient tools at https://api.loyalspark.online/recipient-loyalty-mcp. Each MCP tool also has a paid x402 path under /x402-gateway/mcp-tools/<name> and /x402-gateway/recipient-mcp-tools/<name>.\n\nDocs: https://loyalspark.online/api-docs · llms: https://loyalspark.online/llms.txt · agent manifest: https://loyalspark.online/.well-known/agent.json",
     "contact": {
       "name": "Loyal Spark",
       "email": "admin@loyalspark.online",
@@ -25,12 +25,12 @@
     "x-mcp": {
       "url": "https://api.loyalspark.online/loyalty-mcp",
       "transport": "streamable-http",
-      "tool_count": 28
+      "tool_count": 32
     },
     "x-recipient-mcp": {
       "url": "https://api.loyalspark.online/recipient-loyalty-mcp",
       "transport": "streamable-http",
-      "tool_count": 11
+      "tool_count": 14
     },
     "x-x402-discovery": {
       "wellKnownResources": "https://loyalspark.online/.well-known/x402",
@@ -82,11 +82,11 @@
     },
     {
       "name": "Merchant MCP",
-      "description": "28 merchant MCP tools (Streamable HTTP JSON-RPC 2.0)"
+      "description": "32 merchant MCP tools (Streamable HTTP JSON-RPC 2.0)"
     },
     {
       "name": "Recipient MCP",
-      "description": "11 recipient MCP tools (Streamable HTTP JSON-RPC 2.0)"
+      "description": "14 recipient MCP tools (Streamable HTTP JSON-RPC 2.0)"
     }
   ],
   "paths": {
@@ -5490,6 +5490,526 @@
         }
       }
     },
+    "/x402-gateway/mcp-tools/create_gift_certificate": {
+      "post": {
+        "operationId": "mcp_create_gift_certificate",
+        "summary": "MCP tool: create_gift_certificate",
+        "description": "Create gift / welcome certificate (LOYAL-XXXXXX); single or batch up to 100. JSON-RPC 2.0 over Streamable HTTP. Body: { \"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/call\", \"params\": { \"name\": \"create_gift_certificate\", \"arguments\": { ... } } }. Auth: x-api-key (lsk_...) or Authorization: Bearer.",
+        "tags": [
+          "Merchant MCP"
+        ],
+        "x-auth": {
+          "type": "apiKey",
+          "header": "x-api-key",
+          "prefix": "lsk_"
+        },
+        "x-mcp": {
+          "tool": "create_gift_certificate",
+          "transport": "streamable-http",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "token_address": {
+                "type": "string"
+              },
+              "usd_amount": {
+                "type": "number"
+              },
+              "points_per_dollar": {
+                "type": "number"
+              },
+              "max_redemption_percent": {
+                "type": "number"
+              },
+              "title": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "expires_in_days": {
+                "type": "number"
+              },
+              "image_url": {
+                "type": "string"
+              },
+              "quantity": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "token_address",
+              "usd_amount"
+            ]
+          }
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.01"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            },
+            {
+              "mpp": {
+                "method": "USDC",
+                "intent": "pay-per-call",
+                "currency": "USD"
+              }
+            }
+          ]
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "jsonrpc": {
+                    "type": "string",
+                    "const": "2.0"
+                  },
+                  "id": {},
+                  "method": {
+                    "type": "string",
+                    "const": "tools/call"
+                  },
+                  "params": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "const": "create_gift_certificate"
+                      },
+                      "arguments": {
+                        "type": "object",
+                        "properties": {
+                          "token_address": {
+                            "type": "string"
+                          },
+                          "usd_amount": {
+                            "type": "number"
+                          },
+                          "points_per_dollar": {
+                            "type": "number"
+                          },
+                          "max_redemption_percent": {
+                            "type": "number"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "expires_in_days": {
+                            "type": "number"
+                          },
+                          "image_url": {
+                            "type": "string"
+                          },
+                          "quantity": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "token_address",
+                          "usd_amount"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "name"
+                    ]
+                  }
+                },
+                "required": [
+                  "jsonrpc",
+                  "method",
+                  "params"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MCP JSON-RPC response with result.content[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+          }
+        }
+      }
+    },
+    "/x402-gateway/mcp-tools/list_gift_certificates": {
+      "post": {
+        "operationId": "mcp_list_gift_certificates",
+        "summary": "MCP tool: list_gift_certificates",
+        "description": "List gift certificates issued by your merchant. JSON-RPC 2.0 over Streamable HTTP. Body: { \"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/call\", \"params\": { \"name\": \"list_gift_certificates\", \"arguments\": { ... } } }. Auth: x-api-key (lsk_...) or Authorization: Bearer.",
+        "tags": [
+          "Merchant MCP"
+        ],
+        "x-auth": {
+          "type": "apiKey",
+          "header": "x-api-key",
+          "prefix": "lsk_"
+        },
+        "x-mcp": {
+          "tool": "list_gift_certificates",
+          "transport": "streamable-http",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "token_address": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "limit": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.01"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            },
+            {
+              "mpp": {
+                "method": "USDC",
+                "intent": "pay-per-call",
+                "currency": "USD"
+              }
+            }
+          ]
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "jsonrpc": {
+                    "type": "string",
+                    "const": "2.0"
+                  },
+                  "id": {},
+                  "method": {
+                    "type": "string",
+                    "const": "tools/call"
+                  },
+                  "params": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "const": "list_gift_certificates"
+                      },
+                      "arguments": {
+                        "type": "object",
+                        "properties": {
+                          "token_address": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "limit": {
+                            "type": "number"
+                          }
+                        }
+                      }
+                    },
+                    "required": [
+                      "name"
+                    ]
+                  }
+                },
+                "required": [
+                  "jsonrpc",
+                  "method",
+                  "params"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MCP JSON-RPC response with result.content[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+          }
+        }
+      }
+    },
+    "/x402-gateway/mcp-tools/revoke_gift_certificate": {
+      "post": {
+        "operationId": "mcp_revoke_gift_certificate",
+        "summary": "MCP tool: revoke_gift_certificate",
+        "description": "Revoke an active gift certificate (active → revoked). JSON-RPC 2.0 over Streamable HTTP. Body: { \"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/call\", \"params\": { \"name\": \"revoke_gift_certificate\", \"arguments\": { ... } } }. Auth: x-api-key (lsk_...) or Authorization: Bearer.",
+        "tags": [
+          "Merchant MCP"
+        ],
+        "x-auth": {
+          "type": "apiKey",
+          "header": "x-api-key",
+          "prefix": "lsk_"
+        },
+        "x-mcp": {
+          "tool": "revoke_gift_certificate",
+          "transport": "streamable-http",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "certificate_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "certificate_id"
+            ]
+          }
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.01"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            },
+            {
+              "mpp": {
+                "method": "USDC",
+                "intent": "pay-per-call",
+                "currency": "USD"
+              }
+            }
+          ]
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "jsonrpc": {
+                    "type": "string",
+                    "const": "2.0"
+                  },
+                  "id": {},
+                  "method": {
+                    "type": "string",
+                    "const": "tools/call"
+                  },
+                  "params": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "const": "revoke_gift_certificate"
+                      },
+                      "arguments": {
+                        "type": "object",
+                        "properties": {
+                          "certificate_id": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "certificate_id"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "name"
+                    ]
+                  }
+                },
+                "required": [
+                  "jsonrpc",
+                  "method",
+                  "params"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MCP JSON-RPC response with result.content[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+          }
+        }
+      }
+    },
+    "/x402-gateway/mcp-tools/mark_gift_certificate_minted": {
+      "post": {
+        "operationId": "mcp_mark_gift_certificate_minted",
+        "summary": "MCP tool: mark_gift_certificate_minted",
+        "description": "Mark claimed certificate as minted with on-chain mint tx hash (pending_mint → redeemed). JSON-RPC 2.0 over Streamable HTTP. Body: { \"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/call\", \"params\": { \"name\": \"mark_gift_certificate_minted\", \"arguments\": { ... } } }. Auth: x-api-key (lsk_...) or Authorization: Bearer.",
+        "tags": [
+          "Merchant MCP"
+        ],
+        "x-auth": {
+          "type": "apiKey",
+          "header": "x-api-key",
+          "prefix": "lsk_"
+        },
+        "x-mcp": {
+          "tool": "mark_gift_certificate_minted",
+          "transport": "streamable-http",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "certificate_id": {
+                "type": "string"
+              },
+              "transaction_hash": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "certificate_id",
+              "transaction_hash"
+            ]
+          }
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.01"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            },
+            {
+              "mpp": {
+                "method": "USDC",
+                "intent": "pay-per-call",
+                "currency": "USD"
+              }
+            }
+          ]
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "jsonrpc": {
+                    "type": "string",
+                    "const": "2.0"
+                  },
+                  "id": {},
+                  "method": {
+                    "type": "string",
+                    "const": "tools/call"
+                  },
+                  "params": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "const": "mark_gift_certificate_minted"
+                      },
+                      "arguments": {
+                        "type": "object",
+                        "properties": {
+                          "certificate_id": {
+                            "type": "string"
+                          },
+                          "transaction_hash": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "certificate_id",
+                          "transaction_hash"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "name"
+                    ]
+                  }
+                },
+                "required": [
+                  "jsonrpc",
+                  "method",
+                  "params"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MCP JSON-RPC response with result.content[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+          }
+        }
+      }
+    },
     "/x402-gateway/recipient-mcp-tools/get_recipient_profile": {
       "post": {
         "operationId": "mcp_recipient_get_recipient_profile",
@@ -6711,6 +7231,348 @@
                         "required": [
                           "offer_id"
                         ]
+                      }
+                    },
+                    "required": [
+                      "name"
+                    ]
+                  }
+                },
+                "required": [
+                  "jsonrpc",
+                  "method",
+                  "params"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MCP JSON-RPC response with result.content[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+          }
+        }
+      }
+    },
+    "/x402-gateway/recipient-mcp-tools/lookup_gift_certificate": {
+      "post": {
+        "operationId": "mcp_recipient_lookup_gift_certificate",
+        "summary": "MCP tool: lookup_gift_certificate",
+        "description": "Preview a gift certificate by code (LOYAL-XXXXXX) without claiming. JSON-RPC 2.0 over Streamable HTTP. Body: { \"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/call\", \"params\": { \"name\": \"lookup_gift_certificate\", \"arguments\": { ... } } }. Auth: x-api-key (rwk_...) or Authorization: Bearer.",
+        "tags": [
+          "Recipient MCP"
+        ],
+        "x-auth": {
+          "type": "apiKey",
+          "header": "x-api-key",
+          "prefix": "rwk_"
+        },
+        "x-mcp": {
+          "tool": "lookup_gift_certificate",
+          "transport": "streamable-http",
+          "server": "https://api.loyalspark.online/recipient-loyalty-mcp",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code"
+            ]
+          }
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.01"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            },
+            {
+              "mpp": {
+                "method": "USDC",
+                "intent": "pay-per-call",
+                "currency": "USD"
+              }
+            }
+          ]
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "jsonrpc": {
+                    "type": "string",
+                    "const": "2.0"
+                  },
+                  "id": {},
+                  "method": {
+                    "type": "string",
+                    "const": "tools/call"
+                  },
+                  "params": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "const": "lookup_gift_certificate"
+                      },
+                      "arguments": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "code"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "name"
+                    ]
+                  }
+                },
+                "required": [
+                  "jsonrpc",
+                  "method",
+                  "params"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MCP JSON-RPC response with result.content[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+          }
+        }
+      }
+    },
+    "/x402-gateway/recipient-mcp-tools/claim_gift_certificate": {
+      "post": {
+        "operationId": "mcp_recipient_claim_gift_certificate",
+        "summary": "MCP tool: claim_gift_certificate",
+        "description": "Claim an active gift certificate by code (binds it to your wallet). JSON-RPC 2.0 over Streamable HTTP. Body: { \"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/call\", \"params\": { \"name\": \"claim_gift_certificate\", \"arguments\": { ... } } }. Auth: x-api-key (rwk_...) or Authorization: Bearer.",
+        "tags": [
+          "Recipient MCP"
+        ],
+        "x-auth": {
+          "type": "apiKey",
+          "header": "x-api-key",
+          "prefix": "rwk_"
+        },
+        "x-mcp": {
+          "tool": "claim_gift_certificate",
+          "transport": "streamable-http",
+          "server": "https://api.loyalspark.online/recipient-loyalty-mcp",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code"
+            ]
+          }
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.01"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            },
+            {
+              "mpp": {
+                "method": "USDC",
+                "intent": "pay-per-call",
+                "currency": "USD"
+              }
+            }
+          ]
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "jsonrpc": {
+                    "type": "string",
+                    "const": "2.0"
+                  },
+                  "id": {},
+                  "method": {
+                    "type": "string",
+                    "const": "tools/call"
+                  },
+                  "params": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "const": "claim_gift_certificate"
+                      },
+                      "arguments": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "code"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "name"
+                    ]
+                  }
+                },
+                "required": [
+                  "jsonrpc",
+                  "method",
+                  "params"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MCP JSON-RPC response with result.content[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+          }
+        }
+      }
+    },
+    "/x402-gateway/recipient-mcp-tools/list_my_gift_certificates": {
+      "post": {
+        "operationId": "mcp_recipient_list_my_gift_certificates",
+        "summary": "MCP tool: list_my_gift_certificates",
+        "description": "List gift certificates claimed by your wallet. JSON-RPC 2.0 over Streamable HTTP. Body: { \"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/call\", \"params\": { \"name\": \"list_my_gift_certificates\", \"arguments\": { ... } } }. Auth: x-api-key (rwk_...) or Authorization: Bearer.",
+        "tags": [
+          "Recipient MCP"
+        ],
+        "x-auth": {
+          "type": "apiKey",
+          "header": "x-api-key",
+          "prefix": "rwk_"
+        },
+        "x-mcp": {
+          "tool": "list_my_gift_certificates",
+          "transport": "streamable-http",
+          "server": "https://api.loyalspark.online/recipient-loyalty-mcp",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string"
+              },
+              "limit": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.01"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            },
+            {
+              "mpp": {
+                "method": "USDC",
+                "intent": "pay-per-call",
+                "currency": "USD"
+              }
+            }
+          ]
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "jsonrpc": {
+                    "type": "string",
+                    "const": "2.0"
+                  },
+                  "id": {},
+                  "method": {
+                    "type": "string",
+                    "const": "tools/call"
+                  },
+                  "params": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "const": "list_my_gift_certificates"
+                      },
+                      "arguments": {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          },
+                          "limit": {
+                            "type": "number"
+                          }
+                        }
                       }
                     },
                     "required": [
