@@ -343,7 +343,11 @@
       "send_report",
       "list_my_reports",
       "update_report_status",
-      "delete_report"
+      "delete_report",
+      "create_gift_certificate",
+      "list_gift_certificates",
+      "revoke_gift_certificate",
+      "mark_gift_certificate_minted"
     ]
   },
   "recipient_api": {
