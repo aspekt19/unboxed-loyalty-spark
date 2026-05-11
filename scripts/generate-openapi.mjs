@@ -344,8 +344,8 @@ const openapi = {
   tags: [
     { name: "Merchant REST", description: "Authenticated merchant REST API (lsk_)" },
     { name: "Recipient REST", description: "Holder REST API (rwk_)" },
-    { name: "Merchant MCP", description: "${MCP_TOOLS.length} merchant MCP tools (Streamable HTTP JSON-RPC 2.0)" },
-    { name: "Recipient MCP", description: "${RECIPIENT_MCP_TOOLS.length} recipient MCP tools (Streamable HTTP JSON-RPC 2.0)" },
+    { name: "Merchant MCP", description: `${MCP_TOOLS.length} merchant MCP tools (Streamable HTTP JSON-RPC 2.0)` },
+    { name: "Recipient MCP", description: `${RECIPIENT_MCP_TOOLS.length} recipient MCP tools (Streamable HTTP JSON-RPC 2.0)` },
   ],
   paths,
 };
