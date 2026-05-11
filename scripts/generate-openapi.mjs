@@ -5,7 +5,7 @@
  * - Each paid OpenAPI operation has summary, description, requestBody schema (POST),
  *   responses.402 and `x-payment-info` with structured price + protocols (x402+mpp).
  * - Covers ALL paid resources: merchant REST (agent-api), recipient REST (recipient-api),
- *   28 merchant MCP tools (mcp-tools/<name>) and 11 recipient MCP tools (recipient-mcp-tools/<name>).
+ *   ${MCP_TOOLS.length} merchant MCP tools (mcp-tools/<name>) and ${RECIPIENT_MCP_TOOLS.length} recipient MCP tools (recipient-mcp-tools/<name>).
  * - /.well-known/x402 is rewritten to `{ version: 1, resources: ["METHOD /full/url"] }`.
  *
  * Run: node scripts/generate-openapi.mjs
@@ -307,9 +307,9 @@ const openapi = {
     summary: "AI-agent-native loyalty-as-a-service protocol on Base L2 with paid x402 + MPP corridors.",
     description:
       "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create ERC-20 loyalty programs, mint tokens to customer wallets, manage reward catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics — all via paid x402 endpoints (USDC on Base) or via standard REST with x-api-key. " +
-      `Coverage: ${totalOps} paid operations across ${totalPaths} paths, including merchant REST (agent-api), recipient REST (recipient-api), 28 merchant MCP tools and 11 recipient MCP tools. Builder Code bc_wdmnog7m.`,
+      `Coverage: ${totalOps} paid operations across ${totalPaths} paths, including merchant REST (agent-api), recipient REST (recipient-api), ${MCP_TOOLS.length} merchant MCP tools and ${RECIPIENT_MCP_TOOLS.length} recipient MCP tools. Builder Code bc_wdmnog7m.`,
     "x-guidance":
-      "Loyal Spark on Base L2 (chain 8453, USDC native).\n\nAuth modes:\n• Merchant agents — header x-api-key: lsk_... (or Authorization: Bearer lsk_...). Get a key in https://loyalspark.online/merchant → AI Agents.\n• Holder agents — header x-api-key: rwk_... (or Authorization: Bearer rwk_...). Issued via SIWE: https://loyalspark.online/.well-known/agent.json.\n• x402 corridor — pay USDC on Base per call. Discovery: https://loyalspark.online/.well-known/x402.\n\nTypical merchant flow:\n1. GET /me — profile and scopes\n2. POST /programs — factory calldata to deploy ERC-20\n3. POST /register-program — persist program\n4. POST /update-program-config — set cashback_rate / points_per_dollar\n5. POST /activate-program — unpause\n6. POST /mint or POST /earn — distribute points\n7. POST /rewards — catalog\n8. GET /analytics — metrics\n\nMCP mirrors REST: 28 merchant tools at " + MCP_URL + " and 11 recipient tools at " + RECIPIENT_MCP_URL + ". Each MCP tool also has a paid x402 path under /x402-gateway/mcp-tools/<name> and /x402-gateway/recipient-mcp-tools/<name>.\n\nDocs: https://loyalspark.online/api-docs · llms: https://loyalspark.online/llms.txt · agent manifest: https://loyalspark.online/.well-known/agent.json",
+      "Loyal Spark on Base L2 (chain 8453, USDC native).\n\nAuth modes:\n• Merchant agents — header x-api-key: lsk_... (or Authorization: Bearer lsk_...). Get a key in https://loyalspark.online/merchant → AI Agents.\n• Holder agents — header x-api-key: rwk_... (or Authorization: Bearer rwk_...). Issued via SIWE: https://loyalspark.online/.well-known/agent.json.\n• x402 corridor — pay USDC on Base per call. Discovery: https://loyalspark.online/.well-known/x402.\n\nTypical merchant flow:\n1. GET /me — profile and scopes\n2. POST /programs — factory calldata to deploy ERC-20\n3. POST /register-program — persist program\n4. POST /update-program-config — set cashback_rate / points_per_dollar\n5. POST /activate-program — unpause\n6. POST /mint or POST /earn — distribute points\n7. POST /rewards — catalog\n8. GET /analytics — metrics\n\nMCP mirrors REST: ${MCP_TOOLS.length} merchant tools at " + MCP_URL + " and ${RECIPIENT_MCP_TOOLS.length} recipient tools at " + RECIPIENT_MCP_URL + ". Each MCP tool also has a paid x402 path under /x402-gateway/mcp-tools/<name> and /x402-gateway/recipient-mcp-tools/<name>.\n\nDocs: https://loyalspark.online/api-docs · llms: https://loyalspark.online/llms.txt · agent manifest: https://loyalspark.online/.well-known/agent.json",
     contact: {
       name: "Loyal Spark",
       email: "admin@loyalspark.online",
@@ -344,8 +344,8 @@ const openapi = {
   tags: [
     { name: "Merchant REST", description: "Authenticated merchant REST API (lsk_)" },
     { name: "Recipient REST", description: "Holder REST API (rwk_)" },
-    { name: "Merchant MCP", description: "28 merchant MCP tools (Streamable HTTP JSON-RPC 2.0)" },
-    { name: "Recipient MCP", description: "11 recipient MCP tools (Streamable HTTP JSON-RPC 2.0)" },
+    { name: "Merchant MCP", description: "${MCP_TOOLS.length} merchant MCP tools (Streamable HTTP JSON-RPC 2.0)" },
+    { name: "Recipient MCP", description: "${RECIPIENT_MCP_TOOLS.length} recipient MCP tools (Streamable HTTP JSON-RPC 2.0)" },
   ],
   paths,
 };
@@ -377,7 +377,7 @@ const wellKnown = {
   version: 1,
   name: "Loyal Spark — Onchain Loyalty Protocol on Base",
   description:
-    "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. 70+ paid x402 resources: merchant REST, recipient REST, 28 merchant MCP tools, 11 recipient MCP tools. USDC on Base. Builder Code bc_wdmnog7m.",
+    "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. 70+ paid x402 resources: merchant REST, recipient REST, ${MCP_TOOLS.length} merchant MCP tools, ${RECIPIENT_MCP_TOOLS.length} recipient MCP tools. USDC on Base. Builder Code bc_wdmnog7m.",
   provider: "Loyal Spark",
   website: "https://loyalspark.online",
   documentation: "https://loyalspark.online/for-agents",
