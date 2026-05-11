@@ -121,7 +121,7 @@ curl -H "x-api-key: lsk_YOUR_KEY" \
 | GET | `/tx-receipt` | any | Extract token_address from deploy tx |
 | GET | `/vouchers/status` | public | Check voucher status (no API key) |
 
-### MCP Server Tools (17)
+### MCP Server Tools (32)
 
 | Tool | Scope | Description |
 |------|-------|-------------|
