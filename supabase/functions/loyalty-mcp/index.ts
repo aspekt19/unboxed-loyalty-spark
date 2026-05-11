@@ -1032,6 +1032,74 @@ function createMcpServer(agent: any, authFailure: AuthFailure) {
     },
   });
 
+  mcpServer.tool("revoke_gift_certificate", {
+    description: "Revoke an active gift certificate (status active → revoked). Only the issuing merchant can revoke. Already-redeemed/minted certificates cannot be revoked.",
+    inputSchema: {
+      type: "object" as const,
+      required: ["certificate_id"],
+      properties: {
+        certificate_id: { type: "string", description: "UUID of the certificate from create_gift_certificate / list_gift_certificates" },
+      },
+    },
+    handler: async (args: any) => {
+      const err = authGuard(["write"]);
+      if (err) return T(err);
+      const d = db();
+      const id = String(args.certificate_id || "");
+      if (!id) return T('{"error":"certificate_id required"}');
+      const { data, error } = await d
+        .from("gift_certificates")
+        .update({ status: "revoked" })
+        .eq("id", id)
+        .ilike("merchant_address", agent.ownerAddress)
+        .eq("status", "active")
+        .select("id,code,status")
+        .maybeSingle();
+      if (error) return T(JSON.stringify({ error: error.message }));
+      if (!data) return T('{"error":"Certificate not found, not owned by your merchant, or not in active status"}');
+      return T(JSON.stringify({ ok: true, certificate: data }));
+    },
+  });
+
+  mcpServer.tool("mark_gift_certificate_minted", {
+    description: "After the merchant submits the on-chain mint transaction for a claimed gift certificate, call this to mark it as minted (status pending_mint → redeemed) and store the mint tx hash.",
+    inputSchema: {
+      type: "object" as const,
+      required: ["certificate_id", "transaction_hash"],
+      properties: {
+        certificate_id: { type: "string", description: "UUID of the certificate" },
+        transaction_hash: { type: "string", description: "Base L2 mint transaction hash (0x...)" },
+      },
+    },
+    handler: async (args: any) => {
+      const err = authGuard(["write"]);
+      if (err) return T(err);
+      const d = db();
+      const id = String(args.certificate_id || "");
+      const txHash = String(args.transaction_hash || "");
+      if (!id) return T('{"error":"certificate_id required"}');
+      if (!/^0x[a-fA-F0-9]{64}$/.test(txHash)) return T('{"error":"Invalid transaction_hash"}');
+
+      // Verify ownership before calling RPC
+      const { data: cert } = await d
+        .from("gift_certificates")
+        .select("id,merchant_address,status")
+        .eq("id", id)
+        .ilike("merchant_address", agent.ownerAddress)
+        .maybeSingle();
+      if (!cert) return T('{"error":"Certificate not found or not owned by your merchant"}');
+
+      const { data, error } = await d.rpc("mark_certificate_minted", {
+        p_certificate_id: id,
+        p_tx_hash: txHash,
+      });
+      if (error) return T(JSON.stringify({ error: error.message }));
+      const ok = (data as { ok?: boolean })?.ok === true;
+      if (!ok) return T(JSON.stringify({ error: "mark_failed", detail: data }));
+      return T(JSON.stringify({ ok: true, certificate_id: id, mint_tx_hash: txHash }));
+    },
+  });
+
   return mcpServer;
 }
 
