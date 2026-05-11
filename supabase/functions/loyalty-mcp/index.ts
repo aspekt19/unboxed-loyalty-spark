@@ -928,7 +928,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure) {
       },
     },
     handler: async (args: any) => {
-      const err = authGuard(["write"]);
+      const err = authGuard(["manage_rewards"]);
       if (err) return T(err);
       const d = db();
       const tokenAddress = String(args.token_address || "").toLowerCase();
@@ -1042,7 +1042,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure) {
       },
     },
     handler: async (args: any) => {
-      const err = authGuard(["write"]);
+      const err = authGuard(["manage_rewards"]);
       if (err) return T(err);
       const d = db();
       const id = String(args.certificate_id || "");
@@ -1072,7 +1072,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure) {
       },
     },
     handler: async (args: any) => {
-      const err = authGuard(["write"]);
+      const err = authGuard(["mint"]);
       if (err) return T(err);
       const d = db();
       const id = String(args.certificate_id || "");
