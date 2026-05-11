@@ -30,6 +30,9 @@ export const RECIPIENT_MCP_BAZAAR_TOOLS: readonly RecipientMcpBazaarTool[] = [
   { name: "create_p2p_offer", price: P, description: "Create P2P swap intent", inputSchema: { type: "object", properties: { offer_token_address: { type: "string" }, offer_amount: { type: "number" }, request_token_address: { type: "string" }, request_amount: { type: "number" } }, required: ["offer_token_address", "offer_amount", "request_token_address", "request_amount"] } },
   { name: "accept_p2p_offer", price: P, description: "Accept a P2P offer", inputSchema: { type: "object", properties: { offer_id: { type: "string" } }, required: ["offer_id"] } },
   { name: "cancel_p2p_offer", price: "0.005", description: "Cancel your P2P offer", inputSchema: { type: "object", properties: { offer_id: { type: "string" } }, required: ["offer_id"] } },
+  { name: "lookup_gift_certificate", price: P, description: "Preview a gift certificate by code (LOYAL-XXXXXX) without claiming", inputSchema: { type: "object", properties: { code: { type: "string" } }, required: ["code"] } },
+  { name: "claim_gift_certificate", price: P, description: "Claim an active gift certificate by code; binds it to your wallet (active → pending_mint)", inputSchema: { type: "object", properties: { code: { type: "string" } }, required: ["code"] } },
+  { name: "list_my_gift_certificates", price: P, description: "List gift certificates claimed by your wallet", inputSchema: { type: "object", properties: { status: { type: "string" }, limit: { type: "number" } } } },
 ];
 
 const byName = new Map(RECIPIENT_MCP_BAZAAR_TOOLS.map((t) => [t.name, t] as const));
