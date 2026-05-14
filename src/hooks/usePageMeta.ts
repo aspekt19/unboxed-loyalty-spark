@@ -50,6 +50,18 @@ const routeMeta: Record<string, PageMeta> = {
     title: "Install App - Loyal Spark",
     description: "Install Loyal Spark as a progressive web app on your device for quick access.",
   },
+  "/legal/terms": {
+    title: "Terms of Service - Loyal Spark",
+    description: "Loyal Spark Terms of Service: usage rules for merchants, customers, and AI agents on Base L2.",
+  },
+  "/legal/privacy": {
+    title: "Privacy Policy - Loyal Spark",
+    description: "How Loyal Spark collects, uses, and protects data for merchants, customers, and AI agents.",
+  },
+  "/legal/refund": {
+    title: "Refund Policy - Loyal Spark",
+    description: "Refund and cancellation policy for Loyal Spark plans and paid agent API usage.",
+  },
 };
 
 export function usePageMeta() {
