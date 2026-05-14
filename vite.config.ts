@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from 'vite-plugin-pwa';
+import { sitemapPlugin } from "./scripts/generate-sitemap";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -38,7 +39,8 @@ export default defineConfig(({ mode }) => ({
     }
   },
   plugins: [
-    react(), 
+    react(),
+    sitemapPlugin(),
     mode === "development" && componentTagger(),
     // PWA plugin temporarily disabled to ensure successful builds in the current environment.
   ].filter(Boolean),
