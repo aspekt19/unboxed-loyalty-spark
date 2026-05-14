@@ -11,7 +11,7 @@ interface PageMeta {
 const routeMeta: Record<string, PageMeta> = {
   "/": {
     title: "Loyal Spark - Loyalty Rewards That Grow",
-    description: "Earn loyalty tokens, save automatically, and grow your rewards in DeFi. Onchain loyalty platform with automated investing.",
+    description: "Onchain loyalty protocol on Base L2. Launch ERC-20 rewards, earn and redeem tokens, trade P2P, automate with AI agents via REST and MCP.",
   },
   "/app": {
     title: "App - Loyal Spark",
