@@ -31,7 +31,8 @@ const jsonLd = {
       "offers": {
         "@type": "Offer",
         "price": "0",
-        "priceCurrency": "USD"
+        "priceCurrency": "USD",
+        "description": "Free tier: 200 API calls/month, 1 agent, 1.25% mint fee"
       },
       "creator": {
         "@type": "Organization",
