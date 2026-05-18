@@ -701,7 +701,7 @@ const reward = await fetch(\`\${BASE}/rewards\`, {
         "@type": "WebPage",
         "name": "Agent API Documentation — Loyal Spark",
         "url": "https://loyalspark.online/api-docs",
-        "description": "REST API and MCP Server docs for AI agents on Base L2 — 23 authenticated routes, public voucher status, 28 MCP tools."
+        "description": "REST API and MCP Server docs for AI agents on Base L2 — 17 authenticated routes (12 merchant + 5 recipient), public voucher status, 46 MCP tools (32 merchant + 14 recipient)."
       },
       {
         "@type": "BreadcrumbList",
@@ -755,7 +755,7 @@ const reward = await fetch(\`\${BASE}/rewards\`, {
                   { icon: Network, title: 'Network Effect', desc: 'Tokens are tradeable on the marketplace, convertible between programs, with real utility through vouchers.' },
                   { icon: BadgeCheck, title: 'Trust & Verification', desc: 'Verified protocol with audit history and buyback mechanism — not just another random token.' },
                   { icon: Users, title: 'Ready-Made Audience', desc: 'Access existing merchant customer bases instantly instead of finding token holders from scratch.' },
-                  { icon: TrendingUp, title: 'DeFi Yield', desc: 'Tokens grow via Aave/Compound strategies and Round-Up investing — impossible with a bare ERC-20.' },
+                  { icon: TrendingUp, title: 'Programmatic Distribution', desc: 'Tokens flow through automations, tiers, referrals, and vouchers — programmable utility a bare ERC-20 can\'t deliver.' },
                   { icon: Zap, title: 'Composability', desc: 'Program → tiers → referrals → auto-mint → analytics. All through REST API or MCP Server.' },
                 ].map(({ icon: Icon, title, desc }) => (
                   <div key={title} className="flex items-start gap-3 p-3 rounded-lg border bg-card">
