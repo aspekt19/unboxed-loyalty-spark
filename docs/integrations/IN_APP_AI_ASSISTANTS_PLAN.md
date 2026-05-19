@@ -1,130 +1,150 @@
 # In-app AI Assistants (OpenServ-backed) — Research & Implementation Plan
 
 > **Status:** Research only. No code changes yet. Revisit when ready to build.
-> **Why OpenServ:** chosen primarily for cost — OpenServ runtime / per-request pricing is significantly lower than alternatives (OpenAI Assistants, dedicated AI agent platforms), and these costs are borne by the protocol, not by merchants.
+> **Architecture decision:** go **straight to Option B** — OpenServ-hosted agents as the "brain" from day one. The Lovable AI Gateway fallback (Option A) is intentionally skipped to avoid throwaway code and to lock in OpenServ's lower per-request cost from the start. These costs are borne by the protocol, not by merchants.
 
 ## TL;DR — Is it possible?
 
-**Yes, technically possible**, with one important caveat: OpenServ is a **backend agent orchestrator** (our CEO/SEO/Growth/Analyst team already runs on it), **not a drop-in chat widget**. There is no ready-made "embed this component" UI from OpenServ. So the integration means we build our own chat / voice surface inside Lovable, and OpenServ acts as the "brain" via HTTP API.
-
-Alternative (simpler) path: **Lovable AI Gateway directly** + our existing MCP as tools, without OpenServ runtime at all. Both options are described below.
-
----
+**Yes, technically possible.** OpenServ is a **backend agent orchestrator** (our CEO/SEO/Growth/Analyst team already runs on it), **not a drop-in chat widget**. There is no ready-made "embed this component" UI from OpenServ, so the integration means we build our own chat / voice surface inside Lovable, and **a new hosted OpenServ agent (`Merchant Concierge` / `Shopper Concierge`) acts as the brain** via HTTP, calling our MCP and REST tools.
 
 ## What we already have (foundation)
 
-- **MCP servers** (28 merchant tools + recipient tools) — `supabase/functions/loyalty-mcp` and `recipient-loyalty-mcp`. This is a **ready-made function-calling tool set** for any LLM.
+- **MCP servers** (28+ merchant tools, recipient tools) — `supabase/functions/loyalty-mcp` and `recipient-loyalty-mcp`. Ready-made function-calling toolset for any LLM/agent. Already integrated with OpenServ via `mcp-http-api-key.ts`.
 - **REST agent-api / recipient-api** — same actions over HTTP with `lsk_` / `rwk_` keys.
-- **OpenServ team** (CEO / SEO / Growth / Analyst) — already knows how to call our MCP via `mcp-http-api-key.ts`. But these are **batch jobs**, not realtime chat.
+- **OpenServ team** (CEO / SEO / Growth / Analyst) — already calls our MCP. Today they run as **batch jobs** (reports), but the same runtime supports interactive request/response, so we can add two new realtime agents to the same stack.
 - **Privy auth** (humans) + **CDP MPC wallets** (agents) — identity ready.
-- **Lovable AI Gateway** (`LOVABLE_API_KEY`) — access to Gemini / GPT-5 without a separate key.
+- **`mcp-http-api-key.ts`** — already supports both `x-api-key` and `Authorization: Bearer` (needed because OpenServ doesn't always forward custom headers).
 
-## What needs to be built
+## Target architecture (Option B only)
 
-### Architectural options
-
-**Option A — Lovable AI + MCP-as-tools (recommended to start with)**
 ```
-[Chat UI in Lovable] → [edge function chat-assistant] → [Lovable AI Gateway + streamText]
-                                                              │
-                                                              └─ tools = our own MCP tools
+[Chat UI in Lovable] ──Privy JWT──▶ [edge function chat-bridge]
+                                            │
+                                            │ HTTP (SSE if available, else chunked polling)
+                                            ▼
+                                  [OpenServ Agent (hosted)]
+                                  • Merchant Concierge
+                                  • Shopper Concierge
+                                            │
+                            ┌───────────────┼────────────────┐
+                            ▼               ▼                ▼
+                       loyalty-mcp   recipient-mcp   delegate → CEO/Analyst/Growth
+                       (lsk_ scoped) (rwk_ scoped)   (heavy reports, async)
 ```
-- Pros: 1 edge function, native streaming, low latency, no external runtime, cheap on gateway.
-- Cons: no built-in "agent team" — this is one assistant with tools.
 
-**Option B — OpenServ runtime on top (the user's preferred long-term path due to cost)**
-```
-[Chat UI] → [edge function bridge] → [OpenServ Agent (hosted)] → MCP/REST Loyal Spark
-```
-- Pros: can delegate between our agents (Merchant Concierge → Analyst → Growth) for complex tasks. OpenServ stores context and logs. **Costs are noticeably lower than OpenAI Assistants or commercial agent platforms** — the deciding factor here since the protocol pays.
-- Cons: needs a hosted agent (our OpenServ stack is not self-hosted in this repo today), higher latency, harder to stream tokens to UI.
+### Why Option B (not A)
 
-**Recommendation:** start with **A** as a 1–2 day MVP to validate UX and tool-calling, then migrate to **B** for production once OpenServ-hosted agents are deployed. Option A's code (edge function + UI) is reusable — only the model call layer swaps.
+- **Cost at scale**: OpenServ per-request pricing is materially cheaper than running every turn through the Lovable AI Gateway once chat volume grows. The protocol pays, so cost is the deciding factor.
+- **Reuse**: OpenServ already knows our MCP, auth, and rate limits. No second LLM stack to maintain.
+- **Multi-agent delegation**: "Show me last month's churn risks" → Concierge can delegate to **Analyst** (already built) instead of re-implementing the analysis in the chat agent.
+- **Avoid throwaway code**: building Option A first and migrating later would mean replacing the model-call layer, retesting all tool flows, and migrating message persistence. Going straight to B eliminates that churn.
 
-### Voice
+### Trade-offs we accept
 
-- **Speech-to-text:** browser `webkitSpeechRecognition` for free (Chrome / Safari / mobile). For higher quality, OpenAI Whisper through an external provider.
-- **Text-to-speech:** `SpeechSynthesisUtterance` (native browser, free, instant) for MVP. For production-grade voice — **ElevenLabs** (separate API key, needs a secret) or OpenAI TTS.
-- Realtime voice chat (like ChatGPT Voice Mode) requires WebRTC + a Realtime API → separate large project, **not for MVP**.
+- **Higher first-token latency** than direct Gateway streaming. Mitigation: skeleton + "thinking…" indicator from the moment `sendMessage` fires (per chat-agent UI contract).
+- **Streaming depends on OpenServ**: if the hosted agent doesn't expose SSE for chat responses, the bridge falls back to chunked polling. The UI contract is the same either way (AI SDK `useChat` + `parts`).
+- **Hard dependency on OpenServ availability**: if it's down, the assistant is down. Mitigation: a small in-edge-function **kill-switch** that hides the chat UI ("Assistant temporarily unavailable") instead of erroring inside the chat.
+- **Prerequisite work**: a new OpenServ-hosted agent (Merchant Concierge / Shopper Concierge) must be deployed before Phase 1 ships. This is **blocking** for Phase 1.
+
+## Voice
+
+- **Speech-to-text:** browser `webkitSpeechRecognition` for free (Chrome/Safari/mobile). For higher quality later, Whisper via an external provider.
+- **Text-to-speech:** `SpeechSynthesisUtterance` (native browser, free, instant) for MVP. Production-grade voice → **ElevenLabs** (separate secret) or OpenAI TTS.
+- Realtime voice-to-voice (WebRTC + Realtime API) is **out of scope** for this plan.
 
 ---
 
 ## Two personas
 
 ### 1. Merchant Concierge (for sellers)
-- Context: `merchant_id`, `wallet`, active programs, last 30 days of metrics.
-- Scenarios: "create a program with 5% cashback", "how many new customers today", "launch a campaign for the VIP tier", "issue 50 gift certificates of $10".
-- Tools: subset of MCP (`create_loyalty_program`, `mint_tokens`, `list_customers`, `create_campaign`, `issue_gift_certificate_batch`, `get_platform_stats` for admins).
-- Permissions: tool execute requires **confirmation** for money-actions (`needsApproval: true`) — modal "Confirm mint 1000 LOYAL → 0xAbc...?".
+- **OpenServ agent**: new `merchant-concierge` agent, system prompt scoped to a single merchant context (`merchant_id`, `wallet`, active programs, last 30 days of metrics).
+- **Scenarios**: "create a program with 5% cashback", "how many new customers today", "launch a campaign for the VIP tier", "issue 50 gift certificates of $10".
+- **Tools**: subset of merchant MCP (`create_loyalty_program`, `mint_loyalty_tokens`, `list_customers`, `create_personalized_offer`, `issue_gift_certificate_batch`, `get_platform_stats` for admins).
+- **Delegation**: can call `delegate_to_analyst` / `delegate_to_growth` for heavy/async work that returns as an `agent_reports` row.
+- **Permissions**: money-actions require **`needsApproval: true`** — modal "Confirm mint 1000 LOYAL → 0xAbc…?".
 
 ### 2. Shopper Assistant (for customers)
-- Context: `wallet`, balances across all tokens, available rewards, tiers.
-- Scenarios: "how many points do I have at Starbucks", "what rewards can I redeem right now", "find merchants with > 10% discount nearby", "redeem my 500 points for a voucher".
-- Tools: recipient MCP (`get_balance`, `list_rewards`, `redeem_reward`, `list_p2p_offers`, `accept_p2p_offer`).
-- Permissions: redeem / accept require confirmation + signature (Privy embedded wallet → sync gesture, per our Core memory rule).
+- **OpenServ agent**: new `shopper-concierge` agent, scoped to one `wallet`.
+- **Scenarios**: "how many points do I have at Starbucks", "what rewards can I redeem right now", "find merchants with > 10% discount nearby", "redeem my 500 points for a voucher".
+- **Tools**: recipient MCP (`get_balance`, `list_rewards`, `redeem_reward`, `list_p2p_offers`, `accept_p2p_offer`, `prepare_loyalty_token_transfer`).
+- **Permissions**: redeem / accept / transfer require confirmation + signature (Privy embedded wallet → **sync gesture**, per Core memory rule).
 
 ---
 
 ## Implementation plan (when greenlit)
 
+### Phase 0 — OpenServ agent provisioning (BLOCKING, ≈ 1–2 days infra)
+Outside this repo (OpenServ stack):
+1. Create two new hosted agents: `merchant-concierge`, `shopper-concierge`.
+2. Reuse existing MCP wiring (`mcp-http-api-key.ts` — Bearer-compatible).
+3. System prompts: role scope, refusal rules, tool whitelist, language = caller's locale.
+4. Expose a single inbound endpoint per agent: `POST /chat` accepting `{ session_id, messages[], context: { wallet, merchant_id?, role } }` returning either SSE or JSON.
+5. Issue a service `lsk_` (and `rwk_` for shopper) keypair scoped to "concierge" usage, stored as Lovable secret `OPENSERV_CONCIERGE_API_KEY` (+ `OPENSERV_CONCIERGE_URL`).
+
 ### Phase 1 — Merchant Concierge MVP (≈ 2–3 days)
-1. `supabase/functions/chat-assistant/index.ts` — streaming endpoint:
-   - AI SDK + Lovable Gateway (`openai/gpt-5-mini` or `google/gemini-3-flash-preview`).
-   - System prompt with role + scope restrictions.
-   - Tools = whitelist of MCP merchant tools (via `tool-deferral` pattern, since we have 28+ tools — otherwise context bloats).
-   - Auth: Privy JWT → derive `wallet_address` → inject as context into every tool call.
-2. UI: new page `/merchant/assistant` or a floating button inside `MerchantPanel`:
-   - AI Elements (`Conversation`, `Message`, `PromptInput`, `Tool`, `Shimmer`).
-   - History in **localStorage** (per our rule — one conversation per merchant, not threads).
+1. **Edge function `supabase/functions/chat-bridge/index.ts`** (thin bridge, no LLM call locally):
+   - Verifies Privy JWT (PATCH workaround like `agent-reports`).
+   - Resolves caller → `wallet_address` → `merchant_id` (if any) → role.
+   - Forwards `messages[]` + `context` to OpenServ `merchant-concierge` `/chat` with `Authorization: Bearer ${OPENSERV_CONCIERGE_API_KEY}`.
+   - **Streaming**: passes through SSE when OpenServ supports it; otherwise polls and emits AI SDK UI message stream chunks via `toUIMessageStreamResponse`.
+   - **Kill-switch**: if OpenServ returns 5xx or times out (>8s for first byte), responds 503 with `{ disabled: true }` → UI hides the input and shows "Assistant temporarily unavailable".
+2. **UI** (`/merchant/assistant` page + floating button in `MerchantPanel`):
+   - AI SDK UI: `useChat` + `DefaultChatTransport`, render `message.parts` (text + tool + error).
+   - AI Elements: `Conversation`, `Message`, `PromptInput` (with `PromptInputTextarea` + `PromptInputFooter` + `PromptInputSubmit` inside footer), `Tool`, `Shimmer`.
+   - **Optimistic UI**: user message + typing indicator visible from `status === 'submitted'`, before any token streams.
+   - History in **localStorage** (one conversation per merchant, per Core memory rule).
    - Microphone button → `webkitSpeechRecognition` → text into input → submit.
-   - "Speak responses" toggle → `SpeechSynthesis` reads responses aloud.
-3. Tool approval UI: for destructive tools, show a "Confirm" card with the parameters before execution.
+   - "Speak responses" toggle → `SpeechSynthesis` reads completed assistant turns.
+3. **Tool approval UI**: destructive tool parts (`state === 'input-available'` with `needsApproval`) render a "Confirm" card showing parameters. On approve → resume; on reject → reply "user declined".
+4. **Sync wallet gestures**: `mint_loyalty_tokens` / `redeem_reward` tools return **prepared calldata**. UI shows a "Sign" button → user clicks → `sendTransaction` in the same React event handler.
 
 ### Phase 2 — Shopper Assistant (≈ 1–2 days)
-- Same endpoint, switching system prompt + tool whitelist by caller role (Privy claim or query param `?role=shopper`).
-- Embed on `/customer` page as a bottom dock-chat on mobile / sidebar on desktop.
+- Same `chat-bridge` endpoint; routes to `shopper-concierge` agent based on `role` (from Privy claim or query param `?role=shopper`).
+- Embed on `/customer` page: bottom dock-chat on mobile, sidebar on desktop.
+- Same tool-approval pattern; recipient MCP whitelist.
 
-### Phase 3 — Migrate "brain" to OpenServ (cost-driven)
-- Replace the direct Lovable Gateway call in `chat-assistant` with a thin HTTP bridge to a hosted OpenServ agent (Merchant Concierge / Shopper Concierge).
-- The OpenServ agent owns the tool list and can **delegate** to existing CEO / Analyst / Growth agents for heavy reports.
-- Streaming: if OpenServ doesn't expose SSE for chat responses, fall back to chunked polling with a "thinking…" indicator.
-- This is the **target architecture** because OpenServ usage is cheaper than running everything through the Lovable Gateway when chat volume scales.
+### Phase 3 — Multi-agent delegation polish (≈ 1 day)
+- Add `delegate_to_analyst` / `delegate_to_growth` tools inside the Concierge agent prompts.
+- UI: when Concierge delegates, render a "Working with Analyst…" tool part; the eventual report shows up as a normal `agent_reports` row + a chat link.
 
 ### Phase 4 — Production voice (optional)
-- Add ElevenLabs (requires `ELEVENLABS_API_KEY` secret) for premium voice.
+- Add ElevenLabs (requires `ELEVENLABS_API_KEY` secret) for premium TTS.
 - Cache frequent responses.
-- Optionally — Realtime API (WebRTC) for voice-to-voice as a separate feature.
+- Realtime voice-to-voice (WebRTC) — separate project.
 
 ---
 
-## Technical details (for the engineer, not for the deck)
+## Technical details (engineer-facing)
 
-- **Tool deferral is mandatory**: 28 MCP tools × JSON schema = ~15–20k input tokens per turn. Implement the `tool_search` + `tool_invoke` meta-pattern (see ai-sdk-tool-deferral knowledge).
-- **MCP loading**: we don't need a real MCP-over-HTTP client — we own the code, so we import tool descriptors directly from `_shared/mcp-bazaar-tools.ts` and wrap them in AI SDK `tool()`. Cheaper and faster.
-- **Synchronous wallet gestures** (our Core memory): `mint_tokens` / `redeem_reward` tools cannot sign tx from an edge function for merchants with Privy embedded wallets. Solution: the tool returns **prepared calldata** + UI shows a "Sign" button → user clicks (sync gesture) → `sendTransaction`. For CDP-wallet agents — sign server-side.
-- **Privacy context**: shopper chat must **not** see data of other users. All DB queries in tools go through an RLS-aware service with `lower(wallet) = lower($caller)`.
-- **Rate limiting**: new counter `chat_messages_per_day` in `agent_rate_limit.ts` to avoid bleeding the gateway / OpenServ balance.
-- **Persistence**: localStorage for MVP. If cross-device is wanted later — add a `chat_conversations` + `chat_messages` table with RLS by `user_id` / `wallet`.
+- **No tool deferral needed in-app**: tools live inside the OpenServ agent, not in our edge function — input-token bloat is OpenServ's problem to solve, not ours. We just forward messages.
+- **MCP transport**: OpenServ already uses our MCP over HTTP with Bearer auth (`mcp-http-api-key.ts`). No new transport work.
+- **Privacy / RLS**: `chat-bridge` injects the verified caller `wallet` into the OpenServ `context`. The agent's tool calls go through MCP, which enforces `lower(wallet) = lower($caller)` server-side. **Never trust wallet from the LLM args.**
+- **Rate limiting**: new counter `chat_messages_per_day` in `agent_rate_limit.ts`, keyed by `wallet`. Protects both Lovable edge quota and the OpenServ bill.
+- **Persistence**: localStorage for MVP. If cross-device wanted later → tables `chat_conversations` + `chat_messages` with RLS by `user_id` / `wallet` (validate with `validateUIMessages` on restore).
+- **Streaming contract**: bridge always emits the AI SDK UI message stream format, regardless of whether OpenServ gave us SSE or JSON. UI never sees the difference.
+- **Kill-switch + health**: `chat-bridge` keeps a 30s in-memory health flag on OpenServ. On 3 consecutive failures → hide chat globally for 5 minutes.
 
 ## Cost
 
-- **Lovable AI** (Phase 1–2): ~$0.0001–0.001 per turn on flash models. 1000 active merchants × 20 turns/day ≈ $20–100/month.
-- **OpenServ** (Phase 3, the target): pricing is the **reason this path was chosen** — materially cheaper than OpenAI Assistants or other agent platforms once volume grows. Exact monthly cost depends on the OpenServ plan; recheck before migration.
+- **OpenServ** (Phase 1+): per-request pricing, **the reason this path was chosen**. Materially cheaper than OpenAI Assistants or running every turn through Lovable AI Gateway at scale. Exact monthly cost depends on the OpenServ plan; recheck before launch and budget against `chat_messages_per_day` cap.
+- **Lovable AI Gateway**: ~$0 in this architecture — we don't call it from `chat-bridge`. (Still used by other parts of the app.)
 - **ElevenLabs** (Phase 4, optional): from $5/month starter.
 
 ## Risks
 
-- **Argument hallucination**: the model may invent a `token_address` or `customer_wallet`. Mitigation: tool execute validates with Zod + checks ownership in DB before executing.
-- **Privy session inside edge function**: must verify Privy JWT in `chat-assistant` the same way `agent-reports` already does (PATCH workaround).
-- **Voice on iOS Safari**: `webkitSpeechRecognition` does not work on iOS Safari (only Chrome iOS, and even there with limits). On native Capacitor builds, use a plugin (`@capacitor-community/speech-recognition`).
-- **OpenServ availability / latency**: if OpenServ goes down or is slow, the assistant is unusable. Fallback to Lovable Gateway as automatic degradation.
+- **OpenServ availability/latency**: single point of failure for chat. Mitigated by kill-switch + clear "temporarily unavailable" UI. No silent broken state.
+- **First-token latency higher than direct Gateway streaming**: mitigated by aggressive optimistic UI (loader from `submitted`, not from first token).
+- **Argument hallucination by the agent**: MCP tools validate with Zod + check DB ownership before executing. Wallet is **never** taken from LLM args — only from verified Privy JWT.
+- **Privy session inside edge function**: must verify JWT the same way `agent-reports` does (PATCH workaround). Reuse that code path.
+- **Voice on iOS Safari**: `webkitSpeechRecognition` doesn't work there. On native Capacitor builds, use `@capacitor-community/speech-recognition`.
+- **Phase 0 is blocking**: no OpenServ Concierge agent → no Phase 1. Coordinate timeline with OpenServ stack work.
 
-## What we are NOT doing now
+## What we are NOT doing
 
-- No code changes — this is a research plan.
-- Not creating the `chat-assistant` edge function.
-- Not touching OpenServ agents CEO / SEO / Growth / Analyst — they keep running in the background.
+- **Not building Option A** (Lovable AI Gateway + local tool-deferral). Decision: skip to avoid throwaway code.
+- No code changes yet — this is a research plan.
+- Not touching existing OpenServ agents (CEO / SEO / Growth / Analyst) — they keep running in the background. Concierge agents are **new** and additive.
 
 ---
 
-**Decision when revisiting:** start Phase 1 (Merchant Concierge via Lovable AI + our MCP tools) to validate UX, then transition the brain to OpenServ in Phase 3 for sustainable cost.
+**Decision when revisiting:** kick off **Phase 0** (OpenServ Concierge agent provisioning) first; in parallel, start UI scaffolding in Phase 1 against a mocked `chat-bridge` so frontend and infra land together.
