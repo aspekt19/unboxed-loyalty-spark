@@ -2389,6 +2389,14 @@ export type Database = {
         Returns: Database["public"]["Enums"]["merchant_employee_role"]
       }
       get_my_identity_summary: { Args: never; Returns: Json }
+      get_public_payment_info: {
+        Args: never
+        Returns: {
+          admin_wallet_address: string
+          subscription_wallet_address: string
+          usdc_price: number
+        }[]
+      }
       has_premium_access: {
         Args: { p_wallet_address: string }
         Returns: boolean
