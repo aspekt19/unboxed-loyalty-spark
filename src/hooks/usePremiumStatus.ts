@@ -29,13 +29,9 @@ export const usePremiumStatus = () => {
   const { data: paymentSettings } = useQuery({
     queryKey: ['payment-settings'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('payment_settings')
-        .select('*')
-        .single();
-
+      const { data, error } = await supabase.rpc('get_public_payment_info');
       if (error) throw error;
-      return data;
+      return Array.isArray(data) ? data[0] : data;
     },
   });
 
