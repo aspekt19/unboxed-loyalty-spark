@@ -192,7 +192,7 @@ function buildDiscoveryDocument(req: Request): Record<string, unknown> {
   const items = buildAllItems(req);
   const name = "Loyal Spark — Onchain Loyalty Protocol on Base";
   const description =
-    "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create ERC-20 loyalty programs, mint tokens to customer wallets, manage rewards catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics — all via paid x402 endpoints (USDC on Base). Includes 70+ resources: merchant REST (agent-api), recipient REST (recipient-api), 28 merchant MCP tools and 11 recipient MCP tools. Builder Code bc_wdmnog7m.";
+    "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create ERC-20 loyalty programs, mint tokens to customer wallets, manage rewards catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics — all via paid x402 endpoints (USDC on Base). Includes 77 resources: merchant REST (agent-api), recipient REST (recipient-api), 32 merchant MCP tools and 14 recipient MCP tools. Builder Code bc_wdmnog7m.";
   return {
     x402Version: 1,
     name,
