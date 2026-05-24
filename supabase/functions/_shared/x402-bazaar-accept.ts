@@ -575,7 +575,10 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
   // REST — agent-api and recipient-api (same gateway path patterns)
   const method = getRestMethod(p.resource);
   const keyHint = restApiKeyHint(p.resource);
-  const inputSchema = getRestInputSchema(method);
+  // Canonical per-route JSON Schema — reused for both `outputSchema.input.inputSchema`
+  // (x402 v2 outputSchema) and `extensions.bazaar.info.inputSchema` (CDP Bazaar discovery).
+  const inputSchema = getRestInfoInputSchema(method, p.resource);
+
   const accept: Record<string, unknown> = {
     scheme: "exact",
     network: p.network,
