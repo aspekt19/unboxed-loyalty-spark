@@ -27,29 +27,33 @@ function isLovablePreviewHost(): boolean {
   return host.endsWith('.lovableproject.com') || host.startsWith('id-preview--');
 }
 
-export function usePrivySafe(): PrivySafeResult {
-  const isFarcaster = isFarcasterContext();
+/**
+ * Decide ONCE per module load which implementation to expose. This keeps
+ * Rules of Hooks intact — every render of a component using `usePrivySafe`
+ * calls the same hook implementation, never a conditional one.
+ *
+ * - Farcaster / Lovable preview → no Privy provider in the tree → noop.
+ * - Regular browser → real Privy hooks.
+ */
+const SHOULD_USE_NOOP =
+  typeof window !== 'undefined' && (isFarcasterContext() || isLovablePreviewHost());
 
-  if (isFarcaster || isLovablePreviewHost()) {
-    return noopResult;
-  }
-
-  try {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const privy = usePrivyOriginal();
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const { connectWallet } = useConnectWalletOriginal();
-
-    return {
-      login: privy.login,
-      logout: privy.logout,
-      authenticated: privy.authenticated,
-      user: privy.user,
-      ready: privy.ready,
-      getAccessToken: privy.getAccessToken,
-      connectWallet,
-    };
-  } catch {
-    return noopResult;
-  }
+function usePrivyReal(): PrivySafeResult {
+  const privy = usePrivyOriginal();
+  const { connectWallet } = useConnectWalletOriginal();
+  return {
+    login: privy.login,
+    logout: privy.logout,
+    authenticated: privy.authenticated,
+    user: privy.user,
+    ready: privy.ready,
+    getAccessToken: privy.getAccessToken,
+    connectWallet,
+  };
 }
+
+function usePrivyNoop(): PrivySafeResult {
+  return noopResult;
+}
+
+export const usePrivySafe: () => PrivySafeResult = SHOULD_USE_NOOP ? usePrivyNoop : usePrivyReal;
