@@ -202,6 +202,20 @@
         "scope": "trade",
         "description": "Cancel your own P2P offer. Returns escrow contract calldata for cancelOffer.",
         "body": { "offer_id": "uuid" }
+      },
+      {
+        "method": "GET",
+        "path": "/merchant-profile",
+        "scope": "read",
+        "description": "Get merchant business profile (business_name, category, branding) for the agent's bound wallet.",
+        "query_params": { "use_agent_wallet": "true | false" }
+      },
+      {
+        "method": "POST",
+        "path": "/merchant-profile",
+        "scope": "mint or create_program",
+        "description": "Upsert merchant business profile (business_name, category, logo_url, description, website, location). Also supported via PUT.",
+        "body": { "business_name": "Coffee Co", "category": "cafe", "logo_url": "https://...", "description": "...", "website": "https://...", "location": "Berlin", "use_agent_wallet": false }
       }
     ]
   },
