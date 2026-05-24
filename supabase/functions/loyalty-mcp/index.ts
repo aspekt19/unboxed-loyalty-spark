@@ -346,7 +346,8 @@ function createMcpServer(agent: any, authFailure: AuthFailure) {
     description: "List active token trading offers on the marketplace",
     inputSchema: { type: "object" as const, properties: { status: { type: "string", description: "Filter: active/completed/cancelled" }, limit: { type: "number", description: "Max results (1-100)" } } },
     handler: async ({ status, limit }: any) => {
-      const err = authGuard();
+      // Parity with REST GET /offers: 'read' or 'trade' scope is sufficient.
+      const err = authGuard(["read", "trade"]);
       if (err) return T(err);
       const { data, error } = await db().from("marketplace_offers").select("*").eq("status", status || "active").order("created_at", { ascending: false }).limit(Math.min(limit || 50, 100));
       if (error) return T(JSON.stringify({ error: error.message }));
