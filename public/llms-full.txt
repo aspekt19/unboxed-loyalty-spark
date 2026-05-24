@@ -69,6 +69,9 @@ Base URL: https://api.loyalspark.online/agent-api
 | /redeem-reward | $0.01 | read | Redeem reward: verify tx + create voucher |
 | /vouchers/use | $0.005 | manage_rewards | Mark voucher as used |
 | /cancel-offer | $0.005 | trade | Cancel your P2P offer |
+| /merchant-profile (GET) | $0.001 | read | Read merchant profile |
+| /merchant-profile (POST) | $0.005 | manage_rewards | Create merchant profile |
+| /merchant-profile (PUT) | $0.005 | manage_rewards | Update merchant profile |
 
 ### Example: Mint Tokens
 

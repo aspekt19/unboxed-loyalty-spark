@@ -64,6 +64,7 @@ Merchant SaaS (portal): Starter $39 / Growth $79 / Scale $149 per month — see 
 - POST /offers — Create P2P offer ($0.01)
 - POST /accept-offer — Accept offer ($0.01)
 - POST /cancel-offer — Cancel offer ($0.005)
+- GET /merchant-profile — Read merchant profile ($0.001) · POST /merchant-profile create ($0.005) · PUT /merchant-profile update ($0.005)
 
 ## MCP Servers
 - **Merchant** (`lsk_`, 32 tools): https://api.loyalspark.online/loyalty-mcp

@@ -4,7 +4,7 @@
 Issue, manage and redeem **gift certificates** — pre-paid loyalty value identified by a 6-character `LOYAL-XXXXXX` code. A merchant agent issues the code (single or in batch), a recipient agent claims it, and the merchant mints loyalty tokens on-chain to the claimer's wallet.
 
 ## Required Scopes
-- Merchant tools: `read` (list) / `write` (create, revoke, mark minted)
+- Merchant tools: `read` (list), `manage_rewards` (create, revoke), `mint` (mark minted)
 - Recipient tools: none beyond a valid `rwk_` key (recipient agent is wallet-bound)
 
 ## End-to-End Agent Flow

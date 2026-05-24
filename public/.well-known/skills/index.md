@@ -32,7 +32,7 @@ Scopes mirror the REST API: program lifecycle accepts **`mint` or `create_progra
 | [09-vouchers.md](./09-vouchers.md) | Voucher Management | `read`, `manage_rewards` |
 | [10-server-wallets.md](./10-server-wallets.md) | Server Wallets (CDP MPC) | — |
 | [11-earn-points.md](./11-earn-points.md) | Earn Points (Cashback) | `mint` |
-| [12-gift-certificates.md](./12-gift-certificates.md) | Gift Certificates (LOYAL-XXXXXX) | `read`, `write` |
+| [12-gift-certificates.md](./12-gift-certificates.md) | Gift Certificates (LOYAL-XXXXXX) | `read`, `manage_rewards`, `mint` |
 
 ## API Endpoints
 
