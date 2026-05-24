@@ -177,23 +177,6 @@ Base URL: https://api.loyalspark.online/recipient-api · Auth: `x-api-key: rwk_�
 | POST | /accept-offer | $0.01 | Accept a P2P offer (atomic swap) |
 | POST | /cancel-offer | $0.005 | Cancel your own P2P offer |
 
-## Recipient MCP Server — 11 Tools
-
-URL: https://api.loyalspark.online/recipient-loyalty-mcp · Transport: Streamable HTTP · Auth: `x-api-key: rwk_…`
-
-1. `get_recipient_profile` — Wallet identity bound to this `rwk_` key
-2. `list_my_loyalty_balances` — All loyalty balances and tiers
-3. `get_my_loyalty_balance` — One-program balance
-4. `prepare_loyalty_token_transfer` — ERC-20 transfer calldata ($0.005)
-5. `list_rewards_for_program` — Rewards available to redeem
-6. `list_my_vouchers` — Voucher inventory
-7. `redeem_my_reward` — Redeem reward (verifies tx hash, mints voucher)
-8. `list_p2p_offers` — Active marketplace offers ($0.001)
-9. `create_p2p_offer` — Lock tokens into escrow
-10. `accept_p2p_offer` — Atomic swap with escrow contract
-11. `cancel_p2p_offer` — Cancel and unlock your tokens ($0.005)
-
-Default price: $0.01 per call (matches merchant MCP). Same Bazaar metadata exposed in 402 challenges via `recipient-mcp-tools/<name>` x402 corridor.
 
 
 ## Payment Gateways

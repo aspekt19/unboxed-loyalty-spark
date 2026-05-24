@@ -99,6 +99,9 @@ function txHashFromFacilitatorSettle(result: Record<string, unknown>): string | 
 }
 
 // --- Per-request pricing (USD) — same as MPP ---
+// SECURITY: Every agent-api route the gateway proxies MUST appear in this map.
+// Unmapped routes are rejected with 404 in the request handler (no free fall-through),
+// otherwise a missing entry would let callers bypass x402 payment for merchant data.
 const PRICING: Record<string, Record<string, string>> = {
   GET: {
     me: "0",
@@ -110,6 +113,8 @@ const PRICING: Record<string, Record<string, string>> = {
     "vouchers/status": "0",
     analytics: "0.005",
     offers: "0.001",
+    "tx-receipt": "0",
+    "merchant-profile": "0.001",
   },
   POST: {
     programs: "0.05",
@@ -126,6 +131,10 @@ const PRICING: Record<string, Record<string, string>> = {
     offers: "0.01",
     "accept-offer": "0.01",
     "cancel-offer": "0.005",
+    "merchant-profile": "0.005",
+  },
+  PUT: {
+    "merchant-profile": "0.005",
   },
 };
 
@@ -360,20 +369,23 @@ Deno.serve(async (req) => {
     const price = getPrice(req.method, resource);
 
     if (price === null) {
-      if (resource.startsWith("recipient-api/") || resource.startsWith("recipient-mcp-tools/")) {
-        return new Response(
-          JSON.stringify({
-            error: "Unknown or unsupported recipient route",
-            resource,
-            docs: "See RECIPIENT_REST_ROUTE_USD / recipient-mcp-bazaar-tools in repo",
-          }),
-          {
-            status: 404,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          },
-        );
-      }
-      return await proxyToAgentApi(req);
+      // SECURITY: never silently proxy unmapped routes for free. Every paid resource
+      // must have an explicit entry in PRICING / RECIPIENT_REST_ROUTE_USD / MCP tool
+      // tables, otherwise a missing-entry bug becomes a payment bypass.
+      return new Response(
+        JSON.stringify({
+          error: "Unknown or unsupported route",
+          resource,
+          method: req.method,
+          docs: "https://loyalspark.online/.well-known/agent.json",
+          hint:
+            "If you believe this route should be paid-discoverable, file an issue or extend PRICING/RECIPIENT_REST_ROUTE_USD/MCP bazaar tables.",
+        }),
+        {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     if (price === "0") {
