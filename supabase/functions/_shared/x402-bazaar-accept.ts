@@ -245,162 +245,258 @@ const POSITIVE_INT_STRING = {
 } as const;
 
 const REST_INPUT_SCHEMAS: Record<string, Record<string, unknown>> = {
-  // Merchant REST (agent-api) — GET
+  // ===== Merchant REST (agent-api) — field names match supabase/functions/agent-api/index.ts =====
+
+  // GET
   "GET me": { type: "object", additionalProperties: false, properties: {} },
-  "GET programs": {
-    type: "object", additionalProperties: false,
-    properties: { token: HEX_ADDRESS_SCHEMA },
-  },
+  "GET programs": { type: "object", additionalProperties: false, properties: {} },
   "GET rewards": {
     type: "object", additionalProperties: false,
-    properties: { token: HEX_ADDRESS_SCHEMA },
+    properties: { token_address: HEX_ADDRESS_SCHEMA },
   },
   "GET offers": {
     type: "object", additionalProperties: false,
-    properties: { token: HEX_ADDRESS_SCHEMA, status: { type: "string", enum: ["active", "completed", "cancelled"] } },
+    properties: { token_address: HEX_ADDRESS_SCHEMA },
   },
   "GET vouchers": {
     type: "object", additionalProperties: false,
-    properties: { token: HEX_ADDRESS_SCHEMA, status: { type: "string" } },
+    properties: {
+      token_address: HEX_ADDRESS_SCHEMA,
+      status: { type: "string", enum: ["active", "used", "expired", "cancelled"] },
+    },
   },
   "GET vouchers/status": {
     type: "object", additionalProperties: false, required: ["code"],
-    properties: { code: { type: "string", description: "Voucher code." } },
+    properties: { code: { type: "string", description: "Voucher code (LOYAL-XXXX...)." } },
   },
   "GET balance": {
     type: "object", additionalProperties: false,
-    properties: { token: HEX_ADDRESS_SCHEMA, customer: HEX_ADDRESS_SCHEMA },
+    required: ["token_address", "customer_address"],
+    properties: { token_address: HEX_ADDRESS_SCHEMA, customer_address: HEX_ADDRESS_SCHEMA },
   },
   "GET customers": {
-    type: "object", additionalProperties: false,
-    properties: { token: HEX_ADDRESS_SCHEMA, limit: POSITIVE_INT_STRING, offset: POSITIVE_INT_STRING },
+    type: "object", additionalProperties: false, required: ["token_address"],
+    properties: { token_address: HEX_ADDRESS_SCHEMA },
   },
-  "GET analytics": {
+  "GET analytics": { type: "object", additionalProperties: false, properties: {} },
+  "GET tx-receipt": {
+    type: "object", additionalProperties: false, required: ["tx_hash"],
+    properties: {
+      tx_hash: {
+        type: "string",
+        pattern: "^0x[a-fA-F0-9]{64}$",
+        description: "Base mainnet transaction hash (32-byte hex).",
+      },
+    },
+  },
+  "GET merchant-profile": {
     type: "object", additionalProperties: false,
-    properties: { token: HEX_ADDRESS_SCHEMA, days: POSITIVE_INT_STRING },
+    properties: {
+      use_agent_wallet: { type: "string", enum: ["true", "false"] },
+    },
   },
 
-  // Merchant REST — POST
+  // POST
   "POST programs": {
     type: "object", required: ["name", "symbol"], additionalProperties: true,
     properties: {
-      name: { type: "string", description: "Loyalty program name." },
-      symbol: { type: "string", description: "ERC-20 symbol (3-8 chars)." },
-      cashbackPercent: { type: "number", minimum: 0, maximum: 100 },
-      pointRate: { type: "number", minimum: 0 },
+      name: { type: "string", maxLength: 50, description: "Loyalty program name." },
+      symbol: { type: "string", minLength: 2, maxLength: 5, description: "ERC-20 symbol (2-5 chars)." },
+      expiration_days: { type: "number", minimum: 1, description: "Program lifetime in days (default 365)." },
+      use_agent_wallet: { type: "boolean", description: "Deploy as the agent's CDP MPC wallet instead of the owner address." },
     },
   },
   "POST register-program": {
-    type: "object", required: ["token", "name"], additionalProperties: true,
-    properties: { token: HEX_ADDRESS_SCHEMA, name: { type: "string" }, symbol: { type: "string" } },
+    type: "object", required: ["name", "symbol", "token_address"], additionalProperties: true,
+    properties: {
+      name: { type: "string" },
+      symbol: { type: "string" },
+      token_address: HEX_ADDRESS_SCHEMA,
+      expiration_days: { type: "number", minimum: 1 },
+      cashback_rate: { type: "number", minimum: 0, maximum: 100, description: "Cashback % of purchase amount." },
+      points_per_dollar: { type: "number", minimum: 0 },
+      use_agent_wallet: { type: "boolean" },
+    },
   },
   "POST update-program-config": {
-    type: "object", required: ["token"], additionalProperties: true,
+    type: "object", required: ["token_address"], additionalProperties: true,
     properties: {
-      token: HEX_ADDRESS_SCHEMA,
-      cashbackPercent: { type: "number", minimum: 0, maximum: 100 },
-      pointRate: { type: "number", minimum: 0 },
+      token_address: HEX_ADDRESS_SCHEMA,
+      cashback_rate: { type: "number", minimum: 0, maximum: 100 },
+      points_per_dollar: { type: "number", minimum: 0 },
     },
   },
   "POST activate-program": {
-    type: "object", required: ["token", "months"], additionalProperties: true,
-    properties: { token: HEX_ADDRESS_SCHEMA, months: { type: "number", enum: [1, 3, 6, 12] } },
+    type: "object", required: ["token_address"], additionalProperties: true,
+    properties: {
+      token_address: HEX_ADDRESS_SCHEMA,
+      use_agent_wallet: { type: "boolean" },
+    },
   },
   "POST program-status": {
-    type: "object", required: ["token", "active"], additionalProperties: true,
-    properties: { token: HEX_ADDRESS_SCHEMA, active: { type: "boolean" } },
+    type: "object", required: ["token_address", "status"], additionalProperties: true,
+    properties: {
+      token_address: HEX_ADDRESS_SCHEMA,
+      status: { type: "string", enum: ["active", "paused", "expired", "cancelled"] },
+    },
   },
   "POST rewards": {
-    type: "object", required: ["token", "name", "costPoints"], additionalProperties: true,
+    type: "object", required: ["name", "cost", "token_address"], additionalProperties: true,
     properties: {
-      token: HEX_ADDRESS_SCHEMA,
+      token_address: HEX_ADDRESS_SCHEMA,
       name: { type: "string" },
       description: { type: "string" },
-      costPoints: { type: "number", minimum: 1 },
+      cost: { type: "number", minimum: 1, description: "Loyalty-token cost to redeem." },
     },
   },
   "POST mint": {
-    type: "object", required: ["token", "to", "amount"], additionalProperties: true,
-    properties: { token: HEX_ADDRESS_SCHEMA, to: HEX_ADDRESS_SCHEMA, amount: POSITIVE_INT_STRING },
+    type: "object", required: ["token_address", "recipient_address", "amount"], additionalProperties: true,
+    properties: {
+      token_address: HEX_ADDRESS_SCHEMA,
+      recipient_address: HEX_ADDRESS_SCHEMA,
+      amount: { type: "number", minimum: 0, maximum: 1_000_000_000 },
+    },
   },
   "POST earn": {
-    type: "object", required: ["token", "customer", "amount"], additionalProperties: true,
+    type: "object", required: ["token_address", "customer_address", "purchase_amount"], additionalProperties: true,
     properties: {
-      token: HEX_ADDRESS_SCHEMA,
-      customer: HEX_ADDRESS_SCHEMA,
-      amount: { type: "number", minimum: 0, description: "Purchase amount in fiat units." },
+      token_address: HEX_ADDRESS_SCHEMA,
+      customer_address: HEX_ADDRESS_SCHEMA,
+      purchase_amount: { type: "number", minimum: 0, description: "Purchase amount in fiat units (USD)." },
+      cashback_rate: { type: "number", minimum: 0, maximum: 100, description: "Optional override of program cashback %." },
     },
   },
   "POST transfer": {
-    type: "object", required: ["token", "to", "amount"], additionalProperties: true,
-    properties: { token: HEX_ADDRESS_SCHEMA, to: HEX_ADDRESS_SCHEMA, amount: POSITIVE_INT_STRING },
+    type: "object", required: ["token_address", "to_address", "amount"], additionalProperties: true,
+    properties: {
+      token_address: HEX_ADDRESS_SCHEMA,
+      to_address: HEX_ADDRESS_SCHEMA,
+      amount: { type: "number", minimum: 0, maximum: 1_000_000_000 },
+    },
   },
   "POST redeem-reward": {
-    type: "object", required: ["rewardId"], additionalProperties: true,
-    properties: { rewardId: { type: "string", format: "uuid" } },
+    type: "object", required: ["reward_id", "customer_address", "transaction_hash"], additionalProperties: true,
+    properties: {
+      reward_id: { type: "string", format: "uuid" },
+      customer_address: HEX_ADDRESS_SCHEMA,
+      transaction_hash: {
+        type: "string",
+        pattern: "^0x[a-fA-F0-9]{64}$",
+        description: "On-chain transfer tx hash used to verify the redemption.",
+      },
+    },
   },
   "POST vouchers/use": {
-    type: "object", required: ["code"], additionalProperties: true,
-    properties: { code: { type: "string", description: "Voucher code to redeem." } },
+    type: "object", additionalProperties: true,
+    description: "Either voucher_code or voucher_id is required.",
+    properties: {
+      voucher_code: { type: "string", description: "Voucher code (LOYAL-XXXX...)." },
+      voucher_id: { type: "string", format: "uuid" },
+    },
   },
   "POST offers": {
-    type: "object", required: ["token", "priceUsdc", "amount"], additionalProperties: true,
+    type: "object",
+    required: ["offer_token_address", "offer_amount", "request_token_address", "request_amount"],
+    additionalProperties: true,
     properties: {
-      token: HEX_ADDRESS_SCHEMA,
-      priceUsdc: { type: "number", minimum: 0 },
-      amount: POSITIVE_INT_STRING,
+      offer_token_address: HEX_ADDRESS_SCHEMA,
+      offer_amount: { type: "number", exclusiveMinimum: 0 },
+      request_token_address: HEX_ADDRESS_SCHEMA,
+      request_amount: { type: "number", exclusiveMinimum: 0 },
     },
   },
   "POST accept-offer": {
-    type: "object", required: ["offerId"], additionalProperties: true,
-    properties: { offerId: { type: "string", format: "uuid" } },
+    type: "object", required: ["offer_id"], additionalProperties: true,
+    properties: { offer_id: { type: "string", format: "uuid" } },
   },
   "POST cancel-offer": {
-    type: "object", required: ["offerId"], additionalProperties: true,
-    properties: { offerId: { type: "string", format: "uuid" } },
+    type: "object", required: ["offer_id"], additionalProperties: true,
+    properties: { offer_id: { type: "string", format: "uuid" } },
+  },
+  "POST merchant-profile": {
+    type: "object", required: ["business_name"], additionalProperties: true,
+    properties: {
+      business_name: { type: "string", maxLength: 100 },
+      category: {
+        type: "string",
+        enum: ["cafe", "restaurant", "retail", "beauty", "fitness", "grocery", "pharmacy", "entertainment", "services", "education", "travel", "other"],
+      },
+      logo_url: { type: "string" },
+      description: { type: "string" },
+      website: { type: "string" },
+      location: { type: "string" },
+      use_agent_wallet: { type: "boolean" },
+    },
+  },
+  "PUT merchant-profile": {
+    type: "object", required: ["business_name"], additionalProperties: true,
+    properties: {
+      business_name: { type: "string", maxLength: 100 },
+      category: { type: "string" },
+      logo_url: { type: "string" },
+      description: { type: "string" },
+      website: { type: "string" },
+      location: { type: "string" },
+      use_agent_wallet: { type: "boolean" },
+    },
   },
 
-  // Recipient REST (recipient-api)
-  "GET recipient-api/balance": {
-    type: "object", additionalProperties: false, required: ["token"],
-    properties: { token: HEX_ADDRESS_SCHEMA },
-  },
+  // ===== Recipient REST (recipient-api) — fields match supabase/functions/recipient-api/index.ts =====
+  "GET recipient-api/me": { type: "object", additionalProperties: false, properties: {} },
   "GET recipient-api/balances": { type: "object", additionalProperties: false, properties: {} },
+  "GET recipient-api/balance": {
+    type: "object", additionalProperties: false, required: ["token_address"],
+    properties: { token_address: HEX_ADDRESS_SCHEMA },
+  },
   "GET recipient-api/rewards": {
-    type: "object", additionalProperties: false,
-    properties: { token: HEX_ADDRESS_SCHEMA },
+    type: "object", additionalProperties: false, required: ["token_address"],
+    properties: { token_address: HEX_ADDRESS_SCHEMA },
   },
   "GET recipient-api/vouchers": {
     type: "object", additionalProperties: false,
-    properties: { status: { type: "string" } },
+    properties: {
+      token_address: HEX_ADDRESS_SCHEMA,
+      status: { type: "string" },
+      limit: { type: "string", pattern: "^[0-9]+$" },
+    },
   },
   "GET recipient-api/offers": {
     type: "object", additionalProperties: false,
-    properties: { token: HEX_ADDRESS_SCHEMA },
+    properties: { token_address: HEX_ADDRESS_SCHEMA },
   },
   "POST recipient-api/redeem-reward": {
-    type: "object", required: ["rewardId"], additionalProperties: true,
-    properties: { rewardId: { type: "string", format: "uuid" } },
+    type: "object", required: ["reward_id", "transaction_hash"], additionalProperties: true,
+    properties: {
+      reward_id: { type: "string", format: "uuid" },
+      transaction_hash: { type: "string", pattern: "^0x[a-fA-F0-9]{64}$" },
+    },
   },
   "POST recipient-api/prepare-transfer": {
-    type: "object", required: ["token", "to", "amount"], additionalProperties: true,
-    properties: { token: HEX_ADDRESS_SCHEMA, to: HEX_ADDRESS_SCHEMA, amount: POSITIVE_INT_STRING },
+    type: "object", required: ["token_address", "to", "amount"], additionalProperties: true,
+    properties: {
+      token_address: HEX_ADDRESS_SCHEMA,
+      to: HEX_ADDRESS_SCHEMA,
+      amount: { type: "number", exclusiveMinimum: 0 },
+    },
   },
   "POST recipient-api/offers": {
-    type: "object", required: ["token", "priceUsdc", "amount"], additionalProperties: true,
+    type: "object",
+    required: ["offer_token_address", "offer_amount", "request_token_address", "request_amount"],
+    additionalProperties: true,
     properties: {
-      token: HEX_ADDRESS_SCHEMA,
-      priceUsdc: { type: "number", minimum: 0 },
-      amount: POSITIVE_INT_STRING,
+      offer_token_address: HEX_ADDRESS_SCHEMA,
+      offer_amount: { type: "number", exclusiveMinimum: 0 },
+      request_token_address: HEX_ADDRESS_SCHEMA,
+      request_amount: { type: "number", exclusiveMinimum: 0 },
     },
   },
   "POST recipient-api/accept-offer": {
-    type: "object", required: ["offerId"], additionalProperties: true,
-    properties: { offerId: { type: "string", format: "uuid" } },
+    type: "object", required: ["offer_id"], additionalProperties: true,
+    properties: { offer_id: { type: "string", format: "uuid" } },
   },
   "POST recipient-api/cancel-offer": {
-    type: "object", required: ["offerId"], additionalProperties: true,
-    properties: { offerId: { type: "string", format: "uuid" } },
+    type: "object", required: ["offer_id"], additionalProperties: true,
+    properties: { offer_id: { type: "string", format: "uuid" } },
   },
 };
 
