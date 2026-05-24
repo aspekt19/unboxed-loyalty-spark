@@ -255,14 +255,14 @@
         "name": "Free",
         "price": 0,
         "limits": {
-          "api_calls_monthly": 100,
+          "api_calls_monthly": 200,
           "agents": 1,
-          "transaction_fee": "1%"
+          "transaction_fee": "1.25%"
         }
       },
       {
         "name": "Pro",
-        "price_usdc_monthly": 29,
+        "price_usdc_monthly": 49,
         "limits": {
           "api_calls_monthly": 10000,
           "agents": 5,
@@ -271,7 +271,7 @@
       },
       {
         "name": "Enterprise",
-        "price_usdc_monthly": 99,
+        "price_usdc_monthly": 129,
         "limits": {
           "api_calls_monthly": "unlimited",
           "agents": "unlimited",
@@ -295,6 +295,7 @@
         "GET /vouchers/status": "0 (free, public)",
         "GET /analytics": "0.005",
         "GET /offers": "0.001",
+        "GET /merchant-profile": "0.001",
         "POST /programs": "0.05",
         "POST /register-program": "0.01",
         "POST /update-program-config": "0.005",
@@ -309,6 +310,8 @@
         "POST /offers": "0.01",
         "POST /accept-offer": "0.01",
         "POST /cancel-offer": "0.005",
+        "POST /merchant-profile": "0.005",
+        "PUT /merchant-profile": "0.005",
         "GET /tx-receipt": "free (requires API key)"
       }
     }
