@@ -765,6 +765,49 @@
         }
       }
     },
+    "/x402-gateway/merchant-profile": {
+      "get": {
+        "operationId": "get_merchant_profile",
+        "summary": "Read merchant profile",
+        "description": "Returns the merchant's public profile (business name, category, contact, branding).",
+        "tags": ["Merchant REST"],
+        "responses": {
+          "200": { "description": "Successful response", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "402": { "description": "Payment Required — returns x402 challenge with `accepts[]`" }
+        },
+        "x-input-schema": { "type": "object", "additionalProperties": true, "description": "Query parameters for this request." },
+        "x-payment-info": { "price": { "mode": "fixed", "currency": "USD", "amount": "0.001" }, "protocols": [ { "x402": {} }, { "mpp": { "method": "USDC", "intent": "pay-per-call", "currency": "USD" } } ] },
+        "x-auth": { "type": "apiKey", "header": "x-api-key", "prefix": "lsk_" }
+      },
+      "post": {
+        "operationId": "post_merchant_profile",
+        "summary": "Create merchant profile",
+        "description": "Creates the merchant profile for the agent's owner wallet.",
+        "tags": ["Merchant REST"],
+        "responses": {
+          "200": { "description": "Successful response", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "402": { "description": "Payment Required — returns x402 challenge with `accepts[]`" }
+        },
+        "x-input-schema": { "type": "object", "additionalProperties": true, "description": "JSON body for this request." },
+        "x-payment-info": { "price": { "mode": "fixed", "currency": "USD", "amount": "0.005" }, "protocols": [ { "x402": {} }, { "mpp": { "method": "USDC", "intent": "pay-per-call", "currency": "USD" } } ] },
+        "x-auth": { "type": "apiKey", "header": "x-api-key", "prefix": "lsk_" },
+        "requestBody": { "required": false, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }
+      },
+      "put": {
+        "operationId": "put_merchant_profile",
+        "summary": "Update merchant profile",
+        "description": "Updates the merchant profile for the agent's owner wallet.",
+        "tags": ["Merchant REST"],
+        "responses": {
+          "200": { "description": "Successful response", "content": { "application/json": { "schema": { "type": "object" } } } },
+          "402": { "description": "Payment Required — returns x402 challenge with `accepts[]`" }
+        },
+        "x-input-schema": { "type": "object", "additionalProperties": true, "description": "JSON body for this request." },
+        "x-payment-info": { "price": { "mode": "fixed", "currency": "USD", "amount": "0.005" }, "protocols": [ { "x402": {} }, { "mpp": { "method": "USDC", "intent": "pay-per-call", "currency": "USD" } } ] },
+        "x-auth": { "type": "apiKey", "header": "x-api-key", "prefix": "lsk_" },
+        "requestBody": { "required": false, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }
+      }
+    },
     "/x402-gateway/register-program": {
       "post": {
         "operationId": "post_register_program",
