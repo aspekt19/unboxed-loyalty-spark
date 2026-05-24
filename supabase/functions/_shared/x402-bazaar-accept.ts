@@ -217,20 +217,10 @@ function restApiKeyHint(resource: string): string {
   return resource.startsWith("recipient-api/") ? "rwk_..." : "lsk_...";
 }
 
-function getRestInputSchema(method: string): Record<string, unknown> {
-  if (method === "POST") {
-    return {
-      type: "object",
-      additionalProperties: true,
-    };
-  }
+// `getRestInputSchema` (generic, method-only) was removed in 2.2.2 — both
+// `outputSchema.input.inputSchema` and `extensions.bazaar.info.inputSchema` now share
+// the per-route source `getRestInfoInputSchema(method, resource)` defined below.
 
-  return {
-    type: "object",
-    additionalProperties: true,
-    description: "Query parameters for the HTTP request.",
-  };
-}
 
 /**
  * Per-route Bazaar `info.inputSchema` (sits next to `info.input` / `info.output`, per
@@ -585,7 +575,10 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
   // REST — agent-api and recipient-api (same gateway path patterns)
   const method = getRestMethod(p.resource);
   const keyHint = restApiKeyHint(p.resource);
-  const inputSchema = getRestInputSchema(method);
+  // Canonical per-route JSON Schema — reused for both `outputSchema.input.inputSchema`
+  // (x402 v2 outputSchema) and `extensions.bazaar.info.inputSchema` (CDP Bazaar discovery).
+  const inputSchema = getRestInfoInputSchema(method, p.resource);
+
   const accept: Record<string, unknown> = {
     scheme: "exact",
     network: p.network,
@@ -644,7 +637,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
             // a JSON Schema describing the agent-visible request parameters (query for GET,
             // JSON body for POST). Validators (agentic.market, x402scan) flip
             // "INPUT SCHEMA PRESENT" → yes when this field is present at info level.
-            inputSchema: getRestInfoInputSchema(method, p.resource),
+            inputSchema,
             output: {
               type: "json",
               example: { ok: true, resource: p.resource },
