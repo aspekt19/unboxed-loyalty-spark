@@ -1,5 +1,8 @@
-import { usePrivy as usePrivyOriginal, useConnectWallet as useConnectWalletOriginal } from '@privy-io/react-auth';
-import { isFarcasterContext } from '@/config/wagmi';
+import { createContext, useContext } from 'react';
+import {
+  usePrivy as usePrivyOriginal,
+  useConnectWallet as useConnectWalletOriginal,
+} from '@privy-io/react-auth';
 
 interface PrivySafeResult {
   login: () => void;
@@ -21,22 +24,15 @@ const noopResult: PrivySafeResult = {
   connectWallet: () => {},
 };
 
-function isLovablePreviewHost(): boolean {
-  if (typeof window === 'undefined') return false;
-  const host = window.location.hostname;
-  return host.endsWith('.lovableproject.com') || host.startsWith('id-preview--');
-}
-
 /**
- * Decide ONCE per module load which implementation to expose. This keeps
- * Rules of Hooks intact — every render of a component using `usePrivySafe`
- * calls the same hook implementation, never a conditional one.
+ * Source of truth for whether the surrounding React tree mounts a real
+ * <PrivyProvider>. Decided in App.tsx once Farcaster detection resolves, then
+ * frozen for the lifetime of that provider tree — so the hook call order is
+ * stable per component instance (Rules of Hooks compliant).
  *
- * - Farcaster / Lovable preview → no Privy provider in the tree → noop.
- * - Regular browser → real Privy hooks.
+ * Default `false` matches no-Privy trees (Farcaster, native preview).
  */
-const SHOULD_USE_NOOP =
-  typeof window !== 'undefined' && (isFarcasterContext() || isLovablePreviewHost());
+export const PrivyAvailableContext = createContext<boolean>(false);
 
 function usePrivyReal(): PrivySafeResult {
   const privy = usePrivyOriginal();
@@ -52,8 +48,11 @@ function usePrivyReal(): PrivySafeResult {
   };
 }
 
-function usePrivyNoop(): PrivySafeResult {
-  return noopResult;
+export function usePrivySafe(): PrivySafeResult {
+  const available = useContext(PrivyAvailableContext);
+  // Stable for the lifetime of the surrounding provider tree (App.tsx waits
+  // for Farcaster detection before mounting providers, and the context value
+  // never flips within a tree). eslint-disable: same hook order per instance.
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  return available ? usePrivyReal() : noopResult;
 }
-
-export const usePrivySafe: () => PrivySafeResult = SHOULD_USE_NOOP ? usePrivyNoop : usePrivyReal;
