@@ -413,11 +413,20 @@ Deno.serve(async (req) => {
       });
     }
 
-    const settlement = settlePayment(paymentSignature, price, resource, url);
+    // Settlement is a HARD gate: settle BEFORE proxying to upstream. If settle
+    // fails, we must NOT return upstream success with "settled" headers — that
+    // would let a caller consume the resource without actually paying.
+    const settleResult = await settlePayment(paymentSignature, price, resource, url);
+    if (!settleResult.success) {
+      const errorResp = buildPaymentRequired(price, resource, url);
+      const headers = new Headers(errorResp.headers);
+      headers.set("X-Payment-Error", "Settlement failed");
+      headers.set("X-Payment-Response", "settlement_failed");
+      headers.set("X-Payment-Protocol", "x402");
+      return new Response(await errorResp.text(), { status: 402, headers });
+    }
 
     const apiResponse = await proxyToUpstream(req);
-
-    const settleResult = await settlement;
 
     const respHeaders = new Headers(apiResponse.headers);
     for (const [k, v] of Object.entries(corsHeaders)) {
