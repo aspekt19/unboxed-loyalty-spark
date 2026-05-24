@@ -217,20 +217,10 @@ function restApiKeyHint(resource: string): string {
   return resource.startsWith("recipient-api/") ? "rwk_..." : "lsk_...";
 }
 
-function getRestInputSchema(method: string): Record<string, unknown> {
-  if (method === "POST") {
-    return {
-      type: "object",
-      additionalProperties: true,
-    };
-  }
+// `getRestInputSchema` (generic, method-only) was removed in 2.2.2 — both
+// `outputSchema.input.inputSchema` and `extensions.bazaar.info.inputSchema` now share
+// the per-route source `getRestInfoInputSchema(method, resource)` defined below.
 
-  return {
-    type: "object",
-    additionalProperties: true,
-    description: "Query parameters for the HTTP request.",
-  };
-}
 
 /**
  * Per-route Bazaar `info.inputSchema` (sits next to `info.input` / `info.output`, per
