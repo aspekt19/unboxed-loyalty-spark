@@ -458,6 +458,7 @@
       "GET /vouchers/status": "0 (free, public)",
       "GET /analytics": "0.005",
       "GET /offers": "0.001",
+      "GET /merchant-profile": "0.001",
       "POST /programs": "0.05",
       "POST /register-program": "0.01",
       "POST /update-program-config": "0.005",
@@ -472,6 +473,8 @@
       "POST /offers": "0.01",
       "POST /accept-offer": "0.01",
       "POST /cancel-offer": "0.005",
+      "POST /merchant-profile": "0.005",
+      "PUT /merchant-profile": "0.005",
       "GET /tx-receipt": "free (requires API key)"
     }
   },
