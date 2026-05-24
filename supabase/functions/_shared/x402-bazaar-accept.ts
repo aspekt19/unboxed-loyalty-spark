@@ -117,6 +117,8 @@ function bazaarSchemaHttpQuery(method: "GET" | "HEAD" | "DELETE"): Record<string
         required: ["type", "method"],
         additionalProperties: false,
       },
+      // JSON Schema describing the agent-visible query parameters for this endpoint.
+      inputSchema: { type: "object" },
       output: {
         type: "object",
         properties: {
@@ -154,6 +156,8 @@ function bazaarSchemaHttpBody(): Record<string, unknown> {
         required: ["type", "method", "bodyType", "body"],
         additionalProperties: false,
       },
+      // JSON Schema describing the agent-visible JSON body for this endpoint.
+      inputSchema: { type: "object" },
       output: {
         type: "object",
         properties: {
@@ -225,6 +229,213 @@ function getRestInputSchema(method: string): Record<string, unknown> {
     type: "object",
     additionalProperties: true,
     description: "Query parameters for the HTTP request.",
+  };
+}
+
+/**
+ * Per-route Bazaar `info.inputSchema` (sits next to `info.input` / `info.output`, per
+ * `declareDiscoveryExtension({ input, inputSchema, output })`). Validators such as
+ * agentic.market check this exact field to flip "INPUT SCHEMA PRESENT" to "yes".
+ *
+ * Schemas describe the *agent-visible* parameters (query string for GET, JSON body for
+ * POST). `x-api-key` header is auth and intentionally NOT modeled here.
+ */
+const ADDRESS_PATTERN = "^0x[a-fA-F0-9]{40}$";
+
+const HEX_ADDRESS_SCHEMA = {
+  type: "string",
+  pattern: ADDRESS_PATTERN,
+  description: "EVM address on Base (eip155:8453).",
+} as const;
+
+const POSITIVE_INT_STRING = {
+  type: "string",
+  pattern: "^[0-9]+$",
+  description: "Non-negative integer encoded as string.",
+} as const;
+
+const REST_INPUT_SCHEMAS: Record<string, Record<string, unknown>> = {
+  // Merchant REST (agent-api) — GET
+  "GET me": { type: "object", additionalProperties: false, properties: {} },
+  "GET programs": {
+    type: "object", additionalProperties: false,
+    properties: { token: HEX_ADDRESS_SCHEMA },
+  },
+  "GET rewards": {
+    type: "object", additionalProperties: false,
+    properties: { token: HEX_ADDRESS_SCHEMA },
+  },
+  "GET offers": {
+    type: "object", additionalProperties: false,
+    properties: { token: HEX_ADDRESS_SCHEMA, status: { type: "string", enum: ["active", "completed", "cancelled"] } },
+  },
+  "GET vouchers": {
+    type: "object", additionalProperties: false,
+    properties: { token: HEX_ADDRESS_SCHEMA, status: { type: "string" } },
+  },
+  "GET vouchers/status": {
+    type: "object", additionalProperties: false, required: ["code"],
+    properties: { code: { type: "string", description: "Voucher code." } },
+  },
+  "GET balance": {
+    type: "object", additionalProperties: false,
+    properties: { token: HEX_ADDRESS_SCHEMA, customer: HEX_ADDRESS_SCHEMA },
+  },
+  "GET customers": {
+    type: "object", additionalProperties: false,
+    properties: { token: HEX_ADDRESS_SCHEMA, limit: POSITIVE_INT_STRING, offset: POSITIVE_INT_STRING },
+  },
+  "GET analytics": {
+    type: "object", additionalProperties: false,
+    properties: { token: HEX_ADDRESS_SCHEMA, days: POSITIVE_INT_STRING },
+  },
+
+  // Merchant REST — POST
+  "POST programs": {
+    type: "object", required: ["name", "symbol"], additionalProperties: true,
+    properties: {
+      name: { type: "string", description: "Loyalty program name." },
+      symbol: { type: "string", description: "ERC-20 symbol (3-8 chars)." },
+      cashbackPercent: { type: "number", minimum: 0, maximum: 100 },
+      pointRate: { type: "number", minimum: 0 },
+    },
+  },
+  "POST register-program": {
+    type: "object", required: ["token", "name"], additionalProperties: true,
+    properties: { token: HEX_ADDRESS_SCHEMA, name: { type: "string" }, symbol: { type: "string" } },
+  },
+  "POST update-program-config": {
+    type: "object", required: ["token"], additionalProperties: true,
+    properties: {
+      token: HEX_ADDRESS_SCHEMA,
+      cashbackPercent: { type: "number", minimum: 0, maximum: 100 },
+      pointRate: { type: "number", minimum: 0 },
+    },
+  },
+  "POST activate-program": {
+    type: "object", required: ["token", "months"], additionalProperties: true,
+    properties: { token: HEX_ADDRESS_SCHEMA, months: { type: "number", enum: [1, 3, 6, 12] } },
+  },
+  "POST program-status": {
+    type: "object", required: ["token", "active"], additionalProperties: true,
+    properties: { token: HEX_ADDRESS_SCHEMA, active: { type: "boolean" } },
+  },
+  "POST rewards": {
+    type: "object", required: ["token", "name", "costPoints"], additionalProperties: true,
+    properties: {
+      token: HEX_ADDRESS_SCHEMA,
+      name: { type: "string" },
+      description: { type: "string" },
+      costPoints: { type: "number", minimum: 1 },
+    },
+  },
+  "POST mint": {
+    type: "object", required: ["token", "to", "amount"], additionalProperties: true,
+    properties: { token: HEX_ADDRESS_SCHEMA, to: HEX_ADDRESS_SCHEMA, amount: POSITIVE_INT_STRING },
+  },
+  "POST earn": {
+    type: "object", required: ["token", "customer", "amount"], additionalProperties: true,
+    properties: {
+      token: HEX_ADDRESS_SCHEMA,
+      customer: HEX_ADDRESS_SCHEMA,
+      amount: { type: "number", minimum: 0, description: "Purchase amount in fiat units." },
+    },
+  },
+  "POST transfer": {
+    type: "object", required: ["token", "to", "amount"], additionalProperties: true,
+    properties: { token: HEX_ADDRESS_SCHEMA, to: HEX_ADDRESS_SCHEMA, amount: POSITIVE_INT_STRING },
+  },
+  "POST redeem-reward": {
+    type: "object", required: ["rewardId"], additionalProperties: true,
+    properties: { rewardId: { type: "string", format: "uuid" } },
+  },
+  "POST vouchers/use": {
+    type: "object", required: ["code"], additionalProperties: true,
+    properties: { code: { type: "string", description: "Voucher code to redeem." } },
+  },
+  "POST offers": {
+    type: "object", required: ["token", "priceUsdc", "amount"], additionalProperties: true,
+    properties: {
+      token: HEX_ADDRESS_SCHEMA,
+      priceUsdc: { type: "number", minimum: 0 },
+      amount: POSITIVE_INT_STRING,
+    },
+  },
+  "POST accept-offer": {
+    type: "object", required: ["offerId"], additionalProperties: true,
+    properties: { offerId: { type: "string", format: "uuid" } },
+  },
+  "POST cancel-offer": {
+    type: "object", required: ["offerId"], additionalProperties: true,
+    properties: { offerId: { type: "string", format: "uuid" } },
+  },
+
+  // Recipient REST (recipient-api)
+  "GET recipient-api/balance": {
+    type: "object", additionalProperties: false, required: ["token"],
+    properties: { token: HEX_ADDRESS_SCHEMA },
+  },
+  "GET recipient-api/balances": { type: "object", additionalProperties: false, properties: {} },
+  "GET recipient-api/rewards": {
+    type: "object", additionalProperties: false,
+    properties: { token: HEX_ADDRESS_SCHEMA },
+  },
+  "GET recipient-api/vouchers": {
+    type: "object", additionalProperties: false,
+    properties: { status: { type: "string" } },
+  },
+  "GET recipient-api/offers": {
+    type: "object", additionalProperties: false,
+    properties: { token: HEX_ADDRESS_SCHEMA },
+  },
+  "POST recipient-api/redeem-reward": {
+    type: "object", required: ["rewardId"], additionalProperties: true,
+    properties: { rewardId: { type: "string", format: "uuid" } },
+  },
+  "POST recipient-api/prepare-transfer": {
+    type: "object", required: ["token", "to", "amount"], additionalProperties: true,
+    properties: { token: HEX_ADDRESS_SCHEMA, to: HEX_ADDRESS_SCHEMA, amount: POSITIVE_INT_STRING },
+  },
+  "POST recipient-api/offers": {
+    type: "object", required: ["token", "priceUsdc", "amount"], additionalProperties: true,
+    properties: {
+      token: HEX_ADDRESS_SCHEMA,
+      priceUsdc: { type: "number", minimum: 0 },
+      amount: POSITIVE_INT_STRING,
+    },
+  },
+  "POST recipient-api/accept-offer": {
+    type: "object", required: ["offerId"], additionalProperties: true,
+    properties: { offerId: { type: "string", format: "uuid" } },
+  },
+  "POST recipient-api/cancel-offer": {
+    type: "object", required: ["offerId"], additionalProperties: true,
+    properties: { offerId: { type: "string", format: "uuid" } },
+  },
+};
+
+function getRestInfoInputSchema(
+  method: string,
+  resource: string,
+): Record<string, unknown> {
+  const key = `${method} ${resource}`;
+  const explicit = REST_INPUT_SCHEMAS[key];
+  if (explicit) {
+    return { $schema: JSON_SCHEMA_2020_12, ...explicit };
+  }
+  if (method === "GET" || method === "HEAD" || method === "DELETE") {
+    return {
+      $schema: JSON_SCHEMA_2020_12,
+      type: "object",
+      additionalProperties: { type: "string" },
+      description: `Query parameters for ${method} /${resource}. See https://loyalspark.online/openapi.json for the full schema.`,
+    };
+  }
+  return {
+    $schema: JSON_SCHEMA_2020_12,
+    type: "object",
+    additionalProperties: true,
+    description: `JSON body for ${method} /${resource}. See https://loyalspark.online/openapi.json for the full schema.`,
   };
 }
 
@@ -429,6 +640,11 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
         return {
           info: {
             input,
+            // Per x402 Bazaar spec (`declareDiscoveryExtension({ input, inputSchema, output })`):
+            // a JSON Schema describing the agent-visible request parameters (query for GET,
+            // JSON body for POST). Validators (agentic.market, x402scan) flip
+            // "INPUT SCHEMA PRESENT" → yes when this field is present at info level.
+            inputSchema: getRestInfoInputSchema(method, p.resource),
             output: {
               type: "json",
               example: { ok: true, resource: p.resource },
