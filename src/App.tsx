@@ -127,30 +127,53 @@ function AnimatedRoutes() {
   );
 }
 
-/** Farcaster context: standard WagmiProvider (SIWE only) */
+/** Farcaster context: standard WagmiProvider (SIWE only) — no Privy in tree. */
 function FarcasterProviders({ children }: { children: React.ReactNode }) {
   return (
-    <WagmiProvider config={farcasterWagmiConfig}>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <TooltipProvider>
-            <FarcasterAutoConnect />
-            <Toaster />
-            <Sonner />
-            {children}
-          </TooltipProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
+    <PrivyAvailableContext.Provider value={false}>
+      <WagmiProvider config={farcasterWagmiConfig}>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <TooltipProvider>
+              <FarcasterAutoConnect />
+              <Toaster />
+              <Sonner />
+              {children}
+            </TooltipProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </WagmiProvider>
+    </PrivyAvailableContext.Provider>
   );
 }
 
 /** Regular browser: Privy + wagmi (email/phone/Google + embedded wallets, then SIWE) */
 function BrowserProviders({ children }: { children: React.ReactNode }) {
   return (
-    <PrivyProvider appId={PRIVY_APP_ID} config={privyConfig}>
-      <QueryClientProvider client={queryClient}>
-        <PrivyWagmiProvider config={privyWagmiConfig}>
+    <PrivyAvailableContext.Provider value={true}>
+      <PrivyProvider appId={PRIVY_APP_ID} config={privyConfig}>
+        <QueryClientProvider client={queryClient}>
+          <PrivyWagmiProvider config={privyWagmiConfig}>
+            <AuthProvider>
+              <TooltipProvider>
+                <ConnectorRecoveryListener />
+                <Toaster />
+                <Sonner />
+                {children}
+              </TooltipProvider>
+            </AuthProvider>
+          </PrivyWagmiProvider>
+        </QueryClientProvider>
+      </PrivyProvider>
+    </PrivyAvailableContext.Provider>
+  );
+}
+
+function PreviewBrowserProviders({ children }: { children: React.ReactNode }) {
+  return (
+    <PrivyAvailableContext.Provider value={false}>
+      <WagmiProvider config={browserPreviewWagmiConfig}>
+        <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <TooltipProvider>
               <ConnectorRecoveryListener />
@@ -159,26 +182,9 @@ function BrowserProviders({ children }: { children: React.ReactNode }) {
               {children}
             </TooltipProvider>
           </AuthProvider>
-        </PrivyWagmiProvider>
-      </QueryClientProvider>
-    </PrivyProvider>
-  );
-}
-
-function PreviewBrowserProviders({ children }: { children: React.ReactNode }) {
-  return (
-    <WagmiProvider config={browserPreviewWagmiConfig}>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <TooltipProvider>
-            <ConnectorRecoveryListener />
-            <Toaster />
-            <Sonner />
-            {children}
-          </TooltipProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
+        </QueryClientProvider>
+      </WagmiProvider>
+    </PrivyAvailableContext.Provider>
   );
 }
 
