@@ -369,20 +369,23 @@ Deno.serve(async (req) => {
     const price = getPrice(req.method, resource);
 
     if (price === null) {
-      if (resource.startsWith("recipient-api/") || resource.startsWith("recipient-mcp-tools/")) {
-        return new Response(
-          JSON.stringify({
-            error: "Unknown or unsupported recipient route",
-            resource,
-            docs: "See RECIPIENT_REST_ROUTE_USD / recipient-mcp-bazaar-tools in repo",
-          }),
-          {
-            status: 404,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          },
-        );
-      }
-      return await proxyToAgentApi(req);
+      // SECURITY: never silently proxy unmapped routes for free. Every paid resource
+      // must have an explicit entry in PRICING / RECIPIENT_REST_ROUTE_USD / MCP tool
+      // tables, otherwise a missing-entry bug becomes a payment bypass.
+      return new Response(
+        JSON.stringify({
+          error: "Unknown or unsupported route",
+          resource,
+          method: req.method,
+          docs: "https://loyalspark.online/.well-known/agent.json",
+          hint:
+            "If you believe this route should be paid-discoverable, file an issue or extend PRICING/RECIPIENT_REST_ROUTE_USD/MCP bazaar tables.",
+        }),
+        {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     if (price === "0") {
