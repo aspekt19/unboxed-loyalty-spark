@@ -14,6 +14,7 @@
     "GET https://api.loyalspark.online/x402-gateway/balance",
     "GET https://api.loyalspark.online/x402-gateway/customers",
     "GET https://api.loyalspark.online/x402-gateway/offers",
+    "GET https://api.loyalspark.online/x402-gateway/merchant-profile",
     "GET https://api.loyalspark.online/x402-gateway/programs",
     "GET https://api.loyalspark.online/x402-gateway/recipient-api/balance",
     "GET https://api.loyalspark.online/x402-gateway/recipient-api/balances",
