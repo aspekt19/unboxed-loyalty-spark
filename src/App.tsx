@@ -36,6 +36,7 @@ import { FarcasterAutoConnect } from "./components/FarcasterAutoConnect";
 import { ThemeProvider } from "next-themes";
 import { useBanStatus } from "./hooks/useBanStatus";
 import { BannedScreen } from "./components/BannedScreen";
+import { PrivyAvailableContext } from "./hooks/usePrivySafe";
 
 function BanGate({ children }: { children: React.ReactNode }) {
   const { isBanned, reason, bannedAt, isLoading } = useBanStatus();
