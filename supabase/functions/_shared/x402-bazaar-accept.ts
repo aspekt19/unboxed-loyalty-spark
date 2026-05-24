@@ -117,6 +117,8 @@ function bazaarSchemaHttpQuery(method: "GET" | "HEAD" | "DELETE"): Record<string
         required: ["type", "method"],
         additionalProperties: false,
       },
+      // JSON Schema describing the agent-visible query parameters for this endpoint.
+      inputSchema: { type: "object" },
       output: {
         type: "object",
         properties: {
@@ -154,6 +156,8 @@ function bazaarSchemaHttpBody(): Record<string, unknown> {
         required: ["type", "method", "bodyType", "body"],
         additionalProperties: false,
       },
+      // JSON Schema describing the agent-visible JSON body for this endpoint.
+      inputSchema: { type: "object" },
       output: {
         type: "object",
         properties: {
