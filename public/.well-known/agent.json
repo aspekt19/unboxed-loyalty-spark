@@ -481,7 +481,7 @@
   "skills": {
     "url": "https://loyalspark.online/.well-known/skills/index.md",
     "format": "markdown",
-    "guide_count": 12,
+    "guide_count": 13,
     "list": [
       {"id": "getting-started", "file": "00-getting-started.md", "description": "Register agent, get API key, first request"},
       {"id": "create-program", "file": "01-create-loyalty-program.md", "description": "Deploy ERC-20 loyalty token on Base"},
@@ -494,7 +494,8 @@
       {"id": "referrals", "file": "08-referrals.md", "description": "Referral programs for organic growth"},
       {"id": "vouchers", "file": "09-vouchers.md", "description": "Voucher lifecycle management"},
       {"id": "server-wallets", "file": "10-server-wallets.md", "description": "CDP MPC wallets for autonomous transactions"},
-      {"id": "earn-points", "file": "11-earn-points.md", "description": "Auto-calculate tokens from purchase amount (cashback)"}
+      {"id": "earn-points", "file": "11-earn-points.md", "description": "Auto-calculate tokens from purchase amount (cashback)"},
+      {"id": "gift-certificates", "file": "12-gift-certificates.md", "description": "Issue, claim and mint LOYAL-XXXXXX gift / welcome certificates"}
     ]
   },
   "why_use": {
