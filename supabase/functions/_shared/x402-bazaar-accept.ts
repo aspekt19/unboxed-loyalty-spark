@@ -636,6 +636,11 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
         return {
           info: {
             input,
+            // Per x402 Bazaar spec (`declareDiscoveryExtension({ input, inputSchema, output })`):
+            // a JSON Schema describing the agent-visible request parameters (query for GET,
+            // JSON body for POST). Validators (agentic.market, x402scan) flip
+            // "INPUT SCHEMA PRESENT" → yes when this field is present at info level.
+            inputSchema: getRestInfoInputSchema(method, p.resource),
             output: {
               type: "json",
               example: { ok: true, resource: p.resource },
