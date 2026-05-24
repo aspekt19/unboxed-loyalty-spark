@@ -297,13 +297,19 @@ Deno.serve(async (req) => {
     const price = getPrice(req.method, resource);
 
     if (price === null) {
-      if (resource.startsWith("recipient-api/")) {
-        return new Response(
-          JSON.stringify({ error: "Unknown or unsupported recipient-api route", resource }),
-          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
-      }
-      return await proxyToAgentApi(req);
+      // SECURITY: deny unknown/unmapped routes by default. Never silently proxy
+      // merchant routes for free when the pricing map misses a route — a missing
+      // entry would otherwise let callers bypass MPP payment.
+      return new Response(
+        JSON.stringify({
+          error: "Unknown or unsupported route",
+          resource,
+          method: req.method,
+          docs: "https://loyalspark.online/.well-known/agent.json",
+          hint: "Extend PRICING / RECIPIENT_REST_ROUTE_USD if this route should be paid-discoverable.",
+        }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     if (price === "0") {
