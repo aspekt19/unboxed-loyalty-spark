@@ -202,14 +202,14 @@ function bazaarSchemaMcp(): Record<string, unknown> {
   };
 }
 
-/** Example query string keys for smoke/agent callers (discovery only). */
+/** Example query string keys for smoke/agent callers (discovery only). Field names match real agent-api / recipient-api contracts. */
 function restBazaarQueryParams(resource: string): Record<string, string> {
   if (resource.startsWith("recipient-api/")) {
-    return { token: "0x0000000000000000000000000000000000000001" };
+    return { token_address: "0x0000000000000000000000000000000000000001" };
   }
   return {
-    token: "0x0000000000000000000000000000000000000001",
-    customer: "0x0000000000000000000000000000000000000002",
+    token_address: "0x0000000000000000000000000000000000000001",
+    customer_address: "0x0000000000000000000000000000000000000002",
   };
 }
 
