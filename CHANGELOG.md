@@ -4,7 +4,25 @@ All notable changes to the Loyal Spark agent-facing API surface (REST, MCP, x402
 
 Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.2.1] – 2026-05-24
+
+### Fixed — agentic.market "INPUT SCHEMA PRESENT: no" for REST resources
+
+- All 12 REST x402 resources now expose `extensions.bazaar.info.inputSchema` at the `info` level (previously only present for MCP tools), so the agentic.market validator sees `INPUT SCHEMA PRESENT: yes` for the full 77-resource catalog.
+- Added `REST_INPUT_SCHEMAS` map in `supabase/functions/_shared/x402-bazaar-accept.ts` with per-route JSON Schemas (EVM address regex `^0x[a-fA-F0-9]{40}$`, required fields, enums) for 30+ merchant and recipient routes; non-enumerated routes fall back to a valid generic JSON Schema (never `additionalProperties: true` alone).
+- Updated `bazaarSchemaHttpQuery` / `bazaarSchemaHttpBody` meta-schemas to explicitly allow `inputSchema` at the `info` level for strict CDP validation.
+- Edge functions redeployed: `x402-gateway`, `well-known-x402`.
+
+### Version bumps for integrators
+
+| File | Old | New |
+|------|-----|-----|
+| `public/.well-known/mpp.json` | 2.2.0 | **2.2.1** |
+| `public/.well-known/agent.json` | 2.2.0 | **2.2.1** |
+| `public/openapi.json` | 2.2.0 | **2.2.1** |
+
 ## [2.2.0] – 2026-05-23
+
 
 ### Fixed — count discrepancies across discovery files
 
