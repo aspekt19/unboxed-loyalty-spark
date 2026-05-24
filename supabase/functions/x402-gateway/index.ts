@@ -99,6 +99,9 @@ function txHashFromFacilitatorSettle(result: Record<string, unknown>): string | 
 }
 
 // --- Per-request pricing (USD) — same as MPP ---
+// SECURITY: Every agent-api route the gateway proxies MUST appear in this map.
+// Unmapped routes are rejected with 404 in the request handler (no free fall-through),
+// otherwise a missing entry would let callers bypass x402 payment for merchant data.
 const PRICING: Record<string, Record<string, string>> = {
   GET: {
     me: "0",
@@ -110,6 +113,8 @@ const PRICING: Record<string, Record<string, string>> = {
     "vouchers/status": "0",
     analytics: "0.005",
     offers: "0.001",
+    "tx-receipt": "0",
+    "merchant-profile": "0.001",
   },
   POST: {
     programs: "0.05",
@@ -126,6 +131,10 @@ const PRICING: Record<string, Record<string, string>> = {
     offers: "0.01",
     "accept-offer": "0.01",
     "cancel-offer": "0.005",
+    "merchant-profile": "0.005",
+  },
+  PUT: {
+    "merchant-profile": "0.005",
   },
 };
 
