@@ -4,6 +4,32 @@ All notable changes to the Loyal Spark agent-facing API surface (REST, MCP, x402
 
 Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.3.0] – 2026-05-24
+
+### Security — closed x402 payment bypass in `x402-gateway`
+
+- `supabase/functions/x402-gateway/index.ts` now returns **404 Not Found** for any route not present in the `PRICING` allowlist instead of proxying merchant endpoints for free. Previously a route whose `getPrice()` returned `null` could be reached without payment.
+- Extended `PRICING` map to include `tx-receipt` and `merchant-profile` (`GET` / `POST` / `PUT`) so they remain priced and discoverable.
+
+### Changed — REST input schemas aligned with real handlers
+
+- Rewrote `REST_INPUT_SCHEMAS` in `supabase/functions/_shared/x402-bazaar-accept.ts` to match the actual request contracts of `agent-api` and `recipient-api`. Field names switched to the machine-usable snake_case the handlers expect: `token_address`, `recipient_address`, `customer_address`, `purchase_amount`, `offer_id`, `voucher_code`, `transaction_hash`, etc.
+- This removes the mismatch where agents discovered Bazaar fields that the API did not accept.
+
+### Changed — discovery sync (`agent.json`, `ai-plugin.json`, `llms-full.txt`)
+
+- `public/.well-known/agent.json` → **2.3.0**: synchronized Free / Pro / Enterprise pricing plans with `docs/business/MONETIZATION_AND_PRICING.md`; added `/merchant-profile` endpoints; added `12-gift-certificates.md` to the guide list.
+- `public/.well-known/ai-plugin.json`: tool counts corrected to **32 merchant** + **14 recipient** MCP tools.
+- `public/llms-full.txt`: removed duplicate/stale Recipient MCP section.
+
+### Version bumps for integrators
+
+| File | Old | New |
+|------|-----|-----|
+| `public/.well-known/mpp.json` | 2.2.1 | **2.3.0** |
+| `public/.well-known/agent.json` | 2.2.1 | **2.3.0** |
+| `public/openapi.json` | 2.2.1 | **2.3.0** |
+
 ## [2.2.1] – 2026-05-24
 
 ### Fixed — agentic.market "INPUT SCHEMA PRESENT: no" for REST resources
