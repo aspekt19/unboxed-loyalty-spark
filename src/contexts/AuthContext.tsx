@@ -350,11 +350,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (isExpired) {
           await supabase.auth.signOut();
           } else if (!isFarcasterContext.current && existingSession.user.email?.endsWith('@privy.auth')) {
-            setSession(existingSession);
-            setUser(existingSession.user);
-            setIsLoading(false);
-            window.dispatchEvent(new Event('sessionReady'));
-            return;
+            // Reuse existing Privy-based Supabase session ONLY when it matches
+            // the currently logged-in Privy identity. Otherwise drop it so we
+            // don't accept a stale session from a previous Privy user.
+            const currentPrivyUser = (window as any).__privyUser;
+            const expectedEmail = currentPrivyUser?.id
+              ? `${String(currentPrivyUser.id).replace(/^did:privy:/, '')}@privy.auth`
+              : null;
+            if (expectedEmail && existingSession.user.email === expectedEmail) {
+              setSession(existingSession);
+              setUser(existingSession.user);
+              setIsLoading(false);
+              window.dispatchEvent(new Event('sessionReady'));
+              return;
+            }
+            await supabase.auth.signOut();
+
         } else {
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
