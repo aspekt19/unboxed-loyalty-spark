@@ -60,6 +60,8 @@
     "POST https://api.loyalspark.online/x402-gateway/mcp-tools/update_reward_status",
     "POST https://api.loyalspark.online/x402-gateway/mcp-tools/use_voucher",
     "POST https://api.loyalspark.online/x402-gateway/mint",
+    "POST https://api.loyalspark.online/x402-gateway/merchant-profile",
+    "PUT https://api.loyalspark.online/x402-gateway/merchant-profile",
     "POST https://api.loyalspark.online/x402-gateway/offers",
     "POST https://api.loyalspark.online/x402-gateway/program-status",
     "POST https://api.loyalspark.online/x402-gateway/programs",
