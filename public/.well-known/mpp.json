@@ -65,6 +65,8 @@
       "POST /offers": { "price": "0.01", "description": "Create marketplace offer" },
       "POST /accept-offer": { "price": "0.01", "description": "Accept offer" },
       "POST /cancel-offer": { "price": "0.005", "description": "Cancel offer" },
+      "POST /merchant-profile": { "price": "0.005", "description": "Create merchant profile" },
+      "PUT /merchant-profile": { "price": "0.005", "description": "Update merchant profile" },
       "GET /vouchers/status": { "price": "0", "description": "Public voucher status check (no key)" },
       "GET /tx-receipt": { "price": "0", "description": "Extract token_address from deploy tx" }
     },
