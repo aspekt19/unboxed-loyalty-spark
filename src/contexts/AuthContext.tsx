@@ -595,11 +595,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Privy social session: do NOT validate against wagmi wallet_address.
         // The user may have a different wallet connected in MetaMask than the one
         // bound to their Supabase profile — that's fine, the JWT is still valid.
+        // BUT: the session MUST belong to the currently logged-in Privy identity.
         if (!isFarcasterContext.current && currentSession.user.email?.endsWith('@privy.auth')) {
+          const expectedEmail = privyUserNow?.id
+            ? `${String(privyUserNow.id).replace(/^did:privy:/, '')}@privy.auth`
+            : null;
+          if (!expectedEmail || currentSession.user.email !== expectedEmail) {
+            // Stale session from a previous Privy user → drop it.
+            await clearSessionState();
+            if (isPrivySocial && !manualSignOutRef.current) {
+              await signInWithPrivy();
+            }
+            return;
+          }
           setSession(currentSession);
           setUser(currentSession.user);
           return;
         }
+
 
         // Wallet-only (SIWE) sessions still require profile/wallet match.
         const { data: profile, error: profileError } = await supabase
