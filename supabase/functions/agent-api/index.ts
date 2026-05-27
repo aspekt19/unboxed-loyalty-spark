@@ -1047,18 +1047,21 @@ Deno.serve(async (req) => {
       const custAddr = customer_address.toLowerCase();
       const merchAddr = redeemWallet.toLowerCase();
 
-      const hasTransfer = logs.some((log: any) => {
+      const requiredWei = BigInt(Math.round(Number(reward.cost) * 1e6)) * 10n ** 12n;
+      let transferredWei = 0n;
+      for (const log of logs) {
         const topics = Array.isArray(log?.topics) ? log.topics : [];
-        if ((log?.address || "").toLowerCase() !== tokenAddr) return false;
-        if (topics[0]?.toLowerCase() !== ERC20_TRANSFER || topics.length < 3) return false;
+        if ((log?.address || "").toLowerCase() !== tokenAddr) continue;
+        if (topics[0]?.toLowerCase() !== ERC20_TRANSFER || topics.length < 3) continue;
         const from = `0x${topics[1].slice(-40)}`.toLowerCase();
         const to = `0x${topics[2].slice(-40)}`.toLowerCase();
-        return from === custAddr && to === merchAddr;
-      });
+        if (from !== custAddr || to !== merchAddr) continue;
+        try { transferredWei += BigInt(log?.data || "0x0"); } catch { /* ignore */ }
+      }
 
-      if (!hasTransfer) {
-        await logActivity(serviceClient, agent.agentId, "redeem_reward", body, 400, { error: "Transfer not verified" }, ip);
-        return jsonResponse({ error: "Could not verify token transfer from customer to merchant in transaction logs" }, 400);
+      if (transferredWei < requiredWei) {
+        await logActivity(serviceClient, agent.agentId, "redeem_reward", body, 400, { error: "Insufficient transfer amount", required: reward.cost }, ip);
+        return jsonResponse({ error: `Insufficient token transfer: required ${reward.cost}` }, 400);
       }
 
       // Generate voucher code
