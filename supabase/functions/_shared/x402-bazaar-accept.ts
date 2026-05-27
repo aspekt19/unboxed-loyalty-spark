@@ -791,23 +791,18 @@ export function requirementsFromAccept(accept: Record<string, unknown>): Record<
 
 /**
  * x402 v2 facilitator `/verify` and `/settle` expect `paymentRequirements` shaped like
- * `PaymentRequirementsV2Schema` (scheme, network, amount, asset, payTo, maxTimeoutSeconds, extra).
- * Extra keys (resource, outputSchema, extensions, bazaar, maxAmountRequired) can trigger 500s.
- * Prefer fields from the client-signed `paymentPayload.accepted` when present.
+ * `PaymentRequirementsV2Schema`.
+ *
+ * SECURITY: server-authoritative. We IGNORE `paymentPayload.accepted` and rebuild from
+ * the server's catalog `rebuiltAccept` so a client cannot under-pay by altering
+ * `amount`, `asset`, `payTo`, `network`, or `scheme` in their signed payload.
  */
 export function paymentRequirementsForFacilitator(
   paymentPayload: Record<string, unknown>,
   rebuiltAccept: Record<string, unknown>,
 ): Record<string, unknown> {
   const v = paymentPayload.x402Version;
-  if (v === 2) {
-    const raw =
-      paymentPayload.accepted != null && typeof paymentPayload.accepted === "object" &&
-        !Array.isArray(paymentPayload.accepted)
-        ? (paymentPayload.accepted as Record<string, unknown>)
-        : rebuiltAccept;
-    return slimPaymentRequirementsV2(raw);
-  }
+  if (v === 2) return slimPaymentRequirementsV2(rebuiltAccept);
   return requirementsFromAccept(rebuiltAccept);
 }
 
@@ -825,4 +820,36 @@ function slimPaymentRequirementsV2(a: Record<string, unknown>): Record<string, u
     out.extra = a.extra;
   }
   return out;
+}
+
+/**
+ * Server-side guard: reject a payment payload whose client-signed `accepted` mutates
+ * security-relevant fields away from the server catalog. Call BEFORE the facilitator.
+ */
+export function validateClientAcceptedMatches(
+  paymentPayload: Record<string, unknown>,
+  rebuiltAccept: Record<string, unknown>,
+): { ok: true } | { ok: false; reason: string } {
+  const a = (paymentPayload as { accepted?: unknown })?.accepted;
+  if (!a || typeof a !== "object" || Array.isArray(a)) return { ok: true };
+  const client = a as Record<string, unknown>;
+  for (const f of ["scheme", "network", "asset", "payTo"] as const) {
+    if (client[f] !== undefined && String(client[f]).toLowerCase() !== String(rebuiltAccept[f] ?? "").toLowerCase()) {
+      return { ok: false, reason: `accepted.${f} mismatch with server catalog` };
+    }
+  }
+  const clientAmt = client.amount ?? client.maxAmountRequired;
+  const serverAmt = rebuiltAccept.amount ?? rebuiltAccept.maxAmountRequired;
+  if (clientAmt !== undefined && serverAmt !== undefined) {
+    try {
+      if (BigInt(String(clientAmt)) < BigInt(String(serverAmt))) {
+        return { ok: false, reason: "accepted.amount is less than server-required price" };
+      }
+    } catch {
+      if (String(clientAmt) !== String(serverAmt)) {
+        return { ok: false, reason: "accepted.amount unparseable / mismatched" };
+      }
+    }
+  }
+  return { ok: true };
 }

@@ -2,7 +2,7 @@ import { getMcpBazaarTool, isMcpToolResource } from "../_shared/mcp-bazaar-tools
 import { getRecipientMcpBazaarTool } from "../_shared/recipient-mcp-bazaar-tools.ts";
 import { RECIPIENT_REST_ROUTE_USD } from "../_shared/recipient-paid-routes.ts";
 import { resolveMcpApiKey } from "../_shared/mcp-http-api-key.ts";
-import { buildAcceptEntry, paymentRequirementsForFacilitator } from "../_shared/x402-bazaar-accept.ts";
+import { buildAcceptEntry, paymentRequirementsForFacilitator, validateClientAcceptedMatches } from "../_shared/x402-bazaar-accept.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -241,6 +241,10 @@ async function verifyPayment(
       network: BASE_NETWORK,
       supabaseUrl,
     });
+    const guard = validateClientAcceptedMatches(paymentPayload, accept);
+    if (!guard.ok) {
+      return { valid: false, error: guard.reason };
+    }
     const paymentRequirements = paymentRequirementsForFacilitator(paymentPayload, accept);
 
     // Must match @x402/core HTTPFacilitatorClient — facilitator rejects { payload, requirements }.

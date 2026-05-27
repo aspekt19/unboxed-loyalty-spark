@@ -395,13 +395,20 @@ function createMcpServer(agent: any, authFailure: AuthFailure) {
 
       const ERC20 = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
       const logs = Array.isArray(receipt.logs) ? receipt.logs : [];
-      const ok = logs.some((l: any) => {
+      const tokenAddrLc = reward.token_address.toLowerCase();
+      const custAddrLc = customer_address.toLowerCase();
+      const merchAddrLc = agent.ownerAddress.toLowerCase();
+      const requiredWei = BigInt(Math.round(Number(reward.cost) * 1e6)) * 10n ** 12n;
+      let transferredWei = 0n;
+      for (const l of logs) {
         const t = l?.topics || [];
-        if ((l?.address || "").toLowerCase() !== reward.token_address.toLowerCase()) return false;
-        if (t[0]?.toLowerCase() !== ERC20 || t.length < 3) return false;
-        return `0x${t[1].slice(-40)}`.toLowerCase() === customer_address.toLowerCase() && `0x${t[2].slice(-40)}`.toLowerCase() === agent.ownerAddress.toLowerCase();
-      });
-      if (!ok) return T(JSON.stringify({ error: "Token transfer not verified in tx logs" }));
+        if ((l?.address || "").toLowerCase() !== tokenAddrLc) continue;
+        if (t[0]?.toLowerCase() !== ERC20 || t.length < 3) continue;
+        if (`0x${t[1].slice(-40)}`.toLowerCase() !== custAddrLc) continue;
+        if (`0x${t[2].slice(-40)}`.toLowerCase() !== merchAddrLc) continue;
+        try { transferredWei += BigInt(l?.data || "0x0"); } catch { /* ignore */ }
+      }
+      if (transferredWei < requiredWei) return T(JSON.stringify({ error: `Insufficient token transfer: required ${reward.cost}` }));
 
       const { data: prog } = await d.from("loyalty_programs").select("symbol").eq("token_address", reward.token_address.toLowerCase()).maybeSingle();
       const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
