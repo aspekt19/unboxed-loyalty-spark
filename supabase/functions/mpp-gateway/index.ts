@@ -12,7 +12,7 @@ const corsHeaders = {
 // --- Per-request pricing (USD) ---
 const PRICING: Record<string, Record<string, string>> = {
   GET: {
-    me: "0",         // free
+    me: "0",
     programs: "0.001",
     rewards: "0.001",
     balance: "0.001",
@@ -21,9 +21,11 @@ const PRICING: Record<string, Record<string, string>> = {
     "vouchers/status": "0",
     analytics: "0.005",
     offers: "0.001",
+    "tx-receipt": "0",
+    "merchant-profile": "0.001",
   },
   POST: {
-    programs: "0.05",          // deploy new token
+    programs: "0.05",
     "register-program": "0.01",
     "update-program-config": "0.005",
     "activate-program": "0.01",
@@ -37,6 +39,10 @@ const PRICING: Record<string, Record<string, string>> = {
     offers: "0.01",
     "accept-offer": "0.01",
     "cancel-offer": "0.005",
+    "merchant-profile": "0.005",
+  },
+  PUT: {
+    "merchant-profile": "0.005",
   },
 };
 
