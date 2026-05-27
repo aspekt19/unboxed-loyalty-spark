@@ -60,7 +60,7 @@ Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain
 - **Scoped Permissions**: Granular access control (read, mint, manage_rewards, trade)
 - **Activity Logging**: Full audit trail of all agent operations
 - **Tiered Pricing (agents)**: Free (200 calls/mo, 1.25% mint fee) → Pro ($49/mo, 0.5%) → Enterprise ($129/mo, 0.25%) — see [docs/business/MONETIZATION_AND_PRICING.md](./docs/business/MONETIZATION_AND_PRICING.md)
-- **Skills Documentation**: 12 structured step-by-step guides (`00`–`11` under `/.well-known/skills/`) for agent onboarding and operations
+- **Skills Documentation**: 13 structured step-by-step guides (`00`–`12` under `/.well-known/skills/`) for agent onboarding and operations
 
 ## Technology Stack
 
@@ -207,7 +207,7 @@ Example MCP fragment: [`examples/recipient-agent-mcp/cursor-mcp.json`](./example
 
 AI agents can discover the protocol automatically via:
 - `/.well-known/agent.json` — Full protocol specification, capabilities, pricing
-- `/.well-known/skills/` — 12 structured Skills (`00`–`11`, step-by-step guides)
+- `/.well-known/skills/` — 13 structured Skills (`00`–`12`, step-by-step guides)
 - `/api-docs` — Interactive API documentation
 
 ### Skills for AI Agents
@@ -324,7 +324,7 @@ unboxed-loyalty-spark/
 ├── public/
 │   ├── .well-known/
 │   │   ├── agent.json             # AI agent discovery
-│   │   ├── skills/                # Markdown skills for agents (00–11)
+│   │   ├── skills/                # Markdown skills for agents (00–12)
 │   │   └── farcaster.json         # Farcaster manifest
 │   ├── openapi.json               # OpenAPI 3.1 (API + x402 hints)
 │   ├── llms.txt / llms-full.txt   # Short / long summaries for LLM crawlers
@@ -369,7 +369,7 @@ Loyal Spark is a **machine-payment-native** API. AI agents can discover, authent
 | Agent Manifest | [/.well-known/agent.json](https://loyalspark.online/.well-known/agent.json) | Full protocol spec, capabilities, pricing |
 | MPP Manifest | [/.well-known/mpp.json](https://loyalspark.online/.well-known/mpp.json) | Machine Payment Protocol manifest |
 | OpenAPI Spec | [/openapi.json](https://loyalspark.online/openapi.json) | OpenAPI 3.1.0 with x-payment-info |
-| Skills Library | [/.well-known/skills/](https://loyalspark.online/.well-known/skills/index.md) | 12 step-by-step guides for agents (`00`–`11`) |
+| Skills Library | [/.well-known/skills/](https://loyalspark.online/.well-known/skills/index.md) | 13 step-by-step guides for agents (`00`–`12`) |
 | LLMs.txt | [/llms.txt](https://loyalspark.online/llms.txt) | Protocol summary for LLM crawlers |
 | Prompt Guide | [PROMPT_GUIDE.md](./docs/integrations/PROMPT_GUIDE.md) | Ready-to-use system prompts |
 | Copy-paste MCP / curl | [examples/agent-mcp/](./examples/agent-mcp/) | Starter configs in the repo |

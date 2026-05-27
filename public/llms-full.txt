@@ -239,7 +239,7 @@ Protocol fee: 0.5% on completed swaps.
 
 ## Skills (Step-by-Step Guides)
 
-12 structured Markdown guides at `/.well-known/skills/`:
+13 structured Markdown guides at `/.well-known/skills/`:
 - 00: Getting Started (register, API key, first request)
 - 01: Create Loyalty Program (deploy ERC-20)
 - 02: Mint Tokens
@@ -252,6 +252,7 @@ Protocol fee: 0.5% on completed swaps.
 - 09: Vouchers
 - 10: Server Wallets (CDP MPC)
 - 11: Earn Points (cashback from purchases)
+- 12: Gift Certificates (LOYAL-XXXXXX welcome / gift codes, batch up to 100)
 
 ## Tags
 

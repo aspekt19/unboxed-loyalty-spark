@@ -10,7 +10,7 @@ Start at the repo root **[AGENTS.md](../AGENTS.md)** (links to rules, APIs, and 
 
 | Path | Contents |
 |------|----------|
-| [agents/](./agents/) | [Quickstart](./agents/QUICKSTART.md), [autonomous `lsk_` (SIWE)](./agents/AUTONOMOUS_AGENT_REGISTRATION.md); x402 MCP: `mcp-bazaar-tools.ts`, `recipient-mcp-bazaar-tools.ts`, `x402-bazaar-accept.ts` (Bazaar metadata on 402) |
+| [agents/](./agents/) | [Quickstart](./agents/QUICKSTART.md), [autonomous `lsk_` (SIWE)](./agents/AUTONOMOUS_AGENT_REGISTRATION.md), [Base / Claude / ChatGPT skill distribution](./agents/BASE_SKILLS_SUBMISSION.md); x402 MCP: `mcp-bazaar-tools.ts`, `recipient-mcp-bazaar-tools.ts`, `x402-bazaar-accept.ts` (Bazaar metadata on 402) |
 | [development/](./development/) | Build, deploy, Capacitor; [PORTALS_AND_TEAM.md](./development/PORTALS_AND_TEAM.md) (`/merchant`, `/customer`, team RPC) |
 | [integrations/](./integrations/) | Farcaster, OpenServ, A2A, prompts, adaptation plans |
 | [pitch-deck/](./pitch-deck/) | Investor deck source notes (Markdown); live UI route: `/pitch` |
