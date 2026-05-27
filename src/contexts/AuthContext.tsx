@@ -654,12 +654,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [isConnected, address, signInWithWallet, signInWithPrivy]);
 
   useEffect(() => {
-    if (!isConnected || !address || user || manualSignOutRef.current) return;
+    // Hydrate existing Supabase session as soon as it's available, even when
+    // wagmi has no `address` (Privy social users may have no external wallet
+    // connected). Previously this effect required `isConnected && address`
+    // which caused a hydration race for email/Google sign-ins.
+    if (user || manualSignOutRef.current) return;
 
     let isActive = true;
-
     supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
       if (!isActive || !existingSession) return;
+
+      // Identity validation: if the session is a Privy @privy.auth one, it must
+      // match the currently signed-in Privy user. Otherwise drop it.
+      if (existingSession.user.email?.endsWith('@privy.auth')) {
+        const privyUserNow = (window as any).__privyUser;
+        const expectedEmail = privyUserNow?.id
+          ? `${String(privyUserNow.id).replace(/^did:privy:/, '')}@privy.auth`
+          : null;
+        if (!expectedEmail || existingSession.user.email !== expectedEmail) {
+          // Stale — let the regular re-auth path handle it.
+          return;
+        }
+      }
+
       setSession(existingSession);
       setUser(existingSession.user);
       setIsLoading(false);
@@ -669,6 +686,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isActive = false;
     };
   }, [isConnected, address, user]);
+
+  // Privy social users with no wagmi wallet: trigger token-based sign-in once
+  // the Privy SDK is ready, without waiting on an `address`.
+  useEffect(() => {
+    if (user || manualSignOutRef.current || isFarcasterContext.current) return;
+    const privyUserNow = (window as any).__privyUser;
+    if (!privyUserNow || !shouldUsePrivyTokenAuth(privyUserNow)) return;
+    void signInWithPrivy();
+  }, [user, signInWithPrivy]);
 
   useEffect(() => {
     if (!isFarcasterContext.current) return;
