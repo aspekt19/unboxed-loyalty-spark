@@ -324,7 +324,7 @@ unboxed-loyalty-spark/
 ├── public/
 │   ├── .well-known/
 │   │   ├── agent.json             # AI agent discovery
-│   │   ├── skills/                # Markdown skills for agents (00–11)
+│   │   ├── skills/                # Markdown skills for agents (00–12)
 │   │   └── farcaster.json         # Farcaster manifest
 │   ├── openapi.json               # OpenAPI 3.1 (API + x402 hints)
 │   ├── llms.txt / llms-full.txt   # Short / long summaries for LLM crawlers
