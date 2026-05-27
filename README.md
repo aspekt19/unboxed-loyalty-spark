@@ -207,7 +207,7 @@ Example MCP fragment: [`examples/recipient-agent-mcp/cursor-mcp.json`](./example
 
 AI agents can discover the protocol automatically via:
 - `/.well-known/agent.json` — Full protocol specification, capabilities, pricing
-- `/.well-known/skills/` — 12 structured Skills (`00`–`11`, step-by-step guides)
+- `/.well-known/skills/` — 13 structured Skills (`00`–`12`, step-by-step guides)
 - `/api-docs` — Interactive API documentation
 
 ### Skills for AI Agents
