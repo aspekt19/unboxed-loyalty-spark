@@ -80,19 +80,22 @@ export async function recipientRedeemReward(
   const tokenAddr = reward.token_address.toLowerCase();
   const custAddr = customer_address;
 
-  const hasTransfer = logs.some((log: any) => {
+  const requiredWei = BigInt(Math.round(Number(reward.cost) * 1e6)) * 10n ** 12n;
+  let transferredWei = 0n;
+  for (const log of logs) {
     const topics = Array.isArray(log?.topics) ? log.topics : [];
-    if ((log?.address || "").toLowerCase() !== tokenAddr) return false;
-    if (topics[0]?.toLowerCase() !== ERC20_TRANSFER || topics.length < 3) return false;
+    if ((log?.address || "").toLowerCase() !== tokenAddr) continue;
+    if (topics[0]?.toLowerCase() !== ERC20_TRANSFER || topics.length < 3) continue;
     const from = `0x${topics[1].slice(-40)}`.toLowerCase();
     const to = `0x${topics[2].slice(-40)}`.toLowerCase();
-    return from === custAddr && to === merchAddr;
-  });
+    if (from !== custAddr || to !== merchAddr) continue;
+    try { transferredWei += BigInt(log?.data || "0x0"); } catch { /* ignore */ }
+  }
 
-  if (!hasTransfer) {
+  if (transferredWei < requiredWei) {
     return {
       status: 400,
-      body: { error: "Could not verify token transfer from your wallet to the merchant in transaction logs" },
+      body: { error: `Insufficient token transfer: required ${reward.cost}, got ${(Number(transferredWei) / 1e18).toString()}` },
     };
   }
 
