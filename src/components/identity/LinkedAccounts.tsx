@@ -75,6 +75,13 @@ export function LinkedAccounts() {
   // Add email form
   const [newEmail, setNewEmail] = useState('');
 
+  // Link attempt status for currently connected wallet
+  const [linkStatus, setLinkStatus] = useState<
+    | { kind: 'success'; message: string; lastAction: 'link' | 'link-and-primary' }
+    | { kind: 'error'; message: string; lastAction: 'link' | 'link-and-primary' }
+    | null
+  >(null);
+
   const normalizedConnectedAddress = connectedAddress?.toLowerCase() ?? null;
   const privyPrimaryEmail = useMemo(() => getPrivyPrimaryEmail(privyUser), [privyUser]);
   const privyWallets = useMemo(
