@@ -406,27 +406,46 @@ export function LinkedAccounts() {
               {normalizedConnectedAddress && !isConnectedWalletLinked && !isPrivyWalletAlreadyKnown && (
                   <Alert>
                     <Wallet className="h-4 w-4" />
-                    <AlertDescription className="flex items-center justify-between gap-2">
-                      <span className="text-sm">
-                        Link currently connected wallet: <span className="font-mono">{shorten(normalizedConnectedAddress)}</span>
-                      </span>
-                      <Button
-                        size="sm"
-                        disabled={busy !== null}
-                        onClick={handleLinkCurrentWallet}
-                      >
-                        {busy === 'link-wallet' ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <>
-                            <Plus className="h-3.5 w-3.5 mr-1" />
-                            Link
-                          </>
-                        )}
-                      </Button>
+                    <AlertDescription className="space-y-2">
+                      <div className="text-sm">
+                        Link currently connected wallet:{' '}
+                        <span className="font-mono">{shorten(normalizedConnectedAddress)}</span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={busy !== null}
+                          onClick={() => handleLinkCurrentWallet()}
+                        >
+                          {busy === 'link-wallet' ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <>
+                              <Plus className="h-3.5 w-3.5 mr-1" />
+                              Link
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          size="sm"
+                          disabled={busy !== null}
+                          onClick={() => handleLinkCurrentWallet({ promoteToPrimary: true })}
+                        >
+                          {busy === 'link-and-primary' ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <>
+                              <Star className="h-3.5 w-3.5 mr-1" />
+                              Link & make primary
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </AlertDescription>
                   </Alert>
                 )}
+
 
               {connectWallet && (
                 <div className="rounded-lg border border-dashed bg-muted/30 p-3 space-y-2">
