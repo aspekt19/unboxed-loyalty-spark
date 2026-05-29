@@ -730,14 +730,14 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
     maxAmountRequired,
     maxTimeoutSeconds,
     resource: resourceUrlForDiscovery,
-    description: `Loyal Spark API — ${p.resource}`,
+    description: getRestRouteDescription(p.resource, method),
     mimeType: "application/json",
     payTo: p.recipient,
     asset: USDC_BASE,
     extra: {
       ...USDC_EIP712,
       ...BAZAAR_META,
-      description: `Loyal Spark HTTP API /${p.resource}`,
+      description: getRestRouteDescription(p.resource, method),
     },
     outputSchema: {
       input: {
