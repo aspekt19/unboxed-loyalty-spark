@@ -187,7 +187,9 @@ export function LinkedAccounts() {
     const lower = connectedAddress.toLowerCase();
     const alreadyLinked = summary?.wallets.some(w => w.value === lower) ?? false;
 
+    const action: 'link' | 'link-and-primary' = opts?.promoteToPrimary ? 'link-and-primary' : 'link';
     setBusy(opts?.promoteToPrimary ? 'link-and-primary' : 'link-wallet');
+    setLinkStatus(null);
     try {
       if (!alreadyLinked) {
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -230,6 +232,7 @@ export function LinkedAccounts() {
         const result = data as { ok: boolean; error?: string };
         if (!result.ok) throw new Error(result.error || 'Failed to set primary');
         toast.success('Wallet linked and set as primary');
+        setLinkStatus({ kind: 'success', message: 'Wallet linked and set as primary', lastAction: action });
         window.dispatchEvent(new Event('profileMigrated'));
         window.dispatchEvent(new Event('sessionReady'));
         window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
@@ -238,17 +241,25 @@ export function LinkedAccounts() {
         window.dispatchEvent(new Event('rewardsUpdated'));
       } else {
         toast.success('Wallet linked');
+        setLinkStatus({ kind: 'success', message: 'Wallet linked', lastAction: action });
       }
       await loadSummary();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to link wallet';
-      if (!msg.toLowerCase().includes('reject')) {
+      const rejected = msg.toLowerCase().includes('reject');
+      if (!rejected) {
         toast.error(msg);
       }
+      setLinkStatus({
+        kind: 'error',
+        message: rejected ? 'Signature request was rejected' : msg,
+        lastAction: action,
+      });
     } finally {
       setBusy(null);
     }
   };
+
 
 
   const handleConnectExternalWallet = () => {
