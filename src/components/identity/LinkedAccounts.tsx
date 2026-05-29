@@ -466,6 +466,48 @@ export function LinkedAccounts() {
                           )}
                         </Button>
                       </div>
+                      {linkStatus && (
+                        <div
+                          className={`flex items-start gap-2 rounded-md border p-2 text-xs ${
+                            linkStatus.kind === 'success'
+                              ? 'border-primary/30 bg-primary/5 text-primary'
+                              : 'border-destructive/30 bg-destructive/5 text-destructive'
+                          }`}
+                        >
+                          {linkStatus.kind === 'success' ? (
+                            <CheckCircle2 className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                          ) : (
+                            <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                          )}
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <p className="break-words">{linkStatus.message}</p>
+                            {linkStatus.kind === 'error' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 px-2 text-xs"
+                                disabled={busy !== null}
+                                onClick={() =>
+                                  handleLinkCurrentWallet(
+                                    linkStatus.lastAction === 'link-and-primary'
+                                      ? { promoteToPrimary: true }
+                                      : undefined,
+                                  )
+                                }
+                              >
+                                {busy === 'link-wallet' || busy === 'link-and-primary' ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <>
+                                    <RotateCcw className="h-3.5 w-3.5 mr-1" />
+                                    Retry
+                                  </>
+                                )}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </AlertDescription>
                   </Alert>
                 )}
