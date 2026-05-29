@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Wallet, Mail, Star, Trash2, Plus, Shield, Link2, Copy, Check } from 'lucide-react';
+import { Loader2, Wallet, Mail, Star, Trash2, Plus, Shield, Link2, Copy, Check, AlertCircle, CheckCircle2, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
