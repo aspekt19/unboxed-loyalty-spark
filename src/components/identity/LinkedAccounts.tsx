@@ -137,6 +137,12 @@ export function LinkedAccounts() {
     };
   }, [user, session, privyUser, summary, getAccessToken, normalizedConnectedAddress, loadSummary]);
 
+  // Reset link status when the connected wallet changes
+  useEffect(() => {
+    setLinkStatus(null);
+  }, [normalizedConnectedAddress]);
+
+
   const handleSetPrimary = async (linkType: 'wallet' | 'email', value: string) => {
     setBusy(`primary-${value}`);
     try {
