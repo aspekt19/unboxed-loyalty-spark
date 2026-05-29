@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Wallet, Mail, Star, Trash2, Plus, Shield, Link2, Copy, Check } from 'lucide-react';
+import { Loader2, Wallet, Mail, Star, Trash2, Plus, Shield, Link2, Copy, Check, AlertCircle, CheckCircle2, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -75,6 +75,13 @@ export function LinkedAccounts() {
   // Add email form
   const [newEmail, setNewEmail] = useState('');
 
+  // Link attempt status for currently connected wallet
+  const [linkStatus, setLinkStatus] = useState<
+    | { kind: 'success'; message: string; lastAction: 'link' | 'link-and-primary' }
+    | { kind: 'error'; message: string; lastAction: 'link' | 'link-and-primary' }
+    | null
+  >(null);
+
   const normalizedConnectedAddress = connectedAddress?.toLowerCase() ?? null;
   const privyPrimaryEmail = useMemo(() => getPrivyPrimaryEmail(privyUser), [privyUser]);
   const privyWallets = useMemo(
@@ -130,6 +137,12 @@ export function LinkedAccounts() {
     };
   }, [user, session, privyUser, summary, getAccessToken, normalizedConnectedAddress, loadSummary]);
 
+  // Reset link status when the connected wallet changes
+  useEffect(() => {
+    setLinkStatus(null);
+  }, [normalizedConnectedAddress]);
+
+
   const handleSetPrimary = async (linkType: 'wallet' | 'email', value: string) => {
     setBusy(`primary-${value}`);
     try {
@@ -180,7 +193,9 @@ export function LinkedAccounts() {
     const lower = connectedAddress.toLowerCase();
     const alreadyLinked = summary?.wallets.some(w => w.value === lower) ?? false;
 
+    const action: 'link' | 'link-and-primary' = opts?.promoteToPrimary ? 'link-and-primary' : 'link';
     setBusy(opts?.promoteToPrimary ? 'link-and-primary' : 'link-wallet');
+    setLinkStatus(null);
     try {
       if (!alreadyLinked) {
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -223,6 +238,7 @@ export function LinkedAccounts() {
         const result = data as { ok: boolean; error?: string };
         if (!result.ok) throw new Error(result.error || 'Failed to set primary');
         toast.success('Wallet linked and set as primary');
+        setLinkStatus({ kind: 'success', message: 'Wallet linked and set as primary', lastAction: action });
         window.dispatchEvent(new Event('profileMigrated'));
         window.dispatchEvent(new Event('sessionReady'));
         window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
@@ -231,17 +247,25 @@ export function LinkedAccounts() {
         window.dispatchEvent(new Event('rewardsUpdated'));
       } else {
         toast.success('Wallet linked');
+        setLinkStatus({ kind: 'success', message: 'Wallet linked', lastAction: action });
       }
       await loadSummary();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to link wallet';
-      if (!msg.toLowerCase().includes('reject')) {
+      const rejected = msg.toLowerCase().includes('reject');
+      if (!rejected) {
         toast.error(msg);
       }
+      setLinkStatus({
+        kind: 'error',
+        message: rejected ? 'Signature request was rejected' : msg,
+        lastAction: action,
+      });
     } finally {
       setBusy(null);
     }
   };
+
 
 
   const handleConnectExternalWallet = () => {
@@ -442,6 +466,48 @@ export function LinkedAccounts() {
                           )}
                         </Button>
                       </div>
+                      {linkStatus && (
+                        <div
+                          className={`flex items-start gap-2 rounded-md border p-2 text-xs ${
+                            linkStatus.kind === 'success'
+                              ? 'border-primary/30 bg-primary/5 text-primary'
+                              : 'border-destructive/30 bg-destructive/5 text-destructive'
+                          }`}
+                        >
+                          {linkStatus.kind === 'success' ? (
+                            <CheckCircle2 className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                          ) : (
+                            <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                          )}
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <p className="break-words">{linkStatus.message}</p>
+                            {linkStatus.kind === 'error' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 px-2 text-xs"
+                                disabled={busy !== null}
+                                onClick={() =>
+                                  handleLinkCurrentWallet(
+                                    linkStatus.lastAction === 'link-and-primary'
+                                      ? { promoteToPrimary: true }
+                                      : undefined,
+                                  )
+                                }
+                              >
+                                {busy === 'link-wallet' || busy === 'link-and-primary' ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <>
+                                    <RotateCcw className="h-3.5 w-3.5 mr-1" />
+                                    Retry
+                                  </>
+                                )}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </AlertDescription>
                   </Alert>
                 )}
