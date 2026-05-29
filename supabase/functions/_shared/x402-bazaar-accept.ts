@@ -649,7 +649,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
       maxAmountRequired,
       maxTimeoutSeconds,
       resource: resourceUrlForDiscovery,
-      description: `Loyal Spark — onchain loyalty protocol on Base L2. Recipient MCP tool "${mcp.name}": ${mcp.description}. Pay-per-call in USDC via x402; gateway forwards to the holder-side Loyal Spark MCP (14 recipient tools, rwk_ key).`,
+      description: `Loyal Spark — onchain loyalty protocol on Base L2 (USDC, ERC-20 points, rewards, vouchers, P2P escrow). Recipient MCP tool: ${mcp.name}.`,
       mimeType: "application/json",
       payTo: p.recipient,
       asset: USDC_BASE,
