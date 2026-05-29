@@ -172,50 +172,66 @@ export function LinkedAccounts() {
     }
   };
 
-  const handleLinkCurrentWallet = async () => {
+  const handleLinkCurrentWallet = async (opts?: { promoteToPrimary?: boolean }) => {
     if (!connectedAddress || !session) {
       toast.error('Connect a wallet first');
       return;
     }
     const lower = connectedAddress.toLowerCase();
-    if (summary?.wallets.some(w => w.value === lower)) {
-      toast.info('This wallet is already linked');
-      return;
-    }
+    const alreadyLinked = summary?.wallets.some(w => w.value === lower) ?? false;
 
-    setBusy('link-wallet');
+    setBusy(opts?.promoteToPrimary ? 'link-and-primary' : 'link-wallet');
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const apikey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      if (!alreadyLinked) {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const apikey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-      const nonceRes = await fetch(`${supabaseUrl}/functions/v1/siwe-nonce`, {
-        headers: { apikey },
-      });
-      if (!nonceRes.ok) throw new Error('Failed to get nonce');
-      const { nonce } = await nonceRes.json();
+        const nonceRes = await fetch(`${supabaseUrl}/functions/v1/siwe-nonce`, {
+          headers: { apikey },
+        });
+        if (!nonceRes.ok) throw new Error('Failed to get nonce');
+        const { nonce } = await nonceRes.json();
 
-      const message = constructLinkSiweMessage(connectedAddress, nonce);
-      const signature = await signMessageAsync({ account: connectedAddress, message });
+        const message = constructLinkSiweMessage(connectedAddress, nonce);
+        const signature = await signMessageAsync({ account: connectedAddress, message });
 
-      const verifyRes = await fetch(`${supabaseUrl}/functions/v1/siwe-verify`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey,
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ message, signature, mode: 'link' }),
-      });
+        const verifyRes = await fetch(`${supabaseUrl}/functions/v1/siwe-verify`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey,
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ message, signature, mode: 'link' }),
+        });
 
-      if (!verifyRes.ok) {
-        const err = await verifyRes.json().catch(() => ({}));
-        if (verifyRes.status === 409) {
-          throw new Error('This wallet is already linked to another account. Please sign in with that wallet instead.');
+        if (!verifyRes.ok) {
+          const err = await verifyRes.json().catch(() => ({}));
+          if (verifyRes.status === 409) {
+            throw new Error('This wallet is already linked to another account. Please sign in with that wallet instead.');
+          }
+          throw new Error(err.error || 'Verification failed');
         }
-        throw new Error(err.error || 'Verification failed');
       }
 
-      toast.success('Wallet linked');
+      if (opts?.promoteToPrimary) {
+        const { data, error } = await supabase.rpc('set_primary_identity', {
+          p_link_type: 'wallet',
+          p_value: lower,
+        });
+        if (error) throw error;
+        const result = data as { ok: boolean; error?: string };
+        if (!result.ok) throw new Error(result.error || 'Failed to set primary');
+        toast.success('Wallet linked and set as primary');
+        window.dispatchEvent(new Event('profileMigrated'));
+        window.dispatchEvent(new Event('sessionReady'));
+        window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
+        window.dispatchEvent(new Event('tokenBalancesUpdated'));
+        window.dispatchEvent(new Event('vouchersUpdated'));
+        window.dispatchEvent(new Event('rewardsUpdated'));
+      } else {
+        toast.success('Wallet linked');
+      }
       await loadSummary();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to link wallet';
@@ -226,6 +242,7 @@ export function LinkedAccounts() {
       setBusy(null);
     }
   };
+
 
   const handleConnectExternalWallet = () => {
     if (!connectWallet) {
@@ -389,27 +406,46 @@ export function LinkedAccounts() {
               {normalizedConnectedAddress && !isConnectedWalletLinked && !isPrivyWalletAlreadyKnown && (
                   <Alert>
                     <Wallet className="h-4 w-4" />
-                    <AlertDescription className="flex items-center justify-between gap-2">
-                      <span className="text-sm">
-                        Link currently connected wallet: <span className="font-mono">{shorten(normalizedConnectedAddress)}</span>
-                      </span>
-                      <Button
-                        size="sm"
-                        disabled={busy !== null}
-                        onClick={handleLinkCurrentWallet}
-                      >
-                        {busy === 'link-wallet' ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <>
-                            <Plus className="h-3.5 w-3.5 mr-1" />
-                            Link
-                          </>
-                        )}
-                      </Button>
+                    <AlertDescription className="space-y-2">
+                      <div className="text-sm">
+                        Link currently connected wallet:{' '}
+                        <span className="font-mono">{shorten(normalizedConnectedAddress)}</span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={busy !== null}
+                          onClick={() => handleLinkCurrentWallet()}
+                        >
+                          {busy === 'link-wallet' ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <>
+                              <Plus className="h-3.5 w-3.5 mr-1" />
+                              Link
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          size="sm"
+                          disabled={busy !== null}
+                          onClick={() => handleLinkCurrentWallet({ promoteToPrimary: true })}
+                        >
+                          {busy === 'link-and-primary' ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <>
+                              <Star className="h-3.5 w-3.5 mr-1" />
+                              Link & make primary
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </AlertDescription>
                   </Alert>
                 )}
+
 
               {connectWallet && (
                 <div className="rounded-lg border border-dashed bg-muted/30 p-3 space-y-2">
