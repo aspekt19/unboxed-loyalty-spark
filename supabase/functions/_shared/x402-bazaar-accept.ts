@@ -218,51 +218,13 @@ function restApiKeyHint(resource: string): string {
 }
 
 /**
- * Human-friendly per-route description used by agentic.market / x402 Bazaar
- * crawlers as the "service overview" line. Keep each entry self-contained —
- * crawlers often surface a single resource description as the whole service
- * summary, so every line must explain Loyal Spark, not just the endpoint.
+ * Short, self-contained description shown on x402 Bazaar / agentic.market.
+ * Agentic.market picks ONE resource's `description` as the whole "service
+ * overview", so every line must read as a Loyal Spark summary on its own —
+ * not just an endpoint label.
  */
-const REST_ROUTE_DESCRIPTIONS: Record<string, string> = {
-  // Merchant (lsk_) — agent-api (paths sit under x402-gateway/<name>)
-  "programs": "Loyal Spark — list ERC-20 loyalty programs (Base L2, chain 8453) deployed by the authenticated merchant agent.",
-  "rewards": "Loyal Spark — list catalog rewards (points cost, supply, tier) for a merchant loyalty program.",
-  "balance": "Loyal Spark — read a customer's onchain ERC-20 loyalty token balance and current tier for a given program.",
-  "balances": "Loyal Spark — read all loyalty token balances and tiers for the authenticated recipient wallet (rwk_).",
-  "customers": "Loyal Spark — list merchant customers with onchain balance, tier and recent activity (CRM data).",
-  "vouchers": "Loyal Spark — list redemption vouchers issued by the merchant program (status, code, reward).",
-  "analytics": "Loyal Spark — program analytics: holders, mints, transfers, redemptions, marketplace volume.",
-  "offers": "Loyal Spark — list active P2P escrow marketplace offers (loyalty-token swaps on Base).",
-  "merchant-profile": "Loyal Spark — read public merchant profile (display name, category, branding) for the authenticated merchant.",
-  "mint": "Loyal Spark — mint ERC-20 loyalty points to a customer wallet; returns calldata signed by the connected wallet or merchant CDP MPC.",
-  "earn": "Loyal Spark — auto-calculate and mint cashback points from a purchase amount using the program's points-per-dollar rule.",
-  "transfer": "Loyal Spark — prepare ERC-20 transfer calldata for sending loyalty points to another wallet on Base.",
-  "redeem-reward": "Loyal Spark — verify a customer's onchain reward-redemption transfer and issue a single-use voucher.",
-  "vouchers/use": "Loyal Spark — mark a Loyal Spark voucher as used (one-shot redemption at point of sale).",
-  "vouchers/status": "Loyal Spark — public voucher status check by code (no API key required, used for in-store verification).",
-  "accept-offer": "Loyal Spark — accept a P2P marketplace offer; the escrow contract on Base settles the token swap.",
-  "cancel-offer": "Loyal Spark — cancel one of your active P2P marketplace offers and release escrowed tokens.",
-  "tx-receipt": "Loyal Spark — extract the deployed loyalty token address from a program-deploy transaction hash.",
-
-  // Recipient (rwk_) — recipient-api
-  "recipient-api/balances": "Loyal Spark — list every loyalty token balance and tier across all merchant programs for the authenticated recipient wallet (rwk_).",
-  "recipient-api/balance": "Loyal Spark — balance and tier of a single loyalty token for the authenticated recipient wallet (rwk_).",
-  "recipient-api/rewards": "Loyal Spark — list rewards that the authenticated recipient wallet currently has enough points to redeem.",
-  "recipient-api/vouchers": "Loyal Spark — list vouchers minted for the authenticated recipient wallet (rwk_).",
-  "recipient-api/offers": "Loyal Spark — list P2P marketplace offers visible to the authenticated recipient wallet.",
-  "recipient-api/prepare-transfer": "Loyal Spark — prepare ERC-20 transfer calldata for the holder to send loyalty points to another wallet on Base.",
-  "recipient-api/redeem-reward": "Loyal Spark — redeem a reward by submitting the holder's onchain transfer tx hash; mints a single-use voucher.",
-  "recipient-api/accept-offer": "Loyal Spark — accept a P2P marketplace offer as the recipient; escrow contract settles on Base.",
-  "recipient-api/cancel-offer": "Loyal Spark — cancel a P2P offer previously created by the authenticated recipient wallet.",
-};
-
 function getRestRouteDescription(resource: string, method: string): string {
-  // Try with method prefix first (e.g. "POST offers" vs "GET offers")
-  const verbed = `${method} ${resource}`;
-  if (REST_ROUTE_DESCRIPTIONS[verbed]) return REST_ROUTE_DESCRIPTIONS[verbed];
-  if (REST_ROUTE_DESCRIPTIONS[resource]) return REST_ROUTE_DESCRIPTIONS[resource];
-  // Default — still self-contained
-  return `Loyal Spark — onchain loyalty protocol on Base L2 (chain 8453). ${method} /${resource}: pay-per-request via x402, USDC settlement, authenticate with x-api-key (${restApiKeyHint(resource)}).`;
+  return `Loyal Spark — onchain loyalty protocol on Base L2 (USDC, ERC-20 points, rewards, vouchers, P2P escrow). Endpoint: ${method} /${resource}.`;
 }
 
 // `getRestInputSchema` (generic, method-only) was removed in 2.2.2 — both
