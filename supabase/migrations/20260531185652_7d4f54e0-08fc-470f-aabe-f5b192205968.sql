@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Merchants can view masked customer data via view" ON public.customer_profiles;
