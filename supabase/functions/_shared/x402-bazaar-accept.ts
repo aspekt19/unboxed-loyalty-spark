@@ -223,8 +223,8 @@ function restApiKeyHint(resource: string): string {
  * overview", so every line must read as a Loyal Spark summary on its own —
  * not just an endpoint label.
  */
-function getRestRouteDescription(resource: string, method: string): string {
-  return `Loyal Spark — onchain loyalty protocol on Base L2 (USDC, ERC-20 points, rewards, vouchers, P2P escrow). Endpoint: ${method} /${resource}.`;
+function getRestRouteDescription(_resource: string, _method: string): string {
+  return "Onchain loyalty platform on Base Network. Businesses launch branded rewards in minutes. Customers earn real value with every purchase. AI agents automate the rest.";
 }
 
 // `getRestInputSchema` (generic, method-only) was removed in 2.2.2 — both
@@ -606,7 +606,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
       maxAmountRequired,
       maxTimeoutSeconds,
       resource: resourceUrlForDiscovery,
-      description: `Loyal Spark — onchain loyalty protocol on Base L2 (USDC, ERC-20 points, rewards, vouchers, P2P escrow). Merchant MCP tool: ${mcp.name}.`,
+      description: "Onchain loyalty platform on Base Network. Businesses launch branded rewards in minutes. Customers earn real value with every purchase. AI agents automate the rest.",
       mimeType: "application/json",
       payTo: p.recipient,
       asset: USDC_BASE,
@@ -649,7 +649,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
       maxAmountRequired,
       maxTimeoutSeconds,
       resource: resourceUrlForDiscovery,
-      description: `Loyal Spark — onchain loyalty protocol on Base L2 (USDC, ERC-20 points, rewards, vouchers, P2P escrow). Recipient MCP tool: ${mcp.name}.`,
+      description: "Onchain loyalty platform on Base Network. Businesses launch branded rewards in minutes. Customers earn real value with every purchase. AI agents automate the rest.",
       mimeType: "application/json",
       payTo: p.recipient,
       asset: USDC_BASE,
