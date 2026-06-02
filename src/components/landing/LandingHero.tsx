@@ -93,7 +93,7 @@ const LandingHero = () => {
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
         >
           <div className="grayscale hover:grayscale-0 transition-smooth opacity-60 hover:opacity-100">
-            <img src="/media-kit/logo-horizontal.png" alt="BASE Network" className="h-10 sm:h-14" />
+            <img src="/media-kit/logo-horizontal.png" alt="BASE Network" width="200" height="56" fetchPriority="high" className="h-10 sm:h-14 w-auto" />
           </div>
         </motion.div>
         <div className="mt-4 sm:mt-6 inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-primary/10 border border-primary/20">
