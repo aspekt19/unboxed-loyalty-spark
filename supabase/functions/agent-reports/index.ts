@@ -204,37 +204,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // PATCH: update report status (requires auth via JWT or API key)
+    // PATCH: update report status (scoped to caller's owner_address, admins bypass)
     if (req.method === "PATCH") {
-      let authorized = false;
-
-      // Try JWT auth first
-      const authHeader = req.headers.get("Authorization");
-      if (authHeader) {
-        const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-        const userClient = createClient(supabaseUrl, anonKey, {
-          global: { headers: { Authorization: authHeader } },
-        });
-        const { data: { user } } = await userClient.auth.getUser();
-        if (user) authorized = true;
-      }
-
-      // Fallback: API key auth (for agents or Privy-authenticated users calling via proxy)
-      if (!authorized) {
-        const apiKey = req.headers.get("x-api-key");
-        if (apiKey && apiKey.startsWith("lsk_")) {
-          const hash = await hashApiKey(apiKey);
-          const { data: agent } = await serviceClient
-            .from("agent_registry")
-            .select("id")
-            .eq("api_key_hash", hash)
-            .eq("is_active", true)
-            .single();
-          if (agent) authorized = true;
-        }
-      }
-
-      if (!authorized) {
+      const caller = await resolveCaller();
+      if (!caller) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -251,7 +224,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      const { error: updateError } = await serviceClient
+      let updateQuery = serviceClient
         .from("agent_reports")
         .update({
           status,
@@ -259,9 +232,28 @@ Deno.serve(async (req) => {
         })
         .eq("id", report_id);
 
+      if (!caller.isAdmin) {
+        if (!caller.ownerAddress) {
+          return new Response(JSON.stringify({ error: "Forbidden" }), {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        updateQuery = updateQuery.eq("owner_address", caller.ownerAddress);
+      }
+
+      const { data: updated, error: updateError } = await updateQuery.select("id");
+
       if (updateError) {
         return new Response(JSON.stringify({ error: "Failed to update" }), {
           status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (!updated || updated.length === 0) {
+        return new Response(JSON.stringify({ error: "Report not found" }), {
+          status: 404,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
