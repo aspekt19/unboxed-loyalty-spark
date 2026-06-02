@@ -131,7 +131,7 @@ const MerchantPage = () => {
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-shrink">
               {!isNativeMode && (
                 <Link to="/">
-                  <Button variant="ghost" size="icon" className="hover:bg-secondary h-7 w-7 sm:h-8 sm:w-8">
+                  <Button variant="ghost" size="icon" aria-label="Back to home" className="hover:bg-secondary h-7 w-7 sm:h-8 sm:w-8">
                     <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </Button>
                 </Link>
@@ -143,7 +143,7 @@ const MerchantPage = () => {
               />
               <div className="min-w-0">
                 <h1 className="text-xs sm:text-sm font-bold text-foreground tracking-tight truncate">
-                  Loyal Spark
+                  Loyal Spark — Merchant Portal
                 </h1>
                 <p className="text-[9px] sm:text-[10px] text-muted-foreground truncate">Merchant Portal</p>
               </div>
