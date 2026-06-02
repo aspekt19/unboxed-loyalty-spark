@@ -268,7 +268,22 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Delete related records first
+      // CRITICAL: verify ownership FIRST before touching any related data
+      const { data: ownedAgent, error: ownErr } = await serviceClient
+        .from("agent_registry")
+        .select("id")
+        .eq("id", agent_id)
+        .eq("owner_address", profile.wallet_address)
+        .maybeSingle();
+
+      if (ownErr || !ownedAgent) {
+        return new Response(JSON.stringify({ error: "Agent not found or not owned by you" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Now safe to delete related records
       await serviceClient
         .from("agent_activity_log")
         .delete()
@@ -284,7 +299,7 @@ Deno.serve(async (req) => {
         .delete()
         .eq("agent_id", agent_id);
 
-      // Delete the agent itself
+      // Delete the agent itself (ownership re-checked for safety)
       const { error: deleteError } = await serviceClient
         .from("agent_registry")
         .delete()
