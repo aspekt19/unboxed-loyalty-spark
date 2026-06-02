@@ -39,29 +39,25 @@ Deno.serve(async (req) => {
 
     // Authorization: only merchants or admins can resolve email/phone → wallet.
     // This prevents account enumeration by arbitrary authenticated users.
-    const [{ data: merchantProfile }, { data: isAdminRow }] = await Promise.all([
-      adminClient
-        .from("merchant_profiles")
-        .select("id")
-        .ilike("merchant_address", "%")
-        .limit(1)
-        .maybeSingle()
-        .then(async () => {
-          // Re-query scoped to caller's wallet
-          const { data: prof } = await adminClient
-            .from("profiles")
-            .select("wallet_address")
-            .eq("user_id", user.id)
-            .maybeSingle();
-          if (!prof?.wallet_address) return { data: null };
-          return await adminClient
+    const { data: callerProfile } = await adminClient
+      .from("profiles")
+      .select("wallet_address")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    const callerWallet = callerProfile?.wallet_address?.toLowerCase() || null;
+
+    const [merchantRes, adminRes] = await Promise.all([
+      callerWallet
+        ? adminClient
             .from("merchant_profiles")
             .select("id")
-            .ilike("merchant_address", prof.wallet_address)
-            .maybeSingle();
-        }),
+            .ilike("merchant_address", callerWallet)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
       adminClient.rpc("has_role", { _user_id: user.id, _role: "admin" }),
     ]);
+    const isMerchant = !!merchantRes.data;
+    const isAdminRow = !!adminRes.data;
 
     const { identifier } = await req.json();
     if (!identifier || typeof identifier !== "string" || identifier.trim().length === 0) {
