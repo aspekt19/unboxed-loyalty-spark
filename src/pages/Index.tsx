@@ -18,43 +18,8 @@ import LandingCTA from '@/components/landing/LandingCTA';
 import NotifyMe from '@/components/landing/NotifyMe';
 import { detectFarcasterMiniApp, isFarcasterContext } from '@/config/wagmi';
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "SoftwareApplication",
-      "name": "Loyal Spark",
-      "url": "https://loyalspark.online",
-      "applicationCategory": "BusinessApplication",
-      "operatingSystem": "Web",
-      "description": "Onchain loyalty protocol on Base. Merchants launch branded ERC-20 reward programs; customers earn, redeem, and trade tokens P2P; AI agents automate it via REST API and MCP.",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD",
-        "description": "Free tier: 200 API calls/month, 1 agent, 1.25% mint fee"
-      },
-      "creator": {
-        "@type": "Organization",
-        "name": "Loyal Spark",
-        "url": "https://loyalspark.online",
-        "sameAs": ["https://x.com/Loyal_Spark"]
-      }
-    },
-    {
-      "@type": "WebAPI",
-      "name": "Loyal Spark API",
-      "url": "https://loyalspark.online/api-docs",
-      "documentation": "https://loyalspark.online/openapi.json",
-      "description": "REST API and MCP Server for AI agents to create loyalty programs, mint tokens, and manage rewards on BASE network."
-    },
-    {
-      "@type": "WebSite",
-      "name": "Loyal Spark",
-      "url": "https://loyalspark.online"
-    }
-  ]
-};
+// Note: SoftwareApplication, WebAPI, WebSite, Organization JSON-LD ship sitewide
+// in index.html. Per-route JSON-LD is intentionally not duplicated here.
 
 const FARCASTER_CONTEXT_TIMEOUT_MS = 1200;
 
@@ -100,7 +65,6 @@ const Index = () => {
 
   return (
     <PageTransition>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="min-h-screen bg-gradient-hero">
         <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl transition-smooth">
           <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 flex justify-between items-center relative">
