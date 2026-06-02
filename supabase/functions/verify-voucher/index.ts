@@ -341,15 +341,13 @@ Deno.serve(async (req) => {
     console.log('Blockchain transaction verified via Base RPC (logs/calldata matched)');
 
 
-    // Generate voucher code
+    // Generate voucher code (CSPRNG)
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    const segments = 4;
-    const segmentLength = 4;
-    const code = 'LOYAL-' + Array.from({ length: segments }, () => {
-      return Array.from({ length: segmentLength }, () =>
-        chars.charAt(Math.floor(Math.random() * chars.length))
-      ).join('');
-    }).join('-');
+    const _rand = new Uint8Array(16);
+    crypto.getRandomValues(_rand);
+    const code = 'LOYAL-' + Array.from({ length: 4 }, (_, i) =>
+      Array.from({ length: 4 }, (__, j) => chars[_rand[i * 4 + j] % chars.length]).join('')
+    ).join('-');
 
     // Create the voucher with transaction hash
     const { data: voucher, error: voucherError } = await supabaseClient
