@@ -35,6 +35,30 @@ Deno.serve(async (req) => {
       });
     }
 
+    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+
+    // Authorization: only merchants or admins can resolve email/phone → wallet.
+    // This prevents account enumeration by arbitrary authenticated users.
+    const { data: callerProfile } = await adminClient
+      .from("profiles")
+      .select("wallet_address")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    const callerWallet = callerProfile?.wallet_address?.toLowerCase() || null;
+
+    const [merchantRes, adminRes] = await Promise.all([
+      callerWallet
+        ? adminClient
+            .from("merchant_profiles")
+            .select("id")
+            .ilike("merchant_address", callerWallet)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+      adminClient.rpc("has_role", { _user_id: user.id, _role: "admin" }),
+    ]);
+    const isMerchant = !!merchantRes.data;
+    const isAdminRow = !!adminRes.data;
+
     const { identifier } = await req.json();
     if (!identifier || typeof identifier !== "string" || identifier.trim().length === 0) {
       return new Response(JSON.stringify({ error: "Missing identifier" }), {
@@ -45,7 +69,7 @@ Deno.serve(async (req) => {
 
     const trimmed = identifier.trim().toLowerCase();
 
-    // Direct wallet address — return as-is
+    // Direct wallet address — always allowed (no enumeration risk)
     if (/^0x[a-fA-F0-9]{40}$/.test(trimmed)) {
       return new Response(
         JSON.stringify({ wallet_address: trimmed, resolved_by: "address" }),
@@ -53,7 +77,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+    // Email / phone lookup requires merchant or admin role
+    if (!isMerchant && !isAdminRow) {
+      return new Response(
+        JSON.stringify({ error: "Recipient not found" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
     const isPhone = !isEmail && /^\+?[\d\s\-()]{7,}$/.test(trimmed);
