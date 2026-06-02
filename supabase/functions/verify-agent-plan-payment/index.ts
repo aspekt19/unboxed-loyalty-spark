@@ -390,6 +390,19 @@ Deno.serve(async (req) => {
     }
 
     if (action === "admin_verify") {
+      // Require authenticated admin caller
+      const caller = await resolveCallerWallet(req, supabaseUrl, anonKey, db);
+      if (!caller) {
+        return jsonResponse({ error: "Unauthorized" }, 401);
+      }
+      const { data: isAdminRow } = await db.rpc("has_role", {
+        _user_id: caller.userId,
+        _role: "admin",
+      });
+      if (!isAdminRow) {
+        return jsonResponse({ error: "Forbidden: admin only" }, 403);
+      }
+
       const prod: Product = product === "merchant" ? "merchant" : "agent";
       if (!subscription_id) {
         return jsonResponse({ error: "Missing subscription_id" }, 400);
