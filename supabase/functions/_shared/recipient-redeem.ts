@@ -100,10 +100,12 @@ export async function recipientRedeemReward(
   }
 
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const _rand = new Uint8Array(16);
+  crypto.getRandomValues(_rand);
   const code =
     "LOYAL-" +
-    Array.from({ length: 4 }, () =>
-      Array.from({ length: 4 }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join("")
+    Array.from({ length: 4 }, (_, i) =>
+      Array.from({ length: 4 }, (__, j) => chars[_rand[i * 4 + j] % chars.length]).join("")
     ).join("-");
 
   const { data: voucher, error: voucherError } = await serviceClient
