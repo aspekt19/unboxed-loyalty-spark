@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
     }
 
     // Email / phone lookup requires merchant or admin role
-    if (!merchantProfile && !isAdminRow) {
+    if (!isMerchant && !isAdminRow) {
       return new Response(
         JSON.stringify({ error: "Recipient not found" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
