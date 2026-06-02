@@ -29,7 +29,7 @@ import Preview3D from "./pages/Preview3D";
 import { AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { migrateAllData } from "./lib/migrateLocalStorageData";
-import { usePageMeta } from "./hooks/usePageMeta";
+import { PageMeta } from "./components/PageMeta";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ConnectorRecoveryListener } from "./components/ConnectorRecoveryListener";
 import { FarcasterAutoConnect } from "./components/FarcasterAutoConnect";
@@ -54,8 +54,6 @@ const queryClient = new QueryClient();
 function AnimatedRoutes() {
   const location = useLocation();
 
-  // Dynamic canonical + meta per route
-  usePageMeta();
 
   // Scroll to top on route change; if URL has a hash, scroll to that element.
   // Without this, hash links (e.g. /pricing#plans) don't scroll on mobile.
@@ -97,6 +95,7 @@ function AnimatedRoutes() {
 
   return (
     <BanGate>
+      <PageMeta />
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<Index />} />

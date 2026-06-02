@@ -1,4 +1,5 @@
 import { createRoot } from "react-dom/client";
+import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
 import "./index.css";
 import {
@@ -23,7 +24,11 @@ window.addEventListener('error', (event) => {
   event.preventDefault();
 });
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <HelmetProvider>
+    <App />
+  </HelmetProvider>
+);
 
 // Notify Farcaster / Base App webview that the UI is ready as early as possible.
 // If we wait for Privy/wagmi to initialize, slow iframe loads keep the host
