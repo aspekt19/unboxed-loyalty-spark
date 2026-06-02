@@ -75,7 +75,7 @@ const LandingHero = () => {
         </Link>
         <Link to="/pitch" className="w-full sm:w-auto">
           <Button size="lg" variant="outline" className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 text-sm sm:text-base font-semibold">
-            Learn more
+            Read our pitch deck
           </Button>
         </Link>
       </motion.div>
