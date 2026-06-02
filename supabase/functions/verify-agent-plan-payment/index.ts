@@ -360,6 +360,10 @@ Deno.serve(async (req) => {
         .single();
 
       if (subError) {
+        const msg = String(subError.message || "");
+        if (msg.includes("agent_plan_subscriptions_tx_hash_uniq") || (subError as any).code === "23505") {
+          return jsonResponse({ error: "Transaction already used for a subscription" }, 409);
+        }
         return jsonResponse({ error: subError.message }, 500);
       }
 
