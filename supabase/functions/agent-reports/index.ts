@@ -27,38 +27,69 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const path = url.pathname.split("/").pop();
 
-    // GET: read reports (requires auth or api key)
-    if (req.method === "GET") {
+    // Helper: resolve caller's owner_address + admin flag from JWT or lsk_ api key
+    async function resolveCaller(): Promise<
+      { ownerAddress: string | null; isAdmin: boolean } | null
+    > {
       const apiKey = req.headers.get("x-api-key");
       const authHeader = req.headers.get("Authorization");
 
-      let authorized = false;
-
-      // Check API key auth (for agents)
-      if (apiKey && apiKey.startsWith("lsk_")) {
-        const hash = await hashApiKey(apiKey);
-        const { data: agent } = await serviceClient
-          .from("agent_registry")
-          .select("id")
-          .eq("api_key_hash", hash)
-          .eq("is_active", true)
-          .single();
-        if (agent) authorized = true;
-      }
-
-      // Check JWT auth (for Lovable/browser)
-      if (!authorized && authHeader) {
+      // JWT path (browser/Lovable)
+      if (authHeader) {
         const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
         const userClient = createClient(supabaseUrl, anonKey, {
           global: { headers: { Authorization: authHeader } },
         });
         const { data: { user } } = await userClient.auth.getUser();
-        if (user) authorized = true;
+        if (user) {
+          const { data: profile } = await serviceClient
+            .from("profiles")
+            .select("wallet_address")
+            .eq("user_id", user.id)
+            .maybeSingle();
+          const { data: isAdminData } = await serviceClient.rpc("has_role", {
+            _user_id: user.id,
+            _role: "admin",
+          });
+          return {
+            ownerAddress: profile?.wallet_address?.toLowerCase() ?? null,
+            isAdmin: Boolean(isAdminData),
+          };
+        }
       }
 
-      if (!authorized) {
+      // API key path (agents)
+      if (apiKey && apiKey.startsWith("lsk_")) {
+        const hash = await hashApiKey(apiKey);
+        const { data: agent } = await serviceClient
+          .from("agent_registry")
+          .select("owner_address")
+          .eq("api_key_hash", hash)
+          .eq("is_active", true)
+          .single();
+        if (agent) {
+          return {
+            ownerAddress: agent.owner_address?.toLowerCase() ?? null,
+            isAdmin: false,
+          };
+        }
+      }
+
+      return null;
+    }
+
+    // GET: read reports (scoped to caller's owner_address, admins see all)
+    if (req.method === "GET") {
+      const caller = await resolveCaller();
+      if (!caller) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (!caller.isAdmin && !caller.ownerAddress) {
+        return new Response(JSON.stringify({ data: [] }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -66,14 +97,17 @@ Deno.serve(async (req) => {
       const status = url.searchParams.get("status") || "new";
       const limit = parseInt(url.searchParams.get("limit") || "20");
 
-      const query = serviceClient
+      let query = serviceClient
         .from("agent_reports")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(limit);
 
       if (status !== "all") {
-        query.eq("status", status);
+        query = query.eq("status", status);
+      }
+      if (!caller.isAdmin) {
+        query = query.eq("owner_address", caller.ownerAddress);
       }
 
       const { data, error } = await query;
