@@ -105,6 +105,29 @@ async function verifyUsdcTransferToWallet(
   return { verified: false, method: "basescan_no_match" };
 }
 
+/** Resolve caller's wallet from JWT. Returns null if unauthenticated. */
+async function resolveCallerWallet(
+  req: Request,
+  supabaseUrl: string,
+  anonKey: string,
+  admin: ReturnType<typeof createClient>,
+): Promise<{ userId: string; wallet: string } | null> {
+  const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
+  if (!authHeader) return null;
+  const userClient = createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const { data: { user }, error } = await userClient.auth.getUser();
+  if (error || !user) return null;
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("wallet_address")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (!profile?.wallet_address) return null;
+  return { userId: user.id, wallet: String(profile.wallet_address).toLowerCase() };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -112,6 +135,7 @@ Deno.serve(async (req) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
   const basescanApiKey = Deno.env.get("BASESCAN_API_KEY") || "";
   const db = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -121,7 +145,6 @@ Deno.serve(async (req) => {
       action,
       transaction_hash,
       plan_slug,
-      owner_address,
       subscription_id,
       product = "agent",
       billing_cycle = "monthly",
@@ -181,15 +204,31 @@ Deno.serve(async (req) => {
     }
 
     if (action === "verify_payment") {
-      if (!transaction_hash || !plan_slug || !owner_address) {
+      if (!transaction_hash || !plan_slug) {
         return jsonResponse(
-          { error: "Missing: transaction_hash, plan_slug, owner_address" },
+          { error: "Missing: transaction_hash, plan_slug" },
           400,
         );
       }
 
+      // Resolve caller from JWT — never trust client-supplied owner_address
+      const caller = await resolveCallerWallet(req, supabaseUrl, anonKey, db);
+      if (!caller) {
+        return jsonResponse({ error: "Unauthorized" }, 401);
+      }
+      const owner = caller.wallet;
+
+      // Replay protection: reject reused tx hash across either table
+      const txLower = String(transaction_hash).toLowerCase();
+      const [agentDup, merchantDup] = await Promise.all([
+        db.from("agent_plan_subscriptions").select("id").ilike("transaction_hash", txLower).maybeSingle(),
+        db.from("merchant_plan_subscriptions").select("id").ilike("transaction_hash", txLower).maybeSingle(),
+      ]);
+      if (agentDup.data || merchantDup.data) {
+        return jsonResponse({ error: "Transaction already used for a subscription" }, 409);
+      }
+
       const prod: Product = product === "merchant" ? "merchant" : "agent";
-      const owner = owner_address.toLowerCase();
 
       const { data: settings } = await db
         .from("payment_settings")
