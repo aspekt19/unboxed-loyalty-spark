@@ -35,6 +35,34 @@ Deno.serve(async (req) => {
       });
     }
 
+    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+
+    // Authorization: only merchants or admins can resolve email/phone → wallet.
+    // This prevents account enumeration by arbitrary authenticated users.
+    const [{ data: merchantProfile }, { data: isAdminRow }] = await Promise.all([
+      adminClient
+        .from("merchant_profiles")
+        .select("id")
+        .ilike("merchant_address", "%")
+        .limit(1)
+        .maybeSingle()
+        .then(async () => {
+          // Re-query scoped to caller's wallet
+          const { data: prof } = await adminClient
+            .from("profiles")
+            .select("wallet_address")
+            .eq("user_id", user.id)
+            .maybeSingle();
+          if (!prof?.wallet_address) return { data: null };
+          return await adminClient
+            .from("merchant_profiles")
+            .select("id")
+            .ilike("merchant_address", prof.wallet_address)
+            .maybeSingle();
+        }),
+      adminClient.rpc("has_role", { _user_id: user.id, _role: "admin" }),
+    ]);
+
     const { identifier } = await req.json();
     if (!identifier || typeof identifier !== "string" || identifier.trim().length === 0) {
       return new Response(JSON.stringify({ error: "Missing identifier" }), {
@@ -45,7 +73,7 @@ Deno.serve(async (req) => {
 
     const trimmed = identifier.trim().toLowerCase();
 
-    // Direct wallet address — return as-is
+    // Direct wallet address — always allowed (no enumeration risk)
     if (/^0x[a-fA-F0-9]{40}$/.test(trimmed)) {
       return new Response(
         JSON.stringify({ wallet_address: trimmed, resolved_by: "address" }),
@@ -53,7 +81,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+    // Email / phone lookup requires merchant or admin role
+    if (!merchantProfile && !isAdminRow) {
+      return new Response(
+        JSON.stringify({ error: "Recipient not found" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
     const isPhone = !isEmail && /^\+?[\d\s\-()]{7,}$/.test(trimmed);
