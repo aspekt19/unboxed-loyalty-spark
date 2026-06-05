@@ -17,16 +17,13 @@ const InstallPage = () => {
   const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
-    // Check if app is already installed
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsInstalled(true);
     }
 
-    // Check if iOS
     const ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
     setIsIOS(ios);
 
-    // Listen for beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
@@ -59,9 +56,10 @@ const InstallPage = () => {
             variant="ghost"
             onClick={() => navigate('/')}
             className="mb-6 animate-fade-in-up"
+            aria-label="Back to home"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Назад на главную
+            Back to home
           </Button>
 
           <div className="space-y-6 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
@@ -70,22 +68,22 @@ const InstallPage = () => {
                 <Smartphone className="h-12 w-12 text-white" />
               </div>
               <h1 className="text-2xl sm:text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent pb-1">
-                Установите Loyal Spark
+                Install Loyal Spark
               </h1>
               <p className="text-sm sm:text-lg text-muted-foreground max-w-lg mx-auto">
-                Установите приложение на домашний экран для быстрого доступа и работы в офлайн режиме
+                Install the app to your home screen for fast access and offline use.
               </p>
             </div>
 
             {isInstalled ? (
               <Card className="p-8 text-center space-y-4 bg-card-gradient border-accent/20 animate-scale-in">
                 <CheckCircle className="h-16 w-16 text-accent mx-auto" />
-                <h2 className="text-2xl font-bold text-foreground">Приложение установлено!</h2>
+                <h2 className="text-2xl font-bold text-foreground">App installed!</h2>
                 <p className="text-muted-foreground">
-                  Теперь вы можете запускать Loyal Spark прямо с домашнего экрана
+                  You can now launch Loyal Spark directly from your home screen.
                 </p>
                 <Button onClick={() => navigate('/')} className="mt-4" variant="default">
-                  Открыть приложение
+                  Open app
                 </Button>
               </Card>
             ) : (
@@ -94,9 +92,9 @@ const InstallPage = () => {
                   <Card className="p-8 bg-card-gradient border-primary/20 animate-scale-in">
                     <div className="text-center space-y-4">
                       <Download className="h-12 w-12 text-primary mx-auto" />
-                      <h2 className="text-2xl font-bold">Быстрая установка</h2>
+                      <h2 className="text-2xl font-bold">Quick install</h2>
                       <p className="text-muted-foreground">
-                        Нажмите кнопку ниже, чтобы установить приложение
+                        Tap the button below to install the app.
                       </p>
                       <Button 
                         onClick={handleInstallClick}
@@ -104,7 +102,7 @@ const InstallPage = () => {
                         className="w-full mt-4 shadow-glow hover:shadow-glow-orange transition-all duration-300"
                       >
                         <Download className="mr-2 h-5 w-5" />
-                        Установить приложение
+                        Install app
                       </Button>
                     </div>
                   </Card>
@@ -112,25 +110,25 @@ const InstallPage = () => {
 
                 {isIOS && (
                   <Card className="p-6 bg-card-gradient border-primary/20 animate-scale-in">
-                    <h2 className="text-xl font-bold mb-4">Установка на iOS</h2>
+                    <h2 className="text-xl font-bold mb-4">Install on iOS</h2>
                     <ol className="space-y-3 text-muted-foreground">
                       <li className="flex items-start">
                         <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-bold mr-3 mt-0.5 flex-shrink-0">
                           1
                         </span>
-                        <span>Нажмите кнопку "Поделиться" в Safari</span>
+                        <span>Tap the “Share” button in Safari</span>
                       </li>
                       <li className="flex items-start">
                         <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-bold mr-3 mt-0.5 flex-shrink-0">
                           2
                         </span>
-                        <span>Прокрутите вниз и выберите "На экран «Домой»"</span>
+                        <span>Scroll down and choose “Add to Home Screen”</span>
                       </li>
                       <li className="flex items-start">
                         <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-bold mr-3 mt-0.5 flex-shrink-0">
                           3
                         </span>
-                        <span>Нажмите "Добавить" в правом верхнем углу</span>
+                        <span>Tap “Add” in the top-right corner</span>
                       </li>
                     </ol>
                   </Card>
@@ -138,25 +136,25 @@ const InstallPage = () => {
 
                 {!isIOS && !deferredPrompt && (
                   <Card className="p-6 bg-card-gradient border-primary/20 animate-scale-in">
-                    <h2 className="text-xl font-bold mb-4">Установка на Android</h2>
+                    <h2 className="text-xl font-bold mb-4">Install on Android</h2>
                     <ol className="space-y-3 text-muted-foreground">
                       <li className="flex items-start">
                         <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-bold mr-3 mt-0.5 flex-shrink-0">
                           1
                         </span>
-                        <span>Откройте меню браузера (три точки)</span>
+                        <span>Open the browser menu (three dots)</span>
                       </li>
                       <li className="flex items-start">
                         <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-bold mr-3 mt-0.5 flex-shrink-0">
                           2
                         </span>
-                        <span>Выберите "Добавить на главный экран" или "Установить приложение"</span>
+                        <span>Choose “Add to Home screen” or “Install app”</span>
                       </li>
                       <li className="flex items-start">
                         <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-bold mr-3 mt-0.5 flex-shrink-0">
                           3
                         </span>
-                        <span>Подтвердите установку</span>
+                        <span>Confirm the installation</span>
                       </li>
                     </ol>
                   </Card>
@@ -165,23 +163,23 @@ const InstallPage = () => {
             )}
 
             <Card className="p-6 bg-card-gradient border-accent/20 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-              <h2 className="text-xl font-bold mb-4">Преимущества установки</h2>
+              <h2 className="text-xl font-bold mb-4">Why install</h2>
               <ul className="space-y-3 text-muted-foreground">
                 <li className="flex items-start">
                   <CheckCircle className="h-5 w-5 text-accent mr-3 mt-0.5 flex-shrink-0" />
-                  <span>Быстрый доступ с домашнего экрана</span>
+                  <span>Quick access from your home screen</span>
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="h-5 w-5 text-accent mr-3 mt-0.5 flex-shrink-0" />
-                  <span>Работает в офлайн режиме</span>
+                  <span>Works offline</span>
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="h-5 w-5 text-accent mr-3 mt-0.5 flex-shrink-0" />
-                  <span>Полноэкранный режим без браузера</span>
+                  <span>Full-screen experience without the browser UI</span>
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="h-5 w-5 text-accent mr-3 mt-0.5 flex-shrink-0" />
-                  <span>Мгновенная загрузка</span>
+                  <span>Instant loading</span>
                 </li>
               </ul>
             </Card>

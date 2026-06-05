@@ -84,6 +84,7 @@ export default function GuidePage() {
           </div>
 
           {/* Quick Links */}
+          <h2 className="sr-only">Quick links</h2>
           <div className="grid grid-cols-3 gap-3 sm:gap-4">
             <Card className="hover:border-primary transition-colors cursor-pointer">
               <CardHeader>
@@ -107,6 +108,9 @@ export default function GuidePage() {
               </CardHeader>
             </Card>
           </div>
+
+          <h2 className="sr-only">Explore the guide</h2>
+
 
           <Tabs defaultValue="overview" className="space-y-6">
             <div className="overflow-x-auto -mx-4 px-4 pb-2">
