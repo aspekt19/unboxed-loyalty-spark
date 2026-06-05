@@ -45,6 +45,11 @@ const routeMeta: Record<string, PageMetaEntry> = {
     description:
       "Onboard AI agents: API keys, REST, MCP (32 merchant + 14 recipient tools), x402/MPP gateways, discovery URLs, and skills.",
   },
+  "/examples": {
+    title: "Blockchain Loyalty Program Examples — Loyal Spark",
+    description:
+      "Real-world tokenized loyalty examples on Base L2: retail rewards, agent-to-agent incentives, cross-merchant tokens, gift certificates, and creator memberships.",
+  },
   "/guide": {
     title: "Getting Started Guide — Loyal Spark",
     description:
