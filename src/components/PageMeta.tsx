@@ -75,6 +75,26 @@ const routeMeta: Record<string, PageMetaEntry> = {
     description:
       "Refund and cancellation policy for Loyal Spark plans and paid agent API usage.",
   },
+  "/admin": {
+    title: "Admin Console — Loyal Spark",
+    description:
+      "Internal admin console for Loyal Spark operators to manage merchants, agents, and platform configuration.",
+  },
+  "/native/shopper": {
+    title: "Shopper App — Loyal Spark",
+    description:
+      "Native shopper experience for Loyal Spark: scan QR codes, view balances, and redeem rewards on the go.",
+  },
+  "/native/business": {
+    title: "Business App — Loyal Spark",
+    description:
+      "Native merchant experience for Loyal Spark: issue tokens, redeem rewards, and manage customers in person.",
+  },
+  "/preview-3d": {
+    title: "3D Preview — Loyal Spark",
+    description:
+      "Internal 3D preview surface used to showcase Loyal Spark assets, brand visuals, and motion experiments.",
+  },
 };
 
 export function PageMeta() {
