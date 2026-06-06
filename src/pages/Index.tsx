@@ -100,6 +100,7 @@ const Index = () => {
           <PaymentHandshake />
           <TrustSecurity />
           <UseCases />
+          <CaseStudies />
           <NotifyMe source="landing" />
           <LandingCTA />
         </main>
