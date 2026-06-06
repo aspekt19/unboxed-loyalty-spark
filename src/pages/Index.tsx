@@ -10,6 +10,7 @@ import OnchainSimple from '@/components/landing/OnchainSimple';
 import PaymentHandshake from '@/components/landing/PaymentHandshake';
 import TrustSecurity from '@/components/landing/TrustSecurity';
 import UseCases from '@/components/landing/UseCases';
+import CaseStudies from '@/components/landing/CaseStudies';
 import LandingHero from '@/components/landing/LandingHero';
 import LandingFeatures from '@/components/landing/LandingFeatures';
 import LandingAgents from '@/components/landing/LandingAgents';
