@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Loyal Spark — Презентация для инвесторов и партнёров</title>
+<style>
+  :root{
+    --bg:#070b18;
+    --bg2:#0c1430;
+    --panel:rgba(255,255,255,.04);
+    --panel-border:rgba(255,255,255,.09);
+    --text:#eef2ff;
+    --muted:#9aa7c7;
+    --brand:#5b8cff;
+    --brand2:#8a6bff;
+    --accent:#27e0b3;
+    --gold:#ffcc66;
+    --danger:#ff7a90;
+    --radius:18px;
+    --maxw:1180px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:'Inter','Segoe UI',-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;
+    background:
+      radial-gradient(1200px 700px at 12% -8%, rgba(91,140,255,.20), transparent 60%),
+      radial-gradient(1000px 600px at 100% 0%, rgba(138,107,255,.18), transparent 55%),
+      radial-gradient(900px 700px at 50% 120%, rgba(39,224,179,.10), transparent 60%),
+      linear-gradient(180deg, var(--bg), var(--bg2));
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    overflow:hidden;
+  }
+  .deck{height:100vh;width:100vw;position:relative}
+  .slide{
+    position:absolute;inset:0;
+    display:none;
+    padding:clamp(28px,5vh,64px) clamp(24px,5vw,90px);
+    flex-direction:column;justify-content:center;
+    animation:fade .5s ease;
+  }
+  .slide.active{display:flex}
+  @keyframes fade{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .inner{width:100%;max-width:var(--maxw);margin:0 auto}
+
+  .kicker{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:13px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--brand);
+    background:rgba(91,140,255,.10);
+    border:1px solid rgba(91,140,255,.28);
+    padding:7px 14px;border-radius:999px;margin-bottom:22px;
+  }
+  h1{font-size:clamp(34px,6vw,72px);line-height:1.04;font-weight:800;letter-spacing:-.02em}
+  h2{font-size:clamp(26px,4vw,46px);line-height:1.08;font-weight:800;letter-spacing:-.02em;margin-bottom:10px}
+  .sub{font-size:clamp(16px,2vw,22px);color:var(--muted);font-weight:500;line-height:1.5;max-width:60ch}
+  .grad{background:linear-gradient(100deg,var(--brand),var(--brand2) 55%,var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent}
+  p{color:var(--muted);line-height:1.55}
+
+  .grid{display:grid;gap:18px;margin-top:30px}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:900px){.g2,.g3,.g4{grid-template-columns:1fr}}
+
+  .card{
+    background:var(--panel);border:1px solid var(--panel-border);
+    border-radius:var(--radius);padding:22px 22px;
+    backdrop-filter:blur(6px);
+  }
+  .card h3{font-size:18px;font-weight:700;margin-bottom:8px;color:var(--text)}
+  .card p{font-size:15px}
+  .card .ic{font-size:26px;margin-bottom:10px;display:block}
+
+  .stat{font-size:clamp(34px,5vw,58px);font-weight:800;line-height:1;letter-spacing:-.02em}
+  .stat .grad{display:inline-block}
+  .stat-label{color:var(--muted);font-size:15px;margin-top:10px}
+
+  ul.clean{list-style:none;display:flex;flex-direction:column;gap:16px;margin-top:26px}
+  ul.clean li{display:flex;gap:14px;align-items:flex-start;font-size:clamp(16px,2vw,20px);color:var(--text);line-height:1.4}
+  ul.clean li .dot{flex:0 0 auto;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:16px;background:rgba(91,140,255,.14);border:1px solid rgba(91,140,255,.3)}
+  ul.clean li b{color:#fff}
+  ul.clean li span.t{color:var(--muted);font-size:15px;display:block;margin-top:3px;font-weight:400}
+
+  table{width:100%;border-collapse:collapse;margin-top:24px;font-size:15px}
+  th,td{text-align:left;padding:13px 16px;border-bottom:1px solid var(--panel-border)}
+  th{color:var(--brand);font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  td b{color:#fff}
+  tr:last-child td{border-bottom:none}
+  .pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;background:rgba(39,224,179,.14);color:var(--accent);border:1px solid rgba(39,224,179,.3)}
+
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:26px}
+  @media(max-width:900px){.compare{grid-template-columns:1fr}}
+  .col-old{border-color:rgba(255,122,144,.25)}
+  .col-old h3{color:var(--danger)}
+  .col-new{border-color:rgba(39,224,179,.28);background:rgba(39,224,179,.05)}
+  .col-new h3{color:var(--accent)}
+  .compare ul{list-style:none;display:flex;flex-direction:column;gap:11px;margin-top:14px}
+  .compare ul li{font-size:14.5px;color:var(--muted);padding-left:22px;position:relative;line-height:1.4}
+  .compare ul li::before{position:absolute;left:0;top:0}
+  .col-old ul li::before{content:"✕";color:var(--danger)}
+  .col-new ul li::before{content:"✓";color:var(--accent)}
+
+  .flow{display:flex;align-items:stretch;gap:14px;margin-top:26px;flex-wrap:wrap}
+  .flow .step{flex:1;min-width:180px;background:var(--panel);border:1px solid var(--panel-border);border-radius:14px;padding:18px}
+  .flow .step .n{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-weight:700;background:linear-gradient(120deg,var(--brand),var(--brand2));color:#fff;margin-bottom:10px}
+  .flow .step h4{font-size:16px;margin-bottom:5px}
+  .flow .step p{font-size:13.5px}
+
+  .footer{position:absolute;left:0;right:0;bottom:20px;display:flex;justify-content:space-between;align-items:center;padding:0 clamp(24px,5vw,90px);font-size:12.5px;color:var(--muted)}
+  .footer .brand{font-weight:700;color:var(--text);letter-spacing:.02em}
+  .footer .brand i{color:var(--brand);font-style:normal}
+
+  .nav{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:50;background:rgba(8,12,26,.7);padding:8px 10px;border-radius:999px;border:1px solid var(--panel-border);backdrop-filter:blur(10px)}
+  .nav button{background:transparent;border:none;color:var(--muted);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:16px;display:grid;place-items:center;transition:.2s}
+  .nav button:hover{background:rgba(255,255,255,.08);color:#fff}
+  .nav .count{display:grid;place-items:center;font-size:13px;color:var(--muted);min-width:54px;font-variant-numeric:tabular-nums}
+  .progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--brand),var(--accent));z-index:60;transition:width .35s ease}
+
+  .hero-badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:34px}
+  .hero-badges span{font-size:13px;color:var(--muted);border:1px solid var(--panel-border);padding:8px 14px;border-radius:999px;background:var(--panel)}
+  .lead{font-size:clamp(18px,2.3vw,26px);color:var(--text);font-weight:500;margin-top:18px;line-height:1.45;max-width:46ch}
+
+  .ask{display:grid;grid-template-columns:1.1fr .9fr;gap:22px;margin-top:26px}
+  @media(max-width:900px){.ask{grid-template-columns:1fr}}
+  .ask .big{font-size:clamp(40px,6vw,66px);font-weight:800;letter-spacing:-.02em;line-height:1}
+  .bar{height:12px;border-radius:8px;background:rgba(255,255,255,.07);overflow:hidden;margin:6px 0 2px}
+  .bar > span{display:block;height:100%;border-radius:8px;background:linear-gradient(90deg,var(--brand),var(--brand2))}
+  .uf{display:flex;flex-direction:column;gap:14px;margin-top:6px}
+  .uf .row{display:flex;justify-content:space-between;font-size:14px;color:var(--text)}
+  .uf .row b{color:#fff}
+
+  .note{font-size:12.5px;color:var(--muted);margin-top:18px;opacity:.8}
+  .center{text-align:center;align-items:center}
+  .center .inner{display:flex;flex-direction:column;align-items:center}
+
+  /* ---- Печать / экспорт в PDF (одна страница = один слайд, 16:9) ----
+     Детерминированная типографика (без clamp/vw/vh), overflow:hidden и
+     уплотнённые отступы, чтобы каждый слайд точно умещался в 1280×720. */
+  @media print{
+    @page{size:1280px 720px;margin:0}
+    *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}
+    html,body{height:auto !important;overflow:visible !important;background:#070b18 !important}
+    .nav,.progress,.footer{display:none !important}
+    .deck{height:auto !important;width:1280px !important;position:static !important}
+
+    .slide{
+      position:relative !important;inset:auto !important;
+      display:flex !important;flex-direction:column;justify-content:center;
+      width:1280px !important;height:720px !important;
+      padding:46px 70px !important;
+      overflow:hidden !important;
+      background:linear-gradient(160deg,#0c1430,#070b18) !important;
+      animation:none !important;
+      break-inside:avoid;page-break-inside:avoid;
+      page-break-after:always;break-after:page;
+    }
+    .slide:last-child{page-break-after:auto;break-after:auto}
+
+    .inner{max-width:1120px !important;width:100% !important;margin:0 auto !important}
+
+    /* В печатном вьюпорте срабатывает @media(max-width:900px) и схлопывает
+       сетки в один столбец. Слайды с 6 карточками (g3) при этом не влезают —
+       возвращаем 3 колонки, чтобы 6 карточек шли в 2 ряда и умещались. */
+    .g3{grid-template-columns:repeat(3,1fr) !important}
+
+    /* Фиксированные размеры шрифтов вместо clamp() */
+    h1{font-size:60px !important;line-height:1.04 !important}
+    h2{font-size:38px !important;line-height:1.08 !important;margin-bottom:8px !important}
+    .sub{font-size:18px !important;line-height:1.45 !important;max-width:74ch !important}
+    .lead{font-size:23px !important;line-height:1.4 !important;margin-top:16px !important}
+    .stat{font-size:44px !important}
+    .stat-label{font-size:13.5px !important;margin-top:8px !important}
+    ul.clean li{font-size:18px !important}
+    ul.clean li span.t{font-size:14px !important}
+    .ask .big{font-size:52px !important}
+
+    /* Уплотнение отступов под высоту страницы 720px */
+    .kicker{margin-bottom:14px !important;padding:6px 12px !important;font-size:12px !important}
+    .grid{margin-top:18px !important;gap:14px !important}
+    .card{padding:15px 17px !important;backdrop-filter:none !important;border-radius:14px !important}
+    .card .ic{font-size:22px !important;margin-bottom:6px !important}
+    .card h3{font-size:15.5px !important;margin-bottom:5px !important}
+    .card p{font-size:12.8px !important}
+    ul.clean{margin-top:16px !important;gap:11px !important}
+    ul.clean li .dot{width:28px !important;height:28px !important}
+    table{margin-top:14px !important;font-size:13.5px !important}
+    th,td{padding:8px 13px !important}
+    th{font-size:11px !important}
+    .compare{margin-top:14px !important;gap:14px !important}
+    .compare ul{margin-top:10px !important;gap:9px !important}
+    .compare ul li{font-size:13.5px !important}
+    .flow{margin-top:16px !important;gap:12px !important}
+    .flow .step{padding:14px !important}
+    .flow .step p{font-size:12.5px !important}
+    .hero-badges{margin-top:24px !important}
+    .ask{margin-top:16px !important;gap:18px !important}
+    .uf{gap:11px !important}
+    .note{margin-top:12px !important}
+  }
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+  <!-- 1. Cover -->
+  <section class="slide active center">
+    <div class="inner">
+      <span class="kicker">⚡ Onchain Loyalty Protocol · Base Mainnet</span>
+      <h1><span class="grad">Loyal Spark</span></h1>
+      <p class="lead" style="margin-left:auto;margin-right:auto;text-align:center">Программы лояльности нового поколения для бизнеса — управляемые людьми <b style="color:#fff">и AI-агентами</b>.</p>
+      <div class="hero-badges">
+        <span>🔗 Построено на Base</span>
+        <span>💵 USDC-native</span>
+        <span>🤖 Готово для AI-агентов (REST + MCP)</span>
+        <span>🌐 loyalspark.online</span>
+      </div>
+      <p class="note">Презентация для инвесторов и корпоративных партнёров · 2026</p>
+    </div>
+  </section>
+
+  <!-- 2. Problem -->
+  <section class="slide">
+    <div class="inner">
+      <span class="kicker">01 · Проблема</span>
+      <h2>Лояльность застряла в прошлом веке</h2>
+      <p class="sub">Традиционные программы дороги для бизнеса, бесполезны для клиента и закрыты для автоматизации.</p>
+      <div class="grid g3">
+        <div class="card">
+          <span class="ic">💸</span>
+          <h3>Дорого для бизнеса</h3>
+          <p>Legacy-SaaS берёт <b>$99–499/мес</b> или удерживает <b>15–30%</b> с оборота программы.</p>
+        </div>
+        <div class="card">
+          <span class="ic">🔒</span>
+          <h3>Баллы не принадлежат клиенту</h3>
+          <p>Это строка в чужой базе данных: их обесценивают, «сжигают» по сроку и нельзя перенести.</p>
+        </div>
+        <div class="card">
+          <span class="ic">🤖</span>
+          <h3>Закрыто для агентов</h3>
+          <p>Программы изолированы, нет API для AI-агентов и машинных платежей — главного тренда 2025–2027.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Solution -->
+  <section class="slide">
+    <div class="inner">
+      <span class="kicker">02 · Решение</span>
+      <h2>Двухрежимная платформа лояльности</h2>
+      <p class="sub">Один протокол — два интерфейса: люди работают через портал, AI-агенты через API и MCP. Общие смарт-контракты, токены и база данных.</p>
+      <div class="grid g3">
+        <div class="card">
+          <span class="ic">🪙</span>
+          <h3>Владейте программой</h3>
+          <p>Разверните свой ERC-20 токен лояльности на Base. Эмиссия, переводы и погашение — onchain.</p>
+        </div>
+        <div class="card">
+          <span class="ic">💵</span>
+          <h3>Платите за использование</h3>
+          <p>Предсказуемые тарифы в USDC. Без процента с оборота и скрытых блокировок.</p>
+        </div>
+        <div class="card">
+          <span class="ic">⚙️</span>
+          <h3>Автоматизируйте агентами</h3>
+          <p>AI-агенты ведут программы через REST + MCP, оплачивая вызовы микроплатежами x402 / MPP.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Why now -->
+  <section class="slide">
+    <div class="inner">
+      <span class="kicker">03 · Почему сейчас</span>
+      <h2>Сходятся три волны</h2>
+      <ul class="clean">
+        <li><span class="dot">🤖</span><div><b>Экономика AI-агентов.</b><span class="t">Агенты уже совершают покупки и платят за API. Нужны программируемые сервисы с машинной оплатой — мы такими родились.</span></div></li>
+        <li><span class="dot">⛓️</span><div><b>Стейблкоины и L2 стали зрелыми.</b><span class="t">Base + USDC дают мгновенные расчёты с копеечной комиссией — onchain-лояльность наконец рентабельна.</span></div></li>
+        <li><span class="dot">📉</span><div><b>Давление на маржу ритейла.</b><span class="t">Бизнес ищет дешёвые инструменты удержания. Мы убираем процент с оборота и дорогую SaaS-абонплату.</span></div></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 5. Market -->
+  <section class="slide">
+    <div class="inner">
+      <span class="kicker">04 · Рынок</span>
+      <h2>Большой и недоинвестированный</h2>
+      <div class="grid g4">
+        <div class="card"><div class="stat"><span class="grad">$200B+</span></div><div class="stat-label">TAM — глобальный рынок лояльности (SaaS + обязательства по баллам)</div></div>
+        <div class="card"><div class="stat"><span class="grad">$60B</span></div><div class="stat-label">SAM — цифровая лояльность SMB и mid-market</div></div>
+        <div class="card"><div class="stat"><span class="grad">630K+</span></div><div class="stat-label">SMB c программами лояльности только в США</div></div>
+        <div class="card"><div class="stat"><span class="grad">$100B+</span></div><div class="stat-label">баллов выпускается и не погашается ежегодно</div></div>
+      </div>
+      <p class="note">Источники: отраслевые отчёты по рынку лояльности и SMB-коммерции. SAM — обслуживаемый сегмент цифровой лояльности.</p>
+    </div>
+  </section>
+
+  <!-- 6. Product -->
+  <section class="slide">
+    <div class="inner">
+      <span class="kicker">05 · Продукт</span>
+      <h2>Два портала + один программируемый API</h2>
+      <div class="grid g2">
+        <div class="card">
+          <h3>🏪 Сценарий бизнеса</h3>
+          <div class="flow" style="margin-top:14px">
+            <div class="step"><div class="n">1</div><h4>Запуск</h4><p>ERC-20 токен лояльности на Base за минуты</p></div>
+            <div class="step"><div class="n">2</div><h4>Работа</h4><p>Начисление по email/телефону/кошельку, ваучеры, уровни, RFM, автоматизация</p></div>
+            <div class="step"><div class="n">3</div><h4>Команда и агенты</h4><p>Филиалы, сотрудники, AI-агенты со scoped API-ключами</p></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>👤 Сценарий клиента</h3>
+          <div class="flow" style="margin-top:14px">
+            <div class="step"><div class="n">1</div><h4>Получение</h4><p>Токены приходят в смарт-кошелёк (Privy / SIWE) — без знаний о крипте</p></div>
+            <div class="step"><div class="n">2</div><h4>Погашение</h4><p>Тратит на награды или обменивает P2P через onchain-эскроу</p></div>
+            <div class="step"><div class="n">3</div><h4>Владение</h4><p>Токены в кошельке клиента, полностью переносимы</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. Technology / for corporates -->
+  <section class="slide">
+    <div class="inner">
+      <span class="kicker">06 · Технологии и безопасность</span>
+      <h2>Корпоративный уровень с первого дня</h2>
+      <p class="sub">Архитектура, которую не стыдно показать службе безопасности крупного партнёра.</p>
+      <div class="grid g3">
+        <div class="card"><span class="ic">🔐</span><h3>Гибкая аутентификация</h3><p>Email / телефон / Google через Privy + встроенные кошельки; SIWE для крипто-native.</p></div>
+        <div class="card"><span class="ic">🛡️</span><h3>Защита данных</h3><p>Row Level Security на каждой таблице, scoped API-ключи <code>lsk_</code>/<code>rwk_</code> с SHA-256.</p></div>
+        <div class="card"><span class="ic">🔑</span><h3>MPC-кошельки</h3><p>Coinbase CDP: приватные ключи никогда не покидают защищённый анклав.</p></div>
+        <div class="card"><span class="ic">📜</span><h3>Открытые стандарты</h3><p>OpenAPI 3.1, agent.json, MCP-каталоги (Glama, Smithery, OpenServ).</p></div>
+        <div class="card"><span class="ic">⚡</span><h3>Платежи HTTP 402</h3><p>Нативный x402 и MPP — машинная оплата без API-ключей и регистрации.</p></div>
+        <div class="card"><span class="ic">🧾</span><h3>Полный аудит</h3><p>Журналирование всех операций агентов, rate-limiting, атрибуция Builder Code (ERC-8021).</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. Business model -->
+  <section class="slide">
+    <div class="inner">
+      <span class="kicker">07 · Бизнес-модель</span>
+      <h2>Две оси выручки <span class="grad">+ комиссия с оборота</span></h2>
+      <div class="grid g2" style="margin-top:18px">
+        <div class="card">
+          <h3>🏪 Merchant SaaS (USDC на Base)</h3>
+          <table style="margin-top:12px">
+            <tr><td><b>Starter</b></td><td>$39 / мес</td><td>Портал, программы, CRM-light</td></tr>
+            <tr><td><b>Growth</b></td><td>$79 / мес</td><td>Аналитика, больше мест</td></tr>
+            <tr><td><b>Scale</b></td><td>$149 / мес</td><td>Корп-бюджеты, приоритет</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3>🤖 AI-агенты (API + MCP)</h3>
+          <table style="margin-top:12px">
+            <tr><td><b>Free</b></td><td>$0</td><td>200 вызовов · 1.25% mint fee</td></tr>
+            <tr><td><b>Pro</b></td><td>$49 / мес</td><td>10 000 вызовов · 0.50%</td></tr>
+            <tr><td><b>Enterprise</b></td><td>$129 / мес</td><td>∞ вызовов · 0.25%</td></tr>
+          </table>
+        </div>
+      </div>
+      <p class="note">Pay-per-call (x402 / MPP): от ~$0.001 за чтение, ~$0.005–0.05 за запись — USDC на Base, без API-ключа. Главный рычаг масштабирования — <b>% mint fee с onchain-оборота</b>.</p>
+    </div>
+  </section>
+
+  <!-- 9. Competition -->
+  <section class="slide">
+    <div class="inner">
+      <span class="kicker">08 · Конкуренция</span>
+      <h2>Legacy-лояльность vs Loyal Spark</h2>
+      <div class="compare">
+        <div class="card col-old">
+          <h3>Традиционные платформы</h3>
+          <ul>
+            <li>Square Loyalty: $45–105/мес за точку</li>
+            <li>LoyaltyLion / Yotpo: $200–700+/мес</li>
+            <li>Smile.io: процент с оборота и плата за заказ</li>
+            <li>Закрытые API, нет доступа для AI-агентов</li>
+            <li>Баллы = строка в БД, нет реального владения</li>
+          </ul>
+        </div>
+        <div class="card col-new">
+          <h3>Loyal Spark</h3>
+          <ul>
+            <li>Предсказуемый USDC-SaaS от $39/мес</li>
+            <li>ERC-20 токены — клиент реально ими владеет</li>
+            <li>Готово для агентов: REST + MCP, x402 / MPP</li>
+            <li>SIWE и Privy — без паролей и утечек email</li>
+            <li>P2P-маркетплейс с эскроу между программами</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10. Moat -->
+  <section class="slide">
+    <div class="inner">
+      <span class="kicker">09 · Защищённость</span>
+      <h2>Почему нас сложно скопировать</h2>
+      <div class="grid g3">
+        <div class="card"><span class="ic">🧱</span><h3>Двухрежимность</h3><p>Люди (портал) + AI-агенты (API + MCP) в одном протоколе.</p></div>
+        <div class="card"><span class="ic">💰</span><h3>Модель «два счёта»</h3><p>SaaS бизнеса + API агентов + % mint fee — диверсифицированная выручка.</p></div>
+        <div class="card"><span class="ic">⚡</span><h3>Машинные платежи</h3><p>Нативный HTTP 402 (x402/MPP) — позиция в зарождающейся экономике агентов.</p></div>
+        <div class="card"><span class="ic">🌐</span><h3>На Base</h3><p>Низкие комиссии, быстрый финалити, USDC-native — экосистема Coinbase.</p></div>
+        <div class="card"><span class="ic">🔓</span><h3>Открытые стандарты</h3><p>OpenAPI, agent.json, MCP-каталоги → органический приток агентов.</p></div>
+        <div class="card"><span class="ic">🪙</span><h3>Сетевой эффект LOYAL</h3><p>Hub-and-spoke ликвидность объединяет все токены лояльности.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11. Traction / status -->
+  <section class="slide">
+    <div class="inner">
+      <span class="kicker">10 · Статус</span>
+      <h2>Живой продукт, не слайды</h2>
+      <div class="grid g4">
+        <div class="card"><div class="stat" style="font-size:30px"><span class="grad">Live MVP</span></div><div class="stat-label">Развёрнут на Base Mainnet (Chain ID 8453)</div></div>
+        <div class="card"><div class="stat" style="font-size:30px"><span class="grad">Web · PWA · iOS/Android</span></div><div class="stat-label">Capacitor 8 — мультиплатформа</div></div>
+        <div class="card"><div class="stat" style="font-size:30px"><span class="grad">23 REST + 28 MCP</span></div><div class="stat-label">инструментов для агентов (+ 11 recipient MCP)</div></div>
+        <div class="card"><div class="stat" style="font-size:30px"><span class="grad">Privy + SIWE</span></div><div class="stat-label">+ scoped API-ключи и полный аудит</div></div>
+      </div>
+      <p class="sub" style="margin-top:24px">Смарт-контракты в продакшене: <b style="color:#fff">LoyaltyTokenFactory</b> <code>0x5F3D…dA80</code> · <b style="color:#fff">LoyalSparkERC20</b> <code>0xe6BA…27C3</code>. Этап: pre-revenue, онбординг первых design-партнёров.</p>
+    </div>
+  </section>
+
+  <!-- 12. GTM -->
+  <section class="slide">
+    <div class="inner">
+      <span class="kicker">11 · Go-to-Market</span>
+      <h2>Сначала люди, потом канал агентов</h2>
+      <table>
+        <tr><th>Этап</th><th>Цель</th><th>Фокус</th></tr>
+        <tr><td><span class="pill">Сейчас</span></td><td><b>Первые design-партнёры</b></td><td>Onchain-лояльность + дашборд на Base</td></tr>
+        <tr><td>Q3–Q4 2026</td><td><b>10–25 платящих бизнесов</b></td><td>Тарифы Starter/Growth, кейсы</td></tr>
+        <tr><td>Q1–Q2 2027</td><td><b>100+ бизнесов</b></td><td>Канал агентов: OpenServ, MCP-каталоги, x402</td></tr>
+        <tr><td>H2 2027</td><td><b>500+ бизнесов</b></td><td>Мультирегиональный SaaS + выручка с агентов</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- 13. Projections -->
+  <section class="slide">
+    <div class="inner">
+      <span class="kicker">12 · Прогноз</span>
+      <h2>Экономика роста</h2>
+      <p class="sub">Сценарий на базе модели стейкинга и транзакционных комиссий (см. Tokenomics).</p>
+      <table>
+        <tr><th>Метрика</th><th>Год 1</th><th>Год 2</th><th>Год 3</th></tr>
+        <tr><td>Активные бизнесы</td><td>1 000</td><td>10 000</td><td><b>50 000</b></td></tr>
+        <tr><td>Total Value Locked</td><td>$2M</td><td>$25M</td><td><b>$150M</b></td></tr>
+        <tr><td>Объём транзакций</td><td>$500K</td><td>$10M</td><td><b>$100M</b></td></tr>
+        <tr><td>Выручка протокола</td><td>$50K</td><td>$1.5M</td><td><b>$12M</b></td></tr>
+      </table>
+      <p class="note">Прогноз иллюстративный, отражает целевую траекторию при достижении product-market fit и активации канала агентов.</p>
+    </div>
+  </section>
+
+  <!-- 14. Tokenomics -->
+  <section class="slide">
+    <div class="inner">
+      <span class="kicker">13 · Токеномика</span>
+      <h2>LOYAL — топливо экосистемы</h2>
+      <div class="grid g2">
+        <div class="card">
+          <h3>Распределение · 10 000 000 000 LOYAL</h3>
+          <table style="margin-top:10px">
+            <tr><td>Экосистема / Treasury</td><td><b>41%</b></td><td>линейно 5 лет, DAO</td></tr>
+            <tr><td>Token Sales</td><td><b>30%</b></td><td>вестинг 12–18 мес</td></tr>
+            <tr><td>Команда и эдвайзеры</td><td><b>20%</b></td><td>lock 1 год + 3 года</td></tr>
+            <tr><td>Ликвидность (IDL)</td><td><b>5%</b></td><td>разлок на TGE</td></tr>
+            <tr><td>Маркетинг / Airdrop</td><td><b>4%</b></td><td>быстрый разлок</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3>Утилитарность и дефляция</h3>
+          <ul class="clean" style="margin-top:6px;gap:12px">
+            <li><span class="dot">🔥</span><div><b>Дефляция.</b><span class="t">8% сжигается при выводе баллов (M-token → LOYAL), защищая цену.</span></div></li>
+            <li><span class="dot">🏦</span><div><b>Залог-стейкинг.</b><span class="t">Бизнес вносит возвратный депозит для доступа и ликвидности (от $1 000).</span></div></li>
+            <li><span class="dot">🗳️</span><div><b>Управление DAO.</b><span class="t">Застейканный LOYAL даёт право голоса по параметрам протокола.</span></div></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 15. Ask -->
+  <section class="slide">
+    <div class="inner">
+      <span class="kicker">14 · Раунд</span>
+      <h2>Seed: <span class="grad">$3.5M – $4M</span></h2>
+      <div class="ask">
+        <div class="card">
+          <div class="uf">
+            <div><div class="row"><span>Команда и таланты (14 чел.)</span><b>70% · $2.75M</b></div><div class="bar"><span style="width:70%"></span></div></div>
+            <div><div class="row"><span>Инфраструктура и операции</span><b>10% · $400K</b></div><div class="bar"><span style="width:10%"></span></div></div>
+            <div><div class="row"><span>Комьюнити</span><b>8% · $300K</b></div><div class="bar"><span style="width:8%"></span></div></div>
+            <div><div class="row"><span>Юридич., compliance, аудиты</span><b>7% · $250K</b></div><div class="bar"><span style="width:7%"></span></div></div>
+            <div><div class="row"><span>Резерв</span><b>5% · $200K</b></div><div class="bar"><span style="width:5%"></span></div></div>
+          </div>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column;justify-content:center;gap:18px">
+          <div><div class="stat-label">Pre-money оценка</div><div class="big"><span class="grad">$12–15M</span></div></div>
+          <div><div class="stat-label">Runway</div><div class="big">18 мес</div></div>
+          <div class="stat-label">До product-market fit и готовности к Series A.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 16. Milestones -->
+  <section class="slide">
+    <div class="inner">
+      <span class="kicker">15 · Цели раунда</span>
+      <h2>Что мы достигнем за 18 месяцев</h2>
+      <div class="grid g3">
+        <div class="card"><span class="ic">🏪</span><h3>1 000+ бизнесов</h3><p>Онбординг SMB в нескольких вертикалях.</p></div>
+        <div class="card"><span class="ic">🔒</span><h3>$2M+ TVL</h3><p>Заблокировано в стейках бизнесов.</p></div>
+        <div class="card"><span class="ic">📈</span><h3>$500K+ оборот</h3><p>Транзакции через платформу.</p></div>
+        <div class="card"><span class="ic">🎯</span><h3>Product-Market Fit</h3><p>Подтверждён с положительной юнит-экономикой.</p></div>
+        <div class="card"><span class="ic">💹</span><h3>Путь к прибыли</h3><p>Устойчивая модель выручки.</p></div>
+        <div class="card"><span class="ic">🚀</span><h3>Series A Ready</h3><p>Сильные метрики и траектория роста.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 17. Closing -->
+  <section class="slide center">
+    <div class="inner">
+      <span class="kicker">Спасибо</span>
+      <h1>Сделаем лояльность <span class="grad">программируемой</span></h1>
+      <p class="lead" style="text-align:center;margin:18px auto 0">Откроем onchain-лояльность для следующих 50 миллионов компаний — и для AI-агентов, которые работают рядом с ними.</p>
+      <div class="hero-badges" style="justify-content:center">
+        <span>🌐 loyalspark.online</span>
+        <span>✉️ admin@loyalspark.online</span>
+        <span>𝕏 @Loyal_Spark</span>
+      </div>
+      <p class="note">© 2026 Loyal Spark · Построено на Base · USDC-native · Agent-ready</p>
+    </div>
+  </section>
+
+</div>
+
+<div class="footer">
+  <div class="brand">Loyal<i>Spark</i></div>
+  <div>Onchain Loyalty Protocol · 2026 · Конфиденциально</div>
+</div>
+
+<div class="nav">
+  <button id="prev" aria-label="Назад">‹</button>
+  <div class="count"><span id="cur">1</span> / <span id="total">1</span></div>
+  <button id="next" aria-label="Вперёд">›</button>
+</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  let i=0;
+  const total=slides.length;
+  document.getElementById('total').textContent=total;
+  const progress=document.getElementById('progress');
+  const cur=document.getElementById('cur');
+  function show(n){
+    i=Math.max(0,Math.min(total-1,n));
+    slides.forEach((s,idx)=>s.classList.toggle('active',idx===i));
+    cur.textContent=i+1;
+    progress.style.width=((i+1)/total*100)+'%';
+  }
+  document.getElementById('next').onclick=()=>show(i+1);
+  document.getElementById('prev').onclick=()=>show(i-1);
+  document.addEventListener('keydown',e=>{
+    if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();show(i+1);}
+    if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();show(i-1);}
+    if(e.key==='Home')show(0);
+    if(e.key==='End')show(total-1);
+  });
+  let sx=null;
+  document.addEventListener('touchstart',e=>sx=e.touches[0].clientX,{passive:true});
+  document.addEventListener('touchend',e=>{if(sx===null)return;const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>50)show(dx<0?i+1:i-1);sx=null;},{passive:true});
+  show(0);
+</script>
+</body>
+</html>
