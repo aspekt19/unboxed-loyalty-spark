@@ -430,7 +430,7 @@
     "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
     "network": "eip155:8453",
     "chain_id": 8453,
-    "facilitator": "https://facilitator.x402.org",
+    "facilitator": "https://x402.org/facilitator",
     "facilitator_base_mainnet_cdp": "https://api.cdp.coinbase.com/platform/v2/x402",
     "facilitator_note": "Production Base mainnet settlement uses CDP x402 API (JWT) when CDP_API_KEY_ID/CDP_API_KEY_SECRET are configured on the gateway. Public x402.org/facilitator listings differ (e.g. Sepolia v2 exact).",
     "mcp_paid": {
@@ -531,7 +531,7 @@
       },
       {
         "title": "Pay-as-you-go Pricing",
-        "description": "Start free with 100 API calls/month. Scale to Pro ($29/mo) or Enterprise ($99/mo) with lower transaction fees and higher limits. All payments in USDC on Base."
+        "description": "Start free with 200 API calls/month. Scale to Pro ($49/mo) or Enterprise ($129/mo) with lower transaction fees and higher limits, or pay per call via MPP / x402 with no subscription. All payments in USDC on Base."
       }
     ],
     "analogy": "Think Shopify vs. coding your own store. You could deploy a token yourself, but why build rewards infrastructure from scratch when a protocol exists?"

@@ -194,7 +194,7 @@ Base URL: https://api.loyalspark.online/recipient-api · Auth: `x-api-key: rwk_�
 - Gateway: https://api.loyalspark.online/x402-gateway
 - Currency: USDC on Base (0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913) · network CAIP-2 `eip155:8453`
 - **Paid MCP:** `POST …/x402-gateway/mcp-tools/<tool_name>` — JSON-RPC `tools/call`, header `x-api-key: lsk_…` after payment. Tool ids + argument schemas: `supabase/functions/_shared/mcp-bazaar-tools.ts` (repo). Bazaar: 402 body includes `extensions.bazaar` for MCP routes.
-- Facilitator (Base mainnet production): Coinbase CDP `https://api.cdp.coinbase.com/platform/v2/x402` (gateway uses CDP JWT when configured). Reference: https://facilitator.x402.org
+- Facilitator (Base mainnet production): Coinbase CDP `https://api.cdp.coinbase.com/platform/v2/x402` (gateway uses CDP JWT when configured). Public facilitator reference: https://x402.org/facilitator (Sepolia-focused v2 listings differ from Base mainnet CDP)
 - SDK: `@x402/fetch`, `@x402/evm`
 - Spec: https://github.com/coinbase/x402
 ## Agent Wallets
