@@ -27,6 +27,9 @@ import {
 import { RecipientInput, type RecipientInputType } from '@/components/shared/RecipientInput';
 import { useResolveRecipient } from '@/hooks/useResolveRecipient';
 
+/** Carousel on mobile only for a small list; many tokens use vertical scroll */
+const MOBILE_CAROUSEL_MAX_ITEMS = 8;
+
 interface TokenListProps {
   selectedProgram: string | null;
   onProgramSelect: (address: string) => void;
@@ -427,22 +430,27 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, 
     />
   );
 
+  const showMobileCarousel =
+    isMobile &&
+    filteredTokens.length > 1 &&
+    filteredTokens.length <= MOBILE_CAROUSEL_MAX_ITEMS;
+
   return (
-    <Card className="border-2 bg-gradient-to-br from-card to-muted/30">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Your Loyalty Tokens</CardTitle>
-            <CardDescription>
-              Each merchant issues their own token. Your tier for each program is shown in one line under the token name.
-            </CardDescription>
-          </div>
-          {isMobile && filteredTokens.length > 1 && (
-            <div className="text-sm text-muted-foreground">
+    <Card className="border-2 bg-gradient-to-br from-card to-muted/30 overflow-hidden">
+      <CardHeader className="space-y-2">
+        <div className="flex items-start justify-between gap-3 min-w-0">
+          <CardTitle className="min-w-0 text-base sm:text-lg leading-tight">
+            Your Loyalty Tokens
+          </CardTitle>
+          {showMobileCarousel && (
+            <span className="text-xs text-muted-foreground tabular-nums shrink-0 pt-0.5">
               {currentSlide + 1}/{filteredTokens.length}
-            </div>
+            </span>
           )}
         </div>
+        <CardDescription className="text-xs sm:text-sm">
+          Each merchant issues their own token. Your tier for each program is shown in one line under the token name.
+        </CardDescription>
         {tokensWithBalance.length > 2 && (
           <div className="relative mt-2">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -467,7 +475,7 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, 
           </p>
         )}
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 min-w-0 overflow-hidden">
         {!walletAddress && (
           <div className="text-center py-8 text-muted-foreground">
             <Coins className="h-12 w-12 mx-auto mb-2 opacity-50" />
@@ -501,58 +509,53 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, 
         )}
         
         {filteredTokens.length > 0 && (
-          isMobile && filteredTokens.length > 1 ? (
-            <div className="relative">
+          showMobileCarousel ? (
+            <div className="relative min-w-0 overflow-hidden">
               <Carousel
                 setApi={setCarouselApi}
                 opts={{
                   align: 'start',
                   loop: false,
                 }}
-                className="w-full"
+                className="w-full min-w-0"
               >
                 <CarouselContent className="-ml-2">
                   {filteredTokens.map((token) => (
-                    <CarouselItem key={token.address} className="pl-2 basis-[90%]">
+                    <CarouselItem key={token.address} className="pl-2 basis-[90%] min-w-0">
                       {renderTokenItem(token)}
                     </CarouselItem>
                   ))}
                 </CarouselContent>
               </Carousel>
-              
-              <div className="flex justify-center gap-2 mt-3">
+
+              <div className="flex items-center justify-center gap-3 mt-3">
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-8 w-8 rounded-full"
+                  className="h-8 w-8 shrink-0 rounded-full"
                   onClick={scrollPrev}
                   disabled={currentSlide === 0}
+                  aria-label="Previous token"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <div className="flex items-center gap-1">
-                  {filteredTokens.map((_, index) => (
-                    <div
-                      key={index}
-                      className={`h-2 w-2 rounded-full transition-colors ${
-                        index === currentSlide ? 'bg-primary' : 'bg-muted'
-                      }`}
-                    />
-                  ))}
-                </div>
+                <span className="text-xs text-muted-foreground tabular-nums min-w-[3.5rem] text-center">
+                  {currentSlide + 1} / {filteredTokens.length}
+                </span>
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-8 w-8 rounded-full"
+                  className="h-8 w-8 shrink-0 rounded-full"
                   onClick={scrollNext}
                   disabled={currentSlide === filteredTokens.length - 1}
+                  aria-label="Next token"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>
           ) : (
-            <ScrollArea className="h-[330px]">
+            <ScrollArea className={isMobile ? 'h-[min(55vh,420px)]' : 'h-[330px]'}>
               <div className="space-y-3 pr-4 pb-4">
                 {filteredTokens.map((token) => renderTokenItem(token))}
               </div>

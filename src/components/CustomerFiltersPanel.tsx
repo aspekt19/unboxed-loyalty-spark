@@ -36,6 +36,8 @@ interface TokenInfo {
   merchantAddress: string;
 }
 
+const MOBILE_CAROUSEL_MAX_ITEMS = 8;
+
 interface CustomerFiltersPanelProps {
   filterByMerchant?: string | null;
 }
@@ -185,9 +187,14 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
 
   if (!address) return null;
 
+  const showMobileCarousel =
+    isMobile &&
+    programsWithBalance.length > 1 &&
+    programsWithBalance.length <= MOBILE_CAROUSEL_MAX_ITEMS;
+
   return (
-    <Card className="border-2 h-full flex flex-col">
-      <CardHeader className="flex-shrink-0">
+    <Card className="border-2 h-full flex flex-col overflow-hidden">
+      <CardHeader className="flex-shrink-0 min-w-0">
         <CardTitle className="flex items-center gap-2">
           <Gift className="h-5 w-5 text-primary" />
           Loyalty Programs
@@ -227,8 +234,8 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
             </AlertDescription>
           </Alert>
         ) : (
-          isMobile ? (
-            <div className="relative">
+          showMobileCarousel ? (
+            <div className="relative min-w-0 overflow-hidden px-1">
               <div className="overflow-hidden" ref={emblaRef}>
                 <div className="flex gap-3">
                   {programsWithBalance.map((program) => {
@@ -246,51 +253,34 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
                   })}
                 </div>
               </div>
-              {programsWithBalance.length > 1 && (
-                <div className="flex justify-center gap-1.5 mt-3">
-                  {programsWithBalance.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => emblaApi?.scrollTo(index)}
-                      className={`w-2 h-2 rounded-full transition-all ${
-                        currentSlide === index 
-                          ? 'bg-primary w-4' 
-                          : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
-                      }`}
-                      aria-label={`Go to slide ${index + 1}`}
-                    />
-                  ))}
-                </div>
-              )}
-              {programsWithBalance.length > 1 && (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 h-8 w-8 rounded-full bg-background/80 shadow-md ${
-                      !canScrollPrev ? 'opacity-30 pointer-events-none' : ''
-                    }`}
-                    onClick={() => emblaApi?.scrollPrev()}
-                    disabled={!canScrollPrev}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 h-8 w-8 rounded-full bg-background/80 shadow-md ${
-                      !canScrollNext ? 'opacity-30 pointer-events-none' : ''
-                    }`}
-                    onClick={() => emblaApi?.scrollNext()}
-                    disabled={!canScrollNext}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </>
-              )}
+              <div className="flex items-center justify-center gap-3 mt-3">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 shrink-0 rounded-full"
+                  onClick={() => emblaApi?.scrollPrev()}
+                  disabled={!canScrollPrev}
+                  aria-label="Previous program"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-xs text-muted-foreground tabular-nums min-w-[3.5rem] text-center">
+                  {currentSlide + 1} / {programsWithBalance.length}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 shrink-0 rounded-full"
+                  onClick={() => emblaApi?.scrollNext()}
+                  disabled={!canScrollNext}
+                  aria-label="Next program"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           ) : (
-            <ScrollArea className="h-[500px]">
+            <ScrollArea className={isMobile ? 'h-[min(55vh,420px)]' : 'h-[500px]'}>
               <div className="space-y-3 pr-4 pb-4">
                 {programsWithBalance.map((program) => {
                   const balance = balances.find(b => b.address === program.address);
