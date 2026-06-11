@@ -105,6 +105,22 @@ Deno.serve(async (req) => {
       throw new Error('Transaction hash is missing');
     }
 
+    // Prevent reusing the same on-chain tx hash for multiple verifications
+    const { data: existingVerified } = await supabaseClient
+      .from('premium_payment_requests')
+      .select('id')
+      .eq('status', 'verified')
+      .ilike('transaction_hash', paymentRequest.transaction_hash)
+      .neq('id', requestId)
+      .maybeSingle();
+
+    if (existingVerified) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'This transaction hash has already been used to verify another payment' }),
+        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     console.log('Checking transaction:', paymentRequest.transaction_hash);
 
     // Get admin wallet address
