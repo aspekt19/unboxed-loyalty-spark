@@ -319,6 +319,10 @@ function buildPaymentRequired(req: Request): Response {
         tags: ["loyalty", "rewards", "onchain", "base", "discovery"],
         info: bazaarInfo,
       },
+      // Official x402 Builder Code extension — CDP facilitator appends
+      // ERC-8021 Schema 2 suffix to USDC settle calldata (a=bc_wdmnog7m).
+      // https://docs.cdp.coinbase.com/x402/builder-code.skill.md
+      builderCode: { code: "bc_wdmnog7m" },
     },
   });
 
