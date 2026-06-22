@@ -647,6 +647,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
       },
       extensions: {
         bazaar: mcpBazaarExtension(mcp),
+        [BUILDER_CODE_EXTENSION_KEY]: builderCodeExtension(),
       },
     };
 
