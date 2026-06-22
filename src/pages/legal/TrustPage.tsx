@@ -1,6 +1,5 @@
-import { PageMeta } from '@/components/PageMeta';
 import TrustSecurity from '@/components/landing/TrustSecurity';
-import { SiteHeader } from '@/components/SiteHeader';
+import SiteHeader from '@/components/SiteHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ShieldCheck, Lock, Database, KeyRound, Mail, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -8,10 +7,6 @@ import { Link } from 'react-router-dom';
 export default function TrustPage() {
   return (
     <>
-      <PageMeta
-        title="Trust & Security — LoyalSpark"
-        description="How LoyalSpark protects customer and merchant data: authentication, access controls, data handling, and how to report a security issue."
-      />
       <SiteHeader />
       <main className="max-w-5xl mx-auto px-4 py-10 sm:py-14 space-y-12">
         <header className="text-center space-y-3">
