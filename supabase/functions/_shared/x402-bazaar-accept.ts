@@ -775,6 +775,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
             : bazaarSchemaHttpBody(),
         };
       })(),
+      [BUILDER_CODE_EXTENSION_KEY]: builderCodeExtension(),
     },
   };
 
