@@ -23,6 +23,7 @@ import PricingPage from "./pages/PricingPage";
 import TermsPage from "./pages/legal/TermsPage";
 import PrivacyPage from "./pages/legal/PrivacyPage";
 import RefundPage from "./pages/legal/RefundPage";
+import TrustPage from "./pages/legal/TrustPage";
 import NotFound from "./pages/NotFound";
 import NativeShopperPage from "./pages/NativeShopperPage";
 import NativeBusinessPage from "./pages/NativeBusinessPage";
@@ -116,6 +117,7 @@ function AnimatedRoutes() {
           <Route path="/legal/terms" element={<TermsPage />} />
           <Route path="/legal/privacy" element={<PrivacyPage />} />
           <Route path="/legal/refund" element={<RefundPage />} />
+          <Route path="/trust" element={<TrustPage />} />
           {/* Native app entry points (Capacitor) */}
           <Route path="/native/shopper" element={<NativeShopperPage />} />
           <Route path="/native/business" element={<NativeBusinessPage />} />
