@@ -37,10 +37,32 @@ const BAZAAR_META = {
  *
  * Docs: https://docs.cdp.coinbase.com/x402/builder-code.skill.md
  */
-export const BUILDER_CODE_EXTENSION_KEY = "builderCode" as const;
+/**
+ * CDP spec key is kebab-case `builder-code` (per @x402/extensions/builder-code v2.16+).
+ * The previous `builderCode` (camelCase) was not recognized by the facilitator and the
+ * seller's `a` field was missing from settle calldata.
+ */
+export const BUILDER_CODE_EXTENSION_KEY = "builder-code" as const;
 export const LOYAL_SPARK_BUILDER_CODE = "bc_wdmnog7m" as const;
-export function builderCodeExtension(): { code: string } {
-  return { code: LOYAL_SPARK_BUILDER_CODE };
+
+/**
+ * Mirrors `declareBuilderCodeExtension(code)` from `@x402/extensions/builder-code`.
+ * Returns the `info` + `schema` shape the CDP facilitator inspects to append the
+ * seller's app code into the `a` field of the settle tx's `transferWithAuthorization`
+ * calldata.
+ */
+export function builderCodeExtension(): {
+  info: { a: string };
+  schema: { type: "object"; properties: { a: { type: "string" } }; required: string[] };
+} {
+  return {
+    info: { a: LOYAL_SPARK_BUILDER_CODE },
+    schema: {
+      type: "object",
+      properties: { a: { type: "string" } },
+      required: ["a"],
+    },
+  };
 }
 
 export type BuildAcceptParams = {
