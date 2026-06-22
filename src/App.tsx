@@ -23,6 +23,7 @@ import PricingPage from "./pages/PricingPage";
 import TermsPage from "./pages/legal/TermsPage";
 import PrivacyPage from "./pages/legal/PrivacyPage";
 import RefundPage from "./pages/legal/RefundPage";
+import TrustPage from "./pages/legal/TrustPage";
 import NotFound from "./pages/NotFound";
 import NativeShopperPage from "./pages/NativeShopperPage";
 import NativeBusinessPage from "./pages/NativeBusinessPage";
