@@ -321,8 +321,16 @@ function buildPaymentRequired(req: Request): Response {
       },
       // Official x402 Builder Code extension — CDP facilitator appends
       // ERC-8021 Schema 2 suffix to USDC settle calldata (a=bc_wdmnog7m).
+      // Spec: kebab-case key + { info: { a }, schema } shape.
       // https://docs.cdp.coinbase.com/x402/builder-code.skill.md
-      builderCode: { code: "bc_wdmnog7m" },
+      "builder-code": {
+        info: { a: "bc_wdmnog7m" },
+        schema: {
+          type: "object",
+          properties: { a: { type: "string" } },
+          required: ["a"],
+        },
+      },
     },
   });
 
