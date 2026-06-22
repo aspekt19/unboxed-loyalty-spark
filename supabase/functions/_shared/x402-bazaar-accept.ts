@@ -873,6 +873,14 @@ function slimPaymentRequirementsV2(a: Record<string, unknown>): Record<string, u
   if (a.extra != null && typeof a.extra === "object" && !Array.isArray(a.extra)) {
     out.extra = a.extra;
   }
+  // Forward extensions (builder-code, bazaar) to CDP verify/settle. Per x402 v2 spec
+  // the facilitator cross-checks paymentPayload.extensions["builder-code"].a against
+  // paymentRequirements.extensions["builder-code"].info.a; omitting extensions here
+  // pushes CDP into a fallback CBOR path that mangles the `w` field in settle calldata
+  // (observed: w="cdp_facil1" instead of the spec value "cdp_facil").
+  if (a.extensions != null && typeof a.extensions === "object" && !Array.isArray(a.extensions)) {
+    out.extensions = a.extensions;
+  }
   return out;
 }
 
