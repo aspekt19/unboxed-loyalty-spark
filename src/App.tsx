@@ -117,6 +117,7 @@ function AnimatedRoutes() {
           <Route path="/legal/terms" element={<TermsPage />} />
           <Route path="/legal/privacy" element={<PrivacyPage />} />
           <Route path="/legal/refund" element={<RefundPage />} />
+          <Route path="/trust" element={<TrustPage />} />
           {/* Native app entry points (Capacitor) */}
           <Route path="/native/shopper" element={<NativeShopperPage />} />
           <Route path="/native/business" element={<NativeBusinessPage />} />
