@@ -24,6 +24,25 @@ const BAZAAR_META = {
   builderCode: "bc_wdmnog7m",
 } as const;
 
+/**
+ * Official x402 Builder Code extension (CDP spec).
+ *
+ * Mirrors `declareBuilderCodeExtension("bc_wdmnog7m")` from `@x402/extensions/builder-code`
+ * (Node-only npm package) — re-implemented natively for Deno Edge Functions.
+ *
+ * When this extension is present in `accepts[].extensions`, the CDP facilitator
+ * appends an ERC-8021 Schema 2 suffix to the USDC `transferWithAuthorization`
+ * settlement calldata. The seller's Builder Code shows up as the `a` (app) field
+ * when the settle tx is parsed via x402scan / buildercode-checker.vercel.app.
+ *
+ * Docs: https://docs.cdp.coinbase.com/x402/builder-code.skill.md
+ */
+export const BUILDER_CODE_EXTENSION_KEY = "builderCode" as const;
+export const LOYAL_SPARK_BUILDER_CODE = "bc_wdmnog7m" as const;
+export function builderCodeExtension(): { code: string } {
+  return { code: LOYAL_SPARK_BUILDER_CODE };
+}
+
 export type BuildAcceptParams = {
   price: string;
   resource: string;
