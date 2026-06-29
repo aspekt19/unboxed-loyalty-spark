@@ -68,7 +68,7 @@ export function AgentReportsDashboard() {
       }
       const { error } = await supabase
         .from('agent_reports')
-        .update(updateData)
+        .update(updateData as never)
         .eq('id', reportId);
       if (error) throw error;
       toast.success(`Status updated to "${newStatus}"`);

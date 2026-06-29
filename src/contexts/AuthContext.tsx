@@ -433,7 +433,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (privyUser.phone?.number) updates.phone = privyUser.phone.number;
 
           if (Object.keys(updates).length > 0) {
-            await supabase.from('profiles').update(updates).eq('wallet_address', address.toLowerCase());
+            await supabase.from('profiles').update(updates as never).eq('wallet_address', address.toLowerCase());
           }
         }
       } catch (profileErr) {
