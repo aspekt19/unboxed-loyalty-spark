@@ -1,142 +1,128 @@
-# План: единая идентичность пользователя (wallet + email)
 
-> **Изменения после ревью:** телефон отложен (Privy SMS / Twilio плохо работают по России — нужен глобальный провайдер, обсудим отдельно). Схема `identity_links` фиксируется в варианте `(link_type, value)`. Схлопывание дублей по email — отдельный релиз с бэкапом, не в первой итерации.
+# План: Gasless-транзакции через Base Paymaster
 
----
+## Цель
+Дать пользователям возможность совершать onchain-действия (mint, transfer, redeem, P2P) **без ETH в кошельке** — газ оплачивает наш Coinbase Paymaster, а несколько действий можно объединять в одну подпись (EIP-7702 / batching).
 
-## 1. Текущее состояние (после отката + сверка с репо)
+## Технологический стек
+- **Privy Smart Wallets** — поверх существующих Privy EOA. Smart Wallet = ERC-4337 аккаунт (Kernel/Coinbase Smart Account), к которому Privy EOA выступает signer'ом. Не ломает текущую аутентификацию.
+- **Coinbase Developer Platform (CDP) Paymaster & Bundler** — единый RPC endpoint Base Mainnet, спонсирует UserOperations.
+- **viem 2.x + permissionless.js** — уже частично есть в стеке (viem). Добавим `permissionless` для работы с UserOperations.
+- **Base Mainnet (chainId 8453)** — основная сеть. Sepolia — для тестов.
 
-Сверено с кодом на 2026-04-23:
-
-- ✅ Таблица `identity_links (user_id, wallet_address, is_primary, linked_via, verified_at)` существует.
-- ✅ RPC `get_my_identity_summary()` и `set_primary_wallet(text)` есть.
-- ❌ Таблица **пустая** — никто туда не пишет (`privy-auth`, `siwe-verify` её не трогают).
-- ❌ В `src/` и `supabase/functions/` **нет** ни `LinkExternalWalletCard`, ни `link-secondary-wallet`, ни `link_identity` — все экспериментальные артефакты удалены при откате.
-- ✅ `profiles.wallet_address` имеет уникальный индекс — это база, ломать не будем.
-- ✅ `privy-auth` делает `upsert ... onConflict: 'wallet_address'` — **сохраняет защиту от петли привязки** (если кошелёк уже принадлежит другому user_id, текущая логика не перезаписывает; нужно подтвердить тестом перед миграцией).
-- ✅ `resolve-recipient` ищет только в `profiles` по email/phone.
-
-**Вывод:** стартовая точка чистая, второй параллельной схемы нет, миграцию делаем поверх существующей `identity_links`.
-
----
-
-## 2. Финальная схема `identity_links` (фиксируем сейчас)
-
-Выбираем **вариант с `(link_type, value)`** — один формат хранения для wallet и email, расширяемо под phone/passkey/social в будущем без `ALTER TABLE`.
-
-```sql
-identity_links
-  id              uuid PK
-  user_id         uuid NOT NULL  -- ссылка на auth.users
-  link_type       text NOT NULL  -- 'wallet' | 'email' (phone/oauth — позже)
-  value           text NOT NULL  -- адрес 0x… или email
-  value_normalized text NOT NULL -- lower(value); по нему уникальный индекс
-  is_primary      boolean NOT NULL DEFAULT false
-  verified_via    text NOT NULL  -- 'siwe' | 'privy_embedded' | 'privy_oauth' | 'magic_link' | 'farcaster' | …
-  verified_at     timestamptz NOT NULL DEFAULT now()
-  created_at      timestamptz NOT NULL DEFAULT now()
-
-UNIQUE (link_type, value_normalized)         -- один email/wallet принадлежит одному user_id
-UNIQUE (user_id, link_type) WHERE is_primary -- ровно один primary каждого типа
+## Архитектурная схема
+```text
+User clicks "Redeem"
+   ↓
+Privy EOA (signer)
+   ↓
+Smart Wallet (ERC-4337 account, owner = EOA)
+   ↓  UserOperation
+CDP Bundler  ──── verifyPaymaster ──→  CDP Paymaster
+   ↓                                       │
+EntryPoint v0.7 on Base                    │
+   ↓                              gas paid by us
+Loyalty contracts (existing)
 ```
 
-**Миграция данных:** существующая колонка `wallet_address` копируется в `value`, `link_type='wallet'`, `linked_via` → `verified_via`. Старая колонка какое-то время остаётся (nullable) для обратной совместимости — удалим после полного перехода UI.
+## Этапы внедрения
 
-**Связь с `profiles`:**
-- `profiles.wallet_address` остаётся уникальным и продолжает быть «активным/primary wallet».
-- При смене primary через `set_primary_wallet()` — обновляем и `identity_links.is_primary`, и `profiles.wallet_address`.
-- `profiles.email` остаётся «отображаемым primary email», но теперь синхронизируется с `identity_links` (тип `'email'`, primary).
-- Вторичные кошельки/email — **только** в `identity_links`, в `profiles` не дублируются.
+### Этап 1. Подготовка инфраструктуры (без кода)
+1. Зарегистрировать проект в CDP Portal → создать Paymaster & Bundler endpoint на Base Mainnet и Base Sepolia.
+2. Завести **policy** в CDP: whitelist адресов наших контрактов (LoyaltyTokenFactory `0x5F3...A80`, Logic `0xe6B...7C3`, Escrow, P2P-маркетплейс) и whitelist методов (`redeem`, `transfer`, `mint`, `createOffer`, `acceptOffer`).
+3. Установить лимиты: max gas per user/day, max global spend per day (защита от слива баланса).
+4. Пополнить Paymaster в USDC/ETH на CDP.
+5. Завести секреты в Lovable Cloud: `CDP_PAYMASTER_URL`, `CDP_BUNDLER_URL`, `CDP_PAYMASTER_API_KEY` (если требуется).
 
----
+### Этап 2. Privy Smart Wallets (feature flag, off by default)
+1. Включить Smart Wallets в Privy Dashboard (тип: Coinbase Smart Wallet или Kernel; рекомендую Coinbase — нативная поддержка EIP-7702 на Base).
+2. Обновить `PrivyProvider` конфигом `smartWallets: { defaultChain: base, paymasterContext, bundlerUrl }`.
+3. В `AuthContext` добавить экспозицию `smartWalletAddress` рядом с EOA `address`. Сохранить EOA как primary (back-compat), Smart Wallet — как новый "execution wallet" под feature flag `VITE_GASLESS_ENABLED`.
+4. Миграция привязки: для существующих пользователей Smart Wallet создаётся детерминированно от EOA — адрес стабильный.
 
-## 3. Защита от hijack — что меняем в `privy-auth`
+### Этап 3. Абстракция отправки транзакций
+1. Создать `src/lib/web3/sendTx.ts` — единая точка отправки:
+   - если `gaslessEnabled && smartWalletReady` → `smartWalletClient.sendUserOperation({ calls, paymaster, bundler })`
+   - иначе → текущий `walletClient.sendTransaction` (fallback).
+2. Поддержать **batching**: `calls: [{ to, data, value }, ...]` — например `approve + transferFrom` или `redeem + claimReward` одним кликом/подписью.
+3. Сохранить правило из памяти: вызов `sendTx` остаётся **синхронным к клику** пользователя (без `await` перед ним), чтобы Safari/iOS не блокировал popup Privy.
+4. Логирование: пишем `userOpHash` и финальный `txHash` в `transactions` таблицу, чтобы аналитика и Builder Code трекинг продолжали работать.
 
-Текущая защита (`onConflict: 'wallet_address'`) спасает от перезаписи user_id на чужой кошелёк, но **молчаливо**: пользователь не понимает, почему его embedded wallet «подцепился» к старому аккаунту.
+### Этап 4. Builder Code совместимость
+1. CDP Paymaster поддерживает append calldata suffix. Проверить, что наш фиксированный 29-байтный Builder Code suffix (`62635f...`) корректно приклеивается к **последнему** call в batch, а не теряется.
+2. Если CDP не сохраняет suffix внутри batched call — добавить его в каждый под-call вручную через враппер.
+3. Покрыть тестом `tests/builder-code-coverage.test.ts`.
 
-После миграции `privy-auth`:
-1. Lookup по **Privy DID** (`did:privy:...`) — храним в `identity_links` как `link_type='privy_did'` (отдельный type, не конфликтует с wallet/email).
-2. Если DID найден — возвращаем существующий user_id, не трогаем кошельки.
-3. Если DID новый — создаём `auth.users` + `profiles` + первый `identity_links{wallet}` + `identity_links{privy_did}`.
-4. При попытке embedded wallet с DID привязаться к адресу, который уже в `identity_links` другого user_id — **возвращаем ошибку с понятным кодом** (`wallet_belongs_to_another_account`), фронт показывает «Этот кошелёк уже привязан к другому аккаунту. Войдите через него или обратитесь в поддержку».
+### Этап 5. Миграция фич (пошагово, по одной)
+По одной фиче, чтобы не сломать существующий flow:
+1. **Voucher Redeem** (Shopper) — простейший, один call, идеален для первого релиза.
+2. **P2P offer accept** — два call'а в одном (transfer токена + расчёт ETH), демонстрирует batching.
+3. **Mint loyalty tokens** (Merchant) — высокочастотный, экономит газ мерчантам.
+4. **Gift certificates batch (до 100)** — самая большая экономия UX: одна подпись вместо 100.
+5. **Escrow создание/раскрытие**.
 
-Это сохраняет текущую защиту и убирает молчаливое поведение.
+Для каждой фичи: feature flag → канарейка (5% юзеров) → 100%.
 
----
+### Этап 6. Мониторинг и контроль расходов
+1. Дашборд в `AdminPage`: USD потрачено за день/неделю, топ-N юзеров по газу, отказы Paymaster.
+2. Edge function `paymaster-policy-check` (опционально): pre-flight валидация UserOp до отправки в bundler, чтобы давать осмысленный UX error до подписи.
+3. Алерты: если daily spend > 80% от лимита → Slack/email админу.
+4. Anti-abuse: rate-limit на уровне нашего бэкенда — N UserOps в час на `user_id`, плюс минимальный age аккаунта (24ч) перед первым gasless action.
 
-## 4. Этапы (с учётом ревью)
+### Этап 7. EIP-7702 (опционально, после стабилизации 4337)
+Когда CDP Paymaster добавит полную поддержку 7702 на Base Mainnet — позволить EOA пользователям "временно стать" Smart Account без миграции адреса. Это убирает необходимость в отдельном Smart Wallet адресе и решает back-compat полностью.
 
-### Этап 1 — Миграция БД (1 PR)
+## Технические детали
 
-1. ALTER `identity_links`: добавить `link_type`, `value`, `value_normalized`, `verified_via`. Скопировать старые wallet-строки в новый формат. Старую колонку `wallet_address` оставить nullable.
-2. Уникальные индексы `(link_type, value_normalized)` и `(user_id, link_type) WHERE is_primary`.
-3. RPC:
-   - `link_identity(p_link_type text, p_value text, p_verified_via text)` — пишет в `identity_links` для `auth.uid()`. Если `value` свободен — линкует. Если уже принадлежит этому user_id — no-op. Если чужому — `RAISE EXCEPTION 'identity_taken'`.
-   - `unlink_identity(p_id uuid)` — удаляет, **запрещает** удалять последний wallet или primary без замены.
-   - Пересоздать `get_my_identity_summary()` под новую схему (вернёт wallets и emails отдельными массивами).
-   - Пересоздать `set_primary_wallet()` → переименовать в `set_primary(p_link_type, p_value)` с обратной совместимостью.
-4. Обновить RLS таблицы под `auth.uid() = user_id` (она уже такая, но переподтвердить после ALTER).
+### Зависимости
+```
+bun add permissionless@^0.2 @privy-io/server-auth
+# viem уже стоит
+```
 
-**Список того, что нужно пройти после миграции:**
-- `useResolveRecipient` / `resolve-recipient` — добавить поиск по `identity_links`.
-- `privy-auth` — переход на lookup по Privy DID.
-- `siwe-verify` — добавить «link mode» (если есть JWT, вызвать `link_identity('wallet', address, 'siwe')` вместо создания нового аккаунта).
-- `useAuth` / `AuthContext` — после логина дозалить wallet в `identity_links` если ещё нет.
+### Конфиг Smart Wallet (пример shape)
+```ts
+// src/lib/web3/smartWallet.ts
+const paymasterClient = createPaymasterClient({ transport: http(CDP_PAYMASTER_URL) });
+const bundlerClient = createBundlerClient({ chain: base, transport: http(CDP_BUNDLER_URL), paymaster: paymasterClient });
+```
 
-### Этап 2 — Edge functions
+### Контракты — изменения НЕ требуются
+Существующие loyalty/escrow контракты совместимы с ERC-4337 как есть: они видят `msg.sender = Smart Wallet`, а не EOA. **Важно**: проверить все `onlyOwner` / `MINTER_ROLE` записи в БД — если где-то роль выдана на EOA, нужно либо перевыдать на Smart Wallet, либо в has_role проверять оба адреса.
 
-1. `privy-auth`: lookup по DID (см. раздел 3).
-2. `siwe-verify`: link mode при наличии Bearer JWT.
-3. `resolve-recipient`: порядок поиска
-   1. `identity_links` (type='email', value=normalized) → primary wallet того же user_id.
-   2. `identity_links` (type='wallet', value=normalized) → возврат сразу.
-   3. Fallback: `profiles.email` (legacy, пока не схлопнем дубли).
-   4. Fallback: `customer_profiles.email` (legacy).
-   - Возвращать `display_name` если есть в `customer_profiles`/`merchant_profiles`.
+### RLS-импликации
+`active-primary-wallet` логика остаётся: пользователь видит и EOA, и Smart Wallet в списке кошельков. RLS-политики уже используют `lower(wallet_address)` — добавим Smart Wallet адрес в `user_wallets` при первой инициализации.
 
-### Этап 3 — UI «Linked accounts»
+### Agent (CDP MPC) wallets
+AI-агенты используют CDP MPC и платят газ из своего баланса. Paymaster их **не** покрывает на старте (другой биллинг-домен — у них своя экономика через A2A revenue model). Можно подключить позже отдельной policy.
 
-- Компонент `LinkedAccounts.tsx`:
-  - Список linked wallets и emails с бейджами Primary/Verified, дата.
-  - «Add wallet» → SIWE в link-mode.
-  - «Add email» → Privy `linkEmail()` → callback `link_identity('email', …, 'privy_oauth'|'magic_link')`.
-  - «Set as primary» / «Unlink» с подтверждением.
-- Интеграция: `CustomerProfileSection.tsx`, `MerchantProfileSection.tsx`, `MobileProfileTab.tsx`.
-- Активный wallet — продолжает работать через memory `mem://features/active-primary-wallet.md`.
+## Риски и mitigations
+| Риск | Mitigation |
+|---|---|
+| Слив Paymaster-баланса при abuse | CDP policy whitelist + rate-limit + дневной cap |
+| Smart Wallet ≠ EOA, ломает существующие onchain rep/балансы | Feature flag, постепенный rollout, отображение обоих адресов в UI, миграционный гайд |
+| Popup-блокировка из-за async подписи | Жёсткое правило sync-to-click сохранено (memory: wallet-transaction-gestures) |
+| Builder Code attribution теряется в batch | Покрыть тестом, при необходимости — врапнуть каждый under-call |
+| CDP даун | Fallback на обычные транзакции с EOA — пользователь платит газ сам, но flow не ломается |
+| MINTER_ROLE привязан к EOA | Скрипт миграции ролей через Edge Function `grant-minter-to-smart-wallet` |
 
-### Этап 4 — Отдельный релиз: схлопывание дублей по email (НЕ в первой итерации)
+## Сроки (оценка)
+- Этап 1–2: 1-2 дня
+- Этап 3–4: 2-3 дня
+- Этап 5 (по фиче): ~1 день на фичу × 5 = ~5 дней с канарейкой
+- Этап 6: 1-2 дня
+- **Итого до прод-релиза первой фичи (Voucher Redeem)**: ~5-7 дней работы.
 
-- Перед стартом — бэкап БД, дамп `profiles` + `identity_links`.
-- Скрипт: для каждого email с N>1 user_id — оставляем самого старого (`min(created_at)`), остальные пересаживаем (vouchers, mints, programs, employees…) на winner.user_id, дубли user_id мягко удаляем (через `admin_delete_user` или soft-flag).
-- Аудит каждой склейки в `user_moderation_log` (action='auto_merge_email').
-- После — включить уникальность `profiles.email`.
+## Что НЕ входит в этот план
+- EIP-7702 нативный (без 4337) — отложено до этапа 7.
+- Гасless для AI-агентов — отдельный трек.
+- Замена Privy на другой auth provider.
+- Смена контрактов / новые деплои.
 
-**Решение:** делаем **после** того, как Этапы 1–3 проживут в проде неделю-две и мы увидим реальное распределение дублей.
-
-### Этап 5 — Phone (отложен до выбора провайдера)
-
-- Privy SMS и Twilio не подходят (плохая доставка по России).
-- Кандидаты для глобального покрытия + RU: **Vonage (Nexmo)**, **MessageBird/Bird**, **Plivo**, **SMS Aero/SMSC.ru гибрид через Vonage backup**. У всех есть международный sender и работа по РФ через локальных агрегаторов.
-- Перед реализацией — обсудить выбор отдельно. До этого: телефон как опциональное поле в `customer_profiles` без верификации (как сейчас).
-
----
-
-## 5. Риски и решения (актуализированы)
-
-| Риск | Решение |
-|------|---------|
-| Сломаем существующий код, который читает `identity_links.wallet_address` | Колонка остаётся nullable до миграции UI; новые чтения через `value WHERE link_type='wallet'`. Пройти grep'ом всё перед удалением. |
-| Privy DID меняется при пересоздании Privy app | DID хранится отдельным `link_type='privy_did'`; при смене app — fallback на email lookup. |
-| Уже есть пользователи с одним email на нескольких user_id | Этап 1 НЕ включает уникальность по email в `profiles`. Дубли остаются до Этапа 4. На вход — `link_identity('email', …)` будет падать с `identity_taken` — это ожидаемо, попросим пройти merge. |
-| Onchain история привязана к адресу, не к user_id | Этап 4 (агрегирующий view) — после стабилизации этапов 1–3. |
-| `profiles.wallet_address` уникален → нельзя одному user_id иметь два wallet в profiles | И не нужно: вторые кошельки живут только в `identity_links`. `profiles.wallet_address` всегда = primary. |
-
----
-
-## 6. Что предлагаю на первую итерацию
-
-**Фаза 1 (один заход):** Этап 1 (миграция + RPC) + Этап 2 (`privy-auth` lookup по DID, `siwe-verify` link mode, `resolve-recipient` через `identity_links`) + Этап 3 (UI `LinkedAccounts` для wallet и email).
-
-**Не делаем сейчас:** телефон, схлопывание email-дублей, агрегация баланса по нескольким wallet.
-
-Подтверди, и я готовлю миграцию первым шагом (без изменений кода — сначала схема и RPC, потом отдельно edge-функции, потом UI). Так каждый кусок будет ревьюиться независимо и можно остановиться на любом этапе.
+## Критерии готовности
+- [ ] Юзер без ETH успешно redeem'ит voucher на Base Mainnet.
+- [ ] В Basescan видно `UserOperationEvent`, газ оплачен с адреса Paymaster.
+- [ ] Builder Code suffix присутствует в финальном calldata.
+- [ ] Daily spend < установленного лимита.
+- [ ] Fallback на обычную транзакцию работает при отключении flag.
+- [ ] Существующие EOA-флоу не сломаны (regression-тесты проходят).
