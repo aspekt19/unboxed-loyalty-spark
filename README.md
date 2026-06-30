@@ -185,8 +185,8 @@ Connect Claude, GPT, or any MCP-compatible agent:
 }
 ```
 
-**MCP tools (28)** — defined in `supabase/functions/loyalty-mcp/index.ts`:  
-`get_platform_info`, `get_my_profile`, `list_loyalty_programs`, `create_loyalty_program`, `register_loyalty_program`, `activate_loyalty_program`, `update_program_status`, `update_program_config`, `list_rewards`, `create_reward`, `mint_loyalty_tokens`, `transfer_loyalty_tokens`, `earn_points`, `get_token_balance`, `get_program_analytics`, `list_marketplace_offers`, `redeem_reward`, `use_voucher`, `check_voucher_status`, `get_platform_stats`, `cancel_stale_offers`, `create_personalized_offer`, `update_reward_status`, `export_customers`, `send_report`, `list_my_reports`, `update_report_status`, `delete_report`.
+**MCP tools (32)** — defined in `supabase/functions/loyalty-mcp/index.ts`:  
+`get_platform_info`, `get_my_profile`, `list_loyalty_programs`, `create_loyalty_program`, `register_loyalty_program`, `activate_loyalty_program`, `update_program_status`, `update_program_config`, `list_rewards`, `create_reward`, `mint_loyalty_tokens`, `transfer_loyalty_tokens`, `earn_points`, `get_token_balance`, `get_program_analytics`, `list_marketplace_offers`, `redeem_reward`, `use_voucher`, `check_voucher_status`, `get_platform_stats`, `cancel_stale_offers`, `create_personalized_offer`, `update_reward_status`, `export_customers`, `send_report`, `list_my_reports`, `update_report_status`, `delete_report`, `create_gift_certificate`, `list_gift_certificates`, `revoke_gift_certificate`, `mark_gift_certificate_minted`.
 
 ### Recipient agents (wallet holders, `rwk_`)
 
