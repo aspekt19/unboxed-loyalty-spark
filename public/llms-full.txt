@@ -32,7 +32,7 @@ How to get a key:
 1. **Dashboard (humans):** sign in at https://loyalspark.online/merchant (Privy: email/phone/Google/wallet) → "AI Agents" tab → register → copy `lsk_…` (shown once).
 2. **Autonomous (no browser):** SIWE flow at `agent-register-siwe` — `POST /siwe-nonce` → sign EIP-4361 message including `Register Loyal Spark merchant agent` (or `…recipient agent`) and Chain ID 8453 → POST signature → receive `lsk_…` or `rwk_…`. Same limits as dashboard.
 
-## REST API — 24 Endpoints
+## REST API — 26 Endpoints (25 authenticated + 1 public)
 
 Base URL: https://api.loyalspark.online/agent-api
 
