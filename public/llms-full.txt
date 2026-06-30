@@ -14,7 +14,7 @@ Loyal Spark is a dual-mode protocol: humans interact via web UI with flexible au
 - OpenAPI 3.1.0: https://loyalspark.online/openapi.json
 - MCP Server (merchant, `lsk_`, 32 tools): https://api.loyalspark.online/loyalty-mcp (Streamable HTTP)
 - Recipient MCP Server (`rwk_`, 14 tools): https://api.loyalspark.online/recipient-loyalty-mcp (Streamable HTTP)
-- REST (merchant, `lsk_`, 23 routes): https://api.loyalspark.online/agent-api
+- REST (merchant, `lsk_`, 25 authenticated routes + 1 public): https://api.loyalspark.online/agent-api
 - REST (recipient, `rwk_`, 12 routes): https://api.loyalspark.online/recipient-api
 - MPP Manifest: https://loyalspark.online/.well-known/mpp.json
 - x402 Resources: https://loyalspark.online/.well-known/x402.json (Bazaar-discoverable URLs for both merchant and recipient corridors)
@@ -32,7 +32,7 @@ How to get a key:
 1. **Dashboard (humans):** sign in at https://loyalspark.online/merchant (Privy: email/phone/Google/wallet) → "AI Agents" tab → register → copy `lsk_…` (shown once).
 2. **Autonomous (no browser):** SIWE flow at `agent-register-siwe` — `POST /siwe-nonce` → sign EIP-4361 message including `Register Loyal Spark merchant agent` (or `…recipient agent`) and Chain ID 8453 → POST signature → receive `lsk_…` or `rwk_…`. Same limits as dashboard.
 
-## REST API — 24 Endpoints
+## REST API — 26 Endpoints (25 authenticated + 1 public)
 
 Base URL: https://api.loyalspark.online/agent-api
 
