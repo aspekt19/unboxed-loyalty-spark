@@ -368,7 +368,7 @@
     ]
   },
   "recipient_api": {
-    "description": "Wallet-bound API for agents that HOLD loyalty tokens (not merchants). Authenticated with x-api-key: rwk_… Register via SIWE (POST /siwe-nonce → sign EIP-4361 'Register Loyal Spark recipient agent' Chain ID 8453 → POST /agent-register-siwe).",
+    "description": "Wallet-bound API for agents that HOLD loyalty tokens (not merchants). Authenticated with x-api-key: rwk_… Register via SIWE: POST https://api.loyalspark.online/siwe-nonce → sign EIP-4361 message including 'Register Loyal Spark recipient agent' and Chain ID 8453 → POST { message, signature } to https://api.loyalspark.online/recipient-api/register (pass Supabase publishable apikey header). Returns rwk_… once.",
     "rest_base_url": "https://api.loyalspark.online/recipient-api",
     "mcp_url": "https://api.loyalspark.online/recipient-loyalty-mcp",
     "mcp_transport": "streamable-http",
