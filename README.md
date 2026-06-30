@@ -134,7 +134,7 @@ curl -X POST \
   https://api.loyalspark.online/agent-api/mint
 ```
 
-### API Endpoints (23 authenticated + 1 public)
+### API Endpoints (25 authenticated + 1 public)
 
 All routes below require `x-api-key: lsk_...` except **GET `/vouchers/status`** (public).
 
