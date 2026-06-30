@@ -46,22 +46,49 @@ export const BUILDER_CODE_EXTENSION_KEY = "builder-code" as const;
 export const LOYAL_SPARK_BUILDER_CODE = "bc_wdmnog7m" as const;
 
 /**
+ * Byte-for-byte mirror of `BUILDER_CODE_SCHEMA` from `@x402/extensions@2.17.0/builder-code`
+ * (see https://unpkg.com/@x402/extensions@2.17.0/dist/cjs/builder-code/index.d.ts).
+ *
+ * The CDP facilitator validates `extensions["builder-code"].info` against this exact
+ * schema before emitting the ERC-8021 Schema 2 suffix. Any deviation (missing $schema,
+ * extra `required`, missing `w`/`s` properties, missing `additionalProperties: false`,
+ * missing `pattern`) can cause the facilitator to drop the seller's `a` attribution.
+ */
+const BUILDER_CODE_SCHEMA = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  type: "object",
+  properties: {
+    a: {
+      type: "string",
+      pattern: "^[a-z0-9_]{1,32}$",
+      description: "App builder code",
+    },
+    w: {
+      type: "string",
+      pattern: "^[a-z0-9_]{1,32}$",
+      description: "Wallet builder code",
+    },
+    s: {
+      type: "array",
+      items: { type: "string", pattern: "^[a-z0-9_]{1,32}$" },
+      description: "Service builder codes",
+    },
+  },
+  additionalProperties: false,
+} as const;
+
+/**
  * Mirrors `declareBuilderCodeExtension(code)` from `@x402/extensions/builder-code`.
- * Returns the `info` + `schema` shape the CDP facilitator inspects to append the
- * seller's app code into the `a` field of the settle tx's `transferWithAuthorization`
- * calldata.
+ * The CDP facilitator inspects this shape and appends the seller's app code into the
+ * `a` field of the settle tx's `transferWithAuthorization` calldata (ERC-8021 Schema 2).
  */
 export function builderCodeExtension(): {
   info: { a: string };
-  schema: { type: "object"; properties: { a: { type: "string" } }; required: string[] };
+  schema: typeof BUILDER_CODE_SCHEMA;
 } {
   return {
     info: { a: LOYAL_SPARK_BUILDER_CODE },
-    schema: {
-      type: "object",
-      properties: { a: { type: "string" } },
-      required: ["a"],
-    },
+    schema: BUILDER_CODE_SCHEMA,
   };
 }
 
