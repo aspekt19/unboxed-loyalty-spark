@@ -164,6 +164,9 @@ All routes below require `x-api-key: lsk_...` except **GET `/vouchers/status`** 
 | POST | `/accept-offer` | trade | Accept P2P offer |
 | POST | `/cancel-offer` | trade | Cancel P2P offer |
 | GET | `/tx-receipt` | authenticated | Extract token_address from deploy tx |
+| GET | `/merchant-profile` | read | Read merchant profile |
+| POST | `/merchant-profile` | manage_rewards | Create merchant profile |
+| PUT | `/merchant-profile` | manage_rewards | Update merchant profile |
 
 ### MCP Server (for LLMs)
 
