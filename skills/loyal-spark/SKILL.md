@@ -67,7 +67,7 @@ For autonomous agents without Base Account, use a Loyal Spark CDP MPC wallet (`a
 
 ```bash
 # Vercel skills.sh CLI (any supported harness)
-npx skills add loyalspark/skills --skill loyal-spark
+npx skills add Kot-blockchain/loyaltyspark --skill loyal-spark
 ```
 
 For per-surface install (Claude.ai, ChatGPT, Cursor, Claude Code, Codex, Hermes) see [references/install.md](references/install.md).
