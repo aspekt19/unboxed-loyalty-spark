@@ -214,8 +214,12 @@ function buildPaymentRequired(price: string, resource: string, requestUrl: URL):
 
   const headers = new Headers(corsHeaders);
   headers.set("Content-Type", "application/json");
-  headers.set("X-Payment-Required", encoded);
-  // x402-foundation @x402/fetch expects PAYMENT-REQUIRED (same payload as body / X-Payment-Required)
+  // x402-foundation @x402/fetch expects PAYMENT-REQUIRED. We intentionally do NOT
+  // also set X-Payment-Required: duplicating the ~7.4 KB base64 payload pushes
+  // total response headers over Node.js default maxHeaderSize=16384, causing
+  // "Headers Overflow Error" on branded proxy (api.loyalspark.online) for heavy
+  // MCP tools (earn_points, mint_loyalty_tokens). Body still carries the JSON
+  // for debugging and v1 clients.
   headers.set("PAYMENT-REQUIRED", encoded);
 
   return new Response(JSON.stringify(paymentRequirements), {
