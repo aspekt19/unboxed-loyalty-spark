@@ -1,8 +1,9 @@
 ---
 name: loyal-spark
-description: Loyal Spark — onchain loyalty protocol on Base L2. Lets an AI agent create ERC-20 loyalty programs, mint and transfer points, manage rewards and vouchers, redeem gift certificates (LOYAL-XXXXXX), and trade tokens on a P2P escrow marketplace via the Loyal Spark MCP server (api.loyalspark.online/loyalty-mcp) or REST API. Pairs with Base MCP: Loyal Spark prepares calldata + Builder Code, Base Account signs onchain.
+description: Onchain loyalty protocol on Base. AI agents create ERC-20 loyalty programs, mint/transfer points, manage rewards and vouchers, redeem LOYAL-XXXXXX gift certificates, and trade on P2P escrow via MCP or REST. Returns calldata + Builder Code for Base Account to sign.
 version: 0.1.0
 homepage: https://loyalspark.online
+license: MIT
 ---
 
 # Loyal Spark Skill
