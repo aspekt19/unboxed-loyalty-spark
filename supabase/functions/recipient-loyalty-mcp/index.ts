@@ -440,6 +440,49 @@ function createRecipientMcpServer(
     },
   });
 
+  mcpServer.tool("bazaar_pay_and_call", {
+    description: "[PREVIEW] Pay and call any x402-paid HTTPS endpoint using the holder's CDP MPC wallet (EIP-3009 exact scheme on Base USDC). Currently returns 'not_available' because recipient wallets are Privy-custodied — no server-side signing key. Activates once a delegated CDP MPC wallet is linked to the recipient. Signature is stable so agents can wire it now.",
+    inputSchema: {
+      type: "object" as const,
+      required: ["url"],
+      properties: {
+        url: { type: "string", description: "Full https:// URL of the x402 resource" },
+        method: { type: "string", enum: ["GET", "POST", "PUT", "PATCH", "DELETE"], description: "HTTP method (default GET)" },
+        body: { description: "Optional JSON request body for non-GET methods" },
+        headers: { type: "object", description: "Extra request headers (Accept/Content-Type auto-set)" },
+        max_usdc: { type: "number", description: "Spend cap for THIS call in USDC (default 0.25, must be ≤ 10)" },
+        allowed_networks: { type: "array", items: { type: "string" }, description: "Networks to accept (default ['base'])" },
+        allowed_schemes: { type: "array", items: { type: "string" }, description: "x402 schemes to accept (default ['exact'])" },
+      },
+    },
+    handler: async (args: any) => {
+      let hasCdp = false;
+      try {
+        const { data } = await serviceClient
+          .from("customer_profiles")
+          .select("cdp_wallet_address" as any)
+          .ilike("wallet_address", walletAddress)
+          .maybeSingle();
+        hasCdp = !!(data as any)?.cdp_wallet_address;
+      } catch {
+        hasCdp = false;
+      }
+
+      await log("bazaar_pay_and_call", { url: args?.url, max_usdc: args?.max_usdc }, 501, { reason: hasCdp ? "not_wired" : "no_cdp_wallet" });
+
+      return T(JSON.stringify({
+        error: "not_available",
+        code: hasCdp ? "cdp_wallet_signing_not_wired" : "recipient_cdp_wallet_not_linked",
+        message: hasCdp
+          ? "A CDP wallet is linked to this recipient, but server-side x402 signing for recipients is not wired yet."
+          : "Recipient wallets are custodied by Privy (client-side). To perform automated x402 payments, opt in to a delegated CDP MPC wallet from your account settings. Until then, use prepare_loyalty_token_transfer and sign in your wallet.",
+        wallet_address: walletAddress,
+        cdp_wallet_linked: hasCdp,
+        docs: "https://loyalspark.online/for-agents",
+      }));
+    },
+  });
+
   return mcpServer;
 }
 

@@ -13,7 +13,7 @@ Loyal Spark is a dual-mode protocol: humans interact via web UI with flexible au
 - Agent Manifest: https://loyalspark.online/.well-known/agent.json
 - OpenAPI 3.1.0: https://loyalspark.online/openapi.json
 - MCP Server (merchant, `lsk_`, 36 tools): https://api.loyalspark.online/loyalty-mcp (Streamable HTTP)
-- Recipient MCP Server (`rwk_`, 17 tools): https://api.loyalspark.online/recipient-loyalty-mcp (Streamable HTTP)
+- Recipient MCP Server (`rwk_`, 18 tools): https://api.loyalspark.online/recipient-loyalty-mcp (Streamable HTTP)
 - REST (merchant, `lsk_`, 25 authenticated routes + 1 public): https://api.loyalspark.online/agent-api
 - REST (recipient, `rwk_`, 12 routes): https://api.loyalspark.online/recipient-api
 - MPP Manifest: https://loyalspark.online/.well-known/mpp.json
