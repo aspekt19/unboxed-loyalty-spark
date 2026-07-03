@@ -25,7 +25,8 @@ function createRecipientMcpServer(
   wallet: string,
   agentId: string,
   d: any,
-  ip: string
+  ip: string,
+  apiKey: string,
 ) {
   const w = wallet.toLowerCase();
   const db = d as any;
