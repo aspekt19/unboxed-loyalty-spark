@@ -13,6 +13,7 @@ import {
   marketplaceListOffers,
 } from "../_shared/marketplace-p2p.ts";
 import { loadOnchainLoyaltyBalance, loadOnchainLoyaltyBalances } from "../_shared/recipient-onchain-balances.ts";
+import { discoverResources, discoverMcpServers, probeX402Endpoint } from "../_shared/bazaar-discovery.ts";
 
 const app = new Hono();
 
@@ -372,6 +373,70 @@ function createRecipientMcpServer(
       }
       await log("list_my_gift_certificates", {}, 200, { count: data?.length });
       return T(JSON.stringify({ count: data?.length || 0, certificates: data || [] }));
+    },
+  });
+
+  // ============ Bazaar MCP side-car (outbound discovery) ============
+  mcpServer.tool("bazaar_discover_resources", {
+    description: "Discover third-party x402-paid resources in Coinbase CDP's Bazaar registry. Read-only.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        q: { type: "string", description: "Free-text filter" },
+        network: { type: "string", description: "e.g. 'base'" },
+        limit: { type: "number", description: "Max rows (default 25, max 100)" },
+        cursor: { type: "string" },
+      },
+    },
+    handler: async (args: any) => {
+      try {
+        const out = await discoverResources({ q: args?.q, network: args?.network, limit: args?.limit, cursor: args?.cursor });
+        await log("bazaar_discover_resources", { q: args?.q }, 200, { count: (out as any).count });
+        return T(JSON.stringify(out));
+      } catch (e: any) {
+        await log("bazaar_discover_resources", { q: args?.q }, 500, { error: String(e?.message || e) });
+        return T(JSON.stringify({ error: String(e?.message || e) }));
+      }
+    },
+  });
+
+  mcpServer.tool("bazaar_discover_mcp_servers", {
+    description: "Discover third-party MCP servers in Coinbase CDP's Bazaar registry. Read-only.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        q: { type: "string" },
+        network: { type: "string" },
+        limit: { type: "number" },
+        cursor: { type: "string" },
+      },
+    },
+    handler: async (args: any) => {
+      try {
+        const out = await discoverMcpServers({ q: args?.q, network: args?.network, limit: args?.limit, cursor: args?.cursor });
+        await log("bazaar_discover_mcp_servers", { q: args?.q }, 200, { count: (out as any).count });
+        return T(JSON.stringify(out));
+      } catch (e: any) {
+        return T(JSON.stringify({ error: String(e?.message || e) }));
+      }
+    },
+  });
+
+  mcpServer.tool("bazaar_probe_x402", {
+    description: "GET a candidate x402 URL. If it answers 402, return the parsed accepts[] payment requirements. HTTPS only, no signing.",
+    inputSchema: {
+      type: "object" as const,
+      required: ["url"],
+      properties: { url: { type: "string" } },
+    },
+    handler: async (args: any) => {
+      try {
+        const out = await probeX402Endpoint(String(args?.url || ""));
+        await log("bazaar_probe_x402", { url: args?.url }, 200, { status: (out as any).status });
+        return T(JSON.stringify(out));
+      } catch (e: any) {
+        return T(JSON.stringify({ error: String(e?.message || e) }));
+      }
     },
   });
 

@@ -12,8 +12,8 @@ Loyal Spark is a dual-mode protocol: humans interact via web UI with flexible au
 - Static pointer (markdown): https://loyalspark.online/for-agents.md
 - Agent Manifest: https://loyalspark.online/.well-known/agent.json
 - OpenAPI 3.1.0: https://loyalspark.online/openapi.json
-- MCP Server (merchant, `lsk_`, 32 tools): https://api.loyalspark.online/loyalty-mcp (Streamable HTTP)
-- Recipient MCP Server (`rwk_`, 14 tools): https://api.loyalspark.online/recipient-loyalty-mcp (Streamable HTTP)
+- MCP Server (merchant, `lsk_`, 35 tools): https://api.loyalspark.online/loyalty-mcp (Streamable HTTP)
+- Recipient MCP Server (`rwk_`, 17 tools): https://api.loyalspark.online/recipient-loyalty-mcp (Streamable HTTP)
 - REST (merchant, `lsk_`, 25 authenticated routes + 1 public): https://api.loyalspark.online/agent-api
 - REST (recipient, `rwk_`, 12 routes): https://api.loyalspark.online/recipient-api
 - MPP Manifest: https://loyalspark.online/.well-known/mpp.json
@@ -85,7 +85,7 @@ curl -X POST \
 
 Response returns calldata with Builder Code for onchain execution.
 
-## MCP Server — 32 Tools (Merchant)
+## MCP Server — 35 Tools (Merchant)
 
 URL: https://api.loyalspark.online/loyalty-mcp
 Transport: Streamable HTTP
@@ -126,7 +126,7 @@ Auth: x-api-key header
 31. `revoke_gift_certificate` — Revoke an active gift certificate (active → revoked)
 32. `mark_gift_certificate_minted` — Mark a claimed certificate as minted with the on-chain mint tx (pending_mint → redeemed)
 
-## Recipient MCP Server — 14 Tools (Holder, `rwk_`)
+## Recipient MCP Server — 17 Tools (Holder, `rwk_`)
 
 URL: https://api.loyalspark.online/recipient-loyalty-mcp
 
