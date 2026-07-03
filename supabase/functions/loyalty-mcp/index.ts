@@ -27,7 +27,7 @@ const ADMIN_ADDRESSES = [
 
 type AuthFailure = null | "missing_key" | "invalid_key" | "rate_limited";
 
-function createMcpServer(agent: any, authFailure: AuthFailure) {
+function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | null = null) {
   const mcpServer = new McpServer({ name: "loyal-spark-mcp", version: "1.0.0" });
 
   function authGuard(scopes?: string[]) {
@@ -1179,6 +1179,46 @@ function createMcpServer(agent: any, authFailure: AuthFailure) {
     },
   });
 
+  mcpServer.tool("bazaar_pay_and_call", {
+    description: "Pay and call any x402-paid HTTPS endpoint using the merchant agent's CDP MPC wallet (EIP-3009 exact scheme on Base USDC). Probes the URL for HTTP 402, picks a compatible requirement, signs TransferWithAuthorization via CDP, retries with X-PAYMENT header, and returns the paid response. Requires scope 'mint' and a pre-created CDP wallet. Safety cap: max_usdc (default 0.25, hard limit 10).",
+    inputSchema: {
+      type: "object" as const,
+      required: ["url"],
+      properties: {
+        url: { type: "string", description: "Full https:// URL of the x402 resource" },
+        method: { type: "string", enum: ["GET", "POST", "PUT", "PATCH", "DELETE"], description: "HTTP method (default GET)" },
+        body: { description: "Optional JSON request body for non-GET methods" },
+        headers: { type: "object", description: "Extra request headers (Accept/Content-Type auto-set)" },
+        max_usdc: { type: "number", description: "Spend cap for THIS call in USDC (default 0.25, must be ≤ 10)" },
+        allowed_networks: { type: "array", items: { type: "string" }, description: "Networks to accept (default ['base'])" },
+        allowed_schemes: { type: "array", items: { type: "string" }, description: "x402 schemes to accept (default ['exact'])" },
+      },
+    },
+    handler: async (args: any) => {
+      const err = authGuard(["mint"]);
+      if (err) return T(err);
+      if (!apiKey) return T('{"error":"missing_api_key_context"}');
+      try {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+        const res = await fetch(`${supabaseUrl}/functions/v1/agent-wallet`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": apiKey,
+            apikey: anonKey,
+            Authorization: `Bearer ${anonKey}`,
+          },
+          body: JSON.stringify({ action: "x402_pay_and_call", ...args }),
+        });
+        const text = await res.text();
+        return T(text);
+      } catch (e: any) {
+        return T(JSON.stringify({ error: String(e?.message || e) }));
+      }
+    },
+  });
+
   return mcpServer;
 }
 
@@ -1195,7 +1235,7 @@ app.all("/*", async (c) => {
       agent = r.agent;
     }
   }
-  const server = createMcpServer(agent, authFailure);
+  const server = createMcpServer(agent, authFailure, apiKey);
   const transport = new StreamableHttpTransport();
   const handler = transport.bind(server);
   return handler(c.req.raw);
