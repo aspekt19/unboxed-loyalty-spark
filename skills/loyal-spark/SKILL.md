@@ -40,7 +40,7 @@ Key patterns that deserve their own reference:
 | Topic | Reference |
 | --- | --- |
 | Two API personas: `lsk_` (merchant) vs `rwk_` (recipient/holder) | [references/auth.md](references/auth.md) |
-| Calldata + Builder Code execution flow (mint / transfer / activate / P2P) | [references/calldata-flow.md](references/calldata-flow.md) |
+| Calldata execution flow (mint / transfer / activate / P2P) | [references/calldata-flow.md](references/calldata-flow.md) |
 | Paid x402 MCP — JSON-RPC over `x402-gateway/mcp-tools/<name>` | [references/x402-paid.md](references/x402-paid.md) |
 | Pairing with Base MCP for signing | [references/base-mcp-integration.md](references/base-mcp-integration.md) |
 | Gift certificates (`LOYAL-XXXXXX`, batch up to 100) | [references/gift-certificates.md](references/gift-certificates.md) |
