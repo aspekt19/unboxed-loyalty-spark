@@ -50,7 +50,7 @@ Key patterns that deserve their own reference:
 ### Loading referenced files
 
 * **Default — local.** Read each `references/…` link from the same directory as this `SKILL.md`.
-* **Fallback — web.** If local read fails, fetch the same relative path from `https://loyalspark.online/skills/loyal-spark/<relative>`.
+* **Fallback — web.** If local read fails, fetch the same relative path from `https://raw.githubusercontent.com/Kot-blockchain/loyaltyspark/main/skills/loyal-spark/<relative>`.
 * **Lazy.** Only load a reference when the conversation actually needs it.
 
 ## Pairing with Base MCP (recommended)
