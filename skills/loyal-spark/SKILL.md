@@ -1,6 +1,6 @@
 ---
 name: loyal-spark
-description: Onchain loyalty protocol on Base. AI agents create ERC-20 loyalty programs, mint/transfer points, manage rewards and vouchers, redeem LOYAL-XXXXXX gift certificates, and trade on P2P escrow via MCP or REST. Returns calldata + Builder Code for Base Account to sign.
+description: Onchain loyalty protocol on Base. AI agents create ERC-20 loyalty programs, mint/transfer points, manage rewards and vouchers, redeem LOYAL-XXXXXX gift certificates, and trade on P2P escrow via MCP or REST. Returns ready-to-sign calldata for Base Account, CDP MPC, or any user wallet.
 version: 0.1.0
 homepage: https://loyalspark.online
 license: MIT
@@ -17,7 +17,7 @@ The Loyal Spark MCP exposes its tools to the harness when connected. If no `get_
 
 If Loyal Spark tools are available, load [references/tone.md](references/tone.md) (its rules apply for the entire conversation) and then continue to Onboarding.
 
-If — and only if — sibling files are not readable (e.g. the skill body was pasted with no local filesystem), fetch the same relative path from `https://raw.githubusercontent.com/Kot-blockchain/loyaltyspark/main/skills/loyal-spark/` using `web_request` (Base MCP) or your own HTTP tool. The same fallback applies to every `references/...` and `plugins/...` link in this file.
+If — and only if — sibling files are not readable (e.g. the skill body was pasted with no local filesystem), fetch the same relative path from `https://raw.githubusercontent.com/aspekt19/unboxed-loyalty-spark/a2a-agents/skills/loyal-spark/` using `web_request` (Base MCP) or your own HTTP tool. The same fallback applies to every `references/...` and `plugins/...` link in this file.
 
 ## Onboarding
 
@@ -40,7 +40,7 @@ Key patterns that deserve their own reference:
 | Topic | Reference |
 | --- | --- |
 | Two API personas: `lsk_` (merchant) vs `rwk_` (recipient/holder) | [references/auth.md](references/auth.md) |
-| Calldata + Builder Code execution flow (mint / transfer / activate / P2P) | [references/calldata-flow.md](references/calldata-flow.md) |
+| Calldata execution flow (mint / transfer / activate / P2P) | [references/calldata-flow.md](references/calldata-flow.md) |
 | Paid x402 MCP — JSON-RPC over `x402-gateway/mcp-tools/<name>` | [references/x402-paid.md](references/x402-paid.md) |
 | Pairing with Base MCP for signing | [references/base-mcp-integration.md](references/base-mcp-integration.md) |
 | Gift certificates (`LOYAL-XXXXXX`, batch up to 100) | [references/gift-certificates.md](references/gift-certificates.md) |
@@ -50,12 +50,12 @@ Key patterns that deserve their own reference:
 ### Loading referenced files
 
 * **Default — local.** Read each `references/…` link from the same directory as this `SKILL.md`.
-* **Fallback — web.** If local read fails, fetch the same relative path from `https://raw.githubusercontent.com/Kot-blockchain/loyaltyspark/main/skills/loyal-spark/<relative>`.
+* **Fallback — web.** If local read fails, fetch the same relative path from `https://raw.githubusercontent.com/aspekt19/unboxed-loyalty-spark/a2a-agents/skills/loyal-spark/<relative>`.
 * **Lazy.** Only load a reference when the conversation actually needs it.
 
 ## Pairing with Base MCP (recommended)
 
-Loyal Spark tools return **calldata + Builder Code (`bc_wdmnog7m`)**, not signed transactions. If Base MCP is also connected, the typical flow is:
+Loyal Spark tools return **ready-to-sign calldata**, not signed transactions. If Base MCP is also connected, the typical flow is:
 
 1. Call a Loyal Spark tool (e.g. `mint_loyalty_tokens`, `transfer_loyalty_tokens`, `activate_loyalty_program`) → receive `{ to, data, value }` calldata.
 2. Hand the calldata to Base MCP's batched-call / send-transaction tool (EIP-5792 supported).
@@ -67,7 +67,7 @@ For autonomous agents without Base Account, use a Loyal Spark CDP MPC wallet (`a
 
 ```bash
 # Vercel skills.sh CLI (any supported harness)
-npx skills add Kot-blockchain/loyaltyspark --skill loyal-spark
+npx skills add aspekt19/unboxed-loyalty-spark --skill loyal-spark
 ```
 
 For per-surface install (Claude.ai, ChatGPT, Cursor, Claude Code, Codex, Hermes) see [references/install.md](references/install.md).
