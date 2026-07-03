@@ -793,8 +793,9 @@ Deno.serve(async (req) => {
         case "get_wallet": return await handleGetWallet(d, agent, body);
         case "sign_transaction": return await handleSignTransaction(d, agent, body);
         case "server_mint": return await handleServerMint(d, agent, body);
+        case "x402_pay_and_call": return await handleX402PayAndCall(d, agent, body);
         default:
-          return jsonResponse({ error: "Unknown action", available_actions: ["create_wallet", "get_wallet", "sign_transaction", "server_mint"] }, 400);
+          return jsonResponse({ error: "Unknown action", available_actions: ["create_wallet", "get_wallet", "sign_transaction", "server_mint", "x402_pay_and_call"] }, 400);
       }
     } catch (err) {
       console.error("[agent-wallet] Error:", err);
