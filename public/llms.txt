@@ -77,6 +77,14 @@ Merchant SaaS (portal): Starter $39 / Growth $79 / Scale $149 per month — see 
 - POST /register (free), /prepare-transfer ($0.005), /redeem-reward ($0.01), /offers ($0.01), /accept-offer ($0.01), /cancel-offer ($0.005)
 - Register key: SIWE-only (`agent-register-siwe` returns `rwk_…` for wallets that hold loyalty tokens)
 
+## Base MCP Custom Plugin (`send_calls`-ready calldata)
+- Base URL: https://api.loyalspark.online/agent-prepare
+- Auth: `x-api-key: lsk_...` (merchant actions) or `rwk_...` (holder actions); `?api_key=` fallback
+- Actions: GET /create-program, /activate-program, /mint, /transfer (merchant) · /recipient-transfer, /recipient-approve (holder)
+- Response: `{ chainId: 8453, description, transactions: [{to,data,value}], builder_code: "bc_wdmnog7m" }` — Builder Code appended to calldata (ERC-8021)
+- Plugin spec: https://github.com/oleksiihalytskyi/loyal-spark/blob/main/skills/loyal-spark/plugins/loyal-spark.md
+
+
 ## AI Discovery
 - Agent Manifest: https://loyalspark.online/.well-known/agent.json
 - OpenAPI: https://loyalspark.online/openapi.json
