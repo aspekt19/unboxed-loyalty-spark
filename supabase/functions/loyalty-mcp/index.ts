@@ -27,7 +27,7 @@ const ADMIN_ADDRESSES = [
 
 type AuthFailure = null | "missing_key" | "invalid_key" | "rate_limited";
 
-function createMcpServer(agent: any, authFailure: AuthFailure) {
+function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | null = null) {
   const mcpServer = new McpServer({ name: "loyal-spark-mcp", version: "1.0.0" });
 
   function authGuard(scopes?: string[]) {
