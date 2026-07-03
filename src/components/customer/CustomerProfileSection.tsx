@@ -395,6 +395,7 @@ export function CustomerProfileSection() {
 
       <WalletQRCode />
       <LinkedAccounts />
+      <CdpWalletSetup />
       <ReferralCodeInput />
       <ReferralCard />
       <CustomerReviewsSection />
