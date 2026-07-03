@@ -101,7 +101,7 @@ const ceo = new Agent({
 
 Проект: Onchain Loyalty Protocol на Base L2.
 Сайт: https://loyalspark.online
-API: 23 merchant REST + 12 recipient REST + 32 merchant MCP + 14 recipient MCP
+API: 25 merchant REST + 12 recipient REST + 36 merchant MCP + 18 recipient MCP (direct); 32 merchant + 14 recipient tools via paid x402 corridor
 Монетизация: депозитная модель ($5 = 90 дней)
 
 Правила:
