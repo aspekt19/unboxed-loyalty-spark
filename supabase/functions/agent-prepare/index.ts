@@ -9,7 +9,7 @@
 // Docs: skills/loyal-spark/plugins/loyal-spark.md
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { authenticateAgent } from "../agent-api/auth.ts";
+import { authenticateAgent } from "../_shared/agent-auth.ts";
 import { authenticateRecipientAgent } from "../_shared/recipient-agent-auth.ts";
 import {
   appendBuilderCode,
