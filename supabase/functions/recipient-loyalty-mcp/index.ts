@@ -25,7 +25,8 @@ function createRecipientMcpServer(
   wallet: string,
   agentId: string,
   d: any,
-  ip: string
+  ip: string,
+  apiKey: string,
 ) {
   const w = wallet.toLowerCase();
   const db = d as any;
@@ -441,7 +442,7 @@ function createRecipientMcpServer(
   });
 
   mcpServer.tool("bazaar_pay_and_call", {
-    description: "[PREVIEW] Pay and call any x402-paid HTTPS endpoint using the holder's CDP MPC wallet (EIP-3009 exact scheme on Base USDC). Currently returns 'not_available' because recipient wallets are Privy-custodied — no server-side signing key. Activates once a delegated CDP MPC wallet is linked to the recipient. Signature is stable so agents can wire it now.",
+    description: "Pay and call any x402-paid HTTPS endpoint using the holder's delegated CDP MPC wallet (EIP-3009 exact scheme on Base USDC). Requires opt-in delegated CDP wallet — enable it in /customer settings. Spend cap enforced per call (default 0.25 USDC, hard limit 10 USDC).",
     inputSchema: {
       type: "object" as const,
       required: ["url"],
@@ -456,30 +457,36 @@ function createRecipientMcpServer(
       },
     },
     handler: async (args: any) => {
-      let hasCdp = false;
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
       try {
-        const { data } = await serviceClient
-          .from("customer_profiles")
-          .select("cdp_wallet_address" as any)
-          .ilike("wallet_address", walletAddress)
-          .maybeSingle();
-        hasCdp = !!(data as any)?.cdp_wallet_address;
-      } catch {
-        hasCdp = false;
+        const resp = await fetch(`${supabaseUrl}/functions/v1/agent-wallet`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": apiKey,
+          },
+          body: JSON.stringify({
+            action: "recipient_x402_pay_and_call",
+            url: args?.url,
+            method: args?.method,
+            body: args?.body,
+            headers: args?.headers,
+            max_usdc: args?.max_usdc,
+            allowed_networks: args?.allowed_networks,
+            allowed_schemes: args?.allowed_schemes,
+          }),
+        });
+        const data = await resp.json().catch(() => ({}));
+        await log("bazaar_pay_and_call", { url: args?.url, max_usdc: args?.max_usdc }, resp.status, {
+          paid: (data as any)?.paid,
+          reason: (data as any)?.reason,
+        });
+        return T(JSON.stringify(data));
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        await log("bazaar_pay_and_call", { url: args?.url }, 500, { error: msg });
+        return T(JSON.stringify({ error: "proxy_failed", message: msg }));
       }
-
-      await log("bazaar_pay_and_call", { url: args?.url, max_usdc: args?.max_usdc }, 501, { reason: hasCdp ? "not_wired" : "no_cdp_wallet" });
-
-      return T(JSON.stringify({
-        error: "not_available",
-        code: hasCdp ? "cdp_wallet_signing_not_wired" : "recipient_cdp_wallet_not_linked",
-        message: hasCdp
-          ? "A CDP wallet is linked to this recipient, but server-side x402 signing for recipients is not wired yet."
-          : "Recipient wallets are custodied by Privy (client-side). To perform automated x402 payments, opt in to a delegated CDP MPC wallet from your account settings. Until then, use prepare_loyalty_token_transfer and sign in your wallet.",
-        wallet_address: walletAddress,
-        cdp_wallet_linked: hasCdp,
-        docs: "https://loyalspark.online/for-agents",
-      }));
     },
   });
 
@@ -508,7 +515,7 @@ app.all("/*", async (c) => {
   }
 
   const ip = c.req.header("x-forwarded-for") || c.req.header("cf-connecting-ip") || "unknown";
-  const server = createRecipientMcpServer(auth.agent.walletAddress, auth.agent.agentId, serviceClient, ip);
+  const server = createRecipientMcpServer(auth.agent.walletAddress, auth.agent.agentId, serviceClient, ip, apiKey);
   const transport = new StreamableHttpTransport();
   const handler = transport.bind(server);
   return handler(c.req.raw);
