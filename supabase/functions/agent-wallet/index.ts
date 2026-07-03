@@ -865,8 +865,11 @@ async function handleRecipientX402PayAndCall(
   body: any,
   ip?: string,
 ) {
-  const url = String(body?.url || "");
-  if (!url) return jsonResponse({ error: "Missing required field: url" }, 400);
+  const rawUrl = String(body?.url || "");
+  if (!rawUrl) return jsonResponse({ error: "Missing required field: url" }, 400);
+  const urlCheck = validatePayAndCallUrl(rawUrl);
+  if (!urlCheck.ok) return jsonResponse({ error: urlCheck.error }, 400);
+  const url = urlCheck.url;
 
   const method = (body?.method || "GET").toUpperCase();
   if (!["GET", "POST", "PUT", "PATCH", "DELETE"].includes(method)) {
