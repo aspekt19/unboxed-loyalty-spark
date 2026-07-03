@@ -163,7 +163,9 @@ const mintRes = await x402Fetch('${X402_URL}/mint', {
    → GET /x402-gateway/programs -H "x-api-key: lsk_..."
 
 2. Gateway returns HTTP 402 Payment Required
-   → X-Payment-Required: <base64 payment requirements>
+   → PAYMENT-REQUIRED: <base64 payment requirements>
+     (X-Payment-Required is NOT sent — kept single-header to stay under
+      Node.js default maxHeaderSize=16384. Body JSON mirrors the header.)
    → Includes: amount, USDC asset, Base network, payTo address
 
 3. Agent's x402 client signs USDC transfer on Base
