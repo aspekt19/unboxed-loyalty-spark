@@ -55,7 +55,7 @@ Key patterns that deserve their own reference:
 
 ## Pairing with Base MCP (recommended)
 
-Loyal Spark tools return **calldata + Builder Code (`bc_wdmnog7m`)**, not signed transactions. If Base MCP is also connected, the typical flow is:
+Loyal Spark tools return **ready-to-sign calldata**, not signed transactions. If Base MCP is also connected, the typical flow is:
 
 1. Call a Loyal Spark tool (e.g. `mint_loyalty_tokens`, `transfer_loyalty_tokens`, `activate_loyalty_program`) → receive `{ to, data, value }` calldata.
 2. Hand the calldata to Base MCP's batched-call / send-transaction tool (EIP-5792 supported).
