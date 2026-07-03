@@ -7,6 +7,7 @@ import {
   getAgentFeePercent,
   PLATFORM_FEE_WALLET,
 } from "../_shared/loyalspark-agent-helpers.ts";
+import { payAndCall, type TypedDataSigner } from "../_shared/x402-pay-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
