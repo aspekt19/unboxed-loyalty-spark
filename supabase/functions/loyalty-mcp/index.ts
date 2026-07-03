@@ -1110,8 +1110,78 @@ function createMcpServer(agent: any, authFailure: AuthFailure) {
     },
   });
 
+  // ============ Bazaar MCP side-car (outbound discovery) ============
+  // Lets our agents find & inspect third-party x402 resources / MCP servers
+  // published in Coinbase CDP's Bazaar registry. Read-only, no signing here.
+
+  mcpServer.tool("bazaar_discover_resources", {
+    description: "Discover third-party x402-paid resources published in Coinbase CDP's Bazaar (docs, data feeds, AI inference, etc). Read-only. Filter by free-text q and/or network (e.g. 'base').",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        q: { type: "string", description: "Free-text filter matched against the resource JSON (name/description/url)" },
+        network: { type: "string", description: "Filter by network, e.g. 'base' or 'base-sepolia'" },
+        limit: { type: "number", description: "Max rows returned (default 25, max 100)" },
+        cursor: { type: "string", description: "Pagination cursor from a previous call" },
+      },
+    },
+    handler: async (args: any) => {
+      const err = authGuard(["read"]);
+      if (err) return T(err);
+      try {
+        const out = await discoverResources({ q: args?.q, network: args?.network, limit: args?.limit, cursor: args?.cursor });
+        return T(JSON.stringify(out));
+      } catch (e: any) {
+        return T(JSON.stringify({ error: String(e?.message || e) }));
+      }
+    },
+  });
+
+  mcpServer.tool("bazaar_discover_mcp_servers", {
+    description: "Discover third-party MCP servers published in Coinbase CDP's Bazaar. Read-only. Filter by free-text q and/or network.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        q: { type: "string", description: "Free-text filter matched against the server JSON" },
+        network: { type: "string", description: "Filter by network, e.g. 'base'" },
+        limit: { type: "number", description: "Max rows (default 25, max 100)" },
+        cursor: { type: "string", description: "Pagination cursor" },
+      },
+    },
+    handler: async (args: any) => {
+      const err = authGuard(["read"]);
+      if (err) return T(err);
+      try {
+        const out = await discoverMcpServers({ q: args?.q, network: args?.network, limit: args?.limit, cursor: args?.cursor });
+        return T(JSON.stringify(out));
+      } catch (e: any) {
+        return T(JSON.stringify({ error: String(e?.message || e) }));
+      }
+    },
+  });
+
+  mcpServer.tool("bazaar_probe_x402", {
+    description: "GET a candidate x402 URL and, if it responds HTTP 402, return the parsed payment requirements (accepts[]) so the caller can decide whether to pay. HTTPS only. No signing performed.",
+    inputSchema: {
+      type: "object" as const,
+      required: ["url"],
+      properties: { url: { type: "string", description: "Full https:// URL of the x402-paid endpoint" } },
+    },
+    handler: async (args: any) => {
+      const err = authGuard(["read"]);
+      if (err) return T(err);
+      try {
+        const out = await probeX402Endpoint(String(args?.url || ""));
+        return T(JSON.stringify(out));
+      } catch (e: any) {
+        return T(JSON.stringify({ error: String(e?.message || e) }));
+      }
+    },
+  });
+
   return mcpServer;
 }
+
 
 app.all("/*", async (c) => {
   const apiKey = resolveMcpApiKey((name) => c.req.header(name), "lsk_");
