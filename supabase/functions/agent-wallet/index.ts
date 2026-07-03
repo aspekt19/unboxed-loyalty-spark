@@ -772,6 +772,166 @@ async function handleUiCreateWallet(d: any, userId: string, body: any) {
   return await handleCreateWallet(d, agent, body);
 }
 
+
+// ==================== RECIPIENT (rwk_) CDP WALLET FLOW ====================
+// Opt-in delegated CDP MPC wallet for holders (Privy-custodied users who want
+// their agent to autonomously pay x402 resources with USDC on Base).
+
+async function handleRecipientCreateCdpWallet(d: any, userId: string) {
+  // Resolve caller wallet from JWT profile
+  const { data: profile } = await d
+    .from("profiles")
+    .select("wallet_address")
+    .eq("user_id", userId)
+    .single();
+
+  if (!profile?.wallet_address) return jsonResponse({ error: "Profile not found" }, 404);
+  const walletLc = profile.wallet_address.toLowerCase();
+
+  // Ensure a customer_profiles row exists (it may not for wallet-only users)
+  const { data: cp } = await d
+    .from("customer_profiles")
+    .select("wallet_address, cdp_wallet_address")
+    .ilike("wallet_address", walletLc)
+    .maybeSingle();
+
+  if (cp?.cdp_wallet_address) {
+    return jsonResponse({
+      wallet: { cdp_wallet_address: cp.cdp_wallet_address },
+      message: "Delegated CDP wallet already exists for this recipient.",
+      already_exists: true,
+    });
+  }
+
+  // Create CDP MPC account named recipient-<8-hex>
+  const shortId = walletLc.replace(/^0x/, "").slice(0, 8);
+  const cdpName = `recipient-${shortId}`;
+  const cdpResult = await cdpRequest("POST", "/evm/accounts", { name: cdpName });
+
+  if (!cdpResult.ok || !cdpResult.data?.address) {
+    return jsonResponse({
+      error: "cdp_wallet_creation_failed",
+      detail: cdpResult.error || "CDP API did not return an address",
+    }, 502);
+  }
+
+  const cdpAddress = cdpResult.data.address as string;
+
+  // Upsert customer_profiles row with the CDP wallet address
+  const { error: upErr } = await d
+    .from("customer_profiles")
+    .upsert(
+      {
+        wallet_address: walletLc,
+        cdp_wallet_address: cdpAddress,
+        cdp_wallet_created_at: new Date().toISOString(),
+      },
+      { onConflict: "wallet_address" },
+    );
+
+  if (upErr) return jsonResponse({ error: upErr.message }, 500);
+
+  return jsonResponse({
+    wallet: {
+      cdp_wallet_address: cdpAddress,
+      created_at: new Date().toISOString(),
+    },
+    message: "Delegated CDP MPC wallet created. Fund it with USDC on Base to enable automated x402 payments.",
+  }, 201);
+}
+
+async function handleRecipientX402PayAndCall(
+  d: any,
+  agent: { agentId: string; walletAddress: string; name: string },
+  body: any,
+  ip?: string,
+) {
+  const url = String(body?.url || "");
+  if (!url) return jsonResponse({ error: "Missing required field: url" }, 400);
+
+  const method = (body?.method || "GET").toUpperCase();
+  if (!["GET", "POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+    return jsonResponse({ error: `Unsupported method: ${method}` }, 400);
+  }
+
+  const maxUsdc = typeof body?.max_usdc === "number" ? body.max_usdc : 0.25;
+  if (maxUsdc <= 0 || maxUsdc > 10) {
+    return jsonResponse({ error: "max_usdc must be in (0, 10]" }, 400);
+  }
+
+  // Resolve delegated CDP wallet from customer_profiles
+  const { data: cp } = await d
+    .from("customer_profiles")
+    .select("cdp_wallet_address")
+    .ilike("wallet_address", agent.walletAddress)
+    .maybeSingle();
+
+  const cdpAddress = cp?.cdp_wallet_address as string | undefined;
+  if (!cdpAddress) {
+    const resp = {
+      error: "recipient_cdp_wallet_not_linked",
+      message: "Enable a delegated CDP MPC wallet from /customer settings before calling x402 resources.",
+      wallet_address: agent.walletAddress,
+    };
+    await insertRecipientActivity(d, agent.agentId, "recipient_x402_pay_and_call", { url, max_usdc: maxUsdc }, 412, resp, ip);
+    return jsonResponse(resp, 412);
+  }
+
+  const signer: TypedDataSigner = async ({ address, domain, types, primaryType, message }) => {
+    return await cdpSignTypedData(address, {
+      typedData: {
+        domain,
+        types: {
+          EIP712Domain: [
+            { name: "name", type: "string" },
+            { name: "version", type: "string" },
+            { name: "chainId", type: "uint256" },
+            { name: "verifyingContract", type: "address" },
+          ],
+          ...types,
+        },
+        primaryType,
+        message,
+      },
+    });
+  };
+
+  const result = await payAndCall({
+    url,
+    method: method as any,
+    body: body?.body,
+    headers: body?.headers,
+    fromAddress: cdpAddress,
+    signer,
+    maxUsdc,
+    allowedNetworks: body?.allowed_networks || ["base"],
+    allowedSchemes: body?.allowed_schemes || ["exact"],
+  });
+
+  await insertRecipientActivity(
+    d,
+    agent.agentId,
+    "recipient_x402_pay_and_call",
+    { url, method, max_usdc: maxUsdc },
+    result.status || (result.paid ? 200 : 402),
+    {
+      paid: result.paid,
+      reason: result.reason,
+      selected: result.selected_requirement
+        ? {
+            network: result.selected_requirement.network,
+            asset: result.selected_requirement.asset,
+            amount: result.selected_requirement.maxAmountRequired,
+            payTo: result.selected_requirement.payTo,
+          }
+        : null,
+    },
+    ip,
+  );
+
+  return jsonResponse(result, result.paid ? 200 : (result.status || 402));
+}
+
 // ==================== MAIN HANDLER ====================
 
 Deno.serve(async (req) => {
