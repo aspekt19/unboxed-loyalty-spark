@@ -100,8 +100,10 @@ npm install @x402/fetch @x402/evm
 curl -i ${X402_URL}/programs \\
   -H "x-api-key: lsk_YOUR_API_KEY"
 
-# Response: HTTP 402 with X-Payment-Required header
-# Use x402 SDK to sign and retry automatically`;
+# Response: HTTP 402 with PAYMENT-REQUIRED header (base64 challenge)
+# Use x402 SDK to sign and retry automatically
+# Note: Node.js default fetch (maxHeaderSize=16384) handles this correctly —
+# the challenge is sent once in the PAYMENT-REQUIRED header only.`;
 
   const x402CodeExample = `import { wrapFetch } from '@x402/fetch';
 import { ExactEvmScheme } from '@x402/evm/exact/client';
@@ -161,7 +163,9 @@ const mintRes = await x402Fetch('${X402_URL}/mint', {
    → GET /x402-gateway/programs -H "x-api-key: lsk_..."
 
 2. Gateway returns HTTP 402 Payment Required
-   → X-Payment-Required: <base64 payment requirements>
+   → PAYMENT-REQUIRED: <base64 payment requirements>
+     (X-Payment-Required is NOT sent — kept single-header to stay under
+      Node.js default maxHeaderSize=16384. Body JSON mirrors the header.)
    → Includes: amount, USDC asset, Base network, payTo address
 
 3. Agent's x402 client signs USDC transfer on Base
