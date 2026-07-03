@@ -39,6 +39,8 @@ Optional **local** scripts (not used by the web app build): **`scripts/x402-paid
 - **MCP (merchants):** `supabase/functions/loyalty-mcp/index.ts` — each `mcpServer.tool("name", …)` is one tool.
 - **REST (recipients):** `supabase/functions/recipient-api/index.ts` — wallet-bound `rwk_` keys (balances, rewards, vouchers, redeem, **`POST /prepare-transfer`** for holder ERC-20 send calldata, P2P offers list/create/accept/cancel). **Paid corridor:** `mpp-gateway` / `x402-gateway` + paths in `_shared/recipient-paid-routes.ts`.
 - **MCP (recipients):** `supabase/functions/recipient-loyalty-mcp/index.ts` — holder tools including **`prepare_loyalty_token_transfer`** (same calldata path as merchant `transfer_loyalty_tokens`, but authenticated with `rwk_`) and P2P (`list_p2p_offers`, `create_p2p_offer`, `accept_p2p_offer`, `cancel_p2p_offer`). **Paid x402 MCP:** `x402-gateway/recipient-mcp-tools/<name>` — prices in `_shared/recipient-mcp-bazaar-tools.ts`.
+- **Base MCP custom plugin (calldata → `send_calls`):** `supabase/functions/agent-prepare/index.ts` — GET endpoints at `https://api.loyalspark.online/agent-prepare/<action>` returning `{ chainId, description, transactions:[{to,data,value}], builder_code }` for Base MCP `send_calls`. Actions: `create-program`, `activate-program`, `mint`, `transfer` (`lsk_`) · `recipient-transfer`, `recipient-approve` (`rwk_`). Plugin spec: `skills/loyal-spark/plugins/loyal-spark.md`.
+
 
 ## Prompts & OpenServ
 
