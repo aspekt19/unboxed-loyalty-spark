@@ -18,6 +18,8 @@ import { toast } from 'sonner';
  */
 export function CdpWalletSetup() {
   const { user } = useAuth();
+  const { address } = useAccount();
+  const wallet = address?.toLowerCase() ?? null;
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [cdpAddress, setCdpAddress] = useState<string | null>(null);
@@ -26,21 +28,21 @@ export function CdpWalletSetup() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      if (!user?.walletAddress) {
+      if (!wallet) {
         setLoading(false);
         return;
       }
       const { data } = await supabase
         .from('customer_profiles')
         .select('cdp_wallet_address' as any)
-        .ilike('wallet_address', user.walletAddress.toLowerCase())
+        .ilike('wallet_address', wallet)
         .maybeSingle();
       if (cancelled) return;
       setCdpAddress(((data as any)?.cdp_wallet_address as string) ?? null);
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [user?.walletAddress]);
+  }, [wallet]);
 
   const handleCreate = async () => {
     setCreating(true);
