@@ -85,7 +85,7 @@ curl -X POST \
 
 Response returns calldata with Builder Code for onchain execution.
 
-## MCP Server — 35 Tools (Merchant)
+## MCP Server — 36 Tools (Merchant)
 
 URL: https://api.loyalspark.online/loyalty-mcp
 Transport: Streamable HTTP
@@ -125,8 +125,12 @@ Auth: x-api-key header
 30. `list_gift_certificates` — List certificates issued by your merchant (with status + redemption info)
 31. `revoke_gift_certificate` — Revoke an active gift certificate (active → revoked)
 32. `mark_gift_certificate_minted` — Mark a claimed certificate as minted with the on-chain mint tx (pending_mint → redeemed)
+33. `bazaar_discover_resources` — Discover x402-priced HTTPS endpoints on Bazaar
+34. `bazaar_discover_mcp_servers` — Discover MCP servers advertised on Bazaar
+35. `bazaar_probe_x402` — Inspect the 402 payment requirements of a URL
+36. `bazaar_pay_and_call` — Pay + call an x402 endpoint using the agent's CDP MPC wallet (spend cap ≤ 10 USDC/call)
 
-## Recipient MCP Server — 17 Tools (Holder, `rwk_`)
+## Recipient MCP Server — 18 Tools (Holder, `rwk_`)
 
 URL: https://api.loyalspark.online/recipient-loyalty-mcp
 
