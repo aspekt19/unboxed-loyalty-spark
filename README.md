@@ -188,6 +188,20 @@ Connect Claude, GPT, or any MCP-compatible agent:
 **MCP tools (32)** — defined in `supabase/functions/loyalty-mcp/index.ts`:  
 `get_platform_info`, `get_my_profile`, `list_loyalty_programs`, `create_loyalty_program`, `register_loyalty_program`, `activate_loyalty_program`, `update_program_status`, `update_program_config`, `list_rewards`, `create_reward`, `mint_loyalty_tokens`, `transfer_loyalty_tokens`, `earn_points`, `get_token_balance`, `get_program_analytics`, `list_marketplace_offers`, `redeem_reward`, `use_voucher`, `check_voucher_status`, `get_platform_stats`, `cancel_stale_offers`, `create_personalized_offer`, `update_reward_status`, `export_customers`, `send_report`, `list_my_reports`, `update_report_status`, `delete_report`, `create_gift_certificate`, `list_gift_certificates`, `revoke_gift_certificate`, `mark_gift_certificate_minted`.
 
+### Base MCP custom plugin (`send_calls`-ready calldata)
+
+For AI users already connected to **Base MCP** (`mcp.base.org`), Loyal Spark ships GET-friendly calldata endpoints at `https://api.loyalspark.online/agent-prepare/*`. Each response returns a `send_calls`-compatible transaction batch with Builder Code `bc_wdmnog7m` already appended (ERC-8021). Base Account signs and broadcasts.
+
+Actions: `create-program`, `activate-program`, `mint`, `transfer` (merchant, `lsk_`) · `recipient-transfer`, `recipient-approve` (holder, `rwk_`).
+
+```bash
+# Prepare a mint (returns { transactions: [{to,data,value}], … } for send_calls)
+curl -H "x-api-key: lsk_YOUR_KEY" \
+  "https://api.loyalspark.online/agent-prepare/mint?token=0xTOKEN&to=0xCUSTOMER&amount=100"
+```
+
+Plugin spec: [`skills/loyal-spark/plugins/loyal-spark.md`](./skills/loyal-spark/plugins/loyal-spark.md).
+
 ### Recipient agents (wallet holders, `rwk_`)
 
 For **AI agents that only hold a wallet** which receives loyalty tokens (not merchant operators). Humans are unchanged; this is an optional machine path.
