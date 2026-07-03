@@ -16,6 +16,7 @@ import {
 } from "./helpers.ts";
 import { resolveMcpApiKey } from "../_shared/mcp-http-api-key.ts";
 import { parseOptionalCashbackRate, parseOptionalPointsPerDollar } from "../_shared/program-economics.ts";
+import { discoverResources, discoverMcpServers, probeX402Endpoint } from "../_shared/bazaar-discovery.ts";
 
 const app = new Hono();
 
