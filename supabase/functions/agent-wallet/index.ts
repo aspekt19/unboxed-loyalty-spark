@@ -412,6 +412,103 @@ async function handleSignTransaction(d: any, agent: any, body: any) {
   });
 }
 
+// ---- x402 pay-and-call (Bazaar side-car with signing) --------------------
+// Uses the agent's CDP MPC wallet as an EIP-3009 signer to pay any x402
+// resource on Base. Requires scope `mint` (spending funds) and an existing
+// active CDP wallet. Enforces a max USDC cap per call.
+
+async function cdpSignTypedData(address: string, typedData: any): Promise<{ ok: boolean; signature?: string; error?: string }> {
+  const path = `/evm/accounts/${address}/sign/typed-data`;
+  const res = await cdpRequest("POST", path, typedData);
+  if (!res.ok) return { ok: false, error: res.error };
+  const sig = res.data?.signature || res.data?.signedTypedData || res.data?.result || null;
+  if (!sig || typeof sig !== "string") {
+    return { ok: false, error: `no_signature_in_cdp_response:${JSON.stringify(res.data).slice(0, 200)}` };
+  }
+  return { ok: true, signature: sig };
+}
+
+async function handleX402PayAndCall(d: any, agent: any, body: any) {
+  if (!agent.scopes.includes("mint")) {
+    return jsonResponse({ error: "Scope 'mint' required to spend funds via x402" }, 403);
+  }
+
+  const url = String(body?.url || "");
+  if (!url) return jsonResponse({ error: "Missing required field: url" }, 400);
+
+  const method = (body?.method || "GET").toUpperCase();
+  if (!["GET", "POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+    return jsonResponse({ error: `Unsupported method: ${method}` }, 400);
+  }
+
+  const maxUsdc = typeof body?.max_usdc === "number" ? body.max_usdc : 0.25;
+  if (maxUsdc <= 0 || maxUsdc > 10) {
+    return jsonResponse({ error: "max_usdc must be in (0, 10]" }, 400);
+  }
+
+  const { data: wallet } = await d
+    .from("agent_wallets")
+    .select("wallet_address, wallet_type, is_active")
+    .eq("agent_id", agent.agentId).eq("chain_id", 8453).single();
+
+  if (!wallet || !wallet.is_active) {
+    return jsonResponse({ error: "No active CDP wallet. Use action: create_wallet first." }, 404);
+  }
+  if (wallet.wallet_type !== "cdp_mpc") {
+    return jsonResponse({ error: "x402_pay_and_call requires a CDP MPC wallet" }, 400);
+  }
+
+  const signer: TypedDataSigner = async ({ address, domain, types, primaryType, message }) => {
+    return await cdpSignTypedData(address, {
+      typedData: {
+        domain,
+        types: {
+          EIP712Domain: [
+            { name: "name", type: "string" },
+            { name: "version", type: "string" },
+            { name: "chainId", type: "uint256" },
+            { name: "verifyingContract", type: "address" },
+          ],
+          ...types,
+        },
+        primaryType,
+        message,
+      },
+    });
+  };
+
+  const result = await payAndCall({
+    url,
+    method: method as any,
+    body: body?.body,
+    headers: body?.headers,
+    fromAddress: wallet.wallet_address,
+    signer,
+    maxUsdc,
+    allowedNetworks: body?.allowed_networks || ["base"],
+    allowedSchemes: body?.allowed_schemes || ["exact"],
+  });
+
+  await d.from("agent_activity_log").insert({
+    agent_id: agent.agentId,
+    action: "x402_pay_and_call",
+    request_body: { url, method, max_usdc: maxUsdc },
+    response_status: result.status,
+    response_body: {
+      paid: result.paid,
+      reason: result.reason,
+      selected: result.selected_requirement ? {
+        network: result.selected_requirement.network,
+        asset: result.selected_requirement.asset,
+        amount: result.selected_requirement.maxAmountRequired,
+        payTo: result.selected_requirement.payTo,
+      } : null,
+    },
+  });
+
+  return jsonResponse(result, result.paid ? 200 : (result.status || 402));
+}
+
 async function trackUsage(d: any, ownerAddress: string, mintAmount: number, feeUsdc: number) {
   const now = new Date();
   const periodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
