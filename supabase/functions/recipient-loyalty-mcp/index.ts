@@ -13,6 +13,7 @@ import {
   marketplaceListOffers,
 } from "../_shared/marketplace-p2p.ts";
 import { loadOnchainLoyaltyBalance, loadOnchainLoyaltyBalances } from "../_shared/recipient-onchain-balances.ts";
+import { discoverResources, discoverMcpServers, probeX402Endpoint } from "../_shared/bazaar-discovery.ts";
 
 const app = new Hono();
 
