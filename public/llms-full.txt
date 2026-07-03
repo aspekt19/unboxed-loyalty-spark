@@ -197,6 +197,25 @@ Base URL: https://api.loyalspark.online/recipient-api · Auth: `x-api-key: rwk_�
 - Facilitator (Base mainnet production): Coinbase CDP `https://api.cdp.coinbase.com/platform/v2/x402` (gateway uses CDP JWT when configured). Public facilitator reference: https://x402.org/facilitator (Sepolia-focused v2 listings differ from Base mainnet CDP)
 - SDK: `@x402/fetch`, `@x402/evm`
 - Spec: https://github.com/coinbase/x402
+
+## Base MCP Custom Plugin (`send_calls`-ready calldata)
+
+- Base URL: `https://api.loyalspark.online/agent-prepare`
+- Purpose: GET endpoints returning EIP-5792 `send_calls`-compatible batches with Builder Code `bc_wdmnog7m` (ERC-8021) already baked into the calldata. Consumed by Base MCP custom plugins so Base Account signs and broadcasts.
+- Auth: header `x-api-key: lsk_…` (merchant actions) or `rwk_…` (holder actions); `?api_key=` query fallback for surfaces that cannot forward headers.
+- Response shape: `{ chainId: 8453, description, transactions: [{ to, data, value }], builder_code: "bc_wdmnog7m" }`.
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | /create-program | lsk_ | Deploy ERC-20 loyalty token |
+| GET | /activate-program | lsk_ | Activate a deployed program |
+| GET | /mint | lsk_ | Mint tokens to a wallet |
+| GET | /transfer | lsk_ | Merchant ERC-20 transfer |
+| GET | /recipient-transfer | rwk_ | Holder ERC-20 transfer |
+| GET | /recipient-approve | rwk_ | Holder ERC-20 approve |
+
+Plugin spec: https://github.com/oleksiihalytskyi/loyal-spark/blob/main/skills/loyal-spark/plugins/loyal-spark.md
+
 ## Agent Wallets
 
 Agents can create Coinbase CDP MPC wallets for autonomous onchain operations:
