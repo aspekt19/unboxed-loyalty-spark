@@ -1195,7 +1195,7 @@ app.all("/*", async (c) => {
       agent = r.agent;
     }
   }
-  const server = createMcpServer(agent, authFailure);
+  const server = createMcpServer(agent, authFailure, apiKey);
   const transport = new StreamableHttpTransport();
   const handler = transport.bind(server);
   return handler(c.req.raw);
