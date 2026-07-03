@@ -510,6 +510,8 @@ export type Database = {
       }
       customer_profiles: {
         Row: {
+          cdp_wallet_address: string | null
+          cdp_wallet_created_at: string | null
           created_at: string | null
           email: string | null
           first_name: string | null
@@ -524,6 +526,8 @@ export type Database = {
           wallet_address: string
         }
         Insert: {
+          cdp_wallet_address?: string | null
+          cdp_wallet_created_at?: string | null
           created_at?: string | null
           email?: string | null
           first_name?: string | null
@@ -538,6 +542,8 @@ export type Database = {
           wallet_address: string
         }
         Update: {
+          cdp_wallet_address?: string | null
+          cdp_wallet_created_at?: string | null
           created_at?: string | null
           email?: string | null
           first_name?: string | null
