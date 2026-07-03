@@ -43,7 +43,7 @@ Loyal Spark is a live product at https://loyalspark.online with:
 - Reward catalog and voucher system
 - P2P token marketplace with escrow
 - Customer tiers and referral programs
-- REST API (23 authenticated routes + public **GET `/vouchers/status`**) + MCP Server (**28** tools) for AI agent integration — source: `supabase/functions/agent-api/index.ts`, `supabase/functions/loyalty-mcp/index.ts`
+- REST API (25 authenticated routes + public **GET `/vouchers/status`**) + MCP Server (**36** merchant tools + **18** recipient tools) for AI agent integration — source: `supabase/functions/agent-api/index.ts`, `supabase/functions/loyalty-mcp/index.ts`, `supabase/functions/recipient-loyalty-mcp/index.ts`
 - Payment gateways: x402 (Coinbase) and MPP (Machine Payments Protocol)
 - **Pricing (public, do not invent other numbers):** Merchant portal SaaS **Starter $39 / Growth $79 / Scale $149** USD/month; AI agent API+MCP plans **Free / Pro $49 / Enterprise $129** USD/month (see `docs/business/MONETIZATION_AND_PRICING.md`). Pay-per-call (x402/MPP) is separate.
 
