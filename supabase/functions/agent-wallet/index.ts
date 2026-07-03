@@ -970,9 +970,9 @@ Deno.serve(async (req) => {
     const auth = await authenticateRecipientAgent(apiKey, d);
     if (!auth.ok) return jsonResponse({ error: auth.error || "Invalid recipient API key" }, 401);
     const agent = {
-      agentId: auth.context.agentId,
-      walletAddress: auth.context.walletAddress.toLowerCase(),
-      name: auth.context.name,
+      agentId: auth.agent.agentId,
+      walletAddress: auth.agent.walletAddress.toLowerCase(),
+      name: auth.agent.name,
     };
 
     try {
