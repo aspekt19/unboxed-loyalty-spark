@@ -1,6 +1,6 @@
 {
   "name": "Loyal Spark",
-  "description": "Onchain loyalty protocol on Base L2. Two agent personas: MERCHANT (lsk_, 25 authenticated REST routes + 1 public + 36 MCP tools at /loyalty-mcp) issues programs, mints ERC-20, manages rewards, P2P trading, gift certificates (LOYAL-XXXXXX), CDP MPC wallets, POST /earn cashback. RECIPIENT (rwk_, 12 REST routes at /recipient-api + 17 MCP tools at /recipient-loyalty-mcp) holds tokens, redeems rewards, P2P swaps, claims gift certificates, prepare_loyalty_token_transfer. Pay-per-call via MPP (pathUSD/USDC on Tempo) or x402 v2 (USDC on Base) — both gateways relay merchant + recipient corridors with Coinbase Bazaar discovery metadata.",
+  "description": "Onchain loyalty protocol on Base L2. Two agent personas: MERCHANT (lsk_, 25 authenticated REST routes + 1 public + 36 MCP tools at /loyalty-mcp) issues programs, mints ERC-20, manages rewards, P2P trading, gift certificates (LOYAL-XXXXXX), CDP MPC wallets, POST /earn cashback. RECIPIENT (rwk_, 12 REST routes at /recipient-api + 18 MCP tools at /recipient-loyalty-mcp) holds tokens, redeems rewards, P2P swaps, claims gift certificates, prepare_loyalty_token_transfer. Pay-per-call via MPP (pathUSD/USDC on Tempo) or x402 v2 (USDC on Base) — both gateways relay merchant + recipient corridors with Coinbase Bazaar discovery metadata.",
   "url": "https://loyalspark.online",
   "version": "2.3.0",
   "protocol": "a2a-loyalty",
