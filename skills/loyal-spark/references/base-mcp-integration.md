@@ -38,6 +38,17 @@ Check whether Base MCP tools (e.g. `send_transaction`, `batch_calls`, `get_addre
 1. `create_p2p_offer({ offer_token, offer_amount, request_token, request_amount })` → two calls: approve + createOffer.
 2. Base MCP `batch_calls` to lock tokens in escrow atomically.
 
+## Custom-plugin shortcut (`agent-prepare`)
+
+If Base MCP loads the Loyal Spark custom plugin ([`plugins/loyal-spark.md`](../plugins/loyal-spark.md)), each loyalty action becomes a single GET against `https://api.loyalspark.online/agent-prepare/<action>` that returns a `send_calls`-ready payload:
+
+```json
+{ "chainId": 8453, "description": "...", "transactions": [{ "to": "0x…", "data": "0x…", "value": "0x0" }], "builder_code": "bc_wdmnog7m" }
+```
+
+Actions: `create-program`, `activate-program`, `mint`, `transfer` (`x-api-key: lsk_…`) · `recipient-transfer`, `recipient-approve` (`x-api-key: rwk_…`). Hand the `transactions` array straight to Base MCP `send_calls` — Builder Code is already appended.
+
+
 ## Builder Code preservation
 
 Every calldata blob Loyal Spark returns ends with 29 bytes (`62635f…`) encoding `bc_wdmnog7m`. **Do not modify or trim the data field.** Base MCP forwards it as-is, which is exactly what we need for ERC-8021 attribution on Base.
