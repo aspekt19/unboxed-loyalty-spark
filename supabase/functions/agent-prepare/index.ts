@@ -154,9 +154,9 @@ Deno.serve(async (req: Request) => {
     if (!apiKey.startsWith("rwk_")) {
       return json({ error: "This action requires a recipient (rwk_) key" }, 401);
     }
-    const authRes = await authenticateRecipientAgent(db, apiKey);
-    if (!authRes.ok) return json({ error: authRes.reason || "invalid_key" }, 401);
-    const wallet = authRes.wallet;
+    const authRes = await authenticateRecipientAgent(apiKey, db);
+    if (!authRes.ok) return json({ error: authRes.error }, 401);
+    const wallet = authRes.agent.walletAddress;
 
     const token = params.token || params.token_address;
     const to = params.to || params.spender;
