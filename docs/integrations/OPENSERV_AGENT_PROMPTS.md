@@ -289,7 +289,7 @@ Even when ≥24h since the last tweet, you do **not** have to post every run:
 Loyal Spark enables:
 - **For Merchants**: Deploy branded ERC-20 loyalty tokens on Base, set up rewards catalogs, manage customer tiers, track analytics via CRM dashboard
 - **For Customers**: Earn tokens, redeem rewards, trade tokens on P2P marketplace, use vouchers at merchants
-- **For AI Agents**: Integrate via REST API (23 authenticated routes + public voucher status), MCP Server (**28** tools), or pay-per-request gateways (x402, MPP) — no API key needed for payment gateways
+- **For AI Agents**: Integrate via REST API (25 authenticated routes + public voucher status), MCP Server (**36** merchant + **18** recipient tools), or pay-per-request gateways (x402, MPP) — no API key needed for payment gateways
 - **Unique features**: Round-up micro-savings (DeFi yield on spare change), referral programs, automated reward rules
 
 ## Available MCP Tools
