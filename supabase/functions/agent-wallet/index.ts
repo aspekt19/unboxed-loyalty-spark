@@ -941,8 +941,9 @@ Deno.serve(async (req) => {
 
   const apiKey = req.headers.get("x-api-key");
   const d = db();
+  const ip = req.headers.get("x-forwarded-for") || undefined;
 
-  // Path 1: API key auth (for agents)
+  // Path 1a: Merchant agent (lsk_) API key
   if (apiKey && apiKey.startsWith("lsk_")) {
     const agent = await authenticateAgent(apiKey);
     if (!agent) return jsonResponse({ error: "Invalid API key or agent deactivated" }, 401);
@@ -964,6 +965,34 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Path 1b: Recipient/holder agent (rwk_) API key
+  if (apiKey && apiKey.startsWith("rwk_")) {
+    const auth = await authenticateRecipientAgent(apiKey, d);
+    if (!auth.ok) return jsonResponse({ error: auth.error || "Invalid recipient API key" }, 401);
+    const agent = {
+      agentId: auth.context.agentId,
+      walletAddress: auth.context.walletAddress.toLowerCase(),
+      name: auth.context.name,
+    };
+
+    try {
+      const body = await req.json().catch(() => ({}));
+      switch (body.action) {
+        case "recipient_x402_pay_and_call":
+          return await handleRecipientX402PayAndCall(d, agent, body, ip);
+        default:
+          return jsonResponse({
+            error: "Unknown action",
+            available_actions: ["recipient_x402_pay_and_call"],
+            hint: "Recipient CDP wallet creation must be performed via UI (JWT auth) at /customer settings.",
+          }, 400);
+      }
+    } catch (err) {
+      console.error("[agent-wallet] rwk_ error:", err);
+      return jsonResponse({ error: "Internal server error" }, 500);
+    }
+  }
+
   // Path 2: JWT auth (for UI)
   const jwtAuth = await authenticateViaJwt(req);
   if (jwtAuth) {
@@ -972,7 +1001,13 @@ Deno.serve(async (req) => {
       if (body.action === "create_wallet") {
         return await handleUiCreateWallet(d, jwtAuth.userId, body);
       }
-      return jsonResponse({ error: "Only create_wallet is available via UI auth" }, 400);
+      if (body.action === "recipient_create_cdp_wallet") {
+        return await handleRecipientCreateCdpWallet(d, jwtAuth.userId);
+      }
+      return jsonResponse({
+        error: "Unknown UI action",
+        available_actions: ["create_wallet", "recipient_create_cdp_wallet"],
+      }, 400);
     } catch (err) {
       console.error("[agent-wallet] UI auth error:", err);
       return jsonResponse({ error: "Internal server error" }, 500);
