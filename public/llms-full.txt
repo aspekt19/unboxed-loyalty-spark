@@ -144,6 +144,10 @@ URL: https://api.loyalspark.online/recipient-loyalty-mcp
 12. `lookup_gift_certificate` — Preview a gift certificate by code (LOYAL-XXXXXX)
 13. `claim_gift_certificate` — Claim by code; binds it to your wallet (active → pending_mint)
 14. `list_my_gift_certificates` — Certificates claimed by your wallet
+15. `bazaar_discover_resources` — Discover x402-priced HTTPS endpoints
+16. `bazaar_discover_mcp_servers` — Discover MCP servers advertised on Bazaar
+17. `bazaar_probe_x402` — Inspect the 402 payment requirements of a URL
+18. `bazaar_pay_and_call` — Pay + call an x402 endpoint using the recipient's delegated CDP MPC wallet (opt-in via /customer settings; spend cap ≤ 10 USDC/call)
 
 ### MCP Configuration for Claude/Cursor
 
