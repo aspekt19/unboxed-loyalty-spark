@@ -1,103 +1,136 @@
 ---
 title: "Loyal Spark Plugin"
-description: "Base MCP plugin reference for onchain loyalty programs on Base via Loyal Spark MCP. Pair Loyal Spark's calldata-prep tools with Base Account signing."
+description: "Base MCP custom plugin for onchain loyalty programs on Base L2 via Loyal Spark. Prepares calldata for send_calls (EIP-5792); Base Account signs and broadcasts."
 ---
 
 # Loyal Spark Plugin (for Base MCP)
 
 > [!IMPORTANT]
-> Complete the short Base MCP onboarding flow defined in Base's `SKILL.md` before calling any Loyal Spark command or tool. Fetch the user's wallet address only when a flow actually needs it.
+> Complete Base MCP onboarding (see Base's `SKILL.md`) before calling any Loyal Spark endpoint. Only ask for the user's wallet when a flow needs it.
 
-Loyal Spark is an onchain loyalty protocol on Base L2: ERC-20 loyalty programs, mint/transfer of points, rewards & vouchers, P2P escrow marketplace, and `LOYAL-XXXXXX` gift certificates. The plugin exposes Loyal Spark as an external MCP server that pairs with Base MCP for wallet signing.
+Loyal Spark is an onchain loyalty protocol on Base L2 (chain **8453**): ERC-20 loyalty programs, mint / transfer of points, rewards & vouchers, P2P escrow marketplace, and `LOYAL-XXXXXX` gift certificates.
 
-This plugin has one supported execution path: **Loyal Spark MCP for business logic + Base MCP for signing**.
+This plugin follows the standard Base MCP custom plugin contract:
 
----
+1. **Prepare** — call a `GET https://api.loyalspark.online/agent-prepare/<action>` endpoint with an `x-api-key`. Response returns `{ chainId, description, transactions: [{ to, data, value }], builder_code }`.
+2. **Sign** — hand the `transactions` array to Base MCP's **`send_calls`** tool (EIP-5792 atomic batch). Base Account approves and broadcasts.
+3. **Sync (optional)** — for flows that record onchain results (e.g. `redeem_reward` needs `tx_hash`), call the matching Loyal Spark REST or MCP endpoint after settlement.
 
-## Environment Detection
-
-1. **Loyal Spark MCP tools exposed** (e.g. `list_loyalty_programs`, `mint_loyalty_tokens`): use the paired flow below.
-2. **Not exposed**: help the user install Loyal Spark MCP, then ask them to reconnect.
-
-### Install Loyal Spark MCP
-
-- **Claude.ai / Claude Desktop / iOS / Android:** Customize → Connectors → Add custom connector, name `loyal-spark`, URL `https://api.loyalspark.online/loyalty-mcp`, custom header `x-api-key: lsk_…`.
-- **ChatGPT:** Settings → Connectors → Create, MCP URL `https://api.loyalspark.online/loyalty-mcp`, custom header `x-api-key`.
-- **Claude Code / Codex / Cursor / Hermes:** see https://loyalspark.online/skills/loyal-spark/references/install.md.
-
-The user gets an `lsk_…` key (merchant) or `rwk_…` key (recipient/holder) at https://loyalspark.online/merchant → AI Agents, or via SIWE on `agent-register-siwe`.
+Every calldata blob ends with the ERC-8021 suffix encoding Builder Code **`bc_wdmnog7m`**. **Do not modify or trim `data`.** Base MCP forwards it as-is → Base ecosystem attribution.
 
 ---
 
-## Tool Routing (Loyal Spark MCP)
+## Auth
 
-Tool descriptions exposed by the MCP server are the source of truth. The high-level groups:
-
-| Group | Tools |
-| --- | --- |
-| Programs | `list_loyalty_programs`, `create_loyalty_program`, `register_loyalty_program`, `activate_loyalty_program`, `update_program_status`, `update_program_config` |
-| Mint / Transfer | `mint_loyalty_tokens`, `earn_points`, `transfer_loyalty_tokens` |
-| Rewards & Vouchers | `list_rewards`, `create_reward`, `update_reward_status`, `redeem_reward`, `use_voucher`, `check_voucher_status` |
-| Marketplace (P2P) | `list_marketplace_offers`, `create_personalized_offer`, `cancel_stale_offers` |
-| Analytics | `get_program_analytics`, `get_platform_stats` (admin), `export_customers` |
-| Gift Certificates | `create_gift_certificate`, `list_gift_certificates`, `revoke_gift_certificate`, `mark_gift_certificate_minted` |
-| Recipient (`rwk_`) | `list_my_loyalty_balances`, `prepare_loyalty_token_transfer`, `redeem_my_reward`, `claim_gift_certificate`, `list_my_gift_certificates`, P2P (`list_p2p_offers`, `create_p2p_offer`, `accept_p2p_offer`, `cancel_p2p_offer`) |
+- **Merchant** actions (`create-program`, `activate-program`, `mint`, `transfer`): `x-api-key: lsk_…` — get one at [loyalspark.online/merchant](https://loyalspark.online/merchant) → AI Agents, or via SIWE at `POST /agent-register-siwe`.
+- **Recipient / holder** actions (`recipient-transfer`, `recipient-approve`): `x-api-key: rwk_…` — get one at the same page or via SIWE at `POST /recipient-api/register`.
+- **Fallback for surfaces that cannot forward headers**: append `?api_key=lsk_…` to the URL.
 
 ---
 
-## Paired Execution Flow (Base MCP signs)
+## Prepare endpoints
 
-Loyal Spark **never broadcasts**. Every write tool returns `{ to, data, value }` calldata with Builder Code `bc_wdmnog7m` (ERC-8021) appended — preserve `data` byte-for-byte.
+Base: `https://api.loyalspark.online/agent-prepare`
+
+### Merchant
+
+| Action | Method + path | Required params |
+| --- | --- | --- |
+| Deploy new program | `GET /create-program` | `name`, `symbol` (≤32 / ≤11 chars) |
+| Activate program (unpause + grant MINTER_ROLE) | `GET /activate-program` | `token` |
+| Mint points to a customer | `GET /mint` | `token`, `to`, `amount` (human units) |
+| Merchant-side ERC-20 transfer | `GET /transfer` | `token`, `to`, `amount` |
+
+### Recipient / holder
+
+| Action | Method + path | Required params |
+| --- | --- | --- |
+| Send loyalty tokens to any address | `GET /recipient-transfer` | `token`, `to`, `amount` |
+| Approve a spender (e.g. escrow) | `GET /recipient-approve` | `token`, `spender`, `amount` |
+
+Introspection (no auth): `GET /agent-prepare` returns action list, chain id, and builder code.
+
+---
+
+## Response shape
+
+```json
+{
+  "chainId": 8453,
+  "description": "Mint 100 LOYAL to 0xabc… (+1 protocol fee)",
+  "transactions": [
+    { "to": "0xTOKEN", "data": "0x40c10f19…62635f77646d6e6f67376d…", "value": "0x0" },
+    { "to": "0xTOKEN", "data": "0x40c10f19…62635f77646d6e6f67376d…", "value": "0x0" }
+  ],
+  "builder_code": "bc_wdmnog7m",
+  "note": "Send as EIP-5792 batch (send_calls). Two mint calls: recipient + protocol fee."
+}
+```
+
+Pass `transactions` directly to Base MCP `send_calls`. When more than one call is returned, they **must** be atomically batched — do not split them across separate approvals.
+
+---
+
+## Paired execution flows
 
 ### Deploy + activate a program
 
 ```
-1. loyal-spark/create_loyalty_program(name, symbol, ...) → { to: factory, data, value: 0 }
-2. base-mcp/send_transaction(calldata)                    → user approves, broadcasts
-3. loyal-spark/register_loyalty_program(token_address, cashback_rate, points_per_dollar)
-4. loyal-spark/activate_loyalty_program(token_address)    → batched calls (unpause + grant MINTER_ROLE)
-5. base-mcp/batch_calls(calls)                            → single approval (EIP-5792)
+1. GET /agent-prepare/create-program?name=Coffee%20Points&symbol=CPT
+   → send_calls([{to: factory, data, value: 0x0}])
+2. Wait for receipt; extract token_address from the LoyaltyTokenCreated log
+3. POST https://api.loyalspark.online/agent-api/register-program
+     body: { token_address, cashback_rate, points_per_dollar }
+     header: x-api-key: lsk_…
+4. GET /agent-prepare/activate-program?token=0xTOKEN
+   → send_calls(both transactions atomically)
 ```
 
-### Mint points
+### Mint points to a customer
 
 ```
-1. loyal-spark/mint_loyalty_tokens({ token_address, recipient, amount }) → calldata with fee
-2. base-mcp/send_transaction(calldata)
+1. GET /agent-prepare/mint?token=0xTOKEN&to=0xCUSTOMER&amount=100
+   → send_calls(transactions)   ← two calls: recipient + fee
 ```
 
-### Recipient redeems a reward
+### Recipient claims a reward
 
 ```
-1. recipient: loyal-spark/prepare_loyalty_token_transfer({ token_address, to: merchant, amount })
-2. base-mcp/send_transaction(calldata)
-3. recipient: loyal-spark/redeem_my_reward({ reward_id, tx_hash }) → voucher issued server-side
+1. rwk_ agent: GET /agent-prepare/recipient-transfer?token=0xTOKEN&to=0xMERCHANT&amount=50
+   → send_calls([...])
+2. rwk_ agent: POST https://api.loyalspark.online/recipient-api/redeem-reward
+     body: { reward_id, tx_hash }        ← issues voucher server-side
 ```
 
-### P2P swap
+### Merchant-side transfer
 
 ```
-1. loyal-spark/create_p2p_offer(...) → [approve, createOffer]
-2. base-mcp/batch_calls(calls)        → atomic lock in escrow
+1. GET /agent-prepare/transfer?token=0xTOKEN&to=0xOTHER&amount=25
+   → send_calls([...])
 ```
 
 ---
 
-## Paid Routes (x402 / MPP)
+## When NOT to use this plugin
 
-Loyal Spark also exposes both REST and MCP via x402 (USDC on Base) and MPP (pathUSD on Tempo). Manifests:
-
-- https://loyalspark.online/.well-known/x402.json (Bazaar-discoverable)
-- https://loyalspark.online/.well-known/mpp.json
-
-Use the API-key path when the user has a plan; use x402/MPP when paying per request from a Base Account or Tempo wallet.
+- **Read-only** actions (balances, rewards catalog, voucher lookup, analytics): call the Loyal Spark MCP server (`https://api.loyalspark.online/loyalty-mcp`) or REST (`/agent-api/*`) directly — no calldata / signing needed.
+- **Fully autonomous agents without a Base Account** (cron jobs, backend workers): use a Loyal Spark **CDP MPC wallet** via `POST /agent-wallet` and pass `use_agent_wallet: true` on the relevant MCP tool. Loyal Spark signs server-side. See `references/base-mcp-integration.md`.
+- **x402 pay-per-call MCP** (no API key, pay in USDC per request): see `references/x402-paid.md`.
 
 ---
 
-## Write-Safety
+## Discovery
 
-Before any write, echo back token address, recipient, amount, and program id. Wait for explicit confirmation. Never strip Builder Code from `data`. Never claim a transaction is settled without a tx hash.
+- Plugin (this file): https://loyalspark.online/skills/loyal-spark/plugins/loyal-spark.md
+- Full skill: https://loyalspark.online/skills/loyal-spark/SKILL.md
+- Agent manifest: https://loyalspark.online/.well-known/agent.json
+- OpenAPI: https://loyalspark.online/openapi.json
+- Bazaar (x402) manifest: https://loyalspark.online/.well-known/x402.json
+
+## Write-safety
+
+Before any write, echo back token address, recipient / spender, amount, and program id or symbol. Wait for explicit user confirmation. Never strip Builder Code from `data`. Never claim a transaction is settled without a `tx_hash`.
 
 ## License
 
-Loyal Spark plugin is MIT.
+MIT.

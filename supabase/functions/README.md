@@ -13,6 +13,7 @@ Each subdirectory is one deployable function (`index.ts` entry). Shared Deno mod
 | `agent-api` | REST API for AI agents (CRUD, calldata, mint commission fields) |
 | `loyalty-mcp` | MCP server (JSON-RPC) for LLM tools |
 | `recipient-api` | REST for wallet-bound recipient agents (`rwk_` keys, SIWE registration; includes `POST /prepare-transfer` for holder token sends) |
+| `agent-prepare` | GET-friendly calldata for Base MCP `send_calls` (Builder Code baked in); merchant actions with `lsk_`, holder actions with `rwk_` |
 | `recipient-loyalty-mcp` | MCP tools for loyalty token recipients only |
 | `agent-wallet` | CDP MPC wallet lifecycle and server-side mint |
 | `agent-api-key` | API key issuance / rotation (dashboard, JWT) |

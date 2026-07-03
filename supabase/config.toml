@@ -44,3 +44,7 @@ verify_jwt = false
 
 [functions.loyalty-mcp]
 verify_jwt = false
+
+[functions.agent-prepare]
+verify_jwt = false
+
