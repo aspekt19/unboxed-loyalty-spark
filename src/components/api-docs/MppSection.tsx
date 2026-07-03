@@ -103,7 +103,7 @@ curl -i ${X402_URL}/programs \\
 # Response: HTTP 402 with PAYMENT-REQUIRED header (base64 challenge)
 # Use x402 SDK to sign and retry automatically
 # Note: Node.js default fetch (maxHeaderSize=16384) handles this correctly —
-# the challenge is sent once in the PAYMENT-REQUIRED header only.
+# the challenge is sent once in the PAYMENT-REQUIRED header only.`;
 
   const x402CodeExample = `import { wrapFetch } from '@x402/fetch';
 import { ExactEvmScheme } from '@x402/evm/exact/client';
