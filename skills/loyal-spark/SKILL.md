@@ -17,7 +17,7 @@ The Loyal Spark MCP exposes its tools to the harness when connected. If no `get_
 
 If Loyal Spark tools are available, load [references/tone.md](references/tone.md) (its rules apply for the entire conversation) and then continue to Onboarding.
 
-If — and only if — sibling files are not readable (e.g. the skill body was pasted with no local filesystem), fetch the same relative path from `https://loyalspark.online/skills/loyal-spark/` using `web_request` (Base MCP) or your own HTTP tool. The same fallback applies to every `references/...` and `plugins/...` link in this file.
+If — and only if — sibling files are not readable (e.g. the skill body was pasted with no local filesystem), fetch the same relative path from `https://raw.githubusercontent.com/Kot-blockchain/loyaltyspark/main/skills/loyal-spark/` using `web_request` (Base MCP) or your own HTTP tool. The same fallback applies to every `references/...` and `plugins/...` link in this file.
 
 ## Onboarding
 
