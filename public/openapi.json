@@ -82,11 +82,11 @@
     },
     {
       "name": "Merchant MCP",
-      "description": "32 merchant MCP tools (Streamable HTTP JSON-RPC 2.0)"
+      "description": "36 merchant MCP tools (Streamable HTTP JSON-RPC 2.0)"
     },
     {
       "name": "Recipient MCP",
-      "description": "14 recipient MCP tools (Streamable HTTP JSON-RPC 2.0)"
+      "description": "18 recipient MCP tools (Streamable HTTP JSON-RPC 2.0)"
     }
   ],
   "paths": {
