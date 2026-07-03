@@ -8,6 +8,7 @@ import {
   PLATFORM_FEE_WALLET,
 } from "../_shared/loyalspark-agent-helpers.ts";
 import { payAndCall, type TypedDataSigner } from "../_shared/x402-pay-client.ts";
+import { authenticateRecipientAgent, insertRecipientActivity } from "../_shared/recipient-agent-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
