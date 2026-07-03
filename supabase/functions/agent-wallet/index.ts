@@ -429,18 +429,37 @@ async function cdpSignTypedData(address: string, typedData: any): Promise<{ ok: 
   return { ok: true, signature: sig };
 }
 
+function validatePayAndCallUrl(raw: string): { ok: true; url: string } | { ok: false; error: string } {
+  let u: URL;
+  try { u = new URL(raw); } catch { return { ok: false, error: "url must be a valid absolute URL" }; }
+  if (u.protocol !== "https:") return { ok: false, error: "url must use https://" };
+  const host = u.hostname.toLowerCase();
+  // Block loopback / link-local / private ranges and metadata IPs to prevent SSRF.
+  const blocked = [
+    /^localhost$/, /^127\./, /^0\.0\.0\.0$/, /^169\.254\./,
+    /^10\./, /^192\.168\./, /^172\.(1[6-9]|2\d|3[01])\./,
+    /^::1$/, /^fe80:/, /^fc00:/, /\.local$/, /\.internal$/,
+  ];
+  if (blocked.some((re) => re.test(host))) return { ok: false, error: `url host not allowed: ${host}` };
+  return { ok: true, url: u.toString() };
+}
+
 async function handleX402PayAndCall(d: any, agent: any, body: any) {
   if (!agent.scopes.includes("mint")) {
     return jsonResponse({ error: "Scope 'mint' required to spend funds via x402" }, 403);
   }
 
-  const url = String(body?.url || "");
-  if (!url) return jsonResponse({ error: "Missing required field: url" }, 400);
+  const rawUrl = String(body?.url || "");
+  if (!rawUrl) return jsonResponse({ error: "Missing required field: url" }, 400);
+  const urlCheck = validatePayAndCallUrl(rawUrl);
+  if (!urlCheck.ok) return jsonResponse({ error: urlCheck.error }, 400);
+  const url = urlCheck.url;
 
   const method = (body?.method || "GET").toUpperCase();
   if (!["GET", "POST", "PUT", "PATCH", "DELETE"].includes(method)) {
     return jsonResponse({ error: `Unsupported method: ${method}` }, 400);
   }
+
 
   const maxUsdc = typeof body?.max_usdc === "number" ? body.max_usdc : 0.25;
   if (maxUsdc <= 0 || maxUsdc > 10) {
@@ -846,8 +865,11 @@ async function handleRecipientX402PayAndCall(
   body: any,
   ip?: string,
 ) {
-  const url = String(body?.url || "");
-  if (!url) return jsonResponse({ error: "Missing required field: url" }, 400);
+  const rawUrl = String(body?.url || "");
+  if (!rawUrl) return jsonResponse({ error: "Missing required field: url" }, 400);
+  const urlCheck = validatePayAndCallUrl(rawUrl);
+  if (!urlCheck.ok) return jsonResponse({ error: urlCheck.error }, 400);
+  const url = urlCheck.url;
 
   const method = (body?.method || "GET").toUpperCase();
   if (!["GET", "POST", "PUT", "PATCH", "DELETE"].includes(method)) {

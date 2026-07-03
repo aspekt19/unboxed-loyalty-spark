@@ -701,7 +701,7 @@ const reward = await fetch(\`\${BASE}/rewards\`, {
         "@type": "WebPage",
         "name": "Agent API Documentation — Loyal Spark",
         "url": "https://loyalspark.online/api-docs",
-        "description": "REST API and MCP Server docs for AI agents on Base L2 — 17 authenticated routes (12 merchant + 5 recipient), public voucher status, 46 MCP tools (32 merchant + 14 recipient)."
+        "description": "REST API and MCP Server docs for AI agents on Base L2 — 17 authenticated routes (12 merchant + 5 recipient), public voucher status, 54 MCP tools (36 merchant + 18 recipient)."
       },
       {
         "@type": "BreadcrumbList",

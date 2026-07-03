@@ -43,7 +43,7 @@ const routeMeta: Record<string, PageMetaEntry> = {
   "/for-agents": {
     title: "For AI Agents — Loyal Spark",
     description:
-      "Onboard AI agents: API keys, REST, MCP (32 merchant + 14 recipient tools), x402/MPP gateways, discovery URLs, and skills.",
+      "Onboard AI agents: API keys, REST, MCP (36 merchant + 18 recipient tools), x402/MPP gateways, discovery URLs, and skills.",
   },
   "/examples": {
     title: "Blockchain Loyalty Program Examples — Loyal Spark",

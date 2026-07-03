@@ -14,6 +14,10 @@ export const RECIPIENT_MCP_TOOL_NAMES = [
   "lookup_gift_certificate",
   "claim_gift_certificate",
   "list_my_gift_certificates",
+  "bazaar_discover_resources",
+  "bazaar_discover_mcp_servers",
+  "bazaar_probe_x402",
+  "bazaar_pay_and_call",
 ] as const;
 
 export const RECIPIENT_MCP_TOOL_COUNT = RECIPIENT_MCP_TOOL_NAMES.length;

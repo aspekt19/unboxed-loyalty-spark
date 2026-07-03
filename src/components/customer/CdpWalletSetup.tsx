@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useAccount } from 'wagmi';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,14 +11,13 @@ import { toast } from 'sonner';
 /**
  * Opt-in flow for a delegated Coinbase CDP MPC wallet.
  *
- * When enabled, holder agents authenticated with `rwk_...` keys can pay any
- * x402-priced endpoint via the `bazaar_pay_and_call` MCP tool. Spend cap is
- * enforced per call (default 0.25 USDC, hard limit 10 USDC).
+ * Uses the canonical wallet from `profiles.wallet_address` (resolved via
+ * the authenticated user_id) so the identity always matches what the
+ * `agent-wallet` Edge Function writes on the backend, regardless of the
+ * currently active wagmi/Privy connector.
  */
 export function CdpWalletSetup() {
   const { user } = useAuth();
-  const { address } = useAccount();
-  const wallet = address?.toLowerCase() ?? null;
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [cdpAddress, setCdpAddress] = useState<string | null>(null);
@@ -28,21 +26,32 @@ export function CdpWalletSetup() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      if (!wallet) {
+      if (!user) {
         setLoading(false);
+        return;
+      }
+      // Resolve the canonical wallet the backend uses (JWT → profiles.wallet_address).
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('wallet_address')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      const canonicalWallet = profile?.wallet_address?.toLowerCase() ?? null;
+      if (!canonicalWallet) {
+        if (!cancelled) setLoading(false);
         return;
       }
       const { data } = await supabase
         .from('customer_profiles')
-        .select('cdp_wallet_address' as any)
-        .ilike('wallet_address', wallet)
+        .select('cdp_wallet_address' as never)
+        .ilike('wallet_address', canonicalWallet)
         .maybeSingle();
       if (cancelled) return;
-      setCdpAddress(((data as any)?.cdp_wallet_address as string) ?? null);
+      setCdpAddress(((data as { cdp_wallet_address?: string } | null)?.cdp_wallet_address) ?? null);
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [wallet]);
+  }, [user]);
 
   const handleCreate = async () => {
     setCreating(true);

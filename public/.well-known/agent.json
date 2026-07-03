@@ -325,7 +325,7 @@
   },
   "mcp": {
     "url": "https://api.loyalspark.online/loyalty-mcp",
-    "tool_count": 32,
+    "tool_count": 36,
     "transport": "streamable-http",
     "authentication": {
       "type": "api_key",
@@ -364,7 +364,11 @@
       "create_gift_certificate",
       "list_gift_certificates",
       "revoke_gift_certificate",
-      "mark_gift_certificate_minted"
+      "mark_gift_certificate_minted",
+      "bazaar_discover_resources",
+      "bazaar_discover_mcp_servers",
+      "bazaar_probe_x402",
+      "bazaar_pay_and_call"
     ]
   },
   "base_mcp_plugin": {
@@ -392,7 +396,7 @@
     "rest_base_url": "https://api.loyalspark.online/recipient-api",
     "mcp_url": "https://api.loyalspark.online/recipient-loyalty-mcp",
     "mcp_transport": "streamable-http",
-    "mcp_tool_count": 14,
+    "mcp_tool_count": 18,
     "mcp_tools": [
       "get_recipient_profile",
       "list_my_loyalty_balances",
@@ -407,7 +411,11 @@
       "cancel_p2p_offer",
       "lookup_gift_certificate",
       "claim_gift_certificate",
-      "list_my_gift_certificates"
+      "list_my_gift_certificates",
+      "bazaar_discover_resources",
+      "bazaar_discover_mcp_servers",
+      "bazaar_probe_x402",
+      "bazaar_pay_and_call"
     ],
     "rest_endpoints": [
       { "method": "GET",  "path": "/me",                "price_usd": "free",  "description": "Recipient profile and bound wallet" },
