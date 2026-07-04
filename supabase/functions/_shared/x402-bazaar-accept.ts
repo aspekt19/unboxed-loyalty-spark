@@ -616,9 +616,11 @@ function mcpBazaarExtension(mcp: McpBazaarTool) {
       input: {
         type: "mcp",
         toolName: mcp.name,
+        transport: "streamable-http",
         description: mcp.description,
         inputSchema: mcp.inputSchema,
       },
+      inputSchema: mcp.inputSchema,
       output: {
         type: "json",
       },
