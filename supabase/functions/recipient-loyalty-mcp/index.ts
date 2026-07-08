@@ -14,6 +14,52 @@ import {
 } from "../_shared/marketplace-p2p.ts";
 import { loadOnchainLoyaltyBalance, loadOnchainLoyaltyBalances } from "../_shared/recipient-onchain-balances.ts";
 import { discoverResources, discoverMcpServers, probeX402Endpoint } from "../_shared/bazaar-discovery.ts";
+import { RECIPIENT_MCP_BAZAAR_TOOLS } from "../_shared/recipient-mcp-bazaar-tools.ts";
+
+type RecipientAuthFailure = null | "missing_key" | "invalid_key" | "rate_limited";
+
+/**
+ * Fallback MCP server used when the caller could not be authenticated.
+ * Mirrors the merchant loyalty-mcp pattern so clients get a well-formed
+ * JSON-RPC response (HTTP 200) with a structured `error` + `code` payload,
+ * instead of a raw HTTP 401 that bypasses the MCP transport and confuses
+ * x402/MCP clients (they cannot distinguish auth failure from payment-required
+ * or tool-availability errors when the response is not JSON-RPC).
+ */
+function createDeniedRecipientMcpServer(reason: RecipientAuthFailure) {
+  const server = new McpServer({ name: "loyal-spark-recipient-mcp", version: "1.0.0" });
+  const T = (text: string) => ({ content: [{ type: "text" as const, text }] });
+
+  const payload = (() => {
+    if (reason === "rate_limited") {
+      return {
+        error: "Rate limit exceeded for this recipient agent (per-minute quota).",
+        code: "rate_limited",
+      };
+    }
+    if (reason === "invalid_key") {
+      return {
+        error: "Invalid or inactive rwk_ API key.",
+        code: "invalid_key",
+        hint: "Verify the key via GET https://api.loyalspark.online/recipient-api/me. Re-issue via POST /recipient-api/register if it was deactivated.",
+      };
+    }
+    return {
+      error: "Missing recipient key. Send HTTP header 'x-api-key: rwk_...' or 'Authorization: Bearer rwk_...' on every MCP request (some gateways strip custom headers).",
+      code: "missing_key",
+    };
+  })();
+  const body = JSON.stringify(payload);
+
+  for (const tool of RECIPIENT_MCP_BAZAAR_TOOLS) {
+    server.tool(tool.name, {
+      description: tool.description,
+      inputSchema: tool.inputSchema as any,
+      handler: async () => T(body),
+    });
+  }
+  return server;
+}
 
 const app = new Hono();
 
