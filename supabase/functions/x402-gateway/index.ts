@@ -546,6 +546,14 @@ async function proxyToRecipientLoyaltyMcp(originalReq: Request): Promise<Respons
   if (rwk) {
     headers["x-api-key"] = rwk;
   }
+  // Some clients (OpenServ/curl variants) also send the Supabase `apikey` header.
+  // Forward it as a defensive passthrough so recipient-loyalty-mcp sees the same
+  // header set as recipient-api (which already forwards `apikey`). Missing it here
+  // was the root cause of intermittent `401 invalid_key` on paid MCP calls.
+  const apikeyHeader = originalReq.headers.get("apikey");
+  if (apikeyHeader) {
+    headers["apikey"] = apikeyHeader;
+  }
 
   const ip = originalReq.headers.get("x-forwarded-for") || originalReq.headers.get("cf-connecting-ip");
   if (ip) headers["x-forwarded-for"] = ip;
