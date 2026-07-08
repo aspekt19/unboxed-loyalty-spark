@@ -541,13 +541,14 @@ function createRecipientMcpServer(
 
 app.all("/*", async (c) => {
   const apiKey = resolveMcpApiKey((name) => c.req.header(name), "rwk_");
+  const transport = new StreamableHttpTransport();
+
   if (!apiKey) {
-    return new Response(JSON.stringify({
-      error: "Missing recipient key. Use header x-api-key: rwk_... or Authorization: Bearer rwk_...",
-    }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
+    // Never return raw HTTP 401 on the MCP transport: MCP/x402 clients expect
+    // JSON-RPC responses. Route through StreamableHttpTransport with a denial
+    // server so `tools/call` returns a structured `{error, code}` payload.
+    const handler = transport.bind(createDeniedRecipientMcpServer("missing_key"));
+    return handler(c.req.raw);
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -556,13 +557,12 @@ app.all("/*", async (c) => {
 
   const auth = await authenticateRecipientAgent(apiKey, serviceClient);
   if (!auth.ok) {
-    const status = auth.error === "rate_limited" ? 429 : 401;
-    return new Response(JSON.stringify({ error: auth.error }), { status, headers: { "Content-Type": "application/json" } });
+    const handler = transport.bind(createDeniedRecipientMcpServer(auth.error));
+    return handler(c.req.raw);
   }
 
   const ip = c.req.header("x-forwarded-for") || c.req.header("cf-connecting-ip") || "unknown";
   const server = createRecipientMcpServer(auth.agent.walletAddress, auth.agent.agentId, serviceClient, ip, apiKey);
-  const transport = new StreamableHttpTransport();
   const handler = transport.bind(server);
   return handler(c.req.raw);
 });
