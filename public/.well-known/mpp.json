@@ -1,6 +1,6 @@
 {
   "name": "Loyal Spark",
-  "description": "Onchain loyalty protocol on Base L2. Two API personas with x-api-key: merchant (lsk_, agent-api 25 routes + loyalty-mcp 36 tools) and recipient (rwk_, recipient-api 12 routes + recipient-loyalty-mcp 18 tools). Pay-per-request via MPP (pathUSD/USDC on Tempo) or x402 v2 (USDC on Base).",
+  "description": "Onchain loyalty protocol on Base L2. Two API personas with x-api-key: merchant (lsk_, agent-api 27 routes + loyalty-mcp 37 tools) and recipient (rwk_, recipient-api 14 routes + recipient-loyalty-mcp 20 tools). Pay-per-request via MPP (pathUSD/USDC on Tempo) or x402 v2 (USDC on Base). Includes autonomous workflow planners (workflow/*) for self-orchestrating agents.",
   "url": "https://loyalspark.online",
   "version": "2.3.0",
   "payment_methods": [
