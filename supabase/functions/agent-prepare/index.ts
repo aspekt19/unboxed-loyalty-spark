@@ -20,6 +20,11 @@ import {
   getAgentFeePercent,
   PLATFORM_FEE_WALLET,
 } from "../_shared/loyalspark-agent-helpers.ts";
+import {
+  B20_FACTORY_ADDRESS,
+  encodeCreateB20Asset,
+} from "../_shared/b20-encoding.ts";
+
 
 const CHAIN_ID = 8453;
 const FACTORY_ADDRESS = "0x5F3DdBa12580CFdc6016258774cCc19C4250dA80";
