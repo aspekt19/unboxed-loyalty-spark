@@ -21,6 +21,7 @@ import {
 import { resolveMcpApiKey } from "../_shared/mcp-http-api-key.ts";
 import { parseOptionalCashbackRate, parseOptionalPointsPerDollar } from "../_shared/program-economics.ts";
 import { discoverResources, discoverMcpServers, probeX402Endpoint } from "../_shared/bazaar-discovery.ts";
+import { generateProgramDefaults, merchantProgramWorkflow, wrapWorkflow } from "../_shared/agent-workflows.ts";
 
 
 const app = new Hono();
@@ -74,6 +75,83 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
     },
   });
 
+  mcpServer.tool("generate_program_defaults", {
+    description: "Generate default program name, symbol, economics, and starter rewards from merchant context",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        business_name: { type: "string" },
+        category: { type: "string" },
+        description: { type: "string" },
+        locale: { type: "string" },
+        preferred_style: { type: "string" },
+        target_audience: { type: "string" },
+      },
+    },
+    handler: async (args: any) => {
+      const err = authGuard(["read", "mint", "create_program"]);
+      if (err) return T(err);
+      const { data: profile } = await db()
+        .from("merchant_profiles")
+        .select("business_name,category,description")
+        .eq("merchant_address", agent.ownerAddress)
+        .maybeSingle();
+      const defaults = generateProgramDefaults({
+        business_name: typeof args.business_name === "string" ? args.business_name : profile?.business_name,
+        category: typeof args.category === "string" ? args.category : profile?.category,
+        description: typeof args.description === "string" ? args.description : profile?.description,
+        locale: typeof args.locale === "string" ? args.locale : undefined,
+        preferred_style: typeof args.preferred_style === "string" ? args.preferred_style : undefined,
+        target_audience: typeof args.target_audience === "string" ? args.target_audience : undefined,
+      });
+      return T(JSON.stringify(wrapWorkflow({ defaults }, merchantProgramWorkflow(null, defaults))));
+    },
+  });
+
+  mcpServer.tool("get_program_workflow_status", {
+    description: "Explain the next best merchant action for a program or merchant wallet",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        token_address: { type: "string", description: "Optional token to inspect" },
+      },
+    },
+    handler: async ({ token_address }: any) => {
+      const err = authGuard(["read"]);
+      if (err) return T(err);
+      let program = null;
+      if (typeof token_address === "string" && /^0x[a-fA-F0-9]{40}$/.test(token_address)) {
+        const { data } = await db()
+          .from("loyalty_programs")
+          .select("id,name,symbol,token_address,status,token_standard,cashback_rate,points_per_dollar,merchant_address")
+          .eq("merchant_address", agent.ownerAddress)
+          .eq("token_address", token_address.toLowerCase())
+          .maybeSingle();
+        program = data;
+      } else {
+        const { data } = await db()
+          .from("loyalty_programs")
+          .select("id,name,symbol,token_address,status,token_standard,cashback_rate,points_per_dollar,merchant_address")
+          .eq("merchant_address", agent.ownerAddress)
+          .neq("status", "expired")
+          .order("created_at", { ascending: false })
+          .limit(1);
+        program = data?.[0] || null;
+      }
+      const { data: profile } = await db()
+        .from("merchant_profiles")
+        .select("business_name,category,description")
+        .eq("merchant_address", program?.merchant_address || agent.ownerAddress)
+        .maybeSingle();
+      const defaults = generateProgramDefaults({
+        business_name: profile?.business_name,
+        category: profile?.category,
+        description: profile?.description,
+      });
+      return T(JSON.stringify(wrapWorkflow({ program }, merchantProgramWorkflow(program, defaults))));
+    },
+  });
+
   mcpServer.tool("list_loyalty_programs", {
     description: "List loyalty programs owned by the agent's merchant",
     inputSchema: { type: "object" as const, properties: { include_expired: { type: "boolean", description: "Include expired programs" } } },
@@ -90,12 +168,30 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
 
   mcpServer.tool("create_loyalty_program", {
     description: "Get factory calldata to deploy a new loyalty token on Base. Defaults to B20 (Base native ERC-20 superset, single tx, active immediately). Pass token_standard='erc20' for the legacy factory. For B20, MINT_ROLE is granted atomically to the merchant admin AND to the agent's CDP wallet (or explicit extra_minters) so autonomous agents can mint with no follow-up transaction.",
-    inputSchema: { type: "object" as const, properties: { name: { type: "string", description: "Program name" }, symbol: { type: "string", description: "Token symbol, 2-5 chars" }, expiration_days: { type: "number", description: "Program duration in days (default: 365)" }, token_standard: { type: "string", description: "'b20' (default, single-tx deploy on Base precompile factory) or 'erc20' (legacy factory, requires activate_loyalty_program follow-up)" }, agent_wallet_address: { type: "string", description: "(B20 only) Additional wallet to grant MINT_ROLE atomically. Defaults to the agent's active CDP MPC wallet if not provided." }, extra_minters: { type: "array", items: { type: "string" }, description: "(B20 only) Extra addresses to grant MINT_ROLE atomically in the same deploy tx." } }, required: ["name", "symbol"] },
-    handler: async ({ name, symbol, expiration_days, token_standard, agent_wallet_address, extra_minters }: any) => {
+    inputSchema: { type: "object" as const, properties: { name: { type: "string", description: "Program name" }, symbol: { type: "string", description: "Token symbol, 2-5 chars" }, expiration_days: { type: "number", description: "Program duration in days (default: 365)" }, token_standard: { type: "string", description: "'b20' (default, single-tx deploy on Base precompile factory) or 'erc20' (legacy factory, requires activate_loyalty_program follow-up)" }, agent_wallet_address: { type: "string", description: "(B20 only) Additional wallet to grant MINT_ROLE atomically. Defaults to the agent's active CDP MPC wallet if not provided." }, extra_minters: { type: "array", items: { type: "string" }, description: "(B20 only) Extra addresses to grant MINT_ROLE atomically in the same deploy tx." }, auto_generate: { type: "boolean", description: "Generate missing name/symbol automatically from merchant context." }, business_context: { type: "object", description: "Optional business_name/category/description context." }, preferred_style: { type: "string" }, locale: { type: "string" }, target_audience: { type: "string" } } },
+    handler: async ({ name, symbol, expiration_days, token_standard, agent_wallet_address, extra_minters, auto_generate, business_context, preferred_style, locale, target_audience }: any) => {
       const err = authGuard(["mint", "create_program"]);
       if (err) return T(err);
+      const { data: profile } = await db()
+        .from("merchant_profiles")
+        .select("business_name,category,description")
+        .eq("merchant_address", agent.ownerAddress)
+        .maybeSingle();
+      const defaults = generateProgramDefaults({
+        business_name: typeof business_context?.business_name === "string" ? business_context.business_name : profile?.business_name,
+        category: typeof business_context?.category === "string" ? business_context.category : profile?.category,
+        description: typeof business_context?.description === "string" ? business_context.description : profile?.description,
+        locale: typeof locale === "string" ? locale : undefined,
+        preferred_style: typeof preferred_style === "string" ? preferred_style : undefined,
+        target_audience: typeof target_audience === "string" ? target_audience : undefined,
+      });
+      const chosenName = typeof name === "string" && name.trim() ? name.trim() : (auto_generate ? defaults.program_name_options[0] : "");
+      const chosenSymbol = typeof symbol === "string" && symbol.trim() ? symbol.trim() : (auto_generate ? defaults.token_symbol_options[0] : "");
+      if (!chosenName || !chosenSymbol) {
+        return T(JSON.stringify(wrapWorkflow({ error: "Missing name/symbol. Provide them or set auto_generate=true.", defaults }, merchantProgramWorkflow(null, defaults))));
+      }
       const days = expiration_days || 365;
-      const sym = symbol.toUpperCase();
+      const sym = chosenSymbol.toUpperCase();
       const standard = (typeof token_standard === "string" && token_standard.toLowerCase() === "erc20") ? "erc20" : "b20";
 
       if (standard === "b20") {
@@ -120,8 +216,8 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
             extras.push(aw.wallet_address);
           }
         }
-        const { data, salt, grantees } = encodeCreateB20Asset(agent.ownerAddress, name, sym, 18, extras);
-        return T(JSON.stringify({
+        const { data, salt, grantees } = encodeCreateB20Asset(agent.ownerAddress, chosenName, sym, 18, extras);
+        return T(JSON.stringify(wrapWorkflow({
           message: "Execute the B20 factory tx (single call). Then call register_loyalty_program with token_standard='b20'. MINT_ROLE granted atomically to the merchant admin and the listed grantees — no activate_loyalty_program step needed.",
           contract_call: {
             to: B20_FACTORY_ADDRESS,
@@ -133,16 +229,42 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
             mint_role_grantees: grantees,
             note: "Extract token address from B20Created event topic[1] emitted by the factory.",
           },
-          program_details: { name, symbol: sym, expiration_days: days, token_standard: "b20" },
-        }));
+          program_details: { name: chosenName, symbol: sym, expiration_days: days, token_standard: "b20", generated_by_platform: auto_generate === true },
+        }, {
+          workflow: "merchant_program_bootstrap",
+          actor: "merchant",
+          current_step: "broadcast_deploy_transaction",
+          completed_steps: ["program_defaults_selected"],
+          prerequisites: ["Base signer or CDP wallet available"],
+          next_actions: [
+            { type: "broadcast_transaction", description: "Broadcast the returned B20 deployment transaction" },
+            { type: "call_tool", surface: "mcp", tool: "register_loyalty_program", description: "Register the token after confirmation", required_fields: ["name", "symbol", "token_address"], payload_hint: { name: chosenName, symbol: sym, token_standard: "b20" } },
+          ],
+          blocking_reason: null,
+          suggested_defaults: defaults,
+          continuation_context: { token_standard: "b20", merchant_address: agent.ownerAddress, expiration_days: days },
+        })));
       }
 
-      const calldata = encodeCreateLoyaltyTokenCalldata(name, sym, agent.ownerAddress);
-      return T(JSON.stringify({
+      const calldata = encodeCreateLoyaltyTokenCalldata(chosenName, sym, agent.ownerAddress);
+      return T(JSON.stringify(wrapWorkflow({
         message: "Execute legacy factory tx, then call register_loyalty_program with the deployed token_address and token_standard='erc20', then activate_loyalty_program.",
-        contract_call: { to: FACTORY_ADDRESS, function: "createLoyaltyToken(string,string,address)", params: [name, sym, agent.ownerAddress], calldata, chain: "Base (8453)", builder_code: BUILDER_CODE },
-        program_details: { name, symbol: sym, expiration_days: days, token_standard: "erc20" },
-      }));
+        contract_call: { to: FACTORY_ADDRESS, function: "createLoyaltyToken(string,string,address)", params: [chosenName, sym, agent.ownerAddress], calldata, chain: "Base (8453)", builder_code: BUILDER_CODE },
+        program_details: { name: chosenName, symbol: sym, expiration_days: days, token_standard: "erc20", generated_by_platform: auto_generate === true },
+      }, {
+        workflow: "merchant_program_bootstrap",
+        actor: "merchant",
+        current_step: "broadcast_deploy_transaction",
+        completed_steps: ["program_defaults_selected"],
+        prerequisites: ["Base signer or CDP wallet available"],
+        next_actions: [
+          { type: "broadcast_transaction", description: "Broadcast the returned ERC-20 deployment transaction" },
+          { type: "call_tool", surface: "mcp", tool: "register_loyalty_program", description: "Register the token after confirmation", required_fields: ["name", "symbol", "token_address"], payload_hint: { name: chosenName, symbol: sym, token_standard: "erc20" } },
+        ],
+        blocking_reason: null,
+        suggested_defaults: defaults,
+        continuation_context: { token_standard: "erc20", merchant_address: agent.ownerAddress, expiration_days: days },
+      })));
     },
   });
 
@@ -177,12 +299,12 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
       if (ppd.value !== undefined) row.points_per_dollar = ppd.value;
       const { data: program, error } = await d.from("loyalty_programs").insert(row).select("id,name,symbol,token_address,status,expiration_date,created_at,cashback_rate,points_per_dollar,token_standard").single();
       if (error) return T(JSON.stringify({ error: error.message }));
-      return T(JSON.stringify({
+      return T(JSON.stringify(wrapWorkflow({
         program,
         message: standard === "b20"
           ? "B20 program registered and active — mint immediately."
           : "Program registered as inactive. Call activate_loyalty_program next.",
-      }));
+      }, merchantProgramWorkflow(program))));
     },
   });
 
@@ -195,15 +317,28 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
       const d = db();
       const { data: prog } = await d.from("loyalty_programs").select("id,name,symbol,status,token_standard").eq("token_address", token_address.toLowerCase()).eq("merchant_address", agent.ownerAddress).single();
       if (!prog) return T('{"error":"Program not found"}');
-      if (prog.status === "active") return T(JSON.stringify({ message: "Already active", program: prog }));
+      if (prog.status === "active") return T(JSON.stringify(wrapWorkflow({ message: "Already active", program: prog }, merchantProgramWorkflow(prog))));
       if ((prog as { token_standard?: string }).token_standard === "b20") {
         await d.from("loyalty_programs").update({ status: "active", updated_at: new Date().toISOString() }).eq("id", prog.id);
-        return T(JSON.stringify({ message: "B20 program — active by construction, no onchain tx needed.", program: { ...prog, status: "active" }, transactions: [], token_standard: "b20" }));
+        return T(JSON.stringify(wrapWorkflow({ message: "B20 program — active by construction, no onchain tx needed.", program: { ...prog, status: "active" }, transactions: [], token_standard: "b20" }, merchantProgramWorkflow({ ...prog, token_address, status: "active" }))));
       }
-      return T(JSON.stringify({ message: "Execute 2 transactions in order, then call update_program_status to set status to 'active'.", token_standard: "erc20", transactions: [
+      return T(JSON.stringify(wrapWorkflow({ message: "Execute 2 transactions in order, then call update_program_status to set status to 'active'.", token_standard: "erc20", transactions: [
         { step: 1, description: "Unpause utility", contract_call: { to: token_address, function: "unpauseUtility()", calldata: encodeNoArgCalldata(SELECTORS.unpauseUtility), chain: "Base (8453)", builder_code: BUILDER_CODE } },
         { step: 2, description: "Enable minting", contract_call: { to: token_address, function: "enableMinting()", calldata: encodeNoArgCalldata(SELECTORS.enableMinting), chain: "Base (8453)", builder_code: BUILDER_CODE } },
-      ] }));
+      ] }, {
+        workflow: "merchant_program_bootstrap",
+        actor: "merchant",
+        current_step: "activate_legacy_program",
+        completed_steps: ["program_deployed", "program_registered"],
+        prerequisites: ["broadcast both activation transactions"],
+        next_actions: [
+          { type: "broadcast_transaction", description: "Broadcast unpauseUtility()" },
+          { type: "broadcast_transaction", description: "Broadcast enableMinting()" },
+          { type: "call_tool", surface: "mcp", tool: "update_program_status", description: "Mark the program active after confirmation", required_fields: ["token_address", "status"], payload_hint: { token_address, status: "active" } },
+        ],
+        blocking_reason: null,
+        continuation_context: { token_address, token_standard: "erc20" },
+      })));
     },
   });
 

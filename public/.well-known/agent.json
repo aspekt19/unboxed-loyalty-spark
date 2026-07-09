@@ -19,6 +19,7 @@
   ],
   "workflow_hints": {
     "rule": "Many Loyal Spark actions are multi-step workflows, not single endpoint calls.",
+    "machine_contract": "Lifecycle-sensitive REST and MCP responses include workflow.current_step, completed_steps, next_actions, prerequisites, blocking_reason, suggested_defaults, and continuation_context.",
     "required_docs": [
       "https://loyalspark.online/.well-known/skills/00-getting-started.md",
       "https://loyalspark.online/.well-known/skills/13-endpoint-workflows.md"
@@ -60,6 +61,19 @@
         "description": "Get agent profile, permissions, plan, and wallet info"
       },
       {
+        "method": "POST",
+        "path": "/workflow/generate-program-defaults",
+        "scope": "read or mint or create_program",
+        "description": "Generate default program names, token symbols, starter rewards, and suggested economics so autonomous agents can fill in missing business details.",
+        "body": { "business_name": "Coffee Corner", "category": "cafe", "preferred_style": "playful", "locale": "en" }
+      },
+      {
+        "method": "GET",
+        "path": "/workflow/program-status",
+        "scope": "read",
+        "description": "Return machine-readable merchant workflow state, next actions, and prerequisites for the most recent or specified program."
+      },
+      {
         "method": "GET",
         "path": "/programs",
         "scope": "read",
@@ -69,8 +83,8 @@
         "method": "POST",
         "path": "/programs",
         "scope": "mint or create_program",
-        "description": "Start a program deploy workflow. Default: B20 single-tx deploy. Follow with token extraction and register-program.",
-        "body": { "name": "Coffee Rewards", "symbol": "COFFEE", "expiration_days": 365 }
+        "description": "Start a program deploy workflow. Default: B20 single-tx deploy. Can auto-generate name/symbol from business_context and returns workflow metadata for the next steps.",
+        "body": { "auto_generate": true, "business_context": { "business_name": "Coffee Corner", "category": "cafe" }, "expiration_days": 365 }
       },
       {
         "method": "POST",

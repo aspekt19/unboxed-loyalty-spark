@@ -21,6 +21,11 @@ import {
   B20_CREATED_EVENT_TOPIC,
   encodeCreateB20Asset,
 } from "../_shared/b20-encoding.ts";
+import {
+  generateProgramDefaults,
+  merchantProgramWorkflow,
+  wrapWorkflow,
+} from "../_shared/agent-workflows.ts";
 
 
 // Encode approve(address,uint256) calldata with Builder Code
@@ -257,6 +262,79 @@ Deno.serve(async (req) => {
       body = await req.json().catch(() => ({}));
     }
 
+    if (resource === "workflow" && subResource === "generate-program-defaults" && req.method === "POST") {
+      if (!hasScope(agent, "read") && !hasScope(agent, "mint") && !hasScope(agent, "create_program")) {
+        await logActivity(serviceClient, agent.agentId, "generate_program_defaults", body, 403, { error: "Insufficient scope" }, ip);
+        return jsonResponse({ error: "Scope 'read', 'mint', or 'create_program' required" }, 403);
+      }
+      const merchantAddress = await resolveAgentMerchantAddress(serviceClient, agent, body.use_agent_wallet === true);
+      const { data: profile } = await serviceClient
+        .from("merchant_profiles")
+        .select("business_name, category, description")
+        .eq("merchant_address", merchantAddress)
+        .maybeSingle();
+      const defaults = generateProgramDefaults({
+        business_name: typeof body.business_name === "string" ? body.business_name : profile?.business_name,
+        category: typeof body.category === "string" ? body.category : profile?.category,
+        description: typeof body.description === "string" ? body.description : profile?.description,
+        locale: typeof body.locale === "string" ? body.locale : undefined,
+        preferred_style: typeof body.preferred_style === "string" ? body.preferred_style : undefined,
+        target_audience: typeof body.target_audience === "string" ? body.target_audience : undefined,
+      });
+      await logActivity(serviceClient, agent.agentId, "generate_program_defaults", body, 200, { ok: true }, ip);
+      return jsonResponse(wrapWorkflow({
+        defaults,
+        message: "Generated default program, symbol, economics, and starter rewards.",
+      }, merchantProgramWorkflow(null, defaults)));
+    }
+
+    if (resource === "workflow" && subResource === "program-status" && req.method === "GET") {
+      if (!hasScope(agent, "read")) {
+        await logActivity(serviceClient, agent.agentId, "program_workflow_status", {}, 403, { error: "Insufficient scope" }, ip);
+        return jsonResponse({ error: "Scope 'read' required" }, 403);
+      }
+      const tokenAddress = url.searchParams.get("token_address");
+      let program = null;
+      if (tokenAddress) {
+        program = await findAgentProgram(
+          serviceClient,
+          agent,
+          tokenAddress,
+          "id, name, symbol, token_address, status, token_standard, cashback_rate, points_per_dollar, merchant_address",
+        );
+      } else {
+        const { data: wallet } = await serviceClient
+          .from("agent_wallets")
+          .select("wallet_address")
+          .eq("agent_id", agent.agentId)
+          .eq("chain_id", 8453)
+          .eq("is_active", true)
+          .maybeSingle();
+        const merchantAddresses = [agent.ownerAddress];
+        if (wallet?.wallet_address) merchantAddresses.push(wallet.wallet_address.toLowerCase());
+        const { data: rows } = await serviceClient
+          .from("loyalty_programs")
+          .select("id, name, symbol, token_address, status, token_standard, cashback_rate, points_per_dollar, merchant_address")
+          .in("merchant_address", merchantAddresses)
+          .neq("status", "expired")
+          .order("created_at", { ascending: false })
+          .limit(1);
+        program = rows?.[0] || null;
+      }
+      const { data: profile } = await serviceClient
+        .from("merchant_profiles")
+        .select("business_name, category, description")
+        .eq("merchant_address", program?.merchant_address || agent.ownerAddress)
+        .maybeSingle();
+      const defaults = generateProgramDefaults({
+        business_name: profile?.business_name,
+        category: profile?.category,
+        description: profile?.description,
+      });
+      await logActivity(serviceClient, agent.agentId, "program_workflow_status", { token_address: tokenAddress }, 200, { found: !!program }, ip);
+      return jsonResponse(wrapWorkflow({ program }, merchantProgramWorkflow(program, defaults)));
+    }
+
     // ==================== PROGRAMS ====================
     if (resource === "programs" && req.method === "GET") {
       if (!hasScope(agent, "read")) {
@@ -289,7 +367,26 @@ Deno.serve(async (req) => {
       }
 
       await logActivity(serviceClient, agent.agentId, "get_programs", {}, 200, { count: programs?.length }, ip);
-      return jsonResponse({ programs: programs || [] });
+      return jsonResponse({
+        programs: programs || [],
+        workflow: {
+          workflow: "merchant_program_inventory",
+          actor: "merchant",
+          current_step: "inspect_programs",
+          completed_steps: [],
+          prerequisites: [],
+          next_actions: [
+            {
+              type: "call_endpoint",
+              surface: "rest",
+              method: "GET",
+              path: "/agent-api/workflow/program-status",
+              description: "Inspect the next best merchant step for a specific program or wallet",
+            },
+          ],
+          blocking_reason: null,
+        },
+      });
     }
 
     // ==================== CREATE PROGRAM ====================
@@ -307,24 +404,47 @@ Deno.serve(async (req) => {
         token_standard: reqStandard,
         agent_wallet_address: reqAgentWallet,
         extra_minters: reqExtraMinters,
+        auto_generate,
+        business_context,
+        preferred_style,
+        locale,
+        target_audience,
       } = body;
-      if (!name || !symbol) {
-        return jsonResponse({ error: "Missing required fields: name, symbol" }, 400);
+      const merchantAddress = await resolveAgentMerchantAddress(serviceClient, agent, use_agent_wallet);
+      const { data: profile } = await serviceClient
+        .from("merchant_profiles")
+        .select("business_name, category, description")
+        .eq("merchant_address", merchantAddress)
+        .maybeSingle();
+
+      const defaults = generateProgramDefaults({
+        business_name: typeof business_context?.business_name === "string" ? business_context.business_name : profile?.business_name,
+        category: typeof business_context?.category === "string" ? business_context.category : profile?.category,
+        description: typeof business_context?.description === "string" ? business_context.description : profile?.description,
+        locale: typeof locale === "string" ? locale : undefined,
+        preferred_style: typeof preferred_style === "string" ? preferred_style : undefined,
+        target_audience: typeof target_audience === "string" ? target_audience : undefined,
+      });
+      const chosenName = typeof name === "string" && name.trim() ? name.trim() : (auto_generate ? defaults.program_name_options[0] : "");
+      const chosenSymbol = typeof symbol === "string" && symbol.trim() ? symbol.trim() : (auto_generate ? defaults.token_symbol_options[0] : "");
+      if (!chosenName || !chosenSymbol) {
+        return jsonResponse(wrapWorkflow({
+          error: "Missing required fields: name, symbol. Set auto_generate: true to let the platform choose them from business context.",
+          suggested_defaults: defaults,
+        }, merchantProgramWorkflow(null, defaults)), 400);
       }
 
-      if (typeof name !== "string" || name.length > 50) {
+      if (typeof chosenName !== "string" || chosenName.length > 50) {
         return jsonResponse({ error: "Name must be a string under 50 characters" }, 400);
       }
 
-      if (typeof symbol !== "string" || symbol.length < 2 || symbol.length > 5) {
+      if (typeof chosenSymbol !== "string" || chosenSymbol.length < 2 || chosenSymbol.length > 5) {
         return jsonResponse({ error: "Symbol must be 2-5 characters" }, 400);
       }
 
       const days = expiration_days && typeof expiration_days === "number" ? expiration_days : 365;
       const expirationDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
-
-      const merchantAddress = await resolveAgentMerchantAddress(serviceClient, agent, use_agent_wallet);
-      const upperSym = symbol.toUpperCase();
+      const upperSym = chosenSymbol.toUpperCase();
 
       // Default to B20 (Base native superset). Legacy path only if explicitly opted-in.
       const standard = (typeof reqStandard === "string" ? reqStandard : "b20").toLowerCase();
@@ -352,18 +472,19 @@ Deno.serve(async (req) => {
             extraMinters.push(aw.wallet_address);
           }
         }
-        const { data, salt, grantees } = encodeCreateB20Asset(merchantAddress, name, upperSym, 18, extraMinters);
-        await logActivity(serviceClient, agent.agentId, "create_program", body, 200, { name, symbol: upperSym, merchant: merchantAddress, standard: "b20", grantees }, ip);
-        return jsonResponse({
+        const { data, salt, grantees } = encodeCreateB20Asset(merchantAddress, chosenName, upperSym, 18, extraMinters);
+        await logActivity(serviceClient, agent.agentId, "create_program", body, 200, { name: chosenName, symbol: upperSym, merchant: merchantAddress, standard: "b20", grantees }, ip);
+        return jsonResponse(wrapWorkflow({
           message:
             "Execute the B20 factory transaction (single tx). After confirmation, register the token_address with POST /register-program (token_standard: 'b20'). No activate-program step is required. MINT_ROLE is granted atomically to the merchant admin and the listed extra minters (e.g. the agent's CDP wallet).",
           program_details: {
-            name,
+            name: chosenName,
             symbol: upperSym,
             merchant_address: merchantAddress,
             expiration_days: days,
             expiration_date: expirationDate,
             token_standard: "b20",
+            generated_by_platform: auto_generate === true,
           },
           contract_call: {
             to: B20_FACTORY_ADDRESS,
@@ -376,32 +497,91 @@ Deno.serve(async (req) => {
             note:
               "Extract token address from the B20Created event on the factory (topic[1]). MINT_ROLE is granted atomically via initCalls.",
           },
-        });
+        }, {
+          workflow: "merchant_program_bootstrap",
+          actor: "merchant",
+          current_step: "broadcast_deploy_transaction",
+          completed_steps: ["program_defaults_selected"],
+          prerequisites: ["Base signer or CDP wallet available"],
+          next_actions: [
+            { type: "broadcast_transaction", description: "Broadcast the returned createB20 transaction on Base" },
+            {
+              type: "call_endpoint",
+              surface: "rest",
+              method: "GET",
+              path: "/agent-api/tx-receipt",
+              description: "Extract token_address after confirmation",
+              required_fields: ["tx_hash"],
+            },
+            {
+              type: "call_endpoint",
+              surface: "rest",
+              method: "POST",
+              path: "/agent-api/register-program",
+              description: "Register the deployed B20 program",
+              required_fields: ["name", "symbol", "token_address"],
+              payload_hint: { name: chosenName, symbol: upperSym, token_standard: "b20" },
+            },
+          ],
+          blocking_reason: null,
+          suggested_defaults: defaults,
+          continuation_context: { token_standard: "b20", merchant_address: merchantAddress, expiration_days: days },
+        }));
       }
 
       // Legacy ERC-20 factory path
-      const calldata = encodeCreateLoyaltyTokenCalldata(name, upperSym, merchantAddress);
-      await logActivity(serviceClient, agent.agentId, "create_program", body, 200, { name, symbol: upperSym, merchant: merchantAddress, standard: "erc20" }, ip);
-      return jsonResponse({
+      const calldata = encodeCreateLoyaltyTokenCalldata(chosenName, upperSym, merchantAddress);
+      await logActivity(serviceClient, agent.agentId, "create_program", body, 200, { name: chosenName, symbol: upperSym, merchant: merchantAddress, standard: "erc20" }, ip);
+      return jsonResponse(wrapWorkflow({
         message: "Execute the factory transaction to deploy your loyalty token. After deployment, register the token_address with POST /register-program.",
         program_details: {
-          name,
+          name: chosenName,
           symbol: upperSym,
           merchant_address: merchantAddress,
           expiration_days: days,
           expiration_date: expirationDate,
           token_standard: "erc20",
+          generated_by_platform: auto_generate === true,
         },
         contract_call: {
           to: FACTORY_ADDRESS,
           function: "createLoyaltyToken(string,string,address)",
-          params: [name, upperSym, merchantAddress],
+          params: [chosenName, upperSym, merchantAddress],
           calldata,
           chain: "Base (8453)",
           builder_code: BUILDER_CODE,
           note: "After tx confirmation, use GET /tx-receipt?tx_hash=0x... to extract the token_address, then call POST /register-program.",
         },
-      });
+      }, {
+        workflow: "merchant_program_bootstrap",
+        actor: "merchant",
+        current_step: "broadcast_deploy_transaction",
+        completed_steps: ["program_defaults_selected"],
+        prerequisites: ["Base signer or CDP wallet available"],
+        next_actions: [
+          { type: "broadcast_transaction", description: "Broadcast the returned legacy factory deployment transaction on Base" },
+          {
+            type: "call_endpoint",
+            surface: "rest",
+            method: "GET",
+            path: "/agent-api/tx-receipt",
+            description: "Extract token_address after confirmation",
+            required_fields: ["tx_hash"],
+          },
+          {
+            type: "call_endpoint",
+            surface: "rest",
+            method: "POST",
+            path: "/agent-api/register-program",
+            description: "Register the deployed ERC-20 program",
+            required_fields: ["name", "symbol", "token_address"],
+            payload_hint: { name: chosenName, symbol: upperSym, token_standard: "erc20" },
+          },
+        ],
+        blocking_reason: null,
+        suggested_defaults: defaults,
+        continuation_context: { token_standard: "erc20", merchant_address: merchantAddress, expiration_days: days },
+      }));
     }
 
 
@@ -474,7 +654,7 @@ Deno.serve(async (req) => {
       }
 
       await logActivity(serviceClient, agent.agentId, "register_program", body, 201, { program_id: program.id, standard }, ip);
-      return jsonResponse({
+      return jsonResponse(wrapWorkflow({
         program,
         message: standard === "b20"
           ? "B20 program registered and active — you can mint immediately (no activate-program step needed)."
@@ -482,7 +662,7 @@ Deno.serve(async (req) => {
         next_step: standard === "b20"
           ? "POST /mint with { token_address, recipient, amount }"
           : "POST /activate-program with { token_address }",
-      }, 201);
+      }, merchantProgramWorkflow(program)), 201);
     }
 
 
@@ -561,7 +741,7 @@ Deno.serve(async (req) => {
       }
 
       if (program.status === "active") {
-        return jsonResponse({ message: "Program is already active", program });
+        return jsonResponse(wrapWorkflow({ message: "Program is already active", program }, merchantProgramWorkflow(program)));
       }
 
       // B20 tokens are always active on-chain — nothing to sign. Flip DB status
@@ -572,16 +752,16 @@ Deno.serve(async (req) => {
           .update({ status: "active", updated_at: new Date().toISOString() })
           .eq("id", program.id);
         await logActivity(serviceClient, agent.agentId, "activate_program", body, 200, { token_address, standard: "b20", noop: true }, ip);
-        return jsonResponse({
+        return jsonResponse(wrapWorkflow({
           message: "B20 program — active by construction, no onchain transaction required.",
           program: { ...program, status: "active" },
           transactions: [],
           token_standard: "b20",
-        });
+        }, merchantProgramWorkflow({ ...program, status: "active" })));
       }
 
       await logActivity(serviceClient, agent.agentId, "activate_program", body, 200, { token_address }, ip);
-      return jsonResponse({
+      return jsonResponse(wrapWorkflow({
         message: "Activation requires 2 onchain transactions. Execute them in order.",
         program: { id: program.id, name: program.name, symbol: program.symbol, status: program.status },
         transactions: [
@@ -610,7 +790,28 @@ Deno.serve(async (req) => {
         ],
         after_activation: "POST /program-status with { token_address, status: 'active' } to update the database status.",
         token_standard: "erc20",
-      });
+      }, {
+        workflow: "merchant_program_bootstrap",
+        actor: "merchant",
+        current_step: "activate_legacy_program",
+        completed_steps: ["program_deployed", "program_registered"],
+        prerequisites: ["broadcast both activation transactions on Base"],
+        next_actions: [
+          { type: "broadcast_transaction", description: "Broadcast unpauseUtility()" },
+          { type: "broadcast_transaction", description: "Broadcast enableMinting()" },
+          {
+            type: "call_endpoint",
+            surface: "rest",
+            method: "POST",
+            path: "/agent-api/program-status",
+            description: "Mark program active after both activation transactions confirm",
+            required_fields: ["token_address", "status"],
+            payload_hint: { token_address, status: "active" },
+          },
+        ],
+        blocking_reason: null,
+        continuation_context: { token_address, token_standard: "erc20" },
+      }));
     }
 
 

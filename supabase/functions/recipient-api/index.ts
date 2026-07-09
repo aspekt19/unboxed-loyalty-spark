@@ -20,6 +20,10 @@ import {
   loadOnchainLoyaltyBalance,
   loadOnchainLoyaltyBalances,
 } from "../_shared/recipient-onchain-balances.ts";
+import {
+  recipientRewardWorkflow,
+  wrapWorkflow,
+} from "../_shared/agent-workflows.ts";
 
 const publicClient = createPublicClient({
   chain: base,
@@ -54,6 +58,7 @@ Deno.serve(async (req) => {
   const path = url.pathname.split("/").filter(Boolean);
   const apiIdx = path.indexOf("recipient-api");
   const resource = path[apiIdx + 1] || path[path.length - 1] || "";
+  const subResource = path[apiIdx + 2] || "";
 
   let body: Record<string, unknown> = {};
   if (req.method === "POST" || req.method === "PUT" || req.method === "PATCH") {
@@ -178,6 +183,74 @@ Deno.serve(async (req) => {
   const wallet = agent.walletAddress.toLowerCase();
 
   try {
+    if (resource === "workflow" && subResource === "reward-status" && req.method === "GET") {
+      const tokenAddress = url.searchParams.get("token_address");
+      const rewardId = url.searchParams.get("reward_id");
+      if (!tokenAddress || !/^0x[a-fA-F0-9]{40}$/.test(tokenAddress)) {
+        return jsonResponse({ error: "Missing or invalid query param: token_address" }, 400);
+      }
+      const hasEngagement = await walletHasEngagement(serviceClient, wallet, tokenAddress);
+      const balance = await loadOnchainLoyaltyBalance(serviceClient, wallet, tokenAddress).catch(() => null);
+      let reward: Record<string, unknown> | null = null;
+      if (rewardId) {
+        const { data } = await serviceClient
+          .from("rewards")
+          .select("id, name, description, cost, token_address, merchant_address, is_active")
+          .eq("id", rewardId)
+          .maybeSingle();
+        reward = data;
+      }
+      const workflow = recipientRewardWorkflow({
+        token_address: tokenAddress.toLowerCase(),
+        reward_id: rewardId,
+        merchant_address: typeof reward?.merchant_address === "string" ? reward.merchant_address : null,
+        reward_cost: typeof reward?.cost === "number" ? reward.cost : null,
+        has_engagement: hasEngagement,
+        has_balance: !!balance,
+      });
+      await insertRecipientActivity(serviceClient, agent.agentId, "workflow_reward_status", { tokenAddress, rewardId }, 200, { ok: true }, ip);
+      return jsonResponse(wrapWorkflow({ reward, balance }, workflow));
+    }
+
+    if (resource === "workflow" && subResource === "prepare-reward-redemption" && req.method === "POST") {
+      const rewardId = body.reward_id as string | undefined;
+      if (!rewardId) {
+        return jsonResponse({ error: "Required: reward_id" }, 400);
+      }
+      const { data: reward } = await serviceClient
+        .from("rewards")
+        .select("id, name, description, cost, token_address, merchant_address, is_active")
+        .eq("id", rewardId)
+        .maybeSingle();
+      if (!reward) {
+        return jsonResponse({ error: "Reward not found" }, 404);
+      }
+      const transferPrep = await prepareHolderLoyaltyTransfer(
+        serviceClient,
+        wallet,
+        reward.token_address,
+        reward.merchant_address,
+        Number(reward.cost),
+      );
+      const balance = await loadOnchainLoyaltyBalance(serviceClient, wallet, reward.token_address).catch(() => null);
+      const hasEngagement = await walletHasEngagement(serviceClient, wallet, reward.token_address);
+      const workflow = recipientRewardWorkflow({
+        token_address: reward.token_address,
+        reward_id: reward.id,
+        merchant_address: reward.merchant_address,
+        reward_cost: reward.cost,
+        has_engagement: hasEngagement,
+        has_balance: !!balance,
+      });
+      await insertRecipientActivity(serviceClient, agent.agentId, "prepare_reward_redemption", { rewardId }, transferPrep.ok ? 200 : transferPrep.status, { ok: transferPrep.ok }, ip);
+      return jsonResponse(wrapWorkflow({
+        reward,
+        transfer_preparation: transferPrep.body,
+        balance,
+        message: "Broadcast the transfer transaction first, then call POST /recipient-api/redeem-reward with reward_id and transaction_hash.",
+      }, workflow), transferPrep.ok ? 200 : transferPrep.status);
+    }
+
     if (resource === "me" && req.method === "GET") {
       const { data: row } = await serviceClient
         .from("recipient_agent_registry")
@@ -272,7 +345,13 @@ Deno.serve(async (req) => {
       }
 
       await insertRecipientActivity(serviceClient, agent.agentId, "rewards", { tokenAddress }, 200, { count: rewards?.length }, ip);
-      return jsonResponse({ rewards: rewards || [] });
+      return jsonResponse(wrapWorkflow({
+        rewards: rewards || [],
+      }, recipientRewardWorkflow({
+        token_address: tokenAddress.toLowerCase(),
+        has_engagement: true,
+        has_balance: true,
+      })));
     }
 
     if (resource === "vouchers" && req.method === "GET") {
@@ -312,7 +391,24 @@ Deno.serve(async (req) => {
       const result = await recipientRedeemReward(serviceClient, wallet, reward_id, transaction_hash);
       const logStatus = result.status === 200 && (result.body as any).retryable ? 202 : result.status;
       await insertRecipientActivity(serviceClient, agent.agentId, "redeem_reward", body, logStatus, result.body, ip);
-      return jsonResponse(result.body, result.status);
+      return jsonResponse(wrapWorkflow(result.body as Record<string, unknown>, {
+        workflow: "recipient_reward_redemption",
+        actor: "recipient",
+        current_step: "redeem_reward_result",
+        completed_steps: ["wallet_has_engagement", "reward_selected", "payment_submitted"],
+        prerequisites: [],
+        next_actions: [
+          {
+            type: "call_endpoint",
+            surface: "rest",
+            method: "GET",
+            path: "/recipient-api/vouchers",
+            description: "Inspect issued vouchers after redemption",
+          },
+        ],
+        blocking_reason: null,
+        continuation_context: { reward_id, transaction_hash },
+      }), result.status);
     }
 
     if (resource === "prepare-transfer" && req.method === "POST") {
@@ -339,7 +435,22 @@ Deno.serve(async (req) => {
         result.body,
         ip
       );
-      return jsonResponse(result.body, st);
+      return jsonResponse(wrapWorkflow(result.body as Record<string, unknown>, {
+        workflow: "recipient_transfer",
+        actor: "recipient",
+        current_step: "prepare_transfer",
+        completed_steps: [],
+        prerequisites: ["broadcast returned calldata on Base"],
+        next_actions: [
+          { type: "broadcast_transaction", description: "Broadcast the returned ERC-20 transfer transaction" },
+          {
+            type: "review_state",
+            description: "Re-check balances or downstream workflow after confirmation",
+          },
+        ],
+        blocking_reason: result.ok ? null : "Transfer prerequisites not satisfied",
+        continuation_context: { token_address, to, amount },
+      }), st);
     }
 
     // ==================== P2P (buyer wallet = creator / acceptor) ====================

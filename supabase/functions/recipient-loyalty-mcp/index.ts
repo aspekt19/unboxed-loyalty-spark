@@ -15,6 +15,7 @@ import {
 import { loadOnchainLoyaltyBalance, loadOnchainLoyaltyBalances } from "../_shared/recipient-onchain-balances.ts";
 import { discoverResources, discoverMcpServers, probeX402Endpoint } from "../_shared/bazaar-discovery.ts";
 import { RECIPIENT_MCP_BAZAAR_TOOLS } from "../_shared/recipient-mcp-bazaar-tools.ts";
+import { recipientRewardWorkflow, wrapWorkflow } from "../_shared/agent-workflows.ts";
 
 type RecipientAuthFailure = null | "missing_key" | "invalid_key" | "rate_limited";
 
@@ -179,7 +180,89 @@ function createRecipientMcpServer(
         return T(JSON.stringify({ error: error.message }));
       }
       await log("list_rewards_for_program", { token_address }, 200, { count: rewards?.length });
-      return T(JSON.stringify({ rewards: rewards || [] }));
+      return T(JSON.stringify(wrapWorkflow({ rewards: rewards || [] }, recipientRewardWorkflow({
+        token_address: token_address.toLowerCase(),
+        has_engagement: true,
+        has_balance: true,
+      }))));
+    },
+  });
+
+  mcpServer.tool("get_reward_workflow_status", {
+    description: "Explain the next safe redemption step for a recipient reward flow",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        token_address: { type: "string", description: "Program token address" },
+        reward_id: { type: "string", description: "Optional reward id to inspect" },
+      },
+      required: ["token_address"],
+    },
+    handler: async ({ token_address, reward_id }: any) => {
+      if (!/^0x[a-fA-F0-9]{40}$/.test(token_address)) {
+        await log("get_reward_workflow_status", { token_address, reward_id }, 400, { error: "bad_address" });
+        return T('{"error":"Invalid token_address"}');
+      }
+      const hasEngagement = await walletHasEngagement(db, w, token_address);
+      const balance = await loadOnchainLoyaltyBalance(db, w, token_address).catch(() => null);
+      let reward = null;
+      if (typeof reward_id === "string" && reward_id.length > 0) {
+        const { data } = await db
+          .from("rewards")
+          .select("id, name, description, cost, token_address, merchant_address, is_active")
+          .eq("id", reward_id)
+          .maybeSingle();
+        reward = data;
+      }
+      const payload = wrapWorkflow({ reward, balance }, recipientRewardWorkflow({
+        token_address: token_address.toLowerCase(),
+        reward_id: reward_id || null,
+        merchant_address: reward?.merchant_address || null,
+        reward_cost: reward?.cost || null,
+        has_engagement: hasEngagement,
+        has_balance: !!balance,
+      }));
+      await log("get_reward_workflow_status", { token_address, reward_id }, 200, { ok: true });
+      return T(JSON.stringify(payload));
+    },
+  });
+
+  mcpServer.tool("prepare_reward_redemption", {
+    description: "Prepare the token transfer required before redeeming a reward voucher",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        reward_id: { type: "string", description: "Reward id to redeem" },
+      },
+      required: ["reward_id"],
+    },
+    handler: async ({ reward_id }: any) => {
+      const { data: reward } = await db
+        .from("rewards")
+        .select("id, name, description, cost, token_address, merchant_address, is_active")
+        .eq("id", reward_id)
+        .maybeSingle();
+      if (!reward) {
+        await log("prepare_reward_redemption", { reward_id }, 404, { error: "not_found" });
+        return T('{"error":"Reward not found"}');
+      }
+      const transferPrep = await prepareHolderLoyaltyTransfer(db, w, reward.token_address, reward.merchant_address, Number(reward.cost));
+      const balance = await loadOnchainLoyaltyBalance(db, w, reward.token_address).catch(() => null);
+      const hasEngagement = await walletHasEngagement(db, w, reward.token_address);
+      await log("prepare_reward_redemption", { reward_id }, transferPrep.ok ? 200 : transferPrep.status, { ok: transferPrep.ok });
+      return T(JSON.stringify(wrapWorkflow({
+        reward,
+        transfer_preparation: transferPrep.body,
+        balance,
+        message: "Broadcast the transfer first, then call redeem_my_reward with reward_id and transaction_hash.",
+      }, recipientRewardWorkflow({
+        token_address: reward.token_address,
+        reward_id: reward.id,
+        merchant_address: reward.merchant_address,
+        reward_cost: reward.cost,
+        has_engagement: hasEngagement,
+        has_balance: !!balance,
+      }))));
     },
   });
 

@@ -17,6 +17,12 @@ Teach AI agents how to compose Loyal Spark endpoints into complete business flow
    - Merchant / issuer agent: `lsk_`
    - Recipient / holder agent: `rwk_`
 
+   Use workflow-aware helpers first when available:
+   - Merchant REST: `GET /workflow/program-status`, `POST /workflow/generate-program-defaults`
+   - Merchant MCP: `get_program_workflow_status`, `generate_program_defaults`
+   - Recipient REST: `GET /recipient-api/workflow/reward-status`, `POST /recipient-api/workflow/prepare-reward-redemption`
+   - Recipient MCP: `get_reward_workflow_status`, `prepare_reward_redemption`
+
 3. **Always identify the program first.**
    Before minting, rewards, vouchers, analytics, or transfers, determine:
    - `token_address`
@@ -38,23 +44,25 @@ Teach AI agents how to compose Loyal Spark endpoints into complete business flow
 Use when a merchant wants a fresh loyalty token.
 
 #### B20 default flow
-1. Choose:
+1. Choose or auto-generate:
    - program name
    - token symbol
    - expiration period
-2. Call:
+   - starter rewards / economics when missing
+2. If inputs are missing, call the defaults generator first.
+3. Call:
    - REST: `POST /programs`
    - MCP: `create_loyalty_program`
-3. Broadcast returned `createB20(...)` calldata on Base.
-4. Extract `token_address` from:
+4. Broadcast returned `createB20(...)` calldata on Base.
+5. Extract `token_address` from:
    - `B20Created` event, or
    - `GET /tx-receipt?tx_hash=...`
-5. Call:
+6. Call:
    - REST: `POST /register-program`
    - MCP: `register_loyalty_program`
    with `token_standard: "b20"`
-6. Program is now **active**.
-7. Recommended next step: create at least one reward before minting at scale.
+7. Program is now **active**.
+8. Recommended next step: create at least one reward before minting at scale.
 
 #### Legacy ERC-20 flow
 1. Call create with `token_standard: "erc20"`.
@@ -131,14 +139,15 @@ This is always a multi-step flow.
 1. Discover reward:
    - merchant: `GET /rewards`
    - recipient: `GET /recipient-api/rewards`
-2. Transfer the required token amount onchain to the merchant.
-3. Wait for confirmation.
-4. Call:
+2. Prefer helper endpoints/tools to get merchant target address and ready-to-broadcast calldata.
+3. Transfer the required token amount onchain to the merchant.
+4. Wait for confirmation.
+5. Call:
    - merchant REST/MCP reward redemption route
    - recipient reward redemption route if acting as holder
    passing the onchain `transaction_hash`
-5. Receive voucher code.
-6. Merchant later marks it used:
+6. Receive voucher code.
+7. Merchant later marks it used:
    - REST: `POST /vouchers/use`
    - MCP: `use_voucher`
 
@@ -165,6 +174,8 @@ This is always a multi-step flow.
 | Endpoint / Tool | Meaning in workflow |
 | --- | --- |
 | `POST /programs` / `create_loyalty_program` | Start deploy flow, not finish it |
+| `POST /workflow/generate-program-defaults` / `generate_program_defaults` | Fill in missing merchant identity, program naming, starter rewards, and economics |
+| `GET /workflow/program-status` / `get_program_workflow_status` | Ask the platform what is missing before issuing rewards or minting |
 | `GET /tx-receipt` | Extract deployed token address after tx |
 | `POST /register-program` | Persist program after deploy |
 | `POST /activate-program` | Only meaningful for legacy `erc20` |
@@ -173,6 +184,8 @@ This is always a multi-step flow.
 | `POST /mint` | Requires active program |
 | `POST /earn` | Same as mint, but purchase-driven |
 | `POST /redeem-reward` | Comes after confirmed onchain token transfer |
+| `GET /recipient-api/workflow/reward-status` / `get_reward_workflow_status` | Explain whether a holder can redeem now and what is missing |
+| `POST /recipient-api/workflow/prepare-reward-redemption` / `prepare_reward_redemption` | Build the transfer prerequisite before redeeming a reward |
 | `POST /vouchers/use` | Final merchant-side voucher step |
 
 ## Decision Rules for Agents

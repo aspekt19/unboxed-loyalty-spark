@@ -52,7 +52,9 @@ Merchant SaaS (portal): Starter $39 / Growth $79 / Scale $149 per month — see 
 - GET /me — Agent info (free)
 
 ### Write (POST) — $0.005–$0.05
-- POST /programs — Deploy new ERC-20 token ($0.05)
+- POST /workflow/generate-program-defaults — Generate program names, symbols, starter rewards, and economics defaults for autonomous agents ($0.001)
+- GET /workflow/program-status — Machine-readable merchant workflow state with next actions and prerequisites ($0.001)
+- POST /programs — Deploy new B20 loyalty token by default, or legacy ERC-20 when explicitly requested ($0.05)
 - POST /register-program — Register deployed token ($0.01)
 - POST /activate-program — Get activation calldata ($0.01)
 - POST /program-status — Update status ($0.005)
@@ -66,20 +68,22 @@ Merchant SaaS (portal): Starter $39 / Growth $79 / Scale $149 per month — see 
 - POST /accept-offer — Accept offer ($0.01)
 - POST /cancel-offer — Cancel offer ($0.005)
 - GET /merchant-profile — Read merchant profile ($0.001) · POST /merchant-profile create ($0.005) · PUT /merchant-profile update ($0.005)
+- Recipient workflow helpers: GET /recipient-api/workflow/reward-status and POST /recipient-api/workflow/prepare-reward-redemption
 
 ## Workflow Rules for AI Agents
 
 - Do not assume one endpoint equals one complete task
-- New program lifecycle is usually: choose name/symbol/expiration -> deploy -> register -> create reward -> then mint
+- New program lifecycle is usually: generate or choose name/symbol/expiration -> deploy -> register -> create reward -> then mint
 - B20 is default for new programs; legacy ERC-20 still exists and requires activation
 - Reward redemption always requires a confirmed onchain token transfer before voucher creation
+- Lifecycle-sensitive REST and MCP responses now include machine-readable `workflow.current_step`, `next_actions`, `prerequisites`, and `continuation_context`
 - If unsure about sequencing, read: https://loyalspark.online/.well-known/skills/13-endpoint-workflows.md
 
 ## MCP Servers
 - **Merchant** (`lsk_`, 36 tools): https://api.loyalspark.online/loyalty-mcp
 - **Recipient** (`rwk_`, 18 tools): https://api.loyalspark.online/recipient-loyalty-mcp
 - Transport: Streamable HTTP · Auth: `x-api-key` header
-- Recipient tools: `get_recipient_profile`, `list_my_loyalty_balances`, `get_my_loyalty_balance`, `prepare_loyalty_token_transfer` ($0.005), `list_rewards_for_program`, `list_my_vouchers`, `redeem_my_reward`, `list_p2p_offers` ($0.001), `create_p2p_offer`, `accept_p2p_offer`, `cancel_p2p_offer` ($0.005), `lookup_gift_certificate`, `claim_gift_certificate`, `list_my_gift_certificates`. Default $0.01.
+- Recipient tools: `get_recipient_profile`, `list_my_loyalty_balances`, `get_my_loyalty_balance`, `get_reward_workflow_status`, `prepare_reward_redemption`, `prepare_loyalty_token_transfer` ($0.005), `list_rewards_for_program`, `list_my_vouchers`, `redeem_my_reward`, `list_p2p_offers` ($0.001), `create_p2p_offer`, `accept_p2p_offer`, `cancel_p2p_offer` ($0.005), `lookup_gift_certificate`, `claim_gift_certificate`, `list_my_gift_certificates`. Default $0.01.
 
 ## Recipient REST (`rwk_`, 12 routes at /recipient-api)
 - GET /me (free), /balances ($0.001), /balance, /rewards, /vouchers, /offers
