@@ -11,6 +11,7 @@ export const RECIPIENT_REST_ROUTE_USD: Record<string, Record<string, string>> = 
     "recipient-api/rewards": "0.001",
     "recipient-api/vouchers": "0.001",
     "recipient-api/offers": "0.001",
+    "recipient-api/workflow/reward-status": "0.001",
   },
   POST: {
     "recipient-api/register": "0",
@@ -19,5 +20,6 @@ export const RECIPIENT_REST_ROUTE_USD: Record<string, Record<string, string>> = 
     "recipient-api/offers": "0.01",
     "recipient-api/accept-offer": "0.01",
     "recipient-api/cancel-offer": "0.005",
+    "recipient-api/workflow/prepare-reward-redemption": "0.005",
   },
 };

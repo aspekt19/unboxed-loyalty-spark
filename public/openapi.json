@@ -1,11 +1,11 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Loyal Spark — Onchain Loyalty Protocol on Base",
+    "title": "Loyal Spark \u2014 Onchain Loyalty Protocol on Base",
     "version": "2.3.0",
     "summary": "AI-agent-native loyalty-as-a-service protocol on Base L2 with paid x402 + MPP corridors.",
-    "description": "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. New loyalty programs deploy as B20 (Base native ERC-20 superset, single-tx, active immediately); legacy ERC-20 factory remains for existing programs. AI agents and merchants mint tokens, manage rewards, P2P escrow, vouchers, and analytics — via x402 (USDC on Base) or REST/MCP with x-api-key. Builder Code bc_wdmnog7m.",
-    "x-guidance": "Loyal Spark on Base L2 (chain 8453, USDC native).\n\nCritical rule for AI agents: many operations are multi-step workflows, not single endpoint calls. Read https://loyalspark.online/.well-known/skills/13-endpoint-workflows.md when orchestrating business actions.\n\nLifecycle-sensitive REST and MCP responses now include machine-readable workflow metadata: current_step, completed_steps, next_actions, prerequisites, blocking_reason, suggested_defaults, and continuation_context.\n\nAuth: lsk_ (merchant), rwk_ (holder), or x402 USDC.\n\nProgram lifecycle:\n- Default new program path: call POST /workflow/generate-program-defaults when identity inputs are missing -> POST /programs (B20 default or auto_generate=true) -> broadcast createB20 -> GET /tx-receipt or parse B20Created -> POST /register-program with token_standard b20 -> create rewards -> mint.\n- Legacy path: POST /programs with token_standard erc20 -> broadcast deploy -> POST /register-program -> POST /activate-program -> broadcast activation txs -> POST /program-status active -> create rewards -> mint.\n- To ask the platform what is missing next, call GET /workflow/program-status.\n\nReward / voucher lifecycle:\n- Rewards come after a usable program exists.\n- Call GET /recipient-api/workflow/reward-status or POST /recipient-api/workflow/prepare-reward-redemption before redeeming when holder-side sequencing is unclear.\n- Voucher redemption requires confirmed onchain token transfer first, then redeem endpoint, then vouchers/use when consumed.\n\nMCP mirrors REST: loyalty-mcp and recipient-loyalty-mcp now expose planner/default-generation tools in addition to atomic tools. Paid corridor: /x402-gateway/mcp-tools/<name>.\n\nDocs: https://loyalspark.online/api-docs · skills: https://loyalspark.online/.well-known/skills/index.md",
+    "description": "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. New loyalty programs deploy as B20 (Base native ERC-20 superset, single-tx, active immediately); legacy ERC-20 factory remains for existing programs. AI agents and merchants mint tokens, manage rewards, P2P escrow, vouchers, and analytics \u2014 via x402 (USDC on Base) or REST/MCP with x-api-key. Builder Code bc_wdmnog7m.",
+    "x-guidance": "Loyal Spark on Base L2 (chain 8453, USDC native).\n\nCritical rule for AI agents: many operations are multi-step workflows, not single endpoint calls. Read https://loyalspark.online/.well-known/skills/13-endpoint-workflows.md when orchestrating business actions.\n\nLifecycle-sensitive REST and MCP responses now include machine-readable workflow metadata: current_step, completed_steps, next_actions, prerequisites, blocking_reason, suggested_defaults, and continuation_context.\n\nAuth: lsk_ (merchant), rwk_ (holder), or x402 USDC.\n\nProgram lifecycle:\n- Default new program path: call POST /workflow/generate-program-defaults when identity inputs are missing -> POST /programs (B20 default or auto_generate=true) -> broadcast createB20 -> GET /tx-receipt or parse B20Created -> POST /register-program with token_standard b20 -> create rewards -> mint.\n- Legacy path: POST /programs with token_standard erc20 -> broadcast deploy -> POST /register-program -> POST /activate-program -> broadcast activation txs -> POST /program-status active -> create rewards -> mint.\n- To ask the platform what is missing next, call GET /workflow/program-status.\n\nReward / voucher lifecycle:\n- Rewards come after a usable program exists.\n- Call GET /recipient-api/workflow/reward-status or POST /recipient-api/workflow/prepare-reward-redemption before redeeming when holder-side sequencing is unclear.\n- Voucher redemption requires confirmed onchain token transfer first, then redeem endpoint, then vouchers/use when consumed.\n\nMCP mirrors REST: loyalty-mcp and recipient-loyalty-mcp now expose planner/default-generation tools in addition to atomic tools. Paid corridor: /x402-gateway/mcp-tools/<name>.\n\nDocs: https://loyalspark.online/api-docs \u00b7 skills: https://loyalspark.online/.well-known/skills/index.md",
     "contact": {
       "name": "Loyal Spark",
       "email": "admin@loyalspark.online",
@@ -43,11 +43,11 @@
   "servers": [
     {
       "url": "https://api.loyalspark.online",
-      "description": "Loyal Spark — canonical API origin for x402scan discovery and paid resource invocation. All listed x402 gateway paths return live HTTP 402 payment requirements."
+      "description": "Loyal Spark \u2014 canonical API origin for x402scan discovery and paid resource invocation. All listed x402 gateway paths return live HTTP 402 payment requirements."
     },
     {
       "url": "https://bzxmejzssxjazswgwqqs.supabase.co",
-      "description": "Loyal Spark — direct backend origin for diagnostics and raw gateway access."
+      "description": "Loyal Spark \u2014 direct backend origin for diagnostics and raw gateway access."
     }
   ],
   "security": [
@@ -110,7 +110,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -177,7 +177,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -243,7 +243,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -310,7 +310,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -376,7 +376,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -445,7 +445,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -514,7 +514,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -583,7 +583,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -652,7 +652,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -703,7 +703,7 @@
       "post": {
         "operationId": "post_offers",
         "summary": "Create a P2P swap offer",
-        "description": "Creates a P2P swap offer between two loyalty tokens (offer_token / offer_amount ↔ request_token / request_amount).",
+        "description": "Creates a P2P swap offer between two loyalty tokens (offer_token / offer_amount \u2194 request_token / request_amount).",
         "tags": [
           "Merchant REST"
         ],
@@ -719,7 +719,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -770,42 +770,179 @@
         "operationId": "get_merchant_profile",
         "summary": "Read merchant profile",
         "description": "Returns the merchant's public profile (business name, category, contact, branding).",
-        "tags": ["Merchant REST"],
+        "tags": [
+          "Merchant REST"
+        ],
         "responses": {
-          "200": { "description": "Successful response", "content": { "application/json": { "schema": { "type": "object" } } } },
-          "402": { "description": "Payment Required — returns x402 challenge with `accepts[]`" }
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
+          }
         },
-        "x-input-schema": { "type": "object", "additionalProperties": true, "description": "Query parameters for this request." },
-        "x-payment-info": { "price": { "mode": "fixed", "currency": "USD", "amount": "0.001" }, "protocols": [ { "x402": {} }, { "mpp": { "method": "USDC", "intent": "pay-per-call", "currency": "USD" } } ] },
-        "x-auth": { "type": "apiKey", "header": "x-api-key", "prefix": "lsk_" }
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Query parameters for this request."
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.001"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            },
+            {
+              "mpp": {
+                "method": "USDC",
+                "intent": "pay-per-call",
+                "currency": "USD"
+              }
+            }
+          ]
+        },
+        "x-auth": {
+          "type": "apiKey",
+          "header": "x-api-key",
+          "prefix": "lsk_"
+        }
       },
       "post": {
         "operationId": "post_merchant_profile",
         "summary": "Create merchant profile",
         "description": "Creates the merchant profile for the agent's owner wallet.",
-        "tags": ["Merchant REST"],
+        "tags": [
+          "Merchant REST"
+        ],
         "responses": {
-          "200": { "description": "Successful response", "content": { "application/json": { "schema": { "type": "object" } } } },
-          "402": { "description": "Payment Required — returns x402 challenge with `accepts[]`" }
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
+          }
         },
-        "x-input-schema": { "type": "object", "additionalProperties": true, "description": "JSON body for this request." },
-        "x-payment-info": { "price": { "mode": "fixed", "currency": "USD", "amount": "0.005" }, "protocols": [ { "x402": {} }, { "mpp": { "method": "USDC", "intent": "pay-per-call", "currency": "USD" } } ] },
-        "x-auth": { "type": "apiKey", "header": "x-api-key", "prefix": "lsk_" },
-        "requestBody": { "required": false, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON body for this request."
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.005"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            },
+            {
+              "mpp": {
+                "method": "USDC",
+                "intent": "pay-per-call",
+                "currency": "USD"
+              }
+            }
+          ]
+        },
+        "x-auth": {
+          "type": "apiKey",
+          "header": "x-api-key",
+          "prefix": "lsk_"
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
       },
       "put": {
         "operationId": "put_merchant_profile",
         "summary": "Update merchant profile",
         "description": "Updates the merchant profile for the agent's owner wallet.",
-        "tags": ["Merchant REST"],
+        "tags": [
+          "Merchant REST"
+        ],
         "responses": {
-          "200": { "description": "Successful response", "content": { "application/json": { "schema": { "type": "object" } } } },
-          "402": { "description": "Payment Required — returns x402 challenge with `accepts[]`" }
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
+          }
         },
-        "x-input-schema": { "type": "object", "additionalProperties": true, "description": "JSON body for this request." },
-        "x-payment-info": { "price": { "mode": "fixed", "currency": "USD", "amount": "0.005" }, "protocols": [ { "x402": {} }, { "mpp": { "method": "USDC", "intent": "pay-per-call", "currency": "USD" } } ] },
-        "x-auth": { "type": "apiKey", "header": "x-api-key", "prefix": "lsk_" },
-        "requestBody": { "required": false, "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON body for this request."
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.005"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            },
+            {
+              "mpp": {
+                "method": "USDC",
+                "intent": "pay-per-call",
+                "currency": "USD"
+              }
+            }
+          ]
+        },
+        "x-auth": {
+          "type": "apiKey",
+          "header": "x-api-key",
+          "prefix": "lsk_"
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
       }
     },
     "/x402-gateway/register-program": {
@@ -828,7 +965,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -894,7 +1031,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -960,7 +1097,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -1026,7 +1163,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -1092,7 +1229,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -1158,7 +1295,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -1224,7 +1361,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -1290,7 +1427,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -1356,7 +1493,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -1422,7 +1559,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -1488,7 +1625,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -1554,7 +1691,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -1623,7 +1760,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -1692,7 +1829,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -1761,7 +1898,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -1830,7 +1967,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -1897,7 +2034,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -1963,7 +2100,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -2029,7 +2166,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -2095,7 +2232,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -2161,7 +2298,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         },
         "x-input-schema": {
@@ -2302,7 +2439,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -2402,7 +2539,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -2510,7 +2647,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -2638,7 +2775,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -2768,7 +2905,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -2882,7 +3019,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -3004,7 +3141,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -3130,7 +3267,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -3244,7 +3381,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -3374,7 +3511,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -3504,7 +3641,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -3634,7 +3771,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -3764,7 +3901,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -3886,7 +4023,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -4000,7 +4137,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -4114,7 +4251,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -4244,7 +4381,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -4358,7 +4495,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -4472,7 +4609,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -4572,7 +4709,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -4680,7 +4817,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -4802,7 +4939,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -4922,7 +5059,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -5078,7 +5215,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -5178,7 +5315,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -5300,7 +5437,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -5414,7 +5551,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -5528,7 +5665,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -5692,7 +5829,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -5812,7 +5949,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -5821,7 +5958,7 @@
       "post": {
         "operationId": "mcp_revoke_gift_certificate",
         "summary": "MCP tool: revoke_gift_certificate",
-        "description": "Revoke an active gift certificate (active → revoked). JSON-RPC 2.0 over Streamable HTTP. Body: { \"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/call\", \"params\": { \"name\": \"revoke_gift_certificate\", \"arguments\": { ... } } }. Auth: x-api-key (lsk_...) or Authorization: Bearer.",
+        "description": "Revoke an active gift certificate (active \u2192 revoked). JSON-RPC 2.0 over Streamable HTTP. Body: { \"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/call\", \"params\": { \"name\": \"revoke_gift_certificate\", \"arguments\": { ... } } }. Auth: x-api-key (lsk_...) or Authorization: Bearer.",
         "tags": [
           "Merchant MCP"
         ],
@@ -5926,7 +6063,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -5935,7 +6072,7 @@
       "post": {
         "operationId": "mcp_mark_gift_certificate_minted",
         "summary": "MCP tool: mark_gift_certificate_minted",
-        "description": "Mark claimed certificate as minted with on-chain mint tx hash (pending_mint → redeemed). JSON-RPC 2.0 over Streamable HTTP. Body: { \"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/call\", \"params\": { \"name\": \"mark_gift_certificate_minted\", \"arguments\": { ... } } }. Auth: x-api-key (lsk_...) or Authorization: Bearer.",
+        "description": "Mark claimed certificate as minted with on-chain mint tx hash (pending_mint \u2192 redeemed). JSON-RPC 2.0 over Streamable HTTP. Body: { \"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/call\", \"params\": { \"name\": \"mark_gift_certificate_minted\", \"arguments\": { ... } } }. Auth: x-api-key (lsk_...) or Authorization: Bearer.",
         "tags": [
           "Merchant MCP"
         ],
@@ -6048,7 +6185,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -6148,7 +6285,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -6248,7 +6385,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -6362,7 +6499,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -6492,7 +6629,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -6606,7 +6743,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -6706,7 +6843,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -6828,7 +6965,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -6936,7 +7073,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -7074,7 +7211,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -7188,7 +7325,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -7302,7 +7439,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -7416,7 +7553,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -7530,7 +7667,7 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
           }
         }
       }
@@ -7644,7 +7781,410 @@
             }
           },
           "402": {
-            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+            "description": "Payment Required \u2014 returns x402 challenge with `accepts[]`"
+          }
+        }
+      }
+    },
+    "/workflow/generate-program-defaults": {
+      "post": {
+        "tags": [
+          "Workflow"
+        ],
+        "operationId": "generateProgramDefaults",
+        "summary": "Autonomous planner: propose program name, symbol, cashback, and starter rewards from merchant business context.",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "x-price-usd": "0.001",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "business_name": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "locale": {
+                    "type": "string"
+                  },
+                  "preferred_style": {
+                    "type": "string"
+                  },
+                  "target_audience": {
+                    "type": "string"
+                  },
+                  "use_agent_wallet": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Generated defaults + workflow metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "workflow": {
+                      "type": "object",
+                      "properties": {
+                        "workflow": {
+                          "type": "string"
+                        },
+                        "actor": {
+                          "type": "string"
+                        },
+                        "current_step": {
+                          "type": "string"
+                        },
+                        "completed_steps": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "prerequisites": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "next_actions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object"
+                          }
+                        },
+                        "blocking_reason": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "suggested_defaults": {
+                          "type": "object"
+                        },
+                        "continuation_context": {
+                          "type": "object"
+                        }
+                      }
+                    },
+                    "defaults": {
+                      "type": "object"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workflow/program-status": {
+      "get": {
+        "tags": [
+          "Workflow"
+        ],
+        "operationId": "getProgramWorkflowStatus",
+        "summary": "Return current merchant program lifecycle step + next_actions[] for the most recent or specified program.",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "x-price-usd": "0.001",
+        "parameters": [
+          {
+            "name": "token_address",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current workflow state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "workflow": {
+                      "type": "object",
+                      "properties": {
+                        "workflow": {
+                          "type": "string"
+                        },
+                        "actor": {
+                          "type": "string"
+                        },
+                        "current_step": {
+                          "type": "string"
+                        },
+                        "completed_steps": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "prerequisites": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "next_actions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object"
+                          }
+                        },
+                        "blocking_reason": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "suggested_defaults": {
+                          "type": "object"
+                        },
+                        "continuation_context": {
+                          "type": "object"
+                        }
+                      }
+                    },
+                    "program": {
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/recipient-api/workflow/reward-status": {
+      "get": {
+        "tags": [
+          "Recipient",
+          "Workflow"
+        ],
+        "operationId": "getRecipientRewardWorkflowStatus",
+        "summary": "Return current recipient reward redemption step + next_actions[].",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "x-price-usd": "0.001",
+        "parameters": [
+          {
+            "name": "token_address",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "reward_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current workflow state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "workflow": {
+                      "type": "object",
+                      "properties": {
+                        "workflow": {
+                          "type": "string"
+                        },
+                        "actor": {
+                          "type": "string"
+                        },
+                        "current_step": {
+                          "type": "string"
+                        },
+                        "completed_steps": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "prerequisites": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "next_actions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object"
+                          }
+                        },
+                        "blocking_reason": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "suggested_defaults": {
+                          "type": "object"
+                        },
+                        "continuation_context": {
+                          "type": "object"
+                        }
+                      }
+                    },
+                    "reward": {
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    },
+                    "balance": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/recipient-api/workflow/prepare-reward-redemption": {
+      "post": {
+        "tags": [
+          "Recipient",
+          "Workflow"
+        ],
+        "operationId": "prepareRewardRedemption",
+        "summary": "Return ERC-20 transfer calldata for the reward token cost + recipient workflow so the agent can broadcast tx then call /redeem-reward.",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "x-price-usd": "0.005",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "reward_id"
+                ],
+                "properties": {
+                  "reward_id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transfer preparation + workflow metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "workflow": {
+                      "type": "object",
+                      "properties": {
+                        "workflow": {
+                          "type": "string"
+                        },
+                        "actor": {
+                          "type": "string"
+                        },
+                        "current_step": {
+                          "type": "string"
+                        },
+                        "completed_steps": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "prerequisites": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "next_actions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object"
+                          }
+                        },
+                        "blocking_reason": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "suggested_defaults": {
+                          "type": "object"
+                        },
+                        "continuation_context": {
+                          "type": "object"
+                        }
+                      }
+                    },
+                    "transfer_preparation": {
+                      "type": "object"
+                    },
+                    "reward": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }

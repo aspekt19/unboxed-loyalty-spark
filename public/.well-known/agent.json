@@ -362,7 +362,7 @@
   },
   "mcp": {
     "url": "https://api.loyalspark.online/loyalty-mcp",
-    "tool_count": 36,
+    "tool_count": 37,
     "transport": "streamable-http",
     "authentication": {
       "type": "api_key",
@@ -402,6 +402,8 @@
       "list_gift_certificates",
       "revoke_gift_certificate",
       "mark_gift_certificate_minted",
+      "generate_program_defaults",
+      "get_program_workflow_status",
       "bazaar_discover_resources",
       "bazaar_discover_mcp_servers",
       "bazaar_probe_x402",
@@ -433,7 +435,7 @@
     "rest_base_url": "https://api.loyalspark.online/recipient-api",
     "mcp_url": "https://api.loyalspark.online/recipient-loyalty-mcp",
     "mcp_transport": "streamable-http",
-    "mcp_tool_count": 18,
+    "mcp_tool_count": 20,
     "mcp_tools": [
       "get_recipient_profile",
       "list_my_loyalty_balances",
@@ -449,6 +451,8 @@
       "lookup_gift_certificate",
       "claim_gift_certificate",
       "list_my_gift_certificates",
+      "get_reward_workflow_status",
+      "prepare_reward_redemption",
       "bazaar_discover_resources",
       "bazaar_discover_mcp_servers",
       "bazaar_probe_x402",
@@ -461,12 +465,14 @@
       { "method": "GET",  "path": "/rewards",           "price_usd": "0.001", "description": "Rewards available for redemption" },
       { "method": "GET",  "path": "/vouchers",          "price_usd": "0.001", "description": "Vouchers issued to this wallet" },
       { "method": "GET",  "path": "/offers",            "price_usd": "0.001", "description": "P2P marketplace offers" },
+      { "method": "GET",  "path": "/workflow/reward-status", "price_usd": "0.001", "description": "Autonomous planner: current reward redemption step + next_actions[]" },
       { "method": "POST", "path": "/register",          "price_usd": "free",  "description": "One-time wallet registration after SIWE" },
       { "method": "POST", "path": "/prepare-transfer",  "price_usd": "0.005", "description": "ERC-20 transfer calldata (holder → any address)" },
       { "method": "POST", "path": "/redeem-reward",     "price_usd": "0.01",  "description": "Redeem a reward via on-chain tx hash" },
       { "method": "POST", "path": "/offers",            "price_usd": "0.01",  "description": "Create P2P swap intent (escrow)" },
       { "method": "POST", "path": "/accept-offer",      "price_usd": "0.01",  "description": "Accept a P2P offer (atomic swap)" },
-      { "method": "POST", "path": "/cancel-offer",      "price_usd": "0.005", "description": "Cancel your own P2P offer" }
+      { "method": "POST", "path": "/cancel-offer",      "price_usd": "0.005", "description": "Cancel your own P2P offer" },
+      { "method": "POST", "path": "/workflow/prepare-reward-redemption", "price_usd": "0.005", "description": "Autonomous planner: transfer calldata for reward cost + workflow metadata" }
     ],
     "x402_corridor": {
       "rest_url_template": "https://api.loyalspark.online/x402-gateway/recipient-api/{path}",

@@ -186,6 +186,31 @@ export const RECIPIENT_MCP_BAZAAR_TOOLS: readonly RecipientMcpBazaarTool[] = [
       },
     },
   },
+  {
+    name: "get_reward_workflow_status",
+    price: "0.001",
+    description: "Autonomous status planner for recipients: returns current reward redemption step and machine-readable next_actions[] (check balance → prepare transfer → redeem → voucher).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        token_address: { ...BAZAAR_ADDR, description: "Loyalty program token contract." },
+        reward_id: { ...BAZAAR_UUID, description: "Optional specific reward UUID to focus the plan on." },
+      },
+      required: ["token_address"],
+    },
+  },
+  {
+    name: "prepare_reward_redemption",
+    price: "0.005",
+    description: "One-shot planner: returns ERC-20 transfer calldata for the reward token cost plus the recipient_reward workflow so the agent can broadcast the tx and then call redeem_my_reward.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        reward_id: { ...BAZAAR_UUID, description: "Reward UUID from list_rewards_for_program." },
+      },
+      required: ["reward_id"],
+    },
+  },
 ];
 
 const byName = new Map(RECIPIENT_MCP_BAZAAR_TOOLS.map((t) => [t.name, t] as const));

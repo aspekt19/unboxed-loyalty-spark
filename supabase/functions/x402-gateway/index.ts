@@ -115,6 +115,7 @@ const PRICING: Record<string, Record<string, string>> = {
     offers: "0.001",
     "tx-receipt": "0",
     "merchant-profile": "0.001",
+    "workflow/program-status": "0.001",
   },
   POST: {
     programs: "0.05",
@@ -132,6 +133,7 @@ const PRICING: Record<string, Record<string, string>> = {
     "accept-offer": "0.01",
     "cancel-offer": "0.005",
     "merchant-profile": "0.005",
+    "workflow/generate-program-defaults": "0.001",
   },
   PUT: {
     "merchant-profile": "0.005",
@@ -155,11 +157,12 @@ function publicRequestUrl(req: Request): URL {
 
 function getResourceFromUrl(url: URL): string {
   const path = url.pathname.split("/").filter(Boolean);
-  // Find "x402-gateway" index and extract resource + sub-resource
+  // Find "x402-gateway" index and return everything after it joined by "/".
+  // Supports nested paths like recipient-api/workflow/reward-status.
   const gwIdx = path.indexOf("x402-gateway");
-  const resource = path[gwIdx + 1] || path[path.length - 1] || "";
-  const subResource = path[gwIdx + 2] || "";
-  return subResource ? `${resource}/${subResource}` : resource;
+  if (gwIdx === -1) return path[path.length - 1] || "";
+  const tail = path.slice(gwIdx + 1);
+  return tail.join("/") || "";
 }
 
 function getPrice(method: string, resource: string): string | null {
