@@ -40,6 +40,7 @@ interface LoyaltyProgram {
   status?: 'active' | 'expiring_soon' | 'expired' | 'paused' | 'inactive';
   cashbackRate?: number;
   pointsPerDollar?: number;
+  tokenStandard?: 'erc20' | 'b20';
 }
 
 interface DbProgramRow {
@@ -52,6 +53,7 @@ interface DbProgramRow {
   status?: string;
   cashback_rate?: number;
   points_per_dollar?: number;
+  token_standard?: string;
 }
 
 /** Map DB row to LoyaltyProgram */
@@ -66,8 +68,10 @@ function mapDbProgram(prog: DbProgramRow): LoyaltyProgram {
     status: prog.status as LoyaltyProgram['status'],
     cashbackRate: prog.cashback_rate ?? 5,
     pointsPerDollar: prog.points_per_dollar ?? 1,
+    tokenStandard: (prog.token_standard === 'b20' ? 'b20' : 'erc20'),
   };
 }
+
 
 export function CreatedPrograms({ onSelectProgram, merchantAddress: merchantAddressOverride, readOnly }: { onSelectProgram: (program: LoyaltyProgram & { tokenAddress: string }) => void; merchantAddress?: string; readOnly?: boolean }) {
   const [programs, setPrograms] = useState<LoyaltyProgram[]>([]);
@@ -191,9 +195,33 @@ export function CreatedPrograms({ onSelectProgram, merchantAddress: merchantAddr
 
   const handleToggleProgram = async (program: LoyaltyProgram, shouldPause: boolean) => {
     if (!program.tokenAddress || !program.id) return;
-    
+
+    // B20 programs have no on-chain pause / minting flags — DB-only toggle.
+    if (program.tokenStandard === 'b20') {
+      const newStatus = shouldPause ? 'paused' : 'active';
+      try {
+        const { error } = await supabase
+          .from('loyalty_programs')
+          .update({ status: newStatus })
+          .eq('id', program.id);
+        if (error) throw error;
+        await supabase
+          .from('rewards')
+          .update({ is_active: !shouldPause })
+          .eq('token_address', program.tokenAddress.toLowerCase())
+          .eq('merchant_address', address!.toLowerCase());
+        window.dispatchEvent(new Event('loyaltyProgramsUpdated'));
+        window.dispatchEvent(new Event('rewardsUpdated'));
+        toast.success(shouldPause ? 'Program paused' : 'Program activated');
+      } catch (err) {
+        console.error('[CreatedPrograms] B20 toggle error:', err);
+        toast.error('Failed to update program status');
+      }
+      return;
+    }
+
     setToggledProgram(program.tokenAddress);
-    
+
     try {
       if (shouldPause) {
         setPendingOperation({ program, operation: 'pause', step: 'complete' });
@@ -209,6 +237,7 @@ export function CreatedPrograms({ onSelectProgram, merchantAddress: merchantAddr
       setPendingOperation(null);
     }
   };
+
 
   // Handle successful toggle transaction
   useEffect(() => {
@@ -613,8 +642,13 @@ function ProgramCard({
               </div>
               <p className="text-xs text-muted-foreground">Symbol: {program.symbol}</p>
               {program.tokenAddress && (
-                <p className="text-[10px] text-muted-foreground mt-0.5 font-mono">
-                  {program.tokenAddress.slice(0, 6)}...{program.tokenAddress.slice(-4)}
+                <p className="text-[10px] text-muted-foreground mt-0.5 font-mono flex items-center gap-1">
+                  <span>{program.tokenAddress.slice(0, 6)}...{program.tokenAddress.slice(-4)}</span>
+                  {program.tokenStandard === 'b20' && (
+                    <span className="px-1 py-[1px] rounded bg-primary/10 text-primary text-[9px] font-semibold uppercase tracking-wider">
+                      B20
+                    </span>
+                  )}
                 </p>
               )}
             </div>
@@ -623,6 +657,7 @@ function ProgramCard({
                 tokenAddress={program.tokenAddress}
                 fallbackStatus={program.status || (program.tokenAddress ? 'active' : 'pending')}
                 expirationDate={program.expirationDate}
+                tokenStandard={program.tokenStandard}
               />
               {program.tokenAddress && !readOnly && (
                 <ProgramControlButtons
@@ -632,14 +667,19 @@ function ProgramCard({
                   onPause={() => onToggleProgram(program, true)}
                   onActivate={() => onToggleProgram(program, false)}
                   onDelete={() => program.id && setDeleteDialogOpen(program.id)}
+                  tokenStandard={program.tokenStandard}
                 />
               )}
             </div>
           </div>
           
           {program.tokenAddress && (
-            <ProgramActivationNote tokenAddress={program.tokenAddress} />
+            <ProgramActivationNote
+              tokenAddress={program.tokenAddress}
+              tokenStandard={program.tokenStandard}
+            />
           )}
+
           
           {program.tokenAddress && (
             <>

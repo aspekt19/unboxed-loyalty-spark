@@ -15,11 +15,21 @@ export interface ProgramStatus {
   hasStatusErrors: boolean;
 }
 
-export function useCheckProgramStatus(tokenAddress: TokenAddress | undefined): ProgramStatus {
+/**
+ * B20 tokens are ALWAYS active — the pause/enableMinting concepts don't exist
+ * on the B20 precompile (roles + MINT_ROLE handle everything). For legacy
+ * ERC-20 programs we still poll the on-chain flags.
+ */
+export function useCheckProgramStatus(
+  tokenAddress: TokenAddress | undefined,
+  tokenStandard: 'erc20' | 'b20' = 'erc20',
+): ProgramStatus {
   const queryClient = useQueryClient();
+  const isB20 = tokenStandard === 'b20';
 
   const queryOptions = {
-    enabled: !!tokenAddress,
+    // Skip on-chain reads for B20 — the calls would revert (functions don't exist).
+    enabled: !!tokenAddress && !isB20,
     refetchInterval: STATUS_POLL_INTERVAL,
     refetchOnMount: true as const,
     refetchOnWindowFocus: true as const,
@@ -45,30 +55,32 @@ export function useCheckProgramStatus(tokenAddress: TokenAddress | undefined): P
     const handleProgramUpdate = () => {
       if (tokenAddress) {
         txLog(HOOK_NAME, 'debug', 'Invalidating status cache', { tokenAddress });
-        queryClient.invalidateQueries({ 
+        queryClient.invalidateQueries({
           predicate: (query) => {
             const state = query.state;
-            return state.data !== undefined && 
-                   JSON.stringify(state.data).includes(tokenAddress);
-          }
+            return (
+              state.data !== undefined &&
+              JSON.stringify(state.data).includes(tokenAddress)
+            );
+          },
         });
       }
     };
 
     window.addEventListener('loyaltyProgramsUpdated', handleProgramUpdate);
-    return () => window.removeEventListener('loyaltyProgramsUpdated', handleProgramUpdate);
+    return () =>
+      window.removeEventListener('loyaltyProgramsUpdated', handleProgramUpdate);
   }, [tokenAddress, queryClient]);
 
-  useEffect(() => {
-    if (tokenAddress) {
-      txLog(HOOK_NAME, 'debug', 'Status update', {
-        tokenAddress,
-        isMintingActive,
-        isUtilityActive,
-        isPaused: !(isMintingActive && isUtilityActive),
-      });
-    }
-  }, [tokenAddress, isMintingActive, isUtilityActive]);
+  if (isB20) {
+    // B20 has no pause/minting toggles — always report fully active.
+    return {
+      isMintingActive: true,
+      isUtilityActive: true,
+      isPaused: false,
+      hasStatusErrors: false,
+    };
+  }
 
   return {
     isMintingActive: isMintingActive ?? false,

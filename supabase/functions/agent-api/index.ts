@@ -16,6 +16,11 @@ import {
   marketplaceCreateOffer,
   marketplaceListOffers,
 } from "../_shared/marketplace-p2p.ts";
+import {
+  B20_FACTORY_ADDRESS,
+  encodeCreateB20Asset,
+} from "../_shared/b20-encoding.ts";
+
 
 // Encode approve(address,uint256) calldata with Builder Code
 function encodeApproveCalldata(spender: string, amount: number): string {
@@ -293,7 +298,7 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Scope 'mint' or 'create_program' required" }, 403);
       }
 
-      const { name, symbol, expiration_days, use_agent_wallet } = body;
+      const { name, symbol, expiration_days, use_agent_wallet, token_standard: reqStandard } = body;
       if (!name || !symbol) {
         return jsonResponse({ error: "Missing required fields: name, symbol" }, 400);
       }
@@ -309,26 +314,56 @@ Deno.serve(async (req) => {
       const days = expiration_days && typeof expiration_days === "number" ? expiration_days : 365;
       const expirationDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 
-      // Resolve merchant address: ownerAddress or CDP wallet
       const merchantAddress = await resolveAgentMerchantAddress(serviceClient, agent, use_agent_wallet);
+      const upperSym = symbol.toUpperCase();
 
-      // Return calldata for deploying token via factory
-      const calldata = encodeCreateLoyaltyTokenCalldata(name, symbol.toUpperCase(), merchantAddress);
+      // Default to B20 (Base native superset). Legacy path only if explicitly opted-in.
+      const standard = (typeof reqStandard === "string" ? reqStandard : "b20").toLowerCase();
 
-      await logActivity(serviceClient, agent.agentId, "create_program", body, 200, { name, symbol, merchant: merchantAddress }, ip);
+      if (standard === "b20") {
+        const { data, salt } = encodeCreateB20Asset(merchantAddress, name, upperSym, 18);
+        await logActivity(serviceClient, agent.agentId, "create_program", body, 200, { name, symbol: upperSym, merchant: merchantAddress, standard: "b20" }, ip);
+        return jsonResponse({
+          message:
+            "Execute the B20 factory transaction (single tx). After confirmation, register the token_address with POST /register-program (token_standard: 'b20'). No activate-program step is required.",
+          program_details: {
+            name,
+            symbol: upperSym,
+            merchant_address: merchantAddress,
+            expiration_days: days,
+            expiration_date: expirationDate,
+            token_standard: "b20",
+          },
+          contract_call: {
+            to: B20_FACTORY_ADDRESS,
+            function: "createB20(uint8,bytes32,bytes,bytes[])",
+            calldata: data,
+            salt,
+            chain: "Base (8453)",
+            builder_code: BUILDER_CODE,
+            note:
+              "Extract token address from the B20Created event on the factory (topic[1]). MINT_ROLE is granted atomically via initCalls.",
+          },
+        });
+      }
+
+      // Legacy ERC-20 factory path
+      const calldata = encodeCreateLoyaltyTokenCalldata(name, upperSym, merchantAddress);
+      await logActivity(serviceClient, agent.agentId, "create_program", body, 200, { name, symbol: upperSym, merchant: merchantAddress, standard: "erc20" }, ip);
       return jsonResponse({
         message: "Execute the factory transaction to deploy your loyalty token. After deployment, register the token_address with POST /register-program.",
         program_details: {
           name,
-          symbol: symbol.toUpperCase(),
+          symbol: upperSym,
           merchant_address: merchantAddress,
           expiration_days: days,
           expiration_date: expirationDate,
+          token_standard: "erc20",
         },
         contract_call: {
           to: FACTORY_ADDRESS,
           function: "createLoyaltyToken(string,string,address)",
-          params: [name, symbol.toUpperCase(), merchantAddress],
+          params: [name, upperSym, merchantAddress],
           calldata,
           chain: "Base (8453)",
           builder_code: BUILDER_CODE,
@@ -337,6 +372,7 @@ Deno.serve(async (req) => {
       });
     }
 
+
     // ==================== REGISTER PROGRAM (after onchain deploy) ====================
     if (resource === "register-program" && req.method === "POST") {
       if (!hasScope(agent, "mint") && !hasScope(agent, "create_program")) {
@@ -344,7 +380,7 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Scope 'mint' or 'create_program' required" }, 403);
       }
 
-      const { name, symbol, token_address, expiration_days, use_agent_wallet, cashback_rate, points_per_dollar } = body;
+      const { name, symbol, token_address, expiration_days, use_agent_wallet, cashback_rate, points_per_dollar, token_standard: reqStandard } = body;
       if (!name || !symbol || !token_address) {
         return jsonResponse({ error: "Missing required fields: name, symbol, token_address" }, 400);
       }
@@ -352,6 +388,10 @@ Deno.serve(async (req) => {
       if (!/^0x[a-fA-F0-9]{40}$/.test(token_address)) {
         return jsonResponse({ error: "Invalid token_address format" }, 400);
       }
+
+      const standard = (typeof reqStandard === "string" && reqStandard.toLowerCase() === "erc20")
+        ? "erc20"
+        : "b20"; // default to B20 for new registrations
 
       const cr = parseOptionalCashbackRate(cashback_rate);
       if (!cr.ok) return jsonResponse({ error: cr.error }, 400);
@@ -374,13 +414,18 @@ Deno.serve(async (req) => {
 
       const merchantAddress = await resolveAgentMerchantAddress(serviceClient, agent, use_agent_wallet);
 
+      // B20 tokens are active immediately (MINT_ROLE granted in the deploy tx);
+      // legacy ERC-20 still needs a follow-up activate-program call.
+      const initialStatus = standard === "b20" ? "active" : "inactive";
+
       const insertRow: Record<string, unknown> = {
         name: name.trim(),
         symbol: symbol.toUpperCase().trim(),
         token_address: token_address.toLowerCase(),
         merchant_address: merchantAddress,
-        status: "inactive",
+        status: initialStatus,
         expiration_date: expirationDate,
+        token_standard: standard,
       };
       if (cr.value !== undefined) insertRow.cashback_rate = cr.value;
       if (ppd.value !== undefined) insertRow.points_per_dollar = ppd.value;
@@ -388,7 +433,7 @@ Deno.serve(async (req) => {
       const { data: program, error } = await serviceClient
         .from("loyalty_programs")
         .insert(insertRow)
-        .select("id, name, symbol, token_address, status, expiration_date, created_at, cashback_rate, points_per_dollar")
+        .select("id, name, symbol, token_address, status, expiration_date, created_at, cashback_rate, points_per_dollar, token_standard")
         .single();
 
       if (error) {
@@ -396,13 +441,18 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Failed to register program" }, 500);
       }
 
-      await logActivity(serviceClient, agent.agentId, "register_program", body, 201, { program_id: program.id }, ip);
+      await logActivity(serviceClient, agent.agentId, "register_program", body, 201, { program_id: program.id, standard }, ip);
       return jsonResponse({
         program,
-        message: "Program registered with status 'inactive'. Call POST /activate-program to get activation calldata (unpauseUtility + enableMinting).",
-        next_step: "POST /activate-program with { token_address }",
+        message: standard === "b20"
+          ? "B20 program registered and active — you can mint immediately (no activate-program step needed)."
+          : "Program registered with status 'inactive'. Call POST /activate-program to get activation calldata (unpauseUtility + enableMinting).",
+        next_step: standard === "b20"
+          ? "POST /mint with { token_address, recipient, amount }"
+          : "POST /activate-program with { token_address }",
       }, 201);
     }
+
 
     // ==================== UPDATE PROGRAM CONFIG (cashback / points rate) ====================
     if (resource === "update-program-config" && req.method === "POST") {
@@ -471,7 +521,7 @@ Deno.serve(async (req) => {
       }
 
       // Verify ownership (supports both ownerAddress and CDP wallet)
-      const program = await findAgentProgram(serviceClient, agent, token_address, "id, name, symbol, status");
+      const program = await findAgentProgram(serviceClient, agent, token_address, "id, name, symbol, status, token_standard");
 
       if (!program) {
         await logActivity(serviceClient, agent.agentId, "activate_program", body, 404, { error: "Program not found" }, ip);
@@ -480,6 +530,22 @@ Deno.serve(async (req) => {
 
       if (program.status === "active") {
         return jsonResponse({ message: "Program is already active", program });
+      }
+
+      // B20 tokens are always active on-chain — nothing to sign. Flip DB status
+      // if it somehow got stuck as 'inactive'.
+      if ((program as { token_standard?: string }).token_standard === "b20") {
+        await serviceClient
+          .from("loyalty_programs")
+          .update({ status: "active", updated_at: new Date().toISOString() })
+          .eq("id", program.id);
+        await logActivity(serviceClient, agent.agentId, "activate_program", body, 200, { token_address, standard: "b20", noop: true }, ip);
+        return jsonResponse({
+          message: "B20 program — active by construction, no onchain transaction required.",
+          program: { ...program, status: "active" },
+          transactions: [],
+          token_standard: "b20",
+        });
       }
 
       await logActivity(serviceClient, agent.agentId, "activate_program", body, 200, { token_address }, ip);
@@ -511,8 +577,10 @@ Deno.serve(async (req) => {
           },
         ],
         after_activation: "POST /program-status with { token_address, status: 'active' } to update the database status.",
+        token_standard: "erc20",
       });
     }
+
 
     // ==================== UPDATE PROGRAM STATUS ====================
     if (resource === "program-status" && req.method === "POST") {
