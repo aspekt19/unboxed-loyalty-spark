@@ -253,7 +253,7 @@ function buildDiscoveryDocument(req: Request): Record<string, unknown> {
 }
 
 function buildPaymentRequired(req: Request): Response {
-  const resource = `${publicBaseUrl()}/well-known-x402`;
+  const resource = `${publicBaseUrl()}/.well-known/x402`;
   const recipient = recipientAddress();
 
   const bazaarInfo = {
