@@ -211,12 +211,29 @@ Deno.serve(async (req: Request) => {
     if (name.length > 32 || symbol.length > 11) {
       return json({ error: "name must be ≤32 chars, symbol ≤11 chars" }, 400);
     }
+    // Default to B20 (new Base native superset). Legacy path only if explicitly requested.
+    const standard = (params.standard || params.token_standard || "b20").toLowerCase();
+    if (standard === "b20") {
+      const { data, salt } = encodeCreateB20Asset(merchantAddress, name, symbol.toUpperCase(), 18);
+      return json({
+        chainId: CHAIN_ID,
+        description: `Deploy B20 loyalty program "${name}" (${symbol.toUpperCase()}) for ${merchantAddress} — single tx, active immediately`,
+        transactions: [{ to: B20_FACTORY_ADDRESS, data, value: "0x0" }],
+        builder_code: BUILDER_CODE,
+        token_standard: "b20",
+        salt,
+        followup:
+          "After the deploy tx confirms, extract the token address from the B20Created event (topic[1] on the factory address 0xB20f…). Then POST /agent-api/register-program with { token_address, token_standard: 'b20' }. No activate-program step is needed — MINT_ROLE was granted atomically.",
+      });
+    }
+    // Legacy ERC-20 factory path
     const data = encodeCreateLoyaltyToken(name, symbol, merchantAddress);
     return json({
       chainId: CHAIN_ID,
-      description: `Deploy loyalty program "${name}" (${symbol}) for ${merchantAddress}`,
+      description: `Deploy legacy ERC-20 loyalty program "${name}" (${symbol}) for ${merchantAddress}`,
       transactions: [{ to: FACTORY_ADDRESS, data, value: "0x0" }],
       builder_code: BUILDER_CODE,
+      token_standard: "erc20",
       followup:
         "After the deploy tx confirms, call POST /agent-api/register-program with the emitted token_address, then GET /agent-prepare/activate-program to unpause + grant MINTER_ROLE.",
     });
@@ -231,13 +248,25 @@ Deno.serve(async (req: Request) => {
     }
     const { data: prog } = await db
       .from("loyalty_programs")
-      .select("id,name,symbol,status,merchant_address")
+      .select("id,name,symbol,status,merchant_address,token_standard")
       .eq("token_address", token.toLowerCase())
       .eq("merchant_address", merchantAddress.toLowerCase())
       .maybeSingle();
     if (!prog) return json({ error: "Program not found or not owned by this agent" }, 404);
 
-    // Batched calls: unpause + grantRole(MINTER_ROLE, merchant)
+    // B20 tokens are always active — nothing to do onchain.
+    if (prog.token_standard === "b20") {
+      return json({
+        chainId: CHAIN_ID,
+        description: `${prog.symbol} is B20 — already active, no activation transaction required`,
+        transactions: [],
+        already_active: true,
+        token_standard: "b20",
+        builder_code: BUILDER_CODE,
+      });
+    }
+
+    // Legacy: batched calls: unpause + grantRole(MINTER_ROLE, merchant)
     const unpauseData = appendBuilderCode(SEL.unpauseUtility);
     const grantData = encodeGrantRole(MINTER_ROLE, merchantAddress);
     return json({
@@ -248,9 +277,11 @@ Deno.serve(async (req: Request) => {
         { to: token.toLowerCase(), data: grantData, value: "0x0" },
       ],
       builder_code: BUILDER_CODE,
+      token_standard: "erc20",
       note: "Use send_calls for atomic batching (EIP-5792). Both calls must land or activation is incomplete.",
     });
   }
+
 
   // ----- mint -----
   if (action === "mint") {
