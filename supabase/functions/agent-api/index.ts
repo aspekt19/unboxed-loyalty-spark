@@ -521,7 +521,7 @@ Deno.serve(async (req) => {
       }
 
       // Verify ownership (supports both ownerAddress and CDP wallet)
-      const program = await findAgentProgram(serviceClient, agent, token_address, "id, name, symbol, status");
+      const program = await findAgentProgram(serviceClient, agent, token_address, "id, name, symbol, status, token_standard");
 
       if (!program) {
         await logActivity(serviceClient, agent.agentId, "activate_program", body, 404, { error: "Program not found" }, ip);
@@ -530,6 +530,22 @@ Deno.serve(async (req) => {
 
       if (program.status === "active") {
         return jsonResponse({ message: "Program is already active", program });
+      }
+
+      // B20 tokens are always active on-chain — nothing to sign. Flip DB status
+      // if it somehow got stuck as 'inactive'.
+      if ((program as { token_standard?: string }).token_standard === "b20") {
+        await serviceClient
+          .from("loyalty_programs")
+          .update({ status: "active", updated_at: new Date().toISOString() })
+          .eq("id", program.id);
+        await logActivity(serviceClient, agent.agentId, "activate_program", body, 200, { token_address, standard: "b20", noop: true }, ip);
+        return jsonResponse({
+          message: "B20 program — active by construction, no onchain transaction required.",
+          program: { ...program, status: "active" },
+          transactions: [],
+          token_standard: "b20",
+        });
       }
 
       await logActivity(serviceClient, agent.agentId, "activate_program", body, 200, { token_address }, ip);
@@ -561,8 +577,10 @@ Deno.serve(async (req) => {
           },
         ],
         after_activation: "POST /program-status with { token_address, status: 'active' } to update the database status.",
+        token_standard: "erc20",
       });
     }
+
 
     // ==================== UPDATE PROGRAM STATUS ====================
     if (resource === "program-status" && req.method === "POST") {
