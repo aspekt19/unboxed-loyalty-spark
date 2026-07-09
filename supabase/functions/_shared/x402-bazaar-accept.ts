@@ -675,7 +675,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
     if (!mcp) {
       throw new Error(`Unknown MCP tool: ${toolName}`);
     }
-    const loyaltyMcpUrl = `${p.supabaseUrl}/functions/v1/loyalty-mcp`;
+    const loyaltyMcpUrl = publicFunctionUrl(p.requestUrl, p.supabaseUrl, "loyalty-mcp");
 
     const accept: Record<string, unknown> = {
       scheme: "exact",
