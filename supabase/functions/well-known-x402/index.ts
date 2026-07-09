@@ -75,6 +75,14 @@ function supabaseUrl(): string {
   ).replace(/\/+$/, "");
 }
 
+/**
+ * Canonical public host used in `resource` URLs so x402scan groups this server
+ * under `api.loyalspark.online` — never the raw Supabase host.
+ */
+function publicBaseUrl(): string {
+  return (Deno.env.get("PUBLIC_BASE_URL") || "https://api.loyalspark.online").replace(/\/+$/, "");
+}
+
 /** Build one Bazaar Discovery `item` from a paid resource. */
 function buildItem(req: Request, method: string, resource: string, _price: string) {
   const { accept, resourceUrlForDiscovery } = buildAcceptEntry({
@@ -245,8 +253,7 @@ function buildDiscoveryDocument(req: Request): Record<string, unknown> {
 }
 
 function buildPaymentRequired(req: Request): Response {
-  const supabase = supabaseUrl();
-  const resource = `${supabase}/functions/v1/well-known-x402`;
+  const resource = `${publicBaseUrl()}/well-known-x402`;
   const recipient = recipientAddress();
 
   const bazaarInfo = {
