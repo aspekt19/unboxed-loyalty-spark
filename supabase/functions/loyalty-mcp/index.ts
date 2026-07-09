@@ -14,9 +14,14 @@ import {
   PLATFORM_FEE_WALLET,
   authenticateAgent,
 } from "./helpers.ts";
+import {
+  B20_FACTORY_ADDRESS,
+  encodeCreateB20Asset,
+} from "../_shared/b20-encoding.ts";
 import { resolveMcpApiKey } from "../_shared/mcp-http-api-key.ts";
 import { parseOptionalCashbackRate, parseOptionalPointsPerDollar } from "../_shared/program-economics.ts";
 import { discoverResources, discoverMcpServers, probeX402Endpoint } from "../_shared/bazaar-discovery.ts";
+
 
 const app = new Hono();
 
