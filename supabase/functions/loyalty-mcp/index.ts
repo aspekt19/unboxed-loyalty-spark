@@ -89,25 +89,49 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
   });
 
   mcpServer.tool("create_loyalty_program", {
-    description: "Get factory calldata to deploy a new ERC-20 loyalty token on Base",
-    inputSchema: { type: "object" as const, properties: { name: { type: "string", description: "Program name" }, symbol: { type: "string", description: "Token symbol, 2-5 chars" }, expiration_days: { type: "number", description: "Program duration in days (default: 365)" } }, required: ["name", "symbol"] },
-    handler: async ({ name, symbol, expiration_days }: any) => {
+    description: "Get factory calldata to deploy a new loyalty token on Base. Defaults to B20 (Base native ERC-20 superset, single tx, active immediately). Pass token_standard='erc20' for the legacy factory.",
+    inputSchema: { type: "object" as const, properties: { name: { type: "string", description: "Program name" }, symbol: { type: "string", description: "Token symbol, 2-5 chars" }, expiration_days: { type: "number", description: "Program duration in days (default: 365)" }, token_standard: { type: "string", description: "'b20' (default, single-tx deploy on Base precompile factory) or 'erc20' (legacy factory, requires activate_loyalty_program follow-up)" } }, required: ["name", "symbol"] },
+    handler: async ({ name, symbol, expiration_days, token_standard }: any) => {
       const err = authGuard(["mint", "create_program"]);
       if (err) return T(err);
       const days = expiration_days || 365;
       const sym = symbol.toUpperCase();
+      const standard = (typeof token_standard === "string" && token_standard.toLowerCase() === "erc20") ? "erc20" : "b20";
+
+      if (standard === "b20") {
+        const { data, salt } = encodeCreateB20Asset(agent.ownerAddress, name, sym, 18);
+        return T(JSON.stringify({
+          message: "Execute the B20 factory tx (single call). Then call register_loyalty_program with token_standard='b20'. MINT_ROLE granted atomically — no activate_loyalty_program step needed.",
+          contract_call: {
+            to: B20_FACTORY_ADDRESS,
+            function: "createB20(uint8,bytes32,bytes,bytes[])",
+            calldata: data,
+            salt,
+            chain: "Base (8453)",
+            builder_code: BUILDER_CODE,
+            note: "Extract token address from B20Created event topic[1] emitted by the factory.",
+          },
+          program_details: { name, symbol: sym, expiration_days: days, token_standard: "b20" },
+        }));
+      }
+
       const calldata = encodeCreateLoyaltyTokenCalldata(name, sym, agent.ownerAddress);
-      return T(JSON.stringify({ message: "Execute factory tx, then call register_loyalty_program with the deployed token_address.", contract_call: { to: FACTORY_ADDRESS, function: "createLoyaltyToken(string,string,address)", params: [name, sym, agent.ownerAddress], calldata, chain: "Base (8453)", builder_code: BUILDER_CODE }, program_details: { name, symbol: sym, expiration_days: days } }));
+      return T(JSON.stringify({
+        message: "Execute legacy factory tx, then call register_loyalty_program with the deployed token_address and token_standard='erc20', then activate_loyalty_program.",
+        contract_call: { to: FACTORY_ADDRESS, function: "createLoyaltyToken(string,string,address)", params: [name, sym, agent.ownerAddress], calldata, chain: "Base (8453)", builder_code: BUILDER_CODE },
+        program_details: { name, symbol: sym, expiration_days: days, token_standard: "erc20" },
+      }));
     },
   });
 
   mcpServer.tool("register_loyalty_program", {
-    description: "Register a deployed token as a loyalty program in the database",
-    inputSchema: { type: "object" as const, properties: { name: { type: "string", description: "Program name" }, symbol: { type: "string", description: "Token symbol" }, token_address: { type: "string", description: "Deployed token contract address (0x...)" }, expiration_days: { type: "number", description: "Duration in days (default: 365)" }, cashback_rate: { type: "number", description: "Default cashback percent for earn (1–100). Omit for DB default (5)." }, points_per_dollar: { type: "number", description: "Loyalty points per $1 spent (1–1000). Omit for DB default (1)." } }, required: ["name", "symbol", "token_address"] },
-    handler: async ({ name, symbol, token_address, expiration_days, cashback_rate, points_per_dollar }: any) => {
+    description: "Register a deployed token as a loyalty program in the database. B20 tokens are registered as active; legacy ERC-20 as inactive (activate next).",
+    inputSchema: { type: "object" as const, properties: { name: { type: "string", description: "Program name" }, symbol: { type: "string", description: "Token symbol" }, token_address: { type: "string", description: "Deployed token contract address (0x...)" }, expiration_days: { type: "number", description: "Duration in days (default: 365)" }, cashback_rate: { type: "number", description: "Default cashback percent for earn (1–100). Omit for DB default (5)." }, points_per_dollar: { type: "number", description: "Loyalty points per $1 spent (1–1000). Omit for DB default (1)." }, token_standard: { type: "string", description: "'b20' (default) or 'erc20' (legacy)" } }, required: ["name", "symbol", "token_address"] },
+    handler: async ({ name, symbol, token_address, expiration_days, cashback_rate, points_per_dollar, token_standard }: any) => {
       const err = authGuard(["mint", "create_program"]);
       if (err) return T(err);
       if (!/^0x[a-fA-F0-9]{40}$/.test(token_address)) return T('{"error":"Invalid token_address"}');
+      const standard = (typeof token_standard === "string" && token_standard.toLowerCase() === "erc20") ? "erc20" : "b20";
       const cr = parseOptionalCashbackRate(cashback_rate);
       if (!cr.ok) return T(JSON.stringify({ error: cr.error }));
       const ppd = parseOptionalPointsPerDollar(points_per_dollar);
@@ -117,31 +141,51 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
       if (existing) return T('{"error":"Program already registered"}');
       const days = expiration_days || 365;
       const expDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
-      const row: Record<string, unknown> = { name: name.trim(), symbol: symbol.toUpperCase().trim(), token_address: token_address.toLowerCase(), merchant_address: agent.ownerAddress, status: "inactive", expiration_date: expDate };
+      const initialStatus = standard === "b20" ? "active" : "inactive";
+      const row: Record<string, unknown> = {
+        name: name.trim(),
+        symbol: symbol.toUpperCase().trim(),
+        token_address: token_address.toLowerCase(),
+        merchant_address: agent.ownerAddress,
+        status: initialStatus,
+        expiration_date: expDate,
+        token_standard: standard,
+      };
       if (cr.value !== undefined) row.cashback_rate = cr.value;
       if (ppd.value !== undefined) row.points_per_dollar = ppd.value;
-      const { data: program, error } = await d.from("loyalty_programs").insert(row).select("id,name,symbol,token_address,status,expiration_date,created_at,cashback_rate,points_per_dollar").single();
+      const { data: program, error } = await d.from("loyalty_programs").insert(row).select("id,name,symbol,token_address,status,expiration_date,created_at,cashback_rate,points_per_dollar,token_standard").single();
       if (error) return T(JSON.stringify({ error: error.message }));
-      return T(JSON.stringify({ program, message: "Program registered as inactive. Call activate_loyalty_program next." }));
+      return T(JSON.stringify({
+        program,
+        message: standard === "b20"
+          ? "B20 program registered and active — mint immediately."
+          : "Program registered as inactive. Call activate_loyalty_program next.",
+      }));
     },
   });
 
   mcpServer.tool("activate_loyalty_program", {
-    description: "Get activation calldata (unpauseUtility + enableMinting) for an inactive program",
+    description: "For legacy ERC-20 programs: returns unpauseUtility + enableMinting calldata. For B20 programs: no-op (already active).",
     inputSchema: { type: "object" as const, properties: { token_address: { type: "string", description: "Token contract address (0x...)" } }, required: ["token_address"] },
     handler: async ({ token_address }: any) => {
       const err = authGuard(["mint", "create_program"]);
       if (err) return T(err);
       const d = db();
-      const { data: prog } = await d.from("loyalty_programs").select("id,name,symbol,status").eq("token_address", token_address.toLowerCase()).eq("merchant_address", agent.ownerAddress).single();
+      const { data: prog } = await d.from("loyalty_programs").select("id,name,symbol,status,token_standard").eq("token_address", token_address.toLowerCase()).eq("merchant_address", agent.ownerAddress).single();
       if (!prog) return T('{"error":"Program not found"}');
       if (prog.status === "active") return T(JSON.stringify({ message: "Already active", program: prog }));
-      return T(JSON.stringify({ message: "Execute 2 transactions in order, then call update_program_status to set status to 'active'.", transactions: [
+      if ((prog as { token_standard?: string }).token_standard === "b20") {
+        await d.from("loyalty_programs").update({ status: "active", updated_at: new Date().toISOString() }).eq("id", prog.id);
+        return T(JSON.stringify({ message: "B20 program — active by construction, no onchain tx needed.", program: { ...prog, status: "active" }, transactions: [], token_standard: "b20" }));
+      }
+      return T(JSON.stringify({ message: "Execute 2 transactions in order, then call update_program_status to set status to 'active'.", token_standard: "erc20", transactions: [
         { step: 1, description: "Unpause utility", contract_call: { to: token_address, function: "unpauseUtility()", calldata: encodeNoArgCalldata(SELECTORS.unpauseUtility), chain: "Base (8453)", builder_code: BUILDER_CODE } },
         { step: 2, description: "Enable minting", contract_call: { to: token_address, function: "enableMinting()", calldata: encodeNoArgCalldata(SELECTORS.enableMinting), chain: "Base (8453)", builder_code: BUILDER_CODE } },
       ] }));
     },
   });
+
+
 
   mcpServer.tool("update_program_status", {
     description: "Update program status in database after onchain activation/pause",
