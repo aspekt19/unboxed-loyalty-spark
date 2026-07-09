@@ -68,7 +68,9 @@
       "POST /merchant-profile": { "price": "0.005", "description": "Create merchant profile" },
       "PUT /merchant-profile": { "price": "0.005", "description": "Update merchant profile" },
       "GET /vouchers/status": { "price": "0", "description": "Public voucher status check (no key)" },
-      "GET /tx-receipt": { "price": "0", "description": "Extract token_address from deploy tx" }
+      "GET /tx-receipt": { "price": "0", "description": "Extract token_address from deploy tx" },
+      "GET /workflow/program-status": { "price": "0.001", "description": "Autonomous planner: current merchant lifecycle step + next_actions[]" },
+      "POST /workflow/generate-program-defaults": { "price": "0.001", "description": "Autonomous planner: propose program name, symbol, cashback, starter rewards" }
     },
     "recipient_endpoints": {
       "GET recipient-api/me": { "price": "0", "description": "Recipient profile" },
@@ -77,12 +79,14 @@
       "GET recipient-api/rewards": { "price": "0.001", "description": "Rewards available to redeem" },
       "GET recipient-api/vouchers": { "price": "0.001", "description": "Vouchers for this wallet" },
       "GET recipient-api/offers": { "price": "0.001", "description": "P2P marketplace offers" },
+      "GET recipient-api/workflow/reward-status": { "price": "0.001", "description": "Autonomous planner: current recipient reward step + next_actions[]" },
       "POST recipient-api/register": { "price": "0", "description": "Wallet registration after SIWE" },
       "POST recipient-api/prepare-transfer": { "price": "0.005", "description": "ERC-20 transfer calldata" },
       "POST recipient-api/redeem-reward": { "price": "0.01", "description": "Redeem reward via tx hash" },
       "POST recipient-api/offers": { "price": "0.01", "description": "Create P2P swap intent" },
       "POST recipient-api/accept-offer": { "price": "0.01", "description": "Accept P2P offer" },
-      "POST recipient-api/cancel-offer": { "price": "0.005", "description": "Cancel P2P offer" }
+      "POST recipient-api/cancel-offer": { "price": "0.005", "description": "Cancel P2P offer" },
+      "POST recipient-api/workflow/prepare-reward-redemption": { "price": "0.005", "description": "Autonomous planner: transfer calldata for reward cost + workflow metadata" }
     },
     "mcp_paid_url_templates": {
       "merchant": "{x402_or_mpp_gateway}/mcp-tools/{tool_name}",
