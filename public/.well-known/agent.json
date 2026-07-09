@@ -402,6 +402,8 @@
       "list_gift_certificates",
       "revoke_gift_certificate",
       "mark_gift_certificate_minted",
+      "generate_program_defaults",
+      "get_program_workflow_status",
       "bazaar_discover_resources",
       "bazaar_discover_mcp_servers",
       "bazaar_probe_x402",
