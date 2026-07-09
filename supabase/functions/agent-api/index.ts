@@ -1799,8 +1799,10 @@ Deno.serve(async (req) => {
     return jsonResponse({
       error: "Unknown endpoint",
       available_endpoints: {
+      "POST /workflow/generate-program-defaults": "Autonomous planner: propose program name, symbol, cashback, starter rewards from merchant business context",
+      "GET /workflow/program-status?token_address=0x...": "Autonomous planner: returns current lifecycle step + next_actions[] for create→register→activate→rewards→mint",
       "GET /programs": "List your loyalty programs (supports CDP wallet programs)",
-      "POST /programs": "Get calldata to deploy a new loyalty token (use_agent_wallet: true for CDP)",
+      "POST /programs": "Get calldata to deploy a new loyalty token (use_agent_wallet: true for CDP; auto_generate: true fills name/symbol)",
       "POST /register-program": "Register a deployed token (optional cashback_rate, points_per_dollar; use_agent_wallet: true for CDP)",
       "POST /update-program-config": "Update cashback_rate and/or points_per_dollar for your program",
       "POST /activate-program": "Get activation calldata (supports CDP wallet programs)",
