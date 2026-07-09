@@ -8,7 +8,7 @@
 import {
   encodeAbiParameters,
   encodeFunctionData,
-  parseAbiParameters,
+  
   keccak256,
   encodePacked,
   toBytes,
@@ -56,9 +56,23 @@ export function encodeB20AssetParams(
   admin: string,
   decimals = 18,
 ): Hex {
+  // B20FactoryLib.encodeAssetCreateParams uses abi.encode(struct) — a dynamic
+  // TUPLE, not raw positional args. Raw params make the precompile revert with
+  // AbiDecodeFailed ("buffer overrun").
   return encodeAbiParameters(
-    parseAbiParameters("uint8, string, string, address, uint8"),
-    [1, name, symbol, admin as Address, decimals],
+    [
+      {
+        type: "tuple",
+        components: [
+          { name: "version", type: "uint8" },
+          { name: "name", type: "string" },
+          { name: "symbol", type: "string" },
+          { name: "initialAdmin", type: "address" },
+          { name: "decimals", type: "uint8" },
+        ],
+      },
+    ],
+    [{ version: 1, name, symbol, initialAdmin: admin as Address, decimals }],
   );
 }
 
