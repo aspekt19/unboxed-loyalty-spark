@@ -33,9 +33,8 @@
       "tool_count": 20
     },
     "x-x402-discovery": {
-      "wellKnownResources": "https://loyalspark.online/.well-known/x402",
+      "wellKnownResources": "https://api.loyalspark.online/.well-known/x402",
       "gatewayBaseUrl": "https://api.loyalspark.online/x402-gateway",
-      "directGatewayBaseUrl": "https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway",
       "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
       "network": "eip155:8453"
     }
@@ -44,10 +43,6 @@
     {
       "url": "https://api.loyalspark.online",
       "description": "Loyal Spark \u2014 canonical API origin for x402scan discovery and paid resource invocation. All listed x402 gateway paths return live HTTP 402 payment requirements."
-    },
-    {
-      "url": "https://bzxmejzssxjazswgwqqs.supabase.co",
-      "description": "Loyal Spark \u2014 direct backend origin for diagnostics and raw gateway access."
     }
   ],
   "security": [
