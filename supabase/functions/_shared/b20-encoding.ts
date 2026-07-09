@@ -92,17 +92,30 @@ export function makeDeploySalt(admin: string, name: string, symbol: string): Hex
 
 /**
  * Full createB20 asset calldata + Builder Code suffix (bc_wdmnog7m).
- * Merchant admin is granted MINT_ROLE atomically via initCalls.
+ * Merchant admin is granted MINT_ROLE atomically via initCalls. Additional
+ * minters (e.g. the agent's CDP MPC wallet) can be granted MINT_ROLE in the
+ * same transaction so autonomous agents can mint without a follow-up grant.
  */
 export function encodeCreateB20Asset(
   admin: string,
   name: string,
   symbol: string,
   decimals = 18,
-): { data: Hex; salt: Hex } {
+  extraMinters: readonly string[] = [],
+): { data: Hex; salt: Hex; grantees: string[] } {
   const salt = makeDeploySalt(admin, name, symbol);
   const params = encodeB20AssetParams(name, symbol, admin, decimals);
-  const initCalls: Hex[] = [encodeGrantRoleCall(B20_MINT_ROLE, admin)];
+
+  const seen = new Set<string>();
+  const grantees: string[] = [];
+  for (const addr of [admin, ...extraMinters]) {
+    if (!addr || !/^0x[a-fA-F0-9]{40}$/.test(addr)) continue;
+    const k = addr.toLowerCase();
+    if (seen.has(k)) continue;
+    seen.add(k);
+    grantees.push(addr);
+  }
+  const initCalls: Hex[] = grantees.map((g) => encodeGrantRoleCall(B20_MINT_ROLE, g));
 
   const base = encodeFunctionData({
     abi: B20_FACTORY_ABI,
@@ -110,5 +123,5 @@ export function encodeCreateB20Asset(
     args: [B20_VARIANT.ASSET, salt, params, initCalls],
   });
 
-  return { data: appendBuilderSuffix(base), salt };
+  return { data: appendBuilderSuffix(base), salt, grantees };
 }
