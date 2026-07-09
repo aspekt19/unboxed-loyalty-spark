@@ -61,7 +61,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
   mcpServer.tool("get_platform_info", {
     description: "Get info about Loyal Spark protocol on Base L2",
     inputSchema: { type: "object" as const, properties: {} },
-    handler: async () => T(JSON.stringify({ name: "Loyal Spark", chain: "Base L2", chain_id: 8453, token_standard: "ERC-20", features: ["loyalty_programs","rewards","marketplace","tiers","referrals","vouchers","analytics"], api_docs: "https://loyalspark.online/api-docs" })),
+    handler: async () => T(JSON.stringify({ name: "Loyal Spark", chain: "Base L2", chain_id: 8453, token_standards: ["B20", "ERC-20"], default_token_standard: "b20", features: ["loyalty_programs","rewards","marketplace","tiers","referrals","vouchers","analytics"], api_docs: "https://loyalspark.online/api-docs" })),
   });
 
   mcpServer.tool("get_my_profile", {
@@ -80,7 +80,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
     handler: async ({ include_expired }: any) => {
       const err = authGuard(["read"]);
       if (err) return T(err);
-      let q = db().from("loyalty_programs").select("id,name,symbol,token_address,status,expiration_date,created_at,cashback_rate,points_per_dollar").eq("merchant_address", agent.ownerAddress).order("created_at", { ascending: false });
+      let q = db().from("loyalty_programs").select("id,name,symbol,token_address,status,expiration_date,created_at,cashback_rate,points_per_dollar,token_standard").eq("merchant_address", agent.ownerAddress).order("created_at", { ascending: false });
       if (!include_expired) q = q.neq("status", "expired");
       const { data, error } = await q;
       if (error) return T(JSON.stringify({ error: error.message }));

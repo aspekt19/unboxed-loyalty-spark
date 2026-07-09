@@ -21,9 +21,9 @@ Loyal Spark write tools **prepare** transactions — they return `{ to, data, va
 
 | Tool | Returns |
 | --- | --- |
-| `create_loyalty_program` | Factory `deploy` calldata |
-| `register_loyalty_program` | DB-only, no calldata |
-| `activate_loyalty_program` | `unpause` + `grantRole(MINTER_ROLE,…)` (batched via EIP-5792) |
+| `create_loyalty_program` | **B20 (default):** `createB20` calldata to `0xB20f…` (1 tx, MINT_ROLE in `initCalls`). **Legacy:** `createLoyaltyToken` to `0x5F3DdB…` |
+| `register_loyalty_program` | DB-only; B20 → `status: active`, legacy → `inactive` |
+| `activate_loyalty_program` | **B20:** no-op. **Legacy:** `unpauseUtility` + `enableMinting` (2 txs) |
 | `mint_loyalty_tokens` | ERC-20 `mintWithFee` calldata |
 | `earn_points` | Auto-calculated mint calldata from purchase amount × cashback |
 | `transfer_loyalty_tokens` | ERC-20 `transfer` calldata |
@@ -37,7 +37,7 @@ When Base MCP is connected, pass the returned `{ to, data, value }` into Base MC
 
 ## Pairing with Loyal Spark CDP wallet (autonomous)
 
-If the agent has its own CDP MPC wallet (`POST /agent-wallet`), pass `use_agent_wallet: true` on the relevant tool — Loyal Spark signs and broadcasts server-side. This is the only path that requires no human approval. The CDP wallet must already hold MINTER_ROLE on the program.
+If the agent has its own CDP MPC wallet (`POST /agent-wallet`), pass `use_agent_wallet: true` on create — B20 deploy grants `MINT_ROLE` to the CDP wallet atomically. Legacy ERC-20 programs still need activation + minter role on the CDP wallet.
 
 ## Gas, fees, value
 

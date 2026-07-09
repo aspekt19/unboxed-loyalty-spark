@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
+import { resolveTokenStandard, type TokenStandard } from '@/lib/tokenStandard';
 import type { TierSummary } from '@/hooks/useTierSummaries';
 import { CompactTierInline } from '@/components/tiers/CompactTierInline';
 import { Coins, Send } from 'lucide-react';
@@ -16,6 +17,7 @@ interface TokenListItemProps {
   selected?: boolean;
   /** Per-program tier (batched in parent); avoids duplicate Supabase reads */
   tierSummary?: TierSummary;
+  tokenStandard?: TokenStandard;
 }
 
 export function TokenListItem({
@@ -28,8 +30,10 @@ export function TokenListItem({
   onClick,
   selected,
   tierSummary,
+  tokenStandard,
 }: TokenListItemProps) {
-  const { isPaused } = useCheckProgramStatus(address as `0x${string}`);
+  const standard = resolveTokenStandard(tokenStandard, address);
+  const { isPaused } = useCheckProgramStatus(address as `0x${string}`, standard);
   const balanceNum = parseFloat(balance);
 
   return (

@@ -22,6 +22,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { ProgramExpirationInfo } from '@/components/ProgramExpirationInfo';
 import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
+import { resolveTokenStandard } from '@/lib/tokenStandard';
 import { isFarcasterContext } from '@/config/wagmi';
 import { Input } from '@/components/ui/input';
 
@@ -58,6 +59,7 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
 
   const { isPaused: isProgramPaused } = useCheckProgramStatus(
     selectedTokenAddress as `0x${string}` | undefined,
+    resolveTokenStandard(undefined, selectedTokenAddress),
   );
 
   const selectedRewardForSpender = availableRewards.find(r => r.id === selectedRewardId);

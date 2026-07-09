@@ -48,6 +48,7 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, 
   const [allTokens, setAllTokens] = useState<TokenInfo[]>([]);
   const [isLoadingTokens, setIsLoadingTokens] = useState(true);
   const [activePrograms, setActivePrograms] = useState<Set<string>>(new Set());
+  const [programStandards, setProgramStandards] = useState<Record<string, 'erc20' | 'b20'>>({});
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
@@ -291,7 +292,7 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, 
     try {
       const { data, error } = await supabase
         .from('loyalty_programs')
-        .select('token_address')
+        .select('token_address, token_standard')
         .in('status', ['active', 'expiring_soon', 'paused']);
 
       if (error) {
@@ -302,8 +303,14 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, 
       const activeProgramAddresses = new Set(
         data.map(program => program.token_address.toLowerCase())
       );
+      const standards: Record<string, 'erc20' | 'b20'> = {};
+      for (const row of data) {
+        const addr = row.token_address.toLowerCase();
+        standards[addr] = row.token_standard === 'b20' ? 'b20' : 'erc20';
+      }
       console.log('Active programs loaded:', activeProgramAddresses.size);
       setActivePrograms(activeProgramAddresses);
+      setProgramStandards(standards);
     } catch (error) {
       console.error('Failed to load active programs:', error);
     }
@@ -421,6 +428,7 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, 
       balance={token.balance}
       merchantAddress={token.merchantAddress}
       tierSummary={tierSummaries[token.address.toLowerCase()]}
+      tokenStandard={programStandards[token.address.toLowerCase()]}
       onClick={() => onProgramSelect(token.address)}
       selected={selectedProgram === token.address}
       onSendClick={() => {

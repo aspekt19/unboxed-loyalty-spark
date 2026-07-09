@@ -18,6 +18,7 @@ import {
 } from "../_shared/marketplace-p2p.ts";
 import {
   B20_FACTORY_ADDRESS,
+  B20_CREATED_EVENT_TOPIC,
   encodeCreateB20Asset,
 } from "../_shared/b20-encoding.ts";
 
@@ -277,7 +278,7 @@ Deno.serve(async (req) => {
 
       const { data: programs, error } = await serviceClient
         .from("loyalty_programs")
-        .select("id, name, symbol, token_address, status, expiration_date, created_at, merchant_address, cashback_rate, points_per_dollar")
+        .select("id, name, symbol, token_address, status, expiration_date, created_at, merchant_address, cashback_rate, points_per_dollar, token_standard")
         .in("merchant_address", merchantAddresses)
         .neq("status", "expired")
         .order("created_at", { ascending: false });
@@ -1462,24 +1463,40 @@ Deno.serve(async (req) => {
 
         const receipt = data.result;
 
-        // LoyaltyTokenCreated event topic: keccak256("LoyaltyTokenCreated(address,address,string,string)")
-        // The token address is typically in topic[1] or the first log's address
-        const factoryLogs = receipt.logs.filter(
-          (log: any) => log.address?.toLowerCase() === FACTORY_ADDRESS.toLowerCase()
-        );
+        const factoryLower = FACTORY_ADDRESS.toLowerCase();
+        const b20FactoryLower = B20_FACTORY_ADDRESS.toLowerCase();
+        const b20CreatedTopic = B20_CREATED_EVENT_TOPIC.toLowerCase();
 
-        let tokenAddress = null;
-        if (factoryLogs.length > 0) {
-          // Token address is in topic[1] (indexed param)
-          const topic1 = factoryLogs[0].topics?.[1];
+        let tokenAddress: string | null = null;
+
+        // B20: B20Created on factory precompile (topic[1] = token)
+        const b20Logs = receipt.logs.filter(
+          (log: { address?: string; topics?: string[] }) =>
+            log.address?.toLowerCase() === b20FactoryLower &&
+            log.topics?.[0]?.toLowerCase() === b20CreatedTopic,
+        );
+        if (b20Logs.length > 0) {
+          const topic1 = b20Logs[0].topics?.[1];
           if (topic1) {
-            tokenAddress = "0x" + topic1.slice(26); // Remove 24 leading zeros from 32-byte topic
+            tokenAddress = "0x" + topic1.slice(-40);
           }
         }
 
-        // Also check for contract creation in logs (proxy deploy)
+        // Legacy: LoyaltyTokenCreated on LoyaltyTokenFactory
+        if (!tokenAddress) {
+          const factoryLogs = receipt.logs.filter(
+            (log: { address?: string }) => log.address?.toLowerCase() === factoryLower,
+          );
+          if (factoryLogs.length > 0) {
+            const topic1 = factoryLogs[0].topics?.[1];
+            if (topic1) {
+              tokenAddress = "0x" + topic1.slice(-40);
+            }
+          }
+        }
+
+        // Fallback: first log contract address (legacy proxy deploy)
         if (!tokenAddress && receipt.logs.length > 0) {
-          // The first log often comes from the newly deployed proxy
           tokenAddress = receipt.logs[0].address;
         }
 

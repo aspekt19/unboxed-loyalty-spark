@@ -57,7 +57,14 @@ export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: Merchant
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tabFromUrl]);
 
-  const [selectedProgram, setSelectedProgram] = useState<{ name: string; symbol: string; tokenAddress: string; cashbackRate?: number; pointsPerDollar?: number } | null>(null);
+  const [selectedProgram, setSelectedProgram] = useState<{
+    name: string;
+    symbol: string;
+    tokenAddress: string;
+    cashbackRate?: number;
+    pointsPerDollar?: number;
+    tokenStandard?: 'erc20' | 'b20';
+  } | null>(null);
   const [mintDialogOpen, setMintDialogOpen] = useState(false);
   const [earnDialogOpen, setEarnDialogOpen] = useState(false);
   const [lastMintParams, setLastMintParams] = useState<{ recipient: string; amount: string } | null>(null);
@@ -66,7 +73,8 @@ export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: Merchant
   
   const { mintTokens, isPending, isSuccess, reset, hash } = useMintTokens();
   const { isPaused, isMintingActive } = useCheckProgramStatus(
-    selectedProgram?.tokenAddress as `0x${string}` | undefined
+    selectedProgram?.tokenAddress as `0x${string}` | undefined,
+    selectedProgram?.tokenStandard ?? 'erc20',
   );
 
   // Fetch team memberships

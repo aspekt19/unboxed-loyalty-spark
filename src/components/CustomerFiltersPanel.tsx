@@ -11,6 +11,7 @@ import { Gift, Loader2, AlertCircle, Store, Clock, ChevronLeft, ChevronRight, Se
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useMultiTokenBalance } from '@/hooks/useMultiTokenBalance';
 import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
+import { resolveTokenStandard } from '@/lib/tokenStandard';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import useEmblaCarousel from 'embla-carousel-react';
@@ -314,7 +315,10 @@ function ProgramCard({
   isExpiringSoon: boolean;
   tierSummary?: TierSummary;
 }) {
-  const { isPaused } = useCheckProgramStatus(program.address as `0x${string}`);
+  const { isPaused } = useCheckProgramStatus(
+    program.address as `0x${string}`,
+    resolveTokenStandard(undefined, program.address),
+  );
   
   const formatAddress = (addr: string) => {
     if (!addr) return '';
