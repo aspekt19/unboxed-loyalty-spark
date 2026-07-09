@@ -83,9 +83,23 @@ export function encodeB20AssetParams(
   admin: Address,
   decimals = 18,
 ): Hex {
+  // B20FactoryLib.encodeAssetCreateParams uses abi.encode(struct), which is a
+  // dynamic TUPLE — not raw positional args. Encoding as raw params makes the
+  // precompile revert with AbiDecodeFailed ("buffer overrun").
   return encodeAbiParameters(
-    parseAbiParameters('uint8, string, string, address, uint8'),
-    [1, name, symbol, admin, decimals],
+    [
+      {
+        type: 'tuple',
+        components: [
+          { name: 'version', type: 'uint8' },
+          { name: 'name', type: 'string' },
+          { name: 'symbol', type: 'string' },
+          { name: 'initialAdmin', type: 'address' },
+          { name: 'decimals', type: 'uint8' },
+        ],
+      },
+    ],
+    [{ version: 1, name, symbol, initialAdmin: admin, decimals }],
   );
 }
 
