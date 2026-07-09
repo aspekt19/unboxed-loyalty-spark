@@ -16,6 +16,11 @@ import {
   marketplaceCreateOffer,
   marketplaceListOffers,
 } from "../_shared/marketplace-p2p.ts";
+import {
+  B20_FACTORY_ADDRESS,
+  encodeCreateB20Asset,
+} from "../_shared/b20-encoding.ts";
+
 
 // Encode approve(address,uint256) calldata with Builder Code
 function encodeApproveCalldata(spender: string, amount: number): string {
