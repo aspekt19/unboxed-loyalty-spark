@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useDeployLoyaltyToken } from '@/hooks/useDeployLoyaltyToken';
+import { useDeployB20Token } from '@/hooks/useDeployB20Token';
 import { useAccount } from 'wagmi';
 import { toast } from 'sonner';
 import { Loader2, Plus, CalendarIcon, Info } from 'lucide-react';
@@ -21,7 +21,7 @@ export function CreateLoyaltyProgram() {
   const [expirationDate, setExpirationDate] = useState<Date>();
   const [cashbackRate, setCashbackRate] = useState<string>('5');
   const [pointsPerDollar, setPointsPerDollar] = useState<string>('1');
-  const { deployToken, isPending, isSuccess, deployedTokenAddress } = useDeployLoyaltyToken();
+  const { deployToken, isPending, isSuccess, deployedTokenAddress } = useDeployB20Token();
   const savedRef = useRef(false);
 
   // Clear form on wallet disconnect

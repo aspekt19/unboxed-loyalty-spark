@@ -900,6 +900,7 @@ export type Database = {
           status: string
           symbol: string
           token_address: string
+          token_standard: string
           updated_at: string
         }
         Insert: {
@@ -914,6 +915,7 @@ export type Database = {
           status?: string
           symbol: string
           token_address: string
+          token_standard?: string
           updated_at?: string
         }
         Update: {
@@ -928,6 +930,7 @@ export type Database = {
           status?: string
           symbol?: string
           token_address?: string
+          token_standard?: string
           updated_at?: string
         }
         Relationships: []

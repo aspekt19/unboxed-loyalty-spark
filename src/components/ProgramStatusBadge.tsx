@@ -1,26 +1,34 @@
 import { Badge } from '@/components/ui/badge';
 import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
-import { Loader2 } from 'lucide-react';
 
 interface ProgramStatusBadgeProps {
   tokenAddress?: string;
   fallbackStatus?: 'active' | 'pending' | 'expiring_soon' | 'expired' | 'paused' | 'inactive';
   expirationDate?: string;
+  tokenStandard?: 'erc20' | 'b20';
 }
 
-export function ProgramStatusBadge({ tokenAddress, fallbackStatus, expirationDate }: ProgramStatusBadgeProps) {
+export function ProgramStatusBadge({
+  tokenAddress,
+  fallbackStatus,
+  expirationDate,
+  tokenStandard = 'erc20',
+}: ProgramStatusBadgeProps) {
   const { isPaused, hasStatusErrors } = useCheckProgramStatus(
-    tokenAddress as `0x${string}` | undefined
+    tokenAddress as `0x${string}` | undefined,
+    tokenStandard,
   );
 
-  // Проверяем реальную дату экспирации
   const isExpired = expirationDate && new Date(expirationDate) < new Date();
 
   if (!tokenAddress) {
-    return <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5">{fallbackStatus || 'Pending'}</Badge>;
+    return (
+      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5">
+        {fallbackStatus || 'Pending'}
+      </Badge>
+    );
   }
 
-  // Приоритет 1: Проверяем реальную дату экспирации
   if (isExpired) {
     return (
       <Badge variant="secondary" className="bg-red-600 text-white text-[10px] px-1.5 py-0 h-5">
@@ -29,8 +37,8 @@ export function ProgramStatusBadge({ tokenAddress, fallbackStatus, expirationDat
     );
   }
 
-  // Приоритет 2: Если контракт новый (отвечает на проверки статуса), проверяем isPaused
-  if (!hasStatusErrors && isPaused) {
+  // For B20 skip on-chain "paused" — the concept doesn't exist there.
+  if (tokenStandard !== 'b20' && !hasStatusErrors && isPaused) {
     return (
       <Badge variant="secondary" className="bg-gray-500 text-white text-[10px] px-1.5 py-0 h-5">
         Inactive
@@ -38,9 +46,10 @@ export function ProgramStatusBadge({ tokenAddress, fallbackStatus, expirationDat
     );
   }
 
-  // Приоритет 3: Проверяем fallbackStatus из БД (только для старых контрактов или если не истекла дата)
-  if ((fallbackStatus === 'expired' || fallbackStatus === 'paused' || fallbackStatus === 'inactive') && !isExpired) {
-    // Если в БД expired/paused/inactive но дата не истекла - это manual pause, показываем Inactive
+  if (
+    (fallbackStatus === 'expired' || fallbackStatus === 'paused' || fallbackStatus === 'inactive') &&
+    !isExpired
+  ) {
     return (
       <Badge variant="secondary" className="bg-gray-500 text-white text-[10px] px-1.5 py-0 h-5">
         Inactive
@@ -56,7 +65,6 @@ export function ProgramStatusBadge({ tokenAddress, fallbackStatus, expirationDat
     );
   }
 
-  // Для всех остальных случаев (активные новые и старые контракты) - Active
   return (
     <Badge variant="default" className="text-[10px] px-1.5 py-0 h-5">
       Active

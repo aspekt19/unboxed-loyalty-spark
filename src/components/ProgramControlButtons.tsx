@@ -15,76 +15,85 @@ interface ProgramControlButtonsProps {
   onPause: () => void;
   onActivate: () => void;
   onDelete: () => void;
+  tokenStandard?: 'erc20' | 'b20';
 }
 
-export function ProgramControlButtons({ 
-  tokenAddress, 
+export function ProgramControlButtons({
+  tokenAddress,
   isToggling,
   isDeleting,
   onPause,
   onActivate,
-  onDelete
+  onDelete,
+  tokenStandard = 'erc20',
 }: ProgramControlButtonsProps) {
-  const { isPaused, hasStatusErrors } = useCheckProgramStatus(tokenAddress as `0x${string}`);
+  const { isPaused, hasStatusErrors } = useCheckProgramStatus(
+    tokenAddress as `0x${string}`,
+    tokenStandard,
+  );
+
+  const isB20 = tokenStandard === 'b20';
 
   return (
     <div className="flex items-center gap-0">
       <TooltipProvider>
-        {/* Pause Button */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="inline-block">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onPause();
-                }}
-                disabled={isToggling || isPaused || hasStatusErrors}
-              >
-                {isToggling && !isPaused ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
-                  <Pause className="h-3 w-3 text-amber-600" />
-                )}
-              </Button>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>
-            {hasStatusErrors ? 'Status check failed - old contract version?' : 'Pause Program'}
-          </TooltipContent>
-        </Tooltip>
+        {/* Pause / Activate — only for legacy ERC-20 (B20 has no on-chain pause) */}
+        {!isB20 && (
+          <>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-block">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPause();
+                    }}
+                    disabled={isToggling || isPaused || hasStatusErrors}
+                  >
+                    {isToggling && !isPaused ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Pause className="h-3 w-3 text-amber-600" />
+                    )}
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {hasStatusErrors ? 'Status check failed - old contract version?' : 'Pause Program'}
+              </TooltipContent>
+            </Tooltip>
 
-        {/* Activate Button */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="inline-block">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onActivate();
-                }}
-                disabled={isToggling || !isPaused || hasStatusErrors}
-              >
-                {isToggling && isPaused ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
-                  <Play className="h-3 w-3 text-green-600" />
-                )}
-              </Button>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>
-            {hasStatusErrors ? 'Status check failed - old contract version?' : 'Activate Program'}
-          </TooltipContent>
-        </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-block">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onActivate();
+                    }}
+                    disabled={isToggling || !isPaused || hasStatusErrors}
+                  >
+                    {isToggling && isPaused ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Play className="h-3 w-3 text-green-600" />
+                    )}
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {hasStatusErrors ? 'Status check failed - old contract version?' : 'Activate Program'}
+              </TooltipContent>
+            </Tooltip>
+          </>
+        )}
 
-        {/* Delete Button */}
         <Tooltip>
           <TooltipTrigger asChild>
             <span className="inline-block">
