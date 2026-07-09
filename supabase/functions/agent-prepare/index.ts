@@ -214,7 +214,35 @@ Deno.serve(async (req: Request) => {
     // Default to B20 (new Base native superset). Legacy path only if explicitly requested.
     const standard = (params.standard || params.token_standard || "b20").toLowerCase();
     if (standard === "b20") {
-      const { data, salt } = encodeCreateB20Asset(merchantAddress, name, symbol.toUpperCase(), 18);
+      // Collect extra minters so autonomous agents can mint immediately.
+      // 1) explicit ?agent_wallet_address= / ?extra_minters=csv
+      // 2) fallback: active CDP wallet from agent_wallets
+      const extraFromParams: string[] = [];
+      const explicit = params.agent_wallet_address || params.extra_minter;
+      if (explicit && /^0x[a-fA-F0-9]{40}$/.test(explicit)) extraFromParams.push(explicit);
+      if (params.extra_minters) {
+        for (const a of params.extra_minters.split(",").map((s) => s.trim())) {
+          if (/^0x[a-fA-F0-9]{40}$/.test(a)) extraFromParams.push(a);
+        }
+      }
+      let extra = extraFromParams;
+      if (extra.length === 0) {
+        const { data: aw } = await db
+          .from("agent_wallets")
+          .select("wallet_address")
+          .eq("agent_id", agent.agentId)
+          .eq("chain_id", 8453)
+          .eq("is_active", true)
+          .maybeSingle();
+        if (aw?.wallet_address) extra = [aw.wallet_address];
+      }
+      const { data, salt, grantees } = encodeCreateB20Asset(
+        merchantAddress,
+        name,
+        symbol.toUpperCase(),
+        18,
+        extra,
+      );
       return json({
         chainId: CHAIN_ID,
         description: `Deploy B20 loyalty program "${name}" (${symbol.toUpperCase()}) for ${merchantAddress} — single tx, active immediately`,
@@ -222,8 +250,9 @@ Deno.serve(async (req: Request) => {
         builder_code: BUILDER_CODE,
         token_standard: "b20",
         salt,
+        mint_role_grantees: grantees,
         followup:
-          "After the deploy tx confirms, extract the token address from the B20Created event (topic[1] on the factory address 0xB20f…). Then POST /agent-api/register-program with { token_address, token_standard: 'b20' }. No activate-program step is needed — MINT_ROLE was granted atomically.",
+          "After the deploy tx confirms, extract the token address from the B20Created event (topic[1] on the factory address 0xB20f…). Then POST /agent-api/register-program with { token_address, token_standard: 'b20' }. No activate-program step is needed — MINT_ROLE was granted atomically to the merchant admin and (if present) the agent's CDP wallet.",
       });
     }
     // Legacy ERC-20 factory path
