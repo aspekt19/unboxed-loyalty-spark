@@ -160,6 +160,14 @@ function gatewayPath(resource: string): string {
   return `/functions/v1/x402-gateway/${resource}`;
 }
 
+/** Public URL to a Supabase Edge Function, canonicalised to the branded proxy host when available. */
+function publicFunctionUrl(requestUrl: URL, supabaseUrl: string, fnName: string): string {
+  const origin = resourcePublicOrigin(requestUrl, supabaseUrl);
+  const pub = getPublicBaseUrl();
+  const path = pub?.stripFunctionsPrefix ? `/${fnName}` : `/functions/v1/${fnName}`;
+  return `${origin}${path}`;
+}
+
 /** CDP validates `extensions.bazaar.info` against `extensions.bazaar.schema` (x402 bazaar spec). */
 const JSON_SCHEMA_2020_12 = "https://json-schema.org/draft/2020-12/schema" as const;
 
@@ -667,7 +675,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
     if (!mcp) {
       throw new Error(`Unknown MCP tool: ${toolName}`);
     }
-    const loyaltyMcpUrl = `${p.supabaseUrl}/functions/v1/loyalty-mcp`;
+    const loyaltyMcpUrl = publicFunctionUrl(p.requestUrl, p.supabaseUrl, "loyalty-mcp");
 
     const accept: Record<string, unknown> = {
       scheme: "exact",
@@ -711,7 +719,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
     if (!mcp) {
       throw new Error(`Unknown recipient MCP tool: ${toolName}`);
     }
-    const recipientMcpUrl = `${p.supabaseUrl}/functions/v1/recipient-loyalty-mcp`;
+    const recipientMcpUrl = publicFunctionUrl(p.requestUrl, p.supabaseUrl, "recipient-loyalty-mcp");
 
     const accept: Record<string, unknown> = {
       scheme: "exact",
