@@ -1,0 +1,12 @@
+{
+  "name": "b20-onchain-smoke",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node run.mjs"
+  },
+  "dependencies": {
+    "viem": "^2.21.0"
+  }
+}
