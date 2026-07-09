@@ -430,6 +430,33 @@ export const MCP_BAZAAR_TOOLS: readonly McpBazaarTool[] = [
       required: ["certificate_id", "transaction_hash"],
     },
   },
+  {
+    name: "generate_program_defaults",
+    price: "0.001",
+    description: "Autonomous planner: propose program name, ERC-20 symbol, cashback economics, and starter rewards from merchant business context. Use before create_loyalty_program when the agent has no explicit name/symbol.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        business_name: { type: "string", description: "Merchant brand or storefront name." },
+        category: { type: "string", description: "Business category (cafe, retail, beauty, fitness, etc.)." },
+        description: { type: "string", description: "Short description of what the business sells." },
+        locale: { type: "string", description: "Optional BCP-47 locale hint (e.g. en-US)." },
+        preferred_style: { type: "string", description: "Optional tone hint: modern, classic, playful." },
+        target_audience: { type: "string", description: "Optional audience descriptor." },
+      },
+    },
+  },
+  {
+    name: "get_program_workflow_status",
+    price: "0.001",
+    description: "Autonomous status planner: returns the current merchant program lifecycle step and the machine-readable next_actions[] so an agent can self-orchestrate create → register → activate → rewards → mint.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        token_address: { ...BAZAAR_ADDR, description: "Optional loyalty token address. When omitted, uses the most recent program owned by the agent." },
+      },
+    },
+  },
 ];
 
 const byName = new Map(MCP_BAZAAR_TOOLS.map((t) => [t.name, t] as const));
