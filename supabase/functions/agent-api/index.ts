@@ -380,7 +380,7 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Scope 'mint' or 'create_program' required" }, 403);
       }
 
-      const { name, symbol, token_address, expiration_days, use_agent_wallet, cashback_rate, points_per_dollar } = body;
+      const { name, symbol, token_address, expiration_days, use_agent_wallet, cashback_rate, points_per_dollar, token_standard: reqStandard } = body;
       if (!name || !symbol || !token_address) {
         return jsonResponse({ error: "Missing required fields: name, symbol, token_address" }, 400);
       }
@@ -388,6 +388,10 @@ Deno.serve(async (req) => {
       if (!/^0x[a-fA-F0-9]{40}$/.test(token_address)) {
         return jsonResponse({ error: "Invalid token_address format" }, 400);
       }
+
+      const standard = (typeof reqStandard === "string" && reqStandard.toLowerCase() === "erc20")
+        ? "erc20"
+        : "b20"; // default to B20 for new registrations
 
       const cr = parseOptionalCashbackRate(cashback_rate);
       if (!cr.ok) return jsonResponse({ error: cr.error }, 400);
@@ -410,13 +414,18 @@ Deno.serve(async (req) => {
 
       const merchantAddress = await resolveAgentMerchantAddress(serviceClient, agent, use_agent_wallet);
 
+      // B20 tokens are active immediately (MINT_ROLE granted in the deploy tx);
+      // legacy ERC-20 still needs a follow-up activate-program call.
+      const initialStatus = standard === "b20" ? "active" : "inactive";
+
       const insertRow: Record<string, unknown> = {
         name: name.trim(),
         symbol: symbol.toUpperCase().trim(),
         token_address: token_address.toLowerCase(),
         merchant_address: merchantAddress,
-        status: "inactive",
+        status: initialStatus,
         expiration_date: expirationDate,
+        token_standard: standard,
       };
       if (cr.value !== undefined) insertRow.cashback_rate = cr.value;
       if (ppd.value !== undefined) insertRow.points_per_dollar = ppd.value;
@@ -424,7 +433,7 @@ Deno.serve(async (req) => {
       const { data: program, error } = await serviceClient
         .from("loyalty_programs")
         .insert(insertRow)
-        .select("id, name, symbol, token_address, status, expiration_date, created_at, cashback_rate, points_per_dollar")
+        .select("id, name, symbol, token_address, status, expiration_date, created_at, cashback_rate, points_per_dollar, token_standard")
         .single();
 
       if (error) {
@@ -432,13 +441,18 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Failed to register program" }, 500);
       }
 
-      await logActivity(serviceClient, agent.agentId, "register_program", body, 201, { program_id: program.id }, ip);
+      await logActivity(serviceClient, agent.agentId, "register_program", body, 201, { program_id: program.id, standard }, ip);
       return jsonResponse({
         program,
-        message: "Program registered with status 'inactive'. Call POST /activate-program to get activation calldata (unpauseUtility + enableMinting).",
-        next_step: "POST /activate-program with { token_address }",
+        message: standard === "b20"
+          ? "B20 program registered and active — you can mint immediately (no activate-program step needed)."
+          : "Program registered with status 'inactive'. Call POST /activate-program to get activation calldata (unpauseUtility + enableMinting).",
+        next_step: standard === "b20"
+          ? "POST /mint with { token_address, recipient, amount }"
+          : "POST /activate-program with { token_address }",
       }, 201);
     }
+
 
     // ==================== UPDATE PROGRAM CONFIG (cashback / points rate) ====================
     if (resource === "update-program-config" && req.method === "POST") {
