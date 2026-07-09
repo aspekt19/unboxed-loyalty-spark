@@ -89,9 +89,9 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
   });
 
   mcpServer.tool("create_loyalty_program", {
-    description: "Get factory calldata to deploy a new loyalty token on Base. Defaults to B20 (Base native ERC-20 superset, single tx, active immediately). Pass token_standard='erc20' for the legacy factory.",
-    inputSchema: { type: "object" as const, properties: { name: { type: "string", description: "Program name" }, symbol: { type: "string", description: "Token symbol, 2-5 chars" }, expiration_days: { type: "number", description: "Program duration in days (default: 365)" }, token_standard: { type: "string", description: "'b20' (default, single-tx deploy on Base precompile factory) or 'erc20' (legacy factory, requires activate_loyalty_program follow-up)" } }, required: ["name", "symbol"] },
-    handler: async ({ name, symbol, expiration_days, token_standard }: any) => {
+    description: "Get factory calldata to deploy a new loyalty token on Base. Defaults to B20 (Base native ERC-20 superset, single tx, active immediately). Pass token_standard='erc20' for the legacy factory. For B20, MINT_ROLE is granted atomically to the merchant admin AND to the agent's CDP wallet (or explicit extra_minters) so autonomous agents can mint with no follow-up transaction.",
+    inputSchema: { type: "object" as const, properties: { name: { type: "string", description: "Program name" }, symbol: { type: "string", description: "Token symbol, 2-5 chars" }, expiration_days: { type: "number", description: "Program duration in days (default: 365)" }, token_standard: { type: "string", description: "'b20' (default, single-tx deploy on Base precompile factory) or 'erc20' (legacy factory, requires activate_loyalty_program follow-up)" }, agent_wallet_address: { type: "string", description: "(B20 only) Additional wallet to grant MINT_ROLE atomically. Defaults to the agent's active CDP MPC wallet if not provided." }, extra_minters: { type: "array", items: { type: "string" }, description: "(B20 only) Extra addresses to grant MINT_ROLE atomically in the same deploy tx." } }, required: ["name", "symbol"] },
+    handler: async ({ name, symbol, expiration_days, token_standard, agent_wallet_address, extra_minters }: any) => {
       const err = authGuard(["mint", "create_program"]);
       if (err) return T(err);
       const days = expiration_days || 365;
@@ -99,9 +99,30 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
       const standard = (typeof token_standard === "string" && token_standard.toLowerCase() === "erc20") ? "erc20" : "b20";
 
       if (standard === "b20") {
-        const { data, salt } = encodeCreateB20Asset(agent.ownerAddress, name, sym, 18);
+        const extras: string[] = [];
+        if (typeof agent_wallet_address === "string" && /^0x[a-fA-F0-9]{40}$/.test(agent_wallet_address)) {
+          extras.push(agent_wallet_address);
+        }
+        if (Array.isArray(extra_minters)) {
+          for (const a of extra_minters) {
+            if (typeof a === "string" && /^0x[a-fA-F0-9]{40}$/.test(a)) extras.push(a);
+          }
+        }
+        if (extras.length === 0) {
+          const { data: aw } = await db()
+            .from("agent_wallets")
+            .select("wallet_address")
+            .eq("agent_id", agent.agentId)
+            .eq("chain_id", 8453)
+            .eq("is_active", true)
+            .maybeSingle();
+          if (aw?.wallet_address && aw.wallet_address.toLowerCase() !== agent.ownerAddress.toLowerCase()) {
+            extras.push(aw.wallet_address);
+          }
+        }
+        const { data, salt, grantees } = encodeCreateB20Asset(agent.ownerAddress, name, sym, 18, extras);
         return T(JSON.stringify({
-          message: "Execute the B20 factory tx (single call). Then call register_loyalty_program with token_standard='b20'. MINT_ROLE granted atomically — no activate_loyalty_program step needed.",
+          message: "Execute the B20 factory tx (single call). Then call register_loyalty_program with token_standard='b20'. MINT_ROLE granted atomically to the merchant admin and the listed grantees — no activate_loyalty_program step needed.",
           contract_call: {
             to: B20_FACTORY_ADDRESS,
             function: "createB20(uint8,bytes32,bytes,bytes[])",
@@ -109,6 +130,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
             salt,
             chain: "Base (8453)",
             builder_code: BUILDER_CODE,
+            mint_role_grantees: grantees,
             note: "Extract token address from B20Created event topic[1] emitted by the factory.",
           },
           program_details: { name, symbol: sym, expiration_days: days, token_standard: "b20" },

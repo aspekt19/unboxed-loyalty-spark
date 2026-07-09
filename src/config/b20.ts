@@ -128,10 +128,22 @@ export function encodeCreateB20Asset(
   name: string,
   symbol: string,
   decimals = 18,
+  extraMinters: readonly Address[] = [],
 ): { data: Hex; salt: Hex } {
   const salt = makeDeploySalt(admin, name, symbol);
   const params = encodeB20AssetParams(name, symbol, admin, decimals);
-  const initCalls: Hex[] = [encodeGrantRoleCall(B20_MINT_ROLE, admin)];
+
+  // Deduplicate grantees (case-insensitive) so agent's CDP wallet can be listed
+  // atomically alongside the merchant admin without emitting a redundant call.
+  const seen = new Set<string>();
+  const grantees: Address[] = [];
+  for (const addr of [admin, ...extraMinters]) {
+    const k = addr.toLowerCase();
+    if (seen.has(k)) continue;
+    seen.add(k);
+    grantees.push(addr);
+  }
+  const initCalls: Hex[] = grantees.map((g) => encodeGrantRoleCall(B20_MINT_ROLE, g));
 
   const base = encodeFunctionData({
     abi: B20_FACTORY_ABI,
@@ -152,6 +164,7 @@ export function encodeCreateB20Asset(
     symbol,
     decimals,
     salt,
+    grantees,
     dataLength: data.length,
   });
 
