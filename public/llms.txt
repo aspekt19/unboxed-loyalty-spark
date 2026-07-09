@@ -101,7 +101,8 @@ Merchant SaaS (portal): Starter $39 / Growth $79 / Scale $149 per month — see 
 
 ## AI Discovery
 - Agent Manifest: https://loyalspark.online/.well-known/agent.json
-- OpenAPI: https://loyalspark.online/openapi.json
+- OpenAPI: https://loyalspark.online/openapi.json (servers[] = api.loyalspark.online only)
+- x402 Discovery: https://api.loyalspark.online/.well-known/x402 (mirror: https://loyalspark.online/.well-known/x402.json)
 - Skills: https://loyalspark.online/.well-known/skills/index.md
 
 ## Chain

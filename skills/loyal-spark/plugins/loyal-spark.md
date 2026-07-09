@@ -125,7 +125,7 @@ Pass `transactions` directly to Base MCP `send_calls`. When more than one call i
 - Full skill: https://loyalspark.online/skills/loyal-spark/SKILL.md
 - Agent manifest: https://loyalspark.online/.well-known/agent.json
 - OpenAPI: https://loyalspark.online/openapi.json
-- Bazaar (x402) manifest: https://loyalspark.online/.well-known/x402.json
+- Bazaar (x402) discovery: https://api.loyalspark.online/.well-known/x402 (mirror: https://loyalspark.online/.well-known/x402.json)
 
 ## Write-safety
 

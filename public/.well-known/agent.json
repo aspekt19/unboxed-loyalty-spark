@@ -503,6 +503,8 @@
     "description": "Coinbase x402 Payment Protocol — pay per request with USDC on Base. HTTP 402 with x402 v2 accepts; on-chain verify/settle for Base mainnet via Coinbase CDP when gateway secrets are set.",
     "x402_version": 2,
     "gateway_url": "https://api.loyalspark.online/x402-gateway",
+    "discovery_url": "https://api.loyalspark.online/.well-known/x402",
+    "discovery_mirror": "https://loyalspark.online/.well-known/x402.json",
     "currency": "USDC on Base",
     "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
     "network": "eip155:8453",

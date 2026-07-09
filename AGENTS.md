@@ -39,6 +39,9 @@ This file is the **entry point** for coding agents (Cursor, OpenServ, Claude Cod
 | **Merchant MCP** | `https://api.loyalspark.online/loyalty-mcp` |
 | **x402 / MPP gateways** | `https://api.loyalspark.online/x402-gateway` · `…/mpp-gateway` |
 | **x402 discovery (origin for x402scan)** | `https://api.loyalspark.online/.well-known/x402` |
+| x402 static mirror | `https://loyalspark.online/.well-known/x402.json` |
+
+`openapi.json` is served from the marketing host but `servers[]` lists **only** `api.loyalspark.online` (no `supabase.co` second entry).
 
 Source files for the above: `public/.well-known/`, `public/openapi.json`, `public/llms.txt`, `public/llms-full.txt`.
 

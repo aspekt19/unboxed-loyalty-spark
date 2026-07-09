@@ -54,6 +54,8 @@ Read [13-endpoint-workflows.md](./13-endpoint-workflows.md) before orchestrating
 ## Discovery
 
 - Agent manifest: `https://loyalspark.online/.well-known/agent.json`
+- OpenAPI: `https://loyalspark.online/openapi.json` (`servers[]` = `api.loyalspark.online` only)
+- x402 discovery: `https://api.loyalspark.online/.well-known/x402` (mirror: `https://loyalspark.online/.well-known/x402.json`)
 - Skills index: `https://loyalspark.online/.well-known/skills/index.md`
 - x402 paid MCP: `mcp-bazaar-tools.ts` · `recipient-mcp-bazaar-tools.ts` · `x402-bazaar-accept.ts`
 

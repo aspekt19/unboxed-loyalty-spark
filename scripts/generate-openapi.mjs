@@ -6,7 +6,10 @@
  *   responses.402 and `x-payment-info` with structured price + protocols (x402+mpp).
  * - Covers ALL paid resources: merchant REST (agent-api), recipient REST (recipient-api),
  *   ${MCP_TOOLS.length} merchant MCP tools (mcp-tools/<name>) and ${RECIPIENT_MCP_TOOLS.length} recipient MCP tools (recipient-mcp-tools/<name>).
- * - /.well-known/x402 is rewritten to `{ version: 1, resources: ["METHOD /full/url"] }`.
+ * - Static compat mirrors at public/.well-known/x402 (+ .json) on loyalspark.online; live Bazaar
+ *   discovery origin for x402scan is api.loyalspark.online/.well-known/x402 (see PUBLIC_BASE_URL).
+ * - openapi.json is hosted at loyalspark.online/openapi.json but servers[] lists only api.loyalspark.online
+ *   (no supabase.co second server — avoids duplicate x402scan origin registration).
  *
  * Run: node scripts/generate-openapi.mjs
  */
@@ -20,11 +23,8 @@ const ROOT = resolve(__dirname, "..");
 
 const PUBLIC_ORIGIN = "https://loyalspark.online";
 const API_ORIGIN = "https://api.loyalspark.online";
-const SUPABASE = "https://bzxmejzssxjazswgwqqs.supabase.co";
 const PUBLIC_GATEWAY_PATH = "/x402-gateway";
 const GATEWAY = `${API_ORIGIN}${PUBLIC_GATEWAY_PATH}`;
-const DIRECT_GATEWAY = `${SUPABASE}/functions/v1/x402-gateway`;
-const AGENT_API = `${SUPABASE}/functions/v1/agent-api`;
 const MCP_URL = `${API_ORIGIN}/loyalty-mcp`;
 const RECIPIENT_MCP_URL = `${API_ORIGIN}/recipient-loyalty-mcp`;
 
@@ -309,7 +309,7 @@ const openapi = {
       "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create ERC-20 loyalty programs, mint tokens to customer wallets, manage reward catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics — all via paid x402 endpoints (USDC on Base) or via standard REST with x-api-key. " +
       `Coverage: ${totalOps} paid operations across ${totalPaths} paths, including merchant REST (agent-api), recipient REST (recipient-api), ${MCP_TOOLS.length} merchant MCP tools and ${RECIPIENT_MCP_TOOLS.length} recipient MCP tools. Builder Code bc_wdmnog7m.`,
     "x-guidance":
-      `Loyal Spark on Base L2 (chain 8453, USDC native).\n\nAuth modes:\n• Merchant agents — header x-api-key: lsk_... (or Authorization: Bearer lsk_...). Get a key in https://loyalspark.online/merchant → AI Agents.\n• Holder agents — header x-api-key: rwk_... (or Authorization: Bearer rwk_...). Issued via SIWE: https://loyalspark.online/.well-known/agent.json.\n• x402 corridor — pay USDC on Base per call. Discovery: https://loyalspark.online/.well-known/x402.\n\nTypical merchant flow:\n1. GET /me — profile and scopes\n2. POST /programs — factory calldata to deploy ERC-20\n3. POST /register-program — persist program\n4. POST /update-program-config — set cashback_rate / points_per_dollar\n5. POST /activate-program — unpause\n6. POST /mint or POST /earn — distribute points\n7. POST /rewards — catalog\n8. GET /analytics — metrics\n\nMCP mirrors REST: ${MCP_TOOLS.length} merchant tools at ${MCP_URL} and ${RECIPIENT_MCP_TOOLS.length} recipient tools at ${RECIPIENT_MCP_URL}. Each MCP tool also has a paid x402 path under /x402-gateway/mcp-tools/<name> and /x402-gateway/recipient-mcp-tools/<name>.\n\nDocs: https://loyalspark.online/api-docs · llms: https://loyalspark.online/llms.txt · agent manifest: https://loyalspark.online/.well-known/agent.json`,
+      `Loyal Spark on Base L2 (chain 8453, USDC native).\n\nAuth modes:\n• Merchant agents — header x-api-key: lsk_... (or Authorization: Bearer lsk_...). Get a key in https://loyalspark.online/merchant → AI Agents.\n• Holder agents — header x-api-key: rwk_... (or Authorization: Bearer rwk_...). Issued via SIWE: https://loyalspark.online/.well-known/agent.json.\n• x402 corridor — pay USDC on Base per call. Discovery: https://api.loyalspark.online/.well-known/x402 (static mirror: https://loyalspark.online/.well-known/x402.json).\n\nTypical merchant flow:\n1. GET /me — profile and scopes\n2. POST /programs — factory calldata to deploy ERC-20\n3. POST /register-program — persist program\n4. POST /update-program-config — set cashback_rate / points_per_dollar\n5. POST /activate-program — unpause\n6. POST /mint or POST /earn — distribute points\n7. POST /rewards — catalog\n8. GET /analytics — metrics\n\nMCP mirrors REST: ${MCP_TOOLS.length} merchant tools at ${MCP_URL} and ${RECIPIENT_MCP_TOOLS.length} recipient tools at ${RECIPIENT_MCP_URL}. Each MCP tool also has a paid x402 path under /x402-gateway/mcp-tools/<name> and /x402-gateway/recipient-mcp-tools/<name>.\n\nDocs: https://loyalspark.online/api-docs · llms: https://loyalspark.online/llms.txt · agent manifest: https://loyalspark.online/.well-known/agent.json`,
     contact: {
       name: "Loyal Spark",
       email: "admin@loyalspark.online",
@@ -323,16 +323,14 @@ const openapi = {
     "x-mcp": { url: MCP_URL, transport: "streamable-http", tool_count: MCP_TOOLS.length },
     "x-recipient-mcp": { url: RECIPIENT_MCP_URL, transport: "streamable-http", tool_count: RECIPIENT_MCP_TOOLS.length },
     "x-x402-discovery": {
-      wellKnownResources: `${PUBLIC_ORIGIN}/.well-known/x402`,
+      wellKnownResources: `${API_ORIGIN}/.well-known/x402`,
       gatewayBaseUrl: GATEWAY,
-      directGatewayBaseUrl: DIRECT_GATEWAY,
       asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
       network: "eip155:8453",
     },
   },
   servers: [
     { url: API_ORIGIN, description: "Loyal Spark — canonical API origin for x402scan discovery and paid resource invocation. All listed x402 gateway paths return live HTTP 402 payment requirements." },
-    { url: SUPABASE, description: "Loyal Spark — direct backend origin for diagnostics and raw gateway access." },
   ],
   security: [{ apiKey: [] }],
   components: {

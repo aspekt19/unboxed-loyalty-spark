@@ -67,6 +67,8 @@ Smoke test: `scripts/x402-paid-mcp-test/run.mjs` (`MCP_PATH_PREFIX=mcp-tools` or
 |----------|-----|
 | Agent manifest | https://loyalspark.online/.well-known/agent.json |
 | OpenAPI | https://loyalspark.online/openapi.json |
+| x402 discovery (canonical) | https://api.loyalspark.online/.well-known/x402 |
+| x402 static mirror | https://loyalspark.online/.well-known/x402.json |
 | Skills | https://loyalspark.online/.well-known/skills/index.md |
 | Short LLM summary | https://loyalspark.online/llms.txt |
 

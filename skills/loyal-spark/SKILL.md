@@ -80,7 +80,8 @@ For per-surface install (Claude.ai, ChatGPT, Cursor, Claude Code, Codex, Hermes)
 | OpenAPI 3.1 | https://loyalspark.online/openapi.json |
 | MCP (merchant, 36 tools, `lsk_`) | https://api.loyalspark.online/loyalty-mcp |
 | MCP (recipient, 18 tools, `rwk_`) | https://api.loyalspark.online/recipient-loyalty-mcp |
-| x402 paid resources | https://loyalspark.online/.well-known/x402.json |
+| x402 paid resources (canonical) | https://api.loyalspark.online/.well-known/x402 |
+| x402 static mirror | https://loyalspark.online/.well-known/x402.json |
 | MPP manifest | https://loyalspark.online/.well-known/mpp.json |
 | Long LLM reference | https://loyalspark.online/llms-full.txt |
 

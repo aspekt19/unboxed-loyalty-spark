@@ -36,9 +36,12 @@ Cloudflare Worker `loyalspark-api-proxy` (gerassyk.workers.dev) проксиру
 **`loyalspark.online`** — discovery и человекочитаемые ссылки в `public/`:
 - `agent.json` → `"url": "https://loyalspark.online"`; skills/docs paths на этом же хосте
 - `openapi.json`, `llms.txt`, логотипы, `/for-agents`, `/merchant`
+- `/.well-known/x402.json` — **статический mirror** каталога paid resources (те же URL на `api.loyalspark.online`)
 
 **`api.loyalspark.online`** — runtime вызовы в `agent.json`, skills, examples, боте:
-- `"api.base_url"`, `x402-gateway`, `mpp-gateway`, `loyalty-mcp`, `agent-register-siwe`, `/.well-known/x402` (discovery **origin** для x402scan)
+- `"api.base_url"`, `x402-gateway`, `mpp-gateway`, `loyalty-mcp`, `agent-register-siwe`, `/.well-known/x402` (live Bazaar + discovery **origin** для x402scan)
+
+**`openapi.json`:** файл лежит на `loyalspark.online/openapi.json`, но `servers[]` содержит **только** `https://api.loyalspark.online`, а `info.x-x402-discovery.wellKnownResources` → `https://api.loyalspark.online/.well-known/x402`. Второй server на `supabase.co` и `directGatewayBaseUrl` убраны (cc248cb), чтобы x402scan не индексировал два origin.
 
 ## PUBLIC_BASE_URL (Supabase secret)
 

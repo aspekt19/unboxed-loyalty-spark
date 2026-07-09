@@ -17,7 +17,8 @@ Loyal Spark is a dual-mode protocol: humans interact via web UI with flexible au
 - REST (merchant, `lsk_`, 27 authenticated routes + 1 public): https://api.loyalspark.online/agent-api
 - REST (recipient, `rwk_`, 14 routes): https://api.loyalspark.online/recipient-api
 - MPP Manifest: https://loyalspark.online/.well-known/mpp.json
-- x402 Resources: https://loyalspark.online/.well-known/x402.json (Bazaar-discoverable URLs for both merchant and recipient corridors)
+- x402 Discovery (canonical, x402scan origin): https://api.loyalspark.online/.well-known/x402 (live Bazaar; resource URLs on api host)
+- x402 static mirror: https://loyalspark.online/.well-known/x402.json (same resource list; OpenAPI hosted on marketing site)
 - AI Plugin: https://loyalspark.online/.well-known/ai-plugin.json
 - Skills Guide: https://loyalspark.online/.well-known/skills/index.md
 

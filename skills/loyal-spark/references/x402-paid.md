@@ -7,7 +7,8 @@ Loyal Spark exposes two pay-per-request corridors in addition to the API-key flo
 - Gateway: `https://api.loyalspark.online/x402-gateway`
 - Currency: **USDC on Base** (`0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`), CAIP-2 `eip155:8453`.
 - Facilitator: Coinbase CDP (`https://api.cdp.coinbase.com/platform/v2/x402`) in production.
-- Resource catalog: https://loyalspark.online/.well-known/x402.json — Bazaar-discoverable, includes both merchant and recipient corridors.
+- Resource catalog (canonical): https://api.loyalspark.online/.well-known/x402 — live Bazaar discovery origin for x402scan; includes merchant and recipient corridors.
+- Static mirror (same URLs): https://loyalspark.online/.well-known/x402.json
 
 ### Paid REST
 

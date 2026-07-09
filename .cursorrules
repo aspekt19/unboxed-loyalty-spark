@@ -134,7 +134,7 @@ Behavioral rules to reduce over-engineering and unclear edits. **Tradeoff:** bia
 ## Agent Integration
 
 ### REST API (25 authenticated routes + 1 public GET)
-Base URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/agent-api
+Base URL: https://api.loyalspark.online/agent-api
 
 **Public (no `x-api-key`):**
 - GET `/vouchers/status` — voucher status by `code` or `voucher_id`
@@ -168,18 +168,19 @@ POST (scopes: program lifecycle accepts **mint** or **create_program**):
 - /vouchers/use     — $0.005 — scope: manage_rewards — use voucher
 
 ### MCP Server (36 merchant tools + 18 recipient tools)
-URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/loyalty-mcp  
+URL: https://api.loyalspark.online/loyalty-mcp  
 Transport: Streamable HTTP (JSON-RPC 2.0) · Auth: `x-api-key` · **Tool list = each `mcpServer.tool("…")` in `loyalty-mcp/index.ts`** (includes reporting, exports, admin-only tools).  
 Compatible with: Claude Desktop, Cursor, VS Code, OpenServ, any MCP client.
 
 ### MPP Gateway
-URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/mpp-gateway
+URL: https://api.loyalspark.online/mpp-gateway
 Payment: pathUSD on Tempo or USDC
 Flow: request → 402 challenge → payment → retry with credential
 No API key needed — pay-per-request.
 
 ### x402 Gateway
-URL: https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/x402-gateway
+URL: https://api.loyalspark.online/x402-gateway
+x402 discovery (x402scan origin): https://api.loyalspark.online/.well-known/x402
 Payment: USDC on Base (0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
 Facilitator (Base mainnet): CDP `https://api.cdp.coinbase.com/platform/v2/x402` — JWT via `CDP_API_KEY_ID` + `CDP_API_KEY_SECRET` (`@coinbase/cdp-sdk/auth` generateJwt per /verify and /settle). Optional single-token `CDP_API_KEY`. Public `https://x402.org/facilitator` is Sepolia-only for v2 `exact`.
 
