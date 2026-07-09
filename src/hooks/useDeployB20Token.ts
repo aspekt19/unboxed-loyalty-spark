@@ -49,15 +49,15 @@ export function useDeployB20Token() {
   }, [isSuccess, receipt, address, deployedTokenAddress]);
 
   const deployToken = useCallback(
-    (name: string, symbol: string) => {
+    (name: string, symbol: string, extraMinters: readonly `0x${string}`[] = []) => {
       if (!address) {
         toast.error('Please connect your wallet first');
         return;
       }
       setDeployedTokenAddress(null);
       try {
-        const { data } = encodeCreateB20Asset(address, name, symbol, 18);
-        txLog(HOOK_NAME, 'info', 'Deploying B20 token', { name, symbol });
+        const { data } = encodeCreateB20Asset(address, name, symbol, 18, extraMinters);
+        txLog(HOOK_NAME, 'info', 'Deploying B20 token', { name, symbol, extraMinters });
         sendTransaction({
           to: B20_FACTORY_ADDRESS,
           data,
