@@ -8,7 +8,7 @@
 import {
   encodeAbiParameters,
   encodeFunctionData,
-  parseAbiParameters,
+  parseAbiParameters as _unusedParseAbiParameters,
   keccak256,
   encodePacked,
   toBytes,
