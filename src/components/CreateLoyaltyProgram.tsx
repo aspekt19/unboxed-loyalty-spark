@@ -131,14 +131,17 @@ export function CreateLoyaltyProgram() {
               name: programName,
               symbol: tokenSymbol,
               expiration_date: expirationDate.toISOString(),
-              status: 'inactive',
+              // B20 tokens are active from block 0 — MINT_ROLE was granted in the
+              // same deploy tx via initCalls, so no separate activation step needed.
+              status: 'active',
+              token_standard: 'b20',
               cashback_rate: parseFloat(cashbackRate),
               points_per_dollar: parseFloat(pointsPerDollar),
             });
 
           if (error) {
             console.error('[CreateLoyaltyProgram] Save error:', error.message, error.code);
-            
+
             if (error.code === '42501') {
               toast.error('Permission denied. Please reconnect your wallet and try again.');
             } else if (error.code === '23505') {
@@ -149,7 +152,8 @@ export function CreateLoyaltyProgram() {
             return;
           }
 
-          toast.success(`Loyalty program "${programName}" created! Activate it to start issuing tokens.`);
+          toast.success(`Loyalty program "${programName}" is live! You can start issuing tokens right away.`);
+
           
           // localStorage for backward compatibility
           const savedPrograms = JSON.parse(localStorage.getItem('loyaltyPrograms') || '[]');
