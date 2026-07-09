@@ -23,6 +23,8 @@ import {
 } from "../_shared/b20-encoding.ts";
 import {
   generateProgramDefaults,
+  generateProgramExamples,
+  getMerchantProgramFieldCatalog,
   merchantProgramWorkflow,
   wrapWorkflow,
 } from "../_shared/agent-workflows.ts";
@@ -273,7 +275,7 @@ Deno.serve(async (req) => {
         .select("business_name, category, description")
         .eq("merchant_address", merchantAddress)
         .maybeSingle();
-      const defaults = generateProgramDefaults({
+      const examples = generateProgramExamples({
         business_name: typeof body.business_name === "string" ? body.business_name : profile?.business_name,
         category: typeof body.category === "string" ? body.category : profile?.category,
         description: typeof body.description === "string" ? body.description : profile?.description,
@@ -283,9 +285,19 @@ Deno.serve(async (req) => {
       });
       await logActivity(serviceClient, agent.agentId, "generate_program_defaults", body, 200, { ok: true }, ip);
       return jsonResponse(wrapWorkflow({
-        defaults,
-        message: "Generated default program, symbol, economics, and starter rewards.",
-      }, merchantProgramWorkflow(null, defaults)));
+        message:
+          "Field catalog and workflow planner. External agents must set their own name, symbol, reward names, and costs. Examples are non-binding.",
+        field_catalog: getMerchantProgramFieldCatalog(),
+        examples,
+        defaults: generateProgramDefaults({
+          business_name: typeof body.business_name === "string" ? body.business_name : profile?.business_name,
+          category: typeof body.category === "string" ? body.category : profile?.category,
+          description: typeof body.description === "string" ? body.description : profile?.description,
+          locale: typeof body.locale === "string" ? body.locale : undefined,
+          preferred_style: typeof body.preferred_style === "string" ? body.preferred_style : undefined,
+          target_audience: typeof body.target_audience === "string" ? body.target_audience : undefined,
+        }),
+      }, merchantProgramWorkflow(null)));
     }
 
     if (resource === "workflow" && subResource === "program-status" && req.method === "GET") {
@@ -326,13 +338,13 @@ Deno.serve(async (req) => {
         .select("business_name, category, description")
         .eq("merchant_address", program?.merchant_address || agent.ownerAddress)
         .maybeSingle();
-      const defaults = generateProgramDefaults({
+      const examples = generateProgramExamples({
         business_name: profile?.business_name,
         category: profile?.category,
         description: profile?.description,
       });
       await logActivity(serviceClient, agent.agentId, "program_workflow_status", { token_address: tokenAddress }, 200, { found: !!program }, ip);
-      return jsonResponse(wrapWorkflow({ program }, merchantProgramWorkflow(program, defaults)));
+      return jsonResponse(wrapWorkflow({ program, examples }, merchantProgramWorkflow(program)));
     }
 
     // ==================== PROGRAMS ====================
@@ -417,7 +429,7 @@ Deno.serve(async (req) => {
         .eq("merchant_address", merchantAddress)
         .maybeSingle();
 
-      const defaults = generateProgramDefaults({
+      const examples = generateProgramExamples({
         business_name: typeof business_context?.business_name === "string" ? business_context.business_name : profile?.business_name,
         category: typeof business_context?.category === "string" ? business_context.category : profile?.category,
         description: typeof business_context?.description === "string" ? business_context.description : profile?.description,
@@ -425,13 +437,14 @@ Deno.serve(async (req) => {
         preferred_style: typeof preferred_style === "string" ? preferred_style : undefined,
         target_audience: typeof target_audience === "string" ? target_audience : undefined,
       });
-      const chosenName = typeof name === "string" && name.trim() ? name.trim() : (auto_generate ? defaults.program_name_options[0] : "");
-      const chosenSymbol = typeof symbol === "string" && symbol.trim() ? symbol.trim() : (auto_generate ? defaults.token_symbol_options[0] : "");
+      const chosenName = typeof name === "string" && name.trim() ? name.trim() : (auto_generate ? examples.program_name_examples[0] : "");
+      const chosenSymbol = typeof symbol === "string" && symbol.trim() ? symbol.trim() : (auto_generate ? examples.token_symbol_examples[0] : "");
       if (!chosenName || !chosenSymbol) {
         return jsonResponse(wrapWorkflow({
-          error: "Missing required fields: name, symbol. Set auto_generate: true to let the platform choose them from business context.",
-          suggested_defaults: defaults,
-        }, merchantProgramWorkflow(null, defaults)), 400);
+          error: "Missing required fields: name, symbol. External agents must provide their own values. auto_generate is for trusted internal automation only.",
+          field_catalog: getMerchantProgramFieldCatalog(),
+          examples,
+        }, merchantProgramWorkflow(null)), 400);
       }
 
       if (typeof chosenName !== "string" || chosenName.length > 50) {
@@ -524,7 +537,7 @@ Deno.serve(async (req) => {
             },
           ],
           blocking_reason: null,
-          suggested_defaults: defaults,
+          field_catalog: getMerchantProgramFieldCatalog(),
           continuation_context: { token_standard: "b20", merchant_address: merchantAddress, expiration_days: days },
         }));
       }
@@ -579,7 +592,7 @@ Deno.serve(async (req) => {
           },
         ],
         blocking_reason: null,
-        suggested_defaults: defaults,
+        field_catalog: getMerchantProgramFieldCatalog(),
         continuation_context: { token_standard: "erc20", merchant_address: merchantAddress, expiration_days: days },
       }));
     }
@@ -1799,10 +1812,10 @@ Deno.serve(async (req) => {
     return jsonResponse({
       error: "Unknown endpoint",
       available_endpoints: {
-      "POST /workflow/generate-program-defaults": "Autonomous planner: propose program name, symbol, cashback, starter rewards from merchant business context",
-      "GET /workflow/program-status?token_address=0x...": "Autonomous planner: returns current lifecycle step + next_actions[] for create→register→activate→rewards→mint",
+      "POST /workflow/generate-program-defaults": "Workflow planner: field catalog, required parameters, next_actions, and non-binding examples (external agents choose all values)",
+      "GET /workflow/program-status?token_address=0x...": "Workflow planner: current lifecycle step + next_actions[] for create→register→activate→rewards→mint",
       "GET /programs": "List your loyalty programs (supports CDP wallet programs)",
-      "POST /programs": "Get calldata to deploy a new loyalty token (use_agent_wallet: true for CDP; auto_generate: true fills name/symbol)",
+      "POST /programs": "Get calldata to deploy a new loyalty token — external agents must pass name and symbol; auto_generate is internal automation only",
       "POST /register-program": "Register a deployed token (optional cashback_rate, points_per_dollar; use_agent_wallet: true for CDP)",
       "POST /update-program-config": "Update cashback_rate and/or points_per_dollar for your program",
       "POST /activate-program": "Get activation calldata (supports CDP wallet programs)",

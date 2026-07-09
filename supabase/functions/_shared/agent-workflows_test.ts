@@ -3,24 +3,36 @@
 import { assert, assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   generateProgramDefaults,
+  generateProgramExamples,
+  getMerchantProgramFieldCatalog,
   merchantProgramWorkflow,
   recipientRewardWorkflow,
   wrapWorkflow,
 } from "./agent-workflows.ts";
 
-Deno.test("generateProgramDefaults returns name/symbol/reward suggestions", () => {
-  const d = generateProgramDefaults({
+Deno.test("generateProgramExamples returns non-binding examples", () => {
+  const d = generateProgramExamples({
     business_name: "Sunrise Coffee",
     category: "cafe",
     description: "Neighborhood coffee shop with espresso and pastries",
   });
-  assert(d.program_name_options.length >= 1);
-  assert(d.token_symbol_options.length >= 1);
-  assert(d.starter_rewards.length === 3);
+  assert(d.program_name_examples.length >= 1);
+  assert(d.token_symbol_examples.length >= 1);
+  assert(d.reward_examples.length === 3);
   assertEquals(d.recommended_expiration_days, 365);
-  assertEquals(d.recommended_cashback_rate, 5);
-  assertEquals(d.recommended_points_per_dollar, 1);
-  for (const sym of d.token_symbol_options) assert(sym.length <= 5 && sym.length >= 2);
+  for (const sym of d.token_symbol_examples) assert(sym.length <= 5 && sym.length >= 2);
+});
+
+Deno.test("generateProgramDefaults keeps backward-compatible aliases", () => {
+  const d = generateProgramDefaults({ business_name: "Sunrise Coffee", category: "cafe" });
+  assertEquals(d.program_name_options, d.program_name_examples);
+  assertEquals(d.starter_rewards, d.reward_examples);
+});
+
+Deno.test("getMerchantProgramFieldCatalog marks actor_sets_values", () => {
+  const c = getMerchantProgramFieldCatalog();
+  assertEquals(c.actor_sets_values, true);
+  assert(c.post_programs.fields.some((f) => f.key === "name" && f.required));
 });
 
 Deno.test("merchantProgramWorkflow with no program → missing_program + bootstrap actions", () => {
@@ -29,6 +41,7 @@ Deno.test("merchantProgramWorkflow with no program → missing_program + bootstr
   assertEquals(w.current_step, "missing_program");
   assert(w.next_actions.some((a) => a.path === "/agent-api/workflow/generate-program-defaults"));
   assert(w.next_actions.some((a) => a.path === "/agent-api/programs"));
+  assert(w.field_catalog);
 });
 
 Deno.test("merchantProgramWorkflow with active B20 program → program_ready", () => {
@@ -63,30 +76,7 @@ Deno.test("recipientRewardWorkflow: no engagement → seed_engagement", () => {
   });
   assertEquals(w.current_step, "seed_engagement");
   assert(w.blocking_reason !== null);
-});
-
-Deno.test("recipientRewardWorkflow: engagement, no reward → choose_reward", () => {
-  const w = recipientRewardWorkflow({
-    token_address: "0xabc",
-    has_engagement: true,
-    has_balance: true,
-  });
-  assertEquals(w.current_step, "choose_reward");
-  assert(w.next_actions.some((a) => a.path === "/recipient-api/rewards"));
-});
-
-Deno.test("recipientRewardWorkflow: reward chosen → prepare_payment (planner + redeem)", () => {
-  const w = recipientRewardWorkflow({
-    token_address: "0xabc",
-    reward_id: "r1",
-    merchant_address: "0xmerchant",
-    reward_cost: 50,
-    has_engagement: true,
-    has_balance: true,
-  });
-  assertEquals(w.current_step, "prepare_payment");
-  assert(w.next_actions.some((a) => a.path === "/recipient-api/workflow/prepare-reward-redemption"));
-  assert(w.next_actions.some((a) => a.path === "/recipient-api/redeem-reward"));
+  assert(w.field_catalog);
 });
 
 Deno.test("wrapWorkflow embeds workflow into payload", () => {

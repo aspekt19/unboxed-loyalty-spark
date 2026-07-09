@@ -21,7 +21,7 @@ import {
 import { resolveMcpApiKey } from "../_shared/mcp-http-api-key.ts";
 import { parseOptionalCashbackRate, parseOptionalPointsPerDollar } from "../_shared/program-economics.ts";
 import { discoverResources, discoverMcpServers, probeX402Endpoint } from "../_shared/bazaar-discovery.ts";
-import { generateProgramDefaults, merchantProgramWorkflow, wrapWorkflow } from "../_shared/agent-workflows.ts";
+import { generateProgramDefaults, generateProgramExamples, getMerchantProgramFieldCatalog, merchantProgramWorkflow, wrapWorkflow } from "../_shared/agent-workflows.ts";
 
 
 const app = new Hono();
@@ -76,7 +76,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
   });
 
   mcpServer.tool("generate_program_defaults", {
-    description: "Generate default program name, symbol, economics, and starter rewards from merchant context",
+    description: "Workflow planner: field catalog, required parameters, next_actions, and non-binding examples. External agents must choose their own name, symbol, and economics.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -96,7 +96,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
         .select("business_name,category,description")
         .eq("merchant_address", agent.ownerAddress)
         .maybeSingle();
-      const defaults = generateProgramDefaults({
+      const examples = generateProgramExamples({
         business_name: typeof args.business_name === "string" ? args.business_name : profile?.business_name,
         category: typeof args.category === "string" ? args.category : profile?.category,
         description: typeof args.description === "string" ? args.description : profile?.description,
@@ -104,12 +104,24 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
         preferred_style: typeof args.preferred_style === "string" ? args.preferred_style : undefined,
         target_audience: typeof args.target_audience === "string" ? args.target_audience : undefined,
       });
-      return T(JSON.stringify(wrapWorkflow({ defaults }, merchantProgramWorkflow(null, defaults))));
+      return T(JSON.stringify(wrapWorkflow({
+        message: "Field catalog and workflow planner. You choose all program values; examples are optional inspiration.",
+        field_catalog: getMerchantProgramFieldCatalog(),
+        examples,
+        defaults: generateProgramDefaults({
+          business_name: typeof args.business_name === "string" ? args.business_name : profile?.business_name,
+          category: typeof args.category === "string" ? args.category : profile?.category,
+          description: typeof args.description === "string" ? args.description : profile?.description,
+          locale: typeof args.locale === "string" ? args.locale : undefined,
+          preferred_style: typeof args.preferred_style === "string" ? args.preferred_style : undefined,
+          target_audience: typeof args.target_audience === "string" ? args.target_audience : undefined,
+        }),
+      }, merchantProgramWorkflow(null))));
     },
   });
 
   mcpServer.tool("get_program_workflow_status", {
-    description: "Explain the next best merchant action for a program or merchant wallet",
+    description: "Explain the next merchant action: current_step, required fields, and ordered next_actions (you provide all parameter values)",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -143,12 +155,12 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
         .select("business_name,category,description")
         .eq("merchant_address", program?.merchant_address || agent.ownerAddress)
         .maybeSingle();
-      const defaults = generateProgramDefaults({
+      const examples = generateProgramExamples({
         business_name: profile?.business_name,
         category: profile?.category,
         description: profile?.description,
       });
-      return T(JSON.stringify(wrapWorkflow({ program }, merchantProgramWorkflow(program, defaults))));
+      return T(JSON.stringify(wrapWorkflow({ program, examples }, merchantProgramWorkflow(program))));
     },
   });
 
@@ -168,7 +180,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
 
   mcpServer.tool("create_loyalty_program", {
     description: "Get factory calldata to deploy a new loyalty token on Base. Defaults to B20 (Base native ERC-20 superset, single tx, active immediately). Pass token_standard='erc20' for the legacy factory. For B20, MINT_ROLE is granted atomically to the merchant admin AND to the agent's CDP wallet (or explicit extra_minters) so autonomous agents can mint with no follow-up transaction.",
-    inputSchema: { type: "object" as const, properties: { name: { type: "string", description: "Program name" }, symbol: { type: "string", description: "Token symbol, 2-5 chars" }, expiration_days: { type: "number", description: "Program duration in days (default: 365)" }, token_standard: { type: "string", description: "'b20' (default, single-tx deploy on Base precompile factory) or 'erc20' (legacy factory, requires activate_loyalty_program follow-up)" }, agent_wallet_address: { type: "string", description: "(B20 only) Additional wallet to grant MINT_ROLE atomically. Defaults to the agent's active CDP MPC wallet if not provided." }, extra_minters: { type: "array", items: { type: "string" }, description: "(B20 only) Extra addresses to grant MINT_ROLE atomically in the same deploy tx." }, auto_generate: { type: "boolean", description: "Generate missing name/symbol automatically from merchant context." }, business_context: { type: "object", description: "Optional business_name/category/description context." }, preferred_style: { type: "string" }, locale: { type: "string" }, target_audience: { type: "string" } } },
+    inputSchema: { type: "object" as const, properties: { name: { type: "string", description: "Program name (required for external agents)" }, symbol: { type: "string", description: "Token symbol, 2-5 chars (required for external agents)" }, expiration_days: { type: "number", description: "Program duration in days (default: 365)" }, token_standard: { type: "string", description: "'b20' (default, single-tx deploy on Base precompile factory) or 'erc20' (legacy factory, requires activate_loyalty_program follow-up)" }, agent_wallet_address: { type: "string", description: "(B20 only) Additional wallet to grant MINT_ROLE atomically. Defaults to the agent's active CDP MPC wallet if not provided." }, extra_minters: { type: "array", items: { type: "string" }, description: "(B20 only) Extra addresses to grant MINT_ROLE atomically in the same deploy tx." }, auto_generate: { type: "boolean", description: "Internal automation only — fills missing name/symbol from examples. External agents should pass explicit name and symbol." }, business_context: { type: "object", description: "Optional context for examples only" }, preferred_style: { type: "string" }, locale: { type: "string" }, target_audience: { type: "string" } } },
     handler: async ({ name, symbol, expiration_days, token_standard, agent_wallet_address, extra_minters, auto_generate, business_context, preferred_style, locale, target_audience }: any) => {
       const err = authGuard(["mint", "create_program"]);
       if (err) return T(err);
@@ -177,7 +189,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
         .select("business_name,category,description")
         .eq("merchant_address", agent.ownerAddress)
         .maybeSingle();
-      const defaults = generateProgramDefaults({
+      const examples = generateProgramExamples({
         business_name: typeof business_context?.business_name === "string" ? business_context.business_name : profile?.business_name,
         category: typeof business_context?.category === "string" ? business_context.category : profile?.category,
         description: typeof business_context?.description === "string" ? business_context.description : profile?.description,
@@ -185,10 +197,14 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
         preferred_style: typeof preferred_style === "string" ? preferred_style : undefined,
         target_audience: typeof target_audience === "string" ? target_audience : undefined,
       });
-      const chosenName = typeof name === "string" && name.trim() ? name.trim() : (auto_generate ? defaults.program_name_options[0] : "");
-      const chosenSymbol = typeof symbol === "string" && symbol.trim() ? symbol.trim() : (auto_generate ? defaults.token_symbol_options[0] : "");
+      const chosenName = typeof name === "string" && name.trim() ? name.trim() : (auto_generate ? examples.program_name_examples[0] : "");
+      const chosenSymbol = typeof symbol === "string" && symbol.trim() ? symbol.trim() : (auto_generate ? examples.token_symbol_examples[0] : "");
       if (!chosenName || !chosenSymbol) {
-        return T(JSON.stringify(wrapWorkflow({ error: "Missing name/symbol. Provide them or set auto_generate=true.", defaults }, merchantProgramWorkflow(null, defaults))));
+        return T(JSON.stringify(wrapWorkflow({
+          error: "Missing name/symbol. External agents must provide them. auto_generate is for trusted internal automation only.",
+          field_catalog: getMerchantProgramFieldCatalog(),
+          examples,
+        }, merchantProgramWorkflow(null))));
       }
       const days = expiration_days || 365;
       const sym = chosenSymbol.toUpperCase();
@@ -241,7 +257,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
             { type: "call_tool", surface: "mcp", tool: "register_loyalty_program", description: "Register the token after confirmation", required_fields: ["name", "symbol", "token_address"], payload_hint: { name: chosenName, symbol: sym, token_standard: "b20" } },
           ],
           blocking_reason: null,
-          suggested_defaults: defaults,
+          field_catalog: getMerchantProgramFieldCatalog(),
           continuation_context: { token_standard: "b20", merchant_address: agent.ownerAddress, expiration_days: days },
         })));
       }
@@ -262,7 +278,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
           { type: "call_tool", surface: "mcp", tool: "register_loyalty_program", description: "Register the token after confirmation", required_fields: ["name", "symbol", "token_address"], payload_hint: { name: chosenName, symbol: sym, token_standard: "erc20" } },
         ],
         blocking_reason: null,
-        suggested_defaults: defaults,
+        field_catalog: getMerchantProgramFieldCatalog(),
         continuation_context: { token_standard: "erc20", merchant_address: agent.ownerAddress, expiration_days: days },
       })));
     },

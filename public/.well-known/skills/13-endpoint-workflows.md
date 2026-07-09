@@ -10,6 +10,9 @@ Teach AI agents how to compose Loyal Spark endpoints into complete business flow
 
 ## Core Rules
 
+0. **External agents choose every value.**
+   Loyal Spark workflow responses tell you *what to call next* and which fields are required. They do **not** assign your program name, symbol, or reward catalog. Pass explicit `name`, `symbol`, `cost`, and `amount` on write endpoints. `auto_generate` exists only for trusted internal automation — external agents should omit it.
+
 1. **Do not treat one endpoint as the whole workflow.**
    Many Loyal Spark operations are multi-step: prepare onchain calldata, broadcast, wait for confirmation, then update database state or call the next endpoint.
 
@@ -44,12 +47,15 @@ Teach AI agents how to compose Loyal Spark endpoints into complete business flow
 Use when a merchant wants a fresh loyalty token.
 
 #### B20 default flow
-1. Choose or auto-generate:
-   - program name
-   - token symbol
-   - expiration period
-   - starter rewards / economics when missing
-2. If inputs are missing, call the defaults generator first.
+1. **You choose** program identity and economics:
+   - `name` (required)
+   - `symbol` (required)
+   - `expiration_days`, `cashback_rate`, `points_per_dollar` (optional)
+   - reward `name`, `description`, `cost` when creating catalog items
+2. Optional planner (does not set values for you):
+   - REST: `POST /workflow/generate-program-defaults`
+   - MCP: `generate_program_defaults`
+   Returns `field_catalog`, `workflow.next_actions`, and non-binding `examples`.
 3. Call:
    - REST: `POST /programs`
    - MCP: `create_loyalty_program`

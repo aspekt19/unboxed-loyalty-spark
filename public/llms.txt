@@ -52,7 +52,7 @@ Merchant SaaS (portal): Starter $39 / Growth $79 / Scale $149 per month — see 
 - GET /me — Agent info (free)
 
 ### Write (POST) — $0.005–$0.05
-- POST /workflow/generate-program-defaults — Generate program names, symbols, starter rewards, and economics defaults for autonomous agents ($0.001)
+- POST /workflow/generate-program-defaults — Field catalog, required parameters, workflow next_actions, and non-binding examples ($0.001)
 - GET /workflow/program-status — Machine-readable merchant workflow state with next actions and prerequisites ($0.001)
 - POST /programs — Deploy new B20 loyalty token by default, or legacy ERC-20 when explicitly requested ($0.05)
 - POST /register-program — Register deployed token ($0.01)
