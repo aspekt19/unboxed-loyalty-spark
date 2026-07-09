@@ -2,6 +2,8 @@
 export const MCP_TOOL_NAMES = [
   "get_platform_info",
   "get_my_profile",
+  "generate_program_defaults",
+  "get_program_workflow_status",
   "list_loyalty_programs",
   "create_loyalty_program",
   "register_loyalty_program",
