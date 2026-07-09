@@ -298,7 +298,15 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Scope 'mint' or 'create_program' required" }, 403);
       }
 
-      const { name, symbol, expiration_days, use_agent_wallet, token_standard: reqStandard } = body;
+      const {
+        name,
+        symbol,
+        expiration_days,
+        use_agent_wallet,
+        token_standard: reqStandard,
+        agent_wallet_address: reqAgentWallet,
+        extra_minters: reqExtraMinters,
+      } = body;
       if (!name || !symbol) {
         return jsonResponse({ error: "Missing required fields: name, symbol" }, 400);
       }
@@ -321,11 +329,33 @@ Deno.serve(async (req) => {
       const standard = (typeof reqStandard === "string" ? reqStandard : "b20").toLowerCase();
 
       if (standard === "b20") {
-        const { data, salt } = encodeCreateB20Asset(merchantAddress, name, upperSym, 18);
-        await logActivity(serviceClient, agent.agentId, "create_program", body, 200, { name, symbol: upperSym, merchant: merchantAddress, standard: "b20" }, ip);
+        // Additional MINT_ROLE grantees so autonomous CDP wallets can mint immediately.
+        const extraMinters: string[] = [];
+        if (typeof reqAgentWallet === "string" && /^0x[a-fA-F0-9]{40}$/.test(reqAgentWallet)) {
+          extraMinters.push(reqAgentWallet);
+        }
+        if (Array.isArray(reqExtraMinters)) {
+          for (const a of reqExtraMinters) {
+            if (typeof a === "string" && /^0x[a-fA-F0-9]{40}$/.test(a)) extraMinters.push(a);
+          }
+        }
+        if (extraMinters.length === 0) {
+          const { data: aw } = await serviceClient
+            .from("agent_wallets")
+            .select("wallet_address")
+            .eq("agent_id", agent.agentId)
+            .eq("chain_id", 8453)
+            .eq("is_active", true)
+            .maybeSingle();
+          if (aw?.wallet_address && aw.wallet_address.toLowerCase() !== merchantAddress.toLowerCase()) {
+            extraMinters.push(aw.wallet_address);
+          }
+        }
+        const { data, salt, grantees } = encodeCreateB20Asset(merchantAddress, name, upperSym, 18, extraMinters);
+        await logActivity(serviceClient, agent.agentId, "create_program", body, 200, { name, symbol: upperSym, merchant: merchantAddress, standard: "b20", grantees }, ip);
         return jsonResponse({
           message:
-            "Execute the B20 factory transaction (single tx). After confirmation, register the token_address with POST /register-program (token_standard: 'b20'). No activate-program step is required.",
+            "Execute the B20 factory transaction (single tx). After confirmation, register the token_address with POST /register-program (token_standard: 'b20'). No activate-program step is required. MINT_ROLE is granted atomically to the merchant admin and the listed extra minters (e.g. the agent's CDP wallet).",
           program_details: {
             name,
             symbol: upperSym,
@@ -341,6 +371,7 @@ Deno.serve(async (req) => {
             salt,
             chain: "Base (8453)",
             builder_code: BUILDER_CODE,
+            mint_role_grantees: grantees,
             note:
               "Extract token address from the B20Created event on the factory (topic[1]). MINT_ROLE is granted atomically via initCalls.",
           },
