@@ -16,6 +16,15 @@ This file is the **entry point** for coding agents (Cursor, OpenServ, Claude Cod
 | Edge Functions catalogue | [`supabase/functions/README.md`](./supabase/functions/README.md) |
 | Supabase layout (migrations vs functions) | [`supabase/README.md`](./supabase/README.md) |
 
+## Two production hosts (do not conflate)
+
+| Host | Role |
+|------|------|
+| **`https://loyalspark.online`** | Public website (Vite/Lovable): marketing, portals, static discovery files (`agent.json`, `openapi.json`, `llms.txt`, skills markdown, logos). |
+| **`https://api.loyalspark.online`** | API proxy only — replaces `https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1` for REST, MCP, x402, MPP, SIWE, and x402 discovery origin. |
+
+**`PUBLIC_BASE_URL`** (Supabase secret) must be **`https://api.loyalspark.online`** — it affects **paid resource URLs** in Edge Functions (`x402-bazaar-accept.ts`, `well-known-x402`), not the marketing site. Bazaar `website` / `documentation` metadata still point at `loyalspark.online`. See [`.lovable/memory/integrations/api-proxy-domain.md`](./.lovable/memory/integrations/api-proxy-domain.md).
+
 ## Runtime URLs (do not rename paths on the site)
 
 | Resource | Production URL |
@@ -26,6 +35,10 @@ This file is the **entry point** for coding agents (Cursor, OpenServ, Claude Cod
 | OpenAPI | `https://loyalspark.online/openapi.json` |
 | Short LLM summary | `https://loyalspark.online/llms.txt` |
 | Long LLM reference | `https://loyalspark.online/llms-full.txt` |
+| **Merchant REST** | `https://api.loyalspark.online/agent-api` |
+| **Merchant MCP** | `https://api.loyalspark.online/loyalty-mcp` |
+| **x402 / MPP gateways** | `https://api.loyalspark.online/x402-gateway` · `…/mpp-gateway` |
+| **x402 discovery (origin for x402scan)** | `https://api.loyalspark.online/.well-known/x402` |
 
 Source files for the above: `public/.well-known/`, `public/openapi.json`, `public/llms.txt`, `public/llms-full.txt`.
 

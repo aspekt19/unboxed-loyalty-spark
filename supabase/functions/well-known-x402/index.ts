@@ -76,8 +76,8 @@ function supabaseUrl(): string {
 }
 
 /**
- * Canonical public host used in `resource` URLs so x402scan groups this server
- * under `api.loyalspark.online` — never the raw Supabase host.
+ * Canonical **API** host for x402 `resource` URLs (PUBLIC_BASE_URL).
+ * Replaces `*.supabase.co/functions/v1` in discovery — not the marketing site (`loyalspark.online`).
  */
 function publicBaseUrl(): string {
   return (Deno.env.get("PUBLIC_BASE_URL") || "https://api.loyalspark.online").replace(/\/+$/, "");

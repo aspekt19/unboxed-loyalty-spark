@@ -103,14 +103,18 @@ export type BuildAcceptParams = {
 };
 
 /**
- * Public canonical origin used in x402 `resource` URLs and Bazaar discovery.
+ * Public canonical **API** origin for x402 `resource` URLs and paid-route discovery.
+ *
+ * `PUBLIC_BASE_URL` is **not** the marketing site. It is the branded proxy for Supabase Edge
+ * Functions only (`api.loyalspark.online` ↔ `*.supabase.co/functions/v1`). Human-facing brand
+ * links (`website`, `documentation`, logos) stay on `https://loyalspark.online` — see BAZAAR_META.
+ *
  * Order of preference:
- *   1. `PUBLIC_BASE_URL` env (e.g. `https://api.loyalspark.online`) — branded host that proxies
- *      to Supabase Edge Functions; this is what x402scan / agents should hit.
+ *   1. `PUBLIC_BASE_URL` env (e.g. `https://api.loyalspark.online`) — x402scan / agents register this origin.
  *   2. `SUPABASE_URL` env when the request actually arrived on that host.
  *   3. Request origin (https-normalised for `*.supabase.co`).
  *
- * When `PUBLIC_BASE_URL` is set, gateway paths get `/functions/v1` stripped because the proxy
+ * When `PUBLIC_BASE_URL` is set, gateway paths get `/functions/v1` stripped because the CF Worker
  * mounts edge functions at the root.
  */
 function canonicalPublicOrigin(requestUrl: URL): string {
