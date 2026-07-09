@@ -531,6 +531,8 @@ Deno.serve(async (req) => {
           "POST /recipient-api/offers": "Body: { offer_token_address, offer_amount, request_token_address, request_amount } — creator is your wallet",
           "POST /recipient-api/accept-offer": "Body: { offer_id }",
           "POST /recipient-api/cancel-offer": "Body: { offer_id } — only your active offers",
+          "GET /recipient-api/workflow/reward-status?token_address=0x...&reward_id=uuid": "Autonomous planner: current reward redemption step + next_actions[]",
+          "POST /recipient-api/workflow/prepare-reward-redemption": "Body: { reward_id } — returns ERC-20 transfer calldata + workflow so the agent can broadcast then call /redeem-reward",
         },
       },
       404
