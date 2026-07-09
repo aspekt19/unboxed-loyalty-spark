@@ -12,10 +12,10 @@ Loyal Spark is a dual-mode protocol: humans interact via web UI with flexible au
 - Static pointer (markdown): https://loyalspark.online/for-agents.md
 - Agent Manifest: https://loyalspark.online/.well-known/agent.json
 - OpenAPI 3.1.0: https://loyalspark.online/openapi.json
-- MCP Server (merchant, `lsk_`, 36 tools): https://api.loyalspark.online/loyalty-mcp (Streamable HTTP)
-- Recipient MCP Server (`rwk_`, 18 tools): https://api.loyalspark.online/recipient-loyalty-mcp (Streamable HTTP)
-- REST (merchant, `lsk_`, 25 authenticated routes + 1 public): https://api.loyalspark.online/agent-api
-- REST (recipient, `rwk_`, 12 routes): https://api.loyalspark.online/recipient-api
+- MCP Server (merchant, `lsk_`, 38 tools): https://api.loyalspark.online/loyalty-mcp (Streamable HTTP)
+- Recipient MCP Server (`rwk_`, 20 tools): https://api.loyalspark.online/recipient-loyalty-mcp (Streamable HTTP)
+- REST (merchant, `lsk_`, 27 authenticated routes + 1 public): https://api.loyalspark.online/agent-api
+- REST (recipient, `rwk_`, 14 routes): https://api.loyalspark.online/recipient-api
 - MPP Manifest: https://loyalspark.online/.well-known/mpp.json
 - x402 Resources: https://loyalspark.online/.well-known/x402.json (Bazaar-discoverable URLs for both merchant and recipient corridors)
 - AI Plugin: https://loyalspark.online/.well-known/ai-plugin.json
@@ -32,7 +32,7 @@ How to get a key:
 1. **Dashboard (humans):** sign in at https://loyalspark.online/merchant (Privy: email/phone/Google/wallet) → "AI Agents" tab → register → copy `lsk_…` (shown once).
 2. **Autonomous (no browser):** SIWE flow at `agent-register-siwe` — `POST /siwe-nonce` → sign EIP-4361 message including `Register Loyal Spark merchant agent` (or `…recipient agent`) and Chain ID 8453 → POST signature → receive `lsk_…` or `rwk_…`. Same limits as dashboard.
 
-## REST API — 26 Endpoints (25 authenticated + 1 public)
+## REST API — 28 Endpoints (27 authenticated + 1 public)
 
 Base URL: https://api.loyalspark.online/agent-api
 
@@ -41,6 +41,7 @@ Base URL: https://api.loyalspark.online/agent-api
 | Endpoint | Price | Description |
 |----------|-------|-------------|
 | /me | free | Agent profile, plan, wallet info |
+| /workflow/program-status?token_address=0x... | $0.001 | Autonomous planner: current lifecycle step + next_actions[] |
 | /programs | $0.001 | List active loyalty programs |
 | /rewards?token_address=0x... | $0.001 | Rewards for a program |
 | /balance?token_address=0x...&wallet_address=0x... | $0.001 | Token balance and tier |
@@ -55,6 +56,7 @@ Base URL: https://api.loyalspark.online/agent-api
 
 | Endpoint | Price | Scope | Description |
 |----------|-------|-------|-------------|
+| /workflow/generate-program-defaults | $0.001 | mint | Propose program name, symbol, economics, and starter rewards from business context |
 | /programs | $0.05 | mint | Get calldata to deploy new ERC-20 token |
 | /register-program | $0.01 | mint | Register deployed token (optional cashback_rate, points_per_dollar) |
 | /update-program-config | $0.005 | mint | Update program cashback_rate and/or points_per_dollar |
@@ -85,7 +87,7 @@ curl -X POST \
 
 Response returns calldata with Builder Code for onchain execution.
 
-## MCP Server — 36 Tools (Merchant)
+## MCP Server — 38 Tools (Merchant)
 
 URL: https://api.loyalspark.online/loyalty-mcp
 Transport: Streamable HTTP
@@ -95,63 +97,67 @@ Auth: x-api-key header
 
 1. `get_platform_info` — Protocol metadata and capabilities
 2. `get_my_profile` — Agent identity, plan, wallet
-3. `list_loyalty_programs` — All active programs
-4. `create_loyalty_program` — Deploy calldata for new token
-5. `register_loyalty_program` — Register deployed token (optional cashback_rate, points_per_dollar)
-6. `activate_loyalty_program` — Activation calldata
-7. `update_program_status` — Update status in DB
-8. `update_program_config` — Update cashback_rate / points_per_dollar in DB
-9. `list_rewards` — Rewards for a program (with redemption metrics)
-10. `create_reward` — Create redeemable reward
-11. `mint_loyalty_tokens` — Mint calldata with platform fee
-12. `earn_points` — Auto-calculate and mint tokens from purchase amount (cashback)
-13. `transfer_loyalty_tokens` — Transfer calldata
-14. `get_token_balance` — Balance and tier info
-15. `get_program_analytics` — Metrics and performance
-16. `get_platform_stats` — Global platform statistics (admin-only)
-17. `list_marketplace_offers` — P2P offers
-18. `cancel_stale_offers` — Cancel old marketplace offers (admin-only)
-19. `redeem_reward` — Redeem reward: verify tx + create voucher
-20. `use_voucher` — Mark voucher as used
-21. `check_voucher_status` — Public voucher status lookup (no API key)
-22. `create_personalized_offer` — Create targeted offer for a customer
-23. `update_reward_status` — Activate/deactivate rewards
-24. `export_customers` — Export customer data for analytics
-25. `send_report` — Submit report to developer dashboard
-26. `list_my_reports` — View previously submitted reports
-27. `update_report_status` — Update report status (reviewed/done)
-28. `delete_report` — Delete an outdated report
-29. `create_gift_certificate` — Issue gift / welcome certificate (LOYAL-XXXXXX), single or batch up to 100
-30. `list_gift_certificates` — List certificates issued by your merchant (with status + redemption info)
-31. `revoke_gift_certificate` — Revoke an active gift certificate (active → revoked)
-32. `mark_gift_certificate_minted` — Mark a claimed certificate as minted with the on-chain mint tx (pending_mint → redeemed)
-33. `bazaar_discover_resources` — Discover x402-priced HTTPS endpoints on Bazaar
-34. `bazaar_discover_mcp_servers` — Discover MCP servers advertised on Bazaar
-35. `bazaar_probe_x402` — Inspect the 402 payment requirements of a URL
-36. `bazaar_pay_and_call` — Pay + call an x402 endpoint using the agent's CDP MPC wallet (spend cap ≤ 10 USDC/call)
+3. `generate_program_defaults` — Propose program name, symbol, economics, and starter rewards from business context
+4. `get_program_workflow_status` — Current merchant program lifecycle step + next_actions[]
+5. `list_loyalty_programs` — All active programs
+6. `create_loyalty_program` — Deploy calldata for new token
+7. `register_loyalty_program` — Register deployed token (optional cashback_rate, points_per_dollar)
+8. `activate_loyalty_program` — Activation calldata
+9. `update_program_status` — Update status in DB
+10. `update_program_config` — Update cashback_rate / points_per_dollar in DB
+11. `list_rewards` — Rewards for a program (with redemption metrics)
+12. `create_reward` — Create redeemable reward
+13. `mint_loyalty_tokens` — Mint calldata with platform fee
+14. `earn_points` — Auto-calculate and mint tokens from purchase amount (cashback)
+15. `transfer_loyalty_tokens` — Transfer calldata
+16. `get_token_balance` — Balance and tier info
+17. `get_program_analytics` — Metrics and performance
+18. `get_platform_stats` — Global platform statistics (admin-only)
+19. `list_marketplace_offers` — P2P offers
+20. `cancel_stale_offers` — Cancel old marketplace offers (admin-only)
+21. `redeem_reward` — Redeem reward: verify tx + create voucher
+22. `use_voucher` — Mark voucher as used
+23. `check_voucher_status` — Public voucher status lookup (no API key)
+24. `create_personalized_offer` — Create targeted offer for a customer
+25. `update_reward_status` — Activate/deactivate rewards
+26. `export_customers` — Export customer data for analytics
+27. `send_report` — Submit report to developer dashboard
+28. `list_my_reports` — View previously submitted reports
+29. `update_report_status` — Update report status (reviewed/done)
+30. `delete_report` — Delete an outdated report
+31. `create_gift_certificate` — Issue gift / welcome certificate (LOYAL-XXXXXX), single or batch up to 100
+32. `list_gift_certificates` — List certificates issued by your merchant (with status + redemption info)
+33. `revoke_gift_certificate` — Revoke an active gift certificate (active → revoked)
+34. `mark_gift_certificate_minted` — Mark a claimed certificate as minted with the on-chain mint tx (pending_mint → redeemed)
+35. `bazaar_discover_resources` — Discover x402-priced HTTPS endpoints on Bazaar
+36. `bazaar_discover_mcp_servers` — Discover MCP servers advertised on Bazaar
+37. `bazaar_probe_x402` — Inspect the 402 payment requirements of a URL
+38. `bazaar_pay_and_call` — Pay + call an x402 endpoint using the agent's CDP MPC wallet (spend cap ≤ 10 USDC/call)
 
-## Recipient MCP Server — 18 Tools (Holder, `rwk_`)
+## Recipient MCP Server — 20 Tools (Holder, `rwk_`)
 
 URL: https://api.loyalspark.online/recipient-loyalty-mcp
 
 1. `get_recipient_profile` — Bound wallet + agent metadata
 2. `list_my_loyalty_balances` — All loyalty token balances for the wallet
 3. `get_my_loyalty_balance` — Balance + tier for one token
-4. `prepare_loyalty_token_transfer` — ERC-20 transfer calldata (holder → any address)
-5. `list_rewards_for_program` — Rewards available where you have activity
-6. `list_my_vouchers` — Your vouchers
-7. `redeem_my_reward` — Redeem reward via on-chain transfer tx hash
-8. `list_p2p_offers` — Active P2P swap offers
-9. `create_p2p_offer` — Record P2P swap intent (escrow on-chain)
-10. `accept_p2p_offer` — Accept P2P swap by id
-11. `cancel_p2p_offer` — Cancel your own P2P offer
-12. `lookup_gift_certificate` — Preview a gift certificate by code (LOYAL-XXXXXX)
-13. `claim_gift_certificate` — Claim by code; binds it to your wallet (active → pending_mint)
-14. `list_my_gift_certificates` — Certificates claimed by your wallet
-15. `bazaar_discover_resources` — Discover x402-priced HTTPS endpoints
-16. `bazaar_discover_mcp_servers` — Discover MCP servers advertised on Bazaar
-17. `bazaar_probe_x402` — Inspect the 402 payment requirements of a URL
-18. `bazaar_pay_and_call` — Pay + call an x402 endpoint using the recipient's delegated CDP MPC wallet (opt-in via /customer settings; spend cap ≤ 10 USDC/call)
+4. `get_reward_workflow_status` — Current reward redemption step + next_actions[]
+5. `prepare_reward_redemption` — Transfer calldata for reward cost + workflow metadata
+6. `prepare_loyalty_token_transfer` — ERC-20 transfer calldata (holder → any address)
+7. `list_rewards_for_program` — Rewards available where you have activity
+8. `list_my_vouchers` — Your vouchers
+9. `redeem_my_reward` — Redeem reward via on-chain transfer tx hash
+10. `list_p2p_offers` — Active P2P swap offers
+11. `create_p2p_offer` — Record P2P swap intent (escrow on-chain)
+12. `accept_p2p_offer` — Accept P2P swap by id
+13. `cancel_p2p_offer` — Cancel your own P2P offer
+14. `lookup_gift_certificate` — Preview a gift certificate by code (LOYAL-XXXXXX)
+15. `claim_gift_certificate` — Claim by code; binds it to your wallet (active → pending_mint)
+16. `list_my_gift_certificates` — Certificates claimed by your wallet
+17. `bazaar_discover_resources` — Discover x402-priced HTTPS endpoints
+18. `bazaar_discover_mcp_servers` — Discover MCP servers advertised on Bazaar
+19. `bazaar_probe_x402` — Inspect the 402 payment requirements of a URL
+20. `bazaar_pay_and_call` — Pay + call an x402 endpoint using the recipient's delegated CDP MPC wallet (opt-in via /customer settings; spend cap ≤ 10 USDC/call)
 
 ### MCP Configuration for Claude/Cursor
 
@@ -169,7 +175,7 @@ URL: https://api.loyalspark.online/recipient-loyalty-mcp
 }
 ```
 
-## Recipient REST API (`rwk_`) — 12 Routes
+## Recipient REST API (`rwk_`) — 14 Routes
 
 Base URL: https://api.loyalspark.online/recipient-api · Auth: `x-api-key: rwk_…`
 
@@ -181,8 +187,10 @@ Base URL: https://api.loyalspark.online/recipient-api · Auth: `x-api-key: rwk_�
 | GET | /rewards?token_address=0x… | $0.001 | Rewards available for redemption |
 | GET | /vouchers | $0.001 | Vouchers issued to this wallet |
 | GET | /offers | $0.001 | P2P marketplace offers |
+| GET | /workflow/reward-status?token_address=0x… | $0.001 | Autonomous planner: current reward redemption step + next_actions[] |
 | POST | /register | free | One-time wallet registration (after SIWE) |
 | POST | /prepare-transfer | $0.005 | ERC-20 transfer calldata (holder → any address) |
+| POST | /workflow/prepare-reward-redemption | $0.005 | Autonomous planner: transfer calldata for reward cost + workflow metadata |
 | POST | /redeem-reward | $0.01 | Redeem a reward via on-chain tx hash |
 | POST | /offers | $0.01 | Create a P2P swap intent (escrow) |
 | POST | /accept-offer | $0.01 | Accept a P2P offer (atomic swap) |

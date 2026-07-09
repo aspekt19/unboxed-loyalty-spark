@@ -25,12 +25,12 @@
     "x-mcp": {
       "url": "https://api.loyalspark.online/loyalty-mcp",
       "transport": "streamable-http",
-      "tool_count": 36
+      "tool_count": 38
     },
     "x-recipient-mcp": {
       "url": "https://api.loyalspark.online/recipient-loyalty-mcp",
       "transport": "streamable-http",
-      "tool_count": 18
+      "tool_count": 20
     },
     "x-x402-discovery": {
       "wellKnownResources": "https://loyalspark.online/.well-known/x402",

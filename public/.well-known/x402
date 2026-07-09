@@ -1,7 +1,7 @@
 {
   "version": 1,
   "name": "Loyal Spark \u2014 Onchain Loyalty Protocol on Base",
-  "description": "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. 88 paid x402 resources: merchant REST + workflow planners, recipient REST + workflow planners, 34 merchant MCP tools, 16 recipient MCP tools via paid x402 corridor (direct MCP exposes 37 merchant + 20 recipient tools with x-api-key). USDC on Base. Builder Code bc_wdmnog7m.",
+  "description": "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. 88 paid x402 resources: merchant REST + workflow planners, recipient REST + workflow planners, 34 merchant MCP tools, 16 recipient MCP tools via paid x402 corridor (direct MCP exposes 38 merchant + 20 recipient tools with x-api-key). USDC on Base. Builder Code bc_wdmnog7m.",
   "provider": "Loyal Spark",
   "website": "https://loyalspark.online",
   "documentation": "https://loyalspark.online/for-agents",

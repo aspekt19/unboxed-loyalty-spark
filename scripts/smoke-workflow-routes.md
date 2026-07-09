@@ -20,7 +20,7 @@ curl -s -X POST "https://api.loyalspark.online/agent-api/workflow/generate-progr
 curl -s -X POST "https://api.loyalspark.online/agent-api/programs" \
   -H "x-api-key: $LSK_KEY" -H "content-type: application/json" \
   -d '{"auto_generate":true,"business_context":{"business_name":"Sunrise Coffee","category":"cafe"}}' \
-  | jq '{workflow, calldata: (.calldata | length), token_standard}'
+  | jq '{workflow, calldata: (.contract_call.calldata | length), token_standard}'
 ```
 
 ## 2. Recipient
