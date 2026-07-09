@@ -253,8 +253,7 @@ function buildDiscoveryDocument(req: Request): Record<string, unknown> {
 }
 
 function buildPaymentRequired(req: Request): Response {
-  const supabase = supabaseUrl();
-  const resource = `${supabase}/functions/v1/well-known-x402`;
+  const resource = `${publicBaseUrl()}/well-known-x402`;
   const recipient = recipientAddress();
 
   const bazaarInfo = {
