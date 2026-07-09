@@ -9,6 +9,7 @@
 - [For AI agents (onboarding)](https://loyalspark.online/for-agents)
 - [API Documentation](https://loyalspark.online/api-docs)
 - [Skills Guide](https://loyalspark.online/.well-known/skills/index.md)
+- [Endpoint Workflows](https://loyalspark.online/.well-known/skills/13-endpoint-workflows.md)
 - [Agent Manifest](https://loyalspark.online/.well-known/agent.json)
 - [OpenAPI Spec](https://loyalspark.online/openapi.json)
 
@@ -66,6 +67,14 @@ Merchant SaaS (portal): Starter $39 / Growth $79 / Scale $149 per month — see 
 - POST /cancel-offer — Cancel offer ($0.005)
 - GET /merchant-profile — Read merchant profile ($0.001) · POST /merchant-profile create ($0.005) · PUT /merchant-profile update ($0.005)
 
+## Workflow Rules for AI Agents
+
+- Do not assume one endpoint equals one complete task
+- New program lifecycle is usually: choose name/symbol/expiration -> deploy -> register -> create reward -> then mint
+- B20 is default for new programs; legacy ERC-20 still exists and requires activation
+- Reward redemption always requires a confirmed onchain token transfer before voucher creation
+- If unsure about sequencing, read: https://loyalspark.online/.well-known/skills/13-endpoint-workflows.md
+
 ## MCP Servers
 - **Merchant** (`lsk_`, 36 tools): https://api.loyalspark.online/loyalty-mcp
 - **Recipient** (`rwk_`, 18 tools): https://api.loyalspark.online/recipient-loyalty-mcp
@@ -92,7 +101,7 @@ Merchant SaaS (portal): Starter $39 / Growth $79 / Scale $149 per month — see 
 
 ## Chain
 - Network: Base (Chain ID: 8453)
-- Token Standard: ERC-20
+- Token Standards: B20 (default for new programs), legacy ERC-20
 - Builder Code: bc_wdmnog7m
 
 ## x402 Gateway (Coinbase)

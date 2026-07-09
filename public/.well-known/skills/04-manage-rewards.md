@@ -11,6 +11,13 @@ Create and manage redeemable rewards that customers can claim by burning loyalty
 - Setting up a reward catalog for a loyalty program
 - Managing active/inactive rewards
 
+## Prerequisite
+
+Before creating rewards, make sure the loyalty program already exists and is usable:
+
+- B20: deploy -> register
+- legacy ERC-20: deploy -> register -> activate -> program-status active
+
 ## Steps
 
 ### Step 1: List Existing Rewards

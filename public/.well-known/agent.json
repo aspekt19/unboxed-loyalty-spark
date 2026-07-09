@@ -1,6 +1,6 @@
 {
   "name": "Loyal Spark",
-  "description": "Onchain loyalty protocol on Base L2. Two agent personas: MERCHANT (lsk_, 25 authenticated REST routes + 1 public + 36 MCP tools at /loyalty-mcp) issues programs, mints ERC-20, manages rewards, P2P trading, gift certificates (LOYAL-XXXXXX), CDP MPC wallets, POST /earn cashback. RECIPIENT (rwk_, 12 REST routes at /recipient-api + 18 MCP tools at /recipient-loyalty-mcp) holds tokens, redeems rewards, P2P swaps, claims gift certificates, prepare_loyalty_token_transfer. Pay-per-call via MPP (pathUSD/USDC on Tempo) or x402 v2 (USDC on Base) — both gateways relay merchant + recipient corridors with Coinbase Bazaar discovery metadata.",
+  "description": "Onchain loyalty protocol on Base L2. New programs deploy as B20 by default; legacy ERC-20 programs remain supported. Two agent personas: MERCHANT (lsk_, 25 authenticated REST routes + 1 public + 36 MCP tools at /loyalty-mcp) creates programs, registers and activates them when needed, manages rewards, mints tokens, runs P2P trading, gift certificates (LOYAL-XXXXXX), CDP MPC wallets, and POST /earn cashback. RECIPIENT (rwk_, 12 REST routes at /recipient-api + 18 MCP tools at /recipient-loyalty-mcp) holds tokens, redeems rewards, P2P swaps, claims gift certificates, and prepares loyalty token transfers. Pay-per-call via MPP (pathUSD/USDC on Tempo) or x402 v2 (USDC on Base) — both gateways relay merchant + recipient corridors with Coinbase Bazaar discovery metadata.",
   "url": "https://loyalspark.online",
   "version": "2.3.0",
   "protocol": "a2a-loyalty",
@@ -17,6 +17,28 @@
     "server_wallet_creation",
     "autonomous_transactions"
   ],
+  "workflow_hints": {
+    "rule": "Many Loyal Spark actions are multi-step workflows, not single endpoint calls.",
+    "required_docs": [
+      "https://loyalspark.online/.well-known/skills/00-getting-started.md",
+      "https://loyalspark.online/.well-known/skills/13-endpoint-workflows.md"
+    ],
+    "merchant_program_lifecycle": [
+      "Choose program name, token symbol, and expiration period",
+      "Call POST /programs or create_loyalty_program to get deploy calldata",
+      "Broadcast the onchain deploy transaction",
+      "Extract token_address from B20Created or GET /tx-receipt",
+      "Call POST /register-program or register_loyalty_program",
+      "If token_standard is erc20, also call activate-program and then program-status active",
+      "Create at least one reward before large-scale minting",
+      "Only then mint tokens or use earn_points"
+    ],
+    "voucher_flow": [
+      "Transfer tokens onchain first",
+      "Then call redeem-reward with transaction_hash",
+      "Then use voucher via vouchers/use when consumed"
+    ]
+  },
   "authentication": {
     "type": "api_key",
     "header": "x-api-key",
@@ -47,14 +69,14 @@
         "method": "POST",
         "path": "/programs",
         "scope": "mint or create_program",
-        "description": "Get calldata to deploy a new ERC-20 loyalty token via factory contract",
+        "description": "Start a program deploy workflow. Default: B20 single-tx deploy. Follow with token extraction and register-program.",
         "body": { "name": "Coffee Rewards", "symbol": "COFFEE", "expiration_days": 365 }
       },
       {
         "method": "POST",
         "path": "/register-program",
         "scope": "mint or create_program",
-        "description": "Register a deployed token as a loyalty program in the database",
+        "description": "Register a deployed token as a loyalty program in the database. B20 becomes active immediately; legacy ERC-20 needs activation flow next.",
         "body": { "name": "Coffee Rewards", "symbol": "COFFEE", "token_address": "0x...", "expiration_days": 365, "cashback_rate": 5, "points_per_dollar": 1 }
       },
       {
@@ -68,7 +90,7 @@
         "method": "POST",
         "path": "/activate-program",
         "scope": "mint or create_program",
-        "description": "Get activation calldata (unpauseUtility + enableMinting). Returns 2 transactions to execute.",
+        "description": "Activation step for legacy ERC-20 programs. For B20 programs this is a no-op because they are active by construction.",
         "body": { "token_address": "0x..." }
       },
       {
@@ -319,7 +341,8 @@
   "chain": {
     "name": "Base",
     "chain_id": 8453,
-    "token_standard": "ERC-20",
+    "token_standards": ["B20", "ERC-20"],
+    "default_new_program_standard": "B20",
     "explorer": "https://basescan.org",
     "builder_code": "bc_wdmnog7m"
   },

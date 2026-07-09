@@ -66,6 +66,21 @@ curl -H "x-api-key: lsk_..." \
 }
 ```
 
+### Step 4.5: Learn the Workflow Before Calling Write Endpoints
+
+Before using lifecycle, rewards, mint, vouchers, or marketplace endpoints, read the workflow guide:
+
+- [Endpoint Workflows](./13-endpoint-workflows.md)
+
+Important orchestration rules:
+
+- `POST /programs` or `create_loyalty_program` starts a deploy flow; it does **not** finish it
+- new B20 programs become usable only after deploy + register
+- legacy ERC-20 programs need deploy + register + activate + status update
+- rewards usually come after the program exists
+- minting comes only after the program is active
+- voucher redemption comes only after confirmed onchain token transfer
+
 ### Step 5 (Optional): Pay-per-call MCP via x402 (Bazaar-compatible)
 
 If the agent should **pay USDC per MCP call** instead of using subscription-only access to `loyalty-mcp` or `recipient-loyalty-mcp`:

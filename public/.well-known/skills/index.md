@@ -12,9 +12,9 @@ Loyal Spark provides a complete loyalty infrastructure via REST API and MCP Serv
 - **Authentication**: Pass API key in `x-api-key` header for all requests
 - **Pay-per-call MCP (x402 v2)**: Optional — merchant: `POST …/x402-gateway/mcp-tools/<tool_name>` (`lsk_`); recipient/holder: `POST …/x402-gateway/recipient-mcp-tools/<tool_name>` (`rwk_`). Use `@x402/fetch` + USDC on Base. Schemas: `mcp-bazaar-tools.ts` · `recipient-mcp-bazaar-tools.ts`; HTTP **402** + **Bazaar** metadata: `x402-bazaar-accept.ts`.
 - **Chain**: Base L2 (Chain ID: 8453)
-- **Token Standard**: ERC-20
+- **Token Standards**: B20 (default for new programs) and legacy ERC-20
 
-## Available Skills (13 files: `00`–`12`)
+## Available Skills (14 files: `00`–`13`)
 
 Scopes mirror the REST API: program lifecycle accepts **`mint` or `create_program`**.
 
@@ -33,11 +33,23 @@ Scopes mirror the REST API: program lifecycle accepts **`mint` or `create_progra
 | [10-server-wallets.md](./10-server-wallets.md) | Server Wallets (CDP MPC) | — |
 | [11-earn-points.md](./11-earn-points.md) | Earn Points (Cashback) | `mint` |
 | [12-gift-certificates.md](./12-gift-certificates.md) | Gift Certificates (LOYAL-XXXXXX) | `read`, `manage_rewards`, `mint` |
+| [13-endpoint-workflows.md](./13-endpoint-workflows.md) | Endpoint Workflows | depends on flow |
 
 ## API Endpoints
 
 - **REST API**: `https://api.loyalspark.online/agent-api`
 - **MCP Server**: `https://api.loyalspark.online/loyalty-mcp`
+
+## Operating Rule for AI Agents
+
+Do not treat a single endpoint as a complete business action. Many Loyal Spark actions are multi-step workflows:
+
+- create program: prepare deploy -> broadcast -> extract token address -> register -> optionally activate (legacy only)
+- rewards: program first, reward second
+- mint / earn: only after active program exists
+- vouchers: onchain transfer first, redeem second, use third
+
+Read [13-endpoint-workflows.md](./13-endpoint-workflows.md) before orchestrating multi-step actions.
 
 ## Discovery
 

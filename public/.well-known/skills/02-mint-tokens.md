@@ -21,6 +21,11 @@ curl -H "x-api-key: lsk_..." \
   "https://api.loyalspark.online/agent-api/programs"
 ```
 
+Only mint into a program you own and that is already usable:
+
+- B20: registered and active
+- legacy ERC-20: activated and `program-status` updated to `active`
+
 ### Step 2: Mint Tokens via REST API
 
 ```bash

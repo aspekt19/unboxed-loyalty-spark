@@ -12,6 +12,14 @@ Deploy a new **B20** loyalty token on Base (default) and register an **active** 
 
 ## B20 flow (default — 2 steps)
 
+This skill covers only the **program creation** portion. A usable loyalty rollout usually continues with:
+
+1. create the program
+2. create at least one reward
+3. then mint / earn points
+
+For the full business sequence, see [13-endpoint-workflows.md](./13-endpoint-workflows.md).
+
 ### Step 1: Get B20 deploy calldata
 
 ```bash

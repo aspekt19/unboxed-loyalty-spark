@@ -18,6 +18,8 @@ Full lifecycle management of vouchers — from redeeming rewards (burning tokens
 3. Customer presents voucher code to merchant
 4. Merchant's agent calls `POST /vouchers/use` to mark it as used
 
+This is a good example of a workflow where one API call is **not** enough. Treat the onchain transfer and the voucher endpoint as separate required steps.
+
 ## Voucher Lifecycle
 
 ```

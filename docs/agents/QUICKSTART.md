@@ -27,6 +27,20 @@ curl -sS -H "x-api-key: $LOYAL_SPARK_API_KEY" \
 
 Public (no key): `GET .../agent-api/vouchers/status?code=LOYAL-...`
 
+## 2.5. Workflow rule
+
+Do not assume one endpoint equals one complete task.
+
+Examples:
+
+- create program -> deploy tx -> extract token address -> register -> possibly activate (legacy only)
+- create reward -> then mint / earn
+- redeem reward -> onchain transfer first, voucher endpoint second
+
+Canonical playbook for agents:
+
+- `https://loyalspark.online/.well-known/skills/13-endpoint-workflows.md`
+
 ## 3. MCP (Cursor)
 
 Copy [examples/agent-mcp/cursor-mcp.json](../../examples/agent-mcp/cursor-mcp.json) into `.cursor/mcp.json` (merge `mcpServers`) and replace the placeholder key.
