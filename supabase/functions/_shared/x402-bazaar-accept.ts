@@ -719,7 +719,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
     if (!mcp) {
       throw new Error(`Unknown recipient MCP tool: ${toolName}`);
     }
-    const recipientMcpUrl = `${p.supabaseUrl}/functions/v1/recipient-loyalty-mcp`;
+    const recipientMcpUrl = publicFunctionUrl(p.requestUrl, p.supabaseUrl, "recipient-loyalty-mcp");
 
     const accept: Record<string, unknown> = {
       scheme: "exact",
