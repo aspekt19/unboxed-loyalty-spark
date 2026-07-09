@@ -115,6 +115,7 @@ const PRICING: Record<string, Record<string, string>> = {
     offers: "0.001",
     "tx-receipt": "0",
     "merchant-profile": "0.001",
+    "workflow/program-status": "0.001",
   },
   POST: {
     programs: "0.05",
@@ -132,6 +133,7 @@ const PRICING: Record<string, Record<string, string>> = {
     "accept-offer": "0.01",
     "cancel-offer": "0.005",
     "merchant-profile": "0.005",
+    "workflow/generate-program-defaults": "0.001",
   },
   PUT: {
     "merchant-profile": "0.005",
