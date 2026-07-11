@@ -372,20 +372,25 @@ Deno.serve((req) => {
   }
 
   // Canonicalize origin: scanners that probe the raw *.supabase.co function URL
-  // directly (path contains `well-known-x402`) get 301-redirected to the canonical
-  // api.loyalspark.online discovery URL so x402scan / Bazaar crawlers collapse
-  // duplicate server entries. Requests coming through the Cloudflare proxy hit
-  // path `/.well-known/x402` (no `well-known-x402` slug) and pass through normally.
+  // (no `x-loyalspark-proxy` header injected by the Cloudflare Worker) get 301
+  // redirected to the canonical api.loyalspark.online discovery URL, so x402scan
+  // / Bazaar crawlers collapse duplicate server entries into one.
+  //
+  // Requires the Cloudflare Worker `loyalspark-api-proxy` to add the request
+  // header `x-loyalspark-proxy: 1` before forwarding to Supabase. Without that
+  // header we cannot distinguish direct-vs-proxied inside the function (the
+  // Supabase gateway normalizes the pathname to `/well-known-x402` in both
+  // cases), so we conservatively skip the redirect if the env flag is off.
   try {
-    const reqUrl = new URL(req.url);
-    if (reqUrl.pathname.includes("well-known-x402")) {
+    const proxyHeader = req.headers.get("x-loyalspark-proxy");
+    const enforceCanonical =
+      (Deno.env.get("ENFORCE_CANONICAL_DISCOVERY") || "").toLowerCase() === "true";
+    if (enforceCanonical && !proxyHeader) {
       const target = `${publicBaseUrl()}/.well-known/x402`;
       const headers = new Headers(corsHeaders);
       headers.set("Location", target);
       headers.set("Cache-Control", "public, max-age=86400");
       headers.set("Content-Type", "application/json; charset=utf-8");
-      headers.set("X-Debug-Path", reqUrl.pathname);
-      headers.set("X-Debug-Url", req.url);
       const body = JSON.stringify({
         moved: true,
         canonical: target,
