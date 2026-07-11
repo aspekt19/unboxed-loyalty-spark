@@ -371,6 +371,41 @@ Deno.serve((req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Canonicalize origin: scanners that probe the raw *.supabase.co function URL
+  // (no `x-loyalspark-proxy` header injected by the Cloudflare Worker) get 301
+  // redirected to the canonical api.loyalspark.online discovery URL, so x402scan
+  // / Bazaar crawlers collapse duplicate server entries into one.
+  //
+  // Requires the Cloudflare Worker `loyalspark-api-proxy` to add the request
+  // header `x-loyalspark-proxy: 1` before forwarding to Supabase. Without that
+  // header we cannot distinguish direct-vs-proxied inside the function (the
+  // Supabase gateway normalizes the pathname to `/well-known-x402` in both
+  // cases), so we conservatively skip the redirect if the env flag is off.
+  try {
+    const proxyHeader = req.headers.get("x-loyalspark-proxy");
+    const enforceCanonical =
+      (Deno.env.get("ENFORCE_CANONICAL_DISCOVERY") || "").toLowerCase() === "true";
+    if (enforceCanonical && !proxyHeader) {
+      const target = `${publicBaseUrl()}/.well-known/x402`;
+      const headers = new Headers(corsHeaders);
+      headers.set("Location", target);
+      headers.set("Cache-Control", "public, max-age=86400");
+      headers.set("Content-Type", "application/json; charset=utf-8");
+      const body = JSON.stringify({
+        moved: true,
+        canonical: target,
+        message:
+          "Loyal Spark x402 discovery has moved. Use the canonical api.loyalspark.online host.",
+      });
+      return new Response(req.method === "HEAD" ? null : body, {
+        status: 301,
+        headers,
+      });
+    }
+  } catch (_) {
+    // fall through to normal handling
+  }
+
   // Any non-GET/HEAD method (POST/PUT/PATCH/DELETE) → 402 stub for x402scan probes.
   if (req.method !== "GET" && req.method !== "HEAD") {
     return buildPaymentRequired(req);
