@@ -371,13 +371,14 @@ Deno.serve((req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Canonicalize origin: if a scanner probes the raw *.supabase.co host directly,
-  // 301-redirect to the canonical api.loyalspark.online discovery URL so x402scan
-  // (and other Bazaar crawlers) collapse duplicate server entries into one.
+  // Canonicalize origin: scanners that probe the raw *.supabase.co function URL
+  // directly (path contains `well-known-x402`) get 301-redirected to the canonical
+  // api.loyalspark.online discovery URL so x402scan / Bazaar crawlers collapse
+  // duplicate server entries. Requests coming through the Cloudflare proxy hit
+  // path `/.well-known/x402` (no `well-known-x402` slug) and pass through normally.
   try {
     const reqUrl = new URL(req.url);
-    const canonicalHost = new URL(publicBaseUrl()).host; // api.loyalspark.online
-    if (reqUrl.host !== canonicalHost) {
+    if (reqUrl.pathname.includes("well-known-x402")) {
       const target = `${publicBaseUrl()}/.well-known/x402`;
       const headers = new Headers(corsHeaders);
       headers.set("Location", target);
