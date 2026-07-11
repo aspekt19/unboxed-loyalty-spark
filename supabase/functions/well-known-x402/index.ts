@@ -384,11 +384,11 @@ Deno.serve((req) => {
       headers.set("Location", target);
       headers.set("Cache-Control", "public, max-age=86400");
       headers.set("Content-Type", "application/json; charset=utf-8");
+      headers.set("X-Debug-Path", reqUrl.pathname);
+      headers.set("X-Debug-Url", req.url);
       const body = JSON.stringify({
         moved: true,
         canonical: target,
-        _debug_path: reqUrl.pathname,
-        _debug_url: req.url,
         message:
           "Loyal Spark x402 discovery has moved. Use the canonical api.loyalspark.online host.",
       });
