@@ -33,7 +33,7 @@ Do not assume one endpoint equals one complete task.
 
 Examples:
 
-- create program -> deploy tx -> extract token address -> register -> possibly activate (legacy only)
+- create program -> deploy tx (B20: one tx; legacy: + activate) -> extract token address -> register -> possibly activate (legacy only)
 - create reward -> then mint / earn
 - redeem reward -> onchain transfer first, voucher endpoint second
 
@@ -75,6 +75,7 @@ Smoke test: `scripts/x402-paid-mcp-test/run.mjs` (`MCP_PATH_PREFIX=mcp-tools` or
 ## 6. Repo map
 
 - [AGENTS.md](../../AGENTS.md) — index for coding agents  
+- [LOYALTY_PROGRAM_CONTRACTS.md](../development/LOYALTY_PROGRAM_CONTRACTS.md) — B20 default vs legacy ERC-20 deploy  
 - [../README.md](../README.md) — docs layout  
 - MCP tool ids: `src/constants/mcpToolNames.ts` (must match `loyalty-mcp/index.ts`)
 - x402 MCP tool **schemas** (Bazaar / pricing): `mcp-bazaar-tools.ts` (merchant) · `recipient-mcp-bazaar-tools.ts` (holder); **402 + Bazaar metadata**: `x402-bazaar-accept.ts`

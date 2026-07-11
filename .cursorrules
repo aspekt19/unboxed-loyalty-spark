@@ -20,8 +20,9 @@ Dual-mode: humans via Web UI (Privy-first + SIWE where needed), AI agents via RE
 - Agent surface: REST (`agent-api`) + MCP (`loyalty-mcp`)
 
 ## Smart Contracts (Base Mainnet)
-- LoyaltyTokenFactory: 0x5F3DdBa12580CFdc6016258774cCc19C4250dA80
-- LoyalSparkERC20 (Implementation): 0xe6BA426C9c51281B929a17444De02c65815E27C3
+- B20 Factory (default new programs): 0xB20f000000000000000000000000000000000000
+- LoyaltyTokenFactory (legacy ERC-20): 0x5F3DdBa12580CFdc6016258774cCc19C4250dA80
+- LoyalSparkERC20 (legacy implementation): 0xe6BA426C9c51281B929a17444De02c65815E27C3
 
 ## Authentication
 - Humans: **Privy** first (email / SMS / OAuth / embedded + external wallets); Supabase session via `privy-auth` + client helpers in `src/lib/privyAuth.ts`

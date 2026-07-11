@@ -563,7 +563,7 @@
     "guide_count": 13,
     "list": [
       {"id": "getting-started", "file": "00-getting-started.md", "description": "Register agent, get API key, first request"},
-      {"id": "create-program", "file": "01-create-loyalty-program.md", "description": "Deploy ERC-20 loyalty token on Base"},
+      {"id": "create-program", "file": "01-create-loyalty-program.md", "description": "Deploy B20 loyalty token on Base (legacy ERC-20 optional)"},
       {"id": "mint-tokens", "file": "02-mint-tokens.md", "description": "Mint loyalty tokens to customer wallets"},
       {"id": "transfer-tokens", "file": "03-transfer-tokens.md", "description": "Transfer tokens between wallets"},
       {"id": "manage-rewards", "file": "04-manage-rewards.md", "description": "Create redeemable rewards catalog"},

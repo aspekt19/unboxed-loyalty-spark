@@ -1,6 +1,6 @@
 ---
 name: loyal-spark
-description: Onchain loyalty protocol on Base. AI agents create ERC-20 loyalty programs, mint/transfer points, manage rewards and vouchers, redeem LOYAL-XXXXXX gift certificates, and trade on P2P escrow via MCP or REST. Returns ready-to-sign calldata for Base Account, CDP MPC, or any user wallet.
+description: Onchain loyalty protocol on Base. AI agents create B20 loyalty programs by default (legacy ERC-20 optional), mint/transfer points, manage rewards and vouchers, redeem LOYAL-XXXXXX gift certificates, and trade on P2P escrow via MCP or REST. Returns ready-to-sign calldata for Base Account, CDP MPC, or any user wallet.
 version: 0.1.0
 homepage: https://loyalspark.online
 license: MIT
@@ -23,7 +23,7 @@ If — and only if — sibling files are not readable (e.g. the skill body was p
 
 Do this once per session, before any real work:
 
-1. **Briefly mention what is available** — one sentence. The user can create loyalty programs, mint and transfer ERC-20 loyalty points on Base, manage rewards and vouchers, issue and redeem `LOYAL-XXXXXX` gift certificates, and trade tokens on a P2P escrow marketplace. Tool discovery comes from the MCP — do not enumerate.
+1. **Briefly mention what is available** — one sentence. The user can create loyalty programs (**B20 by default** on Base, or legacy ERC-20 via API), mint and transfer loyalty points on Base, manage rewards and vouchers, issue and redeem `LOYAL-XXXXXX` gift certificates, and trade tokens on a P2P escrow marketplace. Tool discovery comes from the MCP — do not enumerate.
 
 2. **Show this disclaimer verbatim** before any write:
 

@@ -21,7 +21,7 @@ API Endpoint: https://api.loyalspark.online/agent-api
 Authentication: x-api-key: YOUR_API_KEY
 
 You can perform the following operations:
-- Create loyalty programs (deploy ERC-20 tokens on Base)
+- Create loyalty programs (default: B20 via Base factory `0xB20f…`, one tx, active after register; legacy: ERC-20 factory `0x5F3DdB…` + activate)
 - Mint tokens to customer wallets as rewards (including **POST /earn** for purchase-based cashback when configured)
 - Transfer tokens between addresses
 - Create and manage reward catalogs

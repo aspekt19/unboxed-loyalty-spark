@@ -36,8 +36,8 @@ Base: `https://api.loyalspark.online/agent-prepare`
 
 | Action | Method + path | Required params |
 | --- | --- | --- |
-| Deploy new program | `GET /create-program` | `name`, `symbol` (≤32 / ≤11 chars) |
-| Activate program (unpause + grant MINTER_ROLE) | `GET /activate-program` | `token` |
+| Deploy new program (B20 default) | `GET /create-program` | `name`, `symbol` (≤32 / ≤11 chars) |
+| Activate legacy ERC-20 program | `GET /activate-program` | `token` (no-op for B20) |
 | Mint points to a customer | `GET /mint` | `token`, `to`, `amount` (human units) |
 | Merchant-side ERC-20 transfer | `GET /transfer` | `token`, `to`, `amount` |
 

@@ -56,7 +56,7 @@ Merchant SaaS (portal): Starter $39 / Growth $79 / Scale $149 per month — see 
 - GET /workflow/program-status — Machine-readable merchant workflow state with next actions and prerequisites ($0.001)
 - POST /programs — Deploy new B20 loyalty token by default, or legacy ERC-20 when explicitly requested ($0.05)
 - POST /register-program — Register deployed token ($0.01)
-- POST /activate-program — Get activation calldata ($0.01)
+- POST /activate-program — Legacy ERC-20 activation only ($0.01; no-op for B20)
 - POST /program-status — Update status ($0.005)
 - POST /rewards — Create reward ($0.01)
 - POST /mint — Mint tokens ($0.01)

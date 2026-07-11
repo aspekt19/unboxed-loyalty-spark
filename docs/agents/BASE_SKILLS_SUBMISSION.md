@@ -189,7 +189,7 @@ Subject: Partner plugin proposal — Loyal Spark (onchain loyalty on Base)
 
 Hi Base team,
 
-Loyal Spark is an onchain loyalty protocol on Base mainnet (chain 8453). Merchants deploy ERC-20 loyalty programs, mint and transfer points, manage rewards, vouchers, and `LOYAL-XXXXXX` gift certificates, and trade tokens on a P2P escrow marketplace. Builder Code `bc_wdmnog7m` (ERC-8021) is appended to every prepared calldata for onchain attribution.
+Loyal Spark is an onchain loyalty protocol on Base mainnet (chain 8453). Merchants deploy **B20 loyalty programs by default** (Base native factory); legacy ERC-20 factory remains via `token_standard: "erc20"`. Mint and transfer points, manage rewards, vouchers, and `LOYAL-XXXXXX` gift certificates, and trade tokens on a P2P escrow marketplace. Builder Code `bc_wdmnog7m` (ERC-8021) is appended to every prepared calldata for onchain attribution.
 
 We already operate two MCP servers (Streamable HTTP):
 - merchant: https://api.loyalspark.online/loyalty-mcp  (36 tools)

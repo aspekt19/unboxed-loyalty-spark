@@ -156,7 +156,7 @@
       "post": {
         "operationId": "post_programs",
         "summary": "Get factory calldata to deploy a loyalty token",
-        "description": "Returns ERC-20 factory deploy calldata + fee. Agent submits the transaction with its own wallet (or via /agent-wallet). The deployed token address is then registered with /register-program.",
+        "description": "Returns deploy calldata for a loyalty token. Default: B20 (Base factory 0xB20f…, createB20, one tx, active after register-program). Legacy: token_standard erc20 → LoyaltyTokenFactory 0x5F3DdB… + activation. Agent submits the transaction, then POST /register-program.",
         "tags": [
           "Merchant REST"
         ],
@@ -2651,7 +2651,7 @@
       "post": {
         "operationId": "mcp_create_loyalty_program",
         "summary": "MCP tool: create_loyalty_program",
-        "description": "Factory calldata to deploy ERC-20 loyalty token. JSON-RPC 2.0 over Streamable HTTP. Body: { \"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/call\", \"params\": { \"name\": \"create_loyalty_program\", \"arguments\": { ... } } }. Auth: x-api-key (lsk_...) or Authorization: Bearer.",
+        "description": "Deploy calldata for loyalty token (B20 default via createB20, or legacy ERC-20 factory). JSON-RPC 2.0 over Streamable HTTP. Body: { \"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/call\", \"params\": { \"name\": \"create_loyalty_program\", \"arguments\": { ... } } }. Auth: x-api-key (lsk_...) or Authorization: Bearer.",
         "tags": [
           "Merchant MCP"
         ],

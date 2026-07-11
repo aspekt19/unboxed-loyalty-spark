@@ -9,7 +9,7 @@ Loyal Spark Farcaster App enables merchants and customers to participate in a to
 ## Features
 
 ### For Merchants
-- **Create Loyalty Programs**: Deploy ERC-20 loyalty tokens on Base
+- **Create Loyalty Programs**: Deploy **B20** tokens on Base (default); legacy ERC-20 via API (`token_standard: "erc20"`)
 - **Issue Tokens**: Reward customers with loyalty tokens
 - **Manage Rewards**: Create and manage reward vouchers
 - **CRM & Analytics**: Customer profiles, RFM segmentation, tier management
@@ -51,10 +51,13 @@ Loyal Spark Farcaster App enables merchants and customers to participate in a to
 
 ## Smart Contracts
 
+New programs use Base **B20 Factory** (`0xB20f000000000000000000000000000000000000`). Legacy Loyal Spark factory below is for `erc20` programs only. See `docs/development/LOYALTY_PROGRAM_CONTRACTS.md`.
+
 | Contract | Address |
 |----------|---------|
-| **LoyaltyTokenFactory** | `0x5F3DdBa12580CFdc6016258774cCc19C4250dA80` |
-| **LoyalSparkERC20** | `0xe6BA426C9c51281B929a17444De02c65815E27C3` |
+| **B20 Factory** (default) | `0xB20f000000000000000000000000000000000000` |
+| **LoyaltyTokenFactory** (legacy) | `0x5F3DdBa12580CFdc6016258774cCc19C4250dA80` |
+| **LoyalSparkERC20** (legacy impl) | `0xe6BA426C9c51281B929a17444De02c65815E27C3` |
 | **Network** | Base Mainnet (Chain ID: 8453) |
 
 ## Setup

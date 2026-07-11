@@ -35,7 +35,7 @@ Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain
 ## Features
 
 ### For Merchants (Web UI)
-- **Deploy Loyalty Tokens**: Create custom ERC-20 loyalty tokens on Base
+- **Deploy Loyalty Tokens**: Create custom loyalty tokens on Base (**B20 default**; legacy ERC-20 via API)
 - **Mint Tokens**: Issue loyalty points to customers via wallet addresses or QR scan
 - **Create Rewards**: Design voucher rewards with token costs
 - **CRM & Analytics**: Customer profiles, RFM segmentation, tier management
@@ -81,19 +81,31 @@ Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain
 
 ## Smart Contract Architecture
 
-| Contract | Address |
-|----------|---------|
-| **LoyaltyTokenFactory** | `0x5F3DdBa12580CFdc6016258774cCc19C4250dA80` |
-| **LoyalSparkERC20 (Implementation)** | `0xe6BA426C9c51281B929a17444De02c65815E27C3` |
+**New loyalty programs (default)** deploy via Base’s native **B20** factory precompile — one transaction, active immediately after `register-program`. **Legacy** programs use the Loyal Spark ERC-20 factory below (`token_standard: "erc20"` in API only). Full flows: **[docs/development/LOYALTY_PROGRAM_CONTRACTS.md](./docs/development/LOYALTY_PROGRAM_CONTRACTS.md)**.
+
+| Role | Address | When |
+|------|---------|------|
+| **B20 Factory** (Base precompile) | `0xB20f000000000000000000000000000000000000` | **Default** — `createB20` → token `0xB200…` |
+| **LoyaltyTokenFactory** (legacy) | `0x5F3DdBa12580CFdc6016258774cCc19C4250dA80` | Opt-in `erc20` — `createLoyaltyToken` + activation |
+| **LoyalSparkERC20 (implementation)** | `0xe6BA426C9c51281B929a17444De02c65815E27C3` | Logic for legacy proxy tokens |
+| **LoyaltyTokenEscrow** (P2P) | `0xA569C95AfC1BCF381c48BcF336ED9D2c014bcdDF` | Marketplace swaps |
 
 **Network**: Base Mainnet (Chain ID: 8453)
 
-### Core Functions
-- `deployLoyaltyToken(name, symbol)` — Deploy new ERC-20 token
-- `mint(address to, uint256 amount)` — Issue new tokens (owner only)
-- `burn(uint256 amount)` — Burn tokens for voucher redemption
-- `transfer(address to, uint256 amount)` — Transfer tokens between wallets
-- `balanceOf(address account)` — Query token balance
+### Program creation (summary)
+
+| Path | Deploy | Activate | Portal |
+|------|--------|----------|--------|
+| **B20** (default) | 1× `createB20` on `0xB20f…` | Not required | Yes |
+| **Legacy ERC-20** | 1× `createLoyaltyToken` on `0x5F3DdB…` | `unpauseUtility` + `enableMinting` | API only |
+
+### Token operations (both standards)
+
+B20 tokens are ERC-20–compatible for balances, transfers, mint, and escrow:
+
+- `mint(address to, uint256 amount)` — issue points (role-gated)
+- `transfer` / `transferFrom` — move tokens between wallets
+- `balanceOf(address)` — query balance
 
 ## AI Agent Integration
 
@@ -142,10 +154,10 @@ All routes below require `x-api-key: lsk_...` except **GET `/vouchers/status`** 
 |--------|------|-------|-------------|
 | GET | `/me` | authenticated | Agent profile & permissions |
 | GET | `/programs` | read | List loyalty programs |
-| POST | `/programs` | mint or `create_program` | Calldata to deploy new ERC-20 token |
+| POST | `/programs` | mint or `create_program` | Calldata to deploy loyalty token (**B20 default**, or legacy ERC-20 with `token_standard: "erc20"`) |
 | POST | `/register-program` | mint or `create_program` | Register deployed token (optional `cashback_rate`, `points_per_dollar`) |
 | POST | `/update-program-config` | mint or `create_program` | Update `cashback_rate` / `points_per_dollar` for a program |
-| POST | `/activate-program` | mint or `create_program` | Activation calldata |
+| POST | `/activate-program` | mint or `create_program` | Legacy ERC-20 activation only (no-op for B20) |
 | POST | `/program-status` | mint or `create_program` | Update program status |
 | GET | `/rewards` | read | List rewards |
 | POST | `/rewards` | manage_rewards | Create reward |
@@ -234,7 +246,7 @@ Structured Markdown guides that teach agents how to use the protocol:
 | # | Skill | Description |
 |---|-------|-------------|
 | 00 | Getting Started | Register agent (merchant UI or SIWE), get `lsk_`, first request |
-| 01 | Create Loyalty Program | Deploy ERC-20 loyalty token on Base |
+| 01 | Create Loyalty Program | Deploy B20 loyalty token on Base (legacy ERC-20 optional) |
 | 02 | Mint Tokens | Mint tokens to customer wallets |
 | 03 | Transfer Tokens | Transfer tokens between wallets |
 | 04 | Manage Rewards | Create redeemable rewards catalog |

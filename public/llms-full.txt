@@ -1,6 +1,6 @@
 # Loyal Spark — Onchain Loyalty Protocol (Full Reference)
 
-> Loyalty-as-a-Service for AI agents and merchants on Base L2. Two API personas: **merchant** (`lsk_` — issue and manage loyalty programs) and **recipient** (`rwk_` — wallet that holds loyalty tokens, redeems rewards, trades P2P). Deploy ERC-20 tokens, manage rewards, earn points from purchases, trade on P2P marketplace — via REST API, MCP Server, or pay-per-request gateways (MPP / x402 v2).
+> Loyalty-as-a-Service for AI agents and merchants on Base L2. Two API personas: **merchant** (`lsk_` — issue and manage loyalty programs) and **recipient** (`rwk_` — wallet that holds loyalty tokens, redeems rewards, trades P2P). Deploy **B20** loyalty tokens by default (legacy ERC-20 optional), manage rewards, earn points from purchases, trade on P2P marketplace — via REST API, MCP Server, or pay-per-request gateways (MPP / x402 v2).
 
 ## Overview
 
@@ -58,10 +58,10 @@ Base URL: https://api.loyalspark.online/agent-api
 | Endpoint | Price | Scope | Description |
 |----------|-------|-------|-------------|
 | /workflow/generate-program-defaults | $0.001 | mint | Propose program name, symbol, economics, and starter rewards from business context |
-| /programs | $0.05 | mint | Get calldata to deploy new ERC-20 token |
+| /programs | $0.05 | mint | Deploy calldata (B20 default, or legacy ERC-20 with token_standard) |
 | /register-program | $0.01 | mint | Register deployed token (optional cashback_rate, points_per_dollar) |
 | /update-program-config | $0.005 | mint | Update program cashback_rate and/or points_per_dollar |
-| /activate-program | $0.01 | mint | Get activation calldata (unpause + enable minting) |
+| /activate-program | $0.01 | mint | Legacy ERC-20 only: unpause + enable minting (no-op for B20) |
 | /program-status | $0.005 | mint | Update program status |
 | /rewards | $0.01 | manage_rewards | Create a redeemable reward |
 | /mint | $0.01 | mint | Mint tokens to customer wallet |
@@ -224,7 +224,7 @@ Base URL: https://api.loyalspark.online/recipient-api · Auth: `x-api-key: rwk_�
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| GET | /create-program | lsk_ | Deploy ERC-20 loyalty token |
+| GET | /create-program | lsk_ | Deploy loyalty token (B20 default) |
 | GET | /activate-program | lsk_ | Activate a deployed program |
 | GET | /mint | lsk_ | Mint tokens to a wallet |
 | GET | /transfer | lsk_ | Merchant ERC-20 transfer |
@@ -255,10 +255,13 @@ Payment: On-chain USDC transfer on Base, verified automatically.
 
 ## Smart Contracts
 
-| Contract | Address | Chain |
-|----------|---------|-------|
-| LoyaltyTokenFactory | 0x5F3DdBa12580CFdc6016258774cCc19C4250dA80 | Base |
-| LoyalSparkERC20 | 0xe6BA426C9c51281B929a17444De02c65815E27C3 | Base |
+New programs default to **B20** (Base native factory `0xB20f…`). Legacy Loyal Spark ERC-20 factory remains for `token_standard: "erc20"`. Details: `docs/development/LOYALTY_PROGRAM_CONTRACTS.md`.
+
+| Role | Address | Chain |
+|------|---------|-------|
+| B20 Factory (default deploy) | 0xB20f000000000000000000000000000000000000 | Base |
+| LoyaltyTokenFactory (legacy) | 0x5F3DdBa12580CFdc6016258774cCc19C4250dA80 | Base |
+| LoyalSparkERC20 (legacy impl) | 0xe6BA426C9c51281B929a17444De02c65815E27C3 | Base |
 | LoyaltyTokenEscrow | 0xA569C95AfC1BCF381c48BcF336ED9D2c014bcdDF | Base |
 | Builder Code | bc_wdmnog7m (ERC-8021) | Base |
 
@@ -277,7 +280,7 @@ Protocol fee: 0.5% on completed swaps.
 
 13 structured Markdown guides at `/.well-known/skills/`:
 - 00: Getting Started (register, API key, first request)
-- 01: Create Loyalty Program (deploy ERC-20)
+- 01: Create Loyalty Program (B20 default, or legacy ERC-20)
 - 02: Mint Tokens
 - 03: Transfer Tokens
 - 04: Manage Rewards
