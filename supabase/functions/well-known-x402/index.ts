@@ -387,6 +387,8 @@ Deno.serve((req) => {
       const body = JSON.stringify({
         moved: true,
         canonical: target,
+        _debug_path: reqUrl.pathname,
+        _debug_url: req.url,
         message:
           "Loyal Spark x402 discovery has moved. Use the canonical api.loyalspark.online host.",
       });
