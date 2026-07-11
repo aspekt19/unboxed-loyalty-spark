@@ -371,6 +371,33 @@ Deno.serve((req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Canonicalize origin: if a scanner probes the raw *.supabase.co host directly,
+  // 301-redirect to the canonical api.loyalspark.online discovery URL so x402scan
+  // (and other Bazaar crawlers) collapse duplicate server entries into one.
+  try {
+    const reqUrl = new URL(req.url);
+    const canonicalHost = new URL(publicBaseUrl()).host; // api.loyalspark.online
+    if (reqUrl.host !== canonicalHost) {
+      const target = `${publicBaseUrl()}/.well-known/x402`;
+      const headers = new Headers(corsHeaders);
+      headers.set("Location", target);
+      headers.set("Cache-Control", "public, max-age=86400");
+      headers.set("Content-Type", "application/json; charset=utf-8");
+      const body = JSON.stringify({
+        moved: true,
+        canonical: target,
+        message:
+          "Loyal Spark x402 discovery has moved. Use the canonical api.loyalspark.online host.",
+      });
+      return new Response(req.method === "HEAD" ? null : body, {
+        status: 301,
+        headers,
+      });
+    }
+  } catch (_) {
+    // fall through to normal handling
+  }
+
   // Any non-GET/HEAD method (POST/PUT/PATCH/DELETE) → 402 stub for x402scan probes.
   if (req.method !== "GET" && req.method !== "HEAD") {
     return buildPaymentRequired(req);
