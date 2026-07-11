@@ -92,7 +92,7 @@ export function MintTokensDialog({
         </DialogHeader>
         
         {!showScanner ? (
-          <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 mt-3 sm:mt-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>{getLabel()}</Label>
@@ -156,7 +156,7 @@ export function MintTokensDialog({
             </Button>
           </form>
         ) : (
-          <div className="space-y-4 mt-4">
+          <div className="space-y-3 sm:space-y-4 mt-3 sm:mt-4">
             <div className="flex items-center justify-between">
               <Label>Scan Customer's Wallet QR Code</Label>
               <Button

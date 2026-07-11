@@ -206,7 +206,7 @@ export function EarnPointsDialog({
         </DialogHeader>
 
         {showScanner ? (
-          <div className="space-y-4 mt-4">
+          <div className="space-y-3 sm:space-y-4 mt-3 sm:mt-4">
             <div className="flex items-center justify-between">
               <Label>Scan Customer's QR Code</Label>
               <Button type="button" variant="ghost" size="sm" onClick={() => setShowScanner(false)}>
@@ -226,7 +226,7 @@ export function EarnPointsDialog({
             </p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 mt-3 sm:mt-4">
             {/* Step 1: Customer identifier */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">

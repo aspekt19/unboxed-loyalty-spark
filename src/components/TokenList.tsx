@@ -580,7 +580,7 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, 
                 Send {selectedToken?.name} tokens by wallet address, email, or phone number
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleTransfer} className="space-y-4 mt-4">
+            <form onSubmit={handleTransfer} className="space-y-3 sm:space-y-4 mt-3 sm:mt-4">
               <RecipientInput
                 id="recipient"
                 value={recipientAddress}
