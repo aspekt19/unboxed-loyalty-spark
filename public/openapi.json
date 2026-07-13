@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Loyal Spark \u2014 Onchain Loyalty Protocol on Base",
-    "version": "2.3.0",
+    "version": "2.3.1",
     "summary": "AI-agent-native loyalty-as-a-service protocol on Base L2 with paid x402 + MPP corridors.",
     "description": "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. New loyalty programs deploy as B20 (Base native ERC-20 superset, single-tx, active immediately); legacy ERC-20 factory remains for existing programs. AI agents and merchants mint tokens, manage rewards, P2P escrow, vouchers, and analytics \u2014 via x402 (USDC on Base) or REST/MCP with x-api-key. Builder Code bc_wdmnog7m.",
     "x-guidance": "Loyal Spark on Base L2 (chain 8453, USDC native).\n\nCritical rule for AI agents: many operations are multi-step workflows, not single endpoint calls. Read https://loyalspark.online/.well-known/skills/13-endpoint-workflows.md when orchestrating business actions.\n\nExternal agents must choose their own name, symbol, reward names, costs, and amounts. Workflow responses provide field_catalog, current_step, next_actions, prerequisites, blocking_reason, and continuation_context — not auto-assigned identity.\n\nAuth: lsk_ (merchant), rwk_ (holder), or x402 USDC.\n\nProgram lifecycle:\n- Default new program path: optional POST /workflow/generate-program-defaults (field catalog + examples) -> POST /programs with explicit name and symbol (B20 default) -> broadcast createB20 -> GET /tx-receipt or parse B20Created -> POST /register-program with token_standard b20 -> create rewards -> mint. auto_generate is for trusted internal automation only.\n- Legacy path: POST /programs with token_standard erc20 -> broadcast deploy -> POST /register-program -> POST /activate-program -> broadcast activation txs -> POST /program-status active -> create rewards -> mint.\n- To ask the platform what is missing next, call GET /workflow/program-status.\n\nReward / voucher lifecycle:\n- Rewards come after a usable program exists.\n- Call GET /recipient-api/workflow/reward-status or POST /recipient-api/workflow/prepare-reward-redemption before redeeming when holder-side sequencing is unclear.\n- Voucher redemption requires confirmed onchain token transfer first, then redeem endpoint, then vouchers/use when consumed.\n\nMCP mirrors REST: loyalty-mcp and recipient-loyalty-mcp now expose planner/default-generation tools in addition to atomic tools. Paid corridor: /x402-gateway/mcp-tools/<name>.\n\nDocs: https://loyalspark.online/api-docs \u00b7 skills: https://loyalspark.online/.well-known/skills/index.md",
@@ -37,6 +37,24 @@
       "gatewayBaseUrl": "https://api.loyalspark.online/x402-gateway",
       "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
       "network": "eip155:8453"
+    },
+    "x-base-mcp-prepare": {
+      "baseUrl": "https://api.loyalspark.online/agent-prepare",
+      "pluginSpec": "https://loyalspark.online/skills/loyal-spark/plugins/loyal-spark.md",
+      "responseShape": {
+        "chainId": 8453,
+        "description": "string",
+        "transactions": [{ "to": "0x…", "data": "0x…", "value": "0x0" }],
+        "builder_code": "bc_wdmnog7m"
+      },
+      "actions": [
+        "create-program",
+        "activate-program",
+        "mint",
+        "transfer",
+        "recipient-transfer",
+        "recipient-approve"
+      ]
     }
   },
   "servers": [
@@ -82,9 +100,151 @@
     {
       "name": "Recipient MCP",
       "description": "18 recipient MCP tools (Streamable HTTP JSON-RPC 2.0)"
+    },
+    {
+      "name": "Base MCP Prepare",
+      "description": "GET-friendly calldata for Base MCP send_calls (EIP-5792). Builder Code bc_wdmnog7m baked into data. Merchant: lsk_; holder: rwk_."
     }
   ],
   "paths": {
+    "/agent-prepare": {
+      "get": {
+        "operationId": "agent_prepare_introspection",
+        "summary": "Base MCP prepare service introspection",
+        "description": "Public action catalog for the Base MCP custom plugin. No API key required.",
+        "tags": ["Base MCP Prepare"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Service metadata and action list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "service": { "type": "string" },
+                    "chainId": { "type": "integer" },
+                    "builder_code": { "type": "string" },
+                    "actions": { "type": "object" },
+                    "docs": { "type": "string", "format": "uri" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agent-prepare/create-program": {
+      "get": {
+        "operationId": "agent_prepare_create_program",
+        "summary": "Prepare B20 or legacy ERC-20 program deploy calldata",
+        "description": "Returns send_calls-ready factory transaction(s). Default token_standard is b20 (single-tx, active immediately). Requires scope mint or create_program.",
+        "tags": ["Base MCP Prepare"],
+        "parameters": [
+          { "name": "name", "in": "query", "required": true, "schema": { "type": "string", "maxLength": 32 } },
+          { "name": "symbol", "in": "query", "required": true, "schema": { "type": "string", "maxLength": 11 } },
+          { "name": "token_standard", "in": "query", "required": false, "schema": { "type": "string", "enum": ["b20", "erc20"], "default": "b20" } },
+          { "name": "api_key", "in": "query", "required": false, "schema": { "type": "string", "description": "lsk_ fallback when headers unavailable" } }
+        ],
+        "responses": {
+          "200": { "description": "Prepare payload with transactions[]" },
+          "401": { "description": "Missing or invalid lsk_" },
+          "403": { "description": "Insufficient scope (mint or create_program required)" }
+        }
+      }
+    },
+    "/agent-prepare/activate-program": {
+      "get": {
+        "operationId": "agent_prepare_activate_program",
+        "summary": "Prepare legacy ERC-20 activation batch (no-op for B20)",
+        "description": "Legacy programs: unpause + grant MINTER_ROLE as EIP-5792 batch. B20 programs return already_active with empty transactions.",
+        "tags": ["Base MCP Prepare"],
+        "parameters": [
+          { "name": "token", "in": "query", "required": true, "schema": { "type": "string", "pattern": "^0x[a-fA-F0-9]{40}$" } },
+          { "name": "api_key", "in": "query", "required": false, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Prepare payload or already_active for B20" },
+          "401": { "description": "Missing or invalid lsk_" },
+          "403": { "description": "Insufficient scope" },
+          "404": { "description": "Program not found" }
+        }
+      }
+    },
+    "/agent-prepare/mint": {
+      "get": {
+        "operationId": "agent_prepare_mint",
+        "summary": "Prepare mint calldata (recipient + protocol fee)",
+        "description": "Two mint transactions for EIP-5792 batch. Requires scope mint.",
+        "tags": ["Base MCP Prepare"],
+        "parameters": [
+          { "name": "token", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "to", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "amount", "in": "query", "required": true, "schema": { "type": "number" } },
+          { "name": "api_key", "in": "query", "required": false, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Two-transaction prepare payload" },
+          "401": { "description": "Missing or invalid lsk_" },
+          "403": { "description": "Scope mint required" },
+          "404": { "description": "Program not found" }
+        }
+      }
+    },
+    "/agent-prepare/transfer": {
+      "get": {
+        "operationId": "agent_prepare_merchant_transfer",
+        "summary": "Prepare merchant-side ERC-20 transfer calldata",
+        "tags": ["Base MCP Prepare"],
+        "parameters": [
+          { "name": "token", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "to", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "amount", "in": "query", "required": true, "schema": { "type": "number" } },
+          { "name": "api_key", "in": "query", "required": false, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Single transfer transaction" },
+          "401": { "description": "Missing or invalid lsk_" },
+          "403": { "description": "Scope mint required" }
+        }
+      }
+    },
+    "/agent-prepare/recipient-transfer": {
+      "get": {
+        "operationId": "agent_prepare_recipient_transfer",
+        "summary": "Prepare holder ERC-20 transfer calldata",
+        "tags": ["Base MCP Prepare"],
+        "security": [{ "apiKey": [] }],
+        "parameters": [
+          { "name": "token", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "to", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "amount", "in": "query", "required": true, "schema": { "type": "number" } },
+          { "name": "api_key", "in": "query", "required": false, "schema": { "type": "string", "description": "rwk_ fallback" } }
+        ],
+        "responses": {
+          "200": { "description": "Single transfer from bound wallet" },
+          "401": { "description": "Missing or invalid rwk_" }
+        }
+      }
+    },
+    "/agent-prepare/recipient-approve": {
+      "get": {
+        "operationId": "agent_prepare_recipient_approve",
+        "summary": "Prepare holder ERC-20 approve calldata",
+        "tags": ["Base MCP Prepare"],
+        "parameters": [
+          { "name": "token", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "spender", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "amount", "in": "query", "required": true, "schema": { "type": "number" } },
+          { "name": "api_key", "in": "query", "required": false, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Single approve transaction" },
+          "401": { "description": "Missing or invalid rwk_" }
+        }
+      }
+    },
     "/x402-gateway/programs": {
       "get": {
         "operationId": "get_programs",

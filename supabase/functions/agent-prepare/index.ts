@@ -201,10 +201,13 @@ Deno.serve(async (req: Request) => {
   const merchantAddress = agent.ownerAddress;
 
   const hasScope = (s: string) => agent.scopes.includes(s) || agent.scopes.includes("admin");
+  const hasMintOrCreateProgram = () => hasScope("mint") || hasScope("create_program");
 
   // ----- create-program -----
   if (action === "create-program") {
-    if (!hasScope("write")) return json({ error: "Scope 'write' required" }, 403);
+    if (!hasMintOrCreateProgram()) {
+      return json({ error: "Scope 'mint' or 'create_program' required" }, 403);
+    }
     const name = params.name;
     const symbol = params.symbol;
     if (!name || !symbol) return json({ error: "Missing params: name, symbol" }, 400);
@@ -270,7 +273,9 @@ Deno.serve(async (req: Request) => {
 
   // ----- activate-program -----
   if (action === "activate-program" || action === "activate") {
-    if (!hasScope("write")) return json({ error: "Scope 'write' required" }, 403);
+    if (!hasMintOrCreateProgram()) {
+      return json({ error: "Scope 'mint' or 'create_program' required" }, 403);
+    }
     const token = params.token || params.token_address;
     if (!token || !/^0x[a-fA-F0-9]{40}$/.test(token)) {
       return json({ error: "Invalid or missing token / token_address" }, 400);
@@ -370,7 +375,7 @@ Deno.serve(async (req: Request) => {
 
   // ----- transfer (merchant) -----
   if (action === "transfer") {
-    if (!hasScope("write")) return json({ error: "Scope 'write' required" }, 403);
+    if (!hasScope("mint")) return json({ error: "Scope 'mint' required" }, 403);
     const token = params.token || params.token_address;
     const to = params.to;
     const amount = Number(params.amount);

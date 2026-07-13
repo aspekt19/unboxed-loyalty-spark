@@ -231,7 +231,7 @@ Base URL: https://api.loyalspark.online/recipient-api Â· Auth: `x-api-key: rwk_â
 | GET | /recipient-transfer | rwk_ | Holder ERC-20 transfer |
 | GET | /recipient-approve | rwk_ | Holder ERC-20 approve |
 
-Plugin spec: https://github.com/oleksiihalytskyi/loyal-spark/blob/main/skills/loyal-spark/plugins/loyal-spark.md
+Plugin spec: https://loyalspark.online/skills/loyal-spark/plugins/loyal-spark.md
 
 ## Agent Wallets
 

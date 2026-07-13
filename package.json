@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "mkdir -p public/skills && rm -rf public/skills/loyal-spark && cp -R skills/loyal-spark public/skills/",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
