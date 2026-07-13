@@ -13,7 +13,7 @@ const routeMeta: Record<string, PageMetaEntry> = {
   "/": {
     title: "Loyal Spark — Onchain Loyalty Rewards on Base L2",
     description:
-      "Onchain loyalty protocol on Base L2. Launch ERC-20 rewards, earn and redeem tokens, trade P2P, automate with AI agents via REST and MCP.",
+      "Onchain loyalty protocol on Base L2. Launch B20 rewards, earn and redeem tokens, trade P2P, automate with AI agents via REST and MCP.",
   },
   "/app": {
     title: "Open Your Wallet — Loyal Spark",
