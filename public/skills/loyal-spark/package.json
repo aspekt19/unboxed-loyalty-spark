@@ -1,0 +1,23 @@
+{
+  "name": "loyal-spark",
+  "version": "0.1.0",
+  "description": "Loyal Spark — onchain loyalty protocol on Base L2. Skill for AI agents (Claude, ChatGPT, Cursor, Claude Code, Codex, Hermes) to create loyalty programs, mint tokens, manage rewards & vouchers, redeem gift certificates, and trade on P2P escrow.",
+  "homepage": "https://loyalspark.online",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/loyalspark/skills"
+  },
+  "license": "MIT",
+  "keywords": [
+    "loyalty",
+    "base",
+    "erc20",
+    "mcp",
+    "agent-skill",
+    "x402",
+    "mpp",
+    "rewards",
+    "p2p-escrow",
+    "gift-certificates"
+  ]
+}
