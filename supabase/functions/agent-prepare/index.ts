@@ -160,7 +160,12 @@ Deno.serve(async (req: Request) => {
       return json({ error: "This action requires a recipient (rwk_) key" }, 401);
     }
     const authRes = await authenticateRecipientAgent(apiKey, db);
-    if (!authRes.ok) return json({ error: authRes.error }, 401);
+    if (!authRes.ok) {
+      if (authRes.error === "rate_limited") {
+        return json({ error: "rate_limited", reason: authRes.reason, hint: authRes.reason === "monthly_quota" ? "Monthly quota exceeded for your plan. Upgrade or wait for next cycle." : "Per-minute rate limit exceeded. Slow down." }, 429);
+      }
+      return json({ error: authRes.error }, 401);
+    }
     const wallet = authRes.agent.walletAddress;
 
     const token = params.token || params.token_address;
