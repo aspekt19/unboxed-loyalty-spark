@@ -27,9 +27,9 @@ const TermsPage = () => (
             <h2 className="text-xl font-semibold">2. The Service</h2>
             <p>
               Loyal Spark is an open onchain loyalty protocol on Base L2. We provide a
-              web interface, an API, and an MCP server that let merchants issue ERC-20
-              loyalty tokens and let customers and AI agents transfer, redeem and trade
-              them.
+              web interface, an API, and an MCP server that let merchants issue B20
+              loyalty tokens (a Base-native ERC-20 superset) and let customers and AI
+              agents transfer, redeem and trade them.
             </p>
             <p>
               The Service is provided "as is". You are responsible for the lawful use of

@@ -41,7 +41,7 @@ const merchantPlans: Plan[] = [
       { text: "Active loyalty programs on Base", included: true },
       { text: "Customer profiles & basic analytics", included: true },
       { text: "Rewards catalog & vouchers", included: true },
-      { text: "Branded ERC-20 token", included: true },
+      { text: "Branded B20 loyalty token", included: true },
       { text: "RFM segmentation & campaigns", included: false },
       { text: "Team & branch management", included: false },
     ],

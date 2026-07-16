@@ -45,12 +45,12 @@ export default function GuidePage() {
       {
         "@type": "Question",
         "name": "What is Loyal Spark?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Loyal Spark is an onchain loyalty protocol on Base L2 that lets merchants deploy branded ERC-20 loyalty tokens, manage rewards catalogs, customer tiers, and P2P marketplace trading — all via REST API, MCP Server, or payment gateways." }
+        "acceptedAnswer": { "@type": "Answer", "text": "Loyal Spark is an onchain loyalty protocol on Base L2 that lets merchants deploy branded B20 loyalty tokens (Base-native ERC-20 superset), manage rewards catalogs, customer tiers, and P2P marketplace trading — all via REST API, MCP Server, or payment gateways." }
       },
       {
         "@type": "Question",
         "name": "How do I create a loyalty program?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Connect your wallet on the Merchant page, fill in your program name and token symbol, and deploy your ERC-20 loyalty token on Base in one click. The token is yours — fully onchain and composable." }
+        "acceptedAnswer": { "@type": "Answer", "text": "Connect your wallet on the Merchant page, fill in your program name and token symbol, and deploy your B20 loyalty token on Base in one click. The token is yours — fully onchain and composable." }
       },
       {
         "@type": "Question",
@@ -441,7 +441,7 @@ export default function GuidePage() {
                         <li>• Active loyalty programs on Base</li>
                         <li>• Customer profiles & basic analytics</li>
                         <li>• Rewards catalog & vouchers</li>
-                        <li>• Branded ERC-20 token</li>
+                        <li>• Branded B20 loyalty token</li>
                       </ul>
                     </div>
                     <div className="border border-primary rounded-lg p-4">

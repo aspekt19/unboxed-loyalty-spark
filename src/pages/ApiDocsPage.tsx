@@ -924,7 +924,7 @@ const reward = await fetch(\`\${BASE}/rewards\`, {
               <div className="space-y-2">
                 {[
                   { id: '00', name: 'Getting Started', desc: 'Register agent, get API key, first request' },
-                  { id: '01', name: 'Create Loyalty Program', desc: 'Deploy ERC-20 loyalty token on Base' },
+                  { id: '01', name: 'Create Loyalty Program', desc: 'Deploy B20 loyalty token on Base (ERC-20 superset)' },
                   { id: '02', name: 'Mint Tokens', desc: 'Mint tokens to customer wallets' },
                   { id: '03', name: 'Transfer Tokens', desc: 'Transfer tokens between wallets' },
                   { id: '04', name: 'Manage Rewards', desc: 'Create redeemable rewards catalog' },
