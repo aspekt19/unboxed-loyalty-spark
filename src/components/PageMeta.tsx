@@ -23,7 +23,7 @@ const routeMeta: Record<string, PageMetaEntry> = {
   "/merchant": {
     title: "Merchant Dashboard — Loyal Spark",
     description:
-      "Create loyalty programs, mint ERC-20 tokens, manage rewards and customer tiers on Base L2.",
+      "Create loyalty programs, mint B20 loyalty tokens, manage rewards and customer tiers on Base L2.",
   },
   "/customer": {
     title: "Customer Portal — Loyal Spark",
