@@ -244,8 +244,8 @@ s = prs.slides.add_slide(BLANK); grad_bg(s)
 kicker(s, "04 · Рынок")
 title(s, "Большой и недоинвестированный")
 stats = [
-    ("$200B+", "TAM — глобальный рынок лояльности (SaaS + обязательства по баллам)"),
-    ("$60B", "SAM — цифровая лояльность SMB и mid-market"),
+    ("~$16B", "TAM — глобальный рынок loyalty management (2026)"),
+    ("~$5B", "SAM — цифровая / cloud-лояльность SMB и mid-market"),
     ("630K+", "SMB с программами лояльности только в США"),
     ("$100B+", "баллов выпускается и не погашается ежегодно"),
 ]
@@ -258,7 +258,7 @@ for i, (num, lab) in enumerate(stats):
     textbox(s, x + Inches(0.2), sy + Inches(1.4), sw - Inches(0.4), Inches(1.1),
             [[(lab, 13, MUTED, False)]], line_spacing=1.12)
 textbox(s, Inches(0.9), Inches(5.8), Inches(11.5), Inches(0.6),
-        [[("Источники: отраслевые отчёты по рынку лояльности и SMB-коммерции. SAM — обслуживаемый сегмент цифровой лояльности.", 11.5, MUTED, False)]])
+        [[("Источники: Mordor / Grand View и др. по loyalty management (~$15–16B в 2026). SAM — консервативная оценка SMB / mid-market digital & cloud.", 11.5, MUTED, False)]])
 footer(s, 5)
 
 # ============ SLIDE 6 — PRODUCT ============

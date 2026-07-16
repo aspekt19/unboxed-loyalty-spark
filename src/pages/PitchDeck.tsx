@@ -68,10 +68,10 @@ const PitchDeck = () => {
     {
       id: 'market-size',
       title: 'Market Size',
-      subtitle: 'Loyalty SaaS + AI-agent commerce',
+      subtitle: 'Loyalty management software & services',
       marketData: {
-        tam: { value: '$200B+', label: 'Total Addressable Market', description: 'Global loyalty rewards (SaaS + points liability)' },
-        sam: { value: '$60B', label: 'Serviceable Addressable Market', description: 'SMB & mid-market digital loyalty' },
+        tam: { value: '~$16B', label: 'Total Addressable Market', description: 'Global loyalty management market (2026)' },
+        sam: { value: '~$5B', label: 'Serviceable Addressable Market', description: 'SMB & mid-market digital / cloud loyalty' },
         share: { value: 'Pre-revenue', label: 'Stage', description: 'Live MVP on Base, onboarding first design partners' },
       },
     },

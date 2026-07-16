@@ -48,12 +48,12 @@ Total Slides: 12
 
 ## Slide 5: Market Size
 
-**Loyalty SaaS + AI-agent commerce**
+**Loyalty management software & services**
 
 | Segment | Size | Detail |
 |---------|------|--------|
-| **Total Addressable Market** | $200B+ | Global loyalty rewards (SaaS + points liability) |
-| **Serviceable Addressable Market** | $60B | SMB & mid-market digital loyalty |
+| **Total Addressable Market** | ~$16B | Global loyalty management market (2026) |
+| **Serviceable Addressable Market** | ~$5B | SMB & mid-market digital / cloud loyalty |
 | **Stage** | Pre-revenue | Live MVP on Base, onboarding first design partners |
 
 ---
