@@ -583,7 +583,7 @@ const PitchDeck = () => {
                 <p className="text-base xxs:text-lg sm:text-xl text-muted-foreground px-2">
                   Let's build the onchain loyalty layer for humans and AI agents
                 </p>
-                <div className="pt-2 sm:pt-4">
+                <div className="pt-2 sm:pt-4 flex flex-col items-center gap-2">
                   <a 
                     href="https://loyalspark.online/" 
                     target="_blank" 
@@ -591,6 +591,12 @@ const PitchDeck = () => {
                     className="text-base xxs:text-lg font-medium text-foreground hover:underline"
                   >
                     loyalspark.online
+                  </a>
+                  <a
+                    href="mailto:admin@loyalspark.online"
+                    className="text-sm xxs:text-base font-medium text-muted-foreground hover:text-foreground hover:underline"
+                  >
+                    admin@loyalspark.online
                   </a>
                 </div>
               </CardContent>

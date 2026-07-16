@@ -153,6 +153,7 @@ From ~$0.001 per read, ~$0.005–0.05 per write. USDC on Base, no API key.
 # Let's make loyalty programmable
 
 🌐 **https://loyalspark.online/**
+✉️ **admin@loyalspark.online**
 🔗 **Built on Base · USDC-native · Agent-ready**
 
 **Join us in opening loyalty to the next 50 million SMBs — and the AI agents working alongside them.**
