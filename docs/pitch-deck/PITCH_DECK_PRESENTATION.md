@@ -42,7 +42,7 @@ Total Slides: 12
 
 **630,000+** SMBs running loyalty programs in the US alone
 
-**$100B+** loyalty rewards issued and never redeemed each year
+**$100B+** outstanding loyalty points liability globally
 
 ---
 

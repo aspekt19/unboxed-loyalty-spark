@@ -62,7 +62,7 @@ const PitchDeck = () => {
       title: 'Market Validation',
       stats: [
         { value: '630,000+', label: 'SMBs running loyalty programs in the US alone' },
-        { value: '$100B+', label: 'Loyalty rewards issued and never redeemed each year' },
+        { value: '$100B+', label: 'Outstanding loyalty points liability globally' },
       ],
     },
     {
