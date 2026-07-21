@@ -62,12 +62,13 @@ const ENDPOINTS: Endpoint[] = [
   {
     method: 'POST',
     path: '/programs',
-    description: 'Get calldata to deploy a new ERC-20 loyalty token via factory contract. Returns transaction data for on-chain execution.',
+    description: 'Get calldata to deploy a new B20 loyalty token on Base (default). Pass token_standard: "erc20" for the legacy factory. Returns transaction data for on-chain execution.',
     scope: 'create_program',
     params: [
       { name: 'name', type: 'string', required: true, description: 'Token name (e.g. Coffee Rewards)' },
       { name: 'symbol', type: 'string', required: true, description: 'Token symbol (e.g. COFFEE)' },
       { name: 'expiration_days', type: 'number', required: false, description: 'Program duration in days (default 365)' },
+      { name: 'token_standard', type: 'string', required: false, description: 'b20 (default) or erc20 (legacy)' },
     ],
     exampleRequest: `{
   "name": "Coffee Rewards",
@@ -76,10 +77,11 @@ const ENDPOINTS: Endpoint[] = [
 }`,
     exampleResponse: `{
   "calldata": {
-    "to": "0x5F3DdBa12580CFdc6016258774cCc19C4250dA80",
+    "to": "0xB20f000000000000000000000000000000000000",
     "data": "0x...",
     "value": "0"
   },
+  "token_standard": "b20",
   "message": "Send this transaction to deploy your loyalty token"
 }`,
   },
@@ -755,7 +757,7 @@ const reward = await fetch(\`\${BASE}/rewards\`, {
                   { icon: Network, title: 'Network Effect', desc: 'Tokens are tradeable on the marketplace, convertible between programs, with real utility through vouchers.' },
                   { icon: BadgeCheck, title: 'Trust & Verification', desc: 'Verified protocol with audit history and buyback mechanism — not just another random token.' },
                   { icon: Users, title: 'Ready-Made Audience', desc: 'Access existing merchant customer bases instantly instead of finding token holders from scratch.' },
-                  { icon: TrendingUp, title: 'Programmatic Distribution', desc: 'Tokens flow through automations, tiers, referrals, and vouchers — programmable utility a bare ERC-20 can\'t deliver.' },
+                  { icon: TrendingUp, title: 'Programmatic Distribution', desc: 'Tokens flow through automations, tiers, referrals, and vouchers — programmable utility a bare token can\'t deliver.' },
                   { icon: Zap, title: 'Composability', desc: 'Program → tiers → referrals → auto-mint → analytics. All through REST API or MCP Server.' },
                 ].map(({ icon: Icon, title, desc }) => (
                   <div key={title} className="flex items-start gap-3 p-3 rounded-lg border bg-card">
@@ -924,7 +926,7 @@ const reward = await fetch(\`\${BASE}/rewards\`, {
               <div className="space-y-2">
                 {[
                   { id: '00', name: 'Getting Started', desc: 'Register agent, get API key, first request' },
-                  { id: '01', name: 'Create Loyalty Program', desc: 'Deploy B20 loyalty token on Base (ERC-20 superset)' },
+                  { id: '01', name: 'Create Loyalty Program', desc: 'Deploy B20 loyalty token on Base (default; legacy ERC-20 optional)' },
                   { id: '02', name: 'Mint Tokens', desc: 'Mint tokens to customer wallets' },
                   { id: '03', name: 'Transfer Tokens', desc: 'Transfer tokens between wallets' },
                   { id: '04', name: 'Manage Rewards', desc: 'Create redeemable rewards catalog' },

@@ -92,7 +92,7 @@ function buildOpenApiSpec(baseUrl: string): object {
     { path: "/offers", method: "get", operationId: "listOffers", summary: "List active P2P marketplace offers", price: "0.001000", tags: ["Marketplace"] },
     // POST endpoints
     {
-      path: "/programs", method: "post", operationId: "deployProgram", summary: "Deploy new ERC-20 loyalty token via factory", price: "0.050000", tags: ["Programs"],
+      path: "/programs", method: "post", operationId: "deployProgram", summary: "Deploy new B20 loyalty token (default; legacy ERC-20 via token_standard)", price: "0.050000", tags: ["Programs"],
       requestBody: {
         required: true,
         content: { "application/json": { schema: { type: "object", properties: { name: { type: "string", description: "Token name" }, symbol: { type: "string", description: "Token symbol" }, merchant_address: { type: "string", description: "Merchant wallet address" } }, required: ["name", "symbol", "merchant_address"] } } },
@@ -230,17 +230,17 @@ function buildOpenApiSpec(baseUrl: string): object {
     info: {
       title: "Loyal Spark — Onchain Loyalty Protocol",
       version: "2.1.0",
-      description: "AI-agent-native loyalty protocol on Base L2. Create ERC-20 loyalty programs, mint tokens, manage rewards, trade on P2P marketplace, and get autonomous MPC wallets.",
+      description: "AI-agent-native loyalty protocol on Base L2. Create B20 loyalty programs by default (legacy ERC-20 optional), mint tokens, manage rewards, trade on P2P marketplace, and get autonomous MPC wallets.",
       "x-guidance": `Loyal Spark is an onchain loyalty protocol for AI agents on Base L2.
 
 Authentication: Include your API key in the x-api-key header (format: lsk_...). Get one from the Merchant Panel at https://loyalspark.online.
 
 Common workflow:
 1. GET /me — check your agent profile and permissions
-2. POST /programs — deploy a new ERC-20 loyalty token
+2. POST /programs — deploy a new B20 loyalty token (default; token_standard: "erc20" for legacy)
 3. POST /register-program — register the deployed token (optional cashback_rate, points_per_dollar)
 4. POST /update-program-config — change default cashback / points-per-dollar
-5. POST /activate-program — get calldata to activate the program onchain
+5. POST /activate-program — legacy ERC-20 only (no-op for B20)
 6. POST /mint — mint tokens to customer wallets
 7. POST /rewards — create redeemable rewards
 8. GET /analytics — view program metrics

@@ -126,7 +126,7 @@ curl -sS -X POST "${RECIPIENT_REST}/register" \\
 
 4) Call APIs with header: x-api-key: rwk_...
 
-5) Send loyalty tokens to any address (holder-signed ERC-20 transfer calldata; program must be active):
+5) Send loyalty tokens to any address (holder-signed transfer calldata; program must be active):
 curl -sS -X POST "${RECIPIENT_REST}/prepare-transfer" \\
   -H "Content-Type: application/json" \\
   -H "x-api-key: rwk_YOUR_RECIPIENT_KEY" \\
@@ -137,7 +137,7 @@ MCP: prepare_loyalty_token_transfer`;
 
 const recipientP2PFlow = `P2P offers — recipient wallets swap loyalty tokens with each other.
 The API records intent and returns escrow contract hints. The actual on-chain
-swap (ERC-20 approve + escrow create/accept/cancel) is performed separately
+swap (token approve + escrow create/accept/cancel) is performed separately
 by the wallet — same pattern as the merchant agent-api.
 
 # List open offers (optionally filter by token)
@@ -219,7 +219,7 @@ export default function ForAgentsPage() {
         <main className="container max-w-5xl mx-auto px-4 py-8 space-y-10">
           <section className="text-center space-y-3 max-w-3xl mx-auto">
             <Badge variant="secondary" className="text-xs">
-              Base mainnet · ERC-20 · {MCP_TOOL_COUNT} merchant MCP tools · {RECIPIENT_MCP_TOOL_COUNT} recipient MCP tools
+              Base mainnet · B20 default · {MCP_TOOL_COUNT} merchant MCP tools · {RECIPIENT_MCP_TOOL_COUNT} recipient MCP tools
             </Badge>
             <h2 className="text-2xl sm:text-4xl font-bold tracking-tight">
               Ship an agent that runs real loyalty programs
@@ -230,6 +230,10 @@ export default function ForAgentsPage() {
               (dashboard <em>or</em> free SIWE registration — see below).
               <strong> Recipient agents</strong> (wallets that earn points) use <code className="text-xs bg-muted px-1 py-0.5 rounded">rwk_</code> and a separate
               REST + MCP stack — humans never need to touch that. Public voucher lookup needs no key.
+            </p>
+            <p className="text-xs text-muted-foreground max-w-2xl mx-auto">
+              New programs deploy as <strong>B20</strong> on Base by default (one tx, active after register). Legacy <strong>ERC-20</strong> factory remains available via{" "}
+              <code className="bg-muted px-1 rounded">token_standard: &quot;erc20&quot;</code>.
             </p>
             <p className="text-xs text-muted-foreground max-w-2xl mx-auto">
               Optional command-line helpers for developers (x402 MCP check, SIWE key flow) live in the GitHub repo under{" "}
@@ -412,7 +416,7 @@ export default function ForAgentsPage() {
             <h3 className="text-lg font-semibold">P2P offers for recipients (rwk_)</h3>
             <p className="text-sm text-muted-foreground">
               Holder wallets can browse open swap offers, post their own (creator = caller's wallet), accept somebody else's, or cancel their own active offer.
-              The API only records intent and returns escrow contract hints — the actual on-chain step (ERC-20{" "}
+              The API only records intent and returns escrow contract hints — the actual on-chain step (token{" "}
               <code className="text-xs bg-muted px-1 rounded">approve</code> + escrow{" "}
               <code className="text-xs bg-muted px-1 rounded">create</code>/<code className="text-xs bg-muted px-1 rounded">accept</code>/<code className="text-xs bg-muted px-1 rounded">cancel</code>) is performed by the wallet, exactly like the merchant <code className="text-xs bg-muted px-1 rounded">agent-api</code>.
             </p>

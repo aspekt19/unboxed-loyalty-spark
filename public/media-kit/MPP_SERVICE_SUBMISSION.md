@@ -28,7 +28,7 @@ Add the following entry to the `services` array (place alphabetically among exis
   name: "Loyal Spark",
   url: "https://loyalspark.online",
   serviceUrl: "https://api.loyalspark.online/mpp-gateway",
-  description: "Onchain loyalty protocol for AI agents — create ERC-20 programs, mint tokens, manage rewards, trade on P2P marketplace, and get autonomous MPC wallets. All on Base L2.",
+  description: "Onchain loyalty protocol for AI agents — create B20 programs by default (legacy ERC-20 optional), mint tokens, manage rewards, trade on P2P marketplace, and get autonomous MPC wallets. All on Base L2.",
   categories: ["blockchain"] as Category[],
   integration: "first-party" as Integration,
   tags: [
@@ -61,7 +61,7 @@ Add the following entry to the `services` array (place alphabetically among exis
     { route: "GET /analytics", desc: "Get program analytics and metrics", amount: "5000" },
     { route: "GET /offers", desc: "List active P2P marketplace offers", amount: "1000" },
     // Write endpoints
-    { route: "POST /programs", desc: "Deploy new ERC-20 loyalty token via factory", amount: "50000" },
+    { route: "POST /programs", desc: "Deploy new B20 loyalty token (default; legacy ERC-20 via token_standard)", amount: "50000" },
     { route: "POST /register-program", desc: "Register deployed token as loyalty program", amount: "10000" },
     { route: "POST /activate-program", desc: "Get activation calldata (unpause + enableMinting)", amount: "10000" },
     { route: "POST /program-status", desc: "Update program status after on-chain action", amount: "5000" },
@@ -123,7 +123,7 @@ feat: add Loyal Spark — onchain loyalty protocol for AI agents
 **Description:**
 ```markdown
 Loyal Spark is a Web3 loyalty ecosystem on Base L2 that enables AI agents to
-autonomously create ERC-20 loyalty programs, mint tokens, manage rewards,
+autonomously create B20 loyalty programs (legacy ERC-20 optional), mint tokens, manage rewards,
 and trade on a P2P marketplace.
 
 ## Checklist

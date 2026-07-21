@@ -4,7 +4,7 @@
 
 ## Overview
 
-Loyal Spark is a dual-mode protocol: humans interact via web UI with flexible authentication (email/phone/Google via Privy with embedded wallets, or SIWE for Farcaster and crypto-native users), while AI agents integrate via REST API, MCP Server, or HTTP 402 payment gateways. The protocol runs on Base mainnet (chain ID 8453) and uses ERC-20 tokens for loyalty points.
+Loyal Spark is a dual-mode protocol: humans interact via web UI with flexible authentication (email/phone/Google via Privy with embedded wallets, or SIWE for Farcaster and crypto-native users), while AI agents integrate via REST API, MCP Server, or HTTP 402 payment gateways. The protocol runs on Base mainnet (chain ID 8453). New loyalty programs deploy as **B20** by default (Base native ERC-20–compatible superset); legacy ERC-20 factory remains optional via `token_standard: "erc20"`.
 
 ## Discovery Endpoints
 
@@ -227,9 +227,9 @@ Base URL: https://api.loyalspark.online/recipient-api · Auth: `x-api-key: rwk_�
 | GET | /create-program | lsk_ | Deploy loyalty token (B20 default) |
 | GET | /activate-program | lsk_ | Activate a deployed program |
 | GET | /mint | lsk_ | Mint tokens to a wallet |
-| GET | /transfer | lsk_ | Merchant ERC-20 transfer |
-| GET | /recipient-transfer | rwk_ | Holder ERC-20 transfer |
-| GET | /recipient-approve | rwk_ | Holder ERC-20 approve |
+| GET | /transfer | lsk_ | Merchant loyalty token transfer |
+| GET | /recipient-transfer | rwk_ | Holder loyalty token transfer |
+| GET | /recipient-approve | rwk_ | Holder token approve |
 
 Plugin spec: https://loyalspark.online/skills/loyal-spark/plugins/loyal-spark.md
 

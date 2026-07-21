@@ -81,7 +81,7 @@
       "GET recipient-api/offers": { "price": "0.001", "description": "P2P marketplace offers" },
       "GET recipient-api/workflow/reward-status": { "price": "0.001", "description": "Autonomous planner: current recipient reward step + next_actions[]" },
       "POST recipient-api/register": { "price": "0", "description": "Wallet registration after SIWE" },
-      "POST recipient-api/prepare-transfer": { "price": "0.005", "description": "ERC-20 transfer calldata" },
+      "POST recipient-api/prepare-transfer": { "price": "0.005", "description": "Loyalty token transfer calldata" },
       "POST recipient-api/redeem-reward": { "price": "0.01", "description": "Redeem reward via tx hash" },
       "POST recipient-api/offers": { "price": "0.01", "description": "Create P2P swap intent" },
       "POST recipient-api/accept-offer": { "price": "0.01", "description": "Accept P2P offer" },

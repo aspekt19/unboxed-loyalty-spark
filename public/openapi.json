@@ -1104,7 +1104,7 @@
       "post": {
         "operationId": "post_register_program",
         "summary": "Register a deployed loyalty token in the database",
-        "description": "Persists a deployed ERC-20 loyalty token (name, symbol, token_address, optional cashback_rate / points_per_dollar).",
+        "description": "Persists a deployed loyalty token (B20 default or legacy ERC-20). Pass name, symbol, token_address, optional cashback_rate / points_per_dollar.",
         "tags": [
           "Merchant REST"
         ],

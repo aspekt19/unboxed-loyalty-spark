@@ -74,7 +74,7 @@ export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: Merchant
   const { mintTokens, isPending, isSuccess, reset, hash } = useMintTokens();
   const { isPaused, isMintingActive } = useCheckProgramStatus(
     selectedProgram?.tokenAddress as `0x${string}` | undefined,
-    selectedProgram?.tokenStandard ?? 'erc20',
+    selectedProgram?.tokenStandard ?? 'b20',
   );
 
   // Fetch team memberships

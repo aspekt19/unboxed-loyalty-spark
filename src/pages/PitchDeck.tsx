@@ -40,7 +40,7 @@ const PitchDeck = () => {
         {
           title: 'OWN',
           subtitle: 'YOUR PROGRAM',
-          description: 'Deploy ERC-20 loyalty token on Base. Mint, transfer, redeem onchain.',
+          description: 'Deploy B20 loyalty token on Base (default). Mint, transfer, redeem onchain.',
           icon: Coins,
         },
         {
@@ -81,7 +81,7 @@ const PitchDeck = () => {
       subtitle: 'Two portals + one programmable API',
       productFlow: {
         merchant: [
-          { step: 'Deploy Program', description: 'Create ERC-20 loyalty token on Base in minutes', icon: Coins },
+          { step: 'Deploy Program', description: 'Create B20 loyalty token on Base in minutes', icon: Coins },
           { step: 'Run Loyalty', description: 'Mint by email/phone/wallet, vouchers, tiers, RFM, automation', icon: BarChart3 },
           { step: 'Invite Team & Agents', description: 'Branches, employees, AI agents with scoped API keys', icon: UserPlus },
         ],
@@ -144,7 +144,7 @@ const PitchDeck = () => {
         ],
         loyalSpark: [
           'Predictable USDC SaaS from $39/mo',
-          'Onchain ERC-20 tokens — customers truly own them',
+          'Onchain B20 tokens — customers truly own them',
           'Agent-ready: REST + MCP, x402 / MPP micropayments',
           'SIWE & Privy auth — no passwords, no email leaks',
           'P2P escrow marketplace between programs',

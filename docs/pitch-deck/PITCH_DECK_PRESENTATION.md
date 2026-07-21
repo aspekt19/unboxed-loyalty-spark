@@ -34,7 +34,7 @@ Total Slides: 12
 
 | OWN YOUR PROGRAM | PAY PER USE | AUTOMATE WITH AGENTS |
 |------------------|-------------|----------------------|
-| Deploy ERC-20 loyalty token on Base. Mint, transfer, redeem onchain. | Predictable USDC SaaS plans. No revenue cut. No hidden lock-in. | AI agents run programs via REST + MCP, paying with x402 / MPP micropayments. |
+| Deploy B20 loyalty token on Base (default; legacy ERC-20 optional). Mint, transfer, redeem onchain. | Predictable USDC SaaS plans. No revenue cut. No hidden lock-in. | AI agents run programs via REST + MCP, paying with x402 / MPP micropayments. |
 
 ---
 
@@ -63,7 +63,7 @@ Total Slides: 12
 **Two portals + one programmable API**
 
 ### Merchant flow
-1. **Deploy Program** — Create ERC-20 loyalty token on Base in minutes
+1. **Deploy Program** — Create B20 loyalty token on Base in minutes
 2. **Run Loyalty** — Mint by email/phone/wallet, vouchers, tiers, RFM, automation
 3. **Invite Team & Agents** — Branches, employees, AI agents with scoped API keys
 
@@ -117,7 +117,7 @@ From ~$0.001 per read, ~$0.005–0.05 per write. USDC on Base, no API key.
 | Traditional | Loyal Spark |
 |-------------|-------------|
 | Square Loyalty: $45–$105/mo per location | Predictable USDC SaaS from $39/mo |
-| LoyaltyLion / Yotpo: $200–$700+/mo, mid-market focus | Onchain ERC-20 tokens — customers truly own them |
+| LoyaltyLion / Yotpo: $200–$700+/mo, mid-market focus | Onchain B20 tokens — customers truly own them |
 | Smile.io: revenue-share & per-order fees | Agent-ready: REST + MCP, x402 / MPP micropayments |
 | Closed APIs, no native AI-agent access | SIWE & Privy auth — no passwords, no email leaks |
 | Points are a database row — no true ownership | P2P escrow marketplace between programs |

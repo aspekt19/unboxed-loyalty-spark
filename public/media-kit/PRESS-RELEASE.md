@@ -14,7 +14,7 @@ Loyal Spark, the onchain loyalty platform on Base L2, has launched full AI agent
 
 #### What's New
 
-- **REST API** — Full programmatic access to create loyalty programs, mint ERC-20 tokens, manage rewards, and trade on marketplace
+- **REST API** — Full programmatic access to create B20 loyalty programs (legacy ERC-20 optional), mint tokens, manage rewards, and trade on marketplace
 - **MCP Server** — 9 specialized tools for LLM-based agents (compatible with Claude, GPT, and any MCP client)
 - **CDP MPC Wallets** — Each AI agent gets a Coinbase-managed server wallet for autonomous onchain operations
 - **Atomic P2P Escrow** — Smart contract-protected token swaps via LoyaltyTokenEscrow with 0.5% protocol fee
@@ -22,7 +22,7 @@ Loyal Spark, the onchain loyalty platform on Base L2, has launched full AI agent
 
 #### Why It Matters
 
-As AI agents proliferate, they need financial infrastructure. Deploying a standalone ERC-20 token gives an agent a currency but no ecosystem. Loyal Spark provides the complete stack: rewards, vouchers, tiers, analytics, CRM, marketing automation, and a liquid marketplace — all accessible via a single API call.
+As AI agents proliferate, they need financial infrastructure. Deploying a standalone token gives an agent a currency but no ecosystem. Loyal Spark provides the complete stack: rewards, vouchers, tiers, analytics, CRM, marketing automation, and a liquid marketplace — all accessible via a single API call.
 
 Think **"Shopify for loyalty programs"** — but built for AI agents.
 
@@ -66,7 +66,7 @@ Think **"Shopify for loyalty programs"** — but built for AI agents.
 Loyal Spark continues to serve merchants and customers through its Progressive Web App:
 
 **For Merchants:**
-- Deploy custom ERC-20 loyalty tokens with one click
+- Deploy custom B20 loyalty tokens with one click (legacy ERC-20 still supported)
 - Manage rewards, vouchers, tiers, and referral programs
 - CRM with RFM segmentation and marketing automation
 - Real-time analytics dashboard
@@ -102,7 +102,7 @@ Loyal Spark continues to serve merchants and customers through its Progressive W
 ### Quick Facts
 
 - **Platform:** Base Network (Ethereum Layer 2)
-- **Token Standard:** ERC-20 (proxy pattern)
+- **Token Standard:** B20 default (Base native); legacy ERC-20 factory available
 - **AI Integration:** REST API + MCP Server + CDP MPC Wallets
 - **P2P Trading:** Atomic swaps via escrow smart contract
 - **DeFi Yield:** Aave & Compound strategies via Round-Up
@@ -113,17 +113,17 @@ Loyal Spark continues to serve merchants and customers through its Progressive W
 ### Boilerplate
 
 **Short (50 words):**
-Loyal Spark is a Loyalty-as-a-Service protocol on Base L2 for both humans and AI agents. Merchants create ERC-20 loyalty programs, customers earn and trade tokens with escrow protection, and AI agents operate autonomously via REST API and MCP Server with Coinbase CDP wallets.
+Loyal Spark is a Loyalty-as-a-Service protocol on Base L2 for both humans and AI agents. Merchants create B20 loyalty programs by default (legacy ERC-20 optional), customers earn and trade tokens with escrow protection, and AI agents operate autonomously via REST API and MCP Server with Coinbase CDP wallets.
 
 **Medium (100 words):**
-Loyal Spark is the first dual-mode loyalty protocol on Base, serving both human users through a PWA and AI agents through a REST API and MCP Server. Merchants deploy custom ERC-20 loyalty tokens via a gas-efficient proxy factory, manage rewards and tiers, and leverage CRM with RFM segmentation. Customers own tokens in their wallets, trade on a P2P marketplace protected by an escrow smart contract, and invest via DeFi yield strategies. AI agents get Coinbase CDP MPC wallets for autonomous operations. Pricing is crypto-native: Free, Pro ($49/mo USDC), or Enterprise ($129/mo USDC) with decreasing mint fees; see current pricing on the site.
+Loyal Spark is the first dual-mode loyalty protocol on Base, serving both human users through a PWA and AI agents through a REST API and MCP Server. Merchants deploy B20 loyalty tokens by default (legacy ERC-20 factory optional), manage rewards and tiers, and leverage CRM with RFM segmentation. Customers own tokens in their wallets, trade on a P2P marketplace protected by an escrow smart contract, and invest via DeFi yield strategies. AI agents get Coinbase CDP MPC wallets for autonomous operations. Pricing is crypto-native: Free, Pro ($49/mo USDC), or Enterprise ($129/mo USDC) with decreasing mint fees; see current pricing on the site.
 
 ---
 
 ### Hashtags
 
 Primary: #LoyalSpark #Web3Loyalty #AIAgents #Base #MCP
-Secondary: #DeFi #A2A #LoyaltyAsAService #CryptoRewards #ERC20
+Secondary: #DeFi #A2A #LoyaltyAsAService #CryptoRewards #B20 #Base
 
 ---
 

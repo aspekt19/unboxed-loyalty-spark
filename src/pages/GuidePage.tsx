@@ -864,7 +864,7 @@ export default function GuidePage() {
                   <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                     <li>Read balances, vouchers and personalized offers</li>
                     <li>Redeem rewards and accept P2P offers</li>
-                    <li>Prepare ERC-20 transfer calldata for any address (<code className="bg-muted px-1 rounded">prepare_loyalty_token_transfer</code>)</li>
+                    <li>Prepare loyalty token transfer calldata for any address (<code className="bg-muted px-1 rounded">prepare_loyalty_token_transfer</code>)</li>
                     <li>Create / cancel marketplace offers</li>
                   </ul>
                   <p className="text-sm text-muted-foreground">

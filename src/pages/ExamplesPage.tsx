@@ -21,7 +21,7 @@ const examples = [
     title: "Local Coffee Shop — COFFEE token",
     sector: "Retail rewards",
     summary:
-      "A neighborhood café deploys a branded ERC-20 (COFFEE) on Base L2. Every purchase mints tokens to the customer wallet; 50 COFFEE redeems a free latte at the counter via QR scan.",
+      "A neighborhood café deploys a branded B20 loyalty token (COFFEE) on Base L2. Every purchase mints tokens to the customer wallet; 50 COFFEE redeems a free latte at the counter via QR scan.",
     metrics: ["1 token = $0.05 reward value", "Mint fee 0.25%–1.25%", "Settlement in seconds on Base"],
     keywords: ["blockchain loyalty program example", "tokenized loyalty for retail"],
   },
@@ -32,7 +32,7 @@ const examples = [
     summary:
       "An online apparel brand issues SPARK tokens with Bronze, Silver, and Gold tiers. Holders unlock early product drops, free shipping, and resale rights on the in-app P2P marketplace.",
     metrics: ["3 customer tiers, fully onchain", "P2P marketplace with 0.5% protocol fee", "RFM segmentation + automation rules"],
-    keywords: ["tokenized loyalty", "ERC-20 customer rewards"],
+    keywords: ["tokenized loyalty", "B20 customer rewards"],
   },
   {
     icon: Bot,
@@ -48,8 +48,8 @@ const examples = [
     title: "Cross-merchant Network — Shared rewards",
     sector: "Cross-merchant loyalty tokens",
     summary:
-      "A coalition of independent merchants accepts each other's loyalty tokens through Loyal Spark's marketplace. Customers earn at one shop and spend at another — the open ERC-20 standard makes the network composable.",
-    metrics: ["Composable ERC-20 on Base L2", "Shared P2P marketplace", "No vendor lock-in"],
+      "A coalition of independent merchants accepts each other's loyalty tokens through Loyal Spark's marketplace. Customers earn at one shop and spend at another — B20 / ERC-20–compatible tokens make the network composable.",
+    metrics: ["Composable B20 on Base L2", "Shared P2P marketplace", "No vendor lock-in"],
     keywords: ["cross-merchant loyalty", "coalition rewards on blockchain"],
   },
   {
@@ -66,8 +66,8 @@ const examples = [
     title: "Creator Membership — Referral economy",
     sector: "Community & referrals",
     summary:
-      "A creator launches a membership token that fans earn by referring friends. Built-in referral tracking, leaderboards, and ERC-20 transferability turn followers into a verifiable on-chain community.",
-    metrics: ["Onchain referral attribution", "ERC-20 transferable memberships", "Realtime CRM analytics"],
+      "A creator launches a membership token that fans earn by referring friends. Built-in referral tracking, leaderboards, and on-chain transferability turn followers into a verifiable community.",
+    metrics: ["Onchain referral attribution", "Transferable memberships", "Realtime CRM analytics"],
     keywords: ["onchain membership", "creator loyalty token"],
   },
 ];
@@ -113,7 +113,7 @@ export default function ExamplesPage() {
             <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-3xl mx-auto">
               Concrete, tokenized loyalty case studies built on Base L2 — retail rewards,
               agent-to-agent incentives, cross-merchant tokens, gift certificates, and creator
-              memberships powered by composable ERC-20 tokens.
+              memberships powered by composable B20 loyalty tokens.
             </p>
           </section>
 
@@ -168,7 +168,7 @@ export default function ExamplesPage() {
               Launch your tokenized loyalty program on Base
             </h2>
             <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto">
-              Deploy a branded ERC-20, configure rewards and tiers, and onboard AI agents through
+              Deploy a branded B20 loyalty token, configure rewards and tiers, and onboard AI agents through
               REST or MCP — usually in under five minutes.
             </p>
             <div className="flex flex-wrap gap-3 justify-center">
