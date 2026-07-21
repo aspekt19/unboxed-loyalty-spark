@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local ops — never commit plaintext or decrypt keys
+scripts/.admin-wallets.local.json
+scripts/.admin-wallets-decrypt.key
+supabase/functions/_shared/bot-cluster-wallets.json

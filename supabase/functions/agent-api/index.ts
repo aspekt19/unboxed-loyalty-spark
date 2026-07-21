@@ -8,6 +8,7 @@ import {
   PLATFORM_FEE_WALLET,
 } from "../_shared/loyalspark-agent-helpers.ts";
 import { authenticateAgent, type AgentContext } from "./auth.ts";
+import { isPaidGatewayRequest } from "../_shared/paid-gateway-auth.ts";
 import { corsHeaders, jsonResponse } from "./http.ts";
 import { parseOptionalCashbackRate, parseOptionalPointsPerDollar } from "../_shared/program-economics.ts";
 import {
@@ -231,7 +232,9 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "Missing or invalid API key. Use x-api-key header with your lsk_ key." }, 401);
   }
 
-  const auth = await authenticateAgent(apiKey, serviceClient);
+  const auth = await authenticateAgent(apiKey, serviceClient, {
+    skipMonthlyQuota: isPaidGatewayRequest(req),
+  });
   if (!auth.ok && auth.error === "invalid_key") {
     return jsonResponse({ error: "Invalid API key or agent is deactivated" }, 401);
   }

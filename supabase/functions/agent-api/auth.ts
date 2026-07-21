@@ -1,6 +1,7 @@
 import {
   checkAgentApiRateLimits,
   incrementAgentMonthlyApiCall,
+  type AgentRateLimitOptions,
 } from "../_shared/agent-rate-limit.ts";
 
 export interface AgentContext {
@@ -25,7 +26,8 @@ export async function hashApiKey(key: string): Promise<string> {
 
 export async function authenticateAgent(
   apiKey: string,
-  serviceClient: any
+  serviceClient: any,
+  options?: AgentRateLimitOptions,
 ): Promise<AgentAuthResult> {
   const keyHash = await hashApiKey(apiKey);
 
@@ -46,13 +48,15 @@ export async function authenticateAgent(
     owner_address: agent.owner_address,
     rate_limit_per_minute: agent.rate_limit_per_minute,
     plan_id: agent.plan_id ?? null,
-  });
+  }, options);
 
   if (!limits.ok) {
     return { ok: false, error: "rate_limited", reason: limits.reason };
   }
 
-  await incrementAgentMonthlyApiCall(serviceClient, agent.owner_address);
+  if (!options?.skipMonthlyQuota) {
+    await incrementAgentMonthlyApiCall(serviceClient, agent.owner_address);
+  }
 
   await serviceClient
     .from("agent_registry")

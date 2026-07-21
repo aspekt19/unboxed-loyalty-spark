@@ -3,6 +3,7 @@ import { McpServer, StreamableHttpTransport } from "mcp-lite";
 import { resolveMcpApiKey } from "../_shared/mcp-http-api-key.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { authenticateRecipientAgent, insertRecipientActivity } from "../_shared/recipient-agent-auth.ts";
+import { isPaidGatewayRequest } from "../_shared/paid-gateway-auth.ts";
 import { walletHasEngagement } from "../_shared/recipient-queries.ts";
 import { recipientRedeemReward } from "../_shared/recipient-redeem.ts";
 import { prepareHolderLoyaltyTransfer } from "../_shared/recipient-prepare-transfer.ts";
@@ -27,15 +28,23 @@ type RecipientAuthFailure = null | "missing_key" | "invalid_key" | "rate_limited
  * x402/MCP clients (they cannot distinguish auth failure from payment-required
  * or tool-availability errors when the response is not JSON-RPC).
  */
-function createDeniedRecipientMcpServer(reason: RecipientAuthFailure) {
+function createDeniedRecipientMcpServer(
+  reason: RecipientAuthFailure,
+  rateDetail?: "per_minute" | "monthly_quota",
+) {
   const server = new McpServer({ name: "loyal-spark-recipient-mcp", version: "1.0.0" });
   const T = (text: string) => ({ content: [{ type: "text" as const, text }] });
 
   const payload = (() => {
     if (reason === "rate_limited") {
+      const msg =
+        rateDetail === "monthly_quota"
+          ? "Monthly API call quota exceeded for this recipient agent (free tier). Upgrade or wait for next cycle."
+          : "Per-minute rate limit exceeded for this recipient agent. Slow down.";
       return {
-        error: "Rate limit exceeded for this recipient agent (per-minute quota).",
+        error: msg,
         code: "rate_limited",
+        detail: rateDetail ?? "per_minute",
       };
     }
     if (reason === "invalid_key") {
@@ -638,9 +647,16 @@ app.all("/*", async (c) => {
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
 
-  const auth = await authenticateRecipientAgent(apiKey, serviceClient);
+  const auth = await authenticateRecipientAgent(apiKey, serviceClient, {
+    skipMonthlyQuota: isPaidGatewayRequest(c.req.raw),
+  });
   if (!auth.ok) {
-    const handler = transport.bind(createDeniedRecipientMcpServer(auth.error));
+    const handler = transport.bind(
+      createDeniedRecipientMcpServer(
+        auth.error,
+        auth.error === "rate_limited" ? auth.reason : undefined,
+      ),
+    );
     return handler(c.req.raw);
   }
 

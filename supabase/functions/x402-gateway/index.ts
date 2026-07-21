@@ -3,6 +3,7 @@ import { getRecipientMcpBazaarTool } from "../_shared/recipient-mcp-bazaar-tools
 import { RECIPIENT_REST_ROUTE_USD } from "../_shared/recipient-paid-routes.ts";
 import { resolveMcpApiKey } from "../_shared/mcp-http-api-key.ts";
 import { buildAcceptEntry, paymentRequirementsForFacilitator, validateClientAcceptedMatches } from "../_shared/x402-bazaar-accept.ts";
+import { paidGatewayUpstreamHeaders, type PaidGatewayKind } from "../_shared/paid-gateway-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -437,7 +438,7 @@ Deno.serve(async (req) => {
       return new Response(await errorResp.text(), { status: 402, headers });
     }
 
-    const apiResponse = await proxyToUpstream(req);
+    const apiResponse = await proxyToUpstream(req, "x402");
 
     const respHeaders = new Headers(apiResponse.headers);
     for (const [k, v] of Object.entries(corsHeaders)) {
@@ -472,22 +473,27 @@ Deno.serve(async (req) => {
   }
 });
 
-async function proxyToUpstream(originalReq: Request): Promise<Response> {
+async function proxyToUpstream(originalReq: Request, paidVia?: PaidGatewayKind): Promise<Response> {
   const originalUrl = new URL(originalReq.url);
   const resource = getResourceFromUrl(originalUrl);
   if (isMcpToolResource(resource)) {
-    return proxyToLoyaltyMcp(originalReq);
+    return proxyToLoyaltyMcp(originalReq, paidVia);
   }
   if (resource.startsWith("recipient-mcp-tools/")) {
-    return proxyToRecipientLoyaltyMcp(originalReq);
+    return proxyToRecipientLoyaltyMcp(originalReq, paidVia);
   }
   if (resource.startsWith("recipient-api/")) {
-    return proxyToRecipientApi(originalReq);
+    return proxyToRecipientApi(originalReq, paidVia);
   }
-  return proxyToAgentApi(originalReq);
+  return proxyToAgentApi(originalReq, paidVia);
 }
 
-async function proxyToLoyaltyMcp(originalReq: Request): Promise<Response> {
+function withPaidGatewayHeaders(headers: Record<string, string>, paidVia?: PaidGatewayKind): Record<string, string> {
+  if (!paidVia) return headers;
+  return { ...headers, ...paidGatewayUpstreamHeaders(paidVia) };
+}
+
+async function proxyToLoyaltyMcp(originalReq: Request, paidVia?: PaidGatewayKind): Promise<Response> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -497,10 +503,10 @@ async function proxyToLoyaltyMcp(originalReq: Request): Promise<Response> {
   const get = (name: string) => originalReq.headers.get(name) ?? undefined;
   const lsk = resolveMcpApiKey(get, "lsk_");
 
-  const headers: Record<string, string> = {
+  const headers = withPaidGatewayHeaders({
     "Content-Type": originalReq.headers.get("content-type") || "application/json",
     Authorization: `Bearer ${serviceKey}`,
-  };
+  }, paidVia);
   if (lsk) {
     headers["x-api-key"] = lsk;
   }
@@ -532,7 +538,7 @@ async function proxyToLoyaltyMcp(originalReq: Request): Promise<Response> {
   });
 }
 
-async function proxyToRecipientLoyaltyMcp(originalReq: Request): Promise<Response> {
+async function proxyToRecipientLoyaltyMcp(originalReq: Request, paidVia?: PaidGatewayKind): Promise<Response> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -542,10 +548,10 @@ async function proxyToRecipientLoyaltyMcp(originalReq: Request): Promise<Respons
   const get = (name: string) => originalReq.headers.get(name) ?? undefined;
   const rwk = resolveMcpApiKey(get, "rwk_");
 
-  const headers: Record<string, string> = {
+  const headers = withPaidGatewayHeaders({
     "Content-Type": originalReq.headers.get("content-type") || "application/json",
     Authorization: `Bearer ${serviceKey}`,
-  };
+  }, paidVia);
   if (rwk) {
     headers["x-api-key"] = rwk;
   }
@@ -585,7 +591,7 @@ async function proxyToRecipientLoyaltyMcp(originalReq: Request): Promise<Respons
   });
 }
 
-async function proxyToRecipientApi(originalReq: Request): Promise<Response> {
+async function proxyToRecipientApi(originalReq: Request, paidVia?: PaidGatewayKind): Promise<Response> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -594,10 +600,10 @@ async function proxyToRecipientApi(originalReq: Request): Promise<Response> {
   const suffix = resource.replace(/^recipient-api\/?/, "");
   const recipientApiUrl = `${supabaseUrl}/functions/v1/recipient-api/${suffix}${originalUrl.search}`;
 
-  const headers: Record<string, string> = {
+  const headers = withPaidGatewayHeaders({
     "Content-Type": originalReq.headers.get("content-type") || "application/json",
     Authorization: `Bearer ${serviceKey}`,
-  };
+  }, paidVia);
 
   const apiKey = originalReq.headers.get("x-api-key");
   if (apiKey) {
@@ -635,7 +641,7 @@ async function proxyToRecipientApi(originalReq: Request): Promise<Response> {
   });
 }
 
-async function proxyToAgentApi(originalReq: Request): Promise<Response> {
+async function proxyToAgentApi(originalReq: Request, paidVia?: PaidGatewayKind): Promise<Response> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -643,10 +649,10 @@ async function proxyToAgentApi(originalReq: Request): Promise<Response> {
   const resource = getResourceFromUrl(originalUrl);
   const agentApiUrl = `${supabaseUrl}/functions/v1/agent-api/${resource}${originalUrl.search}`;
 
-  const headers: Record<string, string> = {
+  const headers = withPaidGatewayHeaders({
     "Content-Type": "application/json",
     Authorization: `Bearer ${serviceKey}`,
-  };
+  }, paidVia);
 
   const apiKey = originalReq.headers.get("x-api-key");
   if (apiKey) {

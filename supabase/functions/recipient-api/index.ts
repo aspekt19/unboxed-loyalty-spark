@@ -7,6 +7,7 @@ import {
   hashRecipientApiKey,
   insertRecipientActivity,
 } from "../_shared/recipient-agent-auth.ts";
+import { isPaidGatewayRequest } from "../_shared/paid-gateway-auth.ts";
 import { walletHasEngagement } from "../_shared/recipient-queries.ts";
 import { recipientRedeemReward } from "../_shared/recipient-redeem.ts";
 import { prepareHolderLoyaltyTransfer } from "../_shared/recipient-prepare-transfer.ts";
@@ -172,12 +173,18 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "Missing or invalid API key. Use x-api-key with your rwk_ key (register via POST /recipient-api/register)." }, 401);
   }
 
-  const auth = await authenticateRecipientAgent(apiKey, serviceClient);
+  const auth = await authenticateRecipientAgent(apiKey, serviceClient, {
+    skipMonthlyQuota: isPaidGatewayRequest(req),
+  });
   if (!auth.ok && auth.error === "invalid_key") {
     return jsonResponse({ error: "Invalid API key or agent is deactivated" }, 401);
   }
   if (!auth.ok && auth.error === "rate_limited") {
-    return jsonResponse({ error: "Rate limit exceeded for this recipient agent." }, 429);
+    const msg =
+      auth.reason === "monthly_quota"
+        ? "Monthly API call quota exceeded for this recipient agent. Upgrade or wait for next cycle."
+        : "Per-minute rate limit exceeded. Slow down.";
+    return jsonResponse({ error: msg, code: "rate_limited", detail: auth.reason }, 429);
   }
   const agent = auth.agent;
   const wallet = agent.walletAddress.toLowerCase();

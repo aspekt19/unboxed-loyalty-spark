@@ -1,3 +1,9 @@
+import {
+  checkAgentApiRateLimits,
+  incrementAgentMonthlyApiCall,
+  type AgentRateLimitOptions,
+} from "./agent-rate-limit.ts";
+
 export interface RecipientAgentContext {
   agentId: string;
   walletAddress: string;
@@ -7,7 +13,7 @@ export interface RecipientAgentContext {
 export type RecipientAuthResult =
   | { ok: true; agent: RecipientAgentContext }
   | { ok: false; error: "invalid_key" }
-  | { ok: false; error: "rate_limited" };
+  | { ok: false; error: "rate_limited"; reason: "per_minute" | "monthly_quota" };
 
 export async function hashRecipientApiKey(key: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -19,7 +25,8 @@ export async function hashRecipientApiKey(key: string): Promise<string> {
 
 export async function authenticateRecipientAgent(
   apiKey: string,
-  serviceClient: any
+  serviceClient: any,
+  options?: AgentRateLimitOptions,
 ): Promise<RecipientAuthResult> {
   if (!apiKey?.startsWith("rwk_")) {
     return { ok: false, error: "invalid_key" };
@@ -37,18 +44,20 @@ export async function authenticateRecipientAgent(
     return { ok: false, error: "invalid_key" };
   }
 
-  const perMin = row.rate_limit_per_minute ?? 30;
-  const sinceIso = new Date(Date.now() - 60_000).toISOString();
+  const wallet = String(row.wallet_address).toLowerCase();
 
-  const { count, error: cErr } = await serviceClient
-    .from("recipient_agent_activity_log")
-    .select("*", { count: "exact", head: true })
-    .eq("agent_id", row.id)
-    .gte("created_at", sinceIso);
+  const limits = await checkAgentApiRateLimits(serviceClient, {
+    id: row.id,
+    owner_address: wallet,
+    rate_limit_per_minute: row.rate_limit_per_minute,
+    plan_id: null,
+  }, options);
+  if (!limits.ok) {
+    return { ok: false, error: "rate_limited", reason: limits.reason };
+  }
 
-  if (cErr) console.error("[recipient-rate-limit]", cErr);
-  if (count !== null && count >= perMin) {
-    return { ok: false, error: "rate_limited" };
+  if (!options?.skipMonthlyQuota) {
+    await incrementAgentMonthlyApiCall(serviceClient, wallet);
   }
 
   const prevReq = Number(row.total_requests) || 0;
@@ -64,7 +73,7 @@ export async function authenticateRecipientAgent(
     ok: true,
     agent: {
       agentId: row.id,
-      walletAddress: row.wallet_address,
+      walletAddress: wallet,
       name: row.name,
     },
   };

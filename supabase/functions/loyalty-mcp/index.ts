@@ -14,6 +14,7 @@ import {
   PLATFORM_FEE_WALLET,
   authenticateAgent,
 } from "./helpers.ts";
+import { isPaidGatewayRequest } from "../_shared/paid-gateway-auth.ts";
 import {
   B20_FACTORY_ADDRESS,
   encodeCreateB20Asset,
@@ -1450,7 +1451,9 @@ app.all("/*", async (c) => {
   let agent: any = null;
   let authFailure: AuthFailure = apiKey ? null : "missing_key";
   if (apiKey) {
-    const r = await authenticateAgent(apiKey);
+    const r = await authenticateAgent(apiKey, {
+      skipMonthlyQuota: isPaidGatewayRequest(c.req.raw),
+    });
     if (!r.ok) {
       authFailure = r.reason;
     } else {

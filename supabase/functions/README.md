@@ -6,6 +6,8 @@ Each subdirectory is one deployable function (`index.ts` entry). Shared Deno mod
 
 **MCP HTTP auth:** `loyalty-mcp` and `recipient-loyalty-mcp` accept `x-api-key` **or** `Authorization: Bearer <lsk_…>` / `<rwk_…>` (some hosts only forward Bearer). See [docs/integrations/OPENSERV_MCP_AUTH.md](../../docs/integrations/OPENSERV_MCP_AUTH.md).
 
+**Rate limits:** Merchant (`lsk_`) and recipient (`rwk_`) keys share free-tier **200 API calls/month** (`agent_usage`), plus per-minute throttling. See [docs/business/MONETIZATION_AND_PRICING.md](../../docs/business/MONETIZATION_AND_PRICING.md).
+
 ## Core API and agents
 
 | Folder | Role |

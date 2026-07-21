@@ -990,6 +990,13 @@ Deno.serve(async (req) => {
   // Path 1b: Recipient/holder agent (rwk_) API key
   if (apiKey && apiKey.startsWith("rwk_")) {
     const auth = await authenticateRecipientAgent(apiKey, d);
+    if (!auth.ok && auth.error === "rate_limited") {
+      const msg =
+        auth.reason === "monthly_quota"
+          ? "Monthly API call quota exceeded for this recipient agent."
+          : "Per-minute rate limit exceeded. Slow down.";
+      return jsonResponse({ error: msg, code: "rate_limited", detail: auth.reason }, 429);
+    }
     if (!auth.ok) return jsonResponse({ error: auth.error || "Invalid recipient API key" }, 401);
     const agent = {
       agentId: auth.agent.agentId,

@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createPublicClient, http } from "npm:viem@2.46.0";
 import { base } from "npm:viem@2.46.0/chains";
+import { isAdminWallet } from "../_shared/admin-wallets.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -98,11 +99,6 @@ async function ensureAuthUserWithPassword(
 
   return signInResult;
 }
-
-const ADMIN_WALLETS = [
-  '0x5cc0aa9ed773f413f81f78a62f2e94109ce26205',
-  '0x40a8cdd6a10ec1a8cb3dfb2834675e7a2cf4ad8b',
-];
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -314,7 +310,7 @@ serve(async (req) => {
       );
     }
 
-    if (ADMIN_WALLETS.includes(address)) {
+    if (await isAdminWallet(address)) {
       await supabaseAdmin
         .from('user_roles')
         .upsert({ user_id: userId, role: 'admin' }, { onConflict: 'user_id,role' })

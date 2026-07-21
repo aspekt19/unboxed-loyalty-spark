@@ -2,11 +2,7 @@
  * Per-agent per-minute limits (agent_activity_log) and per-owner monthly API caps (agent_plans + agent_usage).
  */
 
-/** Admin wallets get unlimited API access (no rate limits). */
-const ADMIN_WALLETS = [
-  "0x5cc0aa9ed773f413f81f78a62f2e94109ce26205",
-  "0x40a8cdd6a10ec1a8cb3dfb2834675e7a2cf4ad8b",
-];
+import { isAdminWallet } from "./admin-wallets.ts";
 
 export type AgentRateLimitRow = {
   id: string;
@@ -35,16 +31,21 @@ async function resolveMonthlyMaxApiCalls(serviceClient: any, planId: string | nu
     .eq("slug", "free")
     .single();
   const f = free as { max_api_calls_monthly?: number | null } | null;
-  return f?.max_api_calls_monthly ?? 100;
+  return f?.max_api_calls_monthly ?? 200;
 }
+
+export type AgentRateLimitOptions = {
+  /** Per-request x402/MPP payment — do not consume subscription monthly quota. */
+  skipMonthlyQuota?: boolean;
+};
 
 /** Fails if usage already at or over limits (before incrementing this request). */
 export async function checkAgentApiRateLimits(
   serviceClient: any,
-  agent: AgentRateLimitRow
+  agent: AgentRateLimitRow,
+  options?: AgentRateLimitOptions,
 ): Promise<RateLimitResult> {
-  // Admin wallets bypass all rate limits
-  if (ADMIN_WALLETS.includes(agent.owner_address.toLowerCase())) {
+  if (await isAdminWallet(agent.owner_address)) {
     return { ok: true };
   }
 
@@ -60,6 +61,10 @@ export async function checkAgentApiRateLimits(
   if (cErr) console.error("[rate-limit] activity count error:", cErr);
   if (count !== null && count >= perMin) {
     return { ok: false, reason: "per_minute" };
+  }
+
+  if (options?.skipMonthlyQuota) {
+    return { ok: true };
   }
 
   const maxCalls = await resolveMonthlyMaxApiCalls(serviceClient, agent.plan_id);

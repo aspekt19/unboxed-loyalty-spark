@@ -1,5 +1,6 @@
 import { Mppx, tempo } from "npm:mppx@0.4.7/server";
 import { RECIPIENT_REST_ROUTE_USD } from "../_shared/recipient-paid-routes.ts";
+import { paidGatewayUpstreamHeaders, type PaidGatewayKind } from "../_shared/paid-gateway-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -365,7 +366,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const apiResponse = await proxyToMppUpstream(req);
+    const apiResponse = await proxyToMppUpstream(req, "mpp");
     return response.withReceipt(apiResponse);
   } catch (err) {
     console.error("MPP Gateway error:", err);
@@ -383,16 +384,21 @@ Deno.serve(async (req) => {
   }
 });
 
-async function proxyToMppUpstream(originalReq: Request): Promise<Response> {
+async function proxyToMppUpstream(originalReq: Request, paidVia?: PaidGatewayKind): Promise<Response> {
   const originalUrl = new URL(originalReq.url);
   const resource = getResourceFromUrl(originalUrl);
   if (resource.startsWith("recipient-api/")) {
-    return proxyToRecipientApi(originalReq);
+    return proxyToRecipientApi(originalReq, paidVia);
   }
-  return proxyToAgentApi(originalReq);
+  return proxyToAgentApi(originalReq, paidVia);
 }
 
-async function proxyToRecipientApi(originalReq: Request): Promise<Response> {
+function withPaidGatewayHeaders(headers: Record<string, string>, paidVia?: PaidGatewayKind): Record<string, string> {
+  if (!paidVia) return headers;
+  return { ...headers, ...paidGatewayUpstreamHeaders(paidVia) };
+}
+
+async function proxyToRecipientApi(originalReq: Request, paidVia?: PaidGatewayKind): Promise<Response> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const originalUrl = new URL(originalReq.url);
@@ -400,10 +406,10 @@ async function proxyToRecipientApi(originalReq: Request): Promise<Response> {
   const suffix = resource.replace(/^recipient-api\/?/, "");
   const recipientApiUrl = `${supabaseUrl}/functions/v1/recipient-api/${suffix}${originalUrl.search}`;
 
-  const headers: Record<string, string> = {
+  const headers = withPaidGatewayHeaders({
     "Content-Type": originalReq.headers.get("content-type") || "application/json",
     Authorization: `Bearer ${serviceKey}`,
-  };
+  }, paidVia);
   const apiKey = originalReq.headers.get("x-api-key");
   if (apiKey) headers["x-api-key"] = apiKey;
   const apikey = originalReq.headers.get("apikey");
@@ -429,7 +435,7 @@ async function proxyToRecipientApi(originalReq: Request): Promise<Response> {
   return new Response(respBody, { status: proxyResp.status, headers: respHeaders });
 }
 
-async function proxyToAgentApi(originalReq: Request): Promise<Response> {
+async function proxyToAgentApi(originalReq: Request, paidVia?: PaidGatewayKind): Promise<Response> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -439,12 +445,11 @@ async function proxyToAgentApi(originalReq: Request): Promise<Response> {
   const agentApiUrl = `${supabaseUrl}/functions/v1/agent-api/${resource}${originalUrl.search}`;
 
   // Forward headers (especially x-api-key for agent identity)
-  const headers: Record<string, string> = {
+  const headers = withPaidGatewayHeaders({
     "Content-Type": "application/json",
     Authorization: `Bearer ${serviceKey}`,
-  };
+  }, paidVia);
 
-  // Forward the API key for agent identification
   const apiKey = originalReq.headers.get("x-api-key");
   if (apiKey) {
     headers["x-api-key"] = apiKey;

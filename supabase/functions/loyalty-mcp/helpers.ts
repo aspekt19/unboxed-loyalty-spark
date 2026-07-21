@@ -11,6 +11,7 @@ import {
 import {
   checkAgentApiRateLimits,
   incrementAgentMonthlyApiCall,
+  type AgentRateLimitOptions,
 } from "../_shared/agent-rate-limit.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -74,7 +75,10 @@ export type AuthenticateMcpAgentResult =
   | { ok: true; agent: McpAgentContext }
   | { ok: false; reason: "invalid_key" | "rate_limited" };
 
-export async function authenticateAgent(apiKey: string): Promise<AuthenticateMcpAgentResult> {
+export async function authenticateAgent(
+  apiKey: string,
+  options?: AgentRateLimitOptions,
+): Promise<AuthenticateMcpAgentResult> {
   const d = db();
   const keyHash = await hashApiKey(apiKey);
   const { data: agent, error } = await d
@@ -91,10 +95,12 @@ export async function authenticateAgent(apiKey: string): Promise<AuthenticateMcp
     owner_address: agent.owner_address,
     rate_limit_per_minute: agent.rate_limit_per_minute,
     plan_id: agent.plan_id ?? null,
-  });
+  }, options);
   if (!limits.ok) return { ok: false, reason: "rate_limited" };
 
-  await incrementAgentMonthlyApiCall(d, agent.owner_address);
+  if (!options?.skipMonthlyQuota) {
+    await incrementAgentMonthlyApiCall(d, agent.owner_address);
+  }
 
   await d
     .from("agent_registry")

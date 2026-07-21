@@ -62,7 +62,7 @@ Public **corridor** (tune for gas + facilitator):
 
 ### 4.1 Recipient agents (`rwk_`) — same corridor
 
-Buyer-side agents pay for paid routes when using **`mpp-gateway`** (MPP) or **`x402-gateway`** (USDC x402). Direct calls to `…/functions/v1/recipient-api` / `recipient-loyalty-mcp` remain **key + rate-limit only** (no USDC in-app).
+Buyer-side agents pay for paid routes when using **`mpp-gateway`** (MPP) or **`x402-gateway`** (USDC x402). Direct **`rwk_`** calls use the same free-tier **200 calls/mo** as `lsk_` (`agent_usage`).
 
 **REST** (`recipient-api/…` after the gateway prefix) — source: `supabase/functions/_shared/recipient-paid-routes.ts`:
 
