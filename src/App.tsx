@@ -12,6 +12,7 @@ import Index from "./pages/Index";
 import AppPage from "./pages/AppPage";
 import CustomerPage from "./pages/CustomerPage";
 import MerchantPage from "./pages/MerchantPage";
+import ProgramPage from "./pages/ProgramPage";
 import AdminPage from "./pages/AdminPage";
 import PitchDeck from "./pages/PitchDeck";
 import GuidePage from "./pages/GuidePage";
