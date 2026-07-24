@@ -7,8 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
-import { useMultiTokenBalance } from '@/hooks/useMultiTokenBalance';
-import { PageMeta } from '@/components/PageMeta';
+import { useMultiTokenBalance, type TokenInfo } from '@/hooks/useMultiTokenBalance';
 import { format } from 'date-fns';
 import {
   Store,
