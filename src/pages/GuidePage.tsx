@@ -496,9 +496,9 @@ export default function GuidePage() {
                   </p>
                 </CardContent>
               </Card>
-            </div>
+            </TabsContent>
 
-            <div id="guide-customers" className="space-y-6">
+            <TabsContent value="customers" className="space-y-6">
               <Alert>
                 <Wallet className="h-4 w-4" />
                 <AlertDescription>
