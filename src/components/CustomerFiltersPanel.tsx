@@ -49,7 +49,7 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
   const [programs, setPrograms] = useState<TokenInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedProgram, setSelectedProgram] = useState<TokenInfo | null>(null);
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { selectionChanged } = useFarcasterHaptics();
 
