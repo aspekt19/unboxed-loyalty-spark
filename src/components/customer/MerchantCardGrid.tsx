@@ -50,6 +50,8 @@ export function MerchantCardGrid({ onMerchantSelect, selectedMerchant, restrictT
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [expanded, setExpanded] = useState(false);
+  const [viewMode, setViewMode] = useState<'compact' | 'grid'>('compact');
 
   const loadMerchants = useCallback(async () => {
     setIsLoading(true);
