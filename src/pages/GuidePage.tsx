@@ -717,9 +717,9 @@ export default function GuidePage() {
                   </ol>
                 </CardContent>
               </Card>
-            </div>
+            </TabsContent>
 
-            <div id="guide-agents" className="space-y-6">
+            <TabsContent value="agents" className="space-y-6">
               <Alert>
                 <Bot className="h-4 w-4" />
                 <AlertDescription>
