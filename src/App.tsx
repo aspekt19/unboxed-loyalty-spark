@@ -105,6 +105,7 @@ function AnimatedRoutes() {
           <Route path="/app" element={<AppPage />} />
           <Route path="/customer" element={<CustomerPage />} />
           <Route path="/merchant" element={<MerchantPage />} />
+          <Route path="/program/:tokenAddress" element={<ProgramPage />} />
           {/* /premium deprecated → redirect to public pricing */}
           <Route path="/premium" element={<Navigate to="/pricing" replace />} />
           <Route path="/admin" element={<AdminPage />} />
