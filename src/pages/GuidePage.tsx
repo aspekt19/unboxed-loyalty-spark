@@ -122,9 +122,34 @@ export default function GuidePage() {
 
           <h2 className="sr-only">Explore the guide</h2>
 
-          <div id="guide-tabs" className="space-y-12">
+          <div id="guide-tabs">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+              <div className="overflow-x-auto -mx-4 px-4 pb-2">
+                <TabsList className="inline-flex w-auto min-w-full">
+                  <TabsTrigger value="overview" className="whitespace-nowrap px-3 py-2">
+                    <BookOpen className="h-5 w-5" />
+                    <span className="sr-only">Overview</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="merchants" className="whitespace-nowrap px-3 py-2">
+                    <Store className="h-5 w-5" />
+                    <span className="sr-only">For Merchants</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="customers" className="whitespace-nowrap px-3 py-2">
+                    <Users className="h-5 w-5" />
+                    <span className="sr-only">For Customers</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="agents" className="whitespace-nowrap px-3 py-2">
+                    <Bot className="h-5 w-5" />
+                    <span className="sr-only">For AI Agents</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="faq" className="whitespace-nowrap px-3 py-2">
+                    <HelpCircle className="h-5 w-5" />
+                    <span className="sr-only">FAQ</span>
+                  </TabsTrigger>
+                </TabsList>
+            </div>
 
-            <div id="guide-overview" className="space-y-6">
+            <TabsContent value="overview" className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle>What is Loyal Spark?</CardTitle>
