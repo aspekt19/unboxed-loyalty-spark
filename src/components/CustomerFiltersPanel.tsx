@@ -52,7 +52,6 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
   const [selectedProgram, setSelectedProgram] = useState<TokenInfo | null>(null);
   const isMobile = useIsMobile();
   const { selectionChanged } = useFarcasterHaptics();
-  const { selectionChanged } = useFarcasterHaptics();
 
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     align: 'start',
