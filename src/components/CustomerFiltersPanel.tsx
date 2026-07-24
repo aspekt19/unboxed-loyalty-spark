@@ -295,6 +295,7 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
                       balance={balance?.balance || '0'}
                       isExpiringSoon={program.status === 'expiring_soon'}
                       tierSummary={tierSummaries[program.address.toLowerCase()]}
+                      onClick={() => setSelectedProgram(program)}
                     />
                   );
                 })}
@@ -303,6 +304,16 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
           )
         )}
       </CardContent>
+      <ProgramDetailsDialog
+        open={!!selectedProgram}
+        onOpenChange={(o) => !o && setSelectedProgram(null)}
+        tokenAddress={selectedProgram?.address ?? null}
+        balance={
+          selectedProgram
+            ? balances.find((b) => b.address === selectedProgram.address)?.balance || '0'
+            : '0'
+        }
+      />
     </Card>
   );
 }
