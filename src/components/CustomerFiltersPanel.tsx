@@ -323,11 +323,13 @@ function ProgramCard({
   balance,
   isExpiringSoon,
   tierSummary,
+  onClick,
 }: {
   program: TokenInfo;
   balance: string;
   isExpiringSoon: boolean;
   tierSummary?: TierSummary;
+  onClick?: () => void;
 }) {
   const { isPaused } = useCheckProgramStatus(
     program.address as `0x${string}`,
@@ -340,7 +342,11 @@ function ProgramCard({
   };
   
   return (
-    <div className="p-4 rounded-lg border bg-gradient-to-br from-card to-muted/30 space-y-3">
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full text-left p-4 rounded-lg border bg-gradient-to-br from-card to-muted/30 space-y-3 transition-all hover:border-primary/60 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/40"
+    >
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-2 flex-wrap">
