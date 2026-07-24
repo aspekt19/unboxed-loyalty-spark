@@ -183,50 +183,152 @@ export function MerchantCardGrid({ onMerchantSelect, selectedMerchant, restrictT
     return null;
   }
 
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search merchants, programs..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-full sm:w-[200px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {CATEGORIES.map(c => (
-              <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+  const restricted = !!restrictToMerchants;
 
-      {filtered.length === 0 ? (
-        <Alert>
-          <Search className="h-4 w-4" />
-          <AlertDescription>
-            No merchants found matching your search. Try a different query or category.
-          </AlertDescription>
-        </Alert>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map(merchant => (
-            <MerchantCardItem
-              key={merchant.merchant_address}
-              merchant={merchant}
-              isSelected={selectedMerchant === merchant.merchant_address}
-              onClick={() => onMerchantSelect?.(merchant.merchant_address)}
-            />
-          ))}
+  return (
+    <div className="rounded-lg border bg-card">
+      <button
+        type="button"
+        onClick={() => setExpanded(v => !v)}
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/40 transition-colors"
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <Store className="h-4 w-4 text-primary flex-shrink-0" />
+          <span className="text-sm font-medium truncate">
+            {restricted ? 'Your merchants' : 'Browse merchants'}
+          </span>
+          <Badge variant="secondary" className="text-[10px]">{filtered.length}</Badge>
+        </div>
+        {expanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+      </button>
+
+      {expanded && (
+        <div className="px-4 pb-4 space-y-3 border-t">
+          <div className="flex flex-col sm:flex-row gap-2 pt-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search merchants, programs..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="pl-9 h-9"
+              />
+            </div>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-full sm:w-[180px] h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map(c => (
+                  <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex gap-1">
+              <Button
+                type="button"
+                variant={viewMode === 'compact' ? 'default' : 'outline'}
+                size="icon"
+                className="h-9 w-9"
+                onClick={() => setViewMode('compact')}
+                aria-label="Compact list"
+              >
+                <List className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                size="icon"
+                className="h-9 w-9"
+                onClick={() => setViewMode('grid')}
+                aria-label="Card grid"
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {filtered.length === 0 ? (
+            <Alert>
+              <Search className="h-4 w-4" />
+              <AlertDescription>
+                No merchants found matching your search. Try a different query or category.
+              </AlertDescription>
+            </Alert>
+          ) : viewMode === 'compact' ? (
+            <div className="max-h-[360px] overflow-y-auto -mx-1 px-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                {filtered.map(merchant => (
+                  <MerchantCompactRow
+                    key={merchant.merchant_address}
+                    merchant={merchant}
+                    isSelected={selectedMerchant === merchant.merchant_address}
+                    onClick={() => onMerchantSelect?.(merchant.merchant_address)}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {filtered.map(merchant => (
+                <MerchantCardItem
+                  key={merchant.merchant_address}
+                  merchant={merchant}
+                  isSelected={selectedMerchant === merchant.merchant_address}
+                  onClick={() => onMerchantSelect?.(merchant.merchant_address)}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
+  );
+}
+
+function MerchantCompactRow({
+  merchant,
+  isSelected,
+  onClick,
+}: {
+  merchant: MerchantCard;
+  isSelected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center gap-2.5 px-2.5 py-2 rounded-md border text-left transition-colors ${
+        isSelected
+          ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
+          : 'border-border hover:bg-muted/50 hover:border-primary/40'
+      }`}
+    >
+      {merchant.logo_url ? (
+        <img
+          src={merchant.logo_url}
+          alt={merchant.business_name}
+          className="h-8 w-8 rounded-md object-cover flex-shrink-0"
+        />
+      ) : (
+        <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <Store className="h-4 w-4 text-primary" />
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <div className="text-xs font-medium truncate">{merchant.business_name}</div>
+        <div className="text-[10px] text-muted-foreground flex items-center gap-2">
+          <span className="flex items-center gap-0.5"><Gift className="h-3 w-3" />{merchant.rewards_count}</span>
+          <span className="flex items-center gap-0.5"><Users className="h-3 w-3" />{merchant.programs.length}</span>
+          {merchant.avg_rating !== null && (
+            <span className="flex items-center gap-0.5">
+              <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />{merchant.avg_rating.toFixed(1)}
+            </span>
+          )}
+        </div>
+      </div>
+    </button>
   );
 }
 
