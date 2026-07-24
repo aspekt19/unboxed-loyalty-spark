@@ -17,6 +17,7 @@ import { format } from 'date-fns';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useFarcasterHaptics } from '@/hooks/useFarcasterHaptics';
+import { ProgramDetailsDialog } from '@/components/customer/ProgramDetailsDialog';
 
 interface LoyaltyProgram {
   id: string;
@@ -48,6 +49,7 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
   const [programs, setPrograms] = useState<TokenInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedProgram, setSelectedProgram] = useState<TokenInfo | null>(null);
   const isMobile = useIsMobile();
   const { selectionChanged } = useFarcasterHaptics();
 
@@ -248,6 +250,7 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
                           balance={balance?.balance || '0'}
                           isExpiringSoon={program.status === 'expiring_soon'}
                           tierSummary={tierSummaries[program.address.toLowerCase()]}
+                          onClick={() => setSelectedProgram(program)}
                         />
                       </div>
                     );
@@ -292,6 +295,7 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
                       balance={balance?.balance || '0'}
                       isExpiringSoon={program.status === 'expiring_soon'}
                       tierSummary={tierSummaries[program.address.toLowerCase()]}
+                      onClick={() => setSelectedProgram(program)}
                     />
                   );
                 })}
@@ -300,6 +304,16 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
           )
         )}
       </CardContent>
+      <ProgramDetailsDialog
+        open={!!selectedProgram}
+        onOpenChange={(o) => !o && setSelectedProgram(null)}
+        tokenAddress={selectedProgram?.address ?? null}
+        balance={
+          selectedProgram
+            ? balances.find((b) => b.address === selectedProgram.address)?.balance || '0'
+            : '0'
+        }
+      />
     </Card>
   );
 }
@@ -309,11 +323,13 @@ function ProgramCard({
   balance,
   isExpiringSoon,
   tierSummary,
+  onClick,
 }: {
   program: TokenInfo;
   balance: string;
   isExpiringSoon: boolean;
   tierSummary?: TierSummary;
+  onClick?: () => void;
 }) {
   const { isPaused } = useCheckProgramStatus(
     program.address as `0x${string}`,
@@ -326,7 +342,11 @@ function ProgramCard({
   };
   
   return (
-    <div className="p-4 rounded-lg border bg-gradient-to-br from-card to-muted/30 space-y-3">
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full text-left p-4 rounded-lg border bg-gradient-to-br from-card to-muted/30 space-y-3 transition-all hover:border-primary/60 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/40"
+    >
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-2 flex-wrap">
@@ -375,6 +395,6 @@ function ProgramCard({
           </span>
         </div>
       </div>
-    </div>
+    </button>
   );
 }
