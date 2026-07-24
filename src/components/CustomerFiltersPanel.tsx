@@ -250,7 +250,7 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
                           balance={balance?.balance || '0'}
                           isExpiringSoon={program.status === 'expiring_soon'}
                           tierSummary={tierSummaries[program.address.toLowerCase()]}
-                          onClick={() => setSelectedProgram(program)}
+                          onClick={() => navigate(`/program/${program.address}`)}
                         />
                       </div>
                     );
