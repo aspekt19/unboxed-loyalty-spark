@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { BlockchainFAQ } from "@/components/onboarding/BlockchainFAQ";
@@ -124,17 +124,7 @@ export default function GuidePage() {
 
           <div id="guide-tabs">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <div className="overflow-x-auto -mx-4 px-4 pb-2">
-                <TabsList className="inline-flex w-auto min-w-full">
-                  <TabsTrigger value="overview" className="whitespace-nowrap">Overview</TabsTrigger>
-                  <TabsTrigger value="merchants" className="whitespace-nowrap">For Merchants</TabsTrigger>
-                  <TabsTrigger value="customers" className="whitespace-nowrap">For Customers</TabsTrigger>
-                  <TabsTrigger value="agents" className="whitespace-nowrap">For AI Agents</TabsTrigger>
-                  <TabsTrigger value="faq" className="whitespace-nowrap">FAQ</TabsTrigger>
-                </TabsList>
-            </div>
-
-            <TabsContent value="overview" className="space-y-6">
+              <TabsContent value="overview" className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle>What is Loyal Spark?</CardTitle>
