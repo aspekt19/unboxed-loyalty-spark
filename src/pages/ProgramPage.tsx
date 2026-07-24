@@ -78,7 +78,14 @@ export default function ProgramPage() {
   const [tiers, setTiers] = useState<TierRow[]>([]);
   const [rewards, setRewards] = useState<RewardRow[]>([]);
 
-  const { balances } = useMultiTokenBalance(tokenAddress ? [tokenAddress] : []);
+  const tokenList = useMemo<TokenInfo[]>(
+    () =>
+      program && tokenAddress
+        ? [{ address: tokenAddress, name: program.name, symbol: program.symbol, merchantAddress: program.merchant_address }]
+        : [],
+    [program, tokenAddress],
+  );
+  const { balances } = useMultiTokenBalance(tokenList);
   const balance = balances.find((b) => b.address.toLowerCase() === tokenAddress?.toLowerCase())?.balance || '0';
   const balanceNum = parseFloat(balance || '0');
 
