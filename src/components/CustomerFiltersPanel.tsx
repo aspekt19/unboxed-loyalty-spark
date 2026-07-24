@@ -17,6 +17,7 @@ import { format } from 'date-fns';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useFarcasterHaptics } from '@/hooks/useFarcasterHaptics';
+import { ProgramDetailsDialog } from '@/components/customer/ProgramDetailsDialog';
 
 interface LoyaltyProgram {
   id: string;
