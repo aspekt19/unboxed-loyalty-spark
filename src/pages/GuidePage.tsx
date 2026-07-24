@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { BlockchainFAQ } from "@/components/onboarding/BlockchainFAQ";
@@ -33,9 +33,9 @@ export default function GuidePage() {
 
   const handleCardClick = (tab: string) => {
     setActiveTab(tab);
-    const tabsEl = document.getElementById("guide-tabs");
-    if (tabsEl) {
-      tabsEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    const sectionEl = document.getElementById(`guide-${tab}`);
+    if (sectionEl) {
+      sectionEl.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
 
@@ -122,19 +122,9 @@ export default function GuidePage() {
 
           <h2 className="sr-only">Explore the guide</h2>
 
-          <div id="guide-tabs">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <div className="overflow-x-auto -mx-4 px-4 pb-2">
-                <TabsList className="inline-flex w-auto min-w-full">
-                  <TabsTrigger value="overview" className="whitespace-nowrap">Overview</TabsTrigger>
-                  <TabsTrigger value="merchants" className="whitespace-nowrap">For Merchants</TabsTrigger>
-                  <TabsTrigger value="customers" className="whitespace-nowrap">For Customers</TabsTrigger>
-                  <TabsTrigger value="agents" className="whitespace-nowrap">For AI Agents</TabsTrigger>
-                  <TabsTrigger value="faq" className="whitespace-nowrap">FAQ</TabsTrigger>
-                </TabsList>
-            </div>
+          <div id="guide-tabs" className="space-y-12">
 
-            <TabsContent value="overview" className="space-y-6">
+            <div id="guide-overview" className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle>What is Loyal Spark?</CardTitle>
@@ -252,9 +242,9 @@ export default function GuidePage() {
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
+            </div>
 
-            <TabsContent value="merchants" className="space-y-6">
+            <div id="guide-merchants" className="space-y-6">
               <Alert>
                 <Wallet className="h-4 w-4" />
                 <AlertDescription>
@@ -481,9 +471,9 @@ export default function GuidePage() {
                   </p>
                 </CardContent>
               </Card>
-            </TabsContent>
+            </div>
 
-            <TabsContent value="customers" className="space-y-6">
+            <div id="guide-customers" className="space-y-6">
               <Alert>
                 <Wallet className="h-4 w-4" />
                 <AlertDescription>
@@ -702,9 +692,9 @@ export default function GuidePage() {
                   </ol>
                 </CardContent>
               </Card>
-            </TabsContent>
+            </div>
 
-            <TabsContent value="agents" className="space-y-6">
+            <div id="guide-agents" className="space-y-6">
               <Alert>
                 <Bot className="h-4 w-4" />
                 <AlertDescription>
@@ -923,11 +913,11 @@ export default function GuidePage() {
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
+            </div>
 
-            <TabsContent value="faq">
+            <div id="guide-faq">
               <BlockchainFAQ />
-            </TabsContent>
+            </div>
           </Tabs>
           </div>
 
