@@ -918,7 +918,6 @@ export default function GuidePage() {
             <div id="guide-faq">
               <BlockchainFAQ />
             </div>
-          </Tabs>
           </div>
 
           {/* External Resources */}
