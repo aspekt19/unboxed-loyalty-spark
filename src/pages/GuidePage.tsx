@@ -33,9 +33,9 @@ export default function GuidePage() {
 
   const handleCardClick = (tab: string) => {
     setActiveTab(tab);
-    const sectionEl = document.getElementById(`guide-${tab}`);
-    if (sectionEl) {
-      sectionEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    const tabsEl = document.getElementById("guide-tabs");
+    if (tabsEl) {
+      tabsEl.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
 
