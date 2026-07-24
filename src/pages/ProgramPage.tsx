@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useMultiTokenBalance, type TokenInfo } from '@/hooks/useMultiTokenBalance';
 import { format } from 'date-fns';
@@ -252,197 +253,229 @@ export default function ProgramPage() {
               </CardContent>
             </Card>
 
-            {/* Merchant */}
-            <section>
-              <h2 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                <Store className="h-4 w-4 text-primary" /> Issued by
-              </h2>
-              <Card>
-                <CardContent className="p-4 space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-medium">{merchant?.business_name || 'Unknown merchant'}</p>
-                    {merchant?.category && (
-                      <Badge variant="secondary" className="text-[10px] capitalize">
-                        {merchant.category}
-                      </Badge>
-                    )}
+            <Tabs defaultValue="overview" className="w-full">
+              <TabsList className="w-full flex overflow-x-auto justify-start sm:grid sm:grid-cols-5 h-auto">
+                <TabsTrigger value="overview" className="flex-shrink-0">Overview</TabsTrigger>
+                <TabsTrigger value="tokens" className="flex-shrink-0">Tokens & math</TabsTrigger>
+                <TabsTrigger value="rewards" className="flex-shrink-0">Rewards</TabsTrigger>
+                <TabsTrigger value="terms" className="flex-shrink-0">Terms & dates</TabsTrigger>
+                <TabsTrigger value="addresses" className="flex-shrink-0">Addresses</TabsTrigger>
+              </TabsList>
+
+              {/* Overview */}
+              <TabsContent value="overview" className="space-y-4 mt-4">
+                <section>
+                  <h2 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                    <Store className="h-4 w-4 text-primary" /> Issued by
+                  </h2>
+                  <Card>
+                    <CardContent className="p-4 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-medium">{merchant?.business_name || 'Unknown merchant'}</p>
+                        {merchant?.category && (
+                          <Badge variant="secondary" className="text-[10px] capitalize">
+                            {merchant.category}
+                          </Badge>
+                        )}
+                      </div>
+                      {merchant?.description && (
+                        <p className="text-sm text-muted-foreground">{merchant.description}</p>
+                      )}
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground pt-1">
+                        {merchant?.location && (
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" /> {merchant.location}
+                          </span>
+                        )}
+                        {merchant?.website && (
+                          <a
+                            href={merchant.website}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center gap-1 hover:text-primary"
+                          >
+                            <Globe className="h-3 w-3" /> Website <ExternalLink className="h-3 w-3" />
+                          </a>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </section>
+              </TabsContent>
+
+              {/* Tokens & math */}
+              <TabsContent value="tokens" className="space-y-4 mt-4">
+                <section>
+                  <h2 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                    <Coins className="h-4 w-4 text-primary" /> How to earn
+                  </h2>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Percent className="h-3 w-3" /> Cashback rate
+                        </div>
+                        <p className="text-2xl font-bold mt-1">{Number(program.cashback_rate)}%</p>
+                        <p className="text-xs text-muted-foreground">of each purchase</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Sparkles className="h-3 w-3" /> Points per $
+                        </div>
+                        <p className="text-2xl font-bold mt-1">{Number(program.points_per_dollar)}</p>
+                        <p className="text-xs text-muted-foreground">{program.symbol} per dollar spent</p>
+                      </CardContent>
+                    </Card>
                   </div>
-                  {merchant?.description && (
-                    <p className="text-sm text-muted-foreground">{merchant.description}</p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Formula:{' '}
+                    <span className="font-mono">
+                      amount × ({Number(program.cashback_rate)}% ÷ 100) × {Number(program.points_per_dollar)}
+                    </span>
+                  </p>
+                </section>
+              </TabsContent>
+
+              {/* Rewards */}
+              <TabsContent value="rewards" className="space-y-4 mt-4">
+                <section>
+                  <h2 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                    <Gift className="h-4 w-4 text-primary" /> Available rewards
+                  </h2>
+                  {rewards.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No rewards available yet.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {rewards.map((r) => {
+                        const canAfford = balanceNum >= Number(r.cost);
+                        return (
+                          <Card key={r.id}>
+                            <CardContent className="p-3 flex items-center justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium truncate">{r.name}</p>
+                                {r.description && (
+                                  <p className="text-xs text-muted-foreground line-clamp-2">{r.description}</p>
+                                )}
+                              </div>
+                              <div className="text-right flex-shrink-0">
+                                <p className="text-sm font-bold">
+                                  {Number(r.cost)}{' '}
+                                  <span className="text-xs text-muted-foreground font-normal">{program.symbol}</span>
+                                </p>
+                                <Badge
+                                  variant={canAfford ? 'default' : 'secondary'}
+                                  className="text-[9px] mt-0.5"
+                                >
+                                  {canAfford ? 'Available' : `${(Number(r.cost) - balanceNum).toFixed(0)} to go`}
+                                </Badge>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
                   )}
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground pt-1">
-                    {merchant?.location && (
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" /> {merchant.location}
-                      </span>
-                    )}
-                    {merchant?.website && (
-                      <a
-                        href={merchant.website}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center gap-1 hover:text-primary"
-                      >
-                        <Globe className="h-3 w-3" /> Website <ExternalLink className="h-3 w-3" />
-                      </a>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => copy(program.merchant_address, 'Merchant address')}
-                      className="flex items-center gap-1 hover:text-primary font-mono"
-                    >
-                      <Copy className="h-3 w-3" /> {shortAddr(program.merchant_address)}
-                    </button>
+                </section>
+              </TabsContent>
+
+              {/* Terms & dates */}
+              <TabsContent value="terms" className="space-y-4 mt-4">
+                {tiers.length > 0 && (
+                  <section>
+                    <h2 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                      <Award className="h-4 w-4 text-primary" /> Tiers
+                    </h2>
+                    <div className="space-y-2">
+                      {tiers.map((t) => {
+                        const isCurrent = currentTier?.id === t.id;
+                        return (
+                          <Card key={t.id} className={isCurrent ? 'border-2 border-primary' : ''}>
+                            <CardContent className="p-3 flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div
+                                  className="h-9 w-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                                  style={{ background: t.badge_color || 'hsl(var(--primary))' }}
+                                >
+                                  {t.tier_level}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-sm font-medium truncate">
+                                    {t.tier_name}
+                                    {isCurrent && (
+                                      <Badge variant="default" className="ml-2 text-[9px]">
+                                        Current
+                                      </Badge>
+                                    )}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    From {Number(t.min_tokens)} {program.symbol}
+                                    {t.cashback_multiplier && Number(t.cashback_multiplier) !== 1 && (
+                                      <> · ×{Number(t.cashback_multiplier)} cashback</>
+                                    )}
+                                    {t.welcome_bonus && Number(t.welcome_bonus) > 0 && (
+                                      <> · +{Number(t.welcome_bonus)} bonus</>
+                                    )}
+                                  </p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  </section>
+                )}
+
+                <Separator />
+
+                <section className="space-y-2 text-xs text-muted-foreground">
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" /> Program expires
+                    </span>
+                    <span>{format(new Date(program.expiration_date), 'MMM dd, yyyy')}</span>
                   </div>
-                </CardContent>
-              </Card>
-            </section>
+                  <div className="flex items-center justify-between">
+                    <span>Created</span>
+                    <span>{format(new Date(program.created_at), 'MMM dd, yyyy')}</span>
+                  </div>
+                </section>
+              </TabsContent>
 
-            {/* Earning */}
-            <section>
-              <h2 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                <Coins className="h-4 w-4 text-primary" /> How to earn
-              </h2>
-              <div className="grid grid-cols-2 gap-3">
+              {/* Addresses */}
+              <TabsContent value="addresses" className="space-y-3 mt-4">
                 <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Percent className="h-3 w-3" /> Cashback rate
+                  <CardContent className="p-4 space-y-3 text-sm">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-muted-foreground">Merchant address</span>
+                      <button
+                        type="button"
+                        onClick={() => copy(program.merchant_address, 'Merchant address')}
+                        className="flex items-center gap-1 font-mono hover:text-primary"
+                      >
+                        <Copy className="h-3 w-3" /> {shortAddr(program.merchant_address)}
+                      </button>
                     </div>
-                    <p className="text-2xl font-bold mt-1">{Number(program.cashback_rate)}%</p>
-                    <p className="text-xs text-muted-foreground">of each purchase</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-muted-foreground">Token address</span>
+                      <button
+                        type="button"
+                        onClick={() => copy(program.token_address, 'Token address')}
+                        className="flex items-center gap-1 font-mono hover:text-primary"
+                      >
+                        <Copy className="h-3 w-3" /> {shortAddr(program.token_address)}
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-muted-foreground">Token standard</span>
+                      <span className="uppercase font-mono">{program.token_standard}</span>
+                    </div>
                   </CardContent>
                 </Card>
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Sparkles className="h-3 w-3" /> Points per $
-                    </div>
-                    <p className="text-2xl font-bold mt-1">{Number(program.points_per_dollar)}</p>
-                    <p className="text-xs text-muted-foreground">{program.symbol} per dollar spent</p>
-                  </CardContent>
-                </Card>
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Formula:{' '}
-                <span className="font-mono">
-                  amount × ({Number(program.cashback_rate)}% ÷ 100) × {Number(program.points_per_dollar)}
-                </span>
-              </p>
-            </section>
-
-            {/* Tiers */}
-            {tiers.length > 0 && (
-              <section>
-                <h2 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                  <Award className="h-4 w-4 text-primary" /> Tiers
-                </h2>
-                <div className="space-y-2">
-                  {tiers.map((t) => {
-                    const isCurrent = currentTier?.id === t.id;
-                    return (
-                      <Card key={t.id} className={isCurrent ? 'border-2 border-primary' : ''}>
-                        <CardContent className="p-3 flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div
-                              className="h-9 w-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                              style={{ background: t.badge_color || 'hsl(var(--primary))' }}
-                            >
-                              {t.tier_level}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-sm font-medium truncate">
-                                {t.tier_name}
-                                {isCurrent && (
-                                  <Badge variant="default" className="ml-2 text-[9px]">
-                                    Current
-                                  </Badge>
-                                )}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                From {Number(t.min_tokens)} {program.symbol}
-                                {t.cashback_multiplier && Number(t.cashback_multiplier) !== 1 && (
-                                  <> · ×{Number(t.cashback_multiplier)} cashback</>
-                                )}
-                                {t.welcome_bonus && Number(t.welcome_bonus) > 0 && (
-                                  <> · +{Number(t.welcome_bonus)} bonus</>
-                                )}
-                              </p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
-
-            {/* Rewards */}
-            <section>
-              <h2 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                <Gift className="h-4 w-4 text-primary" /> Available rewards
-              </h2>
-              {rewards.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No rewards available yet.</p>
-              ) : (
-                <div className="space-y-2">
-                  {rewards.map((r) => {
-                    const canAfford = balanceNum >= Number(r.cost);
-                    return (
-                      <Card key={r.id}>
-                        <CardContent className="p-3 flex items-center justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium truncate">{r.name}</p>
-                            {r.description && (
-                              <p className="text-xs text-muted-foreground line-clamp-2">{r.description}</p>
-                            )}
-                          </div>
-                          <div className="text-right flex-shrink-0">
-                            <p className="text-sm font-bold">
-                              {Number(r.cost)}{' '}
-                              <span className="text-xs text-muted-foreground font-normal">{program.symbol}</span>
-                            </p>
-                            <Badge
-                              variant={canAfford ? 'default' : 'secondary'}
-                              className="text-[9px] mt-0.5"
-                            >
-                              {canAfford ? 'Available' : `${(Number(r.cost) - balanceNum).toFixed(0)} to go`}
-                            </Badge>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
-
-            <Separator />
-
-            {/* Meta */}
-            <section className="space-y-2 text-xs text-muted-foreground">
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" /> Program expires
-                </span>
-                <span>{format(new Date(program.expiration_date), 'MMM dd, yyyy')}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Created</span>
-                <span>{format(new Date(program.created_at), 'MMM dd, yyyy')}</span>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <span>Token address</span>
-                <button
-                  type="button"
-                  onClick={() => copy(program.token_address, 'Token address')}
-                  className="flex items-center gap-1 font-mono hover:text-primary"
-                >
-                  <Copy className="h-3 w-3" /> {shortAddr(program.token_address)}
-                </button>
-              </div>
-            </section>
+              </TabsContent>
+            </Tabs>
           </>
         )}
       </main>
