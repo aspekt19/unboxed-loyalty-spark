@@ -17,7 +17,7 @@ import { format } from 'date-fns';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useFarcasterHaptics } from '@/hooks/useFarcasterHaptics';
-import { ProgramDetailsDialog } from '@/components/customer/ProgramDetailsDialog';
+import { useNavigate } from 'react-router-dom';
 
 interface LoyaltyProgram {
   id: string;
@@ -49,7 +49,7 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
   const [programs, setPrograms] = useState<TokenInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedProgram, setSelectedProgram] = useState<TokenInfo | null>(null);
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { selectionChanged } = useFarcasterHaptics();
 
@@ -250,7 +250,7 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
                           balance={balance?.balance || '0'}
                           isExpiringSoon={program.status === 'expiring_soon'}
                           tierSummary={tierSummaries[program.address.toLowerCase()]}
-                          onClick={() => setSelectedProgram(program)}
+                          onClick={() => navigate(`/program/${program.address}`)}
                         />
                       </div>
                     );
@@ -295,7 +295,7 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
                       balance={balance?.balance || '0'}
                       isExpiringSoon={program.status === 'expiring_soon'}
                       tierSummary={tierSummaries[program.address.toLowerCase()]}
-                      onClick={() => setSelectedProgram(program)}
+                      onClick={() => navigate(`/program/${program.address}`)}
                     />
                   );
                 })}
@@ -304,16 +304,6 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
           )
         )}
       </CardContent>
-      <ProgramDetailsDialog
-        open={!!selectedProgram}
-        onOpenChange={(o) => !o && setSelectedProgram(null)}
-        tokenAddress={selectedProgram?.address ?? null}
-        balance={
-          selectedProgram
-            ? balances.find((b) => b.address === selectedProgram.address)?.balance || '0'
-            : '0'
-        }
-      />
     </Card>
   );
 }
