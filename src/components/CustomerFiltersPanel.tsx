@@ -304,16 +304,6 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
           )
         )}
       </CardContent>
-      <ProgramDetailsDialog
-        open={!!selectedProgram}
-        onOpenChange={(o) => !o && setSelectedProgram(null)}
-        tokenAddress={selectedProgram?.address ?? null}
-        balance={
-          selectedProgram
-            ? balances.find((b) => b.address === selectedProgram.address)?.balance || '0'
-            : '0'
-        }
-      />
     </Card>
   );
 }
