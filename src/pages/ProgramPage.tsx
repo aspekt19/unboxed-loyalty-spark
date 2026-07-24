@@ -153,14 +153,6 @@ export default function ProgramPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <PageMeta
-        title={program ? `${program.name} (${program.symbol}) — Loyalty Program` : 'Loyalty Program'}
-        description={
-          program
-            ? `${program.name} loyalty program by ${merchant?.business_name || 'merchant'} on Base. Earn ${program.symbol} tokens with ${Number(program.cashback_rate)}% cashback.`
-            : 'Loyalty program details on Loyal Spark.'
-        }
-      />
 
       <div className="border-b bg-gradient-to-br from-primary/10 via-card to-uds-lavender-light/40">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
