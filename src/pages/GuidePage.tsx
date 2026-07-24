@@ -938,9 +938,9 @@ export default function GuidePage() {
                   </div>
                 </CardContent>
               </Card>
-            </div>
+            </TabsContent>
 
-            <div id="guide-faq">
+            <TabsContent value="faq">
               <BlockchainFAQ />
             </div>
           </div>
