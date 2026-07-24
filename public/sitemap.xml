@@ -85,6 +85,12 @@
     <priority>0.85</priority>
   </url>
   <url>
+    <loc>https://loyalspark.online/program/:tokenAddress</loc>
+    <lastmod>2026-07-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://loyalspark.online/trust</loc>
     <lastmod>2026-07-24</lastmod>
     <changefreq>monthly</changefreq>
