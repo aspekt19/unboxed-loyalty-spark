@@ -30,6 +30,16 @@ import {
 } from "lucide-react";
 
 export default function GuidePage() {
+  const [activeTab, setActiveTab] = useState("overview");
+
+  const handleCardClick = (tab: string) => {
+    setActiveTab(tab);
+    const tabsEl = document.getElementById("guide-tabs");
+    if (tabsEl) {
+      tabsEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
