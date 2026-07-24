@@ -96,43 +96,43 @@ export default function GuidePage() {
 
           {/* Quick Links */}
           <h2 className="sr-only">Quick links</h2>
-          <div className="grid grid-cols-3 gap-3 sm:gap-4">
-            <Card className="hover:border-primary transition-colors cursor-pointer">
-              <CardHeader>
-                <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-primary mb-1 sm:mb-2" />
-                <CardTitle className="text-sm sm:text-lg">Getting Started</CardTitle>
-                <CardDescription className="text-xs sm:text-sm">Learn the basics in 5 minutes</CardDescription>
-              </CardHeader>
-            </Card>
-            <Card className="hover:border-primary transition-colors cursor-pointer">
-              <CardHeader>
-                <Video className="h-6 w-6 sm:h-8 sm:w-8 text-primary mb-1 sm:mb-2" />
-                <CardTitle className="text-sm sm:text-lg">Video Tutorials</CardTitle>
-                <CardDescription className="text-xs sm:text-sm">Watch step-by-step guides</CardDescription>
-              </CardHeader>
-            </Card>
-            <Card className="hover:border-primary transition-colors cursor-pointer">
-              <CardHeader>
-                <HelpCircle className="h-6 w-6 sm:h-8 sm:w-8 text-primary mb-1 sm:mb-2" />
-                <CardTitle className="text-sm sm:text-lg">FAQ</CardTitle>
-                <CardDescription className="text-xs sm:text-sm">Common questions answered</CardDescription>
-              </CardHeader>
-            </Card>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+            {[
+              { tab: "overview", icon: BookOpen, title: "Getting Started", desc: "Learn the basics in 5 minutes" },
+              { tab: "merchants", icon: Store, title: "For Merchants", desc: "Deploy and run programs" },
+              { tab: "customers", icon: Users, title: "For Customers", desc: "Earn and redeem tokens" },
+              { tab: "agents", icon: Bot, title: "For AI Agents", desc: "REST, MCP and automation" },
+              { tab: "faq", icon: HelpCircle, title: "FAQ", desc: "Common questions answered" },
+            ].map(({ tab, icon: Icon, title, desc }) => (
+              <Card
+                key={tab}
+                className={`hover:border-primary transition-colors cursor-pointer ${activeTab === tab ? "border-primary bg-primary/5" : ""}`}
+                onClick={() => handleCardClick(tab)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleCardClick(tab); }}
+              >
+                <CardHeader>
+                  <Icon className="h-6 w-6 sm:h-8 sm:w-8 text-primary mb-1 sm:mb-2" />
+                  <CardTitle className="text-sm sm:text-base">{title}</CardTitle>
+                  <CardDescription className="text-xs">{desc}</CardDescription>
+                </CardHeader>
+              </Card>
+            ))}
           </div>
 
           <h2 className="sr-only">Explore the guide</h2>
 
-
-          <Tabs defaultValue="overview" className="space-y-6">
-            <div className="overflow-x-auto -mx-4 px-4 pb-2">
-              <TabsList className="inline-flex w-auto min-w-full">
-                <TabsTrigger value="overview" className="whitespace-nowrap">Overview</TabsTrigger>
-                <TabsTrigger value="merchants" className="whitespace-nowrap">For Merchants</TabsTrigger>
-                <TabsTrigger value="customers" className="whitespace-nowrap">For Customers</TabsTrigger>
-                <TabsTrigger value="agents" className="whitespace-nowrap">For AI Agents</TabsTrigger>
-                
-                <TabsTrigger value="faq" className="whitespace-nowrap">FAQ</TabsTrigger>
-              </TabsList>
+          <div id="guide-tabs">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+              <div className="overflow-x-auto -mx-4 px-4 pb-2">
+                <TabsList className="inline-flex w-auto min-w-full">
+                  <TabsTrigger value="overview" className="whitespace-nowrap">Overview</TabsTrigger>
+                  <TabsTrigger value="merchants" className="whitespace-nowrap">For Merchants</TabsTrigger>
+                  <TabsTrigger value="customers" className="whitespace-nowrap">For Customers</TabsTrigger>
+                  <TabsTrigger value="agents" className="whitespace-nowrap">For AI Agents</TabsTrigger>
+                  <TabsTrigger value="faq" className="whitespace-nowrap">FAQ</TabsTrigger>
+                </TabsList>
             </div>
 
             <TabsContent value="overview" className="space-y-6">
