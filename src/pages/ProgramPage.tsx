@@ -90,6 +90,12 @@ export default function ProgramPage() {
   const balanceNum = parseFloat(balance || '0');
 
   useEffect(() => {
+    if (program) {
+      document.title = `${program.name} (${program.symbol}) — Loyalty Program`;
+    }
+  }, [program]);
+
+  useEffect(() => {
     if (!tokenAddress) return;
     let cancelled = false;
     (async () => {
