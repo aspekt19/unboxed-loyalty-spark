@@ -395,6 +395,6 @@ function ProgramCard({
           </span>
         </div>
       </div>
-    </div>
+    </button>
   );
 }
