@@ -19,7 +19,6 @@ import {
   Shield,
   ExternalLink,
   BookOpen,
-  Video,
   HelpCircle,
   Percent,
   PiggyBank,
