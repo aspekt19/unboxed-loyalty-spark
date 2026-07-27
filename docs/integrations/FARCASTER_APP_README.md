@@ -28,8 +28,8 @@ Loyal Spark Farcaster App enables merchants and customers to participate in a to
 - **Referral Programs**: Earn bonuses by referring friends
 
 ### For AI Agents
-- **REST API**: 25 authenticated routes + **GET `/vouchers/status`** (public); see root `README.md` or `public/llms-full.txt`
-- **MCP Server**: **36** merchant tools + **18** recipient tools — Streamable HTTP; same surface as REST for LLM clients
+- **REST API**: 27 authenticated routes + **GET `/vouchers/status`** (public); see root `README.md` or `public/llms-full.txt`
+- **MCP Server**: **38** merchant tools + **20** recipient tools — Streamable HTTP; same surface as REST for LLM clients
 - **MPP Gateway**: Pay-per-request with USDC/pathUSD on Tempo chain
 - **x402 Gateway**: Pay-per-request with USDC on Base (Coinbase protocol)
 - **Server Wallets**: Coinbase CDP MPC wallets for autonomous onchain operations
@@ -124,7 +124,7 @@ curl -H "x-api-key: lsk_YOUR_KEY" \
 | GET | `/tx-receipt` | any | Extract token_address from deploy tx |
 | GET | `/vouchers/status` | public | Check voucher status (no API key) |
 
-### MCP Server Tools (36 merchant + 18 recipient)
+### MCP Server Tools (38 merchant + 20 recipient)
 
 | Tool | Scope | Description |
 |------|-------|-------------|
@@ -168,10 +168,10 @@ See [API Documentation](https://loyalspark.online/api-docs) for full details.
 
 | Function | Purpose |
 |----------|---------|
-| `agent-api` | REST API for AI agents (25 routes + public GET `/vouchers/status`) |
+| `agent-api` | REST API for AI agents (27 authenticated routes + public GET `/vouchers/status`) |
 | `agent-api-key` | API key generation |
 | `agent-wallet` | CDP MPC wallet management |
-| `loyalty-mcp` | MCP Server for LLMs (36 merchant tools; recipient MCP has 18) |
+| `loyalty-mcp` | MCP Server for LLMs (38 merchant tools; recipient MCP has 20) |
 | `mpp-gateway` | MPP pay-per-request gateway |
 | `x402-gateway` | x402/Coinbase pay-per-request gateway |
 | `siwe-nonce` | SIWE nonce generation |

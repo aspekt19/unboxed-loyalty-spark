@@ -134,7 +134,7 @@ Behavioral rules to reduce over-engineering and unclear edits. **Tradeoff:** bia
 
 ## Agent Integration
 
-### REST API (25 authenticated routes + 1 public GET)
+### REST API (27 authenticated routes + 1 public GET)
 Base URL: https://api.loyalspark.online/agent-api
 
 **Public (no `x-api-key`):**
@@ -144,6 +144,7 @@ Base URL: https://api.loyalspark.online/agent-api
 
 GET:
 - /me               — free    — agent profile, plan, wallet
+- /workflow/program-status — $0.001 — autonomous planner: lifecycle step + next_actions[]
 - /programs         — $0.001  — list loyalty programs
 - /rewards          — $0.001  — rewards (param: token_address)
 - /balance          — $0.001  — balance & tier (params: token_address, wallet_address)
@@ -152,8 +153,10 @@ GET:
 - /analytics        — $0.005  — program analytics (param: token_address)
 - /offers           — $0.001  — P2P offers list
 - /tx-receipt       — free    — extract token_address from deploy tx (still requires API key)
+- /merchant-profile — $0.001  — read merchant profile
 
 POST (scopes: program lifecycle accepts **mint** or **create_program**):
+- /workflow/generate-program-defaults — $0.001 — propose program defaults from business context
 - /programs         — $0.05  — calldata for token deploy
 - /register-program — $0.01  — register token in DB
 - /activate-program — $0.01  — activation calldata
@@ -167,8 +170,9 @@ POST (scopes: program lifecycle accepts **mint** or **create_program**):
 - /cancel-offer     — $0.005 — scope: trade — cancel offer
 - /redeem-reward    — $0.01  — scope: read — exchange reward for voucher
 - /vouchers/use     — $0.005 — scope: manage_rewards — use voucher
+- /merchant-profile — $0.005 — scope: manage_rewards — create merchant profile (POST) or update (PUT)
 
-### MCP Server (36 merchant tools + 18 recipient tools)
+### MCP Server (38 merchant tools + 20 recipient tools)
 URL: https://api.loyalspark.online/loyalty-mcp  
 Transport: Streamable HTTP (JSON-RPC 2.0) · Auth: `x-api-key` · **Tool list = each `mcpServer.tool("…")` in `loyalty-mcp/index.ts`** (includes reporting, exports, admin-only tools).  
 Compatible with: Claude Desktop, Cursor, VS Code, OpenServ, any MCP client.

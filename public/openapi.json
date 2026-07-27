@@ -95,11 +95,11 @@
     },
     {
       "name": "Merchant MCP",
-      "description": "36 merchant MCP tools (Streamable HTTP JSON-RPC 2.0)"
+      "description": "38 merchant MCP tools (Streamable HTTP JSON-RPC 2.0)"
     },
     {
       "name": "Recipient MCP",
-      "description": "18 recipient MCP tools (Streamable HTTP JSON-RPC 2.0)"
+      "description": "20 recipient MCP tools (Streamable HTTP JSON-RPC 2.0)"
     },
     {
       "name": "Base MCP Prepare",

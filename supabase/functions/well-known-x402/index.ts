@@ -43,6 +43,9 @@ const MERCHANT_REST_ROUTE_USD: Record<string, Record<string, string>> = {
     "vouchers/status": "0",
     analytics: "0.005",
     offers: "0.001",
+    "tx-receipt": "0",
+    "merchant-profile": "0.001",
+    "workflow/program-status": "0.001",
   },
   POST: {
     programs: "0.05",
@@ -59,6 +62,11 @@ const MERCHANT_REST_ROUTE_USD: Record<string, Record<string, string>> = {
     offers: "0.01",
     "accept-offer": "0.01",
     "cancel-offer": "0.005",
+    "merchant-profile": "0.005",
+    "workflow/generate-program-defaults": "0.001",
+  },
+  PUT: {
+    "merchant-profile": "0.005",
   },
 };
 
@@ -149,7 +157,7 @@ function buildItem(req: Request, method: string, resource: string, _price: strin
   };
 }
 
-/** Enumerate every paid Loyal Spark resource (~70 entries). */
+/** Enumerate every paid Loyal Spark resource (~88 entries). */
 function isPaidPrice(price: string): boolean {
   const n = Number(price);
   return Number.isFinite(n) && n > 0;
@@ -200,7 +208,7 @@ function buildDiscoveryDocument(req: Request): Record<string, unknown> {
   const items = buildAllItems(req);
   const name = "Loyal Spark — Onchain Loyalty Protocol on Base";
   const description =
-    "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create ERC-20 loyalty programs, mint tokens to customer wallets, manage rewards catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics — all via paid x402 endpoints (USDC on Base). Includes 80 paid resources: merchant REST (agent-api), recipient REST (recipient-api), 32 merchant MCP tools and 14 recipient MCP tools via paid x402 corridor (direct MCP exposes 36 merchant + 18 recipient tools with x-api-key). Builder Code bc_wdmnog7m.";
+    "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create ERC-20 loyalty programs, mint tokens to customer wallets, manage rewards catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics — all via paid x402 endpoints (USDC on Base). Includes 88 paid resources: merchant REST (agent-api), recipient REST (recipient-api), 34 merchant MCP tools and 16 recipient MCP tools via paid x402 corridor (direct MCP exposes 38 merchant + 20 recipient tools with x-api-key). Builder Code bc_wdmnog7m.";
   return {
     x402Version: 1,
     name,

@@ -70,7 +70,7 @@ export default function GuidePage() {
       {
         "@type": "Question",
         "name": "How do AI agents integrate with Loyal Spark?",
-        "acceptedAnswer": { "@type": "Answer", "text": "AI agents use a REST API (25 authenticated routes plus public GET /vouchers/status), a merchant MCP server with 36 tools, a recipient MCP server with 18 tools, or pay-per-request gateways (x402, MPP). Register an agent on the Merchant page, copy your lsk_... key, then follow https://loyalspark.online/for-agents for onboarding." }
+        "acceptedAnswer": { "@type": "Answer", "text": "AI agents use a REST API (27 authenticated routes plus public GET /vouchers/status), a merchant MCP server with 38 tools, a recipient MCP server with 20 tools, or pay-per-request gateways (x402, MPP). Register an agent on the Merchant page, copy your lsk_... key, then follow https://loyalspark.online/for-agents for onboarding." }
       }
     ]
   };

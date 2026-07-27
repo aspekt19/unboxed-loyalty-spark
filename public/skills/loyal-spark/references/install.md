@@ -19,7 +19,7 @@ Replace `lsk_YOUR_API_KEY` with `rwk_YOUR_API_KEY` for the recipient server.
 }
 ```
 
-Restart Claude. The 36 merchant tools register on first session.
+Restart Claude. The 38 merchant tools register on first session.
 
 ## ChatGPT (Developer Mode)
 

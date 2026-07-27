@@ -146,14 +146,16 @@ curl -X POST \
   https://api.loyalspark.online/agent-api/mint
 ```
 
-### API Endpoints (25 authenticated + 1 public)
+### API Endpoints (27 authenticated + 1 public)
 
 All routes below require `x-api-key: lsk_...` except **GET `/vouchers/status`** (public).
 
 | Method | Path | Scope | Description |
 |--------|------|-------|-------------|
 | GET | `/me` | authenticated | Agent profile & permissions |
+| GET | `/workflow/program-status` | read | Autonomous planner: lifecycle step + `next_actions[]` |
 | GET | `/programs` | read | List loyalty programs |
+| POST | `/workflow/generate-program-defaults` | mint | Propose program name, symbol, economics, and starter rewards from business context |
 | POST | `/programs` | mint or `create_program` | Calldata to deploy loyalty token (**B20 default**, or legacy ERC-20 with `token_standard: "erc20"`) |
 | POST | `/register-program` | mint or `create_program` | Register deployed token (optional `cashback_rate`, `points_per_dollar`) |
 | POST | `/update-program-config` | mint or `create_program` | Update `cashback_rate` / `points_per_dollar` for a program |
@@ -197,8 +199,8 @@ Connect Claude, GPT, or any MCP-compatible agent:
 }
 ```
 
-**MCP tools (36)** — defined in `supabase/functions/loyalty-mcp/index.ts`:  
-`get_platform_info`, `get_my_profile`, `list_loyalty_programs`, `create_loyalty_program`, `register_loyalty_program`, `activate_loyalty_program`, `update_program_status`, `update_program_config`, `list_rewards`, `create_reward`, `mint_loyalty_tokens`, `transfer_loyalty_tokens`, `earn_points`, `get_token_balance`, `get_program_analytics`, `list_marketplace_offers`, `redeem_reward`, `use_voucher`, `check_voucher_status`, `get_platform_stats`, `cancel_stale_offers`, `create_personalized_offer`, `update_reward_status`, `export_customers`, `send_report`, `list_my_reports`, `update_report_status`, `delete_report`, `create_gift_certificate`, `list_gift_certificates`, `revoke_gift_certificate`, `mark_gift_certificate_minted`, `bazaar_discover_resources`, `bazaar_discover_mcp_servers`, `bazaar_probe_x402`, `bazaar_pay_and_call` (last four = Bazaar side-car for outbound x402 discovery + signed payments).
+**MCP tools (38)** — defined in `supabase/functions/loyalty-mcp/index.ts`:  
+`get_platform_info`, `get_my_profile`, `generate_program_defaults`, `get_program_workflow_status`, `list_loyalty_programs`, `create_loyalty_program`, `register_loyalty_program`, `activate_loyalty_program`, `update_program_status`, `update_program_config`, `list_rewards`, `create_reward`, `mint_loyalty_tokens`, `transfer_loyalty_tokens`, `earn_points`, `get_token_balance`, `get_program_analytics`, `list_marketplace_offers`, `redeem_reward`, `use_voucher`, `check_voucher_status`, `get_platform_stats`, `cancel_stale_offers`, `create_personalized_offer`, `update_reward_status`, `export_customers`, `send_report`, `list_my_reports`, `update_report_status`, `delete_report`, `create_gift_certificate`, `list_gift_certificates`, `revoke_gift_certificate`, `mark_gift_certificate_minted`, `bazaar_discover_resources`, `bazaar_discover_mcp_servers`, `bazaar_probe_x402`, `bazaar_pay_and_call` (last four = Bazaar side-car for outbound x402 discovery + signed payments).
 
 ### Base MCP custom plugin (`send_calls`-ready calldata)
 
@@ -226,7 +228,7 @@ For **AI agents that only hold a wallet** which receives loyalty tokens (not mer
 
 **REST (all require `x-api-key: rwk_…` except register):** `GET /me`, `GET /balances`, `GET /balance?token_address=`, `GET /rewards?token_address=`, `GET /vouchers`, `POST /redeem-reward` with `{ reward_id, transaction_hash }` (customer is always the bound wallet), **`POST /prepare-transfer`** with `{ token_address, to, amount }` — ERC-20 transfer calldata so the bound wallet can send loyalty tokens to any address (same encoding as merchant `transfer_loyalty_tokens`; sign on Base). **P2P:** `GET /offers?token_address=`, `POST /offers`, `POST /accept-offer`, `POST /cancel-offer` (same bodies as merchant `agent-api` marketplace; `creator_address` is the bound wallet).
 
-**MCP tools (18)** — `supabase/functions/recipient-loyalty-mcp/index.ts`: `get_recipient_profile`, `list_my_loyalty_balances`, `get_my_loyalty_balance`, `prepare_loyalty_token_transfer`, `list_rewards_for_program`, `list_my_vouchers`, `redeem_my_reward`, `list_p2p_offers`, `create_p2p_offer`, `accept_p2p_offer`, `cancel_p2p_offer`, `lookup_gift_certificate`, `claim_gift_certificate`, `list_my_gift_certificates`, `bazaar_discover_resources`, `bazaar_discover_mcp_servers`, `bazaar_probe_x402`, `bazaar_pay_and_call` (last four = Bazaar side-car; `bazaar_pay_and_call` requires opt-in delegated CDP wallet).
+**MCP tools (20)** — `supabase/functions/recipient-loyalty-mcp/index.ts`: `get_recipient_profile`, `list_my_loyalty_balances`, `get_my_loyalty_balance`, `get_reward_workflow_status`, `prepare_reward_redemption`, `prepare_loyalty_token_transfer`, `list_rewards_for_program`, `list_my_vouchers`, `redeem_my_reward`, `list_p2p_offers`, `create_p2p_offer`, `accept_p2p_offer`, `cancel_p2p_offer`, `lookup_gift_certificate`, `claim_gift_certificate`, `list_my_gift_certificates`, `bazaar_discover_resources`, `bazaar_discover_mcp_servers`, `bazaar_probe_x402`, `bazaar_pay_and_call` (last four = Bazaar side-car; `bazaar_pay_and_call` requires opt-in delegated CDP wallet).
 
 **Pay-per-call (recipient, MPP / x402):** Autonomous agents that should pay USDC per request use the same gateways as merchants: **`mpp-gateway/recipient-api/…`** (Tempo MPP) or **`x402-gateway/recipient-api/…`** and **`x402-gateway/recipient-mcp-tools/<tool>`** (x402). USD prices match the merchant corridor (reads **~$0.001**, writes **~$0.005–0.01**; `prepare-transfer` / `prepare_loyalty_token_transfer` **$0.005**). Canonical tables: [`docs/business/MONETIZATION_AND_PRICING.md`](./docs/business/MONETIZATION_AND_PRICING.md) §4.1 · source constants: `supabase/functions/_shared/recipient-paid-routes.ts`, `recipient-mcp-bazaar-tools.ts`. Direct `functions/v1/recipient-api` / `recipient-loyalty-mcp` calls use **`rwk_`** + rate limits only (no per-request USDC in the gateway layer).
 

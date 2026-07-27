@@ -9,7 +9,7 @@
 
 ## What we already have (foundation)
 
-- **MCP servers** (28+ merchant tools, recipient tools) — `supabase/functions/loyalty-mcp` and `recipient-loyalty-mcp`. Ready-made function-calling toolset for any LLM/agent. Already integrated with OpenServ via `mcp-http-api-key.ts`.
+- **MCP servers** (38 merchant tools, 20 recipient tools) — `supabase/functions/loyalty-mcp` and `recipient-loyalty-mcp`. Ready-made function-calling toolset for any LLM/agent. Already integrated with OpenServ via `mcp-http-api-key.ts`.
 - **REST agent-api / recipient-api** — same actions over HTTP with `lsk_` / `rwk_` keys.
 - **OpenServ team** (CEO / SEO / Growth / Analyst) — already calls our MCP. Today they run as **batch jobs** (reports), but the same runtime supports interactive request/response, so we can add two new realtime agents to the same stack.
 - **Privy auth** (humans) + **CDP MPC wallets** (agents) — identity ready.

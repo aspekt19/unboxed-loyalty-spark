@@ -5,7 +5,7 @@ Loyal Spark uses two distinct API key prefixes for two different roles. Pick the
 ## `lsk_…` — Merchant agent
 
 - Issues loyalty programs, mints tokens, manages rewards, runs analytics, issues gift certificates.
-- Required for `agent-api/*` and `loyalty-mcp` (merchant MCP, 36 tools).
+- Required for `agent-api/*` and `loyalty-mcp` (merchant MCP, 38 tools).
 - Only public exception: `GET /vouchers/status` works without a key.
 
 How to get one:
@@ -16,7 +16,7 @@ How to get one:
 ## `rwk_…` — Recipient agent (token holder)
 
 - Wallet that **holds** loyalty tokens. Reads its own balances/vouchers, redeems rewards, trades on P2P, claims gift certificates.
-- Required for `recipient-api/*` and `recipient-loyalty-mcp` (recipient MCP, 18 tools).
+- Required for `recipient-api/*` and `recipient-loyalty-mcp` (recipient MCP, 20 tools).
 
 How to get one: SIWE with message `Register Loyal Spark recipient agent`, same flow.
 

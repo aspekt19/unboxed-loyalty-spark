@@ -143,7 +143,7 @@
 |--------|-------|
 | **Платформа** | Живой MVP на Base |
 | **Поверхности** | Web · PWA · Capacitor |
-| **API для агентов** | 25 REST + 36 MCP-инструментов (+ 18 recipient MCP) |
+| **API для агентов** | 28 merchant REST (27 auth + 1 public) + 38 MCP-инструментов (+ 20 recipient MCP) |
 | **Аутентификация** | Privy + SIWE + scoped-ключи |
 
 ---

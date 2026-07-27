@@ -192,8 +192,8 @@ Hi Base team,
 Loyal Spark is an onchain loyalty protocol on Base mainnet (chain 8453). Merchants deploy **B20 loyalty programs by default** (Base native factory); legacy ERC-20 factory remains via `token_standard: "erc20"`. Mint and transfer points, manage rewards, vouchers, and `LOYAL-XXXXXX` gift certificates, and trade tokens on a P2P escrow marketplace. Builder Code `bc_wdmnog7m` (ERC-8021) is appended to every prepared calldata for onchain attribution.
 
 We already operate two MCP servers (Streamable HTTP):
-- merchant: https://api.loyalspark.online/loyalty-mcp  (36 tools)
-- recipient: https://api.loyalspark.online/recipient-loyalty-mcp  (18 tools)
+- merchant: https://api.loyalspark.online/loyalty-mcp  (38 tools)
+- recipient: https://api.loyalspark.online/recipient-loyalty-mcp  (20 tools)
 
 We have packaged a Base MCP-compatible plugin file mirroring the format of `plugins/morpho.md` etc. Repo: https://github.com/loyalspark/skills, file: skills/loyal-spark/plugins/loyal-spark.md.
 
