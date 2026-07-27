@@ -597,7 +597,8 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
 
       const { data: reward } = await d.from("rewards").select("*").eq("id", reward_id).single();
       if (!reward) return T(JSON.stringify({ error: "Reward not found" }));
-      if (reward.merchant_address.toLowerCase() !== agent.ownerAddress.toLowerCase()) return T(JSON.stringify({ error: "Reward not owned by you" }));
+      const merchantWallets = await agentMerchantAddresses(d, { agentId: agent.agentId, ownerAddress: agent.ownerAddress });
+      if (!rewardOwnedByAgent(reward, merchantWallets)) return T(JSON.stringify({ error: "Reward not owned by you" }));
       if (!reward.is_active) return T(JSON.stringify({ error: "Reward is inactive" }));
 
       const { data: dup } = await d.from("vouchers").select("id").eq("transaction_hash", transaction_hash).maybeSingle();
