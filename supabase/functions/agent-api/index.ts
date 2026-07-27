@@ -1407,7 +1407,7 @@ Deno.serve(async (req) => {
       await serviceClient.from("customer_transactions").insert({
         customer_address: customer_address.toLowerCase(),
         token_address: reward.token_address.toLowerCase(),
-        merchant_address: agent.ownerAddress.toLowerCase(),
+        merchant_address: rewardMerchant,
         transaction_type: "redemption",
         amount: reward.cost,
         voucher_id: voucher.id,
