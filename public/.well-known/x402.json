@@ -13,6 +13,7 @@
     "GET https://api.loyalspark.online/x402-gateway/analytics",
     "GET https://api.loyalspark.online/x402-gateway/balance",
     "GET https://api.loyalspark.online/x402-gateway/customers",
+    "GET https://api.loyalspark.online/x402-gateway/merchant-profile",
     "GET https://api.loyalspark.online/x402-gateway/offers",
     "GET https://api.loyalspark.online/x402-gateway/programs",
     "GET https://api.loyalspark.online/x402-gateway/recipient-api/balance",
@@ -23,6 +24,7 @@
     "GET https://api.loyalspark.online/x402-gateway/recipient-api/workflow/reward-status",
     "GET https://api.loyalspark.online/x402-gateway/rewards",
     "GET https://api.loyalspark.online/x402-gateway/vouchers",
+    "GET https://api.loyalspark.online/x402-gateway/workflow/program-status",
     "POST https://api.loyalspark.online/x402-gateway/accept-offer",
     "POST https://api.loyalspark.online/x402-gateway/activate-program",
     "POST https://api.loyalspark.online/x402-gateway/cancel-offer",
@@ -63,9 +65,12 @@
     "POST https://api.loyalspark.online/x402-gateway/mcp-tools/use_voucher",
     "POST https://api.loyalspark.online/x402-gateway/merchant-profile",
     "POST https://api.loyalspark.online/x402-gateway/mint",
+    "POST https://api.loyalspark.online/x402-gateway/offers",
     "POST https://api.loyalspark.online/x402-gateway/program-status",
+    "POST https://api.loyalspark.online/x402-gateway/programs",
     "POST https://api.loyalspark.online/x402-gateway/recipient-api/accept-offer",
     "POST https://api.loyalspark.online/x402-gateway/recipient-api/cancel-offer",
+    "POST https://api.loyalspark.online/x402-gateway/recipient-api/offers",
     "POST https://api.loyalspark.online/x402-gateway/recipient-api/prepare-transfer",
     "POST https://api.loyalspark.online/x402-gateway/recipient-api/redeem-reward",
     "POST https://api.loyalspark.online/x402-gateway/recipient-api/workflow/prepare-reward-redemption",
@@ -87,10 +92,11 @@
     "POST https://api.loyalspark.online/x402-gateway/recipient-mcp-tools/redeem_my_reward",
     "POST https://api.loyalspark.online/x402-gateway/redeem-reward",
     "POST https://api.loyalspark.online/x402-gateway/register-program",
+    "POST https://api.loyalspark.online/x402-gateway/rewards",
     "POST https://api.loyalspark.online/x402-gateway/transfer",
     "POST https://api.loyalspark.online/x402-gateway/update-program-config",
     "POST https://api.loyalspark.online/x402-gateway/vouchers/use",
     "POST https://api.loyalspark.online/x402-gateway/workflow/generate-program-defaults",
-    "POST https://api.loyalspark.online/x402-gateway/workflow/program-status"
+    "PUT https://api.loyalspark.online/x402-gateway/merchant-profile"
   ]
 }
