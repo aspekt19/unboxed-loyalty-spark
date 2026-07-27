@@ -352,7 +352,7 @@ export async function marketplaceCancelOffer(
     .select("*")
     .eq("id", offer_id)
     .eq("creator_address", w)
-    .eq("status", "active")
+    .in("status", ["active", "accepted"])
     .single();
 
   if (error || !offer) {
