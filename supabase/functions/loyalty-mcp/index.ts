@@ -676,7 +676,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
       if (!voucher_code && !voucher_id) return T(JSON.stringify({ error: "Provide voucher_code or voucher_id" }));
 
       const d = db();
-      let q = d.from("vouchers").select("*").eq("merchant_address", agent.ownerAddress.toLowerCase());
+      let q = d.from("vouchers").select("*").in("merchant_address", await agentMerchantAddresses(d, { agentId: agent.agentId, ownerAddress: agent.ownerAddress }));
       if (voucher_code) q = q.eq("code", voucher_code);
       else q = q.eq("id", voucher_id);
 
