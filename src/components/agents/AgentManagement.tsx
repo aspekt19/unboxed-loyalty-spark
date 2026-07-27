@@ -339,6 +339,12 @@ export function AgentManagement() {
       {/* Agent List */}
       {isLoading ? (
         <Card><CardContent className="py-8 text-center text-muted-foreground">Loading agents...</CardContent></Card>
+      ) : agentsError ? (
+        <Alert variant="destructive">
+          <AlertDescription>
+            Could not load your agents. Check your connection and refresh — the list below may be incomplete.
+          </AlertDescription>
+        </Alert>
       ) : agents.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
