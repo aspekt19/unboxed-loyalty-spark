@@ -51,7 +51,7 @@ export async function authenticateRecipientAgent(
     owner_address: wallet,
     rate_limit_per_minute: row.rate_limit_per_minute,
     plan_id: null,
-  }, options);
+  }, { ...options, activityTable: "recipient_agent_activity_log" });
   if (!limits.ok) {
     return { ok: false, error: "rate_limited", reason: limits.reason };
   }

@@ -37,6 +37,12 @@ async function resolveMonthlyMaxApiCalls(serviceClient: any, planId: string | nu
 export type AgentRateLimitOptions = {
   /** Per-request x402/MPP payment — do not consume subscription monthly quota. */
   skipMonthlyQuota?: boolean;
+  /**
+   * Activity table used for the per-minute window.
+   * Merchant (`lsk_`) agents log to `agent_activity_log`; recipient (`rwk_`) agents log to
+   * `recipient_agent_activity_log`. Passing the wrong table silently disables the per-minute limit.
+   */
+  activityTable?: "agent_activity_log" | "recipient_agent_activity_log";
 };
 
 /** Fails if usage already at or over limits (before incrementing this request). */
@@ -53,7 +59,7 @@ export async function checkAgentApiRateLimits(
   const sinceIso = new Date(Date.now() - 60_000).toISOString();
 
   const { count, error: cErr } = await serviceClient
-    .from("agent_activity_log")
+    .from(options?.activityTable ?? "agent_activity_log")
     .select("*", { count: "exact", head: true })
     .eq("agent_id", agent.id)
     .gte("created_at", sinceIso);
