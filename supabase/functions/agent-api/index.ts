@@ -32,6 +32,7 @@ import {
 import {
   agentMerchantAddresses,
   resolveAgentMerchantAddress,
+  rewardOwnedByAgent,
 } from "../_shared/agent-merchant-wallet.ts";
 
 
@@ -1288,9 +1289,9 @@ Deno.serve(async (req) => {
       }
 
       // Verify the reward belongs to the agent's merchant (supports CDP wallet)
-      const redeemWallet = await resolveAgentMerchantAddress(serviceClient, agent, true);
+      const redeemAddresses = await agentMerchantAddresses(serviceClient, agent);
       const rewardMerchant = reward.merchant_address.toLowerCase();
-      if (rewardMerchant !== agent.ownerAddress.toLowerCase() && rewardMerchant !== redeemWallet.toLowerCase()) {
+      if (!rewardOwnedByAgent(reward, redeemAddresses)) {
         await logActivity(serviceClient, agent.agentId, "redeem_reward", body, 403, { error: "Reward not owned" }, ip);
         return jsonResponse({ error: "Reward does not belong to your program" }, 403);
       }
