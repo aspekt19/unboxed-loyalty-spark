@@ -622,7 +622,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
       const logs = Array.isArray(receipt.logs) ? receipt.logs : [];
       const tokenAddrLc = reward.token_address.toLowerCase();
       const custAddrLc = customer_address.toLowerCase();
-      const merchAddrLc = agent.ownerAddress.toLowerCase();
+      const merchAddrLc = reward.merchant_address.toLowerCase();
       const requiredWei = BigInt(Math.round(Number(reward.cost) * 1e6)) * 10n ** 12n;
       let transferredWei = 0n;
       for (const l of logs) {
