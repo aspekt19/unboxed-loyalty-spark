@@ -643,10 +643,19 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
       const { data: voucher, error: ve } = await d.from("vouchers").insert({
         code, reward_id: reward.id, reward_name: reward.name, reward_description: reward.description,
         token_address: reward.token_address.toLowerCase(), token_symbol: prog?.symbol || "TOKEN",
-        customer_address: customer_address.toLowerCase(), merchant_address: agent.ownerAddress.toLowerCase(),
+        customer_address: customer_address.toLowerCase(), merchant_address: merchAddrLc,
         status: "active", cost: reward.cost, transaction_hash,
       }).select().single();
       if (ve) return T(JSON.stringify({ error: ve.message }));
+
+      await d.from("customer_transactions").insert({
+        customer_address: customer_address.toLowerCase(),
+        token_address: reward.token_address.toLowerCase(),
+        merchant_address: merchAddrLc,
+        transaction_type: "redemption",
+        amount: reward.cost,
+        voucher_id: voucher.id,
+      });
 
       return T(JSON.stringify({ voucher: { id: voucher.id, code: voucher.code, reward_name: voucher.reward_name, cost: voucher.cost, status: "active" } }));
     },
