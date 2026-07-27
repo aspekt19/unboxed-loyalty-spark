@@ -42,10 +42,20 @@ import { BannedScreen } from "./components/BannedScreen";
 import { PrivyAvailableContext } from "./hooks/usePrivySafe";
 
 function BanGate({ children }: { children: React.ReactNode }) {
-  const { isBanned, reason, bannedAt, isLoading } = useBanStatus();
+  const { isBanned, reason, bannedAt, isLoading, isError } = useBanStatus();
   const location = useLocation();
-  // Allow admin route through (admins can't be banned anyway, but failsafe)
-  if (isLoading) return <>{children}</>;
+  // Fail closed: while the ban state is unknown (loading or failed lookup) we block the app
+  // instead of rendering it as if the user were not banned. Admin route stays reachable.
+  if ((isLoading || isError) && location.pathname !== '/admin') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          <p className="text-sm">{isError ? 'Verifying account status…' : 'Loading…'}</p>
+        </div>
+      </div>
+    );
+  }
   if (isBanned && location.pathname !== '/admin') {
     return <BannedScreen reason={reason} bannedAt={bannedAt} />;
   }

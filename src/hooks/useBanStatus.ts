@@ -11,7 +11,7 @@ export interface BanStatus {
 export function useBanStatus() {
   const { user } = useAuth();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['ban-status', user?.id],
     enabled: !!user?.id,
     queryFn: async (): Promise<BanStatus> => {
@@ -20,7 +20,9 @@ export function useBanStatus() {
         .select('is_banned, ban_reason, banned_at')
         .eq('user_id', user!.id)
         .maybeSingle();
-      if (error || !data) return { isBanned: false, reason: null, bannedAt: null };
+      // Fail closed: never swallow the error into "not banned".
+      if (error) throw error;
+      if (!data) return { isBanned: false, reason: null, bannedAt: null };
       return {
         isBanned: !!data.is_banned,
         reason: data.ban_reason ?? null,
@@ -35,5 +37,7 @@ export function useBanStatus() {
     reason: data?.reason ?? null,
     bannedAt: data?.bannedAt ?? null,
     isLoading,
+    /** Ban state could not be verified — callers must not treat this as "not banned". */
+    isError,
   };
 }
