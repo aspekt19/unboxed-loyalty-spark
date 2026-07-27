@@ -20,6 +20,7 @@ import {
   encodeCreateB20Asset,
 } from "../_shared/b20-encoding.ts";
 import { resolveMcpApiKey } from "../_shared/mcp-http-api-key.ts";
+import { agentMerchantAddresses, rewardOwnedByAgent } from "../_shared/agent-merchant-wallet.ts";
 import { parseOptionalCashbackRate, parseOptionalPointsPerDollar } from "../_shared/program-economics.ts";
 import { discoverResources, discoverMcpServers, probeX402Endpoint } from "../_shared/bazaar-discovery.ts";
 import { generateProgramDefaults, generateProgramExamples, getMerchantProgramFieldCatalog, merchantProgramWorkflow, wrapWorkflow } from "../_shared/agent-workflows.ts";
