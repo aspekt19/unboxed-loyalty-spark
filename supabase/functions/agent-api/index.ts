@@ -104,6 +104,14 @@ async function resolveAgentMerchantAddress(
   return typeof resolved === "string" ? resolved.toLowerCase() : resolved;
 }
 
+/** All merchant addresses controlled by this agent: owner wallet + active CDP wallet (lowercased). */
+async function agentMerchantAddresses(serviceClient: any, agent: AgentContext): Promise<string[]> {
+  const list = [agent.ownerAddress.toLowerCase()];
+  const cdp = await resolveAgentMerchantAddress(serviceClient, agent, true);
+  if (cdp && !list.includes(cdp)) list.push(cdp);
+  return list;
+}
+
 // Check program ownership: merchant can be either ownerAddress or agent's CDP wallet
 async function findAgentProgram(
   serviceClient: any,
@@ -1217,11 +1225,12 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Missing query param: token_address" }, 400);
       }
 
-      // Get customers who have vouchers with this merchant
+      // Get customers who have vouchers with this merchant (owner wallet + CDP agent wallet)
+      const customerWallets = await agentMerchantAddresses(serviceClient, agent);
       const { data: vouchers, error } = await serviceClient
         .from("vouchers")
         .select("customer_address")
-        .eq("merchant_address", agent.ownerAddress)
+        .in("merchant_address", customerWallets)
         .eq("token_address", tokenAddress.toLowerCase());
 
       if (error) {
@@ -1362,7 +1371,9 @@ Deno.serve(async (req) => {
       const logs = Array.isArray(receipt.logs) ? receipt.logs : [];
       const tokenAddr = reward.token_address.toLowerCase();
       const custAddr = customer_address.toLowerCase();
-      const merchAddr = redeemWallet.toLowerCase();
+      // Customer must have paid the merchant that owns the reward (owner wallet or CDP wallet),
+      // not whichever wallet resolveAgentMerchantAddress happened to pick.
+      const merchAddr = rewardMerchant;
 
       const requiredWei = BigInt(Math.round(Number(reward.cost) * 1e6)) * 10n ** 12n;
       let transferredWei = 0n;
@@ -1399,7 +1410,7 @@ Deno.serve(async (req) => {
           token_address: reward.token_address.toLowerCase(),
           token_symbol: program?.symbol || "TOKEN",
           customer_address: customer_address.toLowerCase(),
-          merchant_address: redeemWallet.toLowerCase(),
+          merchant_address: rewardMerchant,
           status: "active",
           cost: reward.cost,
           transaction_hash,
@@ -1521,7 +1532,7 @@ Deno.serve(async (req) => {
       const { data: analytics, error } = await serviceClient
         .from("merchant_analytics")
         .select("*")
-        .eq("merchant_address", agent.ownerAddress);
+        .in("merchant_address", await agentMerchantAddresses(serviceClient, agent));
 
       if (error) {
         await logActivity(serviceClient, agent.agentId, "get_analytics", {}, 500, { error: error.message }, ip);

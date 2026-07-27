@@ -73,7 +73,8 @@ const MERCHANT_REST_ROUTE_USD: Record<string, Record<string, string>> = {
 function recipientAddress(): string {
   return (
     Deno.env.get("X402_RECIPIENT_ADDRESS") ||
-    "0x5cc0Aa9ed773F413f81f78a62F2e94109CE26205"
+    // Must stay identical to the x402-gateway default (platform treasury).
+    "0x40a8CdD6a10EC1a8cB3dFb2834675e7a2CF4ad8b"
   );
 }
 
