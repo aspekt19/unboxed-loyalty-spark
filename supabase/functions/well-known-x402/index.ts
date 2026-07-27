@@ -208,7 +208,7 @@ function buildDiscoveryDocument(req: Request): Record<string, unknown> {
   const items = buildAllItems(req);
   const name = "Loyal Spark — Onchain Loyalty Protocol on Base";
   const description =
-    "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create ERC-20 loyalty programs, mint tokens to customer wallets, manage rewards catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics — all via paid x402 endpoints (USDC on Base). Includes 88 paid resources: merchant REST (agent-api), recipient REST (recipient-api), 34 merchant MCP tools and 16 recipient MCP tools via paid x402 corridor (direct MCP exposes 38 merchant + 20 recipient tools with x-api-key). Builder Code bc_wdmnog7m.";
+    "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create B20 loyalty programs, mint tokens to customer wallets, manage rewards catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics — all via paid x402 endpoints (USDC on Base). Includes 88 paid resources: merchant REST (agent-api), recipient REST (recipient-api), 34 merchant MCP tools and 16 recipient MCP tools via paid x402 corridor (direct MCP exposes 38 merchant + 20 recipient tools with x-api-key). Builder Code bc_wdmnog7m.";
   return {
     x402Version: 1,
     name,
@@ -426,7 +426,7 @@ Deno.serve((req) => {
     // NOTE: Header values must be ASCII (ByteString). Avoid em dash and other non-ASCII chars.
     const SERVER_NAME = "Loyal Spark - Onchain Loyalty Protocol on Base";
     const SERVER_DESC =
-      "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create ERC-20 loyalty programs, mint tokens to customer wallets, manage rewards catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics - all via paid x402 endpoints (USDC on Base). 70+ resources, Builder Code bc_wdmnog7m.";
+      "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create B20 loyalty programs, mint tokens to customer wallets, manage rewards catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics - all via paid x402 endpoints (USDC on Base). 88 paid resources (38 merchant + 20 recipient direct MCP tools), Builder Code bc_wdmnog7m.";
     const LOGO_URL = "https://loyalspark.online/new-favicon.png";
 
     const headers = new Headers(corsHeaders);
