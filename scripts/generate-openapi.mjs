@@ -30,6 +30,24 @@ const RECIPIENT_MCP_URL = `${API_ORIGIN}/recipient-loyalty-mcp`;
 
 // ---- Pricing tables (kept aligned with supabase/functions/_shared/*) ----
 
+// Two-phase P2P accept body (kept in sync with supabase/functions/_shared/marketplace-p2p.ts)
+const ACCEPT_OFFER_BODY = {
+  type: "object",
+  required: ["offer_id"],
+  additionalProperties: true,
+  description:
+    "Two-phase: omit transaction_hash to reserve the offer (active -> accepted) and get approve + fillOffer escrow calldata; send transaction_hash of the confirmed fillOffer tx to finalize (accepted -> completed).",
+  properties: {
+    offer_id: { type: "string", format: "uuid", description: "Marketplace offer id." },
+    onchain_offer_id: { type: "number", description: "On-chain escrow offer id (phase 1, when known)." },
+    transaction_hash: {
+      type: "string",
+      pattern: "^0x[a-fA-F0-9]{64}$",
+      description: "Phase 2: hash of the confirmed escrow fillOffer transaction on Base.",
+    },
+  },
+};
+
 const MERCHANT_REST = {
   GET: {
     "/me": { price: "0", auth: "lsk", summary: "Get agent profile, scopes, plan and wallet", desc: "Returns the merchant agent's profile (owner address, plan, API scopes, wallet metadata). Free: identity-only." },
@@ -56,7 +74,7 @@ const MERCHANT_REST = {
     "/redeem-reward": { price: "0.01", auth: "lsk", summary: "Redeem a reward for a customer", desc: "Burns reward cost from customer balance and issues a voucher; returns voucher code and id." },
     "/vouchers/use": { price: "0.005", auth: "lsk", summary: "Mark a voucher as used", desc: "Marks a previously-issued voucher as used (consumed at point-of-sale)." },
     "/offers": { price: "0.01", auth: "lsk", summary: "Create a P2P swap offer", desc: "Creates a P2P swap offer between two loyalty tokens (offer_token / offer_amount ↔ request_token / request_amount)." },
-    "/accept-offer": { price: "0.01", auth: "lsk", summary: "Accept a P2P swap offer", desc: "Accepts an existing P2P swap offer by id. Atomic on-chain swap via LoyaltyTokenEscrow." },
+    "/accept-offer": { price: "0.01", auth: "lsk", summary: "Accept a P2P swap offer (two-phase)", desc: "Phase 1 (no transaction_hash): reserves the offer for your wallet (active -> accepted) and returns approve + fillOffer escrow calldata. Phase 2: call again with transaction_hash of the confirmed LoyaltyTokenEscrow fillOffer tx; the API verifies it on Base and sets the offer to completed.", body: ACCEPT_OFFER_BODY },
     "/cancel-offer": { price: "0.005", auth: "lsk", summary: "Cancel an own P2P swap offer", desc: "Cancels a P2P swap offer the caller created (status active only)." },
   },
 };
@@ -75,7 +93,7 @@ const RECIPIENT_REST = {
     "/recipient-api/prepare-transfer": { price: "0.005", summary: "Prepare ERC-20 transfer calldata", desc: "Returns ERC-20 transfer calldata for the holder to send loyalty tokens to any address." },
     "/recipient-api/redeem-reward": { price: "0.01", summary: "Redeem a reward", desc: "Redeems a reward using a transfer tx hash; returns the issued voucher." },
     "/recipient-api/offers": { price: "0.01", summary: "Create P2P swap offer", desc: "Creates a P2P swap intent between two loyalty tokens." },
-    "/recipient-api/accept-offer": { price: "0.01", summary: "Accept a P2P swap offer", desc: "Accepts a P2P swap offer by id (atomic via escrow)." },
+    "/recipient-api/accept-offer": { price: "0.01", summary: "Accept a P2P swap offer (two-phase)", desc: "Phase 1 (no transaction_hash): reserves the offer (active -> accepted) and returns approve + fillOffer escrow calldata. Phase 2: call again with transaction_hash of the confirmed fillOffer tx to finalize (accepted -> completed).", body: ACCEPT_OFFER_BODY },
     "/recipient-api/cancel-offer": { price: "0.005", summary: "Cancel own P2P swap offer", desc: "Cancels a P2P swap offer created by the holder." },
   },
 };
@@ -174,7 +192,7 @@ function buildRestOp(method, path, meta, kind) {
     description: meta.desc,
     tags: [kind === "merchant" ? "Merchant REST" : "Recipient REST"],
     responses: { "200": jsonOk(), "402": paid402() },
-    "x-input-schema": flexibleInputSchema,
+    "x-input-schema": meta.body ?? flexibleInputSchema,
   };
   if (meta.price && meta.price !== "0") {
     op["x-payment-info"] = paymentInfo(meta.price);
@@ -188,8 +206,8 @@ function buildRestOp(method, path, meta, kind) {
   }
   if (method === "POST") {
     op.requestBody = {
-      required: false,
-      content: { "application/json": { schema: flexibleInputSchema } },
+      required: Boolean(meta.body),
+      content: { "application/json": { schema: meta.body ?? flexibleInputSchema } },
     };
   } else {
     op.parameters = [

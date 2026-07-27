@@ -32,6 +32,7 @@ import {
 import {
   agentMerchantAddresses,
   resolveAgentMerchantAddress,
+  rewardOwnedByAgent,
 } from "../_shared/agent-merchant-wallet.ts";
 
 
@@ -884,18 +885,11 @@ Deno.serve(async (req) => {
       }
 
       const tokenAddress = url.searchParams.get("token_address");
-      // Resolve merchant address (supports CDP wallet)
-      const rewardsWallet = await resolveAgentMerchantAddress(serviceClient, agent, true);
+      // Owner wallet + agent CDP wallet (shared helper)
       let query = serviceClient
         .from("rewards")
-        .select("id, name, description, cost, is_active, token_address, created_at");
-
-      // Check both ownerAddress and CDP wallet
-      if (rewardsWallet.toLowerCase() !== agent.ownerAddress.toLowerCase()) {
-        query = query.or(`merchant_address.eq.${agent.ownerAddress.toLowerCase()},merchant_address.eq.${rewardsWallet.toLowerCase()}`);
-      } else {
-        query = query.eq("merchant_address", agent.ownerAddress);
-      }
+        .select("id, name, description, cost, is_active, token_address, created_at")
+        .in("merchant_address", await agentMerchantAddresses(serviceClient, agent));
 
       if (tokenAddress) {
         query = query.eq("token_address", tokenAddress.toLowerCase());
@@ -1235,17 +1229,11 @@ Deno.serve(async (req) => {
       const status = url.searchParams.get("status");
       const limit = Math.min(parseInt(url.searchParams.get("limit") || "50"), 100);
 
-      // Supports CDP wallet
-      const vouchersWallet = await resolveAgentMerchantAddress(serviceClient, agent, true);
+      // Owner wallet + agent CDP wallet (shared helper)
       let query = serviceClient
         .from("vouchers")
-        .select("id, code, reward_name, cost, status, customer_address, activated_at, used_at");
-
-      if (vouchersWallet.toLowerCase() !== agent.ownerAddress.toLowerCase()) {
-        query = query.or(`merchant_address.eq.${agent.ownerAddress.toLowerCase()},merchant_address.eq.${vouchersWallet.toLowerCase()}`);
-      } else {
-        query = query.eq("merchant_address", agent.ownerAddress);
-      }
+        .select("id, code, reward_name, cost, status, customer_address, activated_at, used_at")
+        .in("merchant_address", await agentMerchantAddresses(serviceClient, agent));
 
       if (tokenAddress) query = query.eq("token_address", tokenAddress.toLowerCase());
       if (status) query = query.eq("status", status);
@@ -1288,9 +1276,9 @@ Deno.serve(async (req) => {
       }
 
       // Verify the reward belongs to the agent's merchant (supports CDP wallet)
-      const redeemWallet = await resolveAgentMerchantAddress(serviceClient, agent, true);
+      const redeemAddresses = await agentMerchantAddresses(serviceClient, agent);
       const rewardMerchant = reward.merchant_address.toLowerCase();
-      if (rewardMerchant !== agent.ownerAddress.toLowerCase() && rewardMerchant !== redeemWallet.toLowerCase()) {
+      if (!rewardOwnedByAgent(reward, redeemAddresses)) {
         await logActivity(serviceClient, agent.agentId, "redeem_reward", body, 403, { error: "Reward not owned" }, ip);
         return jsonResponse({ error: "Reward does not belong to your program" }, 403);
       }
@@ -1441,17 +1429,11 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Required: voucher_code or voucher_id" }, 400);
       }
 
-      // Find the voucher (supports CDP wallet)
-      const useWallet = await resolveAgentMerchantAddress(serviceClient, agent, true);
+      // Find the voucher (owner wallet + agent CDP wallet)
       let voucherQuery = serviceClient
         .from("vouchers")
-        .select("*");
-
-      if (useWallet.toLowerCase() !== agent.ownerAddress.toLowerCase()) {
-        voucherQuery = voucherQuery.or(`merchant_address.eq.${agent.ownerAddress.toLowerCase()},merchant_address.eq.${useWallet.toLowerCase()}`);
-      } else {
-        voucherQuery = voucherQuery.eq("merchant_address", agent.ownerAddress.toLowerCase());
-      }
+        .select("*")
+        .in("merchant_address", await agentMerchantAddresses(serviceClient, agent));
 
       if (voucher_code) {
         voucherQuery = voucherQuery.eq("code", voucher_code);

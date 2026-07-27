@@ -497,7 +497,17 @@ const REST_INPUT_SCHEMAS: Record<string, Record<string, unknown>> = {
   },
   "POST accept-offer": {
     type: "object", required: ["offer_id"], additionalProperties: true,
-    properties: { offer_id: { type: "string", format: "uuid" } },
+    description:
+      "Two-phase: call without transaction_hash to reserve the offer (status active -> accepted) and receive approve + fillOffer escrow calldata; call again with transaction_hash of the confirmed fillOffer tx to finalize (accepted -> completed).",
+    properties: {
+      offer_id: { type: "string", format: "uuid" },
+      onchain_offer_id: { type: "number", description: "On-chain escrow offer id (phase 1, when known)." },
+      transaction_hash: {
+        type: "string",
+        pattern: "^0x[a-fA-F0-9]{64}$",
+        description: "Phase 2: hash of the confirmed escrow fillOffer transaction on Base.",
+      },
+    },
   },
   "POST cancel-offer": {
     type: "object", required: ["offer_id"], additionalProperties: true,
@@ -582,7 +592,17 @@ const REST_INPUT_SCHEMAS: Record<string, Record<string, unknown>> = {
   },
   "POST recipient-api/accept-offer": {
     type: "object", required: ["offer_id"], additionalProperties: true,
-    properties: { offer_id: { type: "string", format: "uuid" } },
+    description:
+      "Two-phase: call without transaction_hash to reserve the offer (status active -> accepted) and receive approve + fillOffer escrow calldata; call again with transaction_hash of the confirmed fillOffer tx to finalize (accepted -> completed).",
+    properties: {
+      offer_id: { type: "string", format: "uuid" },
+      onchain_offer_id: { type: "number", description: "On-chain escrow offer id (phase 1, when known)." },
+      transaction_hash: {
+        type: "string",
+        pattern: "^0x[a-fA-F0-9]{64}$",
+        description: "Phase 2: hash of the confirmed escrow fillOffer transaction on Base.",
+      },
+    },
   },
   "POST recipient-api/cancel-offer": {
     type: "object", required: ["offer_id"], additionalProperties: true,
