@@ -68,7 +68,7 @@ export function AgentManagement() {
   const [editingNameId, setEditingNameId] = useState<string | null>(null);
   const [editNameValue, setEditNameValue] = useState('');
 
-  const { data: agents = [], isLoading } = useQuery({
+  const { data: agents = [], isLoading, isError: agentsError } = useQuery({
     queryKey: ['agents', address],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -115,10 +115,11 @@ export function AgentManagement() {
         body: { action: 'revoke', agent_id: agentId },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       toast.success('Agent deactivated');
       queryClient.invalidateQueries({ queryKey: ['agents'] });
-    } catch {
-      toast.error('Failed to deactivate agent');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to deactivate agent');
     }
   };
 
@@ -128,10 +129,11 @@ export function AgentManagement() {
         body: { action: 'delete', agent_id: agentId },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       toast.success(`Agent "${agentName}" deleted`);
       queryClient.invalidateQueries({ queryKey: ['agents'] });
-    } catch {
-      toast.error('Failed to delete agent');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete agent');
     }
   };
 

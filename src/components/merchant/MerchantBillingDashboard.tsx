@@ -77,7 +77,8 @@ export function MerchantBillingDashboard() {
         .from('merchant_plan_subscriptions')
         .select('*, merchant_plans(*)')
         .eq('owner_address', (address || '').toLowerCase())
-        .eq('status', 'active')
+        // Trials grant the same plan entitlements (see useEffectivePlan / AgentBillingDashboard).
+        .in('status', ['active', 'trialing'])
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
