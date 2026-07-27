@@ -29,6 +29,10 @@ import {
   merchantProgramWorkflow,
   wrapWorkflow,
 } from "../_shared/agent-workflows.ts";
+import {
+  agentMerchantAddresses,
+  resolveAgentMerchantAddress,
+} from "../_shared/agent-merchant-wallet.ts";
 
 
 // Encode approve(address,uint256) calldata with Builder Code
