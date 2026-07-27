@@ -177,17 +177,49 @@ export async function marketplaceCreateOffer(
   };
 }
 
+/** Verify an escrow fillOffer transaction on Base. */
+async function verifyEscrowFillTx(transactionHash: string): Promise<{ ok: boolean; retryable?: boolean; error?: string }> {
+  const rpcUrl = "https://base-rpc.publicnode.com";
+  const txHash = transactionHash.startsWith("0x") ? transactionHash : `0x${transactionHash}`;
+
+  let receipt: any = null;
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    const resp = await fetch(rpcUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_getTransactionReceipt", params: [txHash] }),
+    });
+    const data = (await resp.json()) as any;
+    receipt = data?.result ?? null;
+    if (receipt) break;
+    if (attempt < 5) await new Promise((r) => setTimeout(r, 2500));
+  }
+
+  if (!receipt) return { ok: false, retryable: true, error: "Transaction not confirmed yet. Retry later." };
+  if (receipt.status && receipt.status !== "0x1") return { ok: false, error: "Transaction failed on blockchain" };
+  if ((receipt.to || "").toLowerCase() !== ESCROW_ADDRESS.toLowerCase()) {
+    return { ok: false, error: "Transaction was not sent to the escrow contract" };
+  }
+  return { ok: true };
+}
+
+/**
+ * Two-phase accept:
+ *  - without `transaction_hash`: reserve the offer (`status: 'accepted'`) and return escrow calldata;
+ *  - with `transaction_hash`: verify the on-chain escrow fill and finalize (`status: 'completed'`).
+ */
 export async function marketplaceAcceptOffer(
   serviceClient: { from: (t: string) => any },
   acceptorAddress: string,
   body: JsonBody
 ): Promise<ServiceResult> {
   const w = acceptorAddress.toLowerCase();
-  const { offer_id, onchain_offer_id, request_token_address, request_amount } = body as {
+  const { offer_id, onchain_offer_id, request_token_address, request_amount, transaction_hash } = body as {
     offer_id?: string;
     onchain_offer_id?: number | string;
     request_token_address?: string;
     request_amount?: number;
+    transaction_hash?: string;
   };
   if (!offer_id) {
     return { status: 400, body: { error: "Missing field: offer_id" } };
@@ -197,7 +229,7 @@ export async function marketplaceAcceptOffer(
     .from("marketplace_offers")
     .select("*")
     .eq("id", offer_id)
-    .eq("status", "active")
+    .in("status", ["active", "accepted"])
     .single();
 
   if (error || !offer) {
@@ -208,14 +240,9 @@ export async function marketplaceAcceptOffer(
     return { status: 400, body: { error: "Cannot accept your own offer" } };
   }
 
-  await serviceClient
-    .from("marketplace_offers")
-    .update({
-      status: "completed",
-      completed_by: w,
-      completed_at: new Date().toISOString(),
-    })
-    .eq("id", offer_id);
+  if (offer.status === "accepted" && String(offer.completed_by || "").toLowerCase() !== w) {
+    return { status: 409, body: { error: "Offer is already reserved by another wallet" } };
+  }
 
   const reqToken = (request_token_address ?? offer.request_token_address) as string;
   const reqAmount = Number(request_amount ?? offer.request_amount);
@@ -224,10 +251,58 @@ export async function marketplaceAcceptOffer(
       ? encodeEscrowFillOfferCalldata(onchain_offer_id as number | string)
       : null;
 
+  // Phase 2 — finalize after the on-chain swap is proven.
+  if (typeof transaction_hash === "string" && transaction_hash.length > 0) {
+    const verified = await verifyEscrowFillTx(transaction_hash);
+    if (!verified.ok) {
+      return verified.retryable
+        ? { status: 200, body: { success: false, retryable: true, retry_after_ms: 3000, status_value: offer.status, error: verified.error } }
+        : { status: 400, body: { error: verified.error } };
+    }
+
+    const { data: finalized, error: finalizeError } = await serviceClient
+      .from("marketplace_offers")
+      .update({ status: "completed", completed_by: w, completed_at: new Date().toISOString() })
+      .eq("id", offer_id)
+      .in("status", ["active", "accepted"])
+      .select("*")
+      .single();
+
+    if (finalizeError || !finalized) {
+      return { status: 409, body: { error: "Offer could not be completed (already finalized?)" } };
+    }
+
+    return {
+      status: 200,
+      body: {
+        status: "completed",
+        message: "Escrow fill verified on-chain. Offer completed.",
+        transaction_hash,
+        offer: finalized,
+      },
+    };
+  }
+
+  // Phase 1 — reserve only, no on-chain proof yet.
+  const { data: reserved, error: reserveError } = await serviceClient
+    .from("marketplace_offers")
+    .update({ status: "accepted", completed_by: w, completed_at: null })
+    .eq("id", offer_id)
+    .in("status", ["active", "accepted"])
+    .select("*")
+    .single();
+
+  if (reserveError || !reserved) {
+    return { status: 409, body: { error: "Offer could not be reserved (already taken?)" } };
+  }
+
   return {
     status: 200,
     body: {
-      message: "Offer accepted. Execute fillOffer on the escrow contract to complete the atomic swap.",
+      status: "accepted",
+      message:
+        "Offer reserved (status: accepted). Execute approve + fillOffer on the escrow contract, then call accept-offer again with transaction_hash to mark it completed.",
+      next_step: "POST accept-offer with { offer_id, transaction_hash } after the escrow fillOffer transaction confirms.",
       escrow_contract: {
         address: ESCROW_ADDRESS,
         function: "fillOffer(uint256)",
@@ -252,10 +327,11 @@ export async function marketplaceAcceptOffer(
               },
         },
       },
-      offer,
+      offer: reserved,
     },
   };
 }
+
 
 export async function marketplaceCancelOffer(
   serviceClient: { from: (t: string) => any },
@@ -276,7 +352,7 @@ export async function marketplaceCancelOffer(
     .select("*")
     .eq("id", offer_id)
     .eq("creator_address", w)
-    .eq("status", "active")
+    .in("status", ["active", "accepted"])
     .single();
 
   if (error || !offer) {

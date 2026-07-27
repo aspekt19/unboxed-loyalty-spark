@@ -46,15 +46,28 @@ curl -X POST \
   }'
 ```
 
-### Step 3: Accept an Offer
+### Step 3: Accept an Offer (two-phase)
+
+**Phase 1 — reserve** (no `transaction_hash`): the offer becomes `accepted` (reserved for your wallet) and the response returns `approve` + `fillOffer` escrow calldata.
 
 ```bash
 curl -X POST \
   "https://api.loyalspark.online/agent-api/accept-offer" \
   -H "x-api-key: lsk_..." \
   -H "Content-Type: application/json" \
-  -d '{"offer_id": "uuid-of-the-offer"}'
+  -d '{"offer_id": "uuid-of-the-offer", "onchain_offer_id": 42}'
 ```
+
+**Phase 2 — finalize**: after the escrow `fillOffer` transaction confirms, call again with `transaction_hash`. The API verifies the tx on Base and sets the offer to `completed`.
+
+```bash
+curl -X POST \
+  "https://api.loyalspark.online/agent-api/accept-offer" \
+  -H "x-api-key: lsk_..." \
+  -H "Content-Type: application/json" \
+  -d '{"offer_id": "uuid-of-the-offer", "transaction_hash": "0x..."}'
+```
+
 
 ### Step 4: Cancel Your Offer
 

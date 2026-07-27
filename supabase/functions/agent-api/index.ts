@@ -29,6 +29,10 @@ import {
   merchantProgramWorkflow,
   wrapWorkflow,
 } from "../_shared/agent-workflows.ts";
+import {
+  agentMerchantAddresses,
+  resolveAgentMerchantAddress,
+} from "../_shared/agent-merchant-wallet.ts";
 
 
 // Encode approve(address,uint256) calldata with Builder Code
@@ -84,33 +88,9 @@ function encodeNoArgCalldata(selector: string): string {
   return appendBuilderCode(selector);
 }
 
-// Resolve merchant address: either ownerAddress or CDP wallet if use_agent_wallet is true
-async function resolveAgentMerchantAddress(
-  serviceClient: any,
-  agent: AgentContext,
-  useAgentWallet?: boolean
-): Promise<string> {
-  const raw = !useAgentWallet
-    ? agent.ownerAddress
-    : (await serviceClient
-        .from("agent_wallets")
-        .select("wallet_address")
-        .eq("agent_id", agent.agentId)
-        .eq("chain_id", 8453)
-        .eq("is_active", true)
-        .single()).data?.wallet_address;
+// Merchant wallet resolution (owner + CDP) lives in ../_shared/agent-merchant-wallet.ts
+// and is shared with loyalty-mcp so REST and MCP stay in parity.
 
-  const resolved = raw || agent.ownerAddress;
-  return typeof resolved === "string" ? resolved.toLowerCase() : resolved;
-}
-
-/** All merchant addresses controlled by this agent: owner wallet + active CDP wallet (lowercased). */
-async function agentMerchantAddresses(serviceClient: any, agent: AgentContext): Promise<string[]> {
-  const list = [agent.ownerAddress.toLowerCase()];
-  const cdp = await resolveAgentMerchantAddress(serviceClient, agent, true);
-  if (cdp && !list.includes(cdp)) list.push(cdp);
-  return list;
-}
 
 // Check program ownership: merchant can be either ownerAddress or agent's CDP wallet
 async function findAgentProgram(
@@ -1427,7 +1407,7 @@ Deno.serve(async (req) => {
       await serviceClient.from("customer_transactions").insert({
         customer_address: customer_address.toLowerCase(),
         token_address: reward.token_address.toLowerCase(),
-        merchant_address: agent.ownerAddress.toLowerCase(),
+        merchant_address: rewardMerchant,
         transaction_type: "redemption",
         amount: reward.cost,
         voucher_id: voucher.id,

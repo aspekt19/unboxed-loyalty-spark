@@ -20,6 +20,7 @@ import {
   encodeCreateB20Asset,
 } from "../_shared/b20-encoding.ts";
 import { resolveMcpApiKey } from "../_shared/mcp-http-api-key.ts";
+import { agentMerchantAddresses, rewardOwnedByAgent } from "../_shared/agent-merchant-wallet.ts";
 import { parseOptionalCashbackRate, parseOptionalPointsPerDollar } from "../_shared/program-economics.ts";
 import { discoverResources, discoverMcpServers, probeX402Endpoint } from "../_shared/bazaar-discovery.ts";
 import { generateProgramDefaults, generateProgramExamples, getMerchantProgramFieldCatalog, merchantProgramWorkflow, wrapWorkflow } from "../_shared/agent-workflows.ts";
@@ -597,7 +598,8 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
 
       const { data: reward } = await d.from("rewards").select("*").eq("id", reward_id).single();
       if (!reward) return T(JSON.stringify({ error: "Reward not found" }));
-      if (reward.merchant_address.toLowerCase() !== agent.ownerAddress.toLowerCase()) return T(JSON.stringify({ error: "Reward not owned by you" }));
+      const merchantWallets = await agentMerchantAddresses(d, { agentId: agent.agentId, ownerAddress: agent.ownerAddress });
+      if (!rewardOwnedByAgent(reward, merchantWallets)) return T(JSON.stringify({ error: "Reward not owned by you" }));
       if (!reward.is_active) return T(JSON.stringify({ error: "Reward is inactive" }));
 
       const { data: dup } = await d.from("vouchers").select("id").eq("transaction_hash", transaction_hash).maybeSingle();
@@ -621,7 +623,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
       const logs = Array.isArray(receipt.logs) ? receipt.logs : [];
       const tokenAddrLc = reward.token_address.toLowerCase();
       const custAddrLc = customer_address.toLowerCase();
-      const merchAddrLc = agent.ownerAddress.toLowerCase();
+      const merchAddrLc = reward.merchant_address.toLowerCase();
       const requiredWei = BigInt(Math.round(Number(reward.cost) * 1e6)) * 10n ** 12n;
       let transferredWei = 0n;
       for (const l of logs) {
@@ -642,10 +644,19 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
       const { data: voucher, error: ve } = await d.from("vouchers").insert({
         code, reward_id: reward.id, reward_name: reward.name, reward_description: reward.description,
         token_address: reward.token_address.toLowerCase(), token_symbol: prog?.symbol || "TOKEN",
-        customer_address: customer_address.toLowerCase(), merchant_address: agent.ownerAddress.toLowerCase(),
+        customer_address: customer_address.toLowerCase(), merchant_address: merchAddrLc,
         status: "active", cost: reward.cost, transaction_hash,
       }).select().single();
       if (ve) return T(JSON.stringify({ error: ve.message }));
+
+      await d.from("customer_transactions").insert({
+        customer_address: customer_address.toLowerCase(),
+        token_address: reward.token_address.toLowerCase(),
+        merchant_address: merchAddrLc,
+        transaction_type: "redemption",
+        amount: reward.cost,
+        voucher_id: voucher.id,
+      });
 
       return T(JSON.stringify({ voucher: { id: voucher.id, code: voucher.code, reward_name: voucher.reward_name, cost: voucher.cost, status: "active" } }));
     },
@@ -666,7 +677,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
       if (!voucher_code && !voucher_id) return T(JSON.stringify({ error: "Provide voucher_code or voucher_id" }));
 
       const d = db();
-      let q = d.from("vouchers").select("*").eq("merchant_address", agent.ownerAddress.toLowerCase());
+      let q = d.from("vouchers").select("*").in("merchant_address", await agentMerchantAddresses(d, { agentId: agent.agentId, ownerAddress: agent.ownerAddress }));
       if (voucher_code) q = q.eq("code", voucher_code);
       else q = q.eq("id", voucher_id);
 
@@ -948,7 +959,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
         .eq("id", reward_id)
         .single();
       if (!reward) return T(JSON.stringify({ error: "Reward not found" }));
-      if (reward.merchant_address.toLowerCase() !== agent.ownerAddress.toLowerCase()) {
+      if (!rewardOwnedByAgent(reward, await agentMerchantAddresses(d, { agentId: agent.agentId, ownerAddress: agent.ownerAddress }))) {
         return T(JSON.stringify({ error: "Not your reward" }));
       }
 
