@@ -958,7 +958,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
         .eq("id", reward_id)
         .single();
       if (!reward) return T(JSON.stringify({ error: "Reward not found" }));
-      if (reward.merchant_address.toLowerCase() !== agent.ownerAddress.toLowerCase()) {
+      if (!rewardOwnedByAgent(reward, await agentMerchantAddresses(d, { agentId: agent.agentId, ownerAddress: agent.ownerAddress }))) {
         return T(JSON.stringify({ error: "Not your reward" }));
       }
 
