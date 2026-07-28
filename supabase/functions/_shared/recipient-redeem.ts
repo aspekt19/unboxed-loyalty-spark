@@ -136,7 +136,7 @@ export async function recipientRedeemReward(
     customer_address: custAddr,
     token_address: reward.token_address.toLowerCase(),
     merchant_address: merchAddr,
-    transaction_type: "redemption",
+    transaction_type: "voucher_purchase",
     amount: reward.cost,
     voucher_id: voucher.id,
   });
