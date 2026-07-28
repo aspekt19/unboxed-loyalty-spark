@@ -68,14 +68,12 @@ export function useBurnAllTokens() {
         
         const burnPromises = batch.map(async (holder) => {
           try {
-            const hash = await walletClient.writeContract({
-              address: tokenAddress as `0x${string}`,
-              abi: tokenAbi,
-              functionName: 'burn',
-              args: [
+            const hash = await walletClient.sendTransaction({
+              to: tokenAddress as `0x${string}`,
+              data: encodeWithBuilderCode(tokenAbi, 'burn', [
                 holder.address as `0x${string}`,
                 BigInt(holder.balance),
-              ],
+              ]),
             } as any);
 
             await publicClient.waitForTransactionReceipt({ hash });
