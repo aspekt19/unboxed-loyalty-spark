@@ -2420,6 +2420,10 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_current_user_banned: { Args: never; Returns: boolean }
+      is_current_user_linked_wallet: {
+        Args: { p_wallet: string }
+        Returns: boolean
+      }
       is_merchant_member: {
         Args: { p_merchant_address: string; p_wallet_address: string }
         Returns: boolean
