@@ -7,7 +7,7 @@
 // UI (which queries chain directly) showed non-zero amounts. This helper makes
 // API parity with UI.
 
-import { createPublicClient, http, formatUnits, type Address } from "npm:viem@2.46.0";
+import { createPublicClient, http, fallback, formatUnits, type Address } from "npm:viem@2.46.0";
 import { base } from "npm:viem@2.46.0/chains";
 import { BASE_RPC_URLS } from "./base-rpc.ts";
 
