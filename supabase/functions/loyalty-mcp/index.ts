@@ -656,7 +656,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
         customer_address: customer_address.toLowerCase(),
         token_address: reward.token_address.toLowerCase(),
         merchant_address: merchAddrLc,
-        transaction_type: "redemption",
+        transaction_type: "voucher_purchase",
         amount: reward.cost,
         voucher_id: voucher.id,
       });

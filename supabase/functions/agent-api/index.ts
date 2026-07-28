@@ -1396,7 +1396,7 @@ Deno.serve(async (req) => {
         customer_address: customer_address.toLowerCase(),
         token_address: reward.token_address.toLowerCase(),
         merchant_address: rewardMerchant,
-        transaction_type: "redemption",
+        transaction_type: "voucher_purchase",
         amount: reward.cost,
         voucher_id: voucher.id,
       });
