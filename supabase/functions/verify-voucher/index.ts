@@ -33,7 +33,7 @@ interface VoucherRequest {
   tokenAddress: string;
   tokenSymbol: string;
   customerAddress: string;
-  merchantAddress: string;
+  merchantAddress?: string;
   cost: number;
 }
 
@@ -43,6 +43,13 @@ const ERC20_TRANSFER_TOPIC =
 function topicToAddress(topic: string) {
   // topic is 32-bytes hex; take last 20 bytes
   return `0x${topic.slice(-40)}`.toLowerCase();
+}
+
+function costToWei(cost: number) {
+  if (!Number.isFinite(cost) || cost < 0) return 0n;
+  const fixed = cost.toFixed(18);
+  const [whole, fraction = ''] = fixed.split('.');
+  return BigInt(whole) * 10n ** 18n + BigInt(fraction.padEnd(18, '0').slice(0, 18));
 }
 
 
@@ -80,17 +87,20 @@ Deno.serve(async (req) => {
     console.log('Authenticated user:', user.id);
 
     const body: VoucherRequest = await req.json();
-    const { transactionHash, rewardId, tokenAddress, tokenSymbol, customerAddress, merchantAddress, cost } = body;
+    const { transactionHash, rewardId, tokenAddress, tokenSymbol, customerAddress, cost } = body;
+    const normalizedTxHash = transactionHash?.startsWith('0x') ? transactionHash : `0x${transactionHash}`;
 
     // Validate required fields
-    if (!transactionHash || !rewardId || !tokenAddress || !customerAddress || !merchantAddress || cost === undefined) {
+    if (!transactionHash || !rewardId || !tokenAddress || !customerAddress || cost === undefined) {
       throw new Error('Missing required fields');
     }
 
     console.log('Verifying voucher creation for transaction:', transactionHash);
 
-    // Verify the customer address matches the authenticated user's profile
-    // Try by user_id first, fallback to wallet_address (handles race conditions)
+    const customerAddr = customerAddress.toLowerCase();
+
+    // Verify that the spending wallet belongs to the authenticated account.
+    // Profiles keep the original wallet; linked/primary wallets live in identity_links.
     let profile: { wallet_address: string } | null = null;
 
     const { data: profileById } = await supabaseClient
@@ -133,16 +143,25 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (profile.wallet_address.toLowerCase() !== customerAddress.toLowerCase()) {
-      console.error('Wallet mismatch:', { profile: profile.wallet_address, customer: customerAddress });
-      throw new Error('Customer address does not match authenticated user');
+    const profileWalletMatches = profile.wallet_address.toLowerCase() === customerAddr;
+    const { data: linkedWallet } = await supabaseClient
+      .from('identity_links')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('link_type', 'wallet')
+      .eq('value_normalized', customerAddr)
+      .maybeSingle();
+
+    if (!profileWalletMatches && !linkedWallet) {
+      console.error('Wallet mismatch:', { profile: profile.wallet_address, customer: customerAddr });
+      throw new Error('Customer wallet is not linked to the authenticated user');
     }
 
     // Check if voucher already exists for this transaction hash (prevent replay)
     const { data: existingVoucher } = await supabaseClient
       .from('vouchers')
       .select('id')
-      .eq('transaction_hash', transactionHash)
+      .eq('transaction_hash', normalizedTxHash)
       .maybeSingle();
 
     if (existingVoucher) {
@@ -170,9 +189,13 @@ Deno.serve(async (req) => {
       throw new Error('Cost mismatch');
     }
 
+    const merchantAddress = String(reward.merchant_address || '').toLowerCase();
+    if (!merchantAddress) {
+      throw new Error('Reward merchant address missing');
+    }
+
     // Verify the transaction on blockchain using Base JSON-RPC (no third-party API limits)
     const rpcUrl = 'https://base-rpc.publicnode.com';
-    const normalizedTxHash = transactionHash.startsWith('0x') ? transactionHash : `0x${transactionHash}`;
 
     const maxAttempts = 5;
     const delayMs = 2500;
@@ -277,8 +300,8 @@ Deno.serve(async (req) => {
 
     const receiptLogs = Array.isArray(receipt?.logs) ? receipt.logs : [];
     const tokenAddr = tokenAddress.toLowerCase();
-    const customerAddr = customerAddress.toLowerCase();
     const merchantAddr = merchantAddress.toLowerCase();
+    const requiredWei = costToWei(Number(reward.cost));
 
     const transferLogs = receiptLogs.filter((log: any) => {
       const logAddr = (log?.address || '').toLowerCase();
@@ -286,12 +309,20 @@ Deno.serve(async (req) => {
       return logAddr === tokenAddr && topics[0]?.toLowerCase() === ERC20_TRANSFER_TOPIC && topics.length >= 3;
     });
 
-    const hasExpectedTransfer = transferLogs.some((log: any) => {
+    let transferredWei = 0n;
+    for (const log of transferLogs) {
       const topics = Array.isArray(log?.topics) ? log.topics : [];
       const fromAddr = topicToAddress(topics[1]);
       const toAddr = topicToAddress(topics[2]);
-      return fromAddr === customerAddr && toAddr === merchantAddr;
-    });
+      if (fromAddr !== customerAddr || toAddr !== merchantAddr) continue;
+      try {
+        transferredWei += BigInt(log?.data || '0x0');
+      } catch (_error) {
+        console.warn('Unable to parse transfer log amount');
+      }
+    }
+
+    const hasExpectedTransfer = transferredWei >= requiredWei;
 
     // Fallback: sometimes logs can be missing/partial from certain RPC nodes.
     // For a plain `transfer(address,uint256)` call, we can also parse calldata.
@@ -303,8 +334,10 @@ Deno.serve(async (req) => {
         // recipient is last 20 bytes of the 32-byte word.
         const recipientWord = tx.input.slice(10, 10 + 64);
         const recipient = `0x${recipientWord.slice(24)}`.toLowerCase();
-        hasCalldataMatch = recipient === merchantAddr;
-        console.log('Calldata transfer recipient parsed:', { recipient, merchantAddr, hasCalldataMatch });
+        const amountWord = tx.input.slice(10 + 64, 10 + 128);
+        const amount = BigInt(`0x${amountWord}`);
+        hasCalldataMatch = recipient === merchantAddr && amount >= requiredWei;
+        console.log('Calldata transfer parsed:', { recipient, merchantAddr, hasCalldataMatch });
       } catch (e) {
         console.log('Failed to parse transfer calldata:', e);
       }
@@ -324,6 +357,8 @@ Deno.serve(async (req) => {
         tokenAddr,
         customerAddr,
         merchantAddr,
+          requiredWei: requiredWei.toString(),
+          transferredWei: transferredWei.toString(),
         transferLogsCount: transferLogs.length,
         transferLogsSample: sample,
       });
@@ -363,7 +398,7 @@ Deno.serve(async (req) => {
         merchant_address: merchantAddress.toLowerCase(),
         status: 'active',
         cost,
-        transaction_hash: transactionHash,
+        transaction_hash: normalizedTxHash,
       })
       .select()
       .single();
@@ -374,6 +409,21 @@ Deno.serve(async (req) => {
     }
 
     console.log('Voucher created successfully:', voucher.id);
+
+    const { error: transactionError } = await supabaseClient
+      .from('customer_transactions')
+      .insert({
+        customer_address: customerAddress.toLowerCase(),
+        token_address: tokenAddress.toLowerCase(),
+        merchant_address: merchantAddress.toLowerCase(),
+        transaction_type: 'redemption',
+        amount: cost,
+        voucher_id: voucher.id,
+      });
+
+    if (transactionError) {
+      console.error('Failed to record customer transaction:', transactionError);
+    }
 
     return new Response(
       JSON.stringify({
