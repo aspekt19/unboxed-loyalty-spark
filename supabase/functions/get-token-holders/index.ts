@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { BASE_RPC_URL as SHARED_BASE_RPC_URL } from '../_shared/base-rpc.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -41,7 +42,7 @@ serve(async (req) => {
     console.log('Fetching token holders for:', tokenAddress);
 
     // RPC endpoint for Base network - using public node
-    const BASE_RPC_URL = 'https://base-rpc.publicnode.com';
+    const BASE_RPC_URL = SHARED_BASE_RPC_URL;
     
     // ERC20 ABI for balanceOf
     const ERC20_ABI = [

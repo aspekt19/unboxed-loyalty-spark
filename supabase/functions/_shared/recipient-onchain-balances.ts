@@ -9,6 +9,7 @@
 
 import { createPublicClient, http, formatUnits, type Address } from "npm:viem@2.46.0";
 import { base } from "npm:viem@2.46.0/chains";
+import { BASE_RPC_URLS } from "./base-rpc.ts";
 
 const ERC20_BALANCE_ABI = [
   {
@@ -22,11 +23,9 @@ const ERC20_BALANCE_ABI = [
 
 const publicClient = createPublicClient({
   chain: base,
-  transport: http("https://base-rpc.publicnode.com", {
-    batch: false,
-    retryCount: 2,
-    retryDelay: 1_000,
-  }),
+  transport: fallback(
+    BASE_RPC_URLS.map((url) => http(url, { batch: false, retryCount: 2, retryDelay: 1_000 })),
+  ),
 });
 
 export interface OnchainLoyaltyBalance {
