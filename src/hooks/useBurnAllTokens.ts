@@ -3,6 +3,7 @@ import { usePublicClient, useAccount, useWalletClient } from 'wagmi';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { CONTRACTS } from '@/config/contracts';
+import { encodeWithBuilderCode } from '@/config/builder-code';
 
 interface TokenHolder {
   address: string;
