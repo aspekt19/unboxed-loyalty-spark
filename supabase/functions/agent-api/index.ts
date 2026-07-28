@@ -1,3 +1,4 @@
+import { getTransactionReceipt } from "../_shared/base-rpc.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   appendBuilderCode,
@@ -30,7 +31,6 @@ import {
   wrapWorkflow,
 } from "../_shared/agent-workflows.ts";
 import {
-import { getTransactionReceipt } from "../_shared/base-rpc.ts";
   agentMerchantAddresses,
   resolveAgentMerchantAddress,
   rewardOwnedByAgent,

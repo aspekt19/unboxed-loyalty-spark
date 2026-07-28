@@ -1,3 +1,4 @@
+import { BASE_RPC_URLS } from "../_shared/base-rpc.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createPublicClient, http, fallback } from "npm:viem@2.46.0";
 import { base } from "npm:viem@2.46.0/chains";
@@ -22,7 +23,6 @@ import {
   loadOnchainLoyaltyBalances,
 } from "../_shared/recipient-onchain-balances.ts";
 import {
-import { BASE_RPC_URLS } from "../_shared/base-rpc.ts";
   recipientRewardWorkflow,
   wrapWorkflow,
 } from "../_shared/agent-workflows.ts";
