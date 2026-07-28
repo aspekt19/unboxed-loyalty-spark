@@ -30,6 +30,7 @@ import {
   wrapWorkflow,
 } from "../_shared/agent-workflows.ts";
 import {
+import { getTransactionReceipt } from "../_shared/base-rpc.ts";
   agentMerchantAddresses,
   resolveAgentMerchantAddress,
   rewardOwnedByAgent,
@@ -1307,19 +1308,18 @@ Deno.serve(async (req) => {
         .eq("token_address", reward.token_address.toLowerCase())
         .maybeSingle();
 
-      // Verify the transaction on blockchain via Base RPC
-      const rpcUrl = "https://base-rpc.publicnode.com";
+      // Verify the transaction on blockchain via Base RPC (multi-provider failover)
       const normalizedTxHash = transaction_hash.startsWith("0x") ? transaction_hash : `0x${transaction_hash}`;
 
       let receipt: any = null;
       for (let attempt = 1; attempt <= 5; attempt++) {
-        const resp = await fetch(rpcUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_getTransactionReceipt", params: [normalizedTxHash] }),
-        });
-        const data = (await resp.json()) as any;
-        receipt = data?.result ?? null;
+        try {
+          receipt = await getTransactionReceipt(normalizedTxHash);
+        } catch (rpcError) {
+          console.error("[agent-api] RPC receipt error:", rpcError);
+          await logActivity(serviceClient, agent.agentId, "redeem_reward", body, 202, { error: "RPC unavailable" }, ip);
+          return jsonResponse({ success: false, retryable: true, retry_after_ms: 3000, error: "Blockchain node temporarily unavailable. Retry later." }, 200);
+        }
         if (receipt) break;
         if (attempt < 5) await new Promise((r) => setTimeout(r, 2500));
       }

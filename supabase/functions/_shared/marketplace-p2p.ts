@@ -1,3 +1,4 @@
+import { getTransactionReceipt } from "./base-rpc.ts";
 /**
  * Shared P2P marketplace DB intents (offers list/create/accept/cancel).
  * Used by agent-api (merchant lsk_, creator = ownerAddress) and recipient-api (buyer rwk_, creator = bound wallet).
@@ -179,18 +180,16 @@ export async function marketplaceCreateOffer(
 
 /** Verify an escrow fillOffer transaction on Base. */
 async function verifyEscrowFillTx(transactionHash: string): Promise<{ ok: boolean; retryable?: boolean; error?: string }> {
-  const rpcUrl = "https://base-rpc.publicnode.com";
   const txHash = transactionHash.startsWith("0x") ? transactionHash : `0x${transactionHash}`;
 
   let receipt: any = null;
   for (let attempt = 1; attempt <= 5; attempt++) {
-    const resp = await fetch(rpcUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_getTransactionReceipt", params: [txHash] }),
-    });
-    const data = (await resp.json()) as any;
-    receipt = data?.result ?? null;
+    try {
+      receipt = await getTransactionReceipt(txHash);
+    } catch (rpcError) {
+      console.error("[marketplace-p2p] RPC receipt error:", rpcError);
+      return { ok: false, retryable: true, error: "Blockchain node temporarily unavailable. Retry later." };
+    }
     if (receipt) break;
     if (attempt < 5) await new Promise((r) => setTimeout(r, 2500));
   }

@@ -24,6 +24,7 @@ import { agentMerchantAddresses, rewardOwnedByAgent } from "../_shared/agent-mer
 import { parseOptionalCashbackRate, parseOptionalPointsPerDollar } from "../_shared/program-economics.ts";
 import { discoverResources, discoverMcpServers, probeX402Endpoint } from "../_shared/bazaar-discovery.ts";
 import { generateProgramDefaults, generateProgramExamples, getMerchantProgramFieldCatalog, merchantProgramWorkflow, wrapWorkflow } from "../_shared/agent-workflows.ts";
+import { getTransactionReceipt } from "../_shared/base-rpc.ts";
 
 
 const app = new Hono();
@@ -605,14 +606,16 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
       const { data: dup } = await d.from("vouchers").select("id").eq("transaction_hash", transaction_hash).maybeSingle();
       if (dup) return T(JSON.stringify({ error: "Voucher already exists for this transaction" }));
 
-      // Verify tx on Base RPC
-      const rpcUrl = "https://base-rpc.publicnode.com";
+      // Verify tx on Base RPC (multi-provider failover)
       const txHash = transaction_hash.startsWith("0x") ? transaction_hash : `0x${transaction_hash}`;
       let receipt: any = null;
       for (let i = 0; i < 5; i++) {
-        const r = await fetch(rpcUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_getTransactionReceipt", params: [txHash] }) });
-        const j = (await r.json()) as any;
-        receipt = j?.result;
+        try {
+          receipt = await getTransactionReceipt(txHash);
+        } catch (rpcError) {
+          console.error("[loyalty-mcp] RPC receipt error:", rpcError);
+          return T(JSON.stringify({ error: "Blockchain node temporarily unavailable", retryable: true }));
+        }
         if (receipt) break;
         await new Promise(r => setTimeout(r, 2500));
       }
