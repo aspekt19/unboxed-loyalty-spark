@@ -1,5 +1,6 @@
+import { BASE_RPC_URLS } from "../_shared/base-rpc.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { createPublicClient, http } from "npm:viem@2.46.0";
+import { createPublicClient, http, fallback } from "npm:viem@2.46.0";
 import { base } from "npm:viem@2.46.0/chains";
 import { corsHeaders, jsonResponse } from "./http.ts";
 import {
@@ -28,7 +29,7 @@ import {
 
 const publicClient = createPublicClient({
   chain: base,
-  transport: http("https://base-rpc.publicnode.com", { batch: false, retryCount: 2, retryDelay: 1_000 }),
+  transport: fallback(BASE_RPC_URLS.map((url) => http(url, { batch: false, retryCount: 2, retryDelay: 1_000 }))),
 });
 
 function generateRecipientApiKey(): string {

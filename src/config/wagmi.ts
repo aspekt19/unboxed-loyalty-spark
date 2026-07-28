@@ -2,7 +2,7 @@ import { createConfig as createWagmiConfig } from 'wagmi';
 import { createConfig as createPrivyWagmiConfig } from '@privy-io/wagmi';
 import { injected } from 'wagmi/connectors';
 import { base } from 'wagmi/chains';
-import { http } from 'viem';
+import { http, fallback } from 'viem';
 import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
 
 declare global {
@@ -61,11 +61,19 @@ export async function detectFarcasterMiniApp(timeoutMs = FARCASTER_DETECTION_TIM
   }
 }
 
-const transport = http('https://base-rpc.publicnode.com', {
-  batch: false,
-  retryCount: 5,
-  retryDelay: 1000,
-});
+// Multiple Base RPC providers: publicnode started rejecting some methods,
+// so reads must fail over instead of breaking the whole UI.
+const BASE_RPC_URLS = [
+  'https://mainnet.base.org',
+  'https://base.drpc.org',
+  'https://base.meowrpc.com',
+  'https://1rpc.io/base',
+  'https://base-rpc.publicnode.com',
+];
+
+const transport = fallback(
+  BASE_RPC_URLS.map((url) => http(url, { batch: false, retryCount: 2, retryDelay: 1000 })),
+);
 
 // Farcaster config: standard wagmi with farcasterMiniApp connector
 export const farcasterWagmiConfig = createWagmiConfig({

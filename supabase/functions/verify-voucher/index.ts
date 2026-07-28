@@ -1,5 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.1';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { baseRpcCall } from '../_shared/base-rpc.ts';
+
 
 interface BasescanV2Response {
   status: string;
@@ -190,9 +192,7 @@ Deno.serve(async (req) => {
       throw new Error('Reward merchant address missing');
     }
 
-    // Verify the transaction on blockchain using Base JSON-RPC (no third-party API limits)
-    const rpcUrl = 'https://base-rpc.publicnode.com';
-
+    // Verify the transaction on blockchain using Base JSON-RPC with provider failover
     const maxAttempts = 5;
     const delayMs = 2500;
 
@@ -200,24 +200,20 @@ Deno.serve(async (req) => {
 
     let receipt: any = null;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      const receiptResponse = await fetch(rpcUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'eth_getTransactionReceipt',
-          params: [normalizedTxHash],
-        }),
-      });
-
-      const receiptData = (await receiptResponse.json()) as any;
-      if (receiptData?.error) {
-        console.error('RPC receipt error:', receiptData.error);
-        throw new Error('Blockchain verification failed');
+      try {
+        receipt = await baseRpcCall<any>('eth_getTransactionReceipt', [normalizedTxHash]);
+      } catch (rpcError) {
+        console.error('RPC receipt error:', rpcError);
+        return new Response(
+          JSON.stringify({
+            success: false,
+            retryable: true,
+            retry_after_ms: delayMs,
+            error: 'Blockchain node temporarily unavailable. Please try again.',
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
-
-      receipt = receiptData?.result ?? null;
       if (receipt) break;
 
       console.log('Receipt not found yet, retrying...', { attempt, maxAttempts });
@@ -246,29 +242,18 @@ Deno.serve(async (req) => {
 
     let tx: any = null;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      const txResponse = await fetch(rpcUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 2,
-          method: 'eth_getTransactionByHash',
-          params: [normalizedTxHash],
-        }),
-      });
-
-      const txData = (await txResponse.json()) as any;
-      if (txData?.error) {
-        console.error('RPC tx error:', txData.error);
-        throw new Error('Blockchain verification failed');
+      try {
+        tx = await baseRpcCall<any>('eth_getTransactionByHash', [normalizedTxHash]);
+      } catch (rpcError) {
+        console.error('RPC tx error:', rpcError);
+        break;
       }
-
-      tx = txData?.result ?? null;
       if (tx) break;
 
       console.log('Tx not found yet, retrying...', { attempt, maxAttempts });
       if (attempt < maxAttempts) await new Promise((r) => setTimeout(r, delayMs));
     }
+
 
     if (!tx) {
       return new Response(
@@ -412,7 +397,7 @@ Deno.serve(async (req) => {
         customer_address: customerAddress.toLowerCase(),
         token_address: tokenAddress.toLowerCase(),
         merchant_address: merchantAddress.toLowerCase(),
-        transaction_type: 'redemption',
+        transaction_type: 'voucher_purchase',
         amount: cost,
         voucher_id: voucher.id,
       });

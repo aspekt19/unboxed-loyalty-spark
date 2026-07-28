@@ -13,7 +13,7 @@ const ZERO_ADDRESS_TOPIC =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
 
 const MAX_BLOCK_RANGE = 50000;
-const BASE_RPC_URL = "https://base-rpc.publicnode.com";
+import { BASE_RPC_URL } from "../_shared/base-rpc.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {

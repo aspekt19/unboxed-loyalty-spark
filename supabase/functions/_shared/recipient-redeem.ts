@@ -1,4 +1,5 @@
 import { walletHasEngagement } from "./recipient-queries.ts";
+import { getTransactionReceipt } from "./base-rpc.ts";
 
 export type RecipientRedeemResult = { status: number; body: Record<string, unknown> };
 
@@ -43,18 +44,19 @@ export async function recipientRedeemReward(
     .maybeSingle();
 
   const merchAddr = (reward.merchant_address as string).toLowerCase();
-  const rpcUrl = "https://base-rpc.publicnode.com";
   const normalizedTxHash = transaction_hash.startsWith("0x") ? transaction_hash : `0x${transaction_hash}`;
 
   let receipt: any = null;
   for (let attempt = 1; attempt <= 5; attempt++) {
-    const resp = await fetch(rpcUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_getTransactionReceipt", params: [normalizedTxHash] }),
-    });
-    const data = (await resp.json()) as any;
-    receipt = data?.result ?? null;
+    try {
+      receipt = await getTransactionReceipt(normalizedTxHash);
+    } catch (rpcError) {
+      console.error("[recipient-redeem] RPC receipt error:", rpcError);
+      return {
+        status: 200,
+        body: { success: false, retryable: true, retry_after_ms: 3000, error: "Blockchain node temporarily unavailable. Retry later." },
+      };
+    }
     if (receipt) break;
     if (attempt < 5) await new Promise((r) => setTimeout(r, 2500));
   }
@@ -134,7 +136,7 @@ export async function recipientRedeemReward(
     customer_address: custAddr,
     token_address: reward.token_address.toLowerCase(),
     merchant_address: merchAddr,
-    transaction_type: "redemption",
+    transaction_type: "voucher_purchase",
     amount: reward.cost,
     voucher_id: voucher.id,
   });
