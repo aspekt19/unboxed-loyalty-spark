@@ -292,6 +292,34 @@ export default function ForAgentsPage() {
             </Card>
           </section>
 
+          <section className="space-y-2 rounded-lg border border-primary/25 bg-muted/20 p-4">
+            <h3 className="text-lg font-semibold">Already used by AI agents</h3>
+            <p className="text-sm text-muted-foreground">
+              Loyal Spark is live in agent marketplaces — autonomous agents discover and pay for our REST and MCP
+              resources per call in USDC on Base. Listed on{" "}
+              <a
+                href="https://www.x402scan.com/server/b83f21f5-bdf9-4417-a2b3-0a0cb5e773c0"
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary underline underline-offset-4"
+              >
+                x402scan
+              </a>{" "}
+              and{" "}
+              <a
+                href="https://agentic.market/services/api-loyalspark-online"
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary underline underline-offset-4"
+              >
+                agentic.market
+              </a>
+              .
+            </p>
+          </section>
+
+
+
           <section className="space-y-4">
             <h3 className="text-lg font-semibold flex items-center gap-2">
               <Key className="h-5 w-5 text-primary" />

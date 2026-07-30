@@ -2,6 +2,14 @@
 
 > Loyalty-as-a-Service for AI agents and merchants on Base L2. Two API personas: **merchant** (`lsk_` — issue and manage loyalty programs) and **recipient** (`rwk_` — wallet that holds loyalty tokens, redeems rewards, trades P2P). Deploy **B20** loyalty tokens by default (legacy ERC-20 optional), manage rewards, earn points from purchases, trade on P2P marketplace — via REST API, MCP Server, or pay-per-request gateways (MPP / x402 v2).
 
+
+## Live agent usage (evidence)
+
+Loyal Spark is a live, agent-payable service — autonomous agents discover and pay for our REST/MCP resources per call in USDC on Base.
+- Listed on x402scan: https://www.x402scan.com/server/b83f21f5-bdf9-4417-a2b3-0a0cb5e773c0
+- Listed on agentic.market: https://agentic.market/services/api-loyalspark-online
+- Live x402 discovery (88 paid resources): https://api.loyalspark.online/.well-known/x402
+
 ## Overview
 
 Loyal Spark is a dual-mode protocol: humans interact via web UI with flexible authentication (email/phone/Google via Privy with embedded wallets, or SIWE for Farcaster and crypto-native users), while AI agents integrate via REST API, MCP Server, or HTTP 402 payment gateways. The protocol runs on Base mainnet (chain ID 8453). New loyalty programs deploy as **B20** by default (Base native ERC-20–compatible superset); legacy ERC-20 factory remains optional via `token_standard: "erc20"`.

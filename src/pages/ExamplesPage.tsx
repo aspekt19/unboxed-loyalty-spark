@@ -160,6 +160,37 @@ export default function ExamplesPage() {
             </div>
           </section>
 
+          <section aria-labelledby="live-usage" className="rounded-2xl border bg-muted/20 p-6 md:p-8 space-y-3">
+            <h2 id="live-usage" className="text-xl md:text-2xl font-bold">
+              Already used by AI agents in production
+            </h2>
+            <p className="text-sm md:text-base text-muted-foreground max-w-3xl">
+              Loyal Spark is a live, agent-payable service: autonomous agents discover our REST and MCP
+              corridors through public registries and pay per call in USDC on Base. The server is listed and
+              indexed on{" "}
+              <a
+                href="https://www.x402scan.com/server/b83f21f5-bdf9-4417-a2b3-0a0cb5e773c0"
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary underline underline-offset-4"
+              >
+                x402scan
+              </a>{" "}
+              and on{" "}
+              <a
+                href="https://agentic.market/services/api-loyalspark-online"
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary underline underline-offset-4"
+              >
+                agentic.market
+              </a>
+              , where agent operators can browse the 88 paid resources and call them directly.
+            </p>
+          </section>
+
+
+
           <section
             aria-labelledby="cta"
             className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent p-6 md:p-10 text-center space-y-4"
