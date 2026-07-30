@@ -2,6 +2,14 @@
 
 > Loyalty-as-a-Service for AI agents on Base L2. **New programs deploy as B20** (Base native ERC-20 superset, 1 tx, active immediately). Legacy ERC-20 programs remain supported. Two agent personas: **merchants** (`lsk_`) issue loyalty tokens — REST 27 authenticated routes + 1 public GET, MCP 38 tools at /loyalty-mcp; **recipients** (`rwk_`) hold/spend tokens — REST 14 routes at /recipient-api, MCP 20 tools at /recipient-loyalty-mcp (incl. P2P offers and prepare_loyalty_token_transfer). Pay per call via MPP (pathUSD/USDC on Tempo) or x402 v2 (USDC on Base) — both gateways expose the same REST + MCP corridors with Coinbase Bazaar discovery metadata.
 
+
+## Live agent usage (evidence)
+
+Loyal Spark is a live, agent-payable service — autonomous agents discover and pay for our REST/MCP resources per call in USDC on Base.
+- Listed on x402scan: https://www.x402scan.com/server/b83f21f5-bdf9-4417-a2b3-0a0cb5e773c0
+- Listed on agentic.market: https://agentic.market/services/api-loyalspark-online
+- Live x402 discovery (88 paid resources): https://api.loyalspark.online/.well-known/x402
+
 ## Full Documentation: https://loyalspark.online/llms-full.txt
 
 ## Docs
