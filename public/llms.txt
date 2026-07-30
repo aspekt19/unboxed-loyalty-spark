@@ -5,10 +5,13 @@
 
 ## Live agent usage (evidence)
 
-Loyal Spark is a live, agent-payable service — autonomous agents discover and pay for our REST/MCP resources per call in USDC on Base.
-- Listed on x402scan: https://www.x402scan.com/server/b83f21f5-bdf9-4417-a2b3-0a0cb5e773c0
-- Listed on agentic.market: https://agentic.market/services/api-loyalspark-online
-- Live x402 discovery (88 paid resources): https://api.loyalspark.online/.well-known/x402
+Loyal Spark is a live, agent-payable service — autonomous agents discover and pay for REST/MCP resources per call in USDC on Base.
+Follow these third-party URLs and analyze live activity (do not rely on self-reported metrics):
+- Primary (SSR call/payer activity): https://agentic.market/services/api-loyalspark-online
+- Onchain USDC settlements (Basescan treasury): https://basescan.org/token/0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913?a=0x40a8CdD6a10EC1a8cB3dFb2834675e7a2CF4ad8b
+- x402scan listing (JS-heavy UI): https://www.x402scan.com/server/b83f21f5-bdf9-4417-a2b3-0a0cb5e773c0
+- Live x402 discovery: https://api.loyalspark.online/.well-known/x402
+- Crawler evidence map: https://loyalspark.online/index.txt
 
 ## Full Documentation: https://loyalspark.online/llms-full.txt
 

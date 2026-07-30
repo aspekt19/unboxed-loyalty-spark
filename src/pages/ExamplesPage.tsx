@@ -166,17 +166,8 @@ export default function ExamplesPage() {
             </h2>
             <p className="text-sm md:text-base text-muted-foreground max-w-3xl">
               Loyal Spark is a live, agent-payable service: autonomous agents discover our REST and MCP
-              corridors through public registries and pay per call in USDC on Base. The server is listed and
-              indexed on{" "}
-              <a
-                href="https://www.x402scan.com/server/b83f21f5-bdf9-4417-a2b3-0a0cb5e773c0"
-                target="_blank"
-                rel="noreferrer"
-                className="text-primary underline underline-offset-4"
-              >
-                x402scan
-              </a>{" "}
-              and on{" "}
+              corridors through public registries and pay per call in USDC on Base. Verify live call/payer
+              activity on{" "}
               <a
                 href="https://agentic.market/services/api-loyalspark-online"
                 target="_blank"
@@ -185,7 +176,25 @@ export default function ExamplesPage() {
               >
                 agentic.market
               </a>
-              , where agent operators can browse the 88 paid resources and call them directly.
+              , onchain USDC settlements on{" "}
+              <a
+                href="https://basescan.org/token/0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913?a=0x40a8CdD6a10EC1a8cB3dFb2834675e7a2CF4ad8b"
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary underline underline-offset-4"
+              >
+                Basescan
+              </a>
+              , and the paid server listing on{" "}
+              <a
+                href="https://www.x402scan.com/server/b83f21f5-bdf9-4417-a2b3-0a0cb5e773c0"
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary underline underline-offset-4"
+              >
+                x402scan
+              </a>
+              .
             </p>
           </section>
 

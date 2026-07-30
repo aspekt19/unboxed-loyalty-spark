@@ -296,16 +296,7 @@ export default function ForAgentsPage() {
             <h3 className="text-lg font-semibold">Already used by AI agents</h3>
             <p className="text-sm text-muted-foreground">
               Loyal Spark is live in agent marketplaces — autonomous agents discover and pay for our REST and MCP
-              resources per call in USDC on Base. Listed on{" "}
-              <a
-                href="https://www.x402scan.com/server/b83f21f5-bdf9-4417-a2b3-0a0cb5e773c0"
-                target="_blank"
-                rel="noreferrer"
-                className="text-primary underline underline-offset-4"
-              >
-                x402scan
-              </a>{" "}
-              and{" "}
+              resources per call in USDC on Base. Verify live call/payer activity on{" "}
               <a
                 href="https://agentic.market/services/api-loyalspark-online"
                 target="_blank"
@@ -313,6 +304,33 @@ export default function ForAgentsPage() {
                 className="text-primary underline underline-offset-4"
               >
                 agentic.market
+              </a>
+              , onchain USDC settlements on{" "}
+              <a
+                href="https://basescan.org/token/0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913?a=0x40a8CdD6a10EC1a8cB3dFb2834675e7a2CF4ad8b"
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary underline underline-offset-4"
+              >
+                Basescan
+              </a>
+              , and the paid server listing on{" "}
+              <a
+                href="https://www.x402scan.com/server/b83f21f5-bdf9-4417-a2b3-0a0cb5e773c0"
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary underline underline-offset-4"
+              >
+                x402scan
+              </a>
+              . Crawler map:{" "}
+              <a
+                href={`${SITE}/index.txt`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary underline underline-offset-4"
+              >
+                index.txt
               </a>
               .
             </p>

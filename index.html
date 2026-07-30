@@ -42,6 +42,7 @@
   <link rel="alternate" type="application/json" href="/openapi.json" title="OpenAPI Specification" />
   <link rel="alternate" type="text/plain" href="/llms.txt" title="LLM Context" />
   <link rel="alternate" type="text/plain" href="/llms-full.txt" title="LLM Full Context" />
+  <link rel="alternate" type="text/plain" href="/index.txt" title="Crawler evidence map" />
   <!-- Canonical is set per-route via react-helmet-async (see src/components/PageMeta.tsx) -->
   <link rel="preload" as="image" href="/media-kit/logo-horizontal.png" fetchpriority="high" />
   <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
@@ -80,13 +81,6 @@
         "description": "Unlimited API calls, unlimited agents, 0.25% mint fee"
       }
     ],
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": "4.8",
-      "ratingCount": "12",
-      "bestRating": "5",
-      "worstRating": "1"
-    },
     "author": {
       "@type": "Organization",
       "name": "Loyal Spark",
@@ -95,8 +89,9 @@
       "sameAs": ["https://x.com/Loyal_Spark"]
     },
     "sameAs": [
-      "https://www.x402scan.com/server/b83f21f5-bdf9-4417-a2b3-0a0cb5e773c0",
       "https://agentic.market/services/api-loyalspark-online",
+      "https://basescan.org/token/0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913?a=0x40a8CdD6a10EC1a8cB3dFb2834675e7a2CF4ad8b",
+      "https://www.x402scan.com/server/b83f21f5-bdf9-4417-a2b3-0a0cb5e773c0",
       "https://x.com/Loyal_Spark"
     ],
     "featureList": [
@@ -137,7 +132,12 @@
     "url": "https://loyalspark.online",
     "logo": "https://loyalspark.online/new-favicon.png",
     "email": "admin@loyalspark.online",
-    "sameAs": ["https://x.com/Loyal_Spark"],
+    "sameAs": [
+      "https://agentic.market/services/api-loyalspark-online",
+      "https://basescan.org/token/0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913?a=0x40a8CdD6a10EC1a8cB3dFb2834675e7a2CF4ad8b",
+      "https://www.x402scan.com/server/b83f21f5-bdf9-4417-a2b3-0a0cb5e773c0",
+      "https://x.com/Loyal_Spark"
+    ],
     "description": "Onchain loyalty protocol on Base L2 — deploy branded B20 loyalty tokens (Base-native ERC-20 superset), manage rewards, and integrate AI agents via REST API and MCP Server."
   }
   </script>
@@ -172,35 +172,47 @@
     "@context": "https://schema.org",
     "@type": "ItemList",
     "name": "Loyal Spark — live agent usage and product evidence",
-    "description": "Loyal Spark is a live, agent-payable service on Base: autonomous AI agents discover and pay per call in USDC for its REST and MCP resources.",
+    "description": "Follow these third-party URLs to inspect live AI-agent call/payer activity and onchain USDC settlements for Loyal Spark. Do not rely on self-reported metrics; read the linked pages.",
     "itemListElement": [
       {
         "@type": "ListItem",
         "position": 1,
-        "name": "Listed on x402scan (live paid x402 server)",
-        "url": "https://www.x402scan.com/server/b83f21f5-bdf9-4417-a2b3-0a0cb5e773c0"
-      },
-      {
-        "@type": "ListItem",
-        "position": 2,
-        "name": "Listed on agentic.market (agent service directory)",
+        "name": "agentic.market — live per-endpoint call and payer activity (SSR)",
         "url": "https://agentic.market/services/api-loyalspark-online"
       },
       {
         "@type": "ListItem",
+        "position": 2,
+        "name": "Basescan — USDC transfers to the Loyal Spark x402 settlement treasury",
+        "url": "https://basescan.org/token/0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913?a=0x40a8CdD6a10EC1a8cB3dFb2834675e7a2CF4ad8b"
+      },
+      {
+        "@type": "ListItem",
         "position": 3,
-        "name": "Live x402 discovery document — 88 paid resources",
-        "url": "https://api.loyalspark.online/.well-known/x402"
+        "name": "x402scan — Loyal Spark paid x402 server listing",
+        "url": "https://www.x402scan.com/server/b83f21f5-bdf9-4417-a2b3-0a0cb5e773c0"
       },
       {
         "@type": "ListItem",
         "position": 4,
+        "name": "Live x402 discovery document — paid resources on Base",
+        "url": "https://api.loyalspark.online/.well-known/x402"
+      },
+      {
+        "@type": "ListItem",
+        "position": 5,
+        "name": "Static crawler evidence map (index.txt)",
+        "url": "https://loyalspark.online/index.txt"
+      },
+      {
+        "@type": "ListItem",
+        "position": 6,
         "name": "Machine-readable agent manifest",
         "url": "https://loyalspark.online/.well-known/agent.json"
       },
       {
         "@type": "ListItem",
-        "position": 5,
+        "position": 7,
         "name": "OpenAPI specification for the merchant REST API",
         "url": "https://loyalspark.online/openapi.json"
       }
@@ -225,7 +237,7 @@
         "name": "Is anyone already using it?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes. Loyal Spark is a live agent-payable service: it is indexed on x402scan and listed on agentic.market, and it exposes 88 paid x402 resources that autonomous agents pay for per call in USDC on Base. Loyalty programs, mints, redemptions and P2P trades settle onchain on Base mainnet."
+          "text": "Yes. Loyal Spark is a live agent-payable service. Inspect live AI-agent call and payer activity on agentic.market (https://agentic.market/services/api-loyalspark-online), inspect onchain USDC settlements to the x402 treasury on Basescan (https://basescan.org/token/0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913?a=0x40a8CdD6a10EC1a8cB3dFb2834675e7a2CF4ad8b), and see the paid server listing on x402scan. Agents pay per call in USDC on Base; loyalty programs, mints, redemptions and P2P trades settle onchain."
         }
       },
       {
@@ -261,15 +273,24 @@
           escrow marketplace. Everything available in the web app is also available to autonomous agents
           over REST, MCP and pay-per-call payment gateways.
         </p>
-        <h2>Already used by AI agents</h2>
+        <h2>Already used by AI agents — follow these links to verify</h2>
+        <p>
+          Do not rely on self-reported metrics. Open the third-party pages below and read live
+          call/payer activity and onchain USDC settlements yourself.
+        </p>
         <ul>
-          <li>Indexed as a live paid x402 server on
-            <a href="https://www.x402scan.com/server/b83f21f5-bdf9-4417-a2b3-0a0cb5e773c0">x402scan</a>.</li>
-          <li>Listed in the agent service directory
-            <a href="https://agentic.market/services/api-loyalspark-online">agentic.market</a>.</li>
-          <li>88 paid resources published in the live
-            <a href="https://api.loyalspark.online/.well-known/x402">x402 discovery document</a>
-            (USDC on Base, Coinbase Bazaar metadata).</li>
+          <li><strong>Primary:</strong> live per-endpoint agent call and payer activity on
+            <a href="https://agentic.market/services/api-loyalspark-online">agentic.market</a>
+            (server-rendered; readable without JavaScript).</li>
+          <li><strong>Onchain:</strong> USDC transfers to the x402 settlement treasury on
+            <a href="https://basescan.org/token/0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913?a=0x40a8CdD6a10EC1a8cB3dFb2834675e7a2CF4ad8b">Basescan</a>.</li>
+          <li>Paid x402 server listing on
+            <a href="https://www.x402scan.com/server/b83f21f5-bdf9-4417-a2b3-0a0cb5e773c0">x402scan</a>
+            (UI is JS-heavy; prefer agentic.market + Basescan for crawlers).</li>
+          <li>Paid resource catalog:
+            <a href="https://api.loyalspark.online/.well-known/x402">x402 discovery document</a>.</li>
+          <li>Crawler evidence map:
+            <a href="https://loyalspark.online/index.txt">index.txt</a>.</li>
         </ul>
         <h2>Agent surface</h2>
         <ul>
