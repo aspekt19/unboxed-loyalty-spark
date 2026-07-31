@@ -39,27 +39,53 @@ export function useMultiTokenBalance(tokens: TokenInfo[], overrideAddress?: stri
     }
 
     try {
-      const results = await Promise.all(
-        tokens.map(async (token): Promise<TokenBalance> => {
-          try {
-            const balance = await publicClient.readContract({
-              address: token.address as TokenAddress,
-              abi: ERC20_BALANCE_ABI,
-              functionName: 'balanceOf',
-              args: [address],
-            } as any);
-            
-            return {
-              ...token,
-              balance: formatUnits(balance as bigint, 18),
-              rawBalance: balance as bigint,
-            };
-          } catch (err) {
-            txLog(HOOK_NAME, 'error', `Balance fetch failed for ${token.symbol}`, err);
-            return { ...token, balance: '0', rawBalance: 0n };
-          }
-        })
-      );
+      const toBalance = (token: TokenInfo, raw: bigint): TokenBalance => ({
+        ...token,
+        balance: formatUnits(raw, 18),
+        rawBalance: raw,
+      });
+
+      let results: TokenBalance[] | null = null;
+
+      // Fast path: one multicall round-trip instead of N sequential RPC calls.
+      try {
+        const multicallResults = await publicClient.multicall({
+          contracts: tokens.map((token) => ({
+            address: token.address as TokenAddress,
+            abi: ERC20_BALANCE_ABI,
+            functionName: 'balanceOf',
+            args: [address],
+          })) as any,
+          allowFailure: true,
+        });
+
+        results = tokens.map((token, i) => {
+          const r = multicallResults[i];
+          return toBalance(token, r?.status === 'success' ? (r.result as bigint) : 0n);
+        });
+      } catch (err) {
+        txLog(HOOK_NAME, 'warn', 'Multicall failed, falling back to individual reads', err);
+      }
+
+      // Fallback: per-token reads (older/non-multicall RPCs).
+      if (!results) {
+        results = await Promise.all(
+          tokens.map(async (token): Promise<TokenBalance> => {
+            try {
+              const balance = await publicClient.readContract({
+                address: token.address as TokenAddress,
+                abi: ERC20_BALANCE_ABI,
+                functionName: 'balanceOf',
+                args: [address],
+              } as any);
+              return toBalance(token, balance as bigint);
+            } catch (err) {
+              txLog(HOOK_NAME, 'error', `Balance fetch failed for ${token.symbol}`, err);
+              return toBalance(token, 0n);
+            }
+          })
+        );
+      }
 
       setBalances(results);
       isInitialLoadRef.current = false;
