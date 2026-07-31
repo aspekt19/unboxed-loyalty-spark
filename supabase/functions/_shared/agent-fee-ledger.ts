@@ -101,13 +101,14 @@ export async function assertFeeCompliance(
     const pendingCount = Number((row as { pending_count?: number })?.pending_count ?? 0);
     const pendingFeeTotal = Number((row as { pending_fee_total?: number })?.pending_fee_total ?? 0);
 
-    if (pendingCount > maxPending) {
+    if (pendingCount >= maxPending) {
       return {
         ok: false,
         pendingCount,
         pendingFeeTotal,
         message:
-          `Blocked: ${pendingCount} unpaid protocol-fee mints (${pendingFeeTotal} tokens) older than ` +
+          `Blocked: ${maxPending} or more unpaid protocol-fee mints (${pendingCount} pending, ` +
+          `${pendingFeeTotal} tokens) older than ` +
           `${graceMinutes} minutes. Send the protocol-fee transaction for previous mints and confirm it ` +
           `via POST /agent-api/mint/confirm { obligation_id, fee_tx_hash } before minting again.`,
       };
