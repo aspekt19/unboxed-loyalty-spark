@@ -275,11 +275,17 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
           }));
 
           setTokens(activePrograms);
-          if (activePrograms.length > 0 && !selectedTokenAddress) {
+          if (activePrograms.length > 0 && !selectedTokenRef.current) {
             setSelectedTokenAddress(activePrograms[0].address);
           }
 
           localStorage.setItem('customerTokens', JSON.stringify(activePrograms));
+          // Forget cached rewards of programmes that are gone / no longer active
+          pruneRewardsCache(activePrograms.map(p => p.address));
+        } else {
+          setTokens([]);
+          invalidateRewardsCache();
+          localStorage.removeItem('customerTokens');
         }
       } catch (error) {
         console.error('Error in loadPrograms:', error);
