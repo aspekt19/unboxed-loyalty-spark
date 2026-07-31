@@ -240,35 +240,48 @@ const App = () => {
     return isFarcasterContext() ? true : null;
   });
 
+  // Runs exactly once. Detection needs a dynamic import of the miniapp SDK
+  // chunk plus a postMessage handshake with the host client — both can stall on
+  // a cold Base App webview, which used to leave the user on an empty screen
+  // with no way out. Instead we start with the browser providers after a short
+  // grace period and upgrade to the Farcaster providers if the handshake
+  // eventually answers.
   useEffect(() => {
-    if (isLovablePreviewHost || isFarcaster !== null) return;
+    if (isLovablePreviewHost) return;
 
-    let cancelled = false;
+    let settled = false;
+    const graceTimer = window.setTimeout(() => {
+      settled = true;
+      setIsFarcaster((prev) => (prev === null ? false : prev));
+    }, 1200);
 
-    // Hard safety net: if the miniapp SDK import or detection ever hangs
-    // (flaky webview network on first launch in Base App), never leave the
-    // user on a blank screen — fall back to the regular browser providers.
-    const fallbackTimer = window.setTimeout(() => {
-      if (!cancelled) setIsFarcaster(false);
-    }, 1500);
-
-    void detectFarcasterMiniApp()
+    void detectFarcasterMiniApp(1200)
       .catch(() => false)
       .then((result) => {
-        if (!cancelled) {
-          setIsFarcaster(result);
-        }
+        window.clearTimeout(graceTimer);
+        // A late "true" still matters: it swaps in the Farcaster connector.
+        // A late "false" after we already fell back changes nothing.
+        if (!settled || result) setIsFarcaster(result);
       });
 
-    return () => {
-      cancelled = true;
-      window.clearTimeout(fallbackTimer);
-    };
-  }, [isFarcaster]);
+    return () => window.clearTimeout(graceTimer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (isFarcaster === null) {
-    return <div className="min-h-screen bg-background" />;
+    // Branded placeholder instead of a blank page, so a slow handshake never
+    // reads as a white screen.
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <img
+          src="/new-favicon.png"
+          alt="Loyal Spark"
+          className="h-12 w-12 rounded-xl animate-pulse"
+        />
+      </div>
+    );
   }
+
 
   const Providers = isFarcaster
     ? FarcasterProviders

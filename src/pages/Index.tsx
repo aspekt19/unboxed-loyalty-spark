@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import PageTransition from '@/components/PageTransition';
 import FarcasterSplash from '@/components/FarcasterSplash';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -25,6 +25,7 @@ import { detectFarcasterMiniApp, isFarcasterContext } from '@/config/wagmi';
 const FARCASTER_CONTEXT_TIMEOUT_MS = 1200;
 
 const Index = () => {
+  const navigate = useNavigate();
   const [isFarcaster, setIsFarcaster] = useState(() => isFarcasterContext());
 
   useEffect(() => {
@@ -44,7 +45,10 @@ const Index = () => {
         setIsFarcaster(inFarcaster);
 
         if (inFarcaster) {
-          window.location.replace('/app');
+          // Client-side navigation only. `window.location.replace` forced a
+          // full document reload inside the Base App webview, which on a cold
+          // or flaky connection reliably produced a white screen.
+          navigate('/app', { replace: true });
         }
       } catch {
         if (!cancelled) {
@@ -58,11 +62,12 @@ const Index = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [navigate]);
 
   if (isFarcaster) {
-    return <FarcasterSplash onLaunch={() => window.location.replace('/app')} />;
+    return <FarcasterSplash onLaunch={() => navigate('/app', { replace: true })} />;
   }
+
 
   return (
     <PageTransition>
