@@ -16,7 +16,7 @@ import { PLATFORM_FEE_WALLET } from "./loyalspark-agent-helpers.ts";
 
 /** Obligations older than this are counted as debt. */
 export const FEE_GRACE_MINUTES = 60;
-/** How many overdue unpaid fees an agent may carry before minting is blocked. */
+/** Minting is blocked once an agent carries this many (or more) overdue unpaid fees. */
 export const MAX_PENDING_FEE_OBLIGATIONS = 5;
 
 const TRANSFER_TOPIC =
