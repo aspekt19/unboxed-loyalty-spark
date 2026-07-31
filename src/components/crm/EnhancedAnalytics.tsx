@@ -31,15 +31,30 @@ interface Props {
   tokenAddress?: string;
 }
 
+interface AnalyticsSnapshot {
+  topCustomers: TopCustomer[];
+  tierDistribution: TierDistribution[];
+  activityData: ActivityData[];
+}
+
+const ANALYTICS_CACHE = 'crm:enhanced-analytics';
+const CACHE_OPTS: CacheOptions = { version: 1, ttlMs: 5 * 60 * 1000 };
+
 export function EnhancedAnalytics({ tokenAddress }: Props) {
   const { address } = useAccount();
-  const [topCustomers, setTopCustomers] = useState<TopCustomer[]>([]);
-  const [tierDistribution, setTierDistribution] = useState<TierDistribution[]>([]);
-  const [activityData, setActivityData] = useState<ActivityData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = address
+    ? `${scopedKey(ANALYTICS_CACHE, address)}:${tokenAddress?.toLowerCase() ?? 'all'}`
+    : null;
+  const cachedSnapshot = cacheKey ? readCache<AnalyticsSnapshot>(cacheKey, CACHE_OPTS) : null;
+
+  const [topCustomers, setTopCustomers] = useState<TopCustomer[]>(cachedSnapshot?.topCustomers ?? []);
+  const [tierDistribution, setTierDistribution] = useState<TierDistribution[]>(cachedSnapshot?.tierDistribution ?? []);
+  const [activityData, setActivityData] = useState<ActivityData[]>(cachedSnapshot?.activityData ?? []);
+  const [loading, setLoading] = useState(!cachedSnapshot);
 
   useEffect(() => {
     if (!address) return;
+
 
     const loadData = async () => {
       try {
