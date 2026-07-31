@@ -71,7 +71,7 @@ const Index = () => {
           <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 flex justify-between items-center relative">
             <Link to="/" className="flex items-center gap-2 sm:gap-2.5 group shrink-0">
               <img 
-                src="/new-favicon.png" 
+                src="/logo-icon.png" 
                 alt="Loyal Spark" 
                 className="h-7 w-7 sm:h-9 sm:w-9 rounded-lg transition-smooth group-hover:scale-110 group-hover:rotate-6" 
               />

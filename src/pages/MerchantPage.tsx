@@ -137,7 +137,7 @@ const MerchantPage = () => {
                 </Link>
               )}
               <img 
-                src="/new-favicon.png" 
+                src="/logo-icon.png" 
                 alt="Loyal Spark" 
                 className="h-6 w-6 sm:h-7 sm:w-7 rounded-lg flex-shrink-0" 
               />

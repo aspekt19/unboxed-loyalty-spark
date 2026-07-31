@@ -27,7 +27,7 @@ export default function AppPage() {
                 className="flex items-center gap-2 group"
               >
                 <img
-                  src="/new-favicon.png"
+                  src="/logo-icon.png"
                   alt="Loyal Spark"
                   className="h-8 w-8 rounded-lg flex-shrink-0 transition-transform group-hover:scale-110"
                 />
