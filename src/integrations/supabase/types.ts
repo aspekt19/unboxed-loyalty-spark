@@ -123,6 +123,74 @@ export type Database = {
           },
         ]
       }
+      agent_fee_obligations: {
+        Row: {
+          agent_id: string
+          created_at: string
+          fee_amount: number
+          fee_percent: number
+          fee_tx_hash: string | null
+          id: string
+          last_verified_at: string | null
+          mint_amount: number
+          operation: string
+          owner_address: string
+          recipient_address: string
+          recipient_tx_hash: string | null
+          settled_at: string | null
+          status: string
+          token_address: string
+          updated_at: string
+          verification_attempts: number
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          fee_amount: number
+          fee_percent: number
+          fee_tx_hash?: string | null
+          id?: string
+          last_verified_at?: string | null
+          mint_amount: number
+          operation?: string
+          owner_address: string
+          recipient_address: string
+          recipient_tx_hash?: string | null
+          settled_at?: string | null
+          status?: string
+          token_address: string
+          updated_at?: string
+          verification_attempts?: number
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          fee_amount?: number
+          fee_percent?: number
+          fee_tx_hash?: string | null
+          id?: string
+          last_verified_at?: string | null
+          mint_amount?: number
+          operation?: string
+          owner_address?: string
+          recipient_address?: string
+          recipient_tx_hash?: string | null
+          settled_at?: string | null
+          status?: string
+          token_address?: string
+          updated_at?: string
+          verification_attempts?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_fee_obligations_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agent_registry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_plan_subscriptions: {
         Row: {
           amount_usdc: number
@@ -2376,6 +2444,13 @@ export type Database = {
           performed_by_wallet: string
           reason: string
           target_role: string
+        }[]
+      }
+      agent_outstanding_fee_debt: {
+        Args: { p_agent_id: string; p_grace_minutes?: number }
+        Returns: {
+          pending_count: number
+          pending_fee_total: number
         }[]
       }
       cancel_stale_marketplace_offers: {
