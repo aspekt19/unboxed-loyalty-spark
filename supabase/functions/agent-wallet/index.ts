@@ -281,11 +281,6 @@ function generateMockWalletAddress(agentId: string): string {
   return "0x" + hex.substring(0, 40).padEnd(40, "0");
 }
 
-function mockSignTransaction(params: { to: string; data: string; walletAddress: string }): { txHash: string; status: string } {
-  const fakeHash = "0x" + Array.from(crypto.getRandomValues(new Uint8Array(32)))
-    .map((b) => b.toString(16).padStart(2, "0")).join("");
-  return { txHash: fakeHash, status: "mock_signed" };
-}
 
 function jsonResponse(data: any, status = 200) {
   return new Response(JSON.stringify(data), {
