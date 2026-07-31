@@ -72,7 +72,7 @@ const BASE_RPC_URLS = [
 ];
 
 const transport = fallback(
-  BASE_RPC_URLS.map((url) => http(url, { batch: false, retryCount: 2, retryDelay: 1000 })),
+  BASE_RPC_URLS.map((url) => http(url, { batch: { wait: 16 }, retryCount: 2, retryDelay: 1000 })),
 );
 
 // Farcaster config: standard wagmi with farcasterMiniApp connector
