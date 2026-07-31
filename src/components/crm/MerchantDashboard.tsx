@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
 import { supabase } from '@/integrations/supabase/client';
+import { useCachedResource } from '@/hooks/useCachedResource';
+import { scopedKey } from '@/lib/localCache';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Users, ShoppingBag, TrendingUp, Award, Activity, Calendar } from 'lucide-react';
 import { EnhancedAnalytics } from './EnhancedAnalytics';
+
 
 interface MerchantAnalytics {
   merchant_address: string;
