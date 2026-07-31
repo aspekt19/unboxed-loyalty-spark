@@ -106,11 +106,15 @@ async function verifyUsdcTransferToWallet(
 }
 
 /** Resolve caller's wallet from JWT. Returns null if unauthenticated. */
+/** Supabase client typed against the untyped public schema (edge functions have no generated Database types). */
+// deno-lint-ignore no-explicit-any
+type AdminClient = ReturnType<typeof createClient<any, "public", any>>;
+
 async function resolveCallerWallet(
   req: Request,
   supabaseUrl: string,
   anonKey: string,
-  admin: ReturnType<typeof createClient>,
+  admin: AdminClient,
 ): Promise<{ userId: string; wallet: string } | null> {
   const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
   if (!authHeader) return null;

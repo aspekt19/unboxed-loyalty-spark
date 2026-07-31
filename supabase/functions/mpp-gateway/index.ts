@@ -326,7 +326,18 @@ Deno.serve(async (req) => {
     }
 
     // Paid endpoint — run MPP 402 flow
-    const chargeFn = mppx.charge || Object.getPrototypeOf(mppx)?.charge;
+    // SDK types do not expose `charge` on the instance; it is resolved at runtime
+    // (own property or prototype). Keep the lookup dynamic but typed as unknown.
+    const mppxAny = mppx as unknown as Record<string, unknown>;
+    /** Runtime shape of the mppx charge result: a Response-like object that also
+     *  carries the 402 `challenge` and a `withReceipt` wrapper. */
+    type MppChargeResult = {
+      status: number;
+      challenge: Response;
+      withReceipt: (res: Response) => Response;
+    };
+    type ChargeFn = (opts: { amount: string }) => (req: Request) => Promise<MppChargeResult>;
+    const chargeFn = (mppxAny.charge ?? Object.getPrototypeOf(mppx)?.charge) as ChargeFn | undefined;
     if (!chargeFn) {
       // Fallback: manual 402 challenge without mppx SDK
       const headers = new Headers(corsHeaders);
