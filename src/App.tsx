@@ -132,16 +132,6 @@ function AnimatedRoutes() {
     }
   }, []);
 
-  // Inside embedded webviews (Farcaster / Base App) rAF-driven exit animations
-  // are throttled or dropped, so `AnimatePresence mode="wait"` can hold the old
-  // route unmounting forever and the new page never paints — the "black screen"
-  // seen when opening the Customer Portal. Render routes without the animation
-  // wrapper there.
-  const RouteShell = isEmbeddedWebview() || isFarcasterContext()
-    ? ({ children }: { children: React.ReactNode }) => <>{children}</>
-    : ({ children }: { children: React.ReactNode }) => (
-        <AnimatePresence mode="wait">{children}</AnimatePresence>
-      );
 
   return (
     <BanGate>
