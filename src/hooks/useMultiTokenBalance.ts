@@ -17,16 +17,54 @@ export interface TokenBalance extends TokenInfo {
   rawBalance: bigint;
 }
 
+const BALANCE_CACHE_PREFIX = 'ls_balances_';
+
+function readCachedBalances(address?: string): TokenBalance[] {
+  if (!address) return [];
+  try {
+    const raw = localStorage.getItem(BALANCE_CACHE_PREFIX + address.toLowerCase());
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as Array<TokenInfo & { balance: string }>;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((t) => ({ ...t, rawBalance: BigInt(0), balance: t.balance }));
+  } catch {
+    return [];
+  }
+}
+
+function writeCachedBalances(address: string, balances: TokenBalance[]) {
+  try {
+    localStorage.setItem(
+      BALANCE_CACHE_PREFIX + address.toLowerCase(),
+      JSON.stringify(
+        balances
+          .filter((b) => b.rawBalance > 0n)
+          .map(({ address: a, name, symbol, merchantAddress, balance }) => ({
+            address: a,
+            name,
+            symbol,
+            merchantAddress,
+            balance,
+          })),
+      ),
+    );
+  } catch {
+    /* storage full or unavailable — cache is best-effort */
+  }
+}
+
 export function useMultiTokenBalance(tokens: TokenInfo[], overrideAddress?: string | null) {
   const { address: connectedAddress } = useAccount();
   const publicClient = usePublicClient();
-  const [balances, setBalances] = useState<TokenBalance[]>([]);
+  const address = (overrideAddress ?? connectedAddress) as `0x${string}` | undefined;
+  // Show the last known balances immediately while the multicall is in flight.
+  const [balances, setBalances] = useState<TokenBalance[]>(() => readCachedBalances(address));
   const [isLoading, setIsLoading] = useState(false);
   const isInitialLoadRef = useRef(true);
 
   const tokenAddressesRef = useRef<string>('');
   const currentAddresses = tokens.map(t => t.address).sort().join(',');
-  const address = (overrideAddress ?? connectedAddress) as `0x${string}` | undefined;
+
 
   const fetchBalances = useCallback(async (silent = false) => {
     if (!address || !publicClient || tokens.length === 0) {
