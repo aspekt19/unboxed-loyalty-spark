@@ -11,6 +11,8 @@ import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { GiftCertificate } from '@/types/certificates';
 import { listCustomerCertificates } from '@/lib/giftCertificates';
+import { readCache, writeCache, scopedKey, type CacheOptions } from '@/lib/localCache';
+
 
 const STATUS_LABEL: Record<GiftCertificate['status'], string> = {
   active: 'Active',
