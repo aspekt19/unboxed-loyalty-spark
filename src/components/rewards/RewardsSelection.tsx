@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTierSummaries } from '@/hooks/useTierSummaries';
 import { CompactTierInline } from '@/components/tiers/CompactTierInline';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,6 +40,19 @@ interface RewardsSelectionProps {
 }
 
 const REWARDS_CACHE_PREFIX = 'ls_rewards_';
+const REWARDS_CACHE_VERSION = 2;
+/** Cached rewards older than this are never rendered — they may be stale. */
+const REWARDS_CACHE_TTL_MS = 5 * 60 * 1000;
+
+interface RewardsCacheEnvelope {
+  v: number;
+  ts: number;
+  rewards: Reward[];
+}
+
+function rewardsCacheKey(tokenAddress: string) {
+  return `${REWARDS_CACHE_PREFIX}${tokenAddress.toLowerCase()}`;
+}
 
 function readCachedTokens(): TokenInfo[] {
   try {
@@ -53,25 +66,65 @@ function readCachedTokens(): TokenInfo[] {
 
 function readCachedRewards(tokenAddress: string): Reward[] {
   if (!tokenAddress) return [];
+  const key = rewardsCacheKey(tokenAddress);
   try {
-    const raw = localStorage.getItem(`${REWARDS_CACHE_PREFIX}${tokenAddress.toLowerCase()}`);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
+    const raw = localStorage.getItem(key);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as RewardsCacheEnvelope | Reward[];
+    // Drop legacy (unversioned) payloads — they carry no freshness info
+    if (Array.isArray(parsed) || parsed?.v !== REWARDS_CACHE_VERSION) {
+      localStorage.removeItem(key);
+      return [];
+    }
+    if (!Array.isArray(parsed.rewards) || Date.now() - parsed.ts > REWARDS_CACHE_TTL_MS) {
+      localStorage.removeItem(key);
+      return [];
+    }
+    // Never surface rewards that were deactivated before the snapshot was taken
+    return parsed.rewards.filter(r => r.isActive);
   } catch {
+    localStorage.removeItem(key);
     return [];
   }
 }
 
 function writeCachedRewards(tokenAddress: string, rewards: Reward[]) {
+  if (!tokenAddress) return;
   try {
-    localStorage.setItem(
-      `${REWARDS_CACHE_PREFIX}${tokenAddress.toLowerCase()}`,
-      JSON.stringify(rewards),
-    );
+    const envelope: RewardsCacheEnvelope = { v: REWARDS_CACHE_VERSION, ts: Date.now(), rewards };
+    localStorage.setItem(rewardsCacheKey(tokenAddress), JSON.stringify(envelope));
   } catch {
     /* ignore quota errors */
   }
 }
+
+/** Drop cached rewards for one token, or for every token when omitted. */
+function invalidateRewardsCache(tokenAddress?: string) {
+  try {
+    if (tokenAddress) {
+      localStorage.removeItem(rewardsCacheKey(tokenAddress));
+      return;
+    }
+    Object.keys(localStorage)
+      .filter(k => k.startsWith(REWARDS_CACHE_PREFIX))
+      .forEach(k => localStorage.removeItem(k));
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Remove cached entries for programmes that are no longer available. */
+function pruneRewardsCache(validTokenAddresses: string[]) {
+  try {
+    const valid = new Set(validTokenAddresses.map(a => rewardsCacheKey(a)));
+    Object.keys(localStorage)
+      .filter(k => k.startsWith(REWARDS_CACHE_PREFIX) && !valid.has(k))
+      .forEach(k => localStorage.removeItem(k));
+  } catch {
+    /* ignore */
+  }
+}
+
 
 export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
   const { address } = useAccount();
@@ -86,6 +139,11 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
     readCachedRewards(readCachedTokens()[0]?.address ?? ''),
   );
   const [isLoadingRewards, setIsLoadingRewards] = useState(false);
+  // Always-current token address for listeners registered once on mount
+  const selectedTokenRef = useRef(selectedTokenAddress);
+  useEffect(() => {
+    selectedTokenRef.current = selectedTokenAddress;
+  }, [selectedTokenAddress]);
 
   const [profileVerified, setProfileVerified] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -217,11 +275,17 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
           }));
 
           setTokens(activePrograms);
-          if (activePrograms.length > 0 && !selectedTokenAddress) {
+          if (activePrograms.length > 0 && !selectedTokenRef.current) {
             setSelectedTokenAddress(activePrograms[0].address);
           }
 
           localStorage.setItem('customerTokens', JSON.stringify(activePrograms));
+          // Forget cached rewards of programmes that are gone / no longer active
+          pruneRewardsCache(activePrograms.map(p => p.address));
+        } else {
+          setTokens([]);
+          invalidateRewardsCache();
+          localStorage.removeItem('customerTokens');
         }
       } catch (error) {
         console.error('Error in loadPrograms:', error);
@@ -230,21 +294,37 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
 
     loadPrograms();
 
-    const handleRewardsUpdate = async () => {
-      if (selectedTokenAddress) {
-        const rewards = await getRewardsByToken(selectedTokenAddress);
-        setAvailableRewards(rewards);
-        writeCachedRewards(selectedTokenAddress, rewards);
+    // Any rewards mutation invalidates the snapshot before refetching
+    const handleRewardsUpdate = async (tokenAddress?: string) => {
+      const token = tokenAddress || selectedTokenRef.current;
+      invalidateRewardsCache(token || undefined);
+      if (!token) return;
+      try {
+        const rewards = await getRewardsByToken(token);
+        if (token === selectedTokenRef.current) setAvailableRewards(rewards);
+        writeCachedRewards(token, rewards);
+      } catch (error) {
+        console.error('Error refreshing rewards:', error);
       }
     };
 
-
     const handleSessionReady = () => loadPrograms();
 
+    // Revalidate when the tab regains focus — cache may have gone stale offscreen
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        loadPrograms();
+        handleRewardsUpdate();
+      }
+    };
+
+    const handleRewardsUpdatedEvent = () => handleRewardsUpdate();
+
     window.addEventListener('loyaltyProgramsUpdated', loadPrograms);
-    window.addEventListener('rewardsUpdated', handleRewardsUpdate);
+    window.addEventListener('rewardsUpdated', handleRewardsUpdatedEvent);
     window.addEventListener('sessionReady', handleSessionReady);
     window.addEventListener('profileMigrated', handleSessionReady);
+    document.addEventListener('visibilitychange', handleVisibility);
 
     const programsChannel = supabase
       .channel('loyalty_programs_customer')
@@ -253,18 +333,27 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
 
     const rewardsChannel = supabase
       .channel('rewards_customer')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'rewards' }, () => handleRewardsUpdate())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rewards' }, payload => {
+        const changed =
+          (payload.new as { token_address?: string } | null)?.token_address ||
+          (payload.old as { token_address?: string } | null)?.token_address;
+        // Drop the stale snapshot for the affected programme, refresh if it is on screen
+        if (changed) invalidateRewardsCache(changed);
+        handleRewardsUpdate(changed && changed === selectedTokenRef.current ? changed : undefined);
+      })
       .subscribe();
 
     return () => {
       window.removeEventListener('loyaltyProgramsUpdated', loadPrograms);
-      window.removeEventListener('rewardsUpdated', handleRewardsUpdate);
+      window.removeEventListener('rewardsUpdated', handleRewardsUpdatedEvent);
       window.removeEventListener('sessionReady', handleSessionReady);
       window.removeEventListener('profileMigrated', handleSessionReady);
+      document.removeEventListener('visibilitychange', handleVisibility);
       supabase.removeChannel(programsChannel);
       supabase.removeChannel(rewardsChannel);
     };
   }, []);
+
 
   // ── Load rewards for selected token ──
   useEffect(() => {
