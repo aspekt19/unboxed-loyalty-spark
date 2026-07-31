@@ -10,6 +10,12 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useActiveCustomerWallet } from '@/hooks/useActiveCustomerWallet';
+import { readCache, writeCache, scopedKey, type CacheOptions } from '@/lib/localCache';
+
+const VOUCHERS_CACHE = 'vouchers:customer';
+const CACHE_OPTS: CacheOptions = { version: 1, ttlMs: 5 * 60 * 1000 };
+
+
 
 export function MyVouchers() {
   const { activeAddress } = useActiveCustomerWallet();
