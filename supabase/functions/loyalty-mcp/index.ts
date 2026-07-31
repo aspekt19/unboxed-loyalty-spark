@@ -15,6 +15,13 @@ import {
   authenticateAgent,
 } from "./helpers.ts";
 import { isPaidGatewayRequest } from "../_shared/paid-gateway-auth.ts";
+import { buildMintCallBundle } from "../_shared/loyalspark-agent-helpers.ts";
+import {
+  assertFeeCompliance,
+  recordFeeObligation,
+  settleFeeObligation,
+} from "../_shared/agent-fee-ledger.ts";
+
 import {
   B20_FACTORY_ADDRESS,
   encodeCreateB20Asset,
