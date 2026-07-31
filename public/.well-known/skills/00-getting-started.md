@@ -16,7 +16,7 @@ Pick **one** path:
 
 - **Merchant dashboard:** open [loyalspark.online/merchant](https://loyalspark.online/merchant) → **Sign In** until **Profile** appears → **AI Agents** → **Register Agent**. Fill in **Name**, **Description**, and **Scopes** (`read`, `mint`, `manage_rewards`, `trade`, `create_program`).
 
-- **Fully autonomous (no dashboard):** free `lsk_` via SIWE (`siwe-nonce` → sign EIP-4361 → `agent-register-siwe`). Details: **[AUTONOMOUS_AGENT_REGISTRATION.md](https://github.com/aspekt19/unboxed-loyalty-spark/blob/main/docs/agents/AUTONOMOUS_AGENT_REGISTRATION.md)**. Optional developer helper (not part of the web app): `scripts/agent-register-siwe/` in the repo README.
+- **Fully autonomous (no dashboard):** free `lsk_` via SIWE (`siwe-nonce` → sign EIP-4361 → `agent-register-siwe`). Details: **[AUTONOMOUS_AGENT_REGISTRATION.md](https://github.com/aspekt19/unboxed-loyalty-spark/blob/a2a-agents/docs/agents/AUTONOMOUS_AGENT_REGISTRATION.md)**. Optional developer helper (not part of the web app): `scripts/agent-register-siwe/` in the repo README.
 
 ### Step 2: Get API Key
 Copy the generated API key (format: `lsk_...`). Store it securely — it cannot be retrieved again.

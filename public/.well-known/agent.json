@@ -47,7 +47,7 @@
     "registration_url": "https://loyalspark.online/merchant",
     "registration_note": "Sign in with email, phone, Google, or Web3 wallet (via Privy) to register an agent",
     "siwe_registration_url": "https://api.loyalspark.online/agent-register-siwe",
-    "siwe_registration_note": "Autonomous agents: POST /siwe-nonce, sign EIP-4361 message including exact phrase 'Register Loyal Spark merchant agent' and Chain ID 8453, then POST to siwe_registration_url. Free key; same limits as dashboard. Doc: https://github.com/aspekt19/unboxed-loyalty-spark/blob/main/docs/agents/AUTONOMOUS_AGENT_REGISTRATION.md",
+    "siwe_registration_note": "Autonomous agents: POST /siwe-nonce, sign EIP-4361 message including exact phrase 'Register Loyal Spark merchant agent' and Chain ID 8453, then POST to siwe_registration_url. Free key; same limits as dashboard. Doc: https://github.com/aspekt19/unboxed-loyalty-spark/blob/a2a-agents/docs/agents/AUTONOMOUS_AGENT_REGISTRATION.md",
     "docs_url": "https://loyalspark.online/api-docs"
   },
   "api": {
@@ -516,7 +516,7 @@
       "method": "POST",
       "body": "JSON-RPC 2.0: method tools/call, params.name = tool_name, params.arguments = object per tool schema",
       "headers_after_payment": ["x-api-key: lsk_...", "Content-Type: application/json"],
-      "tool_schemas_source": "https://github.com/aspekt19/unboxed-loyalty-spark/blob/main/supabase/functions/_shared/mcp-bazaar-tools.ts",
+      "tool_schemas_source": "https://github.com/aspekt19/unboxed-loyalty-spark/blob/a2a-agents/supabase/functions/_shared/mcp-bazaar-tools.ts",
       "bazaar": "HTTP 402 response includes extensions.bazaar (discoverable, inputSchema for headers/body) for MCP resources"
     },
     "protocol_spec": "https://github.com/coinbase/x402",
