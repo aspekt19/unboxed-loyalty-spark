@@ -49,6 +49,10 @@ const META: Record<
   "/legal/refund": { changefreq: "yearly", priority: "0.4" },
 };
 
+// Static, non-router assets that must stay in the sitemap for agent discovery.
+const EXTRA_PATHS: string[] = ["/llms.txt"];
+META["/llms.txt"] = { changefreq: "weekly", priority: "0.85" };
+
 function projectRoot(): string {
   // When invoked as a module, resolve relative to this file; when invoked
   // standalone via tsx, process.cwd() is also the project root.
