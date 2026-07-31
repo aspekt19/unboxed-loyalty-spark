@@ -41,12 +41,25 @@ import { useBanStatus } from "./hooks/useBanStatus";
 import { BannedScreen } from "./components/BannedScreen";
 import { PrivyAvailableContext } from "./hooks/usePrivySafe";
 
+// Public marketing/legal routes never need a ban check — rendering them behind a
+// loading spinner causes a visible "Loading…" flash on first paint.
+const PUBLIC_PATH_PREFIXES = [
+  '/', '/pricing', '/guide', '/install', '/api-docs', '/for-agents', '/examples',
+  '/legal', '/trust', '/pitch', '/preview-3d',
+];
+
+function isPublicPath(pathname: string) {
+  if (pathname === '/') return true;
+  return PUBLIC_PATH_PREFIXES.some((p) => p !== '/' && (pathname === p || pathname.startsWith(p + '/')));
+}
+
 function BanGate({ children }: { children: React.ReactNode }) {
   const { isBanned, reason, bannedAt, isLoading, isError } = useBanStatus();
   const location = useLocation();
+  const gated = location.pathname !== '/admin' && !isPublicPath(location.pathname);
   // Fail closed: while the ban state is unknown (loading or failed lookup) we block the app
-  // instead of rendering it as if the user were not banned. Admin route stays reachable.
-  if ((isLoading || isError) && location.pathname !== '/admin') {
+  // instead of rendering it as if the user were not banned. Public/admin routes stay reachable.
+  if ((isLoading || isError) && gated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3 text-muted-foreground">
@@ -61,6 +74,7 @@ function BanGate({ children }: { children: React.ReactNode }) {
   }
   return <>{children}</>;
 }
+
 
 const queryClient = new QueryClient();
 
