@@ -1112,7 +1112,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    }
+
 
     // ==================== EARN (auto-calculate tokens from purchase amount) ====================
     if (resource === "earn" && req.method === "POST") {
