@@ -54,11 +54,15 @@ Optional: override cashback rate for this request:
 }
 ```
 
-### Step 3: Execute On-chain Transactions
-Same as minting — the response returns two calldata values:
+### Step 3: Execute On-chain Transactions (fee-first)
+Same as minting — the response returns a fee-first `calls[]` bundle:
 
-1. **`recipient_calldata`** — mint calculated tokens to the customer
-2. **`fee_calldata`** — mint platform fee to `fee_wallet`
+1. **`calls[0]` (`protocol_fee`)** — mint platform fee to `fee_wallet`. **Send first.**
+2. **`calls[1]` (`recipient_mint`)** — mint calculated tokens to the customer.
+
+Submit in order, or atomically via EIP-5792 `wallet_sendCalls`. Then confirm the fee with
+`POST /agent-api/mint/confirm { obligation_id, fee_tx_hash }` (MCP: `confirm_mint_fee`).
+Unconfirmed obligations (5+ older than 60 minutes) block further mints with HTTP 402.
 
 **Response (shape):**
 ```json
@@ -72,8 +76,11 @@ Same as minting — the response returns two calldata values:
   "fee_percent": 1,
   "fee_amount": 0.025,
   "fee_wallet": "0x5cc0Aa9ed773F413f81f78a62F2e94109CE26205",
-  "recipient_calldata": "0x40c10f19...",
-  "fee_calldata": "0x40c10f19...",
+  "fee_obligation_id": "uuid",
+  "calls": [
+    { "to": "0xToken", "data": "0x40c10f19...", "value": "0x0", "purpose": "protocol_fee" },
+    { "to": "0xToken", "data": "0x40c10f19...", "value": "0x0", "purpose": "recipient_mint" }
+  ],
   "message": "Customer earns 2.5 COFFEE tokens for a $50 purchase (5% cashback)...",
   "contract": {
     "token_address": "0x...",
@@ -84,7 +91,7 @@ Same as minting — the response returns two calldata values:
 }
 ```
 
-**MCP equivalent:** `earn_points` tool (same parameters and response).
+**MCP equivalent:** `earn_points` + `confirm_mint_fee` (same fee-first model).
 
 ### Step 4: Verify Balance
 
@@ -114,7 +121,8 @@ Same as regular minting:
 ## Success Criteria
 - ✅ Tokens auto-calculated from purchase amount × cashback rate
 - ✅ Mint record created in database
-- ✅ Both calldata values returned with builder code suffix
+- ✅ Fee-first `calls[]` returned with builder code suffix
+- ✅ Fee obligation confirmed via `/agent-api/mint/confirm`
 - ✅ Customer balance updated after on-chain execution
 
 ## Next Skills

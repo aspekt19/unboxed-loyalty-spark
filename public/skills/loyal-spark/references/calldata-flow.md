@@ -24,8 +24,9 @@ Loyal Spark write tools **prepare** transactions — they return `{ to, data, va
 | `create_loyalty_program` | **B20 (default):** `createB20` calldata to `0xB20f…` (1 tx, MINT_ROLE in `initCalls`). **Legacy:** `createLoyaltyToken` to `0x5F3DdB…` |
 | `register_loyalty_program` | DB-only; B20 → `status: active`, legacy → `inactive` |
 | `activate_loyalty_program` | **B20:** no-op. **Legacy:** `unpauseUtility` + `enableMinting` (2 txs) |
-| `mint_loyalty_tokens` | ERC-20 `mintWithFee` calldata |
-| `earn_points` | Auto-calculated mint calldata from purchase amount × cashback |
+| `mint_loyalty_tokens` | Fee-first `calls[]`: protocol-fee mint first, recipient mint second (+ `fee_obligation_id`) |
+| `earn_points` | Same fee-first `calls[]`, amount auto-calculated from purchase × cashback |
+| `confirm_mint_fee` | Settles the fee obligation after on-chain verification of the fee tx |
 | `transfer_loyalty_tokens` | ERC-20 `transfer` calldata |
 | `prepare_loyalty_token_transfer` (recipient) | Same as above, but holder-signed |
 | `create_p2p_offer` / `accept_p2p_offer` / `cancel_p2p_offer` | Escrow contract calldata |
@@ -42,6 +43,6 @@ If the agent has its own CDP MPC wallet (`POST /agent-wallet`), pass `use_agent_
 ## Gas, fees, value
 
 - All loyalty contracts live on Base mainnet (chain 8453).
-- Mint has a protocol fee per agent plan: Free 1.25%, Pro 0.5%, Enterprise 0.25%. The fee is included in the returned calldata.
+- Mint has a protocol fee per agent plan: Free 1.25%, Pro 0.5%, Enterprise 0.25%. It is a **separate mint transaction returned first** in `calls[]` — the token contract does **not** enforce it on-chain (there is no `mintWithFee`). Accountability is enforced off-chain: each prepared mint records a pending obligation, and 5 or more unpaid obligations older than 60 minutes block further mints with HTTP 402. Confirm with `confirm_mint_fee` / `POST /agent-api/mint/confirm`. For CDP server wallets, Loyal Spark itself sends the fee tx first and aborts the recipient mint if it fails.
 - P2P swaps charge a 0.5% protocol fee on completed swaps.
 - `value` is `0` for all loyalty operations; only USDC payments (subscriptions, x402) require value transfer, which is handled by the dedicated payment routes, not the loyalty calldata.
