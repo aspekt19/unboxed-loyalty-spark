@@ -40,6 +40,8 @@ import { ThemeProvider } from "next-themes";
 import { useBanStatus } from "./hooks/useBanStatus";
 import { BannedScreen } from "./components/BannedScreen";
 import { PrivyAvailableContext } from "./hooks/usePrivySafe";
+import { AppErrorBoundary } from "./components/AppErrorBoundary";
+
 
 /**
  * Ban check = UX layer only. Real enforcement lives in the database (RLS +
