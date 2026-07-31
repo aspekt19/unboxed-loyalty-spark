@@ -383,23 +383,32 @@ async function handleSignTransaction(d: any, agent: any, body: any) {
 
   let result: { txHash: string; status: string };
 
-  if (wallet.wallet_type === "cdp_mpc") {
-    // Append Builder Code for base.dev attribution
-    const taggedTxData = appendBuilderCode(txData);
-    const rlpTx = encodeUnsignedEIP1559(to, taggedTxData, value ? `0x${BigInt(value).toString(16)}` : "0x0");
-    const cdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/send/transaction`, {
-      transaction: rlpTx,
-      network: "base",
-    });
-    if (cdpResult.ok) {
-      result = { txHash: cdpResult.data.transactionHash || cdpResult.data.hash || "0x_pending", status: "sent_via_cdp" };
-    } else {
-      result = mockSignTransaction({ to, data: txData, walletAddress: wallet.wallet_address });
-      result.status = "cdp_error_mock_fallback";
-    }
-  } else {
-    result = mockSignTransaction({ to, data: txData, walletAddress: wallet.wallet_address });
+  if (wallet.wallet_type !== "cdp_mpc") {
+    return jsonResponse({
+      error: "This wallet has no custodial signer — nothing was broadcast.",
+      wallet_type: wallet.wallet_type,
+      unsigned_call: { to, data: appendBuilderCode(txData), value: value ?? "0x0", chain_id: 8453 },
+      message: "Sign and broadcast `unsigned_call` with your own wallet.",
+    }, 409);
   }
+
+  // Append Builder Code for base.dev attribution
+  const taggedTxData = appendBuilderCode(txData);
+  const rlpTx = encodeUnsignedEIP1559(to, taggedTxData, value ? `0x${BigInt(value).toString(16)}` : "0x0");
+  const cdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/send/transaction`, {
+    transaction: rlpTx,
+    network: "base",
+  });
+  if (!cdpResult.ok) {
+    await d.from("agent_activity_log").insert({
+      agent_id: agent.agentId, action: "sign_transaction",
+      request_body: { to, data: txData?.substring(0, 20) + "...", value },
+      response_status: 502, response_body: { error: "cdp_send_failed" },
+    });
+    return jsonResponse({ error: "CDP failed to broadcast the transaction. Nothing was sent.", retryable: true }, 502);
+  }
+  result = { txHash: cdpResult.data.transactionHash || cdpResult.data.hash || "0x_pending", status: "sent_via_cdp" };
+
 
   await d.from("agent_activity_log").insert({
     agent_id: agent.agentId, action: "sign_transaction",
