@@ -172,9 +172,10 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Load active programs from Supabase
+  // Realtime updates for active programs (initial data comes from the main
+  // token query above — no duplicate fetch on mount).
   useEffect(() => {
-    loadActivePrograms();
+
     
     // Subscribe to realtime updates
     const channel = supabase
