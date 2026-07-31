@@ -152,8 +152,10 @@ export function useMultiTokenBalance(tokens: TokenInfo[], overrideAddress?: stri
     if (lastAddressRef.current === address) return;
     lastAddressRef.current = address;
     isInitialLoadRef.current = true;
+    setBalances(readCachedBalances(address));
     void fetchBalances();
   }, [address, fetchBalances]);
+
 
   // Listen for balance update events
   useEffect(() => {
