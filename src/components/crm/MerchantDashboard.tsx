@@ -63,13 +63,14 @@ export function MerchantDashboard() {
     );
   }
 
-  if (error) {
+  if (error && analytics.length === 0) {
     return (
       <Alert variant="destructive">
         <AlertDescription>{error}</AlertDescription>
       </Alert>
     );
   }
+
 
   if (analytics.length === 0) {
     return (
