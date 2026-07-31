@@ -38,6 +38,18 @@ interface MerchantCard {
   reviews_count: number;
 }
 
+const MERCHANT_CARDS_CACHE_KEY = 'ls_merchant_cards';
+
+function readCachedMerchants(): MerchantCard[] {
+  try {
+    const raw = localStorage.getItem(MERCHANT_CARDS_CACHE_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 interface MerchantCardGridProps {
   onMerchantSelect?: (merchantAddress: string) => void;
   selectedMerchant?: string | null;
@@ -46,15 +58,17 @@ interface MerchantCardGridProps {
 }
 
 export function MerchantCardGrid({ onMerchantSelect, selectedMerchant, restrictToMerchants }: MerchantCardGridProps) {
-  const [merchants, setMerchants] = useState<MerchantCard[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // Render the previously seen merchant list instantly, refresh in background.
+  const [merchants, setMerchants] = useState<MerchantCard[]>(() => readCachedMerchants());
+  const [isLoading, setIsLoading] = useState(() => readCachedMerchants().length === 0);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [expanded, setExpanded] = useState(false);
   const [viewMode, setViewMode] = useState<'compact' | 'grid'>('compact');
 
   const loadMerchants = useCallback(async () => {
-    setIsLoading(true);
+    // Keep cached cards visible instead of flashing a spinner on refresh.
+    setIsLoading((prev) => prev);
     try {
       // Load merchant profiles
       const { data: profiles, error: profilesError } = await supabase
@@ -131,7 +145,13 @@ export function MerchantCardGrid({ onMerchantSelect, selectedMerchant, restrictT
       });
 
       // Only show merchants that have at least one program
-      setMerchants(cards.filter(c => c.programs.length > 0));
+      const visible = cards.filter(c => c.programs.length > 0);
+      setMerchants(visible);
+      try {
+        localStorage.setItem(MERCHANT_CARDS_CACHE_KEY, JSON.stringify(visible));
+      } catch {
+        /* best-effort cache */
+      }
     } catch (err) {
       console.error('[MerchantCardGrid] error:', err);
     } finally {
