@@ -118,7 +118,7 @@ function createDeniedRecipientMcpServer(
   })();
   const body = JSON.stringify(payload);
 
-  for (const tool of RECIPIENT_MCP_BAZAAR_TOOLS) {
+  for (const tool of [...RECIPIENT_MCP_BAZAAR_TOOLS, ...RECIPIENT_MCP_SIDECAR_TOOLS]) {
     server.tool(tool.name, {
       description: tool.description,
       inputSchema: tool.inputSchema as any,
