@@ -29,14 +29,17 @@ Deno.test("B20 factory constants match Base docs", () => {
   assertEquals(B20_CREATED_EVENT_TOPIC.length, 66);
 });
 
-Deno.test("encodeB20AssetParams ABI-encodes (uint8,string,string,address,uint8)", () => {
+Deno.test("encodeB20AssetParams ABI-encodes the params as a dynamic tuple", () => {
   const hex = encodeB20AssetParams("Coffee", "CFE", ADMIN, 18);
   assert(hex.startsWith("0x"));
-  // version=1 first word
-  assertEquals(hex.slice(2, 66).replace(/^0+/, ""), "1");
+  // abi.encode(struct) => first word is the tuple offset (0x20), NOT version.
+  assertEquals(hex.slice(2, 66).replace(/^0+/, ""), "20");
+  // version=1 lives in the second word (start of the tuple body).
+  assertEquals(hex.slice(66, 130).replace(/^0+/, ""), "1");
   // admin appears padded
   assert(hex.toLowerCase().includes(ADMIN.slice(2).toLowerCase()));
 });
+
 
 Deno.test("encodeGrantRoleCall uses 0x2f2ff15d selector", () => {
   const data = encodeGrantRoleCall(B20_MINT_ROLE, ADMIN);
