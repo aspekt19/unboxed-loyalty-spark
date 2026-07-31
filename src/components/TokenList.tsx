@@ -30,6 +30,31 @@ import { useResolveRecipient } from '@/hooks/useResolveRecipient';
 /** Carousel on mobile only for a small list; many tokens use vertical scroll */
 const MOBILE_CAROUSEL_MAX_ITEMS = 8;
 
+const TOKENS_CACHE_KEY = 'customerTokens';
+const STANDARDS_CACHE_KEY = 'customerTokenStandards';
+
+function readCachedTokens(): TokenInfo[] {
+  try {
+    const raw = localStorage.getItem(TOKENS_CACHE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((t: any) => typeof t?.address === 'string' && t.address.startsWith('0x'));
+  } catch {
+    return [];
+  }
+}
+
+function readCachedStandards(): Record<string, 'erc20' | 'b20'> {
+  try {
+    const raw = localStorage.getItem(STANDARDS_CACHE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+
 interface TokenListProps {
   selectedProgram: string | null;
   onProgramSelect: (address: string) => void;
