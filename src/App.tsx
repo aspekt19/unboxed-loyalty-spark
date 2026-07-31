@@ -41,39 +41,49 @@ import { useBanStatus } from "./hooks/useBanStatus";
 import { BannedScreen } from "./components/BannedScreen";
 import { PrivyAvailableContext } from "./hooks/usePrivySafe";
 
-// Public marketing/legal routes never need a ban check — rendering them behind a
-// loading spinner causes a visible "Loading…" flash on first paint.
-const PUBLIC_PATH_PREFIXES = [
-  '/', '/pricing', '/guide', '/install', '/api-docs', '/for-agents', '/examples',
-  '/legal', '/trust', '/pitch', '/preview-3d',
-];
+/**
+ * Ban check = UX layer only. Real enforcement lives in the database (RLS +
+ * `is_current_user_banned()`), so a banned user cannot read or write anything
+ * even if the UI renders. That means we never need to block first paint on it:
+ * the app renders instantly and the ban screen replaces it the moment the
+ * background check confirms a ban.
+ *
+ * A previously confirmed ban is remembered in localStorage so a banned user
+ * still sees the ban screen immediately on reload (no flash of app UI).
+ */
+const BAN_CACHE_KEY = 'ls_ban_state';
 
-function isPublicPath(pathname: string) {
-  if (pathname === '/') return true;
-  return PUBLIC_PATH_PREFIXES.some((p) => p !== '/' && (pathname === p || pathname.startsWith(p + '/')));
+function readCachedBan(): boolean {
+  try {
+    return localStorage.getItem(BAN_CACHE_KEY) === '1';
+  } catch {
+    return false;
+  }
 }
 
 function BanGate({ children }: { children: React.ReactNode }) {
-  const { isBanned, reason, bannedAt, isLoading, isError } = useBanStatus();
+  const { isBanned, reason, bannedAt, isLoading } = useBanStatus();
   const location = useLocation();
-  const gated = location.pathname !== '/admin' && !isPublicPath(location.pathname);
-  // Fail closed: while the ban state is unknown (loading or failed lookup) we block the app
-  // instead of rendering it as if the user were not banned. Public/admin routes stay reachable.
-  if ((isLoading || isError) && gated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-3 text-muted-foreground">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent" />
-          <p className="text-sm">{isError ? 'Verifying account status…' : 'Loading…'}</p>
-        </div>
-      </div>
-    );
-  }
-  if (isBanned && location.pathname !== '/admin') {
+  const [cachedBan, setCachedBan] = useState(readCachedBan);
+
+  useEffect(() => {
+    if (isLoading) return;
+    try {
+      if (isBanned) localStorage.setItem(BAN_CACHE_KEY, '1');
+      else localStorage.removeItem(BAN_CACHE_KEY);
+    } catch {
+      /* storage unavailable — ignore */
+    }
+    setCachedBan(isBanned);
+  }, [isBanned, isLoading]);
+
+  const blocked = isBanned || (isLoading && cachedBan);
+  if (blocked && location.pathname !== '/admin') {
     return <BannedScreen reason={reason} bannedAt={bannedAt} />;
   }
   return <>{children}</>;
 }
+
 
 
 const queryClient = new QueryClient();
