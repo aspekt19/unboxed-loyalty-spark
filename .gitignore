@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Env — keep secrets and local overrides out of git (.env.example is tracked)
+.env
+.env.*
+!.env.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -27,3 +32,6 @@ dist-ssr
 scripts/.admin-wallets.local.json
 scripts/.admin-wallets-decrypt.key
 supabase/functions/_shared/bot-cluster-wallets.json
+
+# Local fundraising notes / application copy — private, never commit
+docs/fundraising/

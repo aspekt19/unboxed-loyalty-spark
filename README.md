@@ -1,6 +1,6 @@
 # Loyal Spark — Onchain Loyalty Protocol
 
-A Web3-powered loyalty platform built on **Base Mainnet**, enabling merchants and AI agents to create custom loyalty token programs while customers earn rewards that automatically invest and grow through DeFi.
+A Web3-powered loyalty platform built on **Base Mainnet**: merchants and AI agents create onchain loyalty programs (B20 by default), mint points, manage rewards/vouchers, and automate the loop via REST, MCP, and pay-per-call gateways (x402 / MPP).
 
 ## Overview
 
@@ -49,9 +49,8 @@ Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain
 - **Multi-Token Dashboard**: View all loyalty tokens from different merchants
 - **Browse Rewards**: Explore available vouchers across all programs
 - **Redeem Vouchers**: Burn tokens to claim exclusive rewards with QR codes
-- **DEX Trading**: Trade loyalty tokens on decentralized exchanges *(module frozen in this repo — no new work in `marketplace/`)*  
-- **Round-Up Investment**: Automatically invest spare change into DeFi *(module frozen in this repo — no new work in `roundup/`)*  
 - **Tier System**: Bronze → Silver → Gold → Platinum with increasing perks
+- **Frozen modules (not product promises):** `marketplace/` (DEX) and `roundup/` (DeFi) remain in the tree but are explicitly frozen — no active development
 
 ### For AI Agents (REST API + MCP)
 - **Full CRUD via API**: Create programs, mint tokens, manage rewards, view analytics
@@ -337,8 +336,8 @@ unboxed-loyalty-spark/
 │   │   ├── automation/            # Marketing automation
 │   │   ├── tiers/                 # Customer tiers
 │   │   ├── referral/              # Referral programs
-│   │   ├── roundup/               # DeFi investment
-│   │   ├── marketplace/           # Token trading
+│   │   ├── roundup/               # DeFi investment (frozen)
+│   │   ├── marketplace/           # Token trading (frozen)
 │   │   ├── reviews/               # Customer reviews
 │   │   ├── onboarding/            # Welcome flows & tours
 │   │   ├── merchant/              # Merchant shell & tabs (Team, Programs, …)
