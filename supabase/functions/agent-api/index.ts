@@ -3,11 +3,18 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   appendBuilderCode,
   BUILDER_CODE,
+  buildMintCallBundle,
   computeMintFeeAmount,
   encodeMintCalldata,
   getAgentFeePercent,
   PLATFORM_FEE_WALLET,
 } from "../_shared/loyalspark-agent-helpers.ts";
+import {
+  assertFeeCompliance,
+  recordFeeObligation,
+  settleFeeObligation,
+} from "../_shared/agent-fee-ledger.ts";
+
 import { authenticateAgent, type AgentContext } from "./auth.ts";
 import { isPaidGatewayRequest } from "../_shared/paid-gateway-auth.ts";
 import { corsHeaders, jsonResponse } from "./http.ts";
