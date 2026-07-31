@@ -58,8 +58,9 @@ interface MerchantCardGridProps {
 }
 
 export function MerchantCardGrid({ onMerchantSelect, selectedMerchant, restrictToMerchants }: MerchantCardGridProps) {
-  const [merchants, setMerchants] = useState<MerchantCard[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // Render the previously seen merchant list instantly, refresh in background.
+  const [merchants, setMerchants] = useState<MerchantCard[]>(() => readCachedMerchants());
+  const [isLoading, setIsLoading] = useState(() => readCachedMerchants().length === 0);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [expanded, setExpanded] = useState(false);
