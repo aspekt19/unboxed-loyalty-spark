@@ -269,22 +269,25 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
   // ── Load rewards for selected token ──
   useEffect(() => {
     setSelectedRewardId('');
-    setAvailableRewards([]);
+    // Render last known rewards instantly while the fresh list loads
+    const cached = readCachedRewards(selectedTokenAddress);
+    setAvailableRewards(cached);
 
     const loadRewardsForToken = async () => {
       if (selectedTokenAddress) {
-        setIsLoadingRewards(true);
+        setIsLoadingRewards(cached.length === 0);
         try {
           const rewards = await getRewardsByToken(selectedTokenAddress);
           setAvailableRewards(rewards);
+          writeCachedRewards(selectedTokenAddress, rewards);
         } catch (error) {
           console.error('Error loading rewards:', error);
-          setAvailableRewards([]);
         } finally {
           setIsLoadingRewards(false);
         }
       }
     };
+
 
     loadRewardsForToken();
   }, [selectedTokenAddress]);
