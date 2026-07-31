@@ -91,3 +91,54 @@ export async function getAgentFeePercent(serviceClient: any, agentId: string): P
 export function computeMintFeeAmount(amount: number, feePercent: number): number {
   return amount * (Number(feePercent) / 100);
 }
+
+export type PreparedCall = {
+  to: string;
+  data: string;
+  value: string;
+  purpose: "protocol_fee" | "recipient_mint";
+  description: string;
+};
+
+/**
+ * Builds the mint transaction bundle in **fee-first** order.
+ *
+ * Rationale: the protocol fee is a second, independent mint. If the caller only
+ * sends one transaction, fee-first means the platform is paid and the recipient
+ * mint is the one that is missing (visible immediately to the merchant), instead
+ * of the previous order where the platform silently lost the commission.
+ *
+ * Callers that support EIP-5792 (`wallet_sendCalls`) MUST submit `calls`
+ * atomically — see `atomic_batch_supported` in the API responses.
+ */
+export function buildMintCallBundle(params: {
+  tokenAddress: string;
+  recipientAddress: string;
+  amount: number;
+  feeAmount: number;
+  feeWallet?: string;
+}): PreparedCall[] {
+  const feeWallet = params.feeWallet ?? PLATFORM_FEE_WALLET;
+  const calls: PreparedCall[] = [];
+
+  if (params.feeAmount > 0) {
+    calls.push({
+      to: params.tokenAddress,
+      data: encodeMintCalldata(feeWallet, params.feeAmount),
+      value: "0x0",
+      purpose: "protocol_fee",
+      description: `Protocol fee mint of ${params.feeAmount} tokens to ${feeWallet}. Send this FIRST.`,
+    });
+  }
+
+  calls.push({
+    to: params.tokenAddress,
+    data: encodeMintCalldata(params.recipientAddress, params.amount),
+    value: "0x0",
+    purpose: "recipient_mint",
+    description: `Mint of ${params.amount} tokens to ${params.recipientAddress}.`,
+  });
+
+  return calls;
+}
+
