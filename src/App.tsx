@@ -90,6 +90,21 @@ function BanGate({ children }: { children: React.ReactNode }) {
 
 const queryClient = new QueryClient();
 
+/**
+ * Inside embedded webviews (Farcaster / Base App) rAF-driven exit animations are
+ * throttled or dropped, so `AnimatePresence mode="wait"` can keep the outgoing
+ * route mounted forever and the new page never paints — that is the black screen
+ * users hit when opening the Customer Portal. Skip the animation wrapper there.
+ */
+const SKIP_ROUTE_ANIMATION =
+  typeof window !== "undefined" && (isEmbeddedWebview() || isFarcasterContext());
+
+function RouteShell({ children }: { children: React.ReactNode }) {
+  if (SKIP_ROUTE_ANIMATION) return <>{children}</>;
+  return <AnimatePresence mode="wait">{children}</AnimatePresence>;
+}
+
+
 function AnimatedRoutes() {
   const location = useLocation();
 
@@ -132,10 +147,11 @@ function AnimatedRoutes() {
     }
   }, []);
 
+
   return (
     <BanGate>
       <PageMeta />
-      <AnimatePresence mode="wait">
+      <RouteShell>
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<Index />} />
           <Route path="/app" element={<AppPage />} />
@@ -163,7 +179,7 @@ function AnimatedRoutes() {
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </AnimatePresence>
+      </RouteShell>
     </BanGate>
   );
 }
@@ -261,10 +277,12 @@ const App = () => {
       .catch(() => false)
       .then((result) => {
         window.clearTimeout(graceTimer);
-        // A late "true" still matters: it swaps in the Farcaster connector.
-        // A late "false" after we already fell back changes nothing.
-        if (!settled || result) setIsFarcaster(result);
+        // Never swap providers after we already committed to a tree: remounting
+        // Privy/wagmi mid-session is what produced the Base App white screen.
+        // Late results only decide the very first commit.
+        if (!settled) setIsFarcaster(result);
       });
+
 
     return () => window.clearTimeout(graceTimer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
