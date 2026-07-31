@@ -4,8 +4,8 @@
     "title": "Loyal Spark — Onchain Loyalty Protocol on Base",
     "version": "2.2.0",
     "summary": "AI-agent-native loyalty-as-a-service protocol on Base L2 with paid x402 + MPP corridors.",
-    "description": "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create ERC-20 loyalty programs, mint tokens to customer wallets, manage reward catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics — all via paid x402 endpoints (USDC on Base) or via standard REST with x-api-key. Coverage: merchant REST (agent-api), recipient REST (recipient-api), 39 merchant MCP tools and 20 recipient MCP tools (direct MCP with x-api-key); paid x402 corridor prices a subset of those tools. Builder Code bc_wdmnog7m.",
-    "x-guidance": "Loyal Spark on Base L2 (chain 8453, USDC native).\n\nAuth modes:\n• Merchant agents — header x-api-key: lsk_... (or Authorization: Bearer lsk_...). Get a key in https://loyalspark.online/merchant → AI Agents.\n• Holder agents — header x-api-key: rwk_... (or Authorization: Bearer rwk_...). Issued via SIWE: https://loyalspark.online/.well-known/agent.json.\n• x402 corridor — pay USDC on Base per call. Discovery: https://api.loyalspark.online/.well-known/x402 (static mirror: https://loyalspark.online/.well-known/x402.json).\n\nTypical merchant flow (B20 default):\n1. GET /me — profile and scopes\n2. POST /programs — B20 createB20 calldata\n3. POST /register-program — persist program (status active)\n4. POST /update-program-config — set cashback_rate / points_per_dollar\n5. POST /rewards — catalog\n6. POST /mint or POST /earn — fee-first calls[] + fee_obligation_id\n7. POST /mint/confirm — settle protocol fee on-chain\n8. GET /analytics — metrics\n\nLegacy ERC-20: add POST /activate-program + program-status after register.\n\nMCP mirrors REST: 39 merchant tools at https://api.loyalspark.online/loyalty-mcp and 20 recipient tools at https://api.loyalspark.online/recipient-loyalty-mcp. Paid x402 paths under /x402-gateway/mcp-tools/<name> cover the priced subset (confirm_mint_fee is lsk_-only settlement, not an x402 resource).\n\nDocs: https://loyalspark.online/api-docs · llms: https://loyalspark.online/llms.txt · agent manifest: https://loyalspark.online/.well-known/agent.json",
+    "description": "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create ERC-20 loyalty programs, mint tokens to customer wallets, manage reward catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics — all via paid x402 endpoints (USDC on Base) or via standard REST with x-api-key. Coverage: 88 paid operations across 82 paths (x402 corridor). Direct MCP (x-api-key) exposes 39 merchant + 20 recipient tools; paid x402 MCP prices 34 merchant + 16 recipient tools (confirm_mint_fee is lsk_-only settlement, not x402-priced). Builder Code bc_wdmnog7m.",
+    "x-guidance": "Loyal Spark on Base L2 (chain 8453, USDC native).\n\nAuth modes:\n• Merchant agents — header x-api-key: lsk_... (or Authorization: Bearer lsk_...). Get a key in https://loyalspark.online/merchant → AI Agents.\n• Holder agents — header x-api-key: rwk_... (or Authorization: Bearer rwk_...). Issued via SIWE: https://loyalspark.online/.well-known/agent.json.\n• x402 corridor — pay USDC on Base per call. Discovery: https://api.loyalspark.online/.well-known/x402 (static mirror: https://loyalspark.online/.well-known/x402.json).\n\nTypical merchant flow (B20 default):\n1. GET /me — profile and scopes\n2. POST /programs — B20 createB20 calldata\n3. POST /register-program — persist program (status active)\n4. POST /update-program-config — set cashback_rate / points_per_dollar\n5. POST /rewards — catalog\n6. POST /mint or POST /earn — fee-first calls[] + fee_obligation_id\n7. POST /mint/confirm — settle protocol fee on-chain\n8. GET /analytics — metrics\n\nLegacy ERC-20: add POST /activate-program + program-status after register.\n\nDirect MCP: 39 merchant tools at https://api.loyalspark.online/loyalty-mcp and 20 recipient tools at https://api.loyalspark.online/recipient-loyalty-mcp. Paid x402 MCP paths: /x402-gateway/mcp-tools/<name> (34) and /x402-gateway/recipient-mcp-tools/<name> (16).\n\nDocs: https://loyalspark.online/api-docs · llms: https://loyalspark.online/llms.txt · agent manifest: https://loyalspark.online/.well-known/agent.json",
     "contact": {
       "name": "Loyal Spark",
       "email": "admin@loyalspark.online",
@@ -77,11 +77,11 @@
     },
     {
       "name": "Merchant MCP",
-      "description": "39 merchant MCP tools (Streamable HTTP JSON-RPC 2.0)"
+      "description": "34 paid merchant MCP tools via x402 (direct loyalty-mcp exposes 39 with x-api-key)"
     },
     {
       "name": "Recipient MCP",
-      "description": "20 recipient MCP tools (Streamable HTTP JSON-RPC 2.0)"
+      "description": "16 paid recipient MCP tools via x402 (direct recipient-loyalty-mcp exposes 20 with x-api-key)"
     }
   ],
   "paths": {
@@ -760,6 +760,272 @@
         }
       }
     },
+    "/x402-gateway/merchant-profile": {
+      "get": {
+        "operationId": "get_merchant_profile",
+        "summary": "Read merchant profile",
+        "description": "Returns the merchant public profile (name, logo, description) for the authenticated agent owner.",
+        "tags": [
+          "Merchant REST"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+          }
+        },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Query parameters for this request."
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.001"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            },
+            {
+              "mpp": {
+                "method": "USDC",
+                "intent": "pay-per-call",
+                "currency": "USD"
+              }
+            }
+          ]
+        },
+        "x-auth": {
+          "type": "apiKey",
+          "header": "x-api-key",
+          "prefix": "lsk_"
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "style": "deepObject",
+            "explode": true,
+            "description": "Query parameters passed through to the paid GET endpoint.",
+            "schema": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Query parameters for this request."
+            }
+          }
+        ]
+      },
+      "post": {
+        "operationId": "post_merchant_profile",
+        "summary": "Create merchant profile",
+        "description": "Creates the merchant public profile for the authenticated agent owner.",
+        "tags": [
+          "Merchant REST"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+          }
+        },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON body for this request."
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.005"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            },
+            {
+              "mpp": {
+                "method": "USDC",
+                "intent": "pay-per-call",
+                "currency": "USD"
+              }
+            }
+          ]
+        },
+        "x-auth": {
+          "type": "apiKey",
+          "header": "x-api-key",
+          "prefix": "lsk_"
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "JSON body for this request."
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "put_merchant_profile",
+        "summary": "Update merchant profile",
+        "description": "Updates merchant profile fields for the authenticated agent owner.",
+        "tags": [
+          "Merchant REST"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+          }
+        },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON body for this request."
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.005"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            },
+            {
+              "mpp": {
+                "method": "USDC",
+                "intent": "pay-per-call",
+                "currency": "USD"
+              }
+            }
+          ]
+        },
+        "x-auth": {
+          "type": "apiKey",
+          "header": "x-api-key",
+          "prefix": "lsk_"
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "JSON body for this request."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/x402-gateway/workflow/program-status": {
+      "get": {
+        "operationId": "get_workflow_program_status",
+        "summary": "Autonomous program workflow status",
+        "description": "Returns the current merchant program lifecycle step and machine-readable next_actions[] for self-orchestration.",
+        "tags": [
+          "Merchant REST"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+          }
+        },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Query parameters for this request."
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.001"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            },
+            {
+              "mpp": {
+                "method": "USDC",
+                "intent": "pay-per-call",
+                "currency": "USD"
+              }
+            }
+          ]
+        },
+        "x-auth": {
+          "type": "apiKey",
+          "header": "x-api-key",
+          "prefix": "lsk_"
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "style": "deepObject",
+            "explode": true,
+            "description": "Query parameters passed through to the paid GET endpoint.",
+            "schema": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Query parameters for this request."
+            }
+          }
+        ]
+      }
+    },
     "/x402-gateway/register-program": {
       "post": {
         "operationId": "post_register_program",
@@ -1027,8 +1293,8 @@
     "/x402-gateway/mint": {
       "post": {
         "operationId": "post_mint",
-        "summary": "Mint loyalty tokens to a customer wallet",
-        "description": "Returns mint calldata + fee tx. Agent submits both txs (or uses CDP server wallet via /agent-wallet).",
+        "summary": "Mint loyalty tokens (fee-first calls[])",
+        "description": "Returns a fee-first calls[] bundle (protocol fee mint first, then recipient) plus fee_obligation_id. Confirm with POST /agent-api/mint/confirm after broadcast.",
         "tags": [
           "Merchant REST"
         ],
@@ -1094,7 +1360,7 @@
       "post": {
         "operationId": "post_earn",
         "summary": "Record an earn / cashback for a purchase",
-        "description": "Computes and mints loyalty points for a purchase (uses program's cashback_rate and points_per_dollar).",
+        "description": "Computes and mints loyalty points for a purchase (uses program's cashback_rate and points_per_dollar). Same fee-first + confirm model as /mint.",
         "tags": [
           "Merchant REST"
         ],
@@ -1491,6 +1757,72 @@
             "mode": "fixed",
             "currency": "USD",
             "amount": "0.005"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            },
+            {
+              "mpp": {
+                "method": "USDC",
+                "intent": "pay-per-call",
+                "currency": "USD"
+              }
+            }
+          ]
+        },
+        "x-auth": {
+          "type": "apiKey",
+          "header": "x-api-key",
+          "prefix": "lsk_"
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "JSON body for this request."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/x402-gateway/workflow/generate-program-defaults": {
+      "post": {
+        "operationId": "post_workflow_generate_program_defaults",
+        "summary": "Generate program defaults from business context",
+        "description": "Autonomous planner: proposes program name, symbol, cashback economics, and starter rewards from merchant business context.",
+        "tags": [
+          "Merchant REST"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+          }
+        },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON body for this request."
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.001"
           },
           "protocols": [
             {
@@ -1933,6 +2265,75 @@
         }
       }
     },
+    "/x402-gateway/recipient-api/workflow/reward-status": {
+      "get": {
+        "operationId": "get_recipient_api_workflow_reward_status",
+        "summary": "Autonomous reward redemption status",
+        "description": "Returns the current reward redemption step and machine-readable next_actions[] for the holder.",
+        "tags": [
+          "Recipient REST"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+          }
+        },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Query parameters for this request."
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.001"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            },
+            {
+              "mpp": {
+                "method": "USDC",
+                "intent": "pay-per-call",
+                "currency": "USD"
+              }
+            }
+          ]
+        },
+        "x-auth": {
+          "type": "apiKey",
+          "header": "x-api-key",
+          "prefix": "rwk_"
+        },
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "style": "deepObject",
+            "explode": true,
+            "description": "Query parameters passed through to the paid GET endpoint.",
+            "schema": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Query parameters for this request."
+            }
+          }
+        ]
+      }
+    },
     "/x402-gateway/recipient-api/prepare-transfer": {
       "post": {
         "operationId": "post_recipient_api_prepare_transfer",
@@ -2174,6 +2575,72 @@
         "operationId": "post_recipient_api_cancel_offer",
         "summary": "Cancel own P2P swap offer",
         "description": "Cancels a P2P swap offer created by the holder.",
+        "tags": [
+          "Recipient REST"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+          }
+        },
+        "x-input-schema": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "JSON body for this request."
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.005"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            },
+            {
+              "mpp": {
+                "method": "USDC",
+                "intent": "pay-per-call",
+                "currency": "USD"
+              }
+            }
+          ]
+        },
+        "x-auth": {
+          "type": "apiKey",
+          "header": "x-api-key",
+          "prefix": "rwk_"
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "JSON body for this request."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/x402-gateway/recipient-api/workflow/prepare-reward-redemption": {
+      "post": {
+        "operationId": "post_recipient_api_workflow_prepare_reward_redemption",
+        "summary": "Prepare reward redemption plan + transfer calldata",
+        "description": "One-shot planner: returns ERC-20 transfer calldata for the reward cost plus workflow so the agent can broadcast then redeem.",
         "tags": [
           "Recipient REST"
         ],
@@ -3411,7 +3878,7 @@
       "post": {
         "operationId": "mcp_mint_loyalty_tokens",
         "summary": "MCP tool: mint_loyalty_tokens",
-        "description": "Mint tokens + fee calldata (two txs). JSON-RPC 2.0 over Streamable HTTP. Body: { \"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/call\", \"params\": { \"name\": \"mint_loyalty_tokens\", \"arguments\": { ... } } }. Auth: x-api-key (lsk_...) or Authorization: Bearer.",
+        "description": "Fee-first mint calls[] (protocol fee first) + fee_obligation_id; confirm via confirm_mint_fee / POST /mint/confirm. JSON-RPC 2.0 over Streamable HTTP. Body: { \"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/call\", \"params\": { \"name\": \"mint_loyalty_tokens\", \"arguments\": { ... } } }. Auth: x-api-key (lsk_...) or Authorization: Bearer.",
         "tags": [
           "Merchant MCP"
         ],
@@ -3671,7 +4138,7 @@
       "post": {
         "operationId": "mcp_earn_points",
         "summary": "MCP tool: earn_points",
-        "description": "Record earn / points for a customer purchase. JSON-RPC 2.0 over Streamable HTTP. Body: { \"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/call\", \"params\": { \"name\": \"earn_points\", \"arguments\": { ... } } }. Auth: x-api-key (lsk_...) or Authorization: Bearer.",
+        "description": "Record earn / points for a customer purchase (fee-first + confirm). JSON-RPC 2.0 over Streamable HTTP. Body: { \"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/call\", \"params\": { \"name\": \"earn_points\", \"arguments\": { ... } } }. Auth: x-api-key (lsk_...) or Authorization: Bearer.",
         "tags": [
           "Merchant MCP"
         ],
@@ -6081,6 +6548,252 @@
         }
       }
     },
+    "/x402-gateway/mcp-tools/generate_program_defaults": {
+      "post": {
+        "operationId": "mcp_generate_program_defaults",
+        "summary": "MCP tool: generate_program_defaults",
+        "description": "Propose program name/symbol/economics/starter rewards from business context. JSON-RPC 2.0 over Streamable HTTP. Body: { \"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/call\", \"params\": { \"name\": \"generate_program_defaults\", \"arguments\": { ... } } }. Auth: x-api-key (lsk_...) or Authorization: Bearer.",
+        "tags": [
+          "Merchant MCP"
+        ],
+        "x-auth": {
+          "type": "apiKey",
+          "header": "x-api-key",
+          "prefix": "lsk_"
+        },
+        "x-mcp": {
+          "tool": "generate_program_defaults",
+          "transport": "streamable-http",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "business_name": {
+                "type": "string"
+              },
+              "category": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "locale": {
+                "type": "string"
+              },
+              "preferred_style": {
+                "type": "string"
+              },
+              "target_audience": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.001"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            },
+            {
+              "mpp": {
+                "method": "USDC",
+                "intent": "pay-per-call",
+                "currency": "USD"
+              }
+            }
+          ]
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "jsonrpc": {
+                    "type": "string",
+                    "const": "2.0"
+                  },
+                  "id": {},
+                  "method": {
+                    "type": "string",
+                    "const": "tools/call"
+                  },
+                  "params": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "const": "generate_program_defaults"
+                      },
+                      "arguments": {
+                        "type": "object",
+                        "properties": {
+                          "business_name": {
+                            "type": "string"
+                          },
+                          "category": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "locale": {
+                            "type": "string"
+                          },
+                          "preferred_style": {
+                            "type": "string"
+                          },
+                          "target_audience": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "required": [
+                      "name"
+                    ]
+                  }
+                },
+                "required": [
+                  "jsonrpc",
+                  "method",
+                  "params"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MCP JSON-RPC response with result.content[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+          }
+        }
+      }
+    },
+    "/x402-gateway/mcp-tools/get_program_workflow_status": {
+      "post": {
+        "operationId": "mcp_get_program_workflow_status",
+        "summary": "MCP tool: get_program_workflow_status",
+        "description": "Program lifecycle step + next_actions[] for autonomous orchestration. JSON-RPC 2.0 over Streamable HTTP. Body: { \"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/call\", \"params\": { \"name\": \"get_program_workflow_status\", \"arguments\": { ... } } }. Auth: x-api-key (lsk_...) or Authorization: Bearer.",
+        "tags": [
+          "Merchant MCP"
+        ],
+        "x-auth": {
+          "type": "apiKey",
+          "header": "x-api-key",
+          "prefix": "lsk_"
+        },
+        "x-mcp": {
+          "tool": "get_program_workflow_status",
+          "transport": "streamable-http",
+          "server": "https://api.loyalspark.online/loyalty-mcp",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "token_address": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.001"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            },
+            {
+              "mpp": {
+                "method": "USDC",
+                "intent": "pay-per-call",
+                "currency": "USD"
+              }
+            }
+          ]
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "jsonrpc": {
+                    "type": "string",
+                    "const": "2.0"
+                  },
+                  "id": {},
+                  "method": {
+                    "type": "string",
+                    "const": "tools/call"
+                  },
+                  "params": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "const": "get_program_workflow_status"
+                      },
+                      "arguments": {
+                        "type": "object",
+                        "properties": {
+                          "token_address": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "required": [
+                      "name"
+                    ]
+                  }
+                },
+                "required": [
+                  "jsonrpc",
+                  "method",
+                  "params"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MCP JSON-RPC response with result.content[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+          }
+        }
+      }
+    },
     "/x402-gateway/recipient-mcp-tools/get_recipient_profile": {
       "post": {
         "operationId": "mcp_recipient_get_recipient_profile",
@@ -7644,6 +8357,240 @@
                             "type": "number"
                           }
                         }
+                      }
+                    },
+                    "required": [
+                      "name"
+                    ]
+                  }
+                },
+                "required": [
+                  "jsonrpc",
+                  "method",
+                  "params"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MCP JSON-RPC response with result.content[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+          }
+        }
+      }
+    },
+    "/x402-gateway/recipient-mcp-tools/get_reward_workflow_status": {
+      "post": {
+        "operationId": "mcp_recipient_get_reward_workflow_status",
+        "summary": "MCP tool: get_reward_workflow_status",
+        "description": "Reward redemption step + next_actions[] for the holder. JSON-RPC 2.0 over Streamable HTTP. Body: { \"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/call\", \"params\": { \"name\": \"get_reward_workflow_status\", \"arguments\": { ... } } }. Auth: x-api-key (rwk_...) or Authorization: Bearer.",
+        "tags": [
+          "Recipient MCP"
+        ],
+        "x-auth": {
+          "type": "apiKey",
+          "header": "x-api-key",
+          "prefix": "rwk_"
+        },
+        "x-mcp": {
+          "tool": "get_reward_workflow_status",
+          "transport": "streamable-http",
+          "server": "https://api.loyalspark.online/recipient-loyalty-mcp",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "token_address": {
+                "type": "string"
+              },
+              "reward_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "token_address"
+            ]
+          }
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.001"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            },
+            {
+              "mpp": {
+                "method": "USDC",
+                "intent": "pay-per-call",
+                "currency": "USD"
+              }
+            }
+          ]
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "jsonrpc": {
+                    "type": "string",
+                    "const": "2.0"
+                  },
+                  "id": {},
+                  "method": {
+                    "type": "string",
+                    "const": "tools/call"
+                  },
+                  "params": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "const": "get_reward_workflow_status"
+                      },
+                      "arguments": {
+                        "type": "object",
+                        "properties": {
+                          "token_address": {
+                            "type": "string"
+                          },
+                          "reward_id": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "token_address"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "name"
+                    ]
+                  }
+                },
+                "required": [
+                  "jsonrpc",
+                  "method",
+                  "params"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MCP JSON-RPC response with result.content[]",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required — returns x402 challenge with `accepts[]`"
+          }
+        }
+      }
+    },
+    "/x402-gateway/recipient-mcp-tools/prepare_reward_redemption": {
+      "post": {
+        "operationId": "mcp_recipient_prepare_reward_redemption",
+        "summary": "MCP tool: prepare_reward_redemption",
+        "description": "Prepare transfer calldata + redemption workflow for a reward. JSON-RPC 2.0 over Streamable HTTP. Body: { \"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/call\", \"params\": { \"name\": \"prepare_reward_redemption\", \"arguments\": { ... } } }. Auth: x-api-key (rwk_...) or Authorization: Bearer.",
+        "tags": [
+          "Recipient MCP"
+        ],
+        "x-auth": {
+          "type": "apiKey",
+          "header": "x-api-key",
+          "prefix": "rwk_"
+        },
+        "x-mcp": {
+          "tool": "prepare_reward_redemption",
+          "transport": "streamable-http",
+          "server": "https://api.loyalspark.online/recipient-loyalty-mcp",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "reward_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "reward_id"
+            ]
+          }
+        },
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.005"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            },
+            {
+              "mpp": {
+                "method": "USDC",
+                "intent": "pay-per-call",
+                "currency": "USD"
+              }
+            }
+          ]
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "jsonrpc": {
+                    "type": "string",
+                    "const": "2.0"
+                  },
+                  "id": {},
+                  "method": {
+                    "type": "string",
+                    "const": "tools/call"
+                  },
+                  "params": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "const": "prepare_reward_redemption"
+                      },
+                      "arguments": {
+                        "type": "object",
+                        "properties": {
+                          "reward_id": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "reward_id"
+                        ]
                       }
                     },
                     "required": [
