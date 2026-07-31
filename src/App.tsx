@@ -243,14 +243,24 @@ const App = () => {
 
     let cancelled = false;
 
-    void detectFarcasterMiniApp().then((result) => {
-      if (!cancelled) {
-        setIsFarcaster(result);
-      }
-    });
+    // Hard safety net: if the miniapp SDK import or detection ever hangs
+    // (flaky webview network on first launch in Base App), never leave the
+    // user on a blank screen — fall back to the regular browser providers.
+    const fallbackTimer = window.setTimeout(() => {
+      if (!cancelled) setIsFarcaster(false);
+    }, 1500);
+
+    void detectFarcasterMiniApp()
+      .catch(() => false)
+      .then((result) => {
+        if (!cancelled) {
+          setIsFarcaster(result);
+        }
+      });
 
     return () => {
       cancelled = true;
+      window.clearTimeout(fallbackTimer);
     };
   }, [isFarcaster]);
 
@@ -265,14 +275,19 @@ const App = () => {
       : BrowserProviders;
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} storageKey="loyal-spark-theme">
-      <Providers>
-        <BrowserRouter>
-          <AnimatedRoutes />
-        </BrowserRouter>
-      </Providers>
-    </ThemeProvider>
+    <AppErrorBoundary scope="root">
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} storageKey="loyal-spark-theme">
+        <Providers>
+          <BrowserRouter>
+            <AppErrorBoundary scope="routes">
+              <AnimatedRoutes />
+            </AppErrorBoundary>
+          </BrowserRouter>
+        </Providers>
+      </ThemeProvider>
+    </AppErrorBoundary>
   );
 };
 
 export default App;
+
