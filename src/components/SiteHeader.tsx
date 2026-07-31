@@ -16,7 +16,7 @@ const SiteHeader = () => {
           className="flex items-center gap-2 sm:gap-2.5 group shrink-0"
         >
           <img
-            src="/logo-icon.png"
+            src="/new-favicon.png"
             alt="Loyal Spark"
             className="h-7 w-7 sm:h-9 sm:w-9 rounded-lg transition-smooth group-hover:scale-110 group-hover:rotate-6"
           />

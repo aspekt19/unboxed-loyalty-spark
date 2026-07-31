@@ -139,19 +139,6 @@ export function CreatedPrograms({ onSelectProgram, merchantAddress: merchantAddr
   useEffect(() => {
     if (!effectiveMerchantAddress) return;
 
-    const cacheKey = `ls_programs_${effectiveMerchantAddress}`;
-
-    // Paint the last known list instantly, then refresh from the database.
-    try {
-      const cached = localStorage.getItem(cacheKey);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) setPrograms(parsed);
-      }
-    } catch {
-      /* ignore corrupted cache */
-    }
-
     const loadPrograms = async () => {
       try {
         const { data: dbPrograms, error } = await supabase
@@ -168,11 +155,6 @@ export function CreatedPrograms({ onSelectProgram, merchantAddress: merchantAddr
 
         const mapped = dbPrograms.map(mapDbProgram);
         setPrograms(mapped);
-        try {
-          localStorage.setItem(cacheKey, JSON.stringify(mapped));
-        } catch {
-          /* best-effort cache */
-        }
         if (!merchantAddressOverride) {
           localStorage.setItem('loyaltyPrograms', JSON.stringify(mapped));
         }

@@ -13,18 +13,11 @@ import { useAccount } from 'wagmi';
 import { useAuth } from '@/contexts/AuthContext';
 import { Reward } from '@/types/rewards';
 import { getMerchantRewards, updateReward, deleteReward } from '@/lib/vouchers';
-import { supabase } from '@/integrations/supabase/client';
-import { readCache, writeCache, scopedKey, type CacheOptions } from '@/lib/localCache';
-
-const REWARDS_CACHE = 'rewards:merchant';
-const CACHE_OPTS: CacheOptions = { version: 1, ttlMs: 5 * 60 * 1000 };
 
 export function RewardsList() {
   const { address } = useAccount();
   const { user } = useAuth();
-  const [rewards, setRewards] = useState<Reward[]>(() =>
-    readCache<Reward[]>(scopedKey(REWARDS_CACHE, address), CACHE_OPTS) ?? []
-  );
+  const [rewards, setRewards] = useState<Reward[]>([]);
   const [tokens, setTokens] = useState<Map<string, { name: string; symbol: string }>>(new Map());
   const [editingReward, setEditingReward] = useState<Reward | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -39,9 +32,8 @@ export function RewardsList() {
 
     const merchantRewards = await getMerchantRewards(address);
     setRewards(merchantRewards);
-    writeCache(scopedKey(REWARDS_CACHE, address), merchantRewards, CACHE_OPTS);
 
-    // Token metadata for the rewards list
+    // Загружаем информацию о токенах
     const loyaltyPrograms = localStorage.getItem('loyaltyPrograms');
     if (loyaltyPrograms) {
       const programs = JSON.parse(loyaltyPrograms);
@@ -55,49 +47,28 @@ export function RewardsList() {
     }
   };
 
-  // Clear rewards when the wallet disconnects / switches
+  // Очищаем награды при отключении кошелька
   useEffect(() => {
     if (!address) {
       setRewards([]);
       setTokens(new Map());
-      return;
     }
-    setRewards(readCache<Reward[]>(scopedKey(REWARDS_CACHE, address), CACHE_OPTS) ?? []);
   }, [address]);
 
   useEffect(() => {
-    if (!address || !user) return;
     loadData();
     window.addEventListener('rewardsUpdated', loadData);
-
-    // Realtime instead of polling: refresh only when rewards actually change
-    const channel = supabase
-      .channel(`merchant_rewards_${address.toLowerCase()}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'rewards',
-          filter: `merchant_address=eq.${address.toLowerCase()}`,
-        },
-        () => loadData()
-      )
-      .subscribe();
-
-    const onVisible = () => {
-      if (document.visibilityState === 'visible') loadData();
-    };
-    document.addEventListener('visibilitychange', onVisible);
-
+    
+    // Auto-refresh rewards every 5 seconds for real-time updates
+    const interval = setInterval(() => {
+      loadData();
+    }, 5000);
+    
     return () => {
       window.removeEventListener('rewardsUpdated', loadData);
-      document.removeEventListener('visibilitychange', onVisible);
-      supabase.removeChannel(channel);
+      clearInterval(interval);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address, user]);
-
 
   const handleToggleActive = async (rewardId: string) => {
     const reward = rewards.find(r => r.id === rewardId);

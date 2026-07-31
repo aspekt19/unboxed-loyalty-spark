@@ -30,31 +30,6 @@ import { useResolveRecipient } from '@/hooks/useResolveRecipient';
 /** Carousel on mobile only for a small list; many tokens use vertical scroll */
 const MOBILE_CAROUSEL_MAX_ITEMS = 8;
 
-const TOKENS_CACHE_KEY = 'customerTokens';
-const STANDARDS_CACHE_KEY = 'customerTokenStandards';
-
-function readCachedTokens(): TokenInfo[] {
-  try {
-    const raw = localStorage.getItem(TOKENS_CACHE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter((t: any) => typeof t?.address === 'string' && t.address.startsWith('0x'));
-  } catch {
-    return [];
-  }
-}
-
-function readCachedStandards(): Record<string, 'erc20' | 'b20'> {
-  try {
-    const raw = localStorage.getItem(STANDARDS_CACHE_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-}
-
-
 interface TokenListProps {
   selectedProgram: string | null;
   onProgramSelect: (address: string) => void;
@@ -70,16 +45,10 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, 
   const { resolveRecipient, isResolving } = useResolveRecipient();
   const [transferAmount, setTransferAmount] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
-  // Hydrate instantly from the last known program list so balances (multicall)
-  // can start before the database round-trip finishes.
-  const [allTokens, setAllTokens] = useState<TokenInfo[]>(() => readCachedTokens());
-  const [isLoadingTokens, setIsLoadingTokens] = useState(() => readCachedTokens().length === 0);
-  const [activePrograms, setActivePrograms] = useState<Set<string>>(
-    () => new Set(readCachedTokens().map(t => t.address.toLowerCase())),
-  );
-  const [programStandards, setProgramStandards] = useState<Record<string, 'erc20' | 'b20'>>(
-    () => readCachedStandards(),
-  );
+  const [allTokens, setAllTokens] = useState<TokenInfo[]>([]);
+  const [isLoadingTokens, setIsLoadingTokens] = useState(true);
+  const [activePrograms, setActivePrograms] = useState<Set<string>>(new Set());
+  const [programStandards, setProgramStandards] = useState<Record<string, 'erc20' | 'b20'>>({});
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
@@ -172,10 +141,9 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Realtime updates for active programs (initial data comes from the main
-  // token query above — no duplicate fetch on mount).
+  // Load active programs from Supabase
   useEffect(() => {
-
+    loadActivePrograms();
     
     // Subscribe to realtime updates
     const channel = supabase
@@ -268,7 +236,7 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, 
       // This is more reliable and shows all tokens regardless of when they were created
       const { data: programs, error } = await supabase
         .from('loyalty_programs')
-        .select('token_address, name, symbol, merchant_address, token_standard')
+        .select('token_address, name, symbol, merchant_address')
         .in('status', ['active', 'expiring_soon', 'paused']);
 
       if (error) {
@@ -285,20 +253,11 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, 
 
       console.log('TokenList: Loaded tokens from database:', tokens.length);
       setAllTokens(tokens);
-      // Same payload already carries status + standard — no second query needed.
-      setActivePrograms(new Set(tokens.map(t => t.address.toLowerCase())));
-      const standards: Record<string, 'erc20' | 'b20'> = {};
-      for (const program of programs) {
-        standards[program.token_address.toLowerCase()] =
-          program.token_standard === 'b20' ? 'b20' : 'erc20';
-      }
-      setProgramStandards(standards);
       retryCountRef.current = 0; // Reset retry count on success
       
       // Save to localStorage for future use
       if (tokens.length > 0) {
-        localStorage.setItem(TOKENS_CACHE_KEY, JSON.stringify(tokens));
-        localStorage.setItem(STANDARDS_CACHE_KEY, JSON.stringify(standards));
+        localStorage.setItem('customerTokens', JSON.stringify(tokens));
       } else {
         // If no tokens found and we haven't exceeded retries, try again
         if (retryCountRef.current < MAX_RETRIES) {

@@ -9,8 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
-import { readCache, writeCache, scopedKey, type CacheOptions } from '@/lib/localCache';
-
 
 interface IssuedToken {
   recipient: string;
@@ -28,23 +26,14 @@ interface ProgramOption {
   tokenAddress: string;
 }
 
-const HISTORY_CACHE = 'mint-history:merchant';
-const PROGRAMS_CACHE = 'mint-history-programs:merchant';
-const CACHE_OPTS: CacheOptions = { version: 1, ttlMs: 5 * 60 * 1000 };
-
 export function IssuedTokensHistory() {
   const { address } = useAccount();
-  const [history, setHistory] = useState<IssuedToken[]>(() =>
-    readCache<IssuedToken[]>(scopedKey(HISTORY_CACHE, address), CACHE_OPTS) ?? []
-  );
+  const [history, setHistory] = useState<IssuedToken[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedProgramFilter, setSelectedProgramFilter] = useState<string>('all');
   const [customerSearch, setCustomerSearch] = useState<string>('');
-  const [programs, setPrograms] = useState<ProgramOption[]>(() =>
-    readCache<ProgramOption[]>(scopedKey(PROGRAMS_CACHE, address), CACHE_OPTS) ?? []
-  );
-
+  const [programs, setPrograms] = useState<ProgramOption[]>([]);
   const hasLoadedRef = useRef(false);
   const loadingAddressRef = useRef<string | null>(null);
 
@@ -58,10 +47,6 @@ export function IssuedTokensHistory() {
       return;
     }
 
-    // Instant paint from the last snapshot for this wallet
-    setHistory(readCache<IssuedToken[]>(scopedKey(HISTORY_CACHE, address), CACHE_OPTS) ?? []);
-    setPrograms(readCache<ProgramOption[]>(scopedKey(PROGRAMS_CACHE, address), CACHE_OPTS) ?? []);
-
     if (!hasLoadedRef.current || loadingAddressRef.current !== address.toLowerCase()) {
       loadingAddressRef.current = address.toLowerCase();
       void loadHistory();
@@ -71,29 +56,22 @@ export function IssuedTokensHistory() {
     const handleUpdate = () => void loadHistory();
     window.addEventListener('tokensIssued', handleUpdate);
     window.addEventListener('loyaltyProgramsUpdated', handleUpdate);
-    const onVisible = () => {
-      if (document.visibilityState === 'visible') void loadHistory();
-    };
-    document.addEventListener('visibilitychange', onVisible);
 
     return () => {
       window.removeEventListener('tokensIssued', handleUpdate);
       window.removeEventListener('loyaltyProgramsUpdated', handleUpdate);
-      document.removeEventListener('visibilitychange', onVisible);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address]);
 
   const loadHistory = async () => {
     if (!address) return;
 
-    const normalizedAddress = address.toLowerCase();
-    const hasCached = !!readCache<IssuedToken[]>(scopedKey(HISTORY_CACHE, address), CACHE_OPTS);
-    // Only block the UI when there is nothing cached to show
-    setIsLoading(!hasCached);
+    setIsLoading(true);
     setError(null);
 
     try {
+      const normalizedAddress = address.toLowerCase();
+
       // Load programs for filter dropdown
       const { data: programsData } = await supabase
         .from('loyalty_programs')
@@ -101,12 +79,12 @@ export function IssuedTokensHistory() {
         .eq('merchant_address', normalizedAddress)
         .order('created_at', { ascending: false });
 
-      if (programsData) {
-        const options = programsData
-          .filter((p) => p.token_address)
-          .map((p) => ({ name: p.name, symbol: p.symbol, tokenAddress: p.token_address }));
-        setPrograms(options);
-        writeCache(scopedKey(PROGRAMS_CACHE, address), options, CACHE_OPTS);
+      if (programsData && programsData.length > 0) {
+        setPrograms(
+          programsData
+            .filter((p) => p.token_address)
+            .map((p) => ({ name: p.name, symbol: p.symbol, tokenAddress: p.token_address }))
+        );
       }
 
       // Load mint history from DB
@@ -123,7 +101,12 @@ export function IssuedTokensHistory() {
         return;
       }
 
-      const items: IssuedToken[] = (mintData || []).map((row: any) => ({
+      if (!mintData || mintData.length === 0) {
+        setHistory([]);
+        return;
+      }
+
+      const items: IssuedToken[] = mintData.map((row: any) => ({
         recipient: row.recipient_address,
         amount: String(row.amount),
         tokenName: row.token_name,
@@ -134,8 +117,6 @@ export function IssuedTokensHistory() {
       }));
 
       setHistory(items);
-      writeCache(scopedKey(HISTORY_CACHE, address), items, CACHE_OPTS);
-
     } catch (err: any) {
       console.error('[IssuedTokensHistory] Error:', err);
       setError('Failed to load history.');

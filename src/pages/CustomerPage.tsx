@@ -106,7 +106,7 @@ const CustomerPage = () => {
                 </Link>
               )}
               <img 
-                src="/logo-icon.png" 
+                src="/new-favicon.png" 
                 alt="Loyal Spark" 
                 className="h-6 w-6 sm:h-7 sm:w-7 rounded-lg flex-shrink-0" 
               />

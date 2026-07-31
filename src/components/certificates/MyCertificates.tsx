@@ -11,8 +11,6 @@ import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { GiftCertificate } from '@/types/certificates';
 import { listCustomerCertificates } from '@/lib/giftCertificates';
-import { readCache, writeCache, scopedKey, type CacheOptions } from '@/lib/localCache';
-
 
 const STATUS_LABEL: Record<GiftCertificate['status'], string> = {
   active: 'Active',
@@ -35,43 +33,23 @@ function formatCodeForDisplay(code: string): string {
   return `${c.slice(0, half)} ${c.slice(half)}`;
 }
 
-const CERTS_CACHE = 'certificates:customer';
-const CACHE_OPTS: CacheOptions = { version: 1, ttlMs: 5 * 60 * 1000 };
-
 export function MyCertificates() {
   const { address } = useAccount();
-  const [certs, setCerts] = useState<GiftCertificate[]>(() =>
-    readCache<GiftCertificate[]>(scopedKey(CERTS_CACHE, address), CACHE_OPTS) ?? []
-  );
-  const [loading, setLoading] = useState(
-    () => !readCache<GiftCertificate[]>(scopedKey(CERTS_CACHE, address), CACHE_OPTS)
-  );
+  const [certs, setCerts] = useState<GiftCertificate[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<GiftCertificate | null>(null);
 
   const reload = useCallback(async () => {
     if (!address) return;
-    const cached = readCache<GiftCertificate[]>(scopedKey(CERTS_CACHE, address), CACHE_OPTS);
-    if (cached) setCerts(cached);
-    setLoading(!cached);
+    setLoading(true);
     try {
-      const fresh = await listCustomerCertificates(address);
-      setCerts(fresh);
-      writeCache(scopedKey(CERTS_CACHE, address), fresh, CACHE_OPTS);
+      setCerts(await listCustomerCertificates(address));
     } finally {
       setLoading(false);
     }
   }, [address]);
 
   useEffect(() => { reload(); }, [reload]);
-
-  useEffect(() => {
-    const onVisible = () => {
-      if (document.visibilityState === 'visible') void reload();
-    };
-    document.addEventListener('visibilitychange', onVisible);
-    return () => document.removeEventListener('visibilitychange', onVisible);
-  }, [reload]);
-
 
   if (!address || (!loading && certs.length === 0)) return null;
 
