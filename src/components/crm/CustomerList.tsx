@@ -120,7 +120,6 @@ export function CustomerList() {
   }, [customers, searchQuery, rfmFilter]);
 
   if (loading) {
-
     return (
       <div className="space-y-4">
         <Skeleton className="h-20 w-full" />
@@ -129,13 +128,14 @@ export function CustomerList() {
     );
   }
 
-  if (error) {
+  if (error && customers.length === 0) {
     return (
       <Alert variant="destructive">
         <AlertDescription>{error}</AlertDescription>
       </Alert>
     );
   }
+
 
   return (
     <div className="space-y-6">
