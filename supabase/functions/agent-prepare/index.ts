@@ -351,10 +351,22 @@ Deno.serve(async (req: Request) => {
     if (prog.status !== "active") {
       return json({ error: `Program is ${prog.status}; must be active to mint` }, 400);
     }
+    const compliance = await assertFeeCompliance(db, agent.agentId);
+    if (!compliance.ok) {
+      return json({
+        error: compliance.message,
+        unpaid_fee_mints: compliance.pendingCount,
+        unpaid_fee_total: compliance.pendingFeeTotal,
+      }, 402);
+    }
     const feePercent = await getAgentFeePercent(db, agent.agentId);
     const feeAmount = computeMintFeeAmount(amount, feePercent);
-    const recipientCalldata = encodeMintCalldata(to, amount);
-    const feeCalldata = encodeMintCalldata(PLATFORM_FEE_WALLET, feeAmount);
+    const calls = buildMintCallBundle({
+      tokenAddress: token.toLowerCase(),
+      recipientAddress: to,
+      amount,
+      feeAmount,
+    });
 
     // Record intent so analytics stay consistent with agent-api mint path
     await db.from("token_mint_history").insert({
@@ -367,19 +379,32 @@ Deno.serve(async (req: Request) => {
       transaction_hash: null,
     });
 
+    const obligationId = await recordFeeObligation(db, {
+      agentId: agent.agentId,
+      ownerAddress: merchantAddress,
+      operation: "mint",
+      tokenAddress: token,
+      recipientAddress: to,
+      mintAmount: amount,
+      feePercent,
+      feeAmount,
+    });
+
     return json({
       chainId: CHAIN_ID,
       description: `Mint ${amount} ${prog.symbol} to ${to} (+${feeAmount} protocol fee)`,
-      transactions: [
-        { to: token.toLowerCase(), data: recipientCalldata, value: "0x0" },
-        { to: token.toLowerCase(), data: feeCalldata, value: "0x0" },
-      ],
+      transactions: calls.map((c) => ({ to: c.to, data: c.data, value: c.value })),
+      calls,
       builder_code: BUILDER_CODE,
       fee_percent: feePercent,
       fee_amount: feeAmount,
       fee_wallet: PLATFORM_FEE_WALLET,
-      note: "Send as EIP-5792 batch (send_calls). Two mint calls: recipient + protocol fee.",
+      fee_obligation_id: obligationId,
+      note:
+        "Send as an atomic EIP-5792 batch (send_calls) in the given order: protocol fee first, then recipient mint. " +
+        "Afterwards POST /agent-api/mint/confirm { obligation_id, fee_tx_hash }.",
     });
+
   }
 
   // ----- transfer (merchant) -----
