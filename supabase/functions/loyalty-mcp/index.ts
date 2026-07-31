@@ -463,7 +463,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
 
   mcpServer.tool("mint_loyalty_tokens", {
     description:
-      "Record mint intent and get two mint calldatas: recipient + platform fee (plan %). Both txs must be sent for correct commission.",
+      "Record mint intent and get a fee-first `calls[]` bundle: protocol fee mint FIRST, then the recipient mint. Submit them in order (atomically via EIP-5792 send_calls if your wallet supports it), then call confirm_mint_fee (or POST /agent-api/mint/confirm) with the fee tx hash. Unconfirmed fee obligations block future mints.",
     inputSchema: { type: "object" as const, properties: { token_address: { type: "string", description: "Token contract address" }, recipient: { type: "string", description: "Recipient wallet (0x...)" }, amount: { type: "number", description: "Tokens to mint" } }, required: ["token_address", "recipient", "amount"] },
     handler: async ({ token_address, recipient, amount }: any) => {
       const err = authGuard(["mint"]);
@@ -522,7 +522,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
   });
 
   mcpServer.tool("earn_points", {
-    description: "Calculate and mint loyalty tokens based on purchase amount and program's cashback rate. Simplifies the mint flow for point-of-sale scenarios — just provide purchase amount, tokens are calculated automatically.",
+    description: "Calculate and mint loyalty tokens based on purchase amount and program's cashback rate. Returns a fee-first `calls[]` bundle (protocol fee mint first, then the customer mint) — submit in order, atomically via EIP-5792 if supported, then call confirm_mint_fee (or POST /agent-api/mint/confirm). Unconfirmed fee obligations block future mints.",
     inputSchema: { type: "object" as const, properties: { token_address: { type: "string", description: "Token contract address (0x...)" }, customer_address: { type: "string", description: "Customer wallet (0x...)" }, purchase_amount: { type: "number", description: "Purchase amount in currency units (e.g. dollars)" }, cashback_rate: { type: "number", description: "Override cashback rate (%). If omitted, uses the program's default rate." } }, required: ["token_address", "customer_address", "purchase_amount"] },
     handler: async ({ token_address, customer_address, purchase_amount, cashback_rate: customRate }: any) => {
       const err = authGuard(["mint"]);

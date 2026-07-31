@@ -1,6 +1,6 @@
 {
   "name": "Loyal Spark",
-  "description": "Onchain loyalty protocol on Base L2. New programs deploy as B20 by default; legacy ERC-20 programs remain supported. Two agent personas: MERCHANT (lsk_, 27 authenticated REST routes + 1 public + 38 MCP tools at /loyalty-mcp) creates programs, registers and activates them when needed, manages rewards, mints tokens, runs P2P trading, gift certificates (LOYAL-XXXXXX), CDP MPC wallets, and POST /earn cashback. RECIPIENT (rwk_, 14 REST routes at /recipient-api + 20 MCP tools at /recipient-loyalty-mcp) holds tokens, redeems rewards, P2P swaps, claims gift certificates, and prepares loyalty token transfers. Pay-per-call via MPP (pathUSD/USDC on Tempo) or x402 v2 (USDC on Base) — both gateways relay merchant + recipient corridors with Coinbase Bazaar discovery metadata.",
+  "description": "Onchain loyalty protocol on Base L2. New programs deploy as B20 by default; legacy ERC-20 programs remain supported. Two agent personas: MERCHANT (lsk_, 27 authenticated REST routes + 1 public + 39 MCP tools at /loyalty-mcp) creates programs, registers and activates them when needed, manages rewards, mints tokens, runs P2P trading, gift certificates (LOYAL-XXXXXX), CDP MPC wallets, and POST /earn cashback. RECIPIENT (rwk_, 14 REST routes at /recipient-api + 20 MCP tools at /recipient-loyalty-mcp) holds tokens, redeems rewards, P2P swaps, claims gift certificates, and prepares loyalty token transfers. Pay-per-call via MPP (pathUSD/USDC on Tempo) or x402 v2 (USDC on Base) — both gateways relay merchant + recipient corridors with Coinbase Bazaar discovery metadata.",
   "url": "https://loyalspark.online",
   "version": "2.3.0",
   "protocol": "a2a-loyalty",
@@ -368,7 +368,7 @@
   },
   "mcp": {
     "url": "https://api.loyalspark.online/loyalty-mcp",
-    "tool_count": 38,
+    "tool_count": 39,
     "transport": "streamable-http",
     "authentication": {
       "type": "api_key",
@@ -388,6 +388,7 @@
       "create_reward",
       "mint_loyalty_tokens",
       "earn_points",
+      "confirm_mint_fee",
       "transfer_loyalty_tokens",
       "get_token_balance",
       "get_program_analytics",

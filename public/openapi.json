@@ -25,7 +25,7 @@
     "x-mcp": {
       "url": "https://api.loyalspark.online/loyalty-mcp",
       "transport": "streamable-http",
-      "tool_count": 38
+      "tool_count": 39
     },
     "x-recipient-mcp": {
       "url": "https://api.loyalspark.online/recipient-loyalty-mcp",

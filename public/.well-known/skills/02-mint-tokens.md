@@ -40,13 +40,25 @@ curl -X POST \
   }'
 ```
 
-### Step 3: Execute Onchain Transactions (two required)
-The API returns **two** pieces of calldata for `mint(address,uint256)` on the **same** token contract. **Both** transactions must be submitted for correct commission (the protocol fee is a separate mint to the platform wallet).
+### Step 3: Execute Onchain Transactions (fee-first)
+The API returns a **fee-first `calls[]` bundle** for `mint(address,uint256)` on the **same** token contract:
 
-1. **`recipient_calldata`** — mint full `amount` to the customer.
-2. **`fee_calldata`** — mint `fee_amount` (plan %) to `fee_wallet`.
+1. **`calls[0]` — `purpose: "protocol_fee"`** — mint `fee_amount` (plan %) to `fee_wallet`. **Send this FIRST.**
+2. **`calls[1]` — `purpose: "recipient_mint"`** — mint full `amount` to the customer.
 
-Order: you may send recipient first, then fee (same as server-wallet CDP flow). Skipping the fee tx means commission was not collected onchain.
+Submit them in order, or atomically in one batch via **EIP-5792 `wallet_sendCalls`** if your wallet supports it.
+Legacy fields `fee_calldata` / `recipient_calldata` are still returned for backwards compatibility, but `calls[]` is the source of truth for ordering.
+
+This is **accountability**, not an on-chain atomic `mintWithFee`: the token contract does not enforce the fee. Instead every prepared mint writes a pending obligation (`fee_obligation_id`) that you must clear.
+
+### Step 4: Confirm the protocol fee
+```bash
+curl -X POST "https://api.loyalspark.online/agent-api/mint/confirm" \
+  -H "x-api-key: lsk_..." -H "Content-Type: application/json" \
+  -d '{"obligation_id":"<fee_obligation_id>","fee_tx_hash":"0x...","recipient_tx_hash":"0x..."}'
+```
+The server verifies the fee mint on Base (Transfer from the zero address to the platform wallet) and settles the obligation.
+**5 or more unpaid obligations older than 60 minutes block further mints with HTTP 402.**
 
 **Response (shape):**
 ```json
@@ -55,23 +67,19 @@ Order: you may send recipient first, then fee (same as server-wallet CDP flow). 
   "fee_percent": 1,
   "fee_amount": 1,
   "fee_wallet": "0x5cc0Aa9ed773F413f81f78a62F2e94109CE26205",
-  "recipient_calldata": "0x40c10f19...",
-  "fee_calldata": "0x40c10f19...",
-  "message": "… two transactions …",
-  "contract": {
-    "token_address": "0xYourTokenAddress",
-    "function": "mint(address,uint256)",
-    "recipient_params": ["0xCustomerWallet", 100],
-    "fee_params": ["0x5cc0Aa9ed773F413f81f78a62F2e94109CE26205", 1],
-    "chain": "Base (8453)",
-    "builder_code": "bc_wdmnog7m"
-  }
+  "fee_obligation_id": "uuid",
+  "calls": [
+    { "to": "0xToken", "data": "0x40c10f19...", "value": "0x0", "purpose": "protocol_fee" },
+    { "to": "0xToken", "data": "0x40c10f19...", "value": "0x0", "purpose": "recipient_mint" }
+  ],
+  "contract": { "function": "mint(address,uint256)", "chain": "Base (8453)", "builder_code": "bc_wdmnog7m" }
 }
 ```
 
-**MCP equivalent:** `mint_loyalty_tokens` (same two-calldata commission model).
+**MCP equivalent:** `mint_loyalty_tokens` + `confirm_mint_fee` (same fee-first model).
 
-### Step 4: Verify Balance
+### Step 5: Verify Balance
+
 Check the customer's updated balance:
 
 ```bash
@@ -88,8 +96,9 @@ curl -H "x-api-key: lsk_..." \
 
 ## Success Criteria
 - ✅ Mint record created in database
-- ✅ Both calldata values returned with builder code suffix
-- ✅ Customer balance updated after onchain execution of **recipient** mint (fee mint credits platform)
+- ✅ Fee-first `calls[]` returned with builder code suffix
+- ✅ Customer balance updated after onchain execution
+- ✅ Fee obligation settled via `/agent-api/mint/confirm` (or MCP `confirm_mint_fee`)
 
 ## Next Skills
 - [Transfer Tokens](./03-transfer-tokens.md)
