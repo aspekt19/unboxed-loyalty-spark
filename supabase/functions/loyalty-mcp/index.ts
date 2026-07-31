@@ -25,14 +25,10 @@ import { parseOptionalCashbackRate, parseOptionalPointsPerDollar } from "../_sha
 import { discoverResources, discoverMcpServers, probeX402Endpoint } from "../_shared/bazaar-discovery.ts";
 import { generateProgramDefaults, generateProgramExamples, getMerchantProgramFieldCatalog, merchantProgramWorkflow, wrapWorkflow } from "../_shared/agent-workflows.ts";
 import { getTransactionReceipt } from "../_shared/base-rpc.ts";
+import { isAdminWallet } from "../_shared/admin-wallets.ts";
 
 
 const app = new Hono();
-
-const ADMIN_ADDRESSES = [
-  "0x5cc0aa9ed773f413f81f78a62f2e94109ce26205",
-  "0x40a8cdd6a10ec1a8cb3dfb2834675e7a2cf4ad8b",
-];
 
 type AuthFailure = null | "missing_key" | "invalid_key" | "rate_limited";
 
@@ -726,7 +722,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
     handler: async () => {
       const err = authGuard(["read"]);
       if (err) return T(err);
-      if (!ADMIN_ADDRESSES.includes(agent.ownerAddress.toLowerCase())) {
+      if (!(await isAdminWallet(agent.ownerAddress))) {
         return T(JSON.stringify({ error: "Access denied. This tool is restricted to platform admin agents." }));
       }
       const d = db();
@@ -844,7 +840,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
     handler: async ({ max_age_days }: any) => {
       const err = authGuard(["read"]);
       if (err) return T(err);
-      if (!ADMIN_ADDRESSES.includes(agent.ownerAddress.toLowerCase())) {
+      if (!(await isAdminWallet(agent.ownerAddress))) {
         return T(JSON.stringify({ error: "Admin-only action" }));
       }
       const days = max_age_days || 14;

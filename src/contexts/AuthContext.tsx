@@ -39,6 +39,15 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 const MANUAL_SIGN_OUT_STORAGE_KEY = 'loyalspark:manual-signout';
 const MANUAL_SIGN_OUT_EVENT = 'loyalspark:manual-signout-changed';
 
+/** Clear leftover keys from the removed portal cache layer (prefix lsc:). */
+function clearLegacyPortalCaches(): void {
+  try {
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith('lsc:'))
+      .forEach((k) => localStorage.removeItem(k));
+  } catch { /* ignore */ }
+}
+
 function getStoredManualSignOut(): boolean {
   if (typeof window === 'undefined') return false;
   return window.localStorage.getItem(MANUAL_SIGN_OUT_STORAGE_KEY) === 'true';
@@ -494,6 +503,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (typeof window !== 'undefined') {
         window.localStorage.removeItem('customerTokens');
+        clearLegacyPortalCaches();
         (window as any).__privyUser = null;
         (window as any).__privyGetAccessToken = null;
         // Ask the Privy-aware UI layer (WalletConnectButton) to also call
@@ -554,6 +564,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const clearSessionState = async () => {
       setSession(null);
       setUser(null);
+      clearLegacyPortalCaches();
       try {
         await supabase.auth.signOut();
       } catch {}
@@ -635,6 +646,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const handleSessionExpired = () => {
+      clearLegacyPortalCaches();
       if (isFarcasterContext.current) {
         void signInWithWallet();
         return;

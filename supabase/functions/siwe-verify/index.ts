@@ -17,6 +17,54 @@ const publicClient = createPublicClient({
   ),
 });
 
+function requireAuthPasswordPepper(): string {
+  const pepper = Deno.env.get('AUTH_PASSWORD_PEPPER')?.trim();
+  if (!pepper) throw new Error('AUTH_PASSWORD_PEPPER must be set');
+  return pepper;
+}
+
+function isAllowedSiweHostname(hostname: string): boolean {
+  const configured = Deno.env.get('SIWE_ALLOWED_DOMAINS');
+  const allowed = (configured ? configured.split(/[\s,]+/) : [
+    'loyalspark.online',
+    'www.loyalspark.online',
+    'localhost',
+    '127.0.0.1',
+    '*.lovable.app',
+    '*.lovableproject.com',
+    'loyalty-spark.lovable.app',
+  ]).filter(Boolean).map((domain) => domain.toLowerCase());
+  const normalized = hostname.toLowerCase();
+  return allowed.some((domain) =>
+    domain.startsWith('*.')
+      ? normalized.endsWith(domain.slice(1)) && normalized !== domain.slice(2)
+      : normalized === domain
+  );
+}
+
+function validateSiweBinding(message: string): string | null {
+  const domainMatch = message.match(/^(.+?) wants you to sign in with your Ethereum account:/m);
+  const uriMatch = message.match(/^URI:\s*(.+)$/m);
+  const chainIdMatch = message.match(/^Chain ID:\s*(.+)$/m);
+  if (!domainMatch || !uriMatch || !chainIdMatch) return 'Invalid SIWE domain, URI, or chain ID';
+
+  const domain = domainMatch[1].trim().replace(/:\d+$/, '').replace(/^\[|\]$/g, '');
+  let uriHostname: string;
+  try {
+    uriHostname = new URL(uriMatch[1].trim()).hostname;
+  } catch {
+    return 'Invalid SIWE URI';
+  }
+  if (!isAllowedSiweHostname(domain) || !isAllowedSiweHostname(uriHostname)) {
+    return 'SIWE domain or URI is not allowed';
+  }
+  if (domain.toLowerCase() !== uriHostname.toLowerCase()) {
+    return 'SIWE domain does not match URI hostname';
+  }
+  if (chainIdMatch[1].trim() !== '8453') return 'SIWE chain ID must be 8453';
+  return null;
+}
+
 async function generateDeterministicPassword(address: string, secret: string): Promise<string> {
   const encoder = new TextEncoder();
   const keyData = await crypto.subtle.importKey(
@@ -138,6 +186,14 @@ serve(async (req) => {
       });
     }
 
+    const bindingError = validateSiweBinding(message);
+    if (bindingError) {
+      return new Response(JSON.stringify({ error: bindingError }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Issued At freshness
     const issuedAtMatch = message.match(/Issued At: (.+)/);
     if (issuedAtMatch) {
@@ -166,6 +222,18 @@ serve(async (req) => {
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('SUPABASE_PUBLISHABLE_KEY')!;
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+    let passwordPepper: string;
+    try {
+      passwordPepper = requireAuthPasswordPepper();
+    } catch {
+      return new Response(
+        JSON.stringify({
+          error: 'Server misconfiguration',
+          hint: 'AUTH_PASSWORD_PEPPER must be set before SIWE authentication can be used.',
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
 
     const { data: consumedNonce, error: consumeErr } = await supabaseAdmin.rpc('consume_siwe_nonce', {
       p_nonce: nonce,
@@ -263,7 +331,7 @@ serve(async (req) => {
     // ============================================================
     const supabaseAuth = createClient(supabaseUrl, anonKey);
     const email = `${address}@wallet.siwe`;
-    const password = await generateDeterministicPassword(address, serviceRoleKey);
+    const password = await generateDeterministicPassword(address, passwordPepper);
 
     const signInResult = await ensureAuthUserWithPassword(
       supabaseAdmin,

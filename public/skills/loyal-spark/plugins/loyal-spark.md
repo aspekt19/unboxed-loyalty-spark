@@ -24,7 +24,7 @@ Every calldata blob ends with the ERC-8021 suffix encoding Builder Code **`bc_wd
 
 - **Merchant** actions (`create-program`, `activate-program`, `mint`, `transfer`): `x-api-key: lsk_…` — get one at [loyalspark.online/merchant](https://loyalspark.online/merchant) → AI Agents, or via SIWE at `POST /agent-register-siwe`.
 - **Recipient / holder** actions (`recipient-transfer`, `recipient-approve`): `x-api-key: rwk_…` — get one at the same page or via SIWE at `POST /recipient-api/register`.
-- **Fallback for surfaces that cannot forward headers**: append `?api_key=lsk_…` to the URL.
+- Query-string `api_key` authentication is not supported. Send `x-api-key` or `Authorization: Bearer` on every request.
 
 ---
 

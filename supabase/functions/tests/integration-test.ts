@@ -105,7 +105,7 @@ async function testX402PaidEndpointNoPayment() {
 
   // Check x402 headers
   const paymentRequired = r.headers.get("x-payment-required");
-  assert(!!paymentRequired, "X-Payment-Required header present");
+  assert(!paymentRequired, "X-Payment-Required header is not sent");
   const paymentRequiredV2 = r.headers.get("payment-required");
   assert(!!paymentRequiredV2, "PAYMENT-REQUIRED header present (x402-foundation clients)");
 
@@ -172,7 +172,7 @@ async function testX402Cors() {
   });
   await consume(r);
   const expose = r.headers.get("access-control-expose-headers") || "";
-  assert(expose.includes("X-Payment-Required"), "Exposes X-Payment-Required header");
+  assert(expose.includes("PAYMENT-REQUIRED"), "Exposes PAYMENT-REQUIRED header");
   assert(expose.includes("X-Payment-TxHash"), "Exposes X-Payment-TxHash header");
 }
 

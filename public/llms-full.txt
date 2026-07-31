@@ -230,7 +230,7 @@ Base URL: https://api.loyalspark.online/recipient-api · Auth: `x-api-key: rwk_�
 
 - Base URL: `https://api.loyalspark.online/agent-prepare`
 - Purpose: GET endpoints returning EIP-5792 `send_calls`-compatible batches with Builder Code `bc_wdmnog7m` (ERC-8021) already baked into the calldata. Consumed by Base MCP custom plugins so Base Account signs and broadcasts.
-- Auth: header `x-api-key: lsk_…` (merchant actions) or `rwk_…` (holder actions); `?api_key=` query fallback for surfaces that cannot forward headers.
+- Auth: header `x-api-key: lsk_…` (merchant actions) or `rwk_…` (holder actions); query-string `api_key` is not supported.
 - Response shape: `{ chainId: 8453, description, transactions: [{ to, data, value }], builder_code: "bc_wdmnog7m" }`.
 
 | Method | Path | Auth | Description |

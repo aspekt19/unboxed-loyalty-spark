@@ -326,6 +326,15 @@ async function settlePayment(
 
     const extensionResponsesHeader = resp.headers.get("EXTENSION-RESPONSES") ?? undefined;
     const result = (await resp.json()) as Record<string, unknown>;
+    const settled =
+      result.success === true ||
+      result.isSuccessful === true ||
+      result.valid === true ||
+      result.isValid === true;
+    if (!settled) {
+      console.error("Facilitator settle returned an unsuccessful result:", result);
+      return { success: false };
+    }
     return {
       success: true,
       txHash: txHashFromFacilitatorSettle(result),

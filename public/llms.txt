@@ -104,7 +104,7 @@ Merchant SaaS (portal): Starter $39 / Growth $79 / Scale $149 per month — see 
 
 ## Base MCP Custom Plugin (`send_calls`-ready calldata)
 - Base URL: https://api.loyalspark.online/agent-prepare
-- Auth: `x-api-key: lsk_...` (merchant actions) or `rwk_...` (holder actions); `?api_key=` fallback
+- Auth: `x-api-key: lsk_...` (merchant actions) or `rwk_...` (holder actions); query-string `api_key` is not supported.
 - Actions: GET /create-program, /activate-program, /mint, /transfer (merchant) · /recipient-transfer, /recipient-approve (holder)
 - Response: `{ chainId: 8453, description, transactions: [{to,data,value}], builder_code: "bc_wdmnog7m" }` — Builder Code appended to calldata (ERC-8021)
 - Plugin spec: https://loyalspark.online/skills/loyal-spark/plugins/loyal-spark.md

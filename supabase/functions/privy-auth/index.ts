@@ -7,6 +7,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function requireAuthPasswordPepper(): string {
+  const pepper = Deno.env.get("AUTH_PASSWORD_PEPPER")?.trim();
+  if (!pepper) throw new Error("AUTH_PASSWORD_PEPPER must be set");
+  return pepper;
+}
+
 async function generateDeterministicPassword(identifier: string, secret: string): Promise<string> {
   const encoder = new TextEncoder();
   const keyData = await crypto.subtle.importKey(
@@ -264,6 +270,18 @@ serve(async (req) => {
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
     const supabaseAuth = createClient(supabaseUrl, anonKey);
+    let passwordPepper: string;
+    try {
+      passwordPepper = requireAuthPasswordPepper();
+    } catch {
+      return new Response(
+        JSON.stringify({
+          error: "Server misconfiguration",
+          hint: "AUTH_PASSWORD_PEPPER must be set before Privy authentication can be used.",
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     // STEP 1: Resolve the canonical user for this Privy identity.
     // Wallet ownership wins, then existing DID link, then email ownership.
@@ -310,7 +328,7 @@ serve(async (req) => {
 
     // STEP 2: Create a new auth user only when this is a truly new Privy identity.
     const authEmail = `${privyDid.replace(/^did:privy:/, "")}@privy.auth`;
-    const password = await generateDeterministicPassword(privyDid, serviceRoleKey);
+    const password = await generateDeterministicPassword(privyDid, passwordPepper);
 
     if (!userId) {
       const signInResult = await ensureAuthUserWithPassword(

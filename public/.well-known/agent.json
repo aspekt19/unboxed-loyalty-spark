@@ -422,7 +422,6 @@
     "authentication": {
       "type": "api_key",
       "header": "x-api-key",
-      "query_fallback": "api_key",
       "prefixes": ["lsk_", "rwk_"]
     },
     "response_shape": { "chainId": 8453, "description": "string", "transactions": [{ "to": "0x…", "data": "0x…", "value": "0x0" }], "builder_code": "bc_wdmnog7m" },

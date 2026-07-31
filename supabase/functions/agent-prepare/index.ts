@@ -3,8 +3,8 @@
 //   { chainId, description, transactions: [{ to, data, value }], builder_code }
 //
 // Auth:
-//   - Merchant actions:  x-api-key: lsk_...  (or ?api_key= as fallback)
-//   - Recipient actions: x-api-key: rwk_...
+//   - Merchant actions:  x-api-key: lsk_... or Authorization: Bearer lsk_...
+//   - Recipient actions: x-api-key: rwk_... or Authorization: Bearer rwk_...
 //
 // Docs: skills/loyal-spark/plugins/loyal-spark.md
 
@@ -92,8 +92,7 @@ function extractApiKey(req: Request, url: URL): string | null {
   if (header) return header.trim();
   const auth = req.headers.get("authorization");
   if (auth?.toLowerCase().startsWith("bearer ")) return auth.slice(7).trim();
-  const q = url.searchParams.get("api_key");
-  return q?.trim() || null;
+  return null;
 }
 
 async function readParams(req: Request, url: URL): Promise<Record<string, string>> {
@@ -146,7 +145,7 @@ Deno.serve(async (req: Request) => {
     return json(
       {
         error: "Missing API key",
-        hint: "Send `x-api-key: lsk_...` (merchant) or `rwk_...` (recipient). GET requests accept `?api_key=` fallback.",
+        hint: "Send `x-api-key: lsk_...` (merchant) or `rwk_...` (recipient), or use an Authorization Bearer header.",
       },
       401,
     );
