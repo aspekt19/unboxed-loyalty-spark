@@ -45,10 +45,16 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, 
   const { resolveRecipient, isResolving } = useResolveRecipient();
   const [transferAmount, setTransferAmount] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [allTokens, setAllTokens] = useState<TokenInfo[]>([]);
-  const [isLoadingTokens, setIsLoadingTokens] = useState(true);
-  const [activePrograms, setActivePrograms] = useState<Set<string>>(new Set());
-  const [programStandards, setProgramStandards] = useState<Record<string, 'erc20' | 'b20'>>({});
+  // Hydrate instantly from the last known program list so balances (multicall)
+  // can start before the database round-trip finishes.
+  const [allTokens, setAllTokens] = useState<TokenInfo[]>(() => readCachedTokens());
+  const [isLoadingTokens, setIsLoadingTokens] = useState(() => readCachedTokens().length === 0);
+  const [activePrograms, setActivePrograms] = useState<Set<string>>(
+    () => new Set(readCachedTokens().map(t => t.address.toLowerCase())),
+  );
+  const [programStandards, setProgramStandards] = useState<Record<string, 'erc20' | 'b20'>>(
+    () => readCachedStandards(),
+  );
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
