@@ -466,20 +466,26 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
       const { data: prog } = await d.from("loyalty_programs").select("id,name,symbol,status").eq("token_address", token_address.toLowerCase()).eq("merchant_address", agent.ownerAddress).single();
       if (!prog) return T('{"error":"Program not found"}');
       if (prog.status !== "active") return T(JSON.stringify({ error: `Program is ${prog.status}` }));
+      const compliance = await assertFeeCompliance(d, agent.agentId);
+      if (!compliance.ok) return T(JSON.stringify({ error: compliance.message, unpaid_fee_mints: compliance.pendingCount, unpaid_fee_total: compliance.pendingFeeTotal }));
       const feePercent = await getAgentFeePercent(d, agent.agentId);
       const feeAmount = computeMintFeeAmount(amount, feePercent);
-      const recipientCalldata = encodeMintCalldata(recipient, amount);
-      const feeCalldata = encodeMintCalldata(PLATFORM_FEE_WALLET, feeAmount);
+      const calls = buildMintCallBundle({ tokenAddress: token_address, recipientAddress: recipient, amount, feeAmount });
+      const feeCalldata = calls.find((c) => c.purpose === "protocol_fee")?.data ?? null;
+      const recipientCalldata = calls.find((c) => c.purpose === "recipient_mint")!.data;
       const { data: mint, error } = await d.from("token_mint_history").insert({ merchant_address: agent.ownerAddress.toLowerCase(), recipient_address: recipient.toLowerCase(), amount, token_address: token_address.toLowerCase(), token_name: prog.name, token_symbol: prog.symbol }).select("id,amount,recipient_address,token_address,created_at").single();
       if (error) return T(JSON.stringify({ error: error.message }));
+      const obligationId = await recordFeeObligation(d, { agentId: agent.agentId, ownerAddress: agent.ownerAddress, operation: "mint", tokenAddress: token_address, recipientAddress: recipient, mintAmount: amount, feePercent, feeAmount });
       return T(JSON.stringify({
         mint,
         fee_percent: feePercent,
         fee_amount: feeAmount,
         fee_wallet: PLATFORM_FEE_WALLET,
+        fee_obligation_id: obligationId,
+        calls,
         recipient_calldata: recipientCalldata,
         fee_calldata: feeCalldata,
-        message: "Broadcast two transactions to the token contract: recipient mint, then fee mint to fee_wallet.",
+        message: "Submit `calls` IN ORDER (protocol fee first, then recipient mint) — atomically via EIP-5792 if your wallet supports it. Then call confirm_mint_fee. Unconfirmed fees block future mints.",
         contract: {
           to: token_address,
           function: "mint(address,uint256)",
@@ -489,6 +495,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
           builder_code: BUILDER_CODE,
         },
       }));
+
     },
   });
 
