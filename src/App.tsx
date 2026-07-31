@@ -277,10 +277,12 @@ const App = () => {
       .catch(() => false)
       .then((result) => {
         window.clearTimeout(graceTimer);
-        // A late "true" still matters: it swaps in the Farcaster connector.
-        // A late "false" after we already fell back changes nothing.
-        if (!settled || result) setIsFarcaster(result);
+        // Never swap providers after we already committed to a tree: remounting
+        // Privy/wagmi mid-session is what produced the Base App white screen.
+        // Late results only decide the very first commit.
+        if (!settled) setIsFarcaster(result);
       });
+
 
     return () => window.clearTimeout(graceTimer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
