@@ -55,6 +55,30 @@ export type Database = {
           },
         ]
       }
+      agent_api_rate_windows: {
+        Row: {
+          agent_id: string
+          agent_kind: string
+          request_count: number
+          updated_at: string
+          window_start: string
+        }
+        Insert: {
+          agent_id: string
+          agent_kind: string
+          request_count?: number
+          updated_at?: string
+          window_start: string
+        }
+        Update: {
+          agent_id?: string
+          agent_kind?: string
+          request_count?: number
+          updated_at?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       agent_fee_log: {
         Row: {
           agent_id: string
@@ -2361,6 +2385,15 @@ export type Database = {
       check_expiring_subscriptions: { Args: never; Returns: undefined }
       check_program_expiration: { Args: never; Returns: undefined }
       claim_gift_certificate: { Args: { p_code: string }; Returns: Json }
+      consume_agent_rate_limit: {
+        Args: {
+          p_agent_id: string
+          p_agent_kind: string
+          p_limit: number
+          p_window_seconds?: number
+        }
+        Returns: boolean
+      }
       consume_siwe_nonce: { Args: { p_nonce: string }; Returns: string }
       delete_email: {
         Args: { message_id: number; queue_name: string }
