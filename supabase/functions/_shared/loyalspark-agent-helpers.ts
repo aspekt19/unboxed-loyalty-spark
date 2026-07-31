@@ -14,18 +14,47 @@ export function appendBuilderCode(calldata: string): string {
   return calldata + BUILDER_SUFFIX;
 }
 
-/** ERC-20 transfer(address,uint256) calldata + Builder Code suffix (18 decimals). */
-export function encodeTransferCalldata(to: string, amount: number): string {
-  const paddedTo = to.toLowerCase().replace("0x", "").padStart(64, "0");
-  const amtHex = BigInt(Math.floor(amount * 1e18)).toString(16).padStart(64, "0");
-  return appendBuilderCode("0xa9059cbb" + paddedTo + amtHex);
+/**
+ * Exact decimal -> wei conversion (18 decimals) without float drift.
+ * `Math.floor(amount * 1e18)` loses precision above 2^53 and produces wei dust,
+ * so we go through the decimal string representation instead.
+ */
+export function toTokenWei(amount: number | string, decimals = 18): bigint {
+  const raw = typeof amount === "number" ? numberToPlainString(amount) : amount.trim();
+  if (!/^-?\d*(\.\d*)?$/.test(raw) || raw === "" || raw === "." || raw === "-") {
+    throw new Error(`Invalid token amount: ${amount}`);
+  }
+  const negative = raw.startsWith("-");
+  const unsigned = negative ? raw.slice(1) : raw;
+  const [whole = "0", fractionRaw = ""] = unsigned.split(".");
+  const fraction = fractionRaw.slice(0, decimals).padEnd(decimals, "0");
+  const wei = BigInt(whole || "0") * 10n ** BigInt(decimals) + BigInt(fraction || "0");
+  return negative ? -wei : wei;
 }
 
-export function encodeMintCalldata(to: string, amount: number): string {
-  const paddedTo = to.toLowerCase().replace("0x", "").padStart(64, "0");
-  const amtHex = BigInt(Math.floor(amount * 1e18)).toString(16).padStart(64, "0");
-  return appendBuilderCode("0x40c10f19" + paddedTo + amtHex);
+/** Renders a JS number without exponent notation so string parsing stays exact. */
+function numberToPlainString(value: number): string {
+  if (!Number.isFinite(value)) throw new Error(`Invalid token amount: ${value}`);
+  if (!/e/i.test(String(value))) return String(value);
+  // Exponent form (1e-7, 1e21): expand via toFixed with enough precision.
+  return value.toFixed(20).replace(/0+$/, "").replace(/\.$/, "");
 }
+
+function encodeAddressAmount(selector: string, to: string, amount: number | string): string {
+  const paddedTo = to.toLowerCase().replace("0x", "").padStart(64, "0");
+  const amtHex = toTokenWei(amount).toString(16).padStart(64, "0");
+  return appendBuilderCode(selector + paddedTo + amtHex);
+}
+
+/** ERC-20 transfer(address,uint256) calldata + Builder Code suffix (18 decimals). */
+export function encodeTransferCalldata(to: string, amount: number | string): string {
+  return encodeAddressAmount("0xa9059cbb", to, amount);
+}
+
+export function encodeMintCalldata(to: string, amount: number | string): string {
+  return encodeAddressAmount("0x40c10f19", to, amount);
+}
+
 
 /** Platform wallet that receives mint fee (loyalty tokens), same across agent-api and agent-wallet */
 export const PLATFORM_FEE_WALLET =
