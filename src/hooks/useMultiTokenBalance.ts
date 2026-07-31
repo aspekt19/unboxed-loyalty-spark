@@ -55,9 +55,9 @@ export function useMultiTokenBalance(tokens: TokenInfo[], overrideAddress?: stri
             abi: ERC20_BALANCE_ABI,
             functionName: 'balanceOf',
             args: [address],
-          })) as any,
+          })),
           allowFailure: true,
-        });
+        } as any) as Array<{ status: string; result?: unknown }>;
 
         results = tokens.map((token, i) => {
           const r = multicallResults[i];
