@@ -31,6 +31,22 @@ export const isFarcasterContext = () => {
   return window.__LOYALSPARK_CONFIRMED_MINIAPP__ === true || hasExplicitFarcasterHint();
 };
 
+// Heuristic: are we inside an embedded webview / iframe (Base App, Farcaster,
+// Warpcast, in-app browsers)? Used only to decide how long we may wait for the
+// miniapp handshake before falling back to the regular browser providers.
+export function isEmbeddedWebview(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    if (window.parent && window.parent !== window) return true;
+    if ((window as unknown as { ReactNativeWebView?: unknown }).ReactNativeWebView) return true;
+    const ua = navigator.userAgent || '';
+    return /Warpcast|Farcaster|BaseApp|Coinbase/i.test(ua);
+  } catch {
+    // Cross-origin access to window.parent throws → we are framed.
+    return true;
+  }
+}
+
 export async function detectFarcasterMiniApp(timeoutMs = FARCASTER_DETECTION_TIMEOUT_MS): Promise<boolean> {
   if (typeof window === 'undefined') return false;
   if (window.__LOYALSPARK_CONFIRMED_MINIAPP__ === true) return true;
