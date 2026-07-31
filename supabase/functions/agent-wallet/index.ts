@@ -2,11 +2,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { SignJWT, importPKCS8 } from "https://deno.land/x/jose@v5.2.4/index.ts";
 import {
   appendBuilderCode,
+  buildMintCallBundle,
   computeMintFeeAmount,
   encodeMintCalldata,
   getAgentFeePercent,
   PLATFORM_FEE_WALLET,
 } from "../_shared/loyalspark-agent-helpers.ts";
+
 import { payAndCall, type TypedDataSigner } from "../_shared/x402-pay-client.ts";
 import { authenticateRecipientAgent, insertRecipientActivity } from "../_shared/recipient-agent-auth.ts";
 
