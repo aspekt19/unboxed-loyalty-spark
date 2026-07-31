@@ -21,6 +21,63 @@ import { recipientRewardWorkflow, wrapWorkflow } from "../_shared/agent-workflow
 type RecipientAuthFailure = null | "missing_key" | "invalid_key" | "rate_limited";
 
 /**
+ * Bazaar side-car tools are registered on the authenticated server but are not
+ * part of the x402 paid catalog (RECIPIENT_MCP_BAZAAR_TOOLS). They are listed
+ * here so an unauthenticated `tools/list` advertises the full 20-tool surface.
+ */
+const RECIPIENT_MCP_SIDECAR_TOOLS = [
+  {
+    name: "bazaar_discover_resources",
+    description: "Discover third-party x402-paid resources in Coinbase CDP's Bazaar registry. Read-only.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        q: { type: "string", description: "Free-text filter" },
+        network: { type: "string", description: "e.g. 'base'" },
+        limit: { type: "number", description: "Max rows (default 25, max 100)" },
+        cursor: { type: "string" },
+      },
+    },
+  },
+  {
+    name: "bazaar_discover_mcp_servers",
+    description: "Discover third-party MCP servers in Coinbase CDP's Bazaar registry. Read-only.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        q: { type: "string" },
+        network: { type: "string" },
+        limit: { type: "number" },
+        cursor: { type: "string" },
+      },
+    },
+  },
+  {
+    name: "bazaar_probe_x402",
+    description: "Probe an https URL for x402 payment requirements without paying. Read-only.",
+    inputSchema: {
+      type: "object" as const,
+      properties: { url: { type: "string", description: "https endpoint to probe" } },
+      required: ["url"],
+    },
+  },
+  {
+    name: "bazaar_pay_and_call",
+    description: "Pay an x402-protected endpoint with USDC on Base and return its response.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        url: { type: "string", description: "https x402 endpoint" },
+        method: { type: "string", description: "HTTP method (default GET)" },
+        body: { type: "object", description: "Optional JSON body" },
+        max_usdc: { type: "number", description: "Spend cap in USDC" },
+      },
+      required: ["url"],
+    },
+  },
+] as const;
+
+/**
  * Fallback MCP server used when the caller could not be authenticated.
  * Mirrors the merchant loyalty-mcp pattern so clients get a well-formed
  * JSON-RPC response (HTTP 200) with a structured `error` + `code` payload,
