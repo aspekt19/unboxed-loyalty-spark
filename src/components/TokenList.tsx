@@ -267,7 +267,7 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, 
       // This is more reliable and shows all tokens regardless of when they were created
       const { data: programs, error } = await supabase
         .from('loyalty_programs')
-        .select('token_address, name, symbol, merchant_address')
+        .select('token_address, name, symbol, merchant_address, token_standard')
         .in('status', ['active', 'expiring_soon', 'paused']);
 
       if (error) {
@@ -284,11 +284,20 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, 
 
       console.log('TokenList: Loaded tokens from database:', tokens.length);
       setAllTokens(tokens);
+      // Same payload already carries status + standard — no second query needed.
+      setActivePrograms(new Set(tokens.map(t => t.address.toLowerCase())));
+      const standards: Record<string, 'erc20' | 'b20'> = {};
+      for (const program of programs) {
+        standards[program.token_address.toLowerCase()] =
+          program.token_standard === 'b20' ? 'b20' : 'erc20';
+      }
+      setProgramStandards(standards);
       retryCountRef.current = 0; // Reset retry count on success
       
       // Save to localStorage for future use
       if (tokens.length > 0) {
-        localStorage.setItem('customerTokens', JSON.stringify(tokens));
+        localStorage.setItem(TOKENS_CACHE_KEY, JSON.stringify(tokens));
+        localStorage.setItem(STANDARDS_CACHE_KEY, JSON.stringify(standards));
       } else {
         // If no tokens found and we haven't exceeded retries, try again
         if (retryCountRef.current < MAX_RETRIES) {
