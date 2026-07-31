@@ -15,6 +15,13 @@ import {
   authenticateAgent,
 } from "./helpers.ts";
 import { isPaidGatewayRequest } from "../_shared/paid-gateway-auth.ts";
+import { buildMintCallBundle } from "../_shared/loyalspark-agent-helpers.ts";
+import {
+  assertFeeCompliance,
+  recordFeeObligation,
+  settleFeeObligation,
+} from "../_shared/agent-fee-ledger.ts";
+
 import {
   B20_FACTORY_ADDRESS,
   encodeCreateB20Asset,
@@ -466,20 +473,26 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
       const { data: prog } = await d.from("loyalty_programs").select("id,name,symbol,status").eq("token_address", token_address.toLowerCase()).eq("merchant_address", agent.ownerAddress).single();
       if (!prog) return T('{"error":"Program not found"}');
       if (prog.status !== "active") return T(JSON.stringify({ error: `Program is ${prog.status}` }));
+      const compliance = await assertFeeCompliance(d, agent.agentId);
+      if (!compliance.ok) return T(JSON.stringify({ error: compliance.message, unpaid_fee_mints: compliance.pendingCount, unpaid_fee_total: compliance.pendingFeeTotal }));
       const feePercent = await getAgentFeePercent(d, agent.agentId);
       const feeAmount = computeMintFeeAmount(amount, feePercent);
-      const recipientCalldata = encodeMintCalldata(recipient, amount);
-      const feeCalldata = encodeMintCalldata(PLATFORM_FEE_WALLET, feeAmount);
+      const calls = buildMintCallBundle({ tokenAddress: token_address, recipientAddress: recipient, amount, feeAmount });
+      const feeCalldata = calls.find((c) => c.purpose === "protocol_fee")?.data ?? null;
+      const recipientCalldata = calls.find((c) => c.purpose === "recipient_mint")!.data;
       const { data: mint, error } = await d.from("token_mint_history").insert({ merchant_address: agent.ownerAddress.toLowerCase(), recipient_address: recipient.toLowerCase(), amount, token_address: token_address.toLowerCase(), token_name: prog.name, token_symbol: prog.symbol }).select("id,amount,recipient_address,token_address,created_at").single();
       if (error) return T(JSON.stringify({ error: error.message }));
+      const obligationId = await recordFeeObligation(d, { agentId: agent.agentId, ownerAddress: agent.ownerAddress, operation: "mint", tokenAddress: token_address, recipientAddress: recipient, mintAmount: amount, feePercent, feeAmount });
       return T(JSON.stringify({
         mint,
         fee_percent: feePercent,
         fee_amount: feeAmount,
         fee_wallet: PLATFORM_FEE_WALLET,
+        fee_obligation_id: obligationId,
+        calls,
         recipient_calldata: recipientCalldata,
         fee_calldata: feeCalldata,
-        message: "Broadcast two transactions to the token contract: recipient mint, then fee mint to fee_wallet.",
+        message: "Submit `calls` IN ORDER (protocol fee first, then recipient mint) — atomically via EIP-5792 if your wallet supports it. Then call confirm_mint_fee. Unconfirmed fees block future mints.",
         contract: {
           to: token_address,
           function: "mint(address,uint256)",
@@ -489,6 +502,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
           builder_code: BUILDER_CODE,
         },
       }));
+
     },
   });
 
@@ -521,22 +535,42 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
       const rate = typeof customRate === "number" && customRate > 0 && customRate <= 100 ? customRate : (prog.cashback_rate || 5);
       const tokensToMint = Math.round(purchase_amount * rate / 100 * 100) / 100;
       if (tokensToMint <= 0) return T('{"error":"Calculated token amount is zero"}');
+      const earnCompliance = await assertFeeCompliance(d, agent.agentId);
+      if (!earnCompliance.ok) return T(JSON.stringify({ error: earnCompliance.message, unpaid_fee_mints: earnCompliance.pendingCount, unpaid_fee_total: earnCompliance.pendingFeeTotal }));
       const feePercent = await getAgentFeePercent(d, agent.agentId);
       const feeAmount = computeMintFeeAmount(tokensToMint, feePercent);
-      const recipientCalldata = encodeMintCalldata(customer_address, tokensToMint);
-      const feeCalldata = encodeMintCalldata(PLATFORM_FEE_WALLET, feeAmount);
+      const calls = buildMintCallBundle({ tokenAddress: token_address, recipientAddress: customer_address, amount: tokensToMint, feeAmount });
+      const feeCalldata = calls.find((c) => c.purpose === "protocol_fee")?.data ?? null;
+      const recipientCalldata = calls.find((c) => c.purpose === "recipient_mint")!.data;
       const { data: mint, error: me } = await d.from("token_mint_history").insert({ merchant_address: agent.ownerAddress.toLowerCase(), recipient_address: customer_address.toLowerCase(), amount: tokensToMint, token_address: token_address.toLowerCase(), token_name: prog.name, token_symbol: prog.symbol }).select("id,amount,recipient_address,token_address,created_at").single();
       if (me) return T(JSON.stringify({ error: me.message }));
+      const earnObligationId = await recordFeeObligation(d, { agentId: agent.agentId, ownerAddress: agent.ownerAddress, operation: "earn", tokenAddress: token_address, recipientAddress: customer_address, mintAmount: tokensToMint, feePercent, feeAmount });
       return T(JSON.stringify({
         earn: { purchase_amount, cashback_rate: rate, tokens_earned: tokensToMint },
         mint,
         fee_percent: feePercent, fee_amount: feeAmount, fee_wallet: PLATFORM_FEE_WALLET,
+        fee_obligation_id: earnObligationId,
+        calls,
         recipient_calldata: recipientCalldata, fee_calldata: feeCalldata,
-        message: `Customer earns ${tokensToMint} ${prog.symbol} for $${purchase_amount} purchase (${rate}% cashback). Send two txs.`,
+        message: `Customer earns ${tokensToMint} ${prog.symbol} for $${purchase_amount} purchase (${rate}% cashback). Submit \`calls\` in order (protocol fee first), then call confirm_mint_fee.`,
         contract: { to: token_address, function: "mint(address,uint256)", recipient_params: [customer_address, tokensToMint], fee_params: [PLATFORM_FEE_WALLET, feeAmount], chain: "Base (8453)", builder_code: BUILDER_CODE },
       }));
     },
   });
+
+  mcpServer.tool("confirm_mint_fee", {
+    description: "Confirm that the protocol fee transaction for a previous mint/earn was broadcast on Base. Verifies the fee mint on-chain and clears the obligation. Unconfirmed fee obligations block future mints.",
+    inputSchema: { type: "object" as const, properties: { obligation_id: { type: "string", description: "fee_obligation_id returned by mint_loyalty_tokens or earn_points" }, fee_tx_hash: { type: "string", description: "Transaction hash of the protocol fee mint" }, recipient_tx_hash: { type: "string", description: "Optional transaction hash of the recipient mint" } }, required: ["obligation_id", "fee_tx_hash"] },
+    handler: async ({ obligation_id, fee_tx_hash, recipient_tx_hash }: any) => {
+      const err = authGuard(["mint"]);
+      if (err) return T(err);
+      const d = db();
+      const result = await settleFeeObligation(d, { obligationId: obligation_id, agentId: agent.agentId, feeTxHash: fee_tx_hash, recipientTxHash: recipient_tx_hash });
+      if (!result.ok) return T(JSON.stringify({ error: result.error }));
+      return T(JSON.stringify({ obligation: result.obligation, message: "Protocol fee verified on-chain and settled." }));
+    },
+  });
+
 
   mcpServer.tool("get_token_balance", {
     description: "Get loyalty token balance and tier info for a customer",

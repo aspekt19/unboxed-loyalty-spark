@@ -3,11 +3,18 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   appendBuilderCode,
   BUILDER_CODE,
+  buildMintCallBundle,
   computeMintFeeAmount,
   encodeMintCalldata,
   getAgentFeePercent,
   PLATFORM_FEE_WALLET,
 } from "../_shared/loyalspark-agent-helpers.ts";
+import {
+  assertFeeCompliance,
+  recordFeeObligation,
+  settleFeeObligation,
+} from "../_shared/agent-fee-ledger.ts";
+
 import { authenticateAgent, type AgentContext } from "./auth.ts";
 import { isPaidGatewayRequest } from "../_shared/paid-gateway-auth.ts";
 import { corsHeaders, jsonResponse } from "./http.ts";
@@ -957,7 +964,7 @@ Deno.serve(async (req) => {
     }
 
     // ==================== MINT ====================
-    if (resource === "mint" && req.method === "POST") {
+    if (resource === "mint" && !subResource && req.method === "POST") {
       if (!hasScope(agent, "mint")) {
         await logActivity(serviceClient, agent.agentId, "mint_tokens", body, 403, { error: "Insufficient scope" }, ip);
         return jsonResponse({ error: "Scope 'mint' required" }, 403);
@@ -993,10 +1000,27 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: `Program is ${program.status}. Must be 'active' to mint.` }, 400);
       }
 
+      // Block agents that keep skipping the protocol-fee transaction
+      const compliance = await assertFeeCompliance(serviceClient, agent.agentId);
+      if (!compliance.ok) {
+        await logActivity(serviceClient, agent.agentId, "mint_tokens", body, 402, { error: compliance.message }, ip);
+        return jsonResponse({
+          error: compliance.message,
+          unpaid_fee_mints: compliance.pendingCount,
+          unpaid_fee_total: compliance.pendingFeeTotal,
+        }, 402);
+      }
+
       const feePercent = await getAgentFeePercent(serviceClient, agent.agentId);
       const feeAmount = computeMintFeeAmount(amount, feePercent);
-      const recipientCalldata = encodeMintCalldata(recipient_address, amount);
-      const feeCalldata = encodeMintCalldata(PLATFORM_FEE_WALLET, feeAmount);
+      const calls = buildMintCallBundle({
+        tokenAddress: token_address,
+        recipientAddress: recipient_address,
+        amount,
+        feeAmount,
+      });
+      const feeCalldata = calls.find((c) => c.purpose === "protocol_fee")?.data ?? null;
+      const recipientCalldata = calls.find((c) => c.purpose === "recipient_mint")!.data;
 
       // Record mint intent in history
       const { data: mintRecord, error: mintError } = await serviceClient
@@ -1018,19 +1042,36 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Failed to record mint" }, 500);
       }
 
+      const obligationId = await recordFeeObligation(serviceClient, {
+        agentId: agent.agentId,
+        ownerAddress: agent.ownerAddress,
+        operation: "mint",
+        tokenAddress: token_address,
+        recipientAddress: recipient_address,
+        mintAmount: amount,
+        feePercent,
+        feeAmount,
+      });
+
       await logActivity(serviceClient, agent.agentId, "mint_tokens", body, 201, {
         mint_id: mintRecord.id,
         fee_amount: feeAmount,
+        fee_obligation_id: obligationId,
       }, ip);
       return jsonResponse({
         mint: mintRecord,
         fee_percent: feePercent,
         fee_amount: feeAmount,
         fee_wallet: PLATFORM_FEE_WALLET,
+        fee_obligation_id: obligationId,
+        calls,
+        atomic_batch_supported: true,
         recipient_calldata: recipientCalldata,
         fee_calldata: feeCalldata,
         message:
-          "Mint intent recorded. To complete onchain, send recipient_calldata and fee_calldata to the token contract (two transactions).",
+          "Mint intent recorded. Submit `calls` IN ORDER (protocol fee first, then recipient mint) — " +
+          "ideally atomically via EIP-5792 wallet_sendCalls. Then confirm with " +
+          "POST /agent-api/mint/confirm { obligation_id, fee_tx_hash }. Unconfirmed fees block future mints.",
         contract: {
           token_address,
           function: "mint(address,uint256)",
@@ -1041,6 +1082,37 @@ Deno.serve(async (req) => {
         },
       }, 201);
     }
+
+    // ==================== MINT FEE CONFIRMATION ====================
+    if (resource === "mint" && subResource === "confirm" && req.method === "POST") {
+      if (!hasScope(agent, "mint")) {
+        return jsonResponse({ error: "Scope 'mint' required" }, 403);
+      }
+      const { obligation_id, fee_tx_hash, recipient_tx_hash } = body;
+      if (!obligation_id || !fee_tx_hash) {
+        return jsonResponse({ error: "Missing required fields: obligation_id, fee_tx_hash" }, 400);
+      }
+
+      const result = await settleFeeObligation(serviceClient, {
+        obligationId: obligation_id,
+        agentId: agent.agentId,
+        feeTxHash: fee_tx_hash,
+        recipientTxHash: recipient_tx_hash,
+      });
+
+      if (!result.ok) {
+        await logActivity(serviceClient, agent.agentId, "confirm_mint_fee", body, result.status, { error: result.error }, ip);
+        return jsonResponse({ error: result.error }, result.status);
+      }
+
+      await logActivity(serviceClient, agent.agentId, "confirm_mint_fee", body, 200, { obligation_id }, ip);
+      return jsonResponse({
+        obligation: result.obligation,
+        message: "Protocol fee verified on-chain and settled.",
+      });
+    }
+
+
 
     // ==================== EARN (auto-calculate tokens from purchase amount) ====================
     if (resource === "earn" && req.method === "POST") {
@@ -1089,10 +1161,26 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Calculated token amount is zero. Increase purchase_amount or cashback_rate." }, 400);
       }
 
+      const earnCompliance = await assertFeeCompliance(serviceClient, agent.agentId);
+      if (!earnCompliance.ok) {
+        await logActivity(serviceClient, agent.agentId, "earn_points", body, 402, { error: earnCompliance.message }, ip);
+        return jsonResponse({
+          error: earnCompliance.message,
+          unpaid_fee_mints: earnCompliance.pendingCount,
+          unpaid_fee_total: earnCompliance.pendingFeeTotal,
+        }, 402);
+      }
+
       const feePercent = await getAgentFeePercent(serviceClient, agent.agentId);
       const feeAmount = computeMintFeeAmount(tokensToMint, feePercent);
-      const recipientCalldata = encodeMintCalldata(customer_address, tokensToMint);
-      const feeCalldata = encodeMintCalldata(PLATFORM_FEE_WALLET, feeAmount);
+      const calls = buildMintCallBundle({
+        tokenAddress: token_address,
+        recipientAddress: customer_address,
+        amount: tokensToMint,
+        feeAmount,
+      });
+      const feeCalldata = calls.find((c) => c.purpose === "protocol_fee")?.data ?? null;
+      const recipientCalldata = calls.find((c) => c.purpose === "recipient_mint")!.data;
 
       // Record mint
       const { data: mintRecord, error: mintError } = await serviceClient
@@ -1114,11 +1202,23 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Failed to record mint" }, 500);
       }
 
+      const earnObligationId = await recordFeeObligation(serviceClient, {
+        agentId: agent.agentId,
+        ownerAddress: agent.ownerAddress,
+        operation: "earn",
+        tokenAddress: token_address,
+        recipientAddress: customer_address,
+        mintAmount: tokensToMint,
+        feePercent,
+        feeAmount,
+      });
+
       await logActivity(serviceClient, agent.agentId, "earn_points", body, 201, {
         mint_id: mintRecord.id,
         purchase_amount,
         cashback_rate: rate,
         tokens: tokensToMint,
+        fee_obligation_id: earnObligationId,
       }, ip);
 
       return jsonResponse({
@@ -1131,9 +1231,13 @@ Deno.serve(async (req) => {
         fee_percent: feePercent,
         fee_amount: feeAmount,
         fee_wallet: PLATFORM_FEE_WALLET,
+        fee_obligation_id: earnObligationId,
+        calls,
+        atomic_batch_supported: true,
         recipient_calldata: recipientCalldata,
         fee_calldata: feeCalldata,
-        message: `Customer earns ${tokensToMint} ${program.symbol} tokens for a $${purchase_amount} purchase (${rate}% cashback). Send two transactions to complete onchain.`,
+        message: `Customer earns ${tokensToMint} ${program.symbol} tokens for a $${purchase_amount} purchase (${rate}% cashback). Submit \`calls\` in order (protocol fee first), then POST /agent-api/mint/confirm { obligation_id, fee_tx_hash }.`,
+
         contract: {
           token_address,
           function: "mint(address,uint256)",
