@@ -16,6 +16,8 @@ import {
   revokeCertificate,
 } from '@/lib/giftCertificates';
 import { useMintTokens } from '@/hooks/useMintTokens';
+import { readCache, writeCache, scopedKey, type CacheOptions } from '@/lib/localCache';
+
 
 const STATUS_VARIANT: Record<GiftCertificate['status'], 'default' | 'secondary' | 'destructive' | 'outline'> = {
   active: 'default',
