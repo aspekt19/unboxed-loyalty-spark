@@ -21,7 +21,7 @@ async function generateDeterministicPassword(identifier: string, secret: string)
 }
 
 async function findAuthUserByEmail(
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: AdminClient,
   email: string
 ): Promise<{ id: string; email?: string | null } | null> {
   let page = 1;
@@ -44,8 +44,12 @@ async function findAuthUserByEmail(
   return null;
 }
 
+/** Supabase client typed against the untyped public schema (edge functions have no generated Database types). */
+// deno-lint-ignore no-explicit-any
+type AdminClient = ReturnType<typeof createClient<any, "public", any>>;
+
 async function findAuthUserById(
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: AdminClient,
   userId: string
 ): Promise<{ id: string; email?: string | null } | null> {
   const { data, error } = await supabaseAdmin.auth.admin.getUserById(userId);
@@ -55,7 +59,7 @@ async function findAuthUserById(
 }
 
 async function reserveAuthEmailForUser(
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: AdminClient,
   userId: string,
   email: string
 ) {
@@ -73,7 +77,7 @@ async function reserveAuthEmailForUser(
 }
 
 async function upsertPrivyDidLink(
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: AdminClient,
   userId: string,
   privyDid: string,
   didNorm: string
@@ -115,8 +119,8 @@ function isAlreadyRegisteredAuthError(message?: string | null): boolean {
 }
 
 async function ensureAuthUserWithPassword(
-  supabaseAdmin: ReturnType<typeof createClient>,
-  supabaseAuth: ReturnType<typeof createClient>,
+  supabaseAdmin: AdminClient,
+  supabaseAuth: AdminClient,
   email: string,
   password: string
 ) {
