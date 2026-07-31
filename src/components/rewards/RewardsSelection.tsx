@@ -294,21 +294,37 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
 
     loadPrograms();
 
-    const handleRewardsUpdate = async () => {
-      if (selectedTokenAddress) {
-        const rewards = await getRewardsByToken(selectedTokenAddress);
-        setAvailableRewards(rewards);
-        writeCachedRewards(selectedTokenAddress, rewards);
+    // Any rewards mutation invalidates the snapshot before refetching
+    const handleRewardsUpdate = async (tokenAddress?: string) => {
+      const token = tokenAddress || selectedTokenRef.current;
+      invalidateRewardsCache(token || undefined);
+      if (!token) return;
+      try {
+        const rewards = await getRewardsByToken(token);
+        if (token === selectedTokenRef.current) setAvailableRewards(rewards);
+        writeCachedRewards(token, rewards);
+      } catch (error) {
+        console.error('Error refreshing rewards:', error);
       }
     };
 
-
     const handleSessionReady = () => loadPrograms();
 
+    // Revalidate when the tab regains focus — cache may have gone stale offscreen
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        loadPrograms();
+        handleRewardsUpdate();
+      }
+    };
+
+    const handleRewardsUpdatedEvent = () => handleRewardsUpdate();
+
     window.addEventListener('loyaltyProgramsUpdated', loadPrograms);
-    window.addEventListener('rewardsUpdated', handleRewardsUpdate);
+    window.addEventListener('rewardsUpdated', handleRewardsUpdatedEvent);
     window.addEventListener('sessionReady', handleSessionReady);
     window.addEventListener('profileMigrated', handleSessionReady);
+    document.addEventListener('visibilitychange', handleVisibility);
 
     const programsChannel = supabase
       .channel('loyalty_programs_customer')
@@ -317,18 +333,27 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
 
     const rewardsChannel = supabase
       .channel('rewards_customer')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'rewards' }, () => handleRewardsUpdate())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rewards' }, payload => {
+        const changed =
+          (payload.new as { token_address?: string } | null)?.token_address ||
+          (payload.old as { token_address?: string } | null)?.token_address;
+        // Drop the stale snapshot for the affected programme, refresh if it is on screen
+        if (changed) invalidateRewardsCache(changed);
+        handleRewardsUpdate(changed && changed === selectedTokenRef.current ? changed : undefined);
+      })
       .subscribe();
 
     return () => {
       window.removeEventListener('loyaltyProgramsUpdated', loadPrograms);
-      window.removeEventListener('rewardsUpdated', handleRewardsUpdate);
+      window.removeEventListener('rewardsUpdated', handleRewardsUpdatedEvent);
       window.removeEventListener('sessionReady', handleSessionReady);
       window.removeEventListener('profileMigrated', handleSessionReady);
+      document.removeEventListener('visibilitychange', handleVisibility);
       supabase.removeChannel(programsChannel);
       supabase.removeChannel(rewardsChannel);
     };
   }, []);
+
 
   // ── Load rewards for selected token ──
   useEffect(() => {
