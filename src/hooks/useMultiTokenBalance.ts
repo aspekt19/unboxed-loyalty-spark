@@ -126,6 +126,7 @@ export function useMultiTokenBalance(tokens: TokenInfo[], overrideAddress?: stri
       }
 
       setBalances(results);
+      writeCachedBalances(address, results);
       isInitialLoadRef.current = false;
     } catch (err) {
       txLog(HOOK_NAME, 'error', 'Batch balance fetch failed', err);
