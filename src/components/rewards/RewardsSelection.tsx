@@ -40,6 +40,19 @@ interface RewardsSelectionProps {
 }
 
 const REWARDS_CACHE_PREFIX = 'ls_rewards_';
+const REWARDS_CACHE_VERSION = 2;
+/** Cached rewards older than this are never rendered — they may be stale. */
+const REWARDS_CACHE_TTL_MS = 5 * 60 * 1000;
+
+interface RewardsCacheEnvelope {
+  v: number;
+  ts: number;
+  rewards: Reward[];
+}
+
+function rewardsCacheKey(tokenAddress: string) {
+  return `${REWARDS_CACHE_PREFIX}${tokenAddress.toLowerCase()}`;
+}
 
 function readCachedTokens(): TokenInfo[] {
   try {
@@ -53,25 +66,65 @@ function readCachedTokens(): TokenInfo[] {
 
 function readCachedRewards(tokenAddress: string): Reward[] {
   if (!tokenAddress) return [];
+  const key = rewardsCacheKey(tokenAddress);
   try {
-    const raw = localStorage.getItem(`${REWARDS_CACHE_PREFIX}${tokenAddress.toLowerCase()}`);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
+    const raw = localStorage.getItem(key);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as RewardsCacheEnvelope | Reward[];
+    // Drop legacy (unversioned) payloads — they carry no freshness info
+    if (Array.isArray(parsed) || parsed?.v !== REWARDS_CACHE_VERSION) {
+      localStorage.removeItem(key);
+      return [];
+    }
+    if (!Array.isArray(parsed.rewards) || Date.now() - parsed.ts > REWARDS_CACHE_TTL_MS) {
+      localStorage.removeItem(key);
+      return [];
+    }
+    // Never surface rewards that were deactivated before the snapshot was taken
+    return parsed.rewards.filter(r => r.isActive);
   } catch {
+    localStorage.removeItem(key);
     return [];
   }
 }
 
 function writeCachedRewards(tokenAddress: string, rewards: Reward[]) {
+  if (!tokenAddress) return;
   try {
-    localStorage.setItem(
-      `${REWARDS_CACHE_PREFIX}${tokenAddress.toLowerCase()}`,
-      JSON.stringify(rewards),
-    );
+    const envelope: RewardsCacheEnvelope = { v: REWARDS_CACHE_VERSION, ts: Date.now(), rewards };
+    localStorage.setItem(rewardsCacheKey(tokenAddress), JSON.stringify(envelope));
   } catch {
     /* ignore quota errors */
   }
 }
+
+/** Drop cached rewards for one token, or for every token when omitted. */
+function invalidateRewardsCache(tokenAddress?: string) {
+  try {
+    if (tokenAddress) {
+      localStorage.removeItem(rewardsCacheKey(tokenAddress));
+      return;
+    }
+    Object.keys(localStorage)
+      .filter(k => k.startsWith(REWARDS_CACHE_PREFIX))
+      .forEach(k => localStorage.removeItem(k));
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Remove cached entries for programmes that are no longer available. */
+function pruneRewardsCache(validTokenAddresses: string[]) {
+  try {
+    const valid = new Set(validTokenAddresses.map(a => rewardsCacheKey(a)));
+    Object.keys(localStorage)
+      .filter(k => k.startsWith(REWARDS_CACHE_PREFIX) && !valid.has(k))
+      .forEach(k => localStorage.removeItem(k));
+  } catch {
+    /* ignore */
+  }
+}
+
 
 export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
   const { address } = useAccount();
