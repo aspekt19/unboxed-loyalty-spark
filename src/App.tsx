@@ -90,6 +90,21 @@ function BanGate({ children }: { children: React.ReactNode }) {
 
 const queryClient = new QueryClient();
 
+/**
+ * Inside embedded webviews (Farcaster / Base App) rAF-driven exit animations are
+ * throttled or dropped, so `AnimatePresence mode="wait"` can keep the outgoing
+ * route mounted forever and the new page never paints — that is the black screen
+ * users hit when opening the Customer Portal. Skip the animation wrapper there.
+ */
+const SKIP_ROUTE_ANIMATION =
+  typeof window !== "undefined" && (isEmbeddedWebview() || isFarcasterContext());
+
+function RouteShell({ children }: { children: React.ReactNode }) {
+  if (SKIP_ROUTE_ANIMATION) return <>{children}</>;
+  return <AnimatePresence mode="wait">{children}</AnimatePresence>;
+}
+
+
 function AnimatedRoutes() {
   const location = useLocation();
 
