@@ -4,9 +4,10 @@ import { Smartphone, QrCode, Eye, Lock } from 'lucide-react';
 const simplifications = [
   {
     icon: Smartphone,
-    title: 'No app download',
-    description: 'Works in any mobile browser. Add to home screen for an app-like experience — no App Store needed.',
+    title: 'Works on any device',
+    description: 'Use it right in your mobile browser today — native iOS and Android apps are on the way.',
   },
+
   {
     icon: QrCode,
     title: 'QR code = your loyalty card',
