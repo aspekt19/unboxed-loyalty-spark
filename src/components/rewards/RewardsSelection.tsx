@@ -139,6 +139,11 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
     readCachedRewards(readCachedTokens()[0]?.address ?? ''),
   );
   const [isLoadingRewards, setIsLoadingRewards] = useState(false);
+  // Always-current token address for listeners registered once on mount
+  const selectedTokenRef = useRef(selectedTokenAddress);
+  useEffect(() => {
+    selectedTokenRef.current = selectedTokenAddress;
+  }, [selectedTokenAddress]);
 
   const [profileVerified, setProfileVerified] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
