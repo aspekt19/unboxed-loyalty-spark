@@ -241,21 +241,23 @@ const App = () => {
   });
 
   // Runs exactly once. Detection needs a dynamic import of the miniapp SDK
-  // chunk plus a postMessage handshake with the host client — both can stall on
-  // a cold Base App webview, which used to leave the user on an empty screen
-  // with no way out. Instead we start with the browser providers after a short
-  // grace period and upgrade to the Farcaster providers if the handshake
-  // eventually answers.
+  // chunk plus a postMessage handshake with the host client. Inside an embedded
+  // webview (Base App / Farcaster) we give the handshake more room, because
+  // falling back to the Privy browser tree there and swapping providers later
+  // remounts the whole app — which is exactly what showed up as a white screen.
   useEffect(() => {
     if (isLovablePreviewHost) return;
+
+    const embedded = isEmbeddedWebview();
+    const detectionTimeout = embedded ? 3500 : 1200;
 
     let settled = false;
     const graceTimer = window.setTimeout(() => {
       settled = true;
       setIsFarcaster((prev) => (prev === null ? false : prev));
-    }, 1200);
+    }, detectionTimeout + 300);
 
-    void detectFarcasterMiniApp(1200)
+    void detectFarcasterMiniApp(detectionTimeout)
       .catch(() => false)
       .then((result) => {
         window.clearTimeout(graceTimer);
@@ -267,6 +269,7 @@ const App = () => {
     return () => window.clearTimeout(graceTimer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   if (isFarcaster === null) {
     // Branded placeholder instead of a blank page, so a slow handshake never
