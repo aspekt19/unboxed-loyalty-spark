@@ -144,7 +144,13 @@ export function MerchantCardGrid({ onMerchantSelect, selectedMerchant, restrictT
       });
 
       // Only show merchants that have at least one program
-      setMerchants(cards.filter(c => c.programs.length > 0));
+      const visible = cards.filter(c => c.programs.length > 0);
+      setMerchants(visible);
+      try {
+        localStorage.setItem(MERCHANT_CARDS_CACHE_KEY, JSON.stringify(visible));
+      } catch {
+        /* best-effort cache */
+      }
     } catch (err) {
       console.error('[MerchantCardGrid] error:', err);
     } finally {
