@@ -67,7 +67,8 @@ export function MerchantCardGrid({ onMerchantSelect, selectedMerchant, restrictT
   const [viewMode, setViewMode] = useState<'compact' | 'grid'>('compact');
 
   const loadMerchants = useCallback(async () => {
-    setIsLoading(true);
+    // Keep cached cards visible instead of flashing a spinner on refresh.
+    setIsLoading((prev) => prev);
     try {
       // Load merchant profiles
       const { data: profiles, error: profilesError } = await supabase
