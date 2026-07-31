@@ -110,7 +110,7 @@ export function generateSitemap(): {
 
   const source = readFileSync(appPath, "utf8");
   const allRoutes = extractRoutes(source);
-  const indexable = allRoutes.filter((p) => !EXCLUDE.has(p));
+  const indexable = [...allRoutes.filter((p) => !EXCLUDE.has(p)), ...EXTRA_PATHS];
 
   const lastmod = new Date().toISOString().slice(0, 10);
   const xml = buildXml(indexable, lastmod);
