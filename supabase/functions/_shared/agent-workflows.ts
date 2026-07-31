@@ -125,25 +125,25 @@ export function getMerchantProgramFieldCatalog() {
         { key: "symbol", type: "string", required: true, description: "Same symbol as deploy" },
         { key: "token_address", type: "address", required: true, description: "From deploy receipt / B20Created event" },
         { key: "token_standard", type: "string", required: true, description: "b20 or erc20", example: "b20" },
-        { key: "expiration_days", type: "number", required: false, example: 365 },
+        { key: "expiration_days", type: "number", required: false, description: "Program lifetime in days before it expires", example: 365 },
         { key: "cashback_rate", type: "number", required: false, description: "Percent cashback on earn flows", example: 5 },
-        { key: "points_per_dollar", type: "number", required: false, example: 1 },
+        { key: "points_per_dollar", type: "number", required: false, description: "Points issued per 1 USD spent", example: 1 },
       ] satisfies WorkflowFieldSpec[],
     },
     post_rewards: {
       endpoint: "POST /agent-api/rewards",
       fields: [
-        { key: "token_address", type: "address", required: true },
+        { key: "token_address", type: "address", required: true, description: "Loyalty token this reward belongs to" },
         { key: "name", type: "string", required: true, description: "Reward catalog title — you choose" },
         { key: "cost", type: "number", required: true, description: "Points/tokens required to redeem" },
-        { key: "description", type: "string", required: false },
+        { key: "description", type: "string", required: false, description: "Optional reward details shown to customers" },
       ] satisfies WorkflowFieldSpec[],
     },
     post_mint: {
       endpoint: "POST /agent-api/mint",
       fields: [
-        { key: "token_address", type: "address", required: true },
-        { key: "recipient_address", type: "address", required: true },
+        { key: "token_address", type: "address", required: true, description: "Loyalty token to mint" },
+        { key: "recipient_address", type: "address", required: true, description: "Wallet receiving the minted tokens" },
         { key: "amount", type: "number", required: true, description: "Whole token units (not wei)" },
       ] satisfies WorkflowFieldSpec[],
     },
@@ -163,7 +163,7 @@ export function getRecipientRewardFieldCatalog() {
     post_redeem_reward: {
       endpoint: "POST /recipient-api/redeem-reward",
       fields: [
-        { key: "reward_id", type: "string", required: true },
+        { key: "reward_id", type: "string", required: true, description: "Reward UUID from GET /recipient-api/rewards" },
         { key: "transaction_hash", type: "string", required: true, description: "Confirmed transfer tx hash" },
       ] satisfies WorkflowFieldSpec[],
     },

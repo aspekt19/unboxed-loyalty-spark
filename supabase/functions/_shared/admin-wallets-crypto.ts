@@ -27,7 +27,7 @@ export async function decryptWalletList(encB64: string, keyHex: string): Promise
   const keyBytes = hexToBytes(keyHex);
   const cryptoKey = await crypto.subtle.importKey(
     "raw",
-    keyBytes,
+    keyBytes as unknown as BufferSource,
     { name: "AES-GCM", length: 256 },
     false,
     ["decrypt"],
