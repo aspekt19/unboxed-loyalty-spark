@@ -10,23 +10,36 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useActiveCustomerWallet } from '@/hooks/useActiveCustomerWallet';
+import { readCache, writeCache, scopedKey, type CacheOptions } from '@/lib/localCache';
+
+const VOUCHERS_CACHE = 'vouchers:customer';
+const CACHE_OPTS: CacheOptions = { version: 1, ttlMs: 5 * 60 * 1000 };
+
+
 
 export function MyVouchers() {
   const { activeAddress } = useActiveCustomerWallet();
   const { session } = useAuth();
-  const [vouchers, setVouchers] = useState<Voucher[]>([]);
+  // Paint the last known vouchers instantly, then refresh in the background
+  const [vouchers, setVouchers] = useState<Voucher[]>(() =>
+    readCache<Voucher[]>(scopedKey(VOUCHERS_CACHE, activeAddress), CACHE_OPTS) ?? []
+  );
 
   const loadVouchers = async () => {
     if (!activeAddress || !session) return;
     const customerVouchers = await getCustomerVouchers(activeAddress);
     setVouchers(customerVouchers);
+    writeCache(scopedKey(VOUCHERS_CACHE, activeAddress), customerVouchers, CACHE_OPTS);
   };
 
   useEffect(() => {
     if (!activeAddress) {
       setVouchers([]);
+      return;
     }
+    setVouchers(readCache<Voucher[]>(scopedKey(VOUCHERS_CACHE, activeAddress), CACHE_OPTS) ?? []);
   }, [activeAddress]);
+
 
   useEffect(() => {
     if (!activeAddress || !session) return;

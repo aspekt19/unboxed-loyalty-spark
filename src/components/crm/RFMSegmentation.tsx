@@ -1,6 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useAccount } from 'wagmi';
 import { supabase } from '@/integrations/supabase/client';
+import { useCachedResource } from '@/hooks/useCachedResource';
+import { scopedKey } from '@/lib/localCache';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,69 +19,55 @@ interface RFMStats {
   new: number;
 }
 
+const EMPTY_STATS: RFMStats = { champions: 0, loyal: 0, at_risk: 0, lost: 0, new: 0 };
+
 export function RFMSegmentation() {
   const { address } = useAccount();
-  const [stats, setStats] = useState<RFMStats>({
-    champions: 0,
-    loyal: 0,
-    at_risk: 0,
-    lost: 0,
-    new: 0,
-  });
-  const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const merchant = address?.toLowerCase() ?? null;
 
-  const loadStats = async () => {
-    if (!address) return;
-
-    try {
-      setLoading(true);
-
-      // Получаем всех клиентов мерчанта
+  const {
+    data: stats,
+    isLoading: loading,
+    refresh: loadStats,
+  } = useCachedResource<RFMStats>({
+    key: merchant ? scopedKey('crm:rfm', merchant) : null,
+    version: 1,
+    ttlMs: 10 * 60 * 1000,
+    initialData: EMPTY_STATS,
+    realtime: merchant
+      ? [{ table: 'vouchers', filter: `merchant_address=eq.${merchant}` }]
+      : undefined,
+    fetcher: async () => {
       const { data: voucherData } = await supabase
         .from('vouchers')
         .select('customer_address')
-        .eq('merchant_address', address.toLowerCase());
+        .eq('merchant_address', merchant!);
 
-      if (!voucherData || voucherData.length === 0) {
-        setStats({ champions: 0, loyal: 0, at_risk: 0, lost: 0, new: 0 });
-        return;
-      }
+      if (!voucherData || voucherData.length === 0) return { ...EMPTY_STATS };
 
       const uniqueAddresses = [...new Set(voucherData.map((v) => v.customer_address))];
 
-      // Получаем профили с RFM scores
       const { data: profiles } = await supabase
         .from('customer_profiles')
         .select('rfm_score')
         .in('wallet_address', uniqueAddresses);
 
-      const rfmCounts: RFMStats = {
-        champions: 0,
-        loyal: 0,
-        at_risk: 0,
-        lost: 0,
-        new: 0,
-      };
+      const rfmCounts: RFMStats = { ...EMPTY_STATS };
 
       if (profiles) {
         profiles.forEach((profile) => {
           const score = (profile.rfm_score || 'new') as keyof RFMStats;
-          rfmCounts[score]++;
+          if (score in rfmCounts) rfmCounts[score]++;
         });
       }
 
-      // Добавляем клиентов без профиля как "new"
       const existingCount = profiles?.length || 0;
       rfmCounts.new += uniqueAddresses.length - existingCount;
 
-      setStats(rfmCounts);
-    } catch (err) {
-      console.error('Error loading RFM stats:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return rfmCounts;
+    },
+  });
 
   const updateRFMScores = async () => {
     setUpdating(true);
@@ -87,7 +76,7 @@ export function RFMSegmentation() {
       if (error) throw error;
 
       toast.success('RFM scores updated successfully');
-      await loadStats();
+      loadStats();
     } catch (err) {
       console.error('Error updating RFM scores:', err);
       toast.error('Failed to update RFM scores');
@@ -96,15 +85,12 @@ export function RFMSegmentation() {
     }
   };
 
-  useEffect(() => {
-    loadStats();
-  }, [address]);
 
   if (loading) {
     return <Skeleton className="h-64 w-full" />;
   }
 
-  const total = Object.values(stats).reduce((sum, val) => sum + val, 0);
+  const total = Object.values(stats).reduce<number>((sum, val) => sum + Number(val || 0), 0);
 
   const segments = [
     {

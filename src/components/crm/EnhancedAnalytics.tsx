@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, Activity, Target, Crown, TrendingUp } from 'lucide-react';
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { readCache, writeCache, scopedKey, type CacheOptions } from '@/lib/localCache';
 
 interface TopCustomer {
   customer_address: string;
@@ -31,19 +32,36 @@ interface Props {
   tokenAddress?: string;
 }
 
+interface AnalyticsSnapshot {
+  topCustomers: TopCustomer[];
+  tierDistribution: TierDistribution[];
+  activityData: ActivityData[];
+}
+
+const ANALYTICS_CACHE = 'crm:enhanced-analytics';
+const CACHE_OPTS: CacheOptions = { version: 1, ttlMs: 5 * 60 * 1000 };
+
 export function EnhancedAnalytics({ tokenAddress }: Props) {
   const { address } = useAccount();
-  const [topCustomers, setTopCustomers] = useState<TopCustomer[]>([]);
-  const [tierDistribution, setTierDistribution] = useState<TierDistribution[]>([]);
-  const [activityData, setActivityData] = useState<ActivityData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = address
+    ? `${scopedKey(ANALYTICS_CACHE, address)}:${tokenAddress?.toLowerCase() ?? 'all'}`
+    : null;
+  const cachedSnapshot = cacheKey ? readCache<AnalyticsSnapshot>(cacheKey, CACHE_OPTS) : null;
+
+  const [topCustomers, setTopCustomers] = useState<TopCustomer[]>(cachedSnapshot?.topCustomers ?? []);
+  const [tierDistribution, setTierDistribution] = useState<TierDistribution[]>(cachedSnapshot?.tierDistribution ?? []);
+  const [activityData, setActivityData] = useState<ActivityData[]>(cachedSnapshot?.activityData ?? []);
+  const [loading, setLoading] = useState(!cachedSnapshot);
 
   useEffect(() => {
     if (!address) return;
 
+
     const loadData = async () => {
+      const snapshot: AnalyticsSnapshot = { topCustomers: [], tierDistribution: [], activityData: [] };
       try {
-        setLoading(true);
+        // Keep showing the cached snapshot while refreshing
+        setLoading(!cacheKey || !readCache<AnalyticsSnapshot>(cacheKey, CACHE_OPTS));
 
         // Load top customers
         const vouchersData = await supabase
@@ -62,14 +80,15 @@ export function EnhancedAnalytics({ tokenAddress }: Props) {
             .limit(10);
 
           if (customersData) {
-            setTopCustomers(customersData.map(c => ({
+            snapshot.topCustomers = customersData.map(c => ({
               customer_address: c.wallet_address,
               first_name: c.first_name || 'Anonymous',
               last_name: c.last_name || '',
               total_spent: c.total_spent || 0,
               total_purchases: c.total_purchases || 0,
               rfm_score: c.rfm_score || 'N/A'
-            })));
+            }));
+            setTopCustomers(snapshot.topCustomers);
           }
         }
 
@@ -100,6 +119,7 @@ export function EnhancedAnalytics({ tokenAddress }: Props) {
               badge_color: tier.badge_color || '#6366f1'
             }));
 
+            snapshot.tierDistribution = distribution;
             setTierDistribution(distribution);
           }
         }
@@ -140,8 +160,10 @@ export function EnhancedAnalytics({ tokenAddress }: Props) {
             })
             .slice(-14);
 
+          snapshot.activityData = activity;
           setActivityData(activity);
         }
+        if (cacheKey) writeCache(cacheKey, snapshot, CACHE_OPTS);
       } catch (err) {
         console.error('Error loading enhanced analytics:', err);
       } finally {
@@ -150,7 +172,13 @@ export function EnhancedAnalytics({ tokenAddress }: Props) {
     };
 
     loadData();
-  }, [address, tokenAddress]);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void loadData();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address, tokenAddress, cacheKey]);
 
   const COLORS = ['#6366f1', '#8b5cf6', '#a855f7', '#c084fc', '#d8b4fe'];
 

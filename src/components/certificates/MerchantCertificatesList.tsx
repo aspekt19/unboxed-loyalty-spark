@@ -16,6 +16,8 @@ import {
   revokeCertificate,
 } from '@/lib/giftCertificates';
 import { useMintTokens } from '@/hooks/useMintTokens';
+import { readCache, writeCache, scopedKey, type CacheOptions } from '@/lib/localCache';
+
 
 const STATUS_VARIANT: Record<GiftCertificate['status'], 'default' | 'secondary' | 'destructive' | 'outline'> = {
   active: 'default',
@@ -33,10 +35,17 @@ const STATUS_LABEL: Record<GiftCertificate['status'], string> = {
   revoked: 'Revoked',
 };
 
+const CERTS_CACHE = 'certificates:merchant';
+const CACHE_OPTS: CacheOptions = { version: 1, ttlMs: 5 * 60 * 1000 };
+
 export function MerchantCertificatesList({ refreshKey = 0 }: { refreshKey?: number }) {
   const { address } = useAccount();
-  const [certs, setCerts] = useState<GiftCertificate[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [certs, setCerts] = useState<GiftCertificate[]>(() =>
+    readCache<GiftCertificate[]>(scopedKey(CERTS_CACHE, address), CACHE_OPTS) ?? []
+  );
+  const [loading, setLoading] = useState(
+    () => !readCache<GiftCertificate[]>(scopedKey(CERTS_CACHE, address), CACHE_OPTS)
+  );
   const [previewCert, setPreviewCert] = useState<GiftCertificate | null>(null);
   const [mintingId, setMintingId] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
@@ -45,9 +54,13 @@ export function MerchantCertificatesList({ refreshKey = 0 }: { refreshKey?: numb
 
   const reload = useCallback(async () => {
     if (!address) return;
-    setLoading(true);
+    const cached = readCache<GiftCertificate[]>(scopedKey(CERTS_CACHE, address), CACHE_OPTS);
+    if (cached) setCerts(cached);
+    setLoading(!cached);
     try {
-      setCerts(await listMerchantCertificates(address));
+      const fresh = await listMerchantCertificates(address);
+      setCerts(fresh);
+      writeCache(scopedKey(CERTS_CACHE, address), fresh, CACHE_OPTS);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to load certificates');
     } finally {
@@ -56,6 +69,7 @@ export function MerchantCertificatesList({ refreshKey = 0 }: { refreshKey?: numb
   }, [address]);
 
   useEffect(() => { reload(); }, [reload, refreshKey]);
+
 
   // After mint tx succeeds, mark certificate as redeemed
   useEffect(() => {

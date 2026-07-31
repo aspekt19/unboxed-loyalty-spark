@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
 import { supabase } from '@/integrations/supabase/client';
+import { useCachedResource } from '@/hooks/useCachedResource';
+import { scopedKey } from '@/lib/localCache';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Users, ShoppingBag, TrendingUp, Award, Activity, Calendar } from 'lucide-react';
 import { EnhancedAnalytics } from './EnhancedAnalytics';
+
 
 interface MerchantAnalytics {
   merchant_address: string;
@@ -25,33 +27,32 @@ interface MerchantAnalytics {
 
 export function MerchantDashboard() {
   const { address } = useAccount();
-  const [analytics, setAnalytics] = useState<MerchantAnalytics[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const merchant = address?.toLowerCase() ?? null;
 
-  useEffect(() => {
-    if (!address) return;
+  const {
+    data: analytics,
+    isLoading: loading,
+    error: loadError,
+  } = useCachedResource<MerchantAnalytics[]>({
+    key: merchant ? scopedKey('crm:analytics', merchant) : null,
+    version: 1,
+    ttlMs: 5 * 60 * 1000,
+    initialData: [],
+    realtime: merchant
+      ? [{ table: 'vouchers', filter: `merchant_address=eq.${merchant}` }]
+      : undefined,
+    fetcher: async () => {
+      const { data, error } = await supabase
+        .from('merchant_analytics')
+        .select('*')
+        .eq('merchant_address', merchant!);
+      if (error) throw error;
+      return (data as MerchantAnalytics[]) || [];
+    },
+  });
 
-    const loadAnalytics = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('merchant_analytics')
-          .select('*')
-          .eq('merchant_address', address.toLowerCase());
+  const error = loadError ? 'Failed to load analytics' : null;
 
-        if (error) throw error;
-        setAnalytics(data || []);
-      } catch (err) {
-        console.error('Error loading analytics:', err);
-        setError('Failed to load analytics');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadAnalytics();
-  }, [address]);
 
   if (loading) {
     return (
@@ -62,13 +63,14 @@ export function MerchantDashboard() {
     );
   }
 
-  if (error) {
+  if (error && analytics.length === 0) {
     return (
       <Alert variant="destructive">
         <AlertDescription>{error}</AlertDescription>
       </Alert>
     );
   }
+
 
   if (analytics.length === 0) {
     return (
