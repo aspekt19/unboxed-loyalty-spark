@@ -1161,10 +1161,26 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Calculated token amount is zero. Increase purchase_amount or cashback_rate." }, 400);
       }
 
+      const earnCompliance = await assertFeeCompliance(serviceClient, agent.agentId);
+      if (!earnCompliance.ok) {
+        await logActivity(serviceClient, agent.agentId, "earn_points", body, 402, { error: earnCompliance.message }, ip);
+        return jsonResponse({
+          error: earnCompliance.message,
+          unpaid_fee_mints: earnCompliance.pendingCount,
+          unpaid_fee_total: earnCompliance.pendingFeeTotal,
+        }, 402);
+      }
+
       const feePercent = await getAgentFeePercent(serviceClient, agent.agentId);
       const feeAmount = computeMintFeeAmount(tokensToMint, feePercent);
-      const recipientCalldata = encodeMintCalldata(customer_address, tokensToMint);
-      const feeCalldata = encodeMintCalldata(PLATFORM_FEE_WALLET, feeAmount);
+      const calls = buildMintCallBundle({
+        tokenAddress: token_address,
+        recipientAddress: customer_address,
+        amount: tokensToMint,
+        feeAmount,
+      });
+      const feeCalldata = calls.find((c) => c.purpose === "protocol_fee")?.data ?? null;
+      const recipientCalldata = calls.find((c) => c.purpose === "recipient_mint")!.data;
 
       // Record mint
       const { data: mintRecord, error: mintError } = await serviceClient
@@ -1186,11 +1202,23 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Failed to record mint" }, 500);
       }
 
+      const earnObligationId = await recordFeeObligation(serviceClient, {
+        agentId: agent.agentId,
+        ownerAddress: agent.ownerAddress,
+        operation: "earn",
+        tokenAddress: token_address,
+        recipientAddress: customer_address,
+        mintAmount: tokensToMint,
+        feePercent,
+        feeAmount,
+      });
+
       await logActivity(serviceClient, agent.agentId, "earn_points", body, 201, {
         mint_id: mintRecord.id,
         purchase_amount,
         cashback_rate: rate,
         tokens: tokensToMint,
+        fee_obligation_id: earnObligationId,
       }, ip);
 
       return jsonResponse({
@@ -1203,9 +1231,13 @@ Deno.serve(async (req) => {
         fee_percent: feePercent,
         fee_amount: feeAmount,
         fee_wallet: PLATFORM_FEE_WALLET,
+        fee_obligation_id: earnObligationId,
+        calls,
+        atomic_batch_supported: true,
         recipient_calldata: recipientCalldata,
         fee_calldata: feeCalldata,
-        message: `Customer earns ${tokensToMint} ${program.symbol} tokens for a $${purchase_amount} purchase (${rate}% cashback). Send two transactions to complete onchain.`,
+        message: `Customer earns ${tokensToMint} ${program.symbol} tokens for a $${purchase_amount} purchase (${rate}% cashback). Submit \`calls\` in order (protocol fee first), then POST /agent-api/mint/confirm { obligation_id, fee_tx_hash }.`,
+
         contract: {
           token_address,
           function: "mint(address,uint256)",
