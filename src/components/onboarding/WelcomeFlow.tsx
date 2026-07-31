@@ -3,6 +3,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { isFarcasterContext } from "@/config/wagmi";
 import { 
   Wallet, 
   Coins, 
@@ -91,6 +92,16 @@ export const WelcomeFlow = ({ userRole }: WelcomeFlowProps) => {
   const steps = userRole === "merchant" ? merchantSteps : customerSteps;
 
   useEffect(() => {
+    // Radix renders dialogs through a portal. In Farcaster/Base App webviews
+    // the overlay can be painted before the dialog content, leaving the user
+    // on an apparently permanent black screen during portal navigation.
+    // The miniapp already has a dedicated launch flow, so do not auto-open the
+    // optional web onboarding modal there.
+    if (isFarcasterContext()) {
+      setIsOpen(false);
+      return;
+    }
+
     // Check if user has seen onboarding
     const hasSeenOnboarding = localStorage.getItem(`onboarding_seen_${userRole}`);
     if (!hasSeenOnboarding && userRole) {
