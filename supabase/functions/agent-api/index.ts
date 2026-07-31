@@ -964,7 +964,7 @@ Deno.serve(async (req) => {
     }
 
     // ==================== MINT ====================
-    if (resource === "mint" && req.method === "POST") {
+    if (resource === "mint" && !subResource && req.method === "POST") {
       if (!hasScope(agent, "mint")) {
         await logActivity(serviceClient, agent.agentId, "mint_tokens", body, 403, { error: "Insufficient scope" }, ip);
         return jsonResponse({ error: "Scope 'mint' required" }, 403);
