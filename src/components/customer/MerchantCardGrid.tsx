@@ -38,6 +38,18 @@ interface MerchantCard {
   reviews_count: number;
 }
 
+const MERCHANT_CARDS_CACHE_KEY = 'ls_merchant_cards';
+
+function readCachedMerchants(): MerchantCard[] {
+  try {
+    const raw = localStorage.getItem(MERCHANT_CARDS_CACHE_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 interface MerchantCardGridProps {
   onMerchantSelect?: (merchantAddress: string) => void;
   selectedMerchant?: string | null;
