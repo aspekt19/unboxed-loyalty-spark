@@ -463,7 +463,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
 
   mcpServer.tool("mint_loyalty_tokens", {
     description:
-      "Record mint intent and get two mint calldatas: recipient + platform fee (plan %). Both txs must be sent for correct commission.",
+      "Record mint intent and get a fee-first `calls[]` bundle: protocol fee mint FIRST, then the recipient mint. Submit them in order (atomically via EIP-5792 send_calls if your wallet supports it), then call confirm_mint_fee (or POST /agent-api/mint/confirm) with the fee tx hash. Unconfirmed fee obligations block future mints.",
     inputSchema: { type: "object" as const, properties: { token_address: { type: "string", description: "Token contract address" }, recipient: { type: "string", description: "Recipient wallet (0x...)" }, amount: { type: "number", description: "Tokens to mint" } }, required: ["token_address", "recipient", "amount"] },
     handler: async ({ token_address, recipient, amount }: any) => {
       const err = authGuard(["mint"]);
