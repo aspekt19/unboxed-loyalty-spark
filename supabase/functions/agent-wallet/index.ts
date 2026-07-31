@@ -616,43 +616,76 @@ async function handleServerMint(d: any, agent: any, body: any) {
 
   const recipientCalldata = encodeMintCalldata(recipient_address, amount);
 
+  if (wallet.wallet_type !== "cdp_mpc") {
+    // No custodial signer: never fake a transaction. Hand back calldata instead.
+    return jsonResponse({
+      error: "Server-side mint requires a CDP MPC wallet",
+      wallet_type: wallet.wallet_type,
+      fee_percent: feePercent,
+      fee_amount: feeAmount,
+      fee_wallet: PLATFORM_FEE_WALLET,
+      calls: buildMintCallBundle({
+        tokenAddress: token_address,
+        recipientAddress: recipient_address,
+        amount,
+        feeAmount,
+      }),
+      message:
+        "This agent has no custodial CDP wallet, so nothing was minted. Sign `calls` yourself " +
+        "(protocol fee first) or create a CDP wallet with action: create_wallet.",
+    }, 409);
+  }
+
   let txResult: { txHash: string; status: string };
   let feeTxResult: { txHash: string; status: string } | null = null;
 
-  if (wallet.wallet_type === "cdp_mpc") {
-    // 1. Mint tokens to recipient via CDP send/transaction
-    const rlpMintTx = encodeUnsignedEIP1559(token_address, recipientCalldata);
-    const cdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/send/transaction`, {
-      transaction: rlpMintTx,
+  // 1. Protocol fee FIRST — if it fails we abort before minting to the recipient,
+  //    so a CDP outage can never produce an unpaid mint.
+  if (feeAmount > 0) {
+    const feeCalldata = encodeMintCalldata(PLATFORM_FEE_WALLET, feeAmount);
+    const rlpFeeTx = encodeUnsignedEIP1559(token_address, feeCalldata);
+    const feeCdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/send/transaction`, {
+      transaction: rlpFeeTx,
       network: "base",
     });
-    if (cdpResult.ok) {
-      txResult = { txHash: cdpResult.data.transactionHash || cdpResult.data.hash || "0x_pending", status: "minted_onchain" };
-    } else {
-      txResult = mockSignTransaction({ to: token_address, data: recipientCalldata, walletAddress: wallet.wallet_address });
-      txResult.status = "cdp_error_mock_fallback";
-    }
-
-    // 2. Mint fee tokens to platform wallet (separate tx)
-    if (feeAmount > 0) {
-      const feeCalldata = encodeMintCalldata(PLATFORM_FEE_WALLET, feeAmount);
-      const rlpFeeTx = encodeUnsignedEIP1559(token_address, feeCalldata);
-      const feeCdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/send/transaction`, {
-        transaction: rlpFeeTx,
-        network: "base",
+    if (!feeCdpResult.ok) {
+      await d.from("agent_activity_log").insert({
+        agent_id: agent.agentId,
+        action: "server_mint",
+        request_body: { token_address, recipient_address, amount },
+        response_status: 502,
+        response_body: { error: "fee_mint_failed", fee_amount: feeAmount },
       });
-      if (feeCdpResult.ok) {
-        feeTxResult = { txHash: feeCdpResult.data.transactionHash || feeCdpResult.data.hash || "0x_fee_pending", status: "fee_minted_onchain" };
-      } else {
-        feeTxResult = { txHash: "0x_fee_mock", status: "fee_mock" };
-      }
+      return jsonResponse({
+        error: "Protocol fee mint failed — recipient mint aborted. Nothing was minted.",
+        fee_percent: feePercent,
+        fee_amount: feeAmount,
+        retryable: true,
+      }, 502);
     }
-  } else {
-    txResult = mockSignTransaction({ to: token_address, data: recipientCalldata, walletAddress: wallet.wallet_address });
-    if (feeAmount > 0) {
-      feeTxResult = { txHash: "0x_fee_mock", status: "fee_mock" };
-    }
+    feeTxResult = {
+      txHash: feeCdpResult.data.transactionHash || feeCdpResult.data.hash || "0x_fee_pending",
+      status: "fee_minted_onchain",
+    };
   }
+
+  // 2. Recipient mint
+  const rlpMintTx = encodeUnsignedEIP1559(token_address, recipientCalldata);
+  const cdpResult = await cdpRequest("POST", `/evm/accounts/${wallet.wallet_address}/send/transaction`, {
+    transaction: rlpMintTx,
+    network: "base",
+  });
+  if (!cdpResult.ok) {
+    return jsonResponse({
+      error: "Recipient mint failed after the protocol fee was paid. Retry the mint.",
+      fee: { amount: feeAmount, tx_hash: feeTxResult?.txHash ?? null, status: feeTxResult?.status ?? null },
+      retryable: true,
+    }, 502);
+  }
+  txResult = {
+    txHash: cdpResult.data.transactionHash || cdpResult.data.hash || "0x_pending",
+    status: "minted_onchain",
+  };
 
   // Record mint history for recipient
   await d.from("token_mint_history").insert({
@@ -672,7 +705,25 @@ async function handleServerMint(d: any, agent: any, body: any) {
       token_name: prog.name, token_symbol: prog.symbol,
       transaction_hash: feeTxResult?.status === "fee_minted_onchain" ? feeTxResult.txHash : null,
     });
+
+    // Custodial path settles its own obligation immediately (fee tx already sent).
+    await d.from("agent_fee_obligations").insert({
+      agent_id: agent.agentId,
+      owner_address: agent.ownerAddress.toLowerCase(),
+      operation: "server_mint",
+      token_address: token_address.toLowerCase(),
+      recipient_address: recipient_address.toLowerCase(),
+      mint_amount: amount,
+      fee_percent: feePercent,
+      fee_amount: feeAmount,
+      status: "settled",
+      fee_tx_hash: feeTxResult?.txHash ?? null,
+      recipient_tx_hash: txResult.txHash,
+      settled_at: new Date().toISOString(),
+    });
   }
+
+
 
   // Record transaction fee log
   await d.from("agent_fee_log").insert({
