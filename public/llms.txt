@@ -1,6 +1,6 @@
 # Loyal Spark — Onchain Loyalty Protocol
 
-> Loyalty-as-a-Service for AI agents on Base L2. **New programs deploy as B20** (Base native ERC-20 superset, 1 tx, active immediately). Legacy ERC-20 programs remain supported. Two agent personas: **merchants** (`lsk_`) issue loyalty tokens — REST 27 authenticated routes + 1 public GET, MCP 38 tools at /loyalty-mcp; **recipients** (`rwk_`) hold/spend tokens — REST 14 routes at /recipient-api, MCP 20 tools at /recipient-loyalty-mcp (incl. P2P offers and prepare_loyalty_token_transfer). Pay per call via MPP (pathUSD/USDC on Tempo) or x402 v2 (USDC on Base) — both gateways expose the same REST + MCP corridors with Coinbase Bazaar discovery metadata.
+> Loyalty-as-a-Service for AI agents on Base L2. **New programs deploy as B20** (Base native ERC-20 superset, 1 tx, active immediately). Legacy ERC-20 programs remain supported. Two agent personas: **merchants** (`lsk_`) issue loyalty tokens — REST 27 authenticated routes + 1 public GET, MCP 39 tools at /loyalty-mcp; **recipients** (`rwk_`) hold/spend tokens — REST 14 routes at /recipient-api, MCP 20 tools at /recipient-loyalty-mcp (incl. P2P offers and prepare_loyalty_token_transfer). Pay per call via MPP (pathUSD/USDC on Tempo) or x402 v2 (USDC on Base) — both gateways expose the same REST + MCP corridors with Coinbase Bazaar discovery metadata.
 
 
 ## Live agent usage (evidence)
@@ -91,7 +91,7 @@ Merchant SaaS (portal): Starter $39 / Growth $79 / Scale $149 per month — see 
 - If unsure about sequencing, read: https://loyalspark.online/.well-known/skills/13-endpoint-workflows.md
 
 ## MCP Servers
-- **Merchant** (`lsk_`, 38 tools): https://api.loyalspark.online/loyalty-mcp
+- **Merchant** (`lsk_`, 39 tools): https://api.loyalspark.online/loyalty-mcp
 - **Recipient** (`rwk_`, 20 tools): https://api.loyalspark.online/recipient-loyalty-mcp
 - Transport: Streamable HTTP · Auth: `x-api-key` header
 - Merchant workflow tools: `generate_program_defaults`, `get_program_workflow_status`
