@@ -234,8 +234,10 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
       if (selectedTokenAddress) {
         const rewards = await getRewardsByToken(selectedTokenAddress);
         setAvailableRewards(rewards);
+        writeCachedRewards(selectedTokenAddress, rewards);
       }
     };
+
 
     const handleSessionReady = () => loadPrograms();
 
