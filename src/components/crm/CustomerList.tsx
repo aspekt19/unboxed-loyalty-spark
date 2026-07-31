@@ -36,85 +36,75 @@ const RFM_LABELS = {
 
 export function CustomerList() {
   const { address } = useAccount();
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [rfmFilter, setRfmFilter] = useState<string>('all');
 
-  useEffect(() => {
-    if (!address) return;
+  const merchant = address?.toLowerCase() ?? null;
 
-    const loadCustomers = async () => {
-      try {
-        setLoading(true);
+  const {
+    data: customers,
+    isLoading: loading,
+    error: loadError,
+  } = useCachedResource<Customer[]>({
+    key: merchant ? scopedKey('crm:customers', merchant) : null,
+    version: 1,
+    ttlMs: 5 * 60 * 1000,
+    initialData: [],
+    realtime: merchant
+      ? [
+          { table: 'vouchers', filter: `merchant_address=eq.${merchant}` },
+          { table: 'customer_profiles' },
+        ]
+      : undefined,
+    fetcher: async () => {
+      // Unique customers of this merchant, derived from issued vouchers
+      const { data: voucherData, error: voucherError } = await supabase
+        .from('vouchers')
+        .select('customer_address')
+        .eq('merchant_address', merchant!);
 
-        // Получаем список всех уникальных клиентов мерчанта через vouchers
-        const { data: voucherData, error: voucherError } = await supabase
-          .from('vouchers')
-          .select('customer_address')
-          .eq('merchant_address', address.toLowerCase());
+      if (voucherError) throw voucherError;
+      if (!voucherData || voucherData.length === 0) return [];
 
-        if (voucherError) throw voucherError;
+      const uniqueAddresses = [...new Set(voucherData.map((v) => v.customer_address))];
 
-        if (!voucherData || voucherData.length === 0) {
-          setCustomers([]);
-          setFilteredCustomers([]);
-          return;
-        }
+      const { data: customerData, error: customerError } = await supabase
+        .from('customer_profiles')
+        .select('*')
+        .in('wallet_address', uniqueAddresses);
 
-        const uniqueAddresses = [...new Set(voucherData.map((v) => v.customer_address))];
+      if (customerError) throw customerError;
 
-        // Получаем профили клиентов
-        const { data: customerData, error: customerError } = await supabase
-          .from('customer_profiles')
-          .select('*')
-          .in('wallet_address', uniqueAddresses);
+      const existingAddresses = new Set(customerData?.map((c) => c.wallet_address) || []);
+      const missingAddresses = uniqueAddresses.filter((addr) => !existingAddresses.has(addr));
 
-        if (customerError) throw customerError;
+      const newProfiles: Customer[] = missingAddresses.map((addr) => ({
+        id: '',
+        wallet_address: addr,
+        first_name: null,
+        last_name: null,
+        email: null,
+        phone: null,
+        total_purchases: 0,
+        total_spent: 0,
+        last_purchase_date: null,
+        rfm_score: 'new',
+        created_at: new Date().toISOString(),
+      }));
 
-        // Создаём профили для клиентов, у которых их ещё нет
-        const existingAddresses = new Set(customerData?.map((c) => c.wallet_address) || []);
-        const missingAddresses = uniqueAddresses.filter((addr) => !existingAddresses.has(addr));
+      return [...((customerData as Customer[]) || []), ...newProfiles];
+    },
+  });
 
-        const newProfiles: Customer[] = missingAddresses.map((addr) => ({
-          id: '',
-          wallet_address: addr,
-          first_name: null,
-          last_name: null,
-          email: null,
-          phone: null,
-          total_purchases: 0,
-          total_spent: 0,
-          last_purchase_date: null,
-          rfm_score: 'new',
-          created_at: new Date().toISOString(),
-        }));
+  const error = loadError ? 'Failed to load customers' : null;
 
-        const allCustomers = [...(customerData || []), ...newProfiles];
-        setCustomers(allCustomers);
-        setFilteredCustomers(allCustomers);
-      } catch (err) {
-        console.error('Error loading customers:', err);
-        setError('Failed to load customers');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadCustomers();
-  }, [address]);
-
-  useEffect(() => {
+  const filteredCustomers = useMemo(() => {
     let filtered = customers;
 
-    // Фильтр по RFM
     if (rfmFilter !== 'all') {
       filtered = filtered.filter((c) => c.rfm_score === rfmFilter);
     }
 
-    // Поиск
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
@@ -126,10 +116,11 @@ export function CustomerList() {
       );
     }
 
-    setFilteredCustomers(filtered);
+    return filtered;
   }, [customers, searchQuery, rfmFilter]);
 
   if (loading) {
+
     return (
       <div className="space-y-4">
         <Skeleton className="h-20 w-full" />
