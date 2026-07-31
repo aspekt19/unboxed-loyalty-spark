@@ -14,12 +14,15 @@ import { authenticateRecipientAgent } from "../_shared/recipient-agent-auth.ts";
 import {
   appendBuilderCode,
   BUILDER_CODE,
+  buildMintCallBundle,
   computeMintFeeAmount,
   encodeMintCalldata,
   encodeTransferCalldata,
   getAgentFeePercent,
   PLATFORM_FEE_WALLET,
 } from "../_shared/loyalspark-agent-helpers.ts";
+import { assertFeeCompliance, recordFeeObligation } from "../_shared/agent-fee-ledger.ts";
+
 import {
   B20_FACTORY_ADDRESS,
   encodeCreateB20Asset,
