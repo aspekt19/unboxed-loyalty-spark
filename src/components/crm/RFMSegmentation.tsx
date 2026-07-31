@@ -90,7 +90,7 @@ export function RFMSegmentation() {
     return <Skeleton className="h-64 w-full" />;
   }
 
-  const total = Object.values(stats).reduce((sum, val) => sum + val, 0);
+  const total = Object.values(stats).reduce<number>((sum, val) => sum + Number(val || 0), 0);
 
   const segments = [
     {
