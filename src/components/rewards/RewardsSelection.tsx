@@ -39,15 +39,54 @@ interface RewardsSelectionProps {
   filterByMerchant?: string | null;
 }
 
+const REWARDS_CACHE_PREFIX = 'ls_rewards_';
+
+function readCachedTokens(): TokenInfo[] {
+  try {
+    const raw = localStorage.getItem('customerTokens');
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function readCachedRewards(tokenAddress: string): Reward[] {
+  if (!tokenAddress) return [];
+  try {
+    const raw = localStorage.getItem(`${REWARDS_CACHE_PREFIX}${tokenAddress.toLowerCase()}`);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeCachedRewards(tokenAddress: string, rewards: Reward[]) {
+  try {
+    localStorage.setItem(
+      `${REWARDS_CACHE_PREFIX}${tokenAddress.toLowerCase()}`,
+      JSON.stringify(rewards),
+    );
+  } catch {
+    /* ignore quota errors */
+  }
+}
+
 export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
   const { address } = useAccount();
   const { user, session, signInWithWallet, isLoading: authLoading } = useAuth();
   const isFarcaster = isFarcasterContext();
-  const [tokens, setTokens] = useState<TokenInfo[]>([]);
-  const [selectedTokenAddress, setSelectedTokenAddress] = useState<string>('');
+  const [tokens, setTokens] = useState<TokenInfo[]>(() => readCachedTokens());
+  const [selectedTokenAddress, setSelectedTokenAddress] = useState<string>(
+    () => readCachedTokens()[0]?.address ?? '',
+  );
   const [selectedRewardId, setSelectedRewardId] = useState<string>('');
-  const [availableRewards, setAvailableRewards] = useState<Reward[]>([]);
+  const [availableRewards, setAvailableRewards] = useState<Reward[]>(() =>
+    readCachedRewards(readCachedTokens()[0]?.address ?? ''),
+  );
   const [isLoadingRewards, setIsLoadingRewards] = useState(false);
+
   const [profileVerified, setProfileVerified] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [programSearch, setProgramSearch] = useState('');
