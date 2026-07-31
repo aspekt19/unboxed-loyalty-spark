@@ -26,14 +26,23 @@ interface ProgramOption {
   tokenAddress: string;
 }
 
+const HISTORY_CACHE = 'mint-history:merchant';
+const PROGRAMS_CACHE = 'mint-history-programs:merchant';
+const CACHE_OPTS: CacheOptions = { version: 1, ttlMs: 5 * 60 * 1000 };
+
 export function IssuedTokensHistory() {
   const { address } = useAccount();
-  const [history, setHistory] = useState<IssuedToken[]>([]);
+  const [history, setHistory] = useState<IssuedToken[]>(() =>
+    readCache<IssuedToken[]>(scopedKey(HISTORY_CACHE, address), CACHE_OPTS) ?? []
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedProgramFilter, setSelectedProgramFilter] = useState<string>('all');
   const [customerSearch, setCustomerSearch] = useState<string>('');
-  const [programs, setPrograms] = useState<ProgramOption[]>([]);
+  const [programs, setPrograms] = useState<ProgramOption[]>(() =>
+    readCache<ProgramOption[]>(scopedKey(PROGRAMS_CACHE, address), CACHE_OPTS) ?? []
+  );
+
   const hasLoadedRef = useRef(false);
   const loadingAddressRef = useRef<string | null>(null);
 
