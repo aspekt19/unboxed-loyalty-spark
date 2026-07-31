@@ -37,9 +37,10 @@ export async function createVerifiedVoucher(
     // getSession() returns a locally cached session that may be stale/deleted on the server.
     // We validate with getUser() first, and if that fails, attempt a token refresh.
     const {
-      data: { session },
+      data: { session: initialSession },
       error: sessionError,
     } = await supabase.auth.getSession();
+    let session = initialSession;
 
     if (sessionError || !session?.access_token) {
       console.error('[createVerifiedVoucher] No local session:', sessionError);
