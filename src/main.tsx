@@ -34,11 +34,21 @@ createRoot(document.getElementById("root")!).render(
 // If we wait for Privy/wagmi to initialize, slow iframe loads keep the host
 // splash screen up and the user sees a white screen. This is safe outside of
 // Farcaster clients — the SDK no-ops when not embedded.
+// The first call can land before the host bridge is listening (cold start),
+// which leaves the splash/white screen up forever — so retry a few times.
 (async () => {
   try {
     const { sdk } = await import('@farcaster/miniapp-sdk');
-    await sdk.actions.ready();
+    for (let attempt = 0; attempt < 4; attempt++) {
+      try {
+        await sdk.actions.ready();
+      } catch {
+        // Bridge not ready yet — retry below.
+      }
+      await new Promise((resolve) => setTimeout(resolve, 700));
+    }
   } catch {
     // Not in a Farcaster/Base client, or SDK unavailable — ignore.
   }
 })();
+

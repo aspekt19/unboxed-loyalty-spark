@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-route
 import { WagmiProvider } from "wagmi";
 import { WagmiProvider as PrivyWagmiProvider } from "@privy-io/wagmi";
 import { PrivyProvider } from "@privy-io/react-auth";
-import { browserPreviewWagmiConfig, detectFarcasterMiniApp, isFarcasterContext, farcasterWagmiConfig, privyWagmiConfig } from "./config/wagmi";
+import { browserPreviewWagmiConfig, detectFarcasterMiniApp, isEmbeddedWebview, isFarcasterContext, farcasterWagmiConfig, privyWagmiConfig } from "./config/wagmi";
 import { PRIVY_APP_ID, privyConfig } from "./config/privy";
 import Index from "./pages/Index";
 import AppPage from "./pages/AppPage";
