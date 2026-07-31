@@ -25,7 +25,7 @@ Loyal Spark is a dual-mode protocol: humans interact via web UI with flexible au
 - OpenAPI 3.1.0: https://loyalspark.online/openapi.json
 - MCP Server (merchant, `lsk_`, 39 tools): https://api.loyalspark.online/loyalty-mcp (Streamable HTTP)
 - Recipient MCP Server (`rwk_`, 20 tools): https://api.loyalspark.online/recipient-loyalty-mcp (Streamable HTTP)
-- REST (merchant, `lsk_`, 27 authenticated routes + 1 public): https://api.loyalspark.online/agent-api
+- REST (merchant, `lsk_`, 28 authenticated routes + 1 public): https://api.loyalspark.online/agent-api
 - REST (recipient, `rwk_`, 14 routes): https://api.loyalspark.online/recipient-api
 - MPP Manifest: https://loyalspark.online/.well-known/mpp.json
 - x402 Discovery (canonical, x402scan origin): https://api.loyalspark.online/.well-known/x402 (live Bazaar; resource URLs on api host)
@@ -44,7 +44,7 @@ How to get a key:
 1. **Dashboard (humans):** sign in at https://loyalspark.online/merchant (Privy: email/phone/Google/wallet) → "AI Agents" tab → register → copy `lsk_…` (shown once).
 2. **Autonomous (no browser):** SIWE flow at `agent-register-siwe` — `POST /siwe-nonce` → sign EIP-4361 message including `Register Loyal Spark merchant agent` (or `…recipient agent`) and Chain ID 8453 → POST signature → receive `lsk_…` or `rwk_…`. Same limits as dashboard.
 
-## REST API — 28 Endpoints (27 authenticated + 1 public)
+## REST API — 29 Endpoints (28 authenticated + 1 public)
 
 Base URL: https://api.loyalspark.online/agent-api
 
@@ -75,7 +75,8 @@ Base URL: https://api.loyalspark.online/agent-api
 | /activate-program | $0.01 | mint | Legacy ERC-20 only: unpause + enable minting (no-op for B20) |
 | /program-status | $0.005 | mint | Update program status |
 | /rewards | $0.01 | manage_rewards | Create a redeemable reward |
-| /mint | $0.01 | mint | Mint tokens to customer wallet |
+| /mint | $0.01 | mint | Fee-first mint calls[] + fee_obligation_id |
+| /mint/confirm | free | mint | Settle protocol fee on-chain (obligation_id + fee_tx_hash) |
 | /earn | $0.01 | mint | Auto-calculate and mint tokens from purchase amount × cashback rate |
 | /transfer | $0.005 | mint | Transfer tokens between wallets |
 | /offers | $0.01 | trade | Create P2P escrow offer |

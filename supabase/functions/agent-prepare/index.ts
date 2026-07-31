@@ -20,6 +20,7 @@ import {
   encodeTransferCalldata,
   getAgentFeePercent,
   PLATFORM_FEE_WALLET,
+  toTokenWei,
 } from "../_shared/loyalspark-agent-helpers.ts";
 import { assertFeeCompliance, recordFeeObligation } from "../_shared/agent-fee-ledger.ts";
 
@@ -84,9 +85,9 @@ function encodeGrantRole(role: string, account: string): string {
   return appendBuilderCode(SEL.grantRole + role.replace("0x", "") + paddedAcc);
 }
 
-function encodeApprove(spender: string, amount: number): string {
+function encodeApprove(spender: string, amount: number | string): string {
   const paddedSpender = spender.toLowerCase().replace("0x", "").padStart(64, "0");
-  const amtHex = BigInt(Math.floor(amount * 1e18)).toString(16).padStart(64, "0");
+  const amtHex = toTokenWei(amount).toString(16).padStart(64, "0");
   return appendBuilderCode(SEL.approve + paddedSpender + amtHex);
 }
 
@@ -360,7 +361,7 @@ Deno.serve(async (req: Request) => {
         error: compliance.message,
         unpaid_fee_mints: compliance.pendingCount,
         unpaid_fee_total: compliance.pendingFeeTotal,
-      }, 402);
+      }, compliance.status ?? 402);
     }
     const feePercent = await getAgentFeePercent(db, agent.agentId);
     const feeAmount = computeMintFeeAmount(amount, feePercent);
@@ -392,6 +393,9 @@ Deno.serve(async (req: Request) => {
       feePercent,
       feeAmount,
     });
+    if (feeAmount > 0 && !obligationId) {
+      return json({ error: "Failed to record protocol fee obligation" }, 500);
+    }
 
     return json({
       chainId: CHAIN_ID,

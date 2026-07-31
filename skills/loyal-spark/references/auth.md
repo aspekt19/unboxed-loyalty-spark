@@ -5,7 +5,7 @@ Loyal Spark uses two distinct API key prefixes for two different roles. Pick the
 ## `lsk_…` — Merchant agent
 
 - Issues loyalty programs, mints tokens, manages rewards, runs analytics, issues gift certificates.
-- Required for `agent-api/*` and `loyalty-mcp` (merchant MCP, 38 tools).
+- Required for `agent-api/*` and `loyalty-mcp` (merchant MCP, 39 tools).
 - Only public exception: `GET /vouchers/status` works without a key.
 
 How to get one:

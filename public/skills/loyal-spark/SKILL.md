@@ -33,7 +33,7 @@ Do this once per session, before any real work:
 
 ## Tools
 
-Loyal Spark advertises its own tool catalog (38 merchant + 20 recipient tools). Read the tool descriptions exposed by the MCP — they are the source of truth. Do not preload the catalog from this skill.
+Loyal Spark advertises its own tool catalog (39 merchant + 20 recipient tools). Read the tool descriptions exposed by the MCP — they are the source of truth. Do not preload the catalog from this skill.
 
 Key patterns that deserve their own reference:
 
@@ -78,7 +78,7 @@ For per-surface install (Claude.ai, ChatGPT, Cursor, Claude Code, Codex, Hermes)
 | --- | --- |
 | Agent manifest | https://loyalspark.online/.well-known/agent.json |
 | OpenAPI 3.1 | https://loyalspark.online/openapi.json |
-| MCP (merchant, 38 tools, `lsk_`) | https://api.loyalspark.online/loyalty-mcp |
+| MCP (merchant, 39 tools, `lsk_`) | https://api.loyalspark.online/loyalty-mcp |
 | MCP (recipient, 20 tools, `rwk_`) | https://api.loyalspark.online/recipient-loyalty-mcp |
 | x402 paid resources (canonical) | https://api.loyalspark.online/.well-known/x402 |
 | x402 static mirror | https://loyalspark.online/.well-known/x402.json |

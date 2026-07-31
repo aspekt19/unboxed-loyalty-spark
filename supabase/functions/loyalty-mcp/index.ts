@@ -474,7 +474,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
       if (!prog) return T('{"error":"Program not found"}');
       if (prog.status !== "active") return T(JSON.stringify({ error: `Program is ${prog.status}` }));
       const compliance = await assertFeeCompliance(d, agent.agentId);
-      if (!compliance.ok) return T(JSON.stringify({ error: compliance.message, unpaid_fee_mints: compliance.pendingCount, unpaid_fee_total: compliance.pendingFeeTotal }));
+      if (!compliance.ok) return T(JSON.stringify({ error: compliance.message, unpaid_fee_mints: compliance.pendingCount, unpaid_fee_total: compliance.pendingFeeTotal, status: compliance.status ?? 402 }));
       const feePercent = await getAgentFeePercent(d, agent.agentId);
       const feeAmount = computeMintFeeAmount(amount, feePercent);
       const calls = buildMintCallBundle({ tokenAddress: token_address, recipientAddress: recipient, amount, feeAmount });
@@ -483,6 +483,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
       const { data: mint, error } = await d.from("token_mint_history").insert({ merchant_address: agent.ownerAddress.toLowerCase(), recipient_address: recipient.toLowerCase(), amount, token_address: token_address.toLowerCase(), token_name: prog.name, token_symbol: prog.symbol }).select("id,amount,recipient_address,token_address,created_at").single();
       if (error) return T(JSON.stringify({ error: error.message }));
       const obligationId = await recordFeeObligation(d, { agentId: agent.agentId, ownerAddress: agent.ownerAddress, operation: "mint", tokenAddress: token_address, recipientAddress: recipient, mintAmount: amount, feePercent, feeAmount });
+      if (feeAmount > 0 && !obligationId) return T('{"error":"Failed to record protocol fee obligation"}');
       return T(JSON.stringify({
         mint,
         fee_percent: feePercent,
@@ -536,7 +537,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
       const tokensToMint = Math.round(purchase_amount * rate / 100 * 100) / 100;
       if (tokensToMint <= 0) return T('{"error":"Calculated token amount is zero"}');
       const earnCompliance = await assertFeeCompliance(d, agent.agentId);
-      if (!earnCompliance.ok) return T(JSON.stringify({ error: earnCompliance.message, unpaid_fee_mints: earnCompliance.pendingCount, unpaid_fee_total: earnCompliance.pendingFeeTotal }));
+      if (!earnCompliance.ok) return T(JSON.stringify({ error: earnCompliance.message, unpaid_fee_mints: earnCompliance.pendingCount, unpaid_fee_total: earnCompliance.pendingFeeTotal, status: earnCompliance.status ?? 402 }));
       const feePercent = await getAgentFeePercent(d, agent.agentId);
       const feeAmount = computeMintFeeAmount(tokensToMint, feePercent);
       const calls = buildMintCallBundle({ tokenAddress: token_address, recipientAddress: customer_address, amount: tokensToMint, feeAmount });
@@ -545,6 +546,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
       const { data: mint, error: me } = await d.from("token_mint_history").insert({ merchant_address: agent.ownerAddress.toLowerCase(), recipient_address: customer_address.toLowerCase(), amount: tokensToMint, token_address: token_address.toLowerCase(), token_name: prog.name, token_symbol: prog.symbol }).select("id,amount,recipient_address,token_address,created_at").single();
       if (me) return T(JSON.stringify({ error: me.message }));
       const earnObligationId = await recordFeeObligation(d, { agentId: agent.agentId, ownerAddress: agent.ownerAddress, operation: "earn", tokenAddress: token_address, recipientAddress: customer_address, mintAmount: tokensToMint, feePercent, feeAmount });
+      if (feeAmount > 0 && !earnObligationId) return T('{"error":"Failed to record protocol fee obligation"}');
       return T(JSON.stringify({
         earn: { purchase_amount, cashback_rate: rate, tokens_earned: tokensToMint },
         mint,

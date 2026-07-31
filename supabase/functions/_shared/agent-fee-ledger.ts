@@ -12,7 +12,7 @@
  */
 
 import { baseRpcCall } from "./base-rpc.ts";
-import { PLATFORM_FEE_WALLET } from "./loyalspark-agent-helpers.ts";
+import { PLATFORM_FEE_WALLET, toTokenWei } from "./loyalspark-agent-helpers.ts";
 
 /** Obligations older than this are counted as debt. */
 export const FEE_GRACE_MINUTES = 60;
@@ -76,11 +76,18 @@ export async function recordFeeObligation(
 
 export type FeeComplianceResult =
   | { ok: true }
-  | { ok: false; pendingCount: number; pendingFeeTotal: number; message: string };
+  | {
+    ok: false;
+    pendingCount: number;
+    pendingFeeTotal: number;
+    message: string;
+    /** HTTP status for callers (402 debt, 503 infra). */
+    status?: number;
+  };
 
 /**
  * Blocks agents that keep skipping the fee transaction.
- * Fails **open** on infrastructure errors so a DB hiccup never bricks minting.
+ * Fails **closed** on infrastructure errors so mint cannot proceed without a debt check.
  */
 export async function assertFeeCompliance(
   db: Db,
@@ -95,7 +102,16 @@ export async function assertFeeCompliance(
       p_agent_id: agentId,
       p_grace_minutes: graceMinutes,
     });
-    if (error) return { ok: true };
+    if (error) {
+      console.error("[fee-ledger] debt RPC failed", error);
+      return {
+        ok: false,
+        pendingCount: 0,
+        pendingFeeTotal: 0,
+        status: 503,
+        message: "Fee compliance check unavailable. Retry shortly.",
+      };
+    }
 
     const row = Array.isArray(data) ? data[0] : data;
     const pendingCount = Number((row as { pending_count?: number })?.pending_count ?? 0);
@@ -106,6 +122,7 @@ export async function assertFeeCompliance(
         ok: false,
         pendingCount,
         pendingFeeTotal,
+        status: 402,
         message:
           `Blocked: ${maxPending} or more unpaid protocol-fee mints (${pendingCount} pending, ` +
           `${pendingFeeTotal} tokens) older than ` +
@@ -114,8 +131,15 @@ export async function assertFeeCompliance(
       };
     }
     return { ok: true };
-  } catch (_error) {
-    return { ok: true };
+  } catch (error) {
+    console.error("[fee-ledger] debt check threw", error);
+    return {
+      ok: false,
+      pendingCount: 0,
+      pendingFeeTotal: 0,
+      status: 503,
+      message: "Fee compliance check unavailable. Retry shortly.",
+    };
   }
 }
 
@@ -170,7 +194,12 @@ export async function settleFeeObligation(
 
   const feeWalletTopic =
     "0x" + PLATFORM_FEE_WALLET.toLowerCase().replace("0x", "").padStart(64, "0");
-  const expectedWei = BigInt(Math.round(Number(obligation.fee_amount) * 1e6)) * 10n ** 12n;
+  let expectedWei: bigint;
+  try {
+    expectedWei = toTokenWei(obligation.fee_amount);
+  } catch {
+    return { ok: false, status: 500, error: "Invalid fee_amount on obligation" };
+  }
   const tolerance = expectedWei / 100n; // 1% slack for rounding in the caller's encoder
 
   const matched = (receipt.logs ?? []).some((log) => {

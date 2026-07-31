@@ -134,7 +134,7 @@ Behavioral rules to reduce over-engineering and unclear edits. **Tradeoff:** bia
 
 ## Agent Integration
 
-### REST API (27 authenticated routes + 1 public GET)
+### REST API (28 authenticated routes + 1 public GET)
 Base URL: https://api.loyalspark.online/agent-api
 
 **Public (no `x-api-key`):**
@@ -162,7 +162,8 @@ POST (scopes: program lifecycle accepts **mint** or **create_program**):
 - /activate-program — $0.01  — activation calldata
 - /program-status   — $0.005 — update program status
 - /rewards          — $0.01  — scope: manage_rewards — create reward
-- /mint             — $0.01  — scope: mint — mint tokens
+- /mint             — $0.01  — scope: mint — fee-first mint calls[] + fee obligation
+- /mint/confirm     — free    — scope: mint — settle protocol fee on-chain (obligation_id + fee_tx_hash)
 - /earn             — $0.01  — scope: mint — cashback from purchase amount × rate
 - /transfer         — $0.005 — scope: mint — transfer tokens
 - /offers           — $0.01  — scope: trade — create P2P offer
@@ -172,7 +173,7 @@ POST (scopes: program lifecycle accepts **mint** or **create_program**):
 - /vouchers/use     — $0.005 — scope: manage_rewards — use voucher
 - /merchant-profile — $0.005 — scope: manage_rewards — create merchant profile (POST) or update (PUT)
 
-### MCP Server (38 merchant tools + 20 recipient tools)
+### MCP Server (39 merchant tools + 20 recipient tools)
 URL: https://api.loyalspark.online/loyalty-mcp  
 Transport: Streamable HTTP (JSON-RPC 2.0) · Auth: `x-api-key` · **Tool list = each `mcpServer.tool("…")` in `loyalty-mcp/index.ts`** (includes reporting, exports, admin-only tools).  
 Compatible with: Claude Desktop, Cursor, VS Code, OpenServ, any MCP client.

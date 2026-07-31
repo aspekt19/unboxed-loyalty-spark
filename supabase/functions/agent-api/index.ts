@@ -6,8 +6,10 @@ import {
   buildMintCallBundle,
   computeMintFeeAmount,
   encodeMintCalldata,
+  encodeTransferCalldata,
   getAgentFeePercent,
   PLATFORM_FEE_WALLET,
+  toTokenWei,
 } from "../_shared/loyalspark-agent-helpers.ts";
 import {
   assertFeeCompliance,
@@ -45,17 +47,10 @@ import {
 
 
 // Encode approve(address,uint256) calldata with Builder Code
-function encodeApproveCalldata(spender: string, amount: number): string {
+function encodeApproveCalldata(spender: string, amount: number | string): string {
   const paddedSpender = spender.toLowerCase().replace("0x", "").padStart(64, "0");
-  const amtHex = BigInt(Math.floor(amount * 1e18)).toString(16).padStart(64, "0");
+  const amtHex = toTokenWei(amount).toString(16).padStart(64, "0");
   return appendBuilderCode("0x095ea7b3" + paddedSpender + amtHex);
-}
-
-// Encode transfer(address,uint256) calldata with Builder Code
-function encodeTransferCalldata(to: string, amount: number): string {
-  const paddedTo = to.toLowerCase().replace("0x", "").padStart(64, "0");
-  const amtHex = BigInt(Math.floor(amount * 1e18)).toString(16).padStart(64, "0");
-  return appendBuilderCode("0xa9059cbb" + paddedTo + amtHex);
 }
 
 // Contract addresses
@@ -1003,12 +998,13 @@ Deno.serve(async (req) => {
       // Block agents that keep skipping the protocol-fee transaction
       const compliance = await assertFeeCompliance(serviceClient, agent.agentId);
       if (!compliance.ok) {
-        await logActivity(serviceClient, agent.agentId, "mint_tokens", body, 402, { error: compliance.message }, ip);
+        const status = compliance.status ?? 402;
+        await logActivity(serviceClient, agent.agentId, "mint_tokens", body, status, { error: compliance.message }, ip);
         return jsonResponse({
           error: compliance.message,
           unpaid_fee_mints: compliance.pendingCount,
           unpaid_fee_total: compliance.pendingFeeTotal,
-        }, 402);
+        }, status);
       }
 
       const feePercent = await getAgentFeePercent(serviceClient, agent.agentId);
@@ -1052,6 +1048,10 @@ Deno.serve(async (req) => {
         feePercent,
         feeAmount,
       });
+      if (feeAmount > 0 && !obligationId) {
+        await logActivity(serviceClient, agent.agentId, "mint_tokens", body, 500, { error: "fee_obligation_failed" }, ip);
+        return jsonResponse({ error: "Failed to record protocol fee obligation" }, 500);
+      }
 
       await logActivity(serviceClient, agent.agentId, "mint_tokens", body, 201, {
         mint_id: mintRecord.id,
@@ -1163,12 +1163,13 @@ Deno.serve(async (req) => {
 
       const earnCompliance = await assertFeeCompliance(serviceClient, agent.agentId);
       if (!earnCompliance.ok) {
-        await logActivity(serviceClient, agent.agentId, "earn_points", body, 402, { error: earnCompliance.message }, ip);
+        const status = earnCompliance.status ?? 402;
+        await logActivity(serviceClient, agent.agentId, "earn_points", body, status, { error: earnCompliance.message }, ip);
         return jsonResponse({
           error: earnCompliance.message,
           unpaid_fee_mints: earnCompliance.pendingCount,
           unpaid_fee_total: earnCompliance.pendingFeeTotal,
-        }, 402);
+        }, status);
       }
 
       const feePercent = await getAgentFeePercent(serviceClient, agent.agentId);
@@ -1212,6 +1213,10 @@ Deno.serve(async (req) => {
         feePercent,
         feeAmount,
       });
+      if (feeAmount > 0 && !earnObligationId) {
+        await logActivity(serviceClient, agent.agentId, "earn_points", body, 500, { error: "fee_obligation_failed" }, ip);
+        return jsonResponse({ error: "Failed to record protocol fee obligation" }, 500);
+      }
 
       await logActivity(serviceClient, agent.agentId, "earn_points", body, 201, {
         mint_id: mintRecord.id,

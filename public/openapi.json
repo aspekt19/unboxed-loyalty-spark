@@ -4,8 +4,8 @@
     "title": "Loyal Spark — Onchain Loyalty Protocol on Base",
     "version": "2.2.0",
     "summary": "AI-agent-native loyalty-as-a-service protocol on Base L2 with paid x402 + MPP corridors.",
-    "description": "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create ERC-20 loyalty programs, mint tokens to customer wallets, manage reward catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics — all via paid x402 endpoints (USDC on Base) or via standard REST with x-api-key. Coverage: 77 paid operations across 73 paths, including merchant REST (agent-api), recipient REST (recipient-api), 32 merchant MCP tools and 14 recipient MCP tools. Builder Code bc_wdmnog7m.",
-    "x-guidance": "Loyal Spark on Base L2 (chain 8453, USDC native).\n\nAuth modes:\n• Merchant agents — header x-api-key: lsk_... (or Authorization: Bearer lsk_...). Get a key in https://loyalspark.online/merchant → AI Agents.\n• Holder agents — header x-api-key: rwk_... (or Authorization: Bearer rwk_...). Issued via SIWE: https://loyalspark.online/.well-known/agent.json.\n• x402 corridor — pay USDC on Base per call. Discovery: https://api.loyalspark.online/.well-known/x402 (static mirror: https://loyalspark.online/.well-known/x402.json).\n\nTypical merchant flow (B20 default):\n1. GET /me — profile and scopes\n2. POST /programs — B20 createB20 calldata\n3. POST /register-program — persist program (status active)\n4. POST /update-program-config — set cashback_rate / points_per_dollar\n5. POST /rewards — catalog\n6. POST /mint or POST /earn — distribute points\n7. GET /analytics — metrics\n\nLegacy ERC-20: add POST /activate-program + program-status after register.\n\nMCP mirrors REST: 32 merchant tools at https://api.loyalspark.online/loyalty-mcp and 14 recipient tools at https://api.loyalspark.online/recipient-loyalty-mcp. Each MCP tool also has a paid x402 path under /x402-gateway/mcp-tools/<name> and /x402-gateway/recipient-mcp-tools/<name>.\n\nDocs: https://loyalspark.online/api-docs · llms: https://loyalspark.online/llms.txt · agent manifest: https://loyalspark.online/.well-known/agent.json",
+    "description": "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create ERC-20 loyalty programs, mint tokens to customer wallets, manage reward catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics — all via paid x402 endpoints (USDC on Base) or via standard REST with x-api-key. Coverage: merchant REST (agent-api), recipient REST (recipient-api), 39 merchant MCP tools and 20 recipient MCP tools (direct MCP with x-api-key); paid x402 corridor prices a subset of those tools. Builder Code bc_wdmnog7m.",
+    "x-guidance": "Loyal Spark on Base L2 (chain 8453, USDC native).\n\nAuth modes:\n• Merchant agents — header x-api-key: lsk_... (or Authorization: Bearer lsk_...). Get a key in https://loyalspark.online/merchant → AI Agents.\n• Holder agents — header x-api-key: rwk_... (or Authorization: Bearer rwk_...). Issued via SIWE: https://loyalspark.online/.well-known/agent.json.\n• x402 corridor — pay USDC on Base per call. Discovery: https://api.loyalspark.online/.well-known/x402 (static mirror: https://loyalspark.online/.well-known/x402.json).\n\nTypical merchant flow (B20 default):\n1. GET /me — profile and scopes\n2. POST /programs — B20 createB20 calldata\n3. POST /register-program — persist program (status active)\n4. POST /update-program-config — set cashback_rate / points_per_dollar\n5. POST /rewards — catalog\n6. POST /mint or POST /earn — fee-first calls[] + fee_obligation_id\n7. POST /mint/confirm — settle protocol fee on-chain\n8. GET /analytics — metrics\n\nLegacy ERC-20: add POST /activate-program + program-status after register.\n\nMCP mirrors REST: 39 merchant tools at https://api.loyalspark.online/loyalty-mcp and 20 recipient tools at https://api.loyalspark.online/recipient-loyalty-mcp. Paid x402 paths under /x402-gateway/mcp-tools/<name> cover the priced subset (confirm_mint_fee is lsk_-only settlement, not an x402 resource).\n\nDocs: https://loyalspark.online/api-docs · llms: https://loyalspark.online/llms.txt · agent manifest: https://loyalspark.online/.well-known/agent.json",
     "contact": {
       "name": "Loyal Spark",
       "email": "admin@loyalspark.online",
@@ -77,11 +77,11 @@
     },
     {
       "name": "Merchant MCP",
-      "description": "32 merchant MCP tools (Streamable HTTP JSON-RPC 2.0)"
+      "description": "39 merchant MCP tools (Streamable HTTP JSON-RPC 2.0)"
     },
     {
       "name": "Recipient MCP",
-      "description": "14 recipient MCP tools (Streamable HTTP JSON-RPC 2.0)"
+      "description": "20 recipient MCP tools (Streamable HTTP JSON-RPC 2.0)"
     }
   ],
   "paths": {
