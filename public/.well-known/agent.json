@@ -388,6 +388,7 @@
       "create_reward",
       "mint_loyalty_tokens",
       "earn_points",
+      "confirm_mint_fee",
       "transfer_loyalty_tokens",
       "get_token_balance",
       "get_program_analytics",
