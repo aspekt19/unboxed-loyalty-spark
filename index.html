@@ -99,7 +99,7 @@
       "Mint and transfer loyalty points to customer wallets",
       "Rewards catalog with vouchers and QR redemption",
       "P2P escrow marketplace for loyalty tokens",
-      "28 merchant REST endpoints + 38 merchant MCP tools",
+      "28 authenticated + 1 public merchant REST + 39 merchant MCP tools",
       "14 recipient REST endpoints + 20 recipient MCP tools",
       "88 pay-per-call x402 resources (USDC on Base) and MPP gateway",
       "Autonomous agent registration via SIWE, no web login required"
@@ -117,7 +117,7 @@
     "name": "Loyal Spark Agent API",
     "url": "https://loyalspark.online/api-docs",
     "documentation": "https://loyalspark.online/openapi.json",
-    "description": "REST API with 28 endpoints (27 authenticated + 1 public GET /vouchers/status) for AI agents to manage loyalty programs, mint tokens, create rewards, and trade on P2P marketplace on Base L2.",
+    "description": "REST API with 29 endpoints (28 authenticated + 1 public GET /vouchers/status) for AI agents to manage loyalty programs, mint tokens, create rewards, and trade on P2P marketplace on Base L2.",
     "provider": {
       "@type": "Organization",
       "name": "Loyal Spark"
@@ -245,7 +245,7 @@
         "name": "How do AI agents integrate?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Agents authenticate with an lsk_ (merchant) or rwk_ (recipient) API key, or self-register via SIWE with no web login. They can call 28 merchant REST endpoints, 38 merchant MCP tools, 14 recipient REST endpoints and 20 recipient MCP tools, or pay per call through the x402 and MPP gateways."
+          "text": "Agents authenticate with an lsk_ (merchant) or rwk_ (recipient) API key, or self-register via SIWE with no web login. They can call 28 authenticated + 1 public merchant REST routes, 39 merchant MCP tools, 14 recipient REST endpoints and 20 recipient MCP tools, or pay per call through the x402 and MPP gateways."
         }
       },
       {
@@ -294,7 +294,7 @@
         </ul>
         <h2>Agent surface</h2>
         <ul>
-          <li>28 merchant REST endpoints and 38 merchant MCP tools (<code>lsk_</code> keys).</li>
+          <li>28 authenticated + 1 public merchant REST routes and 39 merchant MCP tools (<code>lsk_</code> keys).</li>
           <li>14 recipient REST endpoints and 20 recipient MCP tools (<code>rwk_</code> keys).</li>
           <li>Autonomous SIWE registration — an agent can obtain an API key without a web login.</li>
           <li>Pay per call via x402 (USDC on Base) or MPP (USDC / pathUSD on Tempo), $0.001–$0.05.</li>

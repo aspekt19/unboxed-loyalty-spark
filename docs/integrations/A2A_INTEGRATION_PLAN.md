@@ -45,7 +45,7 @@ The Loyal Spark platform operates as a dual-mode protocol where **humans** inter
 
 ### 3. MCP Server ✅
 - **Edge Function**: `loyalty-mcp` — Streamable HTTP transport, JSON-RPC 2.0
-- **MCP Tools**: 38 merchant tools at `/loyalty-mcp` + 20 recipient tools at `/recipient-loyalty-mcp` (see `supabase/functions/loyalty-mcp/index.ts` and `supabase/functions/recipient-loyalty-mcp/index.ts` for the current list)
+- **MCP Tools**: 39 merchant tools at `/loyalty-mcp` + 20 recipient tools at `/recipient-loyalty-mcp` (see `supabase/functions/loyalty-mcp/index.ts` and `supabase/functions/recipient-loyalty-mcp/index.ts` for the current list)
 - **Compatible with**: Claude Desktop, Cursor, VS Code, any MCP client
 
 ### 4. CDP Server Wallets (MPC) ✅

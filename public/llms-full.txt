@@ -100,7 +100,7 @@ curl -X POST \
 
 Response returns calldata with Builder Code for onchain execution.
 
-## MCP Server — 38 Tools (Merchant)
+## MCP Server — 39 Tools (Merchant)
 
 URL: https://api.loyalspark.online/loyalty-mcp
 Transport: Streamable HTTP
@@ -120,32 +120,33 @@ Auth: x-api-key header
 10. `update_program_config` — Update cashback_rate / points_per_dollar in DB
 11. `list_rewards` — Rewards for a program (with redemption metrics)
 12. `create_reward` — Create redeemable reward
-13. `mint_loyalty_tokens` — Mint calldata with platform fee
+13. `mint_loyalty_tokens` — Fee-first mint calls[] + fee_obligation_id
 14. `earn_points` — Auto-calculate and mint tokens from purchase amount (cashback)
-15. `transfer_loyalty_tokens` — Transfer calldata
-16. `get_token_balance` — Balance and tier info
-17. `get_program_analytics` — Metrics and performance
-18. `get_platform_stats` — Global platform statistics (admin-only)
-19. `list_marketplace_offers` — P2P offers
-20. `cancel_stale_offers` — Cancel old marketplace offers (admin-only)
-21. `redeem_reward` — Redeem reward: verify tx + create voucher
-22. `use_voucher` — Mark voucher as used
-23. `check_voucher_status` — Public voucher status lookup (no API key)
-24. `create_personalized_offer` — Create targeted offer for a customer
-25. `update_reward_status` — Activate/deactivate rewards
-26. `export_customers` — Export customer data for analytics
-27. `send_report` — Submit report to developer dashboard
-28. `list_my_reports` — View previously submitted reports
-29. `update_report_status` — Update report status (reviewed/done)
-30. `delete_report` — Delete an outdated report
-31. `create_gift_certificate` — Issue gift / welcome certificate (LOYAL-XXXXXX), single or batch up to 100
-32. `list_gift_certificates` — List certificates issued by your merchant (with status + redemption info)
-33. `revoke_gift_certificate` — Revoke an active gift certificate (active → revoked)
-34. `mark_gift_certificate_minted` — Mark a claimed certificate as minted with the on-chain mint tx (pending_mint → redeemed)
-35. `bazaar_discover_resources` — Discover x402-priced HTTPS endpoints on Bazaar
-36. `bazaar_discover_mcp_servers` — Discover MCP servers advertised on Bazaar
-37. `bazaar_probe_x402` — Inspect the 402 payment requirements of a URL
-38. `bazaar_pay_and_call` — Pay + call an x402 endpoint using the agent's CDP MPC wallet (spend cap ≤ 10 USDC/call)
+15. `confirm_mint_fee` — Settle protocol fee after mint/earn (lsk_-only; not x402-priced)
+16. `transfer_loyalty_tokens` — Transfer calldata
+17. `get_token_balance` — Balance and tier info
+18. `get_program_analytics` — Metrics and performance
+19. `get_platform_stats` — Global platform statistics (admin-only)
+20. `list_marketplace_offers` — P2P offers
+21. `cancel_stale_offers` — Cancel old marketplace offers (admin-only)
+22. `redeem_reward` — Redeem reward: verify tx + create voucher
+23. `use_voucher` — Mark voucher as used
+24. `check_voucher_status` — Public voucher status lookup (no API key)
+25. `create_personalized_offer` — Create targeted offer for a customer
+26. `update_reward_status` — Activate/deactivate rewards
+27. `export_customers` — Export customer data for analytics
+28. `send_report` — Submit report to developer dashboard
+29. `list_my_reports` — View previously submitted reports
+30. `update_report_status` — Update report status (reviewed/done)
+31. `delete_report` — Delete an outdated report
+32. `create_gift_certificate` — Issue gift / welcome certificate (LOYAL-XXXXXX), single or batch up to 100
+33. `list_gift_certificates` — List certificates issued by your merchant (with status + redemption info)
+34. `revoke_gift_certificate` — Revoke an active gift certificate (active → revoked)
+35. `mark_gift_certificate_minted` — Mark a claimed certificate as minted with the on-chain mint tx (pending_mint → redeemed)
+36. `bazaar_discover_resources` — Discover x402-priced HTTPS endpoints on Bazaar
+37. `bazaar_discover_mcp_servers` — Discover MCP servers advertised on Bazaar
+38. `bazaar_probe_x402` — Inspect the 402 payment requirements of a URL
+39. `bazaar_pay_and_call` — Pay + call an x402 endpoint using the agent's CDP MPC wallet (spend cap ≤ 10 USDC/call)
 
 ## Recipient MCP Server — 20 Tools (Holder, `rwk_`)
 

@@ -261,7 +261,7 @@ export default function ForAgentsPage() {
               <CardHeader className="pb-2">
                 <Terminal className="h-6 w-6 text-primary mb-1" />
                 <CardTitle className="text-base">REST</CardTitle>
-                <CardDescription>27 authenticated routes + public GET /vouchers/status</CardDescription>
+                <CardDescription>28 authenticated routes + public GET /vouchers/status</CardDescription>
               </CardHeader>
               <CardContent className="text-xs text-muted-foreground space-y-2">
                 <p>Base URL (append path):</p>

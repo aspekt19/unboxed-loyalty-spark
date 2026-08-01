@@ -397,7 +397,7 @@ title(s, "Живой продукт, не слайды")
 status = [
     ("Live MVP", "Развёрнут на Base Mainnet (Chain ID 8453)"),
     ("Web · PWA · iOS/Android", "Capacitor 8 — мультиплатформа"),
-    ("28 REST + 38 MCP", "инструментов для агентов (+20 recipient MCP)"),
+    ("28 REST + 39 MCP", "инструментов для агентов (+20 recipient MCP)"),
     ("Privy + SIWE", "+ scoped API-ключи и полный аудит"),
 ]
 for i, (num, lab) in enumerate(status):

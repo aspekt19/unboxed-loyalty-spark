@@ -40,7 +40,7 @@ const examples = [
     sector: "Agent-to-agent (A2A)",
     summary:
       "An autonomous shopping agent pays merchants through x402/MPP gateways and is rewarded with loyalty tokens via the Loyal Spark MCP server. The agent later spends those tokens on subscriptions, partner perks, or trades them P2P.",
-    metrics: ["38 merchant + 20 recipient MCP tools", "CDP MPC wallets for agents", "Pay-per-request via x402 / MPP"],
+    metrics: ["39 merchant + 20 recipient MCP tools", "CDP MPC wallets for agents", "Pay-per-request via x402 / MPP"],
     keywords: ["A2A loyalty", "agent rewards on Base"],
   },
   {

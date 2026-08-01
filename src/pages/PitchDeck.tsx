@@ -170,7 +170,7 @@ const PitchDeck = () => {
       metrics: [
         { label: 'Platform', value: 'Live MVP on Base', icon: Zap },
         { label: 'Surfaces', value: 'Web · PWA · Capacitor', icon: Globe },
-        { label: 'Agent API', value: '42 REST + 58 MCP tools', icon: Bot },
+        { label: 'Agent API', value: '43 REST + 59 MCP tools', icon: Bot },
         { label: 'Auth', value: 'Privy + SIWE + scoped keys', icon: KeyRound },
       ],
     },

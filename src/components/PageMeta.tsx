@@ -38,12 +38,12 @@ const routeMeta: Record<string, PageMetaEntry> = {
   "/api-docs": {
     title: "API & MCP Documentation — Loyal Spark",
     description:
-      "REST API and MCP Server docs for AI agents on Base L2 — 27 authenticated merchant REST routes + 1 public voucher status, 14 recipient REST routes, 58 MCP tools (38 merchant + 20 recipient).",
+      "REST API and MCP Server docs for AI agents on Base L2 — 28 authenticated merchant REST routes + 1 public voucher status, 14 recipient REST routes, 59 MCP tools (39 merchant + 20 recipient).",
   },
   "/for-agents": {
     title: "For AI Agents — Loyal Spark",
     description:
-      "Onboard AI agents: API keys, REST, MCP (38 merchant + 20 recipient tools), x402/MPP gateways, discovery URLs, and skills.",
+      "Onboard AI agents: API keys, REST, MCP (39 merchant + 20 recipient tools), x402/MPP gateways, discovery URLs, and skills.",
   },
   "/examples": {
     title: "Blockchain Loyalty Program Examples — Loyal Spark",

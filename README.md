@@ -145,9 +145,9 @@ curl -X POST \
   https://api.loyalspark.online/agent-api/mint
 ```
 
-### API Endpoints (27 authenticated + 1 public)
+### API Endpoints (28 authenticated + 1 public)
 
-All routes below require `x-api-key: lsk_...` except **GET `/vouchers/status`** (public).
+All routes below require `x-api-key: lsk_...` except **GET `/vouchers/status`** (public). Canonical catalogue: `public/.well-known/agent.json` (must match `supabase/functions/agent-api/index.ts`).
 
 | Method | Path | Scope | Description |
 |--------|------|-------|-------------|
@@ -162,8 +162,9 @@ All routes below require `x-api-key: lsk_...` except **GET `/vouchers/status`** 
 | POST | `/program-status` | mint or `create_program` | Update program status |
 | GET | `/rewards` | read | List rewards |
 | POST | `/rewards` | manage_rewards | Create reward |
-| POST | `/mint` | mint | Mint tokens |
-| POST | `/earn` | mint | Cashback: mint from purchase amount × rate |
+| POST | `/mint` | mint | Fee-first mint `calls[]` + `fee_obligation_id` |
+| POST | `/mint/confirm` | mint | Settle protocol fee after mint/earn (obligation_id + fee_tx_hash) |
+| POST | `/earn` | mint | Cashback: mint from purchase amount × rate (same fee-first + confirm) |
 | POST | `/transfer` | mint | Transfer tokens |
 | GET | `/balance` | read | Token balance & tier |
 | GET | `/customers` | read | Customer list |
@@ -178,8 +179,7 @@ All routes below require `x-api-key: lsk_...` except **GET `/vouchers/status`** 
 | POST | `/cancel-offer` | trade | Cancel P2P offer |
 | GET | `/tx-receipt` | authenticated | Extract token_address from deploy tx |
 | GET | `/merchant-profile` | read | Read merchant profile |
-| POST | `/merchant-profile` | manage_rewards | Create merchant profile |
-| PUT | `/merchant-profile` | manage_rewards | Update merchant profile |
+| POST | `/merchant-profile` | manage_rewards | Create or update merchant profile (`PUT` also accepted) |
 
 ### MCP Server (for LLMs)
 
@@ -198,8 +198,8 @@ Connect Claude, GPT, or any MCP-compatible agent:
 }
 ```
 
-**MCP tools (38)** — defined in `supabase/functions/loyalty-mcp/index.ts`:  
-`get_platform_info`, `get_my_profile`, `generate_program_defaults`, `get_program_workflow_status`, `list_loyalty_programs`, `create_loyalty_program`, `register_loyalty_program`, `activate_loyalty_program`, `update_program_status`, `update_program_config`, `list_rewards`, `create_reward`, `mint_loyalty_tokens`, `transfer_loyalty_tokens`, `earn_points`, `get_token_balance`, `get_program_analytics`, `list_marketplace_offers`, `redeem_reward`, `use_voucher`, `check_voucher_status`, `get_platform_stats`, `cancel_stale_offers`, `create_personalized_offer`, `update_reward_status`, `export_customers`, `send_report`, `list_my_reports`, `update_report_status`, `delete_report`, `create_gift_certificate`, `list_gift_certificates`, `revoke_gift_certificate`, `mark_gift_certificate_minted`, `bazaar_discover_resources`, `bazaar_discover_mcp_servers`, `bazaar_probe_x402`, `bazaar_pay_and_call` (last four = Bazaar side-car for outbound x402 discovery + signed payments).
+**MCP tools (39)** — defined in `supabase/functions/loyalty-mcp/index.ts`:  
+`get_platform_info`, `get_my_profile`, `generate_program_defaults`, `get_program_workflow_status`, `list_loyalty_programs`, `create_loyalty_program`, `register_loyalty_program`, `activate_loyalty_program`, `update_program_status`, `update_program_config`, `list_rewards`, `create_reward`, `mint_loyalty_tokens`, `transfer_loyalty_tokens`, `earn_points`, `confirm_mint_fee`, `get_token_balance`, `get_program_analytics`, `list_marketplace_offers`, `redeem_reward`, `use_voucher`, `check_voucher_status`, `get_platform_stats`, `cancel_stale_offers`, `create_personalized_offer`, `update_reward_status`, `export_customers`, `send_report`, `list_my_reports`, `update_report_status`, `delete_report`, `create_gift_certificate`, `list_gift_certificates`, `revoke_gift_certificate`, `mark_gift_certificate_minted`, `bazaar_discover_resources`, `bazaar_discover_mcp_servers`, `bazaar_probe_x402`, `bazaar_pay_and_call` (`confirm_mint_fee` = lsk_-only fee settlement, not x402-priced; last four = Bazaar side-car).
 
 ### Base MCP custom plugin (`send_calls`-ready calldata)
 
@@ -225,7 +225,7 @@ For **AI agents that only hold a wallet** which receives loyalty tokens (not mer
 | MCP | `https://api.loyalspark.online/recipient-loyalty-mcp` |
 | Register key | `POST …/recipient-api/register` with SIWE `{ message, signature }` (nonce from `siwe-nonce`) — returns `rwk_…` once. Pass Supabase `apikey` (anon/publishable) header like other public functions. |
 
-**REST (all require `x-api-key: rwk_…` except register):** `GET /me`, `GET /balances`, `GET /balance?token_address=`, `GET /rewards?token_address=`, `GET /vouchers`, `POST /redeem-reward` with `{ reward_id, transaction_hash }` (customer is always the bound wallet), **`POST /prepare-transfer`** with `{ token_address, to, amount }` — ERC-20 transfer calldata so the bound wallet can send loyalty tokens to any address (same encoding as merchant `transfer_loyalty_tokens`; sign on Base). **P2P:** `GET /offers?token_address=`, `POST /offers`, `POST /accept-offer`, `POST /cancel-offer` (same bodies as merchant `agent-api` marketplace; `creator_address` is the bound wallet).
+**REST (14 routes; all require `x-api-key: rwk_…` except register):** `GET /me`, `GET /balances`, `GET /balance?token_address=`, `GET /rewards?token_address=`, `GET /vouchers`, `GET /workflow/reward-status`, `POST /register` (SIWE), `POST /redeem-reward` with `{ reward_id, transaction_hash }` (customer is always the bound wallet), **`POST /prepare-transfer`** with `{ token_address, to, amount }`, `POST /workflow/prepare-reward-redemption`. **P2P:** `GET /offers?token_address=`, `POST /offers`, `POST /accept-offer`, `POST /cancel-offer` (same bodies as merchant `agent-api` marketplace; `creator_address` is the bound wallet).
 
 **MCP tools (20)** — `supabase/functions/recipient-loyalty-mcp/index.ts`: `get_recipient_profile`, `list_my_loyalty_balances`, `get_my_loyalty_balance`, `get_reward_workflow_status`, `prepare_reward_redemption`, `prepare_loyalty_token_transfer`, `list_rewards_for_program`, `list_my_vouchers`, `redeem_my_reward`, `list_p2p_offers`, `create_p2p_offer`, `accept_p2p_offer`, `cancel_p2p_offer`, `lookup_gift_certificate`, `claim_gift_certificate`, `list_my_gift_certificates`, `bazaar_discover_resources`, `bazaar_discover_mcp_servers`, `bazaar_probe_x402`, `bazaar_pay_and_call` (last four = Bazaar side-car; `bazaar_pay_and_call` requires opt-in delegated CDP wallet).
 

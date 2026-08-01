@@ -43,7 +43,7 @@ Loyal Spark is a live product at https://loyalspark.online with:
 - Reward catalog and voucher system
 - P2P token marketplace with escrow
 - Customer tiers and referral programs
-- REST API (27 authenticated routes + public **GET `/vouchers/status`**) + MCP Server (**38** merchant tools + **20** recipient tools) for AI agent integration — source: `supabase/functions/agent-api/index.ts`, `supabase/functions/loyalty-mcp/index.ts`, `supabase/functions/recipient-loyalty-mcp/index.ts`
+- REST API (28 authenticated routes + public **GET `/vouchers/status`**) + MCP Server (**39** merchant tools + **20** recipient tools) for AI agent integration — source: `supabase/functions/agent-api/index.ts`, `supabase/functions/loyalty-mcp/index.ts`, `supabase/functions/recipient-loyalty-mcp/index.ts`
 - Payment gateways: x402 (Coinbase) and MPP (Machine Payments Protocol)
 - **Pricing (public, do not invent other numbers):** Merchant portal SaaS **Starter $39 / Growth $79 / Scale $149** USD/month; AI agent API+MCP plans **Free / Pro $49 / Enterprise $129** USD/month (see `docs/business/MONETIZATION_AND_PRICING.md`). Pay-per-call (x402/MPP) is separate.
 
@@ -53,7 +53,7 @@ Target users: Small-to-medium merchants (cafes, shops, e-commerce) and AI agent 
 
 ## Available MCP Tools
 
-> Full catalogue: **38** tools — `supabase/functions/loyalty-mcp/index.ts`. Subsets below are the ones most relevant to this workflow.
+> Full catalogue: **39** tools — `supabase/functions/loyalty-mcp/index.ts`. Subsets below are the ones most relevant to this workflow.
 
 **Data tools:**
 - `get_platform_info` — Protocol metadata and capabilities
@@ -143,7 +143,7 @@ You are responsible for:
 
 ## Available MCP Tools
 
-> Full catalogue: **38** tools — `supabase/functions/loyalty-mcp/index.ts`.
+> Full catalogue: **39** tools — `supabase/functions/loyalty-mcp/index.ts`.
 
 **Data tools:**
 - `get_platform_info` — Protocol metadata
@@ -168,7 +168,7 @@ The following items have already been implemented by the developer. Do NOT inclu
 - ✅ Sitemap updated with correct lastmod dates and OpenAPI/agent.json entries
 - ✅ Meta author and twitter:site tags in index.html
 - ✅ llms.txt references agent.json, OpenAPI, and Skills
-- ✅ agent.json / MCP tool list matches `loyalty-mcp/index.ts` (**38** tools including reporting and admin tools)
+- ✅ agent.json / MCP tool list matches `loyalty-mcp/index.ts` (**39** tools including reporting and admin tools)
 - ✅ robots.txt allows all crawlers and references sitemap.xml
 - ✅ Marketplace count "discrepancy" is expected behavior (total includes all statuses; list shows active only)
 - ✅ list_rewards now includes per-reward redemption metrics (total, redeemed, last_30d)
@@ -289,12 +289,12 @@ Even when ≥24h since the last tweet, you do **not** have to post every run:
 Loyal Spark enables:
 - **For Merchants**: Deploy branded ERC-20 loyalty tokens on Base, set up rewards catalogs, manage customer tiers, track analytics via CRM dashboard
 - **For Customers**: Earn tokens, redeem rewards, trade tokens on P2P marketplace, use vouchers at merchants
-- **For AI Agents**: Integrate via REST API (27 authenticated routes + public voucher status), MCP Server (**38** merchant + **20** recipient tools), or pay-per-request gateways (x402, MPP) — no API key needed for payment gateways
+- **For AI Agents**: Integrate via REST API (28 authenticated routes + public voucher status), MCP Server (**39** merchant + **20** recipient tools), or pay-per-request gateways (x402, MPP) — no API key needed for payment gateways
 - **Unique features**: Round-up micro-savings (DeFi yield on spare change), referral programs, automated reward rules
 
 ## Available MCP Tools
 
-> Full catalogue: **38** tools — `supabase/functions/loyalty-mcp/index.ts`.
+> Full catalogue: **39** tools — `supabase/functions/loyalty-mcp/index.ts`.
 
 **Data tools:**
 - `get_platform_info` — Protocol features and capabilities
@@ -392,7 +392,7 @@ You are responsible for:
 
 ## Available MCP Tools
 
-> Full catalogue: **38** tools — `supabase/functions/loyalty-mcp/index.ts`.
+> Full catalogue: **39** tools — `supabase/functions/loyalty-mcp/index.ts`.
 
 **Data tools (use all of these in every analysis cycle):**
 - `get_platform_info` — Protocol metadata

@@ -143,7 +143,7 @@ From ~$0.001 per read, ~$0.005–0.05 per write. USDC on Base, no API key.
 |--------|-------|
 | **Platform** | Live MVP on Base |
 | **Surfaces** | Web · PWA · Capacitor |
-| **Agent API** | 28 merchant REST (27 auth + 1 public) + 38 MCP tools (+ 20 recipient MCP) |
+| **Agent API** | 28 authenticated + 1 public merchant REST + 39 MCP tools (+ 20 recipient MCP) |
 | **Auth** | Privy + SIWE + scoped keys |
 
 ---
