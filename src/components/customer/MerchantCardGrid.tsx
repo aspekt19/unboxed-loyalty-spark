@@ -273,9 +273,9 @@ export function MerchantCardGrid({ onMerchantSelect, selectedMerchant, restrictT
               ))}
             </div>
           )}
-        </div>
+        </CardContent>
       )}
-    </div>
+    </Card>
   );
 }
 
