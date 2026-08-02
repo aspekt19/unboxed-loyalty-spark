@@ -177,24 +177,26 @@ export function MerchantCardGrid({ onMerchantSelect, selectedMerchant, restrictT
   const restricted = !!restrictToMerchants;
 
   return (
-    <div className="rounded-lg border bg-card">
-      <button
-        type="button"
-        onClick={() => setExpanded(v => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/40 transition-colors"
-      >
-        <div className="flex items-center gap-2 min-w-0">
-          <Store className="h-4 w-4 text-primary flex-shrink-0" />
-          <span className="text-sm font-medium truncate">
-            {restricted ? 'Your merchants' : 'Browse merchants'}
-          </span>
-          <Badge variant="secondary" className="text-[10px]">{filtered.length}</Badge>
-        </div>
-        {expanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
-      </button>
+    <Card className="border-2">
+      <CardHeader className="pb-3">
+        <button
+          type="button"
+          onClick={() => setExpanded(v => !v)}
+          className="w-full flex items-center justify-between -m-4 sm:-m-6 p-4 sm:p-6 hover:bg-muted/40 transition-colors rounded-3xl"
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-2xl">
+              <Store className="h-5 w-5 text-primary flex-shrink-0" />
+              {restricted ? 'Your merchants' : 'Browse merchants'}
+            </CardTitle>
+            <Badge variant="secondary" className="text-[10px]">{filtered.length}</Badge>
+          </div>
+          {expanded ? <ChevronUp className="h-5 w-5 text-muted-foreground" /> : <ChevronDown className="h-5 w-5 text-muted-foreground" />}
+        </button>
+      </CardHeader>
 
       {expanded && (
-        <div className="px-4 pb-4 space-y-3 border-t">
+        <CardContent className="space-y-3 border-t">
           <div className="flex flex-col sm:flex-row gap-2 pt-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -271,9 +273,9 @@ export function MerchantCardGrid({ onMerchantSelect, selectedMerchant, restrictT
               ))}
             </div>
           )}
-        </div>
+        </CardContent>
       )}
-    </div>
+    </Card>
   );
 }
 
