@@ -245,7 +245,8 @@ export function MerchantDiscoverPanel() {
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, [hasMore, filtered.length]);
+  }, [hasMore, filtered.length, visibleCount]);
+
 
   const activeCategoryLabel =
     CATEGORIES.find((c) => c.value === category)?.label || 'All';
