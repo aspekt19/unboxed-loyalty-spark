@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, Activity, Target, Crown, TrendingUp } from 'lucide-react';
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useMerchantCustomerIndex } from '@/hooks/useMerchantCustomerIndex';
 
 interface TopCustomer {
   customer_address: string;
@@ -33,10 +34,30 @@ interface Props {
 
 export function EnhancedAnalytics({ tokenAddress }: Props) {
   const { address } = useAccount();
+  const { data: customerIndex, isLoading: indexLoading } = useMerchantCustomerIndex(address);
   const [topCustomers, setTopCustomers] = useState<TopCustomer[]>([]);
   const [tierDistribution, setTierDistribution] = useState<TierDistribution[]>([]);
   const [activityData, setActivityData] = useState<ActivityData[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!customerIndex) {
+      setTopCustomers([]);
+      return;
+    }
+    const ranked = [...customerIndex.profiles]
+      .sort((a, b) => (b.total_spent || 0) - (a.total_spent || 0))
+      .slice(0, 10)
+      .map((c) => ({
+        customer_address: c.wallet_address,
+        first_name: c.first_name || 'Anonymous',
+        last_name: c.last_name || '',
+        total_spent: c.total_spent || 0,
+        total_purchases: c.total_purchases || 0,
+        rfm_score: c.rfm_score || 'N/A',
+      }));
+    setTopCustomers(ranked);
+  }, [customerIndex]);
 
   useEffect(() => {
     if (!address) return;
@@ -44,34 +65,6 @@ export function EnhancedAnalytics({ tokenAddress }: Props) {
     const loadData = async () => {
       try {
         setLoading(true);
-
-        // Load top customers
-        const vouchersData = await supabase
-          .from('vouchers')
-          .select('customer_address')
-          .eq('merchant_address', address.toLowerCase());
-
-        const customerAddresses = [...new Set((vouchersData.data || []).map(v => v.customer_address))];
-
-        if (customerAddresses.length > 0) {
-          const { data: customersData } = await supabase
-            .from('customer_profiles')
-            .select('wallet_address, first_name, last_name, total_spent, total_purchases, rfm_score')
-            .in('wallet_address', customerAddresses)
-            .order('total_spent', { ascending: false })
-            .limit(10);
-
-          if (customersData) {
-            setTopCustomers(customersData.map(c => ({
-              customer_address: c.wallet_address,
-              first_name: c.first_name || 'Anonymous',
-              last_name: c.last_name || '',
-              total_spent: c.total_spent || 0,
-              total_purchases: c.total_purchases || 0,
-              rfm_score: c.rfm_score || 'N/A'
-            })));
-          }
-        }
 
         // Load tier distribution if token address provided
         if (tokenAddress) {
@@ -154,7 +147,7 @@ export function EnhancedAnalytics({ tokenAddress }: Props) {
 
   const COLORS = ['#6366f1', '#8b5cf6', '#a855f7', '#c084fc', '#d8b4fe'];
 
-  if (loading) {
+  if (loading || indexLoading) {
     return <div className="text-sm text-muted-foreground">Loading analytics...</div>;
   }
 

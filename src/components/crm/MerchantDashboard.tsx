@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
-import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Users, ShoppingBag, TrendingUp, Award, Activity, Calendar } from 'lucide-react';
 import { EnhancedAnalytics } from './EnhancedAnalytics';
+import { useMerchantAnalyticsView } from '@/hooks/useMerchantCustomerIndex';
 
 interface MerchantAnalytics {
   merchant_address: string;
@@ -25,33 +24,9 @@ interface MerchantAnalytics {
 
 export function MerchantDashboard() {
   const { address } = useAccount();
-  const [analytics, setAnalytics] = useState<MerchantAnalytics[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!address) return;
-
-    const loadAnalytics = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('merchant_analytics')
-          .select('*')
-          .eq('merchant_address', address.toLowerCase());
-
-        if (error) throw error;
-        setAnalytics(data || []);
-      } catch (err) {
-        console.error('Error loading analytics:', err);
-        setError('Failed to load analytics');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadAnalytics();
-  }, [address]);
+  const { data, isLoading: loading, error: queryError } = useMerchantAnalyticsView(address);
+  const analytics = (data ?? []) as MerchantAnalytics[];
+  const error = queryError ? 'Failed to load analytics' : null;
 
   if (loading) {
     return (

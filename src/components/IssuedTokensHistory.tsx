@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
+import { useMerchantPrograms } from '@/hooks/useMerchantPrograms';
 
 interface IssuedToken {
   recipient: string;
@@ -20,74 +22,31 @@ interface IssuedToken {
   transactionHash: string | null;
 }
 
-interface ProgramOption {
-  name: string;
-  symbol: string;
-  tokenAddress: string;
-}
-
 export function IssuedTokensHistory() {
   const { address } = useAccount();
-  const [history, setHistory] = useState<IssuedToken[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [selectedProgramFilter, setSelectedProgramFilter] = useState<string>('all');
   const [customerSearch, setCustomerSearch] = useState<string>('');
-  const [programs, setPrograms] = useState<ProgramOption[]>([]);
-  const hasLoadedRef = useRef(false);
-  const loadingAddressRef = useRef<string | null>(null);
+  const { data: programRows = [], isLoading: programsLoading } = useMerchantPrograms(address);
 
-  useEffect(() => {
-    if (!address) {
-      setHistory([]);
-      setPrograms([]);
-      setIsLoading(false);
-      hasLoadedRef.current = false;
-      loadingAddressRef.current = null;
-      return;
-    }
+  const programs = useMemo(
+    () =>
+      programRows
+        .filter((p) => p.token_address)
+        .map((p) => ({
+          name: p.name,
+          symbol: p.symbol,
+          tokenAddress: p.token_address as string,
+        })),
+    [programRows],
+  );
 
-    if (!hasLoadedRef.current || loadingAddressRef.current !== address.toLowerCase()) {
-      loadingAddressRef.current = address.toLowerCase();
-      void loadHistory();
-      hasLoadedRef.current = true;
-    }
-
-    const handleUpdate = () => void loadHistory();
-    window.addEventListener('tokensIssued', handleUpdate);
-    window.addEventListener('loyaltyProgramsUpdated', handleUpdate);
-
-    return () => {
-      window.removeEventListener('tokensIssued', handleUpdate);
-      window.removeEventListener('loyaltyProgramsUpdated', handleUpdate);
-    };
-  }, [address]);
-
-  const loadHistory = async () => {
-    if (!address) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const normalizedAddress = address.toLowerCase();
-
-      // Load programs for filter dropdown
-      const { data: programsData } = await supabase
-        .from('loyalty_programs')
-        .select('name, symbol, token_address')
-        .eq('merchant_address', normalizedAddress)
-        .order('created_at', { ascending: false });
-
-      if (programsData && programsData.length > 0) {
-        setPrograms(
-          programsData
-            .filter((p) => p.token_address)
-            .map((p) => ({ name: p.name, symbol: p.symbol, tokenAddress: p.token_address }))
-        );
-      }
-
-      // Load mint history from DB
+  const mintQuery = useQuery({
+    queryKey: ['merchant', 'mint-history', address?.toLowerCase() ?? null],
+    enabled: Boolean(address),
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
+    queryFn: async (): Promise<IssuedToken[]> => {
+      const normalizedAddress = address!.toLowerCase();
       const { data: mintData, error: mintError } = await supabase
         .from('token_mint_history')
         .select('*')
@@ -95,18 +54,10 @@ export function IssuedTokensHistory() {
         .order('created_at', { ascending: false })
         .limit(200);
 
-      if (mintError) {
-        console.error('[IssuedTokensHistory] DB error:', mintError);
-        setError('Failed to load history.');
-        return;
-      }
+      if (mintError) throw mintError;
+      if (!mintData || mintData.length === 0) return [];
 
-      if (!mintData || mintData.length === 0) {
-        setHistory([]);
-        return;
-      }
-
-      const items: IssuedToken[] = mintData.map((row: any) => ({
+      return mintData.map((row) => ({
         recipient: row.recipient_address,
         amount: String(row.amount),
         tokenName: row.token_name,
@@ -115,15 +66,24 @@ export function IssuedTokensHistory() {
         timestamp: new Date(row.created_at).getTime(),
         transactionHash: row.transaction_hash,
       }));
+    },
+  });
 
-      setHistory(items);
-    } catch (err: any) {
-      console.error('[IssuedTokensHistory] Error:', err);
-      setError('Failed to load history.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  useEffect(() => {
+    const handleUpdate = () => {
+      void mintQuery.refetch();
+    };
+    window.addEventListener('tokensIssued', handleUpdate);
+    window.addEventListener('loyaltyProgramsUpdated', handleUpdate);
+    return () => {
+      window.removeEventListener('tokensIssued', handleUpdate);
+      window.removeEventListener('loyaltyProgramsUpdated', handleUpdate);
+    };
+  }, [mintQuery]);
+
+  const history = mintQuery.data ?? [];
+  const isLoading = Boolean(address) && (programsLoading || mintQuery.isLoading);
+  const error = mintQuery.error ? 'Failed to load history.' : null;
 
   if (!address) return null;
 
@@ -155,7 +115,7 @@ export function IssuedTokensHistory() {
             <AlertDescription className="flex flex-col gap-3">
               <span>{error}</span>
               <button
-                onClick={() => loadHistory()}
+                onClick={() => void mintQuery.refetch()}
                 className="text-sm underline hover:no-underline self-start"
               >
                 Try again

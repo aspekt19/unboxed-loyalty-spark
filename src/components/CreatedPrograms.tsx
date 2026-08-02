@@ -13,6 +13,7 @@ import { ProgramStatusBadge } from './ProgramStatusBadge';
 import { ProgramControlButtons } from './ProgramControlButtons';
 import { ProgramActivationNote } from './ProgramActivationNote';
 import { ExtendProgramDialog } from './ExtendProgramDialog';
+import { useMerchantPrograms } from '@/hooks/useMerchantPrograms';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import useEmblaCarousel from 'embla-carousel-react';
@@ -88,6 +89,8 @@ export function CreatedPrograms({ onSelectProgram, merchantAddress: merchantAddr
   const { address } = useAccount();
   const { burnAllTokens, isBurning, progress } = useBurnAllTokens();
   const { pauseProgram, unpauseUtility, enableMinting, isPending: isToggling, isSuccess: toggleSuccess, hash } = useToggleProgramStatus();
+  const effectiveMerchantAddress = merchantAddressOverride || address?.toLowerCase();
+  const { data: merchantProgramRows = [] } = useMerchantPrograms(effectiveMerchantAddress);
   const { tokenStats, isLoadingStats } = useTokenStats(programs);
   const isMobile = useIsMobile();
   const { selectionChanged } = useFarcasterHaptics();
@@ -127,61 +130,34 @@ export function CreatedPrograms({ onSelectProgram, merchantAddress: merchantAddr
 
   // Clear programs on wallet disconnect
   useEffect(() => {
-    if (!address) {
+    if (!address && !merchantAddressOverride) {
       setPrograms([]);
       setSelectedProgram(null);
     }
-  }, [address]);
+  }, [address, merchantAddressOverride]);
 
-  const effectiveMerchantAddress = merchantAddressOverride || address?.toLowerCase();
-
-  // Load programs from DB + realtime subscription
+  // Shared merchant programs cache (TQ) — replaces per-mount select* + duplicate realtime
   useEffect(() => {
     if (!effectiveMerchantAddress) return;
-
-    const loadPrograms = async () => {
-      try {
-        const { data: dbPrograms, error } = await supabase
-          .from('loyalty_programs')
-          .select('*')
-          .eq('merchant_address', effectiveMerchantAddress)
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          console.error('[CreatedPrograms] Load error:', error.message);
-          toast.error('Failed to load programs');
-          return;
-        }
-
-        const mapped = dbPrograms.map(mapDbProgram);
-        setPrograms(mapped);
-        if (!merchantAddressOverride) {
-          localStorage.setItem('loyaltyPrograms', JSON.stringify(mapped));
-        }
-      } catch (error) {
-        console.error('[CreatedPrograms] Load error:', error);
-      }
-    };
-
-    loadPrograms();
-    
-    const handleUpdate = () => loadPrograms();
-    window.addEventListener('loyaltyProgramsUpdated', handleUpdate);
-
-    const channel = supabase
-      .channel(`loyalty_programs_changes_${effectiveMerchantAddress}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'loyalty_programs', filter: `merchant_address=eq.${effectiveMerchantAddress}` },
-        () => loadPrograms()
-      )
-      .subscribe();
-
-    return () => {
-      window.removeEventListener('loyaltyProgramsUpdated', handleUpdate);
-      supabase.removeChannel(channel);
-    };
-  }, [effectiveMerchantAddress, merchantAddressOverride]);
+    const mapped = merchantProgramRows.map((row) =>
+      mapDbProgram({
+        id: row.id,
+        name: row.name,
+        symbol: row.symbol,
+        created_at: row.created_at || new Date().toISOString(),
+        token_address: row.token_address || '',
+        expiration_date: row.expiration_date || undefined,
+        status: row.status,
+        cashback_rate: row.cashback_rate ?? undefined,
+        points_per_dollar: row.points_per_dollar ?? undefined,
+        token_standard: row.token_standard ?? undefined,
+      }),
+    );
+    setPrograms(mapped);
+    if (!merchantAddressOverride) {
+      localStorage.setItem('loyaltyPrograms', JSON.stringify(mapped));
+    }
+  }, [effectiveMerchantAddress, merchantProgramRows, merchantAddressOverride]);
 
   const handleSelectProgram = (program: LoyaltyProgram, index: number) => {
     if (!program.tokenAddress) {
@@ -658,6 +634,7 @@ function ProgramCard({
                 fallbackStatus={program.status || (program.tokenAddress ? 'active' : 'pending')}
                 expirationDate={program.expirationDate}
                 tokenStandard={program.tokenStandard}
+                preferDbStatus
               />
               {program.tokenAddress && !readOnly && (
                 <ProgramControlButtons

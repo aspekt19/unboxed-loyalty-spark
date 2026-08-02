@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useAccount } from 'wagmi';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { useMerchantCustomerIndex } from '@/hooks/useMerchantCustomerIndex';
 
 interface RFMStats {
   champions: number;
@@ -18,67 +19,27 @@ interface RFMStats {
 
 export function RFMSegmentation() {
   const { address } = useAccount();
-  const [stats, setStats] = useState<RFMStats>({
-    champions: 0,
-    loyal: 0,
-    at_risk: 0,
-    lost: 0,
-    new: 0,
-  });
-  const [loading, setLoading] = useState(true);
+  const { data: index, isLoading: loading, refetch } = useMerchantCustomerIndex(address);
   const [updating, setUpdating] = useState(false);
 
-  const loadStats = async () => {
-    if (!address) return;
+  const stats = useMemo<RFMStats>(() => {
+    const rfmCounts: RFMStats = {
+      champions: 0,
+      loyal: 0,
+      at_risk: 0,
+      lost: 0,
+      new: 0,
+    };
+    if (!index) return rfmCounts;
 
-    try {
-      setLoading(true);
-
-      // Получаем всех клиентов мерчанта
-      const { data: voucherData } = await supabase
-        .from('vouchers')
-        .select('customer_address')
-        .eq('merchant_address', address.toLowerCase());
-
-      if (!voucherData || voucherData.length === 0) {
-        setStats({ champions: 0, loyal: 0, at_risk: 0, lost: 0, new: 0 });
-        return;
-      }
-
-      const uniqueAddresses = [...new Set(voucherData.map((v) => v.customer_address))];
-
-      // Получаем профили с RFM scores
-      const { data: profiles } = await supabase
-        .from('customer_profiles')
-        .select('rfm_score')
-        .in('wallet_address', uniqueAddresses);
-
-      const rfmCounts: RFMStats = {
-        champions: 0,
-        loyal: 0,
-        at_risk: 0,
-        lost: 0,
-        new: 0,
-      };
-
-      if (profiles) {
-        profiles.forEach((profile) => {
-          const score = (profile.rfm_score || 'new') as keyof RFMStats;
-          rfmCounts[score]++;
-        });
-      }
-
-      // Добавляем клиентов без профиля как "new"
-      const existingCount = profiles?.length || 0;
-      rfmCounts.new += uniqueAddresses.length - existingCount;
-
-      setStats(rfmCounts);
-    } catch (err) {
-      console.error('Error loading RFM stats:', err);
-    } finally {
-      setLoading(false);
+    for (const profile of index.profiles) {
+      const score = (profile.rfm_score || 'new') as keyof RFMStats;
+      if (score in rfmCounts) rfmCounts[score]++;
+      else rfmCounts.new++;
     }
-  };
+    rfmCounts.new += Math.max(0, index.customerAddresses.length - index.profiles.length);
+    return rfmCounts;
+  }, [index]);
 
   const updateRFMScores = async () => {
     setUpdating(true);
@@ -87,7 +48,7 @@ export function RFMSegmentation() {
       if (error) throw error;
 
       toast.success('RFM scores updated successfully');
-      await loadStats();
+      await refetch();
     } catch (err) {
       console.error('Error updating RFM scores:', err);
       toast.error('Failed to update RFM scores');
@@ -95,10 +56,6 @@ export function RFMSegmentation() {
       setUpdating(false);
     }
   };
-
-  useEffect(() => {
-    loadStats();
-  }, [address]);
 
   if (loading) {
     return <Skeleton className="h-64 w-full" />;

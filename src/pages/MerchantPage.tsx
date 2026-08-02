@@ -21,6 +21,12 @@ import { useCallback, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import type { NavItem } from '@/components/mobile/BottomNavBar';
+import { MERCHANT_PROGRAMS_QUERY_KEY } from '@/hooks/useMerchantPrograms';
+import {
+  MERCHANT_CUSTOMER_INDEX_QUERY_KEY,
+  MERCHANT_ANALYTICS_QUERY_KEY,
+} from '@/hooks/useMerchantCustomerIndex';
+import { MERCHANT_TOKEN_STATS_QUERY_KEY } from '@/hooks/useTokenStats';
 
 const HOME_SUB_TABS = ['dashboard', 'customers', 'marketing', 'billing', 'agents'];
 
@@ -63,8 +69,13 @@ const MerchantPage = () => {
   }, [user, mobileTab]);
 
   const handleRefresh = useCallback(async () => {
-    await queryClient.invalidateQueries();
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: MERCHANT_PROGRAMS_QUERY_KEY }),
+      queryClient.invalidateQueries({ queryKey: MERCHANT_CUSTOMER_INDEX_QUERY_KEY }),
+      queryClient.invalidateQueries({ queryKey: MERCHANT_ANALYTICS_QUERY_KEY }),
+      queryClient.invalidateQueries({ queryKey: MERCHANT_TOKEN_STATS_QUERY_KEY }),
+      queryClient.invalidateQueries({ queryKey: ['merchant'] }),
+    ]);
   }, [queryClient]);
 
   const handleMobileTabChange = (tab: string) => {

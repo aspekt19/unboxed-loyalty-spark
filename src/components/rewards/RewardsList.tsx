@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,12 +13,22 @@ import { useAccount } from 'wagmi';
 import { useAuth } from '@/contexts/AuthContext';
 import { Reward } from '@/types/rewards';
 import { getMerchantRewards, updateReward, deleteReward } from '@/lib/vouchers';
+import { useMerchantPrograms } from '@/hooks/useMerchantPrograms';
 
 export function RewardsList() {
   const { address } = useAccount();
   const { user } = useAuth();
   const [rewards, setRewards] = useState<Reward[]>([]);
-  const [tokens, setTokens] = useState<Map<string, { name: string; symbol: string }>>(new Map());
+  const { data: programRows = [] } = useMerchantPrograms(address);
+  const tokens = useMemo(() => {
+    const tokenMap = new Map<string, { name: string; symbol: string }>();
+    for (const p of programRows) {
+      if (p.token_address) {
+        tokenMap.set(p.token_address.toLowerCase(), { name: p.name, symbol: p.symbol });
+      }
+    }
+    return tokenMap;
+  }, [programRows]);
   const [editingReward, setEditingReward] = useState<Reward | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
@@ -32,42 +42,22 @@ export function RewardsList() {
 
     const merchantRewards = await getMerchantRewards(address);
     setRewards(merchantRewards);
-
-    // Загружаем информацию о токенах
-    const loyaltyPrograms = localStorage.getItem('loyaltyPrograms');
-    if (loyaltyPrograms) {
-      const programs = JSON.parse(loyaltyPrograms);
-      const tokenMap = new Map();
-      programs.forEach((p: any) => {
-        if (p.tokenAddress) {
-          tokenMap.set(p.tokenAddress.toLowerCase(), { name: p.name, symbol: p.symbol });
-        }
-      });
-      setTokens(tokenMap);
-    }
   };
 
   // Очищаем награды при отключении кошелька
   useEffect(() => {
     if (!address) {
       setRewards([]);
-      setTokens(new Map());
     }
   }, [address]);
 
   useEffect(() => {
-    loadData();
+    void loadData();
     window.addEventListener('rewardsUpdated', loadData);
-    
-    // Auto-refresh rewards every 5 seconds for real-time updates
-    const interval = setInterval(() => {
-      loadData();
-    }, 5000);
-    
     return () => {
       window.removeEventListener('rewardsUpdated', loadData);
-      clearInterval(interval);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address, user]);
 
   const handleToggleActive = async (rewardId: string) => {

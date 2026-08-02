@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { createReward } from '@/lib/vouchers';
 import { useAuth } from '@/contexts/AuthContext';
 import { rewardSchema } from '@/lib/validationSchemas';
 import { AuthPrompt } from '@/components/AuthPrompt';
+import { useMerchantPrograms } from '@/hooks/useMerchantPrograms';
 import { supabase } from '@/integrations/supabase/client';
 
 interface TokenInfo {
@@ -23,7 +24,18 @@ interface TokenInfo {
 export function CreateReward() {
   const { address } = useAccount();
   const { user } = useAuth();
-  const [tokens, setTokens] = useState<TokenInfo[]>([]);
+  const { data: programRows = [] } = useMerchantPrograms(address, { activeOnly: true });
+  const tokens: TokenInfo[] = useMemo(
+    () =>
+      programRows
+        .filter((p) => p.token_address)
+        .map((p) => ({
+          address: p.token_address as string,
+          name: p.name,
+          symbol: p.symbol,
+        })),
+    [programRows],
+  );
   const [formData, setFormData] = useState({
     tokenAddress: '',
     name: '',
@@ -32,53 +44,16 @@ export function CreateReward() {
   });
 
   useEffect(() => {
-    // Очищаем токены при отключении кошелька
     if (!address) {
-      setTokens([]);
       setFormData({ tokenAddress: '', name: '', description: '', cost: '' });
-      return;
     }
-
-    const loadPrograms = async () => {
-      // Загружаем только активные программы из БД для создания наград
-      const { data: programs, error } = await supabase
-        .from('loyalty_programs')
-        .select('token_address, name, symbol, status')
-        .eq('merchant_address', address.toLowerCase())
-        .in('status', ['active', 'expiring_soon']);
-      
-      if (error) {
-        console.error('Error loading programs for rewards:', error);
-        return;
-      }
-
-      if (programs && programs.length > 0) {
-        const activePrograms = programs.map((p) => ({
-          address: p.token_address,
-          name: p.name,
-          symbol: p.symbol,
-        }));
-        setTokens(activePrograms);
-      } else {
-        setTokens([]);
-      }
-    };
-
-    loadPrograms();
-
-    // Listen for updates when programs status changes
-    window.addEventListener('loyaltyProgramsUpdated', loadPrograms);
-    
-    // Auto-refresh programs every 5 seconds for real-time updates
-    const interval = setInterval(() => {
-      loadPrograms();
-    }, 5000);
-    
-    return () => {
-      window.removeEventListener('loyaltyProgramsUpdated', loadPrograms);
-      clearInterval(interval);
-    };
   }, [address]);
+
+  useEffect(() => {
+    if (!formData.tokenAddress && tokens.length > 0) {
+      setFormData((prev) => ({ ...prev, tokenAddress: tokens[0].address }));
+    }
+  }, [tokens, formData.tokenAddress]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

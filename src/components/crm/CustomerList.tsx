@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAccount } from 'wagmi';
-import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -8,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Users } from 'lucide-react';
+import { useMerchantCustomerIndex } from '@/hooks/useMerchantCustomerIndex';
 
 interface Customer {
   id: string;
@@ -33,75 +33,47 @@ const RFM_LABELS = {
 
 export function CustomerList() {
   const { address } = useAccount();
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const { data: index, isLoading: loading, error: queryError } = useMerchantCustomerIndex(address);
   const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [rfmFilter, setRfmFilter] = useState<string>('all');
+  const error = queryError ? 'Failed to load customers' : null;
 
-  useEffect(() => {
-    if (!address) return;
+  const customers = useMemo<Customer[]>(() => {
+    if (!index) return [];
+    const existingAddresses = new Set(index.profiles.map((c) => c.wallet_address));
+    const missingAddresses = index.customerAddresses.filter((addr) => !existingAddresses.has(addr));
 
-    const loadCustomers = async () => {
-      try {
-        setLoading(true);
+    const fromProfiles: Customer[] = index.profiles.map((c) => ({
+      id: c.id,
+      wallet_address: c.wallet_address,
+      first_name: c.first_name,
+      last_name: c.last_name,
+      email: c.email,
+      phone: c.phone,
+      total_purchases: c.total_purchases || 0,
+      total_spent: c.total_spent || 0,
+      last_purchase_date: c.last_purchase_date,
+      rfm_score: c.rfm_score,
+      created_at: c.created_at || new Date().toISOString(),
+    }));
 
-        // Получаем список всех уникальных клиентов мерчанта через vouchers
-        const { data: voucherData, error: voucherError } = await supabase
-          .from('vouchers')
-          .select('customer_address')
-          .eq('merchant_address', address.toLowerCase());
+    const placeholders: Customer[] = missingAddresses.map((addr) => ({
+      id: '',
+      wallet_address: addr,
+      first_name: null,
+      last_name: null,
+      email: null,
+      phone: null,
+      total_purchases: 0,
+      total_spent: 0,
+      last_purchase_date: null,
+      rfm_score: 'new',
+      created_at: new Date().toISOString(),
+    }));
 
-        if (voucherError) throw voucherError;
-
-        if (!voucherData || voucherData.length === 0) {
-          setCustomers([]);
-          setFilteredCustomers([]);
-          return;
-        }
-
-        const uniqueAddresses = [...new Set(voucherData.map((v) => v.customer_address))];
-
-        // Получаем профили клиентов
-        const { data: customerData, error: customerError } = await supabase
-          .from('customer_profiles')
-          .select('*')
-          .in('wallet_address', uniqueAddresses);
-
-        if (customerError) throw customerError;
-
-        // Создаём профили для клиентов, у которых их ещё нет
-        const existingAddresses = new Set(customerData?.map((c) => c.wallet_address) || []);
-        const missingAddresses = uniqueAddresses.filter((addr) => !existingAddresses.has(addr));
-
-        const newProfiles: Customer[] = missingAddresses.map((addr) => ({
-          id: '',
-          wallet_address: addr,
-          first_name: null,
-          last_name: null,
-          email: null,
-          phone: null,
-          total_purchases: 0,
-          total_spent: 0,
-          last_purchase_date: null,
-          rfm_score: 'new',
-          created_at: new Date().toISOString(),
-        }));
-
-        const allCustomers = [...(customerData || []), ...newProfiles];
-        setCustomers(allCustomers);
-        setFilteredCustomers(allCustomers);
-      } catch (err) {
-        console.error('Error loading customers:', err);
-        setError('Failed to load customers');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadCustomers();
-  }, [address]);
+    return [...fromProfiles, ...placeholders];
+  }, [index]);
 
   useEffect(() => {
     let filtered = customers;
