@@ -214,7 +214,8 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, 
     <Card className="border-2 bg-gradient-to-br from-card to-muted/30 overflow-hidden">
       <CardHeader className="space-y-2">
         <div className="flex items-start justify-between gap-3 min-w-0">
-          <CardTitle className="min-w-0 text-base sm:text-lg leading-tight">
+          <CardTitle className="min-w-0 flex items-center gap-2 text-lg sm:text-2xl leading-tight">
+            <Coins className="h-5 w-5 text-primary flex-shrink-0" />
             Your Loyalty Tokens
           </CardTitle>
           {showMobileCarousel && (
