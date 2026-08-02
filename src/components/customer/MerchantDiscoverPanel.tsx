@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -21,13 +22,14 @@ import {
   Flame,
   Filter,
   Compass,
+  ChevronRight,
 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 12;
 const SCROLL_THRESHOLD_PX = 400;
 
 interface CategoryDef {
@@ -245,7 +247,8 @@ export function MerchantDiscoverPanel() {
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, [hasMore, filtered.length]);
+  }, [hasMore, filtered.length, visibleCount]);
+
 
   const activeCategoryLabel =
     CATEGORIES.find((c) => c.value === category)?.label || 'All';
@@ -446,18 +449,28 @@ export function MerchantDiscoverPanel() {
             </Alert>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+              <div className="divide-y divide-border rounded-xl border border-border overflow-hidden bg-card">
                 {pageItems.map((m) => (
-                  <DiscoverCard key={m.merchant_address} merchant={m} />
+                  <DiscoverRow key={m.merchant_address} merchant={m} />
                 ))}
               </div>
 
               {hasMore && (
                 <div
                   ref={sentinelRef}
-                  className="flex items-center justify-center py-6"
+                  className="flex flex-col items-center justify-center gap-2 py-6"
                 >
                   <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs"
+                    onClick={() =>
+                      setVisibleCount((c) => Math.min(c + PAGE_SIZE, filtered.length))
+                    }
+                  >
+                    Load more
+                  </Button>
                 </div>
               )}
               {!hasMore && filtered.length > PAGE_SIZE && (
@@ -473,78 +486,68 @@ export function MerchantDiscoverPanel() {
   );
 }
 
-function DiscoverCard({ merchant }: { merchant: MerchantCard }) {
+function DiscoverRow({ merchant }: { merchant: MerchantCard }) {
+  const navigate = useNavigate();
   const categoryLabel =
     CATEGORIES.find((c) => c.value === merchant.category)?.label ||
     merchant.category;
 
   return (
-    <Card className="transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 border border-border h-full">
-      <CardHeader className="pb-3">
-        <div className="flex items-start gap-3">
-          {merchant.logo_url ? (
-            <img
-              src={merchant.logo_url}
-              alt={merchant.business_name}
-              className="h-12 w-12 rounded-xl object-cover flex-shrink-0"
-            />
-          ) : (
-            <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <Store className="h-6 w-6 text-primary" />
-            </div>
-          )}
-          <div className="min-w-0 flex-1">
-            <CardTitle className="text-sm font-semibold truncate">
-              {merchant.business_name}
-            </CardTitle>
-            <Badge variant="secondary" className="text-[10px] mt-1">
-              {categoryLabel}
-            </Badge>
-          </div>
+    <button
+      type="button"
+      onClick={() => navigate(`/shop/${merchant.merchant_address}`)}
+      className="w-full text-left px-3 py-2.5 flex items-center gap-3 hover:bg-accent/40 transition-colors"
+    >
+      {merchant.logo_url ? (
+        <img
+          src={merchant.logo_url}
+          alt={`${merchant.business_name} logo`}
+          className="h-9 w-9 rounded-lg object-cover flex-shrink-0"
+        />
+      ) : (
+        <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <Store className="h-4 w-4 text-primary" />
         </div>
-      </CardHeader>
-      <CardContent className="pt-0 space-y-3">
-        {merchant.description && (
-          <p className="text-xs text-muted-foreground line-clamp-2">
-            {merchant.description}
-          </p>
-        )}
+      )}
 
-        <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-sm font-medium truncate">
+            {merchant.business_name}
+          </span>
+          <Badge variant="secondary" className="text-[10px] flex-shrink-0">
+            {categoryLabel}
+          </Badge>
+        </div>
+        <div className="flex items-center gap-3 text-[11px] text-muted-foreground flex-wrap mt-0.5">
           {merchant.avg_rating !== null && (
             <span className="flex items-center gap-1">
-              <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />
-              {merchant.avg_rating.toFixed(1)}
-              <span className="text-muted-foreground/60">
-                ({merchant.reviews_count})
-              </span>
+              <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+              {merchant.avg_rating.toFixed(1)} ({merchant.reviews_count})
             </span>
           )}
           <span className="flex items-center gap-1">
-            <Gift className="h-3.5 w-3.5" />
-            {merchant.rewards_count} rewards
+            <Gift className="h-3 w-3" />
+            {merchant.rewards_count}
+          </span>
+          {merchant.location && (
+            <span className="flex items-center gap-1 truncate">
+              <MapPin className="h-3 w-3 flex-shrink-0" />
+              {merchant.location}
+            </span>
+          )}
+          <span className="hidden sm:flex items-center gap-1 truncate">
+            {merchant.programs
+              .slice(0, 3)
+              .map((p) => p.symbol)
+              .join(' · ')}
+            {merchant.programs.length > 3 ? ` +${merchant.programs.length - 3}` : ''}
           </span>
         </div>
+      </div>
 
-        {merchant.location && (
-          <p className="text-[11px] text-muted-foreground flex items-center gap-1 truncate">
-            <MapPin className="h-3 w-3 flex-shrink-0" />
-            {merchant.location}
-          </p>
-        )}
-
-        <div className="flex flex-wrap gap-1.5">
-          {merchant.programs.map((p) => (
-            <Badge
-              key={p.token_address}
-              variant="outline"
-              className="text-[10px]"
-            >
-              {p.symbol}
-            </Badge>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+      <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+    </button>
   );
 }
+

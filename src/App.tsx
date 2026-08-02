@@ -13,6 +13,7 @@ import AppPage from "./pages/AppPage";
 import CustomerPage from "./pages/CustomerPage";
 import MerchantPage from "./pages/MerchantPage";
 import ProgramPage from "./pages/ProgramPage";
+import ShopPage from "./pages/ShopPage";
 import AdminPage from "./pages/AdminPage";
 import PitchDeck from "./pages/PitchDeck";
 import GuidePage from "./pages/GuidePage";
@@ -166,6 +167,7 @@ function AnimatedRoutes() {
           <Route path="/customer" element={<CustomerPage />} />
           <Route path="/merchant" element={<MerchantPage />} />
           <Route path="/program/:tokenAddress" element={<ProgramPage />} />
+          <Route path="/shop/:merchantAddress" element={<ShopPage />} />
           {/* /premium deprecated → redirect to public pricing */}
           <Route path="/premium" element={<Navigate to="/pricing" replace />} />
           <Route path="/admin" element={<AdminPage />} />
