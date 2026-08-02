@@ -88,7 +88,15 @@ function BanGate({ children }: { children: React.ReactNode }) {
 
 
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 /**
  * Inside embedded webviews (Farcaster / Base App) rAF-driven exit animations are

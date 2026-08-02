@@ -20,6 +20,8 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { CUSTOMER_PROGRAMS_QUERY_KEY } from '@/hooks/useActiveLoyaltyPrograms';
+import { CUSTOMER_BALANCES_QUERY_KEY } from '@/hooks/useMultiTokenBalance';
 
 const CustomerPage = () => {
   const [activeTab, setActiveTab] = useState('loyalty');
@@ -41,9 +43,11 @@ const CustomerPage = () => {
   }, [user, activeTab]);
 
   const handleRefresh = useCallback(async () => {
-    await queryClient.invalidateQueries();
-    // Small delay so user sees the refresh indicator
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: CUSTOMER_PROGRAMS_QUERY_KEY }),
+      queryClient.invalidateQueries({ queryKey: CUSTOMER_BALANCES_QUERY_KEY }),
+      queryClient.invalidateQueries({ queryKey: ['customer'] }),
+    ]);
   }, [queryClient]);
 
   const handleTabChange = (tab: string) => {

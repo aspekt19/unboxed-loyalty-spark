@@ -6,28 +6,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useAccount } from 'wagmi';
-import { Gift, Loader2, AlertCircle, Store, Clock, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { Gift, AlertCircle, Store, Clock, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useMultiTokenBalance } from '@/hooks/useMultiTokenBalance';
-import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
-import { resolveTokenStandard } from '@/lib/tokenStandard';
-import { supabase } from '@/integrations/supabase/client';
+import { useActiveCustomerWallet } from '@/hooks/useActiveCustomerWallet';
+import {
+  useActiveLoyaltyPrograms,
+  programIsPausedFromDb,
+} from '@/hooks/useActiveLoyaltyPrograms';
 import { format } from 'date-fns';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useFarcasterHaptics } from '@/hooks/useFarcasterHaptics';
 import { useNavigate } from 'react-router-dom';
-
-interface LoyaltyProgram {
-  id: string;
-  token_address: string;
-  name: string;
-  symbol: string;
-  status: string;
-  expiration_date: string;
-  merchant_address: string;
-}
 
 interface TokenInfo {
   address: string;
@@ -45,15 +36,27 @@ interface CustomerFiltersPanelProps {
 }
 
 export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelProps) {
-  const { address } = useAccount();
-  const [programs, setPrograms] = useState<TokenInfo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { activeAddress } = useActiveCustomerWallet();
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { selectionChanged } = useFarcasterHaptics();
+  const { data: programRows = [], isLoading } = useActiveLoyaltyPrograms();
 
-  const [emblaRef, emblaApi] = useEmblaCarousel({ 
+  const programs: TokenInfo[] = useMemo(
+    () =>
+      programRows.map((prog) => ({
+        address: prog.token_address,
+        name: prog.name,
+        symbol: prog.symbol,
+        status: prog.status,
+        expirationDate: prog.expiration_date || '',
+        merchantAddress: prog.merchant_address,
+      })),
+    [programRows],
+  );
+
+  const [emblaRef, emblaApi] = useEmblaCarousel({
     align: 'start',
     containScroll: 'trimSnaps',
     dragFree: false,
@@ -61,7 +64,7 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
-  
+
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
     setCanScrollPrev(emblaApi.canScrollPrev());
@@ -72,7 +75,7 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
     }
     setCurrentSlide(newSlide);
   }, [emblaApi, currentSlide, selectionChanged]);
-  
+
   useEffect(() => {
     if (!emblaApi) return;
     onSelect();
@@ -84,91 +87,31 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
     };
   }, [emblaApi, onSelect]);
 
-  const { balances, isLoading: balancesLoading, refetch } = useMultiTokenBalance(programs);
+  const balanceTokens = useMemo(
+    () =>
+      programs.map((p) => ({
+        address: p.address,
+        name: p.name,
+        symbol: p.symbol,
+        merchantAddress: p.merchantAddress,
+      })),
+    [programs],
+  );
 
-  const loadActivePrograms = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('loyalty_programs')
-        .select('*')
-        .in('status', ['active', 'expiring_soon', 'paused'])
-        .order('created_at', { ascending: false });
+  const { balances, isLoading: balancesLoading } = useMultiTokenBalance(balanceTokens, activeAddress);
 
-      if (error) {
-        console.error('[CustomerFiltersPanel] Error loading programs:', error.message);
-        return;
-      }
-
-      setPrograms(data.map((prog: LoyaltyProgram) => ({
-        address: prog.token_address,
-        name: prog.name,
-        symbol: prog.symbol,
-        status: prog.status,
-        expirationDate: prog.expiration_date,
-        merchantAddress: prog.merchant_address,
-      })));
-    } catch (error) {
-      console.error('[CustomerFiltersPanel] Failed to load programs:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // Load active programs from Supabase
-  useEffect(() => {
-    if (!address) {
-      setPrograms([]);
-      return;
-    }
-
-    loadActivePrograms();
-
-    const channel = supabase
-      .channel('customer_loyalty_programs')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'loyalty_programs' },
-        () => loadActivePrograms()
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [address, loadActivePrograms]);
-
-  // Listen for token balance updates
-  useEffect(() => {
-    const handleBalanceUpdate = () => refetch(true);
-    window.addEventListener('tokenBalancesUpdated', handleBalanceUpdate);
-    return () => window.removeEventListener('tokenBalancesUpdated', handleBalanceUpdate);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Auto-refresh balances every 5 seconds
-  useEffect(() => {
-    if (!address || programs.length === 0) return;
-
-    const interval = setInterval(() => refetch(true), 5000);
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address, programs.length]);
-
-  // Filter programs with non-zero balance, then by merchant and search
   const programsWithBalance = useMemo(() => {
-    let result = programs.filter(program => {
-      const balance = balances.find(b => b.address === program.address);
+    let result = programs.filter((program) => {
+      const balance = balances.find((b) => b.address === program.address);
       return balance && parseFloat(balance.balance) > 0;
     });
     if (filterByMerchant) {
-      result = result.filter(p => p.merchantAddress.toLowerCase() === filterByMerchant.toLowerCase());
+      result = result.filter((p) => p.merchantAddress.toLowerCase() === filterByMerchant.toLowerCase());
     }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      result = result.filter(p =>
-        p.name.toLowerCase().includes(q) ||
-        p.symbol.toLowerCase().includes(q)
+      result = result.filter(
+        (p) => p.name.toLowerCase().includes(q) || p.symbol.toLowerCase().includes(q),
       );
     }
     return result;
@@ -188,7 +131,7 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
   );
   const tierSummaries = useTierSummaries(tierEntries);
 
-  if (!address) return null;
+  if (!activeAddress) return null;
 
   const showMobileCarousel =
     isMobile &&
@@ -203,10 +146,9 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
           Loyalty Programs
         </CardTitle>
         <CardDescription>
-          {filterByMerchant 
-            ? 'Showing programs for selected merchant' 
-            : 'Each merchant issues their own token. Your balance never expires unless you use it.'
-          }
+          {filterByMerchant
+            ? 'Showing programs for selected merchant'
+            : 'Each merchant issues their own token. Your balance never expires unless you use it.'}
         </CardDescription>
         {programsWithBalance.length > 1 && (
           <div className="relative mt-2">
@@ -214,7 +156,7 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
             <Input
               placeholder="Search programs..."
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 h-9"
             />
           </div>
@@ -236,72 +178,70 @@ export function CustomerFiltersPanel({ filterByMerchant }: CustomerFiltersPanelP
               No active programs yet. Get tokens from merchants to see them here!
             </AlertDescription>
           </Alert>
-        ) : (
-          showMobileCarousel ? (
-            <div className="relative min-w-0 overflow-hidden px-1">
-              <div className="overflow-hidden" ref={emblaRef}>
-                <div className="flex gap-3">
-                  {programsWithBalance.map((program) => {
-                    const balance = balances.find(b => b.address === program.address);
-                    return (
-                      <div key={program.address} className="flex-[0_0_90%] min-w-0">
-                        <ProgramCard
-                          program={program}
-                          balance={balance?.balance || '0'}
-                          isExpiringSoon={program.status === 'expiring_soon'}
-                          tierSummary={tierSummaries[program.address.toLowerCase()]}
-                          onClick={() => navigate(`/program/${program.address}`)}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-              <div className="flex items-center justify-center gap-3 mt-3">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8 shrink-0 rounded-full"
-                  onClick={() => emblaApi?.scrollPrev()}
-                  disabled={!canScrollPrev}
-                  aria-label="Previous program"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="text-xs text-muted-foreground tabular-nums min-w-[3.5rem] text-center">
-                  {currentSlide + 1} / {programsWithBalance.length}
-                </span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8 shrink-0 rounded-full"
-                  onClick={() => emblaApi?.scrollNext()}
-                  disabled={!canScrollNext}
-                  aria-label="Next program"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <ScrollArea className={isMobile ? 'h-[min(55vh,420px)]' : 'h-[500px]'}>
-              <div className="space-y-3 pr-4 pb-4">
+        ) : showMobileCarousel ? (
+          <div className="relative min-w-0 overflow-hidden px-1">
+            <div className="overflow-hidden" ref={emblaRef}>
+              <div className="flex gap-3">
                 {programsWithBalance.map((program) => {
-                  const balance = balances.find(b => b.address === program.address);
+                  const balance = balances.find((b) => b.address === program.address);
                   return (
-                    <ProgramCard
-                      key={program.address}
-                      program={program}
-                      balance={balance?.balance || '0'}
-                      isExpiringSoon={program.status === 'expiring_soon'}
-                      tierSummary={tierSummaries[program.address.toLowerCase()]}
-                      onClick={() => navigate(`/program/${program.address}`)}
-                    />
+                    <div key={program.address} className="flex-[0_0_90%] min-w-0">
+                      <ProgramCard
+                        program={program}
+                        balance={balance?.balance || '0'}
+                        isExpiringSoon={program.status === 'expiring_soon'}
+                        tierSummary={tierSummaries[program.address.toLowerCase()]}
+                        onClick={() => navigate(`/program/${program.address}`)}
+                      />
+                    </div>
                   );
                 })}
               </div>
-            </ScrollArea>
-          )
+            </div>
+            <div className="flex items-center justify-center gap-3 mt-3">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 shrink-0 rounded-full"
+                onClick={() => emblaApi?.scrollPrev()}
+                disabled={!canScrollPrev}
+                aria-label="Previous program"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-xs text-muted-foreground tabular-nums min-w-[3.5rem] text-center">
+                {currentSlide + 1} / {programsWithBalance.length}
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 shrink-0 rounded-full"
+                onClick={() => emblaApi?.scrollNext()}
+                disabled={!canScrollNext}
+                aria-label="Next program"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <ScrollArea className={isMobile ? 'h-[min(55vh,420px)]' : 'h-[500px]'}>
+            <div className="space-y-3 pr-4 pb-4">
+              {programsWithBalance.map((program) => {
+                const balance = balances.find((b) => b.address === program.address);
+                return (
+                  <ProgramCard
+                    key={program.address}
+                    program={program}
+                    balance={balance?.balance || '0'}
+                    isExpiringSoon={program.status === 'expiring_soon'}
+                    tierSummary={tierSummaries[program.address.toLowerCase()]}
+                    onClick={() => navigate(`/program/${program.address}`)}
+                  />
+                );
+              })}
+            </div>
+          </ScrollArea>
         )}
       </CardContent>
     </Card>
@@ -321,16 +261,13 @@ function ProgramCard({
   tierSummary?: TierSummary;
   onClick?: () => void;
 }) {
-  const { isPaused } = useCheckProgramStatus(
-    program.address as `0x${string}`,
-    resolveTokenStandard(undefined, program.address),
-  );
-  
+  const isPaused = programIsPausedFromDb(program.status);
+
   const formatAddress = (addr: string) => {
     if (!addr) return '';
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
-  
+
   return (
     <button
       type="button"
@@ -364,26 +301,22 @@ function ProgramCard({
           )}
         </div>
         <div className="text-right">
-          <p className="text-2xl font-bold">
-            {parseFloat(balance).toFixed(0)}
-          </p>
+          <p className="text-2xl font-bold">{parseFloat(balance).toFixed(0)}</p>
           <p className="text-xs text-muted-foreground">{program.symbol}</p>
         </div>
       </div>
-      
+
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Store className="h-3 w-3 flex-shrink-0" />
-          <span className="font-mono">
-            {formatAddress(program.merchantAddress)}
-          </span>
+          <span className="font-mono">{formatAddress(program.merchantAddress)}</span>
         </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Clock className="h-3 w-3 flex-shrink-0" />
-          <span>
-            Expires: {format(new Date(program.expirationDate), 'MMM dd, yyyy')}
-          </span>
-        </div>
+        {program.expirationDate ? (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Clock className="h-3 w-3 flex-shrink-0" />
+            <span>Expires: {format(new Date(program.expirationDate), 'MMM dd, yyyy')}</span>
+          </div>
+        ) : null}
       </div>
     </button>
   );

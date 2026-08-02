@@ -56,64 +56,56 @@ export function MerchantCardGrid({ onMerchantSelect, selectedMerchant, restrictT
   const loadMerchants = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Load merchant profiles
-      const { data: profiles, error: profilesError } = await supabase
-        .from('merchant_profiles')
-        .select('*');
-
-      if (profilesError) {
-        console.error('[MerchantCardGrid] profiles error:', profilesError.message);
-        setMerchants([]);
-        return;
-      }
-
-      if (!profiles || profiles.length === 0) {
-        setMerchants([]);
-        return;
-      }
-
-      const merchantAddresses = profiles.map(p => p.merchant_address);
-
-      // Load programs, rewards, reviews in parallel
-      const [programsRes, rewardsRes, reviewsRes] = await Promise.all([
+      const [profilesRes, programsRes, rewardsRes, reviewsRes] = await Promise.all([
+        supabase
+          .from('merchant_profiles')
+          .select(
+            'merchant_address, business_name, category, logo_url, description, website, location',
+          ),
         supabase
           .from('loyalty_programs')
           .select('name, symbol, token_address, status, merchant_address')
-          .in('merchant_address', merchantAddresses)
           .in('status', ['active', 'expiring_soon', 'paused']),
-        supabase
-          .from('rewards')
-          .select('merchant_address')
-          .in('merchant_address', merchantAddresses)
-          .eq('is_active', true),
-        supabase
-          .from('reviews')
-          .select('merchant_address, rating')
-          .in('merchant_address', merchantAddresses),
+        supabase.from('rewards').select('merchant_address').eq('is_active', true),
+        supabase.from('reviews').select('merchant_address, rating'),
       ]);
+
+      if (profilesRes.error) {
+        console.error('[MerchantCardGrid] profiles error:', profilesRes.error.message);
+        setMerchants([]);
+        return;
+      }
+
+      const profiles = profilesRes.data || [];
+      if (profiles.length === 0) {
+        setMerchants([]);
+        return;
+      }
 
       if (programsRes.error || rewardsRes.error || reviewsRes.error) {
         console.error(
           '[MerchantCardGrid] related data error:',
-          programsRes.error?.message || rewardsRes.error?.message || reviewsRes.error?.message
+          programsRes.error?.message || rewardsRes.error?.message || reviewsRes.error?.message,
         );
         setMerchants([]);
         return;
       }
 
-      const cards: MerchantCard[] = profiles.map(profile => {
+      const cards: MerchantCard[] = profiles.map((profile) => {
+        const addr = profile.merchant_address.toLowerCase();
         const programs = (programsRes.data || []).filter(
-          p => p.merchant_address === profile.merchant_address
+          (p) => p.merchant_address.toLowerCase() === addr,
         );
         const rewards = (rewardsRes.data || []).filter(
-          r => r.merchant_address === profile.merchant_address
+          (r) => r.merchant_address.toLowerCase() === addr,
         );
         const reviews = (reviewsRes.data || []).filter(
-          r => r.merchant_address === profile.merchant_address
+          (r) => r.merchant_address.toLowerCase() === addr,
         );
-        const avgRating = reviews.length > 0
-          ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
-          : null;
+        const avgRating =
+          reviews.length > 0
+            ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+            : null;
 
         return {
           merchant_address: profile.merchant_address,
@@ -130,8 +122,7 @@ export function MerchantCardGrid({ onMerchantSelect, selectedMerchant, restrictT
         };
       });
 
-      // Only show merchants that have at least one program
-      setMerchants(cards.filter(c => c.programs.length > 0));
+      setMerchants(cards.filter((c) => c.programs.length > 0));
     } catch (err) {
       console.error('[MerchantCardGrid] error:', err);
     } finally {

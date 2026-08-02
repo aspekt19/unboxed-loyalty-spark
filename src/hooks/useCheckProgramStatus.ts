@@ -5,8 +5,8 @@ import { type TokenAddress, TOKEN_STATUS_ABI, txLog } from './types/transaction'
 
 const HOOK_NAME = 'CheckProgramStatus';
 
-/** Polling interval for contract status checks (ms) */
-const STATUS_POLL_INTERVAL = 5000;
+/** Polling interval for contract status checks (ms). List UIs should prefer DB status. */
+const STATUS_POLL_INTERVAL = 60_000;
 
 export interface ProgramStatus {
   isMintingActive: boolean;
@@ -31,8 +31,9 @@ export function useCheckProgramStatus(
     // Skip on-chain reads for B20 — the calls would revert (functions don't exist).
     enabled: !!tokenAddress && !isB20,
     refetchInterval: STATUS_POLL_INTERVAL,
-    refetchOnMount: true as const,
-    refetchOnWindowFocus: true as const,
+    refetchOnMount: false as const,
+    refetchOnWindowFocus: false as const,
+    staleTime: 45_000,
     retry: 1,
   };
 

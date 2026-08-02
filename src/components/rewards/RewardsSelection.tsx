@@ -25,6 +25,7 @@ import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
 import { resolveTokenStandard } from '@/lib/tokenStandard';
 import { isFarcasterContext } from '@/config/wagmi';
 import { Input } from '@/components/ui/input';
+import { useActiveLoyaltyPrograms } from '@/hooks/useActiveLoyaltyPrograms';
 
 interface TokenInfo {
   address: string;
@@ -53,6 +54,7 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
   const [programSearch, setProgramSearch] = useState('');
 
   const { activeAddress, isMismatch, primaryAddress } = useActiveCustomerWallet();
+  const { data: programsCatalog = [] } = useActiveLoyaltyPrograms({ includePaused: false });
   const { balances, isLoading: balancesLoading, refetch } = useMultiTokenBalance(tokens, activeAddress);
   const { burnTokens, isPending, isSuccess, hash } = useBurnTokens();
   const { approveTokens, isPending: isApproving, isSuccess: isApproved } = useApproveTokens();
@@ -148,49 +150,28 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
     }
   }, [address]);
 
-  // ── Load loyalty programmes ──
+  // ── Load loyalty programmes (shared cache with TokenList / Filters) ──
   useEffect(() => {
-    const loadPrograms = async () => {
-      try {
-        const { data: programs, error } = await supabase
-          .from('loyalty_programs')
-          .select('*')
-          .in('status', ['active', 'expiring_soon'])
-          .order('created_at', { ascending: false });
+    if (!address) return;
 
-        if (error) {
-          console.error('Error loading programs:', error);
-          return;
-        }
+    const mapped = (programsCatalog ?? [])
+      .filter((p) => p.merchant_address.toLowerCase() !== address.toLowerCase())
+      .map((p) => ({
+        address: p.token_address,
+        name: p.name,
+        symbol: p.symbol,
+        merchantAddress: p.merchant_address,
+        expirationDate: p.expiration_date || undefined,
+        status: p.status as 'active' | 'expiring_soon' | 'expired',
+      }));
 
-        if (programs && programs.length > 0) {
-          const filteredPrograms = programs.filter(
-            p => p.merchant_address.toLowerCase() !== address?.toLowerCase(),
-          );
+    setTokens(mapped);
+    if (mapped.length > 0) {
+      setSelectedTokenAddress((prev) => prev || mapped[0].address);
+    }
+  }, [address, programsCatalog]);
 
-          const activePrograms = filteredPrograms.map(p => ({
-            address: p.token_address,
-            name: p.name,
-            symbol: p.symbol,
-            merchantAddress: p.merchant_address,
-            expirationDate: p.expiration_date,
-            status: p.status as 'active' | 'expiring_soon' | 'expired',
-          }));
-
-          setTokens(activePrograms);
-          if (activePrograms.length > 0 && !selectedTokenAddress) {
-            setSelectedTokenAddress(activePrograms[0].address);
-          }
-
-          localStorage.setItem('customerTokens', JSON.stringify(activePrograms));
-        }
-      } catch (error) {
-        console.error('Error in loadPrograms:', error);
-      }
-    };
-
-    loadPrograms();
-
+  useEffect(() => {
     const handleRewardsUpdate = async () => {
       if (selectedTokenAddress) {
         const rewards = await getRewardsByToken(selectedTokenAddress);
@@ -198,32 +179,20 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
       }
     };
 
-    const handleSessionReady = () => loadPrograms();
-
-    window.addEventListener('loyaltyProgramsUpdated', loadPrograms);
     window.addEventListener('rewardsUpdated', handleRewardsUpdate);
-    window.addEventListener('sessionReady', handleSessionReady);
-    window.addEventListener('profileMigrated', handleSessionReady);
-
-    const programsChannel = supabase
-      .channel('loyalty_programs_customer')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'loyalty_programs' }, () => loadPrograms())
-      .subscribe();
 
     const rewardsChannel = supabase
       .channel('rewards_customer')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'rewards' }, () => handleRewardsUpdate())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rewards' }, () => {
+        void handleRewardsUpdate();
+      })
       .subscribe();
 
     return () => {
-      window.removeEventListener('loyaltyProgramsUpdated', loadPrograms);
       window.removeEventListener('rewardsUpdated', handleRewardsUpdate);
-      window.removeEventListener('sessionReady', handleSessionReady);
-      window.removeEventListener('profileMigrated', handleSessionReady);
-      supabase.removeChannel(programsChannel);
       supabase.removeChannel(rewardsChannel);
     };
-  }, []);
+  }, [selectedTokenAddress]);
 
   // ── Load rewards for selected token ──
   useEffect(() => {
