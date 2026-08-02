@@ -90,7 +90,15 @@ export function CustomerPanel({ selectedMerchant, onMerchantSelect, onClearMerch
 
   return (
     <div className="space-y-6">
-      {/* Primary loyalty loop first — shared programs/balances cache */}
+      {showSecondary ? (
+        <MerchantCardGrid
+          onMerchantSelect={handleMerchantSelect}
+          selectedMerchant={selectedMerchant}
+          restrictToMerchants={ownedMerchantAddresses}
+        />
+      ) : null}
+
+      {/* Primary loyalty loop — shared programs/balances cache */}
       <TokenList
         selectedProgram={selectedProgram}
         onProgramSelect={setSelectedProgram}
@@ -104,11 +112,6 @@ export function CustomerPanel({ selectedMerchant, onMerchantSelect, onClearMerch
 
       {showSecondary ? (
         <>
-          <MerchantCardGrid
-            onMerchantSelect={handleMerchantSelect}
-            selectedMerchant={selectedMerchant}
-            restrictToMerchants={ownedMerchantAddresses}
-          />
           <PersonalizedOffers />
           <MyCertificates />
         </>
