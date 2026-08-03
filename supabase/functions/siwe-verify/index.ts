@@ -312,7 +312,7 @@ serve(async (req) => {
           if (insertErr) {
             console.error('SIWE link insert error:', insertErr);
             return new Response(
-              JSON.stringify({ mode: 'link', ok: false, error: insertErr.message }),
+              JSON.stringify({ mode: 'link', ok: false, error: 'Failed to link wallet' }),
               { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
             );
           }
@@ -397,7 +397,7 @@ serve(async (req) => {
   } catch (error: any) {
     console.error('SIWE verify error:', error);
     return new Response(
-      JSON.stringify({ error: error.message || 'Verification failed' }),
+      JSON.stringify({ error: 'Verification failed' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

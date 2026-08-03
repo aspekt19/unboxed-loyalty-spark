@@ -478,7 +478,6 @@ Deno.serve((req) => {
     return new Response(
       JSON.stringify({
         error: "Failed to build x402 discovery document",
-        message: err instanceof Error ? err.message : String(err),
       }),
       {
         status: 500,

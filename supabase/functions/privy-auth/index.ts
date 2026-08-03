@@ -550,7 +550,7 @@ serve(async (req) => {
     );
   } catch (error: any) {
     console.error("Privy auth error:", error);
-    return new Response(JSON.stringify({ error: error.message || "Authentication failed" }), {
+    return new Response(JSON.stringify({ error: "Authentication failed" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

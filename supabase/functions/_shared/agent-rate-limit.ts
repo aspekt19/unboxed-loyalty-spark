@@ -79,64 +79,21 @@ export async function checkAgentApiRateLimits(
 
   try {
     const maxCalls = await resolveMonthlyMaxApiCalls(serviceClient, agent.plan_id);
-    if (maxCalls === null) return { ok: true };
 
-    const now = new Date();
-    const periodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
-    const { data: usage, error: usageError } = await serviceClient
-      .from("agent_usage")
-      .select("api_calls_count")
-      .eq("owner_address", agent.owner_address.toLowerCase())
-      .eq("period_start", periodStart)
-      .maybeSingle();
-    if (usageError) throw usageError;
+    // Single atomic increment-and-check; a read-then-write pair loses concurrent
+    // increments and lets a capped plan exceed its quota under parallel load.
+    const { data: withinQuota, error: quotaError } = await serviceClient.rpc(
+      "consume_agent_monthly_quota",
+      {
+        p_owner_address: agent.owner_address.toLowerCase(),
+        p_max_calls: maxCalls,
+      },
+    );
+    if (quotaError) throw quotaError;
 
-    const used = (usage as { api_calls_count?: number } | null)?.api_calls_count ?? 0;
-    return used >= maxCalls ? { ok: false, reason: "monthly_quota" } : { ok: true };
+    return withinQuota === true ? { ok: true } : { ok: false, reason: "monthly_quota" };
   } catch (error) {
-    console.error("[rate-limit] monthly quota lookup failed:", error);
+    console.error("[rate-limit] monthly quota consume failed:", error);
     return { ok: false, reason: "monthly_quota" };
   }
-}
-
-export async function incrementAgentMonthlyApiCall(serviceClient: any, ownerAddress: string): Promise<void> {
-  const now = new Date();
-  const periodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
-  const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0];
-  const owner = ownerAddress.toLowerCase();
-
-  const { data: existing, error: selectError } = await serviceClient
-    .from("agent_usage")
-    .select("id, api_calls_count")
-    .eq("owner_address", owner)
-    .eq("period_start", periodStart)
-    .maybeSingle();
-  if (selectError) {
-    console.error("[rate-limit] monthly usage lookup failed:", selectError);
-    return;
-  }
-
-  const row = existing as { id: string; api_calls_count?: number } | null;
-  if (row) {
-    const { error } = await serviceClient
-      .from("agent_usage")
-      .update({
-        api_calls_count: (row.api_calls_count || 0) + 1,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", row.id);
-    if (error) console.error("[rate-limit] monthly usage update failed:", error);
-    return;
-  }
-
-  const { error } = await serviceClient.from("agent_usage").insert({
-    owner_address: owner,
-    period_start: periodStart,
-    period_end: periodEnd,
-    api_calls_count: 1,
-    mint_operations_count: 0,
-    mint_total_amount: 0,
-    fees_collected_usdc: 0,
-  });
-  if (error) console.error("[rate-limit] monthly usage insert failed:", error);
 }

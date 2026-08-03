@@ -132,6 +132,8 @@ export function MerchantBillingDashboard() {
         setUpgradeDialogOpen(false);
         void queryClient.invalidateQueries({ queryKey: ['merchant-plan-subscription'] });
         void queryClient.invalidateQueries({ queryKey: ['merchant-profiles'] });
+        // PlanFeatureGate reads useEffectivePlan, not the raw subscription row.
+        void queryClient.invalidateQueries({ queryKey: ['effective-plan'] });
       } else {
         toast.info(d.message || 'Recorded — pending verification');
         setUpgradeDialogOpen(false);

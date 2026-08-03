@@ -133,9 +133,8 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Frame error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: 'Frame request failed' }),
       {
         status: 500,
         headers: {

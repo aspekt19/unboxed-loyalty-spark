@@ -1,11 +1,22 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { BASE_RPC_URL as SHARED_BASE_RPC_URL } from '../_shared/base-rpc.ts';
+import { isAdminWallet } from '../_shared/admin-wallets.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
+
+/** This endpoint fans out to hundreds of Base RPC calls, so it is capped per wallet. */
+const HOLDER_SCAN_LIMIT = 5;
+const HOLDER_SCAN_WINDOW_SECONDS = 300;
+
+const jsonError = (message: string, status: number) =>
+  new Response(JSON.stringify({ error: message }), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -16,9 +27,7 @@ serve(async (req) => {
     // Authentication check
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return jsonError('Unauthorized', 401);
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -28,15 +37,56 @@ serve(async (req) => {
     });
     const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Invalid token' }), {
-        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return jsonError('Invalid token', 401);
     }
 
     const { tokenAddress } = await req.json();
 
-    if (!tokenAddress) {
-      throw new Error('tokenAddress is required');
+    if (!tokenAddress || !/^0x[a-fA-F0-9]{40}$/.test(String(tokenAddress))) {
+      return jsonError('Valid tokenAddress is required', 400);
+    }
+
+    const serviceClient = createClient(
+      supabaseUrl,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    );
+
+    const { data: profile } = await serviceClient
+      .from('profiles')
+      .select('wallet_address')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    const callerWallet = profile?.wallet_address?.toLowerCase() ?? null;
+    if (!callerWallet) {
+      return jsonError('No wallet linked to this account', 403);
+    }
+
+    // Holder scans are merchant tooling (burn-all on program delete) — own programs only.
+    const { data: program } = await serviceClient
+      .from('loyalty_programs')
+      .select('id')
+      .eq('token_address', String(tokenAddress).toLowerCase())
+      .eq('merchant_address', callerWallet)
+      .maybeSingle();
+
+    if (!program && !(await isAdminWallet(callerWallet))) {
+      return jsonError('Loyalty program not found or not owned by you', 403);
+    }
+
+    const { data: withinLimit, error: limitError } = await serviceClient.rpc(
+      'consume_wallet_rate_limit',
+      {
+        p_scope: 'get_token_holders',
+        p_subject: callerWallet,
+        p_limit: HOLDER_SCAN_LIMIT,
+        p_window_seconds: HOLDER_SCAN_WINDOW_SECONDS,
+      },
+    );
+    // Fail closed: without a working counter this endpoint can be looped freely.
+    if (limitError || withinLimit !== true) {
+      if (limitError) console.error('[get-token-holders] rate limit RPC failed:', limitError);
+      return jsonError('Too many holder scans — try again in a few minutes', 429);
     }
 
     console.log('Fetching token holders for:', tokenAddress);
@@ -187,13 +237,6 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error('Error in get-token-holders:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      }
-    );
+    return jsonError('Failed to fetch token holders', 500);
   }
 });

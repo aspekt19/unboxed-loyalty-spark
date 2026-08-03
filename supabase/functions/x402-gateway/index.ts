@@ -471,7 +471,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         error: "x402 Gateway error",
-        message: err instanceof Error ? err.message : String(err),
+        message: "Unexpected gateway failure — see docs or retry.",
         docs: "https://loyalspark.online/api-docs",
       }),
       {

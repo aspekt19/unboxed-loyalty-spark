@@ -113,7 +113,8 @@ Deno.serve(async (req) => {
       const { data, error } = await query;
 
       if (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
+        console.error("Agent reports list error:", error);
+        return new Response(JSON.stringify({ error: "Failed to list reports" }), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });

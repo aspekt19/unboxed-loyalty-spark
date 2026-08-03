@@ -33,7 +33,8 @@ export async function prepareHolderLoyaltyTransfer(
     .maybeSingle();
 
   if (error) {
-    return { ok: false, status: 500, body: { error: error.message } };
+    console.error("[recipient-prepare-transfer] program lookup failed:", error);
+    return { ok: false, status: 500, body: { error: "Failed to load loyalty program" } };
   }
   if (!prog) {
     return {

@@ -1268,6 +1268,13 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Missing query params: token_address, customer_address" }, 400);
       }
 
+      // Off-chain balance/tier is merchant data — only readable for your own program.
+      const balanceProgram = await findAgentProgram(serviceClient, agent, tokenAddress, "id");
+      if (!balanceProgram) {
+        await logActivity(serviceClient, agent.agentId, "get_balance", { tokenAddress, customerAddress }, 404, { error: "Program not owned" }, ip);
+        return jsonResponse({ error: "Loyalty program not found or not owned by you" }, 404);
+      }
+
       // Get tier status which includes balance
       const { data: tierStatus } = await serviceClient
         .from("customer_tier_status")

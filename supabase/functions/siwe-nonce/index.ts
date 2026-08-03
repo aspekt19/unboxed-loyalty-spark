@@ -34,7 +34,7 @@ serve(async (req) => {
     });
   } catch (error: any) {
     console.error('Nonce generation error:', error);
-    return new Response(JSON.stringify({ error: error.message || 'Failed to generate nonce' }), {
+    return new Response(JSON.stringify({ error: 'Failed to generate nonce' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

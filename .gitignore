@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Local Deno cache lock for supabase/functions — not used by CI or the web build
+deno.lock
+
 # Env — keep secrets and local overrides out of git (.env.example is tracked)
 .env
 .env.*

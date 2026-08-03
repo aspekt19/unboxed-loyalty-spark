@@ -4,7 +4,6 @@
 
 import {
   checkAgentApiRateLimits,
-  incrementAgentMonthlyApiCall,
   type AgentRateLimitOptions,
 } from "./agent-rate-limit.ts";
 
@@ -59,9 +58,6 @@ export async function authenticateAgent(
     return { ok: false, error: "rate_limited", reason: limits.reason };
   }
 
-  if (!options?.skipMonthlyQuota) {
-    await incrementAgentMonthlyApiCall(serviceClient, agent.owner_address);
-  }
   await serviceClient
     .from("agent_registry")
     .update({

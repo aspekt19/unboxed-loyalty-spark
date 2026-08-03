@@ -10,7 +10,6 @@ import {
 } from "../_shared/loyalspark-agent-helpers.ts";
 import {
   checkAgentApiRateLimits,
-  incrementAgentMonthlyApiCall,
   type AgentRateLimitOptions,
 } from "../_shared/agent-rate-limit.ts";
 
@@ -97,10 +96,6 @@ export async function authenticateAgent(
     plan_id: agent.plan_id ?? null,
   }, options);
   if (!limits.ok) return { ok: false, reason: "rate_limited" };
-
-  if (!options?.skipMonthlyQuota) {
-    await incrementAgentMonthlyApiCall(d, agent.owner_address);
-  }
 
   await d
     .from("agent_registry")

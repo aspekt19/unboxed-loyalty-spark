@@ -184,6 +184,8 @@ export function AgentBillingDashboard() {
         setUpgradeDialogOpen(false);
         queryClient.invalidateQueries({ queryKey: ['agent-plan-subscription'] });
         queryClient.invalidateQueries({ queryKey: ['agents'] });
+        // PlanFeatureGate reads useEffectivePlan, not the raw subscription row.
+        queryClient.invalidateQueries({ queryKey: ['effective-plan'] });
       } else {
         toast.info(data.message);
         setUpgradeDialogOpen(false);

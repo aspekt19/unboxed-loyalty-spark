@@ -384,7 +384,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         error: "MPP Gateway error",
-        message: err instanceof Error ? err.message : String(err),
+        message: "Unexpected gateway failure — see docs or retry.",
         docs: "https://loyalspark.online/api-docs",
       }),
       {

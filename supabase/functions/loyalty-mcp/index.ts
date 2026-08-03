@@ -581,6 +581,9 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
       const err = authGuard(["read"]);
       if (err) return T(err);
       const d = db();
+      // Off-chain balance/tier is merchant data — only readable for your own program.
+      const { data: balanceProgram } = await d.from("loyalty_programs").select("id").eq("token_address", token_address.toLowerCase()).in("merchant_address", await agentMerchantAddresses(d, { agentId: agent.agentId, ownerAddress: agent.ownerAddress })).maybeSingle();
+      if (!balanceProgram) return T('{"error":"Program not found or not owned by you"}');
       const { data: ts } = await d.from("customer_tier_status").select("current_balance,tokens_earned_total,current_tier_id,last_calculated_at").eq("token_address", token_address.toLowerCase()).eq("customer_address", customer_address.toLowerCase()).single();
       let tier = null;
       if (ts?.current_tier_id) { const { data } = await d.from("customer_tiers").select("tier_name,tier_level,badge_color,cashback_multiplier").eq("id", ts.current_tier_id).single(); tier = data; }
