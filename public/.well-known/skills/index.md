@@ -67,4 +67,6 @@ Read [13-endpoint-workflows.md](./13-endpoint-workflows.md) before orchestrating
 | Pro | $49 USDC | 10,000 | 5 | 0.5% |
 | Enterprise | $129 USDC | Unlimited | Unlimited | 0.25% |
 
+The **mint fee is paid in your own loyalty tokens** (a separate `mint()` to the platform fee wallet), not in USDC — see [02-mint-tokens.md](./02-mint-tokens.md). Only subscriptions and x402 / MPP per-call charges are USDC.
+
 Merchant portal (SaaS): Starter $39 / Growth $79 / Scale $149 per month — separate from agent plans.

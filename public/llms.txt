@@ -43,10 +43,12 @@ Pay per request with USDC on Base. HTTP **402** with **x402 v2** `accepts` (CAIP
 - MCP per-call price: typically **$0.01** per tool (see mcp-bazaar-tools); REST routes use separate prices on the gateway
 
 ### API Key (Subscription)
-Traditional API key authentication with monthly plans.
+Traditional API key authentication with monthly plans. Subscriptions are paid in USDC on Base.
 - Free: 200 calls/month, 1.25% mint fee
 - Pro ($49/mo): 10K calls, 0.5% mint fee
 - Enterprise ($129/mo): unlimited, 0.25% mint fee
+
+**Mint fee is not USDC.** It is a separate `mint(address,uint256)` on your own loyalty token that sends the fee % to the platform fee wallet — paid in loyalty points, not USDC/ETH/fiat, and separate from the per-call prices below. The token contract does not enforce it; the API tracks a fee obligation per mint and returns HTTP 402 once 5+ obligations are unpaid for over 60 minutes. Settle each one with `POST /mint/confirm`.
 
 Merchant SaaS (portal): Starter $39 / Growth $79 / Scale $149 per month — see site docs.
 
@@ -70,8 +72,9 @@ Merchant SaaS (portal): Starter $39 / Growth $79 / Scale $149 per month — see 
 - POST /activate-program — Legacy ERC-20 activation only ($0.01; no-op for B20)
 - POST /program-status — Update status ($0.005)
 - POST /rewards — Create reward ($0.01)
-- POST /mint — Mint tokens ($0.01)
-- POST /earn — Auto-calculate and mint tokens from purchase amount ($0.01)
+- POST /mint — Mint tokens ($0.01 per call; plus the plan mint fee % in loyalty tokens, settled via POST /mint/confirm)
+- POST /mint/confirm — Settle the mint fee obligation with obligation_id + fee_tx_hash (free)
+- POST /earn — Auto-calculate and mint tokens from purchase amount ($0.01 per call; same mint fee rules as /mint)
 - POST /transfer — Transfer tokens ($0.005)
 - POST /redeem-reward — Redeem reward: verify tx + create voucher ($0.01)
 - POST /vouchers/use — Mark voucher as used ($0.005)

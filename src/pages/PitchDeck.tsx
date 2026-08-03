@@ -115,7 +115,7 @@ const PitchDeck = () => {
         },
         ppc: {
           title: 'Pay-per-call (x402 / MPP)',
-          detail: 'From ~$0.001 per read, ~$0.005–0.05 per write. USDC on Base, no API key.',
+          detail: 'From ~$0.001 per read, ~$0.005–0.05 per write. USDC on Base, no API key. Cash revenue is subscriptions + pay-per-call, both prepaid; the mint fee % is charged in the merchant\'s own loyalty tokens.',
         },
       },
     },
@@ -157,7 +157,7 @@ const PitchDeck = () => {
       subtitle: 'What makes us defensible',
       advantages: [
         { point: 'Dual-mode platform: humans (portal) + AI agents (API + MCP)', icon: Layers },
-        { point: 'Two-bills monetization: merchant SaaS + agent API + mint fee %', icon: DollarSign },
+        { point: 'Two-bills monetization: merchant SaaS + agent API + x402 pay-per-call', icon: DollarSign },
         { point: 'Native HTTP 402 payments via x402 and MPP — no API keys needed', icon: Cpu },
         { point: 'Built on Base: low fees, fast finality, USDC-native', icon: Globe },
         { point: 'Hardened security: RLS, SIWE, scoped lsk_/rwk_ API keys', icon: Shield },

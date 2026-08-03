@@ -64,8 +64,8 @@ The server verifies the fee mint on Base (Transfer from the zero address to the 
 ```json
 {
   "mint": { "id": "uuid", "amount": 100, "recipient_address": "0x...", "token_address": "0x..." },
-  "fee_percent": 1,
-  "fee_amount": 1,
+  "fee_percent": 1.25,
+  "fee_amount": 1.25,
   "fee_wallet": "0x5cc0Aa9ed773F413f81f78a62F2e94109CE26205",
   "fee_obligation_id": "uuid",
   "calls": [
@@ -88,6 +88,8 @@ curl -H "x-api-key: lsk_..." \
 ```
 
 ## Transaction Fees
+The fee is **denominated in the loyalty tokens you are minting** — a separate `mint()` to the platform wallet on your own token contract. It is **not** USDC, ETH, or fiat, and it is separate from x402/MPP per-call pricing.
+
 | Plan | Mint commission (% of amount, as separate mint to platform) |
 |------|----------------------------------------------------------------|
 | Free | 1.25% |

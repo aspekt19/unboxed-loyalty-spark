@@ -463,7 +463,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
 
   mcpServer.tool("mint_loyalty_tokens", {
     description:
-      "Record mint intent and get a fee-first `calls[]` bundle: protocol fee mint FIRST, then the recipient mint. Submit them in order (atomically via EIP-5792 send_calls if your wallet supports it), then call confirm_mint_fee (or POST /agent-api/mint/confirm) with the fee tx hash. Unconfirmed fee obligations block future mints.",
+      "Record mint intent and get a fee-first `calls[]` bundle: protocol fee mint FIRST, then the recipient mint. The protocol fee is charged in the merchant's own loyalty tokens (not USDC). Submit both calls in order (atomically via EIP-5792 send_calls if your wallet supports it), then call confirm_mint_fee (or POST /agent-api/mint/confirm) with the fee tx hash. Unconfirmed fee obligations block future mints.",
     inputSchema: { type: "object" as const, properties: { token_address: { type: "string", description: "Token contract address" }, recipient: { type: "string", description: "Recipient wallet (0x...)" }, amount: { type: "number", description: "Tokens to mint" } }, required: ["token_address", "recipient", "amount"] },
     handler: async ({ token_address, recipient, amount }: any) => {
       const err = authGuard(["mint"]);
@@ -488,6 +488,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
         mint,
         fee_percent: feePercent,
         fee_amount: feeAmount,
+        fee_currency: "loyalty_tokens",
         fee_wallet: PLATFORM_FEE_WALLET,
         fee_obligation_id: obligationId,
         calls,
@@ -550,7 +551,8 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
       return T(JSON.stringify({
         earn: { purchase_amount, cashback_rate: rate, tokens_earned: tokensToMint },
         mint,
-        fee_percent: feePercent, fee_amount: feeAmount, fee_wallet: PLATFORM_FEE_WALLET,
+        fee_percent: feePercent, fee_amount: feeAmount, fee_currency: "loyalty_tokens",
+        fee_wallet: PLATFORM_FEE_WALLET,
         fee_obligation_id: earnObligationId,
         calls,
         recipient_calldata: recipientCalldata, fee_calldata: feeCalldata,

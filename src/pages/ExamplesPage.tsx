@@ -22,7 +22,7 @@ const examples = [
     sector: "Retail rewards",
     summary:
       "A neighborhood café deploys a branded B20 loyalty token (COFFEE) on Base L2. Every purchase mints tokens to the customer wallet; 50 COFFEE redeems a free latte at the counter via QR scan.",
-    metrics: ["1 token = $0.05 reward value", "Mint fee 0.25%–1.25%", "Settlement in seconds on Base"],
+    metrics: ["1 token = $0.05 reward value", "Mint fee 0.25%–1.25%, paid in COFFEE", "Settlement in seconds on Base"],
     keywords: ["blockchain loyalty program example", "tokenized loyalty for retail"],
   },
   {

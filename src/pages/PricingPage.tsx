@@ -285,7 +285,8 @@ const PricingPage = () => {
             ))}
           </div>
           <p className="text-xs text-muted-foreground text-center mt-4">
-            Annual billing: 15% off Pro, 20% off Enterprise. Mint fee charged on chain volume.
+            Annual billing: 15% off Pro, 20% off Enterprise. The mint fee is charged in your own
+            loyalty tokens — a separate mint to the platform wallet on every mint, not a USDC charge.
           </p>
         </section>
 

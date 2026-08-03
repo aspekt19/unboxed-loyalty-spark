@@ -40,7 +40,7 @@ export function TrialWelcomeBanner({ product }: Props) {
   const featureLine =
     product === 'merchant'
       ? 'Marketing campaigns, automation rules, RFM segmentation, customer tiers and CRM analytics.'
-      : 'Higher rate limits, more agents, full MCP toolset and lower transaction fees.';
+      : 'Higher rate limits, more agents, full MCP toolset and lower mint fees.';
 
   return (
     <Card className="relative border-accent/40 bg-gradient-to-br from-accent/10 via-primary/5 to-transparent mb-6">

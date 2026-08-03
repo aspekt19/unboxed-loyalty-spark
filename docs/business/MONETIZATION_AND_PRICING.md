@@ -15,7 +15,9 @@ This document is the **single source of truth** for public pricing: it reflects 
    - **Agents** — API + MCP, `lsk_` keys, automation.  
    Pro agent pricing **above** merchant Starter is intentional (R&D / integration vs one operator seat).
 
-2. **Primary scale lever for agents** — **mint fee %** on chain volume, not subscription alone.
+2. **Cash revenue today comes from prepaid rails only** — agent/merchant **subscriptions in USDC** and **x402 / MPP per-request** payments. Both are collected *before* the service is delivered and cannot be skipped.
+
+   The **mint fee %** is **not** a cash revenue line today: it is settled in the **merchant's own loyalty tokens**, and it is enforced **off-chain**. Treat it as protocol accounting and a future lever, not as ARR. See [§3.1](#31-what-the-mint-fee-actually-is) before putting it in any financial model.
 
 3. **Globally** anchor on **SMB SaaS for on-chain loyalty**; UDS is a regional reference, not a feature checklist.
 
@@ -48,6 +50,25 @@ This document is the **single source of truth** for public pricing: it reflects 
 **Free @ 1.25%:** Slightly higher than 1% to offset a more generous free tier and reduce toxic micro-spam; monitor **COGS** if limits increase.
 
 Subscriptions are paid in **USDC on Base** ($1 = 1 USDC) per current product flow.
+
+### 3.1 What the mint fee actually is
+
+Be precise about this everywhere — public copy, decks, and investor material.
+
+| Question | Answer today |
+|---|---|
+| What is charged? | A second `mint(address,uint256)` call on the **merchant's own loyalty token** |
+| Paid in what? | **Loyalty tokens** (the merchant's points) sent to `PLATFORM_FEE_WALLET` — **not** USDC, not ETH, not fiat |
+| Who enforces it? | The **API**, off-chain: `_shared/agent-fee-ledger.ts` records an obligation, verifies settlement from on-chain `Transfer`-from-zero logs, and blocks new mints after **5** unpaid obligations older than **60 min** |
+| Does the token contract enforce it? | **No.** There is no `mintWithFee`. A merchant holding mint rights can mint directly on-chain and pay nothing |
+| Can it be counted as revenue? | **No.** Loyalty points have no market price and the issuer can pause or expire the program |
+
+Consequences to respect:
+
+- **Never** present the mint fee as USD/USDC revenue or as the primary growth lever.
+- **Never** claim it is "onchain-enforced", "automatic", "guaranteed", or "unavoidable". The accurate word is **accountability**.
+- Contract-level enforcement (`mintWithFee` or an equivalent fee-on-mint hook) is a **roadmap item**; it needs a new factory or an upgrade path plus an audit, and the default **B20 factory is not ours**.
+- Column `agent_usage.fees_collected_usdc` stores **token units**, not USDC — legacy name, do not read it as dollars.
 
 ---
 
@@ -108,6 +129,8 @@ Use one schema everywhere:
 
 Without this split, conversion drops.
 
+When the agent bill is described, the **paid** part is the subscription and per-request calls; the lower mint % is a **benefit of the tier**, not a second invoice.
+
 ---
 
 ## 7. Risks & caveats
@@ -118,6 +141,8 @@ Without this split, conversion drops.
 | COGS on Free @ **200** calls | Monitor Edge/DB load; tighten fair-use if needed. |
 | Expectation of full UDS parity | Clear roadmap-only claims. |
 | Russia: friction paying USDC | Separate acquiring track **without** publishing a second USD ladder. |
+| **Mint fee read as cash revenue** | §3.1 wording is mandatory in decks and site copy; models rely on subscriptions + x402 only. |
+| **Mint fee bypassed by direct on-chain mint** | Accepted today — the fee is in points, so the loss is not cash. Off-chain ledger blocks repeat offenders; contract-level enforcement is roadmap. |
 
 ---
 

@@ -252,11 +252,13 @@ export function AgentBillingDashboard() {
             <Card>
               <CardContent className="pt-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-muted-foreground">Fees This Month</span>
+                  <span className="text-sm text-muted-foreground">Mint Fees This Month</span>
                   <Receipt className="h-4 w-4 text-primary" />
                 </div>
                 <p className="text-2xl font-bold">{(usage?.fees_collected_usdc || 0).toFixed(2)}</p>
-                <p className="text-xs text-muted-foreground">tokens (at {currentPlan?.transaction_fee_percent || 1}%)</p>
+                <p className="text-xs text-muted-foreground">
+                  loyalty tokens, not USDC (at {currentPlan?.transaction_fee_percent ?? 1.25}%)
+                </p>
               </CardContent>
             </Card>
           </div>

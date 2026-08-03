@@ -95,6 +95,8 @@ Total Slides: 12
 ### Pay-per-call (x402 / MPP)
 From ~$0.001 per read, ~$0.005–0.05 per write. USDC on Base, no API key.
 
+Cash revenue is subscriptions + pay-per-call — both prepaid in USDC before the request is served. The mint fee % is charged in the merchant's **own loyalty tokens**, so we treat it as protocol accounting, not ARR (see `docs/business/MONETIZATION_AND_PRICING.md` §3.1).
+
 ---
 
 ## Slide 8: Go-to-Market
@@ -129,7 +131,7 @@ From ~$0.001 per read, ~$0.005–0.05 per write. USDC on Base, no API key.
 **What makes us defensible**
 
 - 🧱 **Dual-mode platform**: humans (portal) + AI agents (API + MCP)
-- 💰 **Two-bills monetization**: merchant SaaS + agent API + mint fee %
+- 💰 **Two-bills monetization**: merchant SaaS + agent API + x402 pay-per-call
 - ⚡ **Native HTTP 402 payments** via x402 and MPP — no API keys needed
 - 🌐 **Built on Base**: low fees, fast finality, USDC-native
 - 🛡️ **Hardened security**: RLS, SIWE, scoped `lsk_` / `rwk_` API keys

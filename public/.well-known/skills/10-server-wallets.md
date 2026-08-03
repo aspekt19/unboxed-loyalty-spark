@@ -52,6 +52,8 @@ Once funded, the agent can:
 - Accept marketplace offers via `/accept-offer`
 - All transactions signed server-side via MPC
 
+**Protocol fee on mints.** When you execute the `/mint` or `/earn` calldata yourself, you must send **both** calls in order — the `protocol_fee` mint first, then `recipient_mint` — and settle the obligation with `POST /agent-api/mint/confirm` (see [02-mint-tokens.md](./02-mint-tokens.md)). The fee is charged in your own loyalty tokens, not USDC. If you instead use `POST /agent-wallet` with `action: "server_mint"`, Loyal Spark sends the fee transaction itself and aborts the recipient mint if the fee fails, so no confirmation step is needed.
+
 ### Step 4: Check Wallet Status
 Your wallet info is included in the `GET /me` response:
 

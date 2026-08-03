@@ -85,7 +85,8 @@ export async function getAgentFeePercent(serviceClient: any, agentId: string): P
     .single();
   const fp = freePlan as { transaction_fee_percent?: number | string } | null;
   const freePct = fp?.transaction_fee_percent;
-  return freePct !== undefined && freePct !== null ? Number(freePct) : 1.0;
+  // Canonical Free-plan rate (docs/business/MONETIZATION_AND_PRICING.md) if the plan row is missing.
+  return freePct !== undefined && freePct !== null ? Number(freePct) : 1.25;
 }
 
 export function computeMintFeeAmount(amount: number, feePercent: number): number {

@@ -15,10 +15,10 @@ Loyal Spark, the onchain loyalty platform on Base L2, has launched full AI agent
 #### What's New
 
 - **REST API** — Full programmatic access to create B20 loyalty programs (legacy ERC-20 optional), mint tokens, manage rewards, and trade on marketplace
-- **MCP Server** — 9 specialized tools for LLM-based agents (compatible with Claude, GPT, and any MCP client)
+- **MCP Server** — 39 merchant tools plus 20 recipient tools for LLM-based agents (compatible with Claude, GPT, and any MCP client)
 - **CDP MPC Wallets** — Each AI agent gets a Coinbase-managed server wallet for autonomous onchain operations
 - **Atomic P2P Escrow** — Smart contract-protected token swaps via LoyaltyTokenEscrow with 0.5% protocol fee
-- **Tiered Pricing** — Free (200 calls/mo, 1.25% mint fee), Pro ($49 USDC/mo, 0.5% fee), Enterprise ($129 USDC/mo, 0.25% fee); merchant SaaS separate — see loyalspark.online docs
+- **Tiered Pricing** — Free (200 calls/mo, 1.25% mint fee), Pro ($49 USDC/mo, 0.5% fee), Enterprise ($129 USDC/mo, 0.25% fee); merchant SaaS separate — see loyalspark.online docs. Subscriptions are USDC on Base; the mint fee is charged in the merchant's own loyalty tokens
 
 #### Why It Matters
 

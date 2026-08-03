@@ -1,5 +1,9 @@
 # Loyal Spark Tokenomics
 
+> **Status: target model, not shipped.** `$LOYAL`, staking, the 8% / 0.5% swap fees, and the DAO described below are **not deployed** — there is no LOYAL contract on Base today. This document is the strategic design for a later phase.
+>
+> Live monetization is different and is described in [`docs/business/MONETIZATION_AND_PRICING.md`](../business/MONETIZATION_AND_PRICING.md): merchant SaaS and agent subscriptions in **USDC**, x402 / MPP per-request payments in **USDC**, and a mint fee % charged in the **merchant's own loyalty tokens**. Do not mix the two models in the same slide or financial model.
+
 ## Token: LOYAL (ERC-20 Utility/Governance Token)
 
 **Total Supply:** 10,000,000,000 LOYAL
@@ -103,7 +107,9 @@ M-token A → LOYAL → M-token B
 
 ## 5. Revenue Model
 
-Loyal Spark generates revenue through:
+*Applies to the `$LOYAL` phase only. For revenue as it works today, see [`MONETIZATION_AND_PRICING.md`](../business/MONETIZATION_AND_PRICING.md).*
+
+Loyal Spark would generate revenue through:
 
 1. **Staking Deposits:** Merchants stake LOYAL tokens (minimum 1-month lock-up)
    - Basic: $1,000
@@ -127,7 +133,7 @@ LOYAL token serves multiple purposes:
 1. **Collateral:** Required deposit for merchant access
 2. **Liquidity Hub:** Central trading pair for all M-tokens
 3. **Governance:** Stakers vote on protocol parameters
-4. **Fee Payment:** Platform transaction fees paid in LOYAL
+4. **Fee Payment:** Platform transaction fees paid in LOYAL — *target state only.* Today the mint fee is paid in the merchant's own loyalty tokens and subscriptions in USDC.
 5. **Rewards:** Ecosystem fund distributes LOYAL for growth initiatives
 
 ---

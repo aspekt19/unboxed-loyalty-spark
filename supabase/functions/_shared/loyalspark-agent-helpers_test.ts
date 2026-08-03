@@ -13,6 +13,10 @@ Deno.test("computeMintFeeAmount — 0.5% of 200", () => {
   assertEquals(computeMintFeeAmount(200, 0.5), 1);
 });
 
+Deno.test("computeMintFeeAmount — canonical Free plan 1.25% of 100", () => {
+  assertEquals(computeMintFeeAmount(100, 1.25), 1.25);
+});
+
 Deno.test("encodeMintCalldata — selector and padded addresses", () => {
   const hex = encodeMintCalldata("0x0000000000000000000000000000000000000001", 1);
   assert(hex.startsWith("0x40c10f19"));

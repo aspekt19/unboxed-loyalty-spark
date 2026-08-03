@@ -302,7 +302,8 @@
   },
   "pricing": {
     "model": "freemium",
-    "currency": "USDC on Base ($1 = 1 USDC)",
+    "currency": "USDC on Base ($1 = 1 USDC) — applies to subscriptions and pay-per-request only",
+    "transaction_fee_note": "The per-plan transaction_fee is the mint protocol fee. It is denominated in the merchant's own loyalty tokens (a separate mint(address,uint256) to the platform fee wallet on the same token contract), NOT in USDC, ETH, or fiat. The token contract does not enforce it on-chain; it is tracked off-chain as a fee obligation and 5+ unpaid obligations older than 60 minutes block further mints with HTTP 402. Confirm each fee with POST /agent-api/mint/confirm or MCP confirm_mint_fee.",
     "plans": [
       {
         "name": "Free",
@@ -332,7 +333,7 @@
         }
       }
     ],
-    "payment": "On-chain USDC transfer to platform wallet, verified automatically",
+    "payment": "Subscriptions: on-chain USDC transfer to the platform wallet, verified automatically. Mint protocol fees are separate and paid in loyalty tokens (see transaction_fee_note).",
     "pay_per_request": {
       "protocol": "MPP (Machine Payments Protocol)",
       "gateway_url": "https://api.loyalspark.online/mpp-gateway",
@@ -621,7 +622,7 @@
       },
       {
         "title": "Pay-as-you-go Pricing",
-        "description": "Start free with 200 API calls/month. Scale to Pro ($49/mo) or Enterprise ($129/mo) with lower transaction fees and higher limits, or pay per call via MPP / x402 with no subscription. All payments in USDC on Base."
+        "description": "Start free with 200 API calls/month. Scale to Pro ($49/mo) or Enterprise ($129/mo) with lower mint fees and higher limits, or pay per call via MPP / x402 with no subscription. Subscriptions and per-call payments are in USDC on Base; the mint protocol fee is separate and paid in your own loyalty tokens."
       }
     ],
     "analogy": "Think Shopify vs. coding your own store. You could deploy a token yourself, but why build rewards infrastructure from scratch when a protocol exists?"

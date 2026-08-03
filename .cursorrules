@@ -204,10 +204,12 @@ Facilitator (Base mainnet): CDP `https://api.cdp.coinbase.com/platform/v2/x402` 
 Merchant SaaS (portal): Starter $39 / Growth $79 / Scale $149 — separate product line; paid via `verify-agent-plan-payment` with `product: "merchant"` (tables `merchant_plans`, `merchant_plan_subscriptions`).
 Subscription payment: onchain USDC on Base to `payment_settings.subscription_wallet_address`, auto-verified when BaseScan key is set.
 
+**Mint fee ≠ USDC.** The mint fee % is a second `mint()` on the merchant's own loyalty token, paid in **loyalty tokens** to `PLATFORM_FEE_WALLET`. Cash revenue is subscriptions + x402/MPP only. Never describe the mint fee as USDC/fiat revenue or as contract-enforced — see `docs/business/MONETIZATION_AND_PRICING.md` §3.1.
+
 ## Agent Rules
 - Always validate x-api-key on every protected endpoint
 - Only **GET /vouchers/status** is public — no API key
 - Agent scope must be checked before every write operation
 - Rate limiting is per-agent, tracked in DB
 - All agent activity must be logged to audit trail
-- Commission enforcement must happen at smart contract level too
+- Mint fee enforcement is **off-chain today** (`_shared/agent-fee-ledger.ts`: obligation ledger, on-chain settlement check, block after 5 unpaid > 60 min). The token contract has **no** `mintWithFee` — a merchant with mint rights can bypass it. Contract-level enforcement is a roadmap item; do not write code or docs that assume it already exists.

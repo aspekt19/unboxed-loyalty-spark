@@ -73,8 +73,8 @@ Unconfirmed obligations (5+ older than 60 minutes) block further mints with HTTP
     "tokens_earned": 2.5
   },
   "mint": { "id": "uuid", "amount": 2.5, "recipient_address": "0x...", "token_address": "0x..." },
-  "fee_percent": 1,
-  "fee_amount": 0.025,
+  "fee_percent": 1.25,
+  "fee_amount": 0.03125,
   "fee_wallet": "0x5cc0Aa9ed773F413f81f78a62F2e94109CE26205",
   "fee_obligation_id": "uuid",
   "calls": [
@@ -110,7 +110,7 @@ curl -H "x-api-key: lsk_..." \
 | $250 | 3% | 7.5 |
 
 ## Transaction Fees
-Same as regular minting:
+Same as regular minting — paid **in the loyalty tokens being minted**, not in USDC or fiat:
 
 | Plan | Commission (% of tokens minted) |
 |------|--------------------------------|

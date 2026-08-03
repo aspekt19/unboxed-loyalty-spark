@@ -535,7 +535,9 @@ async function handleX402PayAndCall(d: any, agent: any, body: any) {
   return jsonResponse(result, result.paid ? 200 : (result.status || 402));
 }
 
-async function trackUsage(d: any, ownerAddress: string, mintAmount: number, feeUsdc: number) {
+// `fees_collected_usdc` is a legacy column name: it accumulates mint fee amounts
+// denominated in the merchant's loyalty tokens, never USDC.
+async function trackUsage(d: any, ownerAddress: string, mintAmount: number, feeTokens: number) {
   const now = new Date();
   const periodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
   const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0];

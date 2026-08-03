@@ -399,12 +399,13 @@ Deno.serve(async (req: Request) => {
 
     return json({
       chainId: CHAIN_ID,
-      description: `Mint ${amount} ${prog.symbol} to ${to} (+${feeAmount} protocol fee)`,
+      description: `Mint ${amount} ${prog.symbol} to ${to} (+${feeAmount} ${prog.symbol} protocol fee)`,
       transactions: calls.map((c) => ({ to: c.to, data: c.data, value: c.value })),
       calls,
       builder_code: BUILDER_CODE,
       fee_percent: feePercent,
       fee_amount: feeAmount,
+      fee_currency: "loyalty_tokens",
       fee_wallet: PLATFORM_FEE_WALLET,
       fee_obligation_id: obligationId,
       note:

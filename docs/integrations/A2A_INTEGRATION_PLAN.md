@@ -56,7 +56,7 @@ The Loyal Spark platform operates as a dual-mode protocol where **humans** inter
 - **Table**: `agent_wallets` — stores wallet addresses linked to agents
 
 ### 5. Monetization ✅
-- **Transaction Fees**: 1.25% (Free), 0.5% (Pro), 0.25% (Enterprise) — collected during `server_mint`
+- **Mint Fees**: 1.25% (Free), 0.5% (Pro), 0.25% (Enterprise) — charged in the merchant's own loyalty tokens, not USDC. On the CDP `server_mint` path Loyal Spark sends the fee tx itself; on the calldata path the agent must broadcast it and settle via `POST /agent-api/mint/confirm`. Not enforced by the token contract — see `docs/business/MONETIZATION_AND_PRICING.md` §3.1
 - **SaaS Plans (agents)**: Free ($0), Pro ($49/mo USDC), Enterprise ($129/mo USDC) — see `docs/business/MONETIZATION_AND_PRICING.md`
 - **Payment**: On-chain USDC transfer verification via BaseScan API
 - **Tables**: `agent_plans`, `agent_plan_subscriptions`, `agent_usage`, `agent_fee_log`

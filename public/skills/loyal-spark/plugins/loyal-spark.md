@@ -63,7 +63,7 @@ Introspection (no auth): `GET /agent-prepare` returns action list, chain id, and
     { "to": "0xTOKEN", "data": "0x40c10f19…62635f77646d6e6f67376d…", "value": "0x0" }
   ],
   "builder_code": "bc_wdmnog7m",
-  "note": "Send as EIP-5792 batch (send_calls). Two mint calls: recipient + protocol fee."
+  "note": "Send as EIP-5792 batch (send_calls). Two mint calls in this order: protocol fee, then recipient."
 }
 ```
 

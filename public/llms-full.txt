@@ -98,7 +98,19 @@ curl -X POST \
   https://api.loyalspark.online/agent-api/mint
 ```
 
-Response returns calldata with Builder Code for onchain execution.
+Response returns a **fee-first `calls[]` bundle** with Builder Code for onchain execution: `calls[0]` (`purpose: "protocol_fee"`) mints the plan fee % to the platform fee wallet, `calls[1]` (`purpose: "recipient_mint"`) mints the full amount to the customer. Send them in that order, or atomically via EIP-5792 `wallet_sendCalls`.
+
+Then settle the fee obligation:
+
+```bash
+curl -X POST \
+  -H "x-api-key: lsk_YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"obligation_id":"<fee_obligation_id>","fee_tx_hash":"0x..."}' \
+  https://api.loyalspark.online/agent-api/mint/confirm
+```
+
+The fee is charged **in the loyalty tokens being minted**, not in USDC. The token contract does not enforce it — once 5 or more obligations stay unpaid for over 60 minutes, further mints return HTTP 402.
 
 ## MCP Server — 39 Tools (Merchant)
 
@@ -264,7 +276,9 @@ Agents can create Coinbase CDP MPC wallets for autonomous onchain operations:
 
 Merchant SaaS (portal): Starter $39 / Growth $79 / Scale $149 per month — separate product line.
 
-Payment: On-chain USDC transfer on Base, verified automatically.
+Payment: On-chain USDC transfer on Base, verified automatically. This covers **subscriptions only**.
+
+**Mint fee (separate, not USDC).** The mint fee % above is charged in the merchant's **own loyalty tokens** — a second `mint(address,uint256)` to the platform fee wallet on the same token contract. It is not USDC, ETH, or fiat, and it is independent of the per-call x402 / MPP prices. The token contract has no `mintWithFee`, so the fee is tracked off-chain as an obligation per prepared mint; 5+ obligations unpaid for over 60 minutes block further mints with HTTP 402. Settle with `POST /agent-api/mint/confirm` (REST) or `confirm_mint_fee` (MCP).
 
 ## Smart Contracts
 
