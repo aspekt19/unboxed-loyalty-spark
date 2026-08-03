@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAccount, useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +11,11 @@ import { parseUnits } from 'viem';
 import { encodeWithBuilderCode } from '@/config/builder-code';
 import { CONTRACTS } from '@/config/contracts';
 import { Loader2, ArrowRightLeft, X, Shield, Info, CheckCircle2 } from 'lucide-react';
+import {
+  applyOptimisticBalanceReceive,
+  applyOptimisticBalanceSpend,
+  reconcileCustomerBalances,
+} from '@/hooks/useMultiTokenBalance';
 
 interface MarketplaceOffer {
   id: string;
@@ -30,6 +36,7 @@ interface TokenInfo {
 
 export function MarketplaceOffersList() {
   const { address } = useAccount();
+  const queryClient = useQueryClient();
   const [offers, setOffers] = useState<MarketplaceOffer[]>([]);
   const [tokens, setTokens] = useState<Record<string, TokenInfo>>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -165,6 +172,8 @@ export function MarketplaceOffersList() {
   };
 
   const completeOffer = async (offerId: string) => {
+    const offer = pendingOffer ?? offers.find((o) => o.id === offerId) ?? null;
+
     await supabase
       .from('marketplace_offers')
       .update({
@@ -174,10 +183,16 @@ export function MarketplaceOffersList() {
       })
       .eq('id', offerId);
 
+    // Acceptor spends request token, receives offer token.
+    if (offer) {
+      applyOptimisticBalanceSpend(queryClient, offer.request_token_address, offer.request_amount);
+      applyOptimisticBalanceReceive(queryClient, offer.offer_token_address, offer.offer_amount);
+    }
+
     toast.success('Escrow exchange completed! Both transfers confirmed.');
     resetProcessing();
     loadOffers();
-    window.dispatchEvent(new CustomEvent('tokenBalancesUpdated'));
+    reconcileCustomerBalances(queryClient);
   };
 
   const handleCancelOffer = async (offerId: string) => {
@@ -203,14 +218,22 @@ export function MarketplaceOffersList() {
   };
 
   const completeCancelOffer = async (offerId: string) => {
+    const offer = pendingOffer ?? offers.find((o) => o.id === offerId) ?? null;
+
     await supabase
       .from('marketplace_offers')
       .update({ status: 'cancelled' })
       .eq('id', offerId);
 
+    // Creator gets locked offer tokens back from escrow.
+    if (offer) {
+      applyOptimisticBalanceReceive(queryClient, offer.offer_token_address, offer.offer_amount);
+    }
+
     toast.success('Offer cancelled. Tokens returned from escrow.');
     resetProcessing();
     loadOffers();
+    reconcileCustomerBalances(queryClient);
   };
 
   const resetProcessing = () => {

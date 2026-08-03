@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useMultiTokenBalance } from '@/hooks/useMultiTokenBalance';
+import { useMultiTokenBalance, applyOptimisticBalanceSpend, reconcileCustomerBalances } from '@/hooks/useMultiTokenBalance';
 import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { parseUnits } from 'viem';
 import { encodeWithBuilderCode } from '@/config/builder-code';
@@ -15,6 +15,7 @@ import { CONTRACTS } from '@/config/contracts';
 import { Loader2, ArrowRightLeft, Shield, Info, CheckCircle2 } from 'lucide-react';
 import { z } from 'zod';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface TokenInfo {
   address: string;
@@ -34,6 +35,7 @@ type Step = 'form' | 'approving' | 'creating';
 
 export function CreateMarketplaceOffer() {
   const { address } = useAccount();
+  const queryClient = useQueryClient();
   const [tokens, setTokens] = useState<TokenInfo[]>([]);
   const [offerTokenAddress, setOfferTokenAddress] = useState('');
   const [offerAmount, setOfferAmount] = useState('');
@@ -156,6 +158,9 @@ export function CreateMarketplaceOffer() {
 
   const saveOfferToDB = async () => {
     try {
+      const lockedToken = offerTokenAddress;
+      const lockedAmount = offerAmount;
+
       await supabase.from('marketplace_offers').insert({
         creator_address: address!.toLowerCase(),
         offer_token_address: offerTokenAddress.toLowerCase(),
@@ -165,6 +170,10 @@ export function CreateMarketplaceOffer() {
         status: 'active',
       });
 
+      if (lockedToken && lockedAmount) {
+        applyOptimisticBalanceSpend(queryClient, lockedToken, lockedAmount);
+      }
+
       toast.success('Escrow offer created! Tokens locked in smart contract.');
       setOfferTokenAddress('');
       setOfferAmount('');
@@ -172,6 +181,7 @@ export function CreateMarketplaceOffer() {
       setRequestAmount('');
       setStep('form');
       window.dispatchEvent(new CustomEvent('marketplaceOffersUpdated'));
+      reconcileCustomerBalances(queryClient);
     } catch {
       toast.error('Offer created on-chain but failed to save. Contact support.');
       setStep('form');

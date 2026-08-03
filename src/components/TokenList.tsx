@@ -4,13 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { TokenListItem } from './TokenListItem';
-import { useMultiTokenBalance, type TokenInfo } from '@/hooks/useMultiTokenBalance';
+import { useMultiTokenBalance, type TokenInfo, applyOptimisticBalanceSpend, reconcileCustomerBalances, CUSTOMER_BALANCES_QUERY_KEY } from '@/hooks/useMultiTokenBalance';
 import { useTransferTokens } from '@/hooks/useTransferTokens';
 import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
 import { Loader2, Coins, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAccount } from 'wagmi';
+import { useQueryClient } from '@tanstack/react-query';
 import { useActiveCustomerWallet } from '@/hooks/useActiveCustomerWallet';
 import { useActiveLoyaltyPrograms } from '@/hooks/useActiveLoyaltyPrograms';
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from '@/components/ui/carousel';
@@ -76,8 +77,9 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, 
     }
     return map;
   }, [programs]);
-  const { balances, isLoading, refetch } = useMultiTokenBalance(allTokens, activeAddress);
+  const { balances, isLoading } = useMultiTokenBalance(allTokens, activeAddress);
   const { transferTokens, isPending, isSuccess } = useTransferTokens();
+  const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const { selectionChanged } = useFarcasterHaptics();
 
@@ -148,17 +150,21 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, 
 
   useEffect(() => {
     if (isSuccess && !prevIsSuccessRef.current && dialogOpen) {
+      const spentToken = selectedToken?.address;
+      const spentAmount = transferAmount;
+      if (spentToken && spentAmount) {
+        applyOptimisticBalanceSpend(queryClient, spentToken, spentAmount);
+        void queryClient.cancelQueries({ queryKey: CUSTOMER_BALANCES_QUERY_KEY });
+      }
       toast.success('Tokens transferred successfully!');
       setRecipientAddress('');
       setTransferAmount('');
       setSelectedToken(null);
       setDialogOpen(false);
-      setTimeout(() => {
-        void refetch();
-      }, 1000);
+      reconcileCustomerBalances(queryClient);
     }
     prevIsSuccessRef.current = isSuccess;
-  }, [isSuccess, dialogOpen, refetch]);
+  }, [isSuccess, dialogOpen, queryClient, selectedToken, transferAmount]);
 
   const handleTransfer = async (e: React.FormEvent) => {
     e.preventDefault();

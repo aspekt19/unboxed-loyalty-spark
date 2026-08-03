@@ -8,11 +8,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useAccount } from 'wagmi';
+import { useQueryClient } from '@tanstack/react-query';
 import { createVerifiedVoucher } from '@/lib/verifiedVoucher';
 import { getRewardsByToken } from '@/lib/vouchers';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Reward } from '@/types/rewards';
+import {
+  applyOptimisticBalanceSpend,
+  reconcileCustomerBalances,
+  CUSTOMER_BALANCES_QUERY_KEY,
+} from '@/hooks/useMultiTokenBalance';
 
 /** Shape of a failed voucher attempt stored for recovery */
 export interface FailedVoucherAttempt {
@@ -55,8 +61,6 @@ interface UseVoucherVerificationProps {
   isSuccess: boolean;
   /** Burn tx hash */
   hash: `0x${string}` | undefined;
-  /** Callback to refetch balances */
-  refetch: () => void;
   /** Callback to clear reward selection */
   clearSelection: () => void;
 }
@@ -68,16 +72,30 @@ export function useVoucherVerification({
   selectedRewardId,
   isSuccess,
   hash,
-  refetch,
   clearSelection,
 }: UseVoucherVerificationProps) {
   const { address } = useAccount();
   const { signInWithWallet } = useAuth();
+  const queryClient = useQueryClient();
 
   const [processedHash, setProcessedHash] = useState<string | undefined>();
   const [failedAttempt, setFailedAttempt] = useState<FailedVoucherAttempt | null>(null);
   const [isRecovering, setIsRecovering] = useState(false);
   const [verification, setVerification] = useState<VerificationStatus>(INITIAL_VERIFICATION);
+
+  const applySpendToUi = useCallback(
+    (tokenAddress: string, cost: number) => {
+      if (cost > 0) {
+        applyOptimisticBalanceSpend(queryClient, tokenAddress, cost);
+      }
+      void queryClient.cancelQueries({ queryKey: CUSTOMER_BALANCES_QUERY_KEY });
+    },
+    [queryClient],
+  );
+
+  const reconcileBalancesFromChain = useCallback(() => {
+    reconcileCustomerBalances(queryClient);
+  }, [queryClient]);
 
   // Reset failed attempt & verification when programme / reward changes
   useEffect(() => {
@@ -154,8 +172,8 @@ export function useVoucherVerification({
       }
 
       setProcessedHash(hash);
-      refetch();
-      window.dispatchEvent(new Event('tokenBalancesUpdated'));
+      // Burn confirmed — update UI immediately; do not wait for staleTime / idle refresh.
+      applySpendToUi(selectedTokenAddress, reward.cost);
 
       const { result, attempts } = await runVerificationLoop({
         txHash: hash,
@@ -168,14 +186,15 @@ export function useVoucherVerification({
         cost: reward.cost,
       });
 
+      // Tokens are already spent on-chain regardless of voucher DB success.
+      reconcileBalancesFromChain();
+
       if (result?.success && result.voucher) {
         setVerification(INITIAL_VERIFICATION);
         toast.success(`Voucher activated! Code: ${result.voucher.code}`);
         clearSelection();
         setFailedAttempt(null);
-        refetch();
         window.dispatchEvent(new Event('vouchersUpdated'));
-        window.dispatchEvent(new Event('tokenBalancesUpdated'));
       } else {
         console.error('[useVoucherVerification] Failed after', attempts, 'attempts:', result?.error);
         setVerification(prev => ({ ...prev, isVerifying: false, canRetry: true }));
@@ -190,7 +209,7 @@ export function useVoucherVerification({
     };
 
     handleVoucherCreation();
-  }, [isSuccess, hash, processedHash, selectedRewardId, availableRewards, tokens, selectedTokenAddress, address, refetch, clearSelection, runVerificationLoop]);
+  }, [isSuccess, hash, processedHash, selectedRewardId, availableRewards, tokens, selectedTokenAddress, address, clearSelection, runVerificationLoop, applySpendToUi, reconcileBalancesFromChain]);
 
   // ── Recovery for a failed attempt ──
   const recoverVoucher = useCallback(async () => {
@@ -262,9 +281,9 @@ export function useVoucherVerification({
         toast.success(`Voucher activated! Code: ${result.voucher.code}`);
         setFailedAttempt(null);
         clearSelection();
-        refetch();
+        // Recovery: burn already happened earlier — refresh only, no second optimistic spend.
+        reconcileBalancesFromChain();
         window.dispatchEvent(new Event('vouchersUpdated'));
-        window.dispatchEvent(new Event('tokenBalancesUpdated'));
       } else {
         console.error('[useVoucherVerification] Recovery failed after', attempts, 'attempts:', result?.error);
         setVerification(prev => ({ ...prev, isVerifying: false, canRetry: true }));
@@ -275,7 +294,7 @@ export function useVoucherVerification({
     } finally {
       setIsRecovering(false);
     }
-  }, [failedAttempt, address, signInWithWallet, runVerificationLoop, refetch, clearSelection]);
+  }, [failedAttempt, address, signInWithWallet, runVerificationLoop, clearSelection, reconcileBalancesFromChain]);
 
   const dismissFailedAttempt = useCallback(() => {
     setFailedAttempt(null);

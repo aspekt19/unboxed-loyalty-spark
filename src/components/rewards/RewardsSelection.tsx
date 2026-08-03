@@ -55,7 +55,7 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
 
   const { activeAddress, isMismatch, primaryAddress } = useActiveCustomerWallet();
   const { data: programsCatalog = [] } = useActiveLoyaltyPrograms({ includePaused: false });
-  const { balances, isLoading: balancesLoading, refetch } = useMultiTokenBalance(tokens, activeAddress);
+  const { balances, isLoading: balancesLoading } = useMultiTokenBalance(tokens, activeAddress);
   const { burnTokens, isPending, isSuccess, hash } = useBurnTokens();
   const { approveTokens, isPending: isApproving, isSuccess: isApproved } = useApproveTokens();
 
@@ -92,7 +92,6 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
     selectedRewardId,
     isSuccess,
     hash,
-    refetch,
     clearSelection,
   });
 

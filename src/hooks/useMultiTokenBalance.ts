@@ -1,7 +1,7 @@
 import { useAccount, usePublicClient } from 'wagmi';
-import { formatUnits } from 'viem';
+import { formatUnits, parseUnits } from 'viem';
 import { useCallback, useEffect, useMemo } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { type TokenAddress, ERC20_BALANCE_ABI, txLog } from './types/transaction';
 
 const HOOK_NAME = 'MultiTokenBalance';
@@ -18,6 +18,80 @@ export interface TokenInfo {
 export interface TokenBalance extends TokenInfo {
   balance: string;
   rawBalance: bigint;
+}
+
+/**
+ * Force-refresh all customer balance caches (bypasses staleTime).
+ * Cancels in-flight fetches first so an early post-tx read cannot overwrite a later one.
+ */
+export async function refreshCustomerBalances(queryClient: QueryClient) {
+  await queryClient.cancelQueries({ queryKey: CUSTOMER_BALANCES_QUERY_KEY });
+  await queryClient.invalidateQueries({ queryKey: CUSTOMER_BALANCES_QUERY_KEY });
+}
+
+/** Immediate invalidate + one delayed reconcile (RPC lag after confirmation). */
+export function reconcileCustomerBalances(queryClient: QueryClient) {
+  void refreshCustomerBalances(queryClient);
+  window.setTimeout(() => {
+    void refreshCustomerBalances(queryClient);
+  }, 1500);
+}
+
+/**
+ * Immediately adjust a token balance in every matching cache entry.
+ * Used after transfers / voucher burns / P2P so UI updates before staleTime expires.
+ */
+export function applyOptimisticBalanceDelta(
+  queryClient: QueryClient,
+  tokenAddress: string,
+  amountHuman: number | string,
+  direction: 'spend' | 'receive',
+) {
+  const token = tokenAddress.toLowerCase();
+  let amountWei: bigint;
+  try {
+    amountWei = parseUnits(String(amountHuman), 18);
+  } catch {
+    return;
+  }
+  if (amountWei <= 0n) return;
+
+  queryClient.setQueriesData<TokenBalance[]>(
+    { queryKey: CUSTOMER_BALANCES_QUERY_KEY },
+    (old) => {
+      if (!old?.length) return old;
+      return old.map((row) => {
+        if (row.address.toLowerCase() !== token) return row;
+        const nextRaw =
+          direction === 'spend'
+            ? row.rawBalance > amountWei
+              ? row.rawBalance - amountWei
+              : 0n
+            : row.rawBalance + amountWei;
+        return {
+          ...row,
+          rawBalance: nextRaw,
+          balance: formatUnits(nextRaw, 18),
+        };
+      });
+    },
+  );
+}
+
+export function applyOptimisticBalanceSpend(
+  queryClient: QueryClient,
+  tokenAddress: string,
+  amountHuman: number | string,
+) {
+  applyOptimisticBalanceDelta(queryClient, tokenAddress, amountHuman, 'spend');
+}
+
+export function applyOptimisticBalanceReceive(
+  queryClient: QueryClient,
+  tokenAddress: string,
+  amountHuman: number | string,
+) {
+  applyOptimisticBalanceDelta(queryClient, tokenAddress, amountHuman, 'receive');
 }
 
 async function fetchBalancesMulticall(
@@ -124,7 +198,7 @@ export function useMultiTokenBalance(tokens: TokenInfo[], overrideAddress?: stri
 
   useEffect(() => {
     const invalidate = () => {
-      void queryClient.invalidateQueries({ queryKey: CUSTOMER_BALANCES_QUERY_KEY });
+      void refreshCustomerBalances(queryClient);
     };
     window.addEventListener('tokenBalancesUpdated', invalidate);
     window.addEventListener('sessionReady', invalidate);
@@ -138,7 +212,7 @@ export function useMultiTokenBalance(tokens: TokenInfo[], overrideAddress?: stri
 
   const refetch = useCallback(
     async (_silent = false) => {
-      await queryClient.invalidateQueries({ queryKey: CUSTOMER_BALANCES_QUERY_KEY });
+      await refreshCustomerBalances(queryClient);
       return query.refetch();
     },
     [query, queryClient],
