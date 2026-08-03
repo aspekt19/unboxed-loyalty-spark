@@ -443,7 +443,7 @@ footer(s, 12)
 s = prs.slides.add_slide(BLANK); grad_bg(s)
 kicker(s, "12 · Прогноз")
 title(s, "Экономика роста")
-subtitle(s, "Сценарий на базе модели стейкинга и транзакционных комиссий.")
+subtitle(s, "Сценарий на базе модели стейкинга и транзакционных комиссий — она ещё не задеплоена.")
 cols = ["Метрика", "Год 1", "Год 2", "Год 3"]
 data = [
     ("Активные бизнесы", "1 000", "10 000", "50 000"),
@@ -464,13 +464,13 @@ for r in data:
         textbox(s, colx[j], yy, Inches(2.6), Inches(0.5), [[(v, 15, color, bold)]])
     yy = yy + Inches(0.72)
 textbox(s, Inches(0.9), Inches(6.5), Inches(11.5), Inches(0.5),
-        [[("Прогноз иллюстративный: целевая траектория при достижении PMF и активации канала агентов.", 11.5, MUTED, False)]])
+        [[("Прогноз иллюстративный: целевая траектория при достижении PMF и активации канала агентов. Опирается на будущую модель $LOYAL, а не на текущую выручку (подписки и оплата за вызов в USDC).", 11.5, MUTED, False)]])
 footer(s, 13)
 
 # ============ SLIDE 14 — TOKENOMICS ============
 s = prs.slides.add_slide(BLANK); grad_bg(s)
 kicker(s, "13 · Токеномика")
-title(s, "LOYAL — топливо экосистемы")
+title(s, "LOYAL — топливо экосистемы (план)")
 # left card: allocation
 card(s, Inches(0.9), Inches(2.45), Inches(5.6), Inches(4.1))
 textbox(s, Inches(1.15), Inches(2.65), Inches(5.1), Inches(0.5), [[("Распределение · 10 000 000 000 LOYAL", 15, WHITE, True)]])
@@ -501,6 +501,8 @@ for ic, h, b in util:
     textbox(s, Inches(7.1), yy, Inches(0.6), Inches(0.6), [[(ic, 22, BRAND, False)]])
     textbox(s, Inches(7.75), yy, Inches(4.5), Inches(1.0), [[(h + " ", 14, WHITE, True), (b, 12.5, MUTED, False)]], line_spacing=1.1)
     yy = yy + Inches(1.05)
+textbox(s, Inches(0.9), Inches(6.62), Inches(11.5), Inches(0.35),
+        [[("$LOYAL, стейкинг и DAO пока не задеплоены — дизайн следующей фазы. Сейчас: подписки и оплата за вызов в USDC.", 11.5, MUTED, False)]])
 footer(s, 14)
 
 # ============ SLIDE 15 — ASK ============
