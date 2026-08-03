@@ -393,7 +393,8 @@ export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: Merchant
             )
           ) : (
             <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-2">
-              <TabsList className="inline-flex w-auto min-w-full">
+              <TabsList className="inline-flex w-auto min-w-full lg:flex lg:flex-wrap lg:h-auto lg:gap-1">
+
                 <TabsTrigger value="dashboard" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Dashboard</TabsTrigger>
                 <TabsTrigger value="customers" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Customers</TabsTrigger>
                 <TabsTrigger value="programs" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Programs</TabsTrigger>
