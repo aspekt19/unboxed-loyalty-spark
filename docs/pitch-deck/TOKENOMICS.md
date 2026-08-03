@@ -1,179 +1,109 @@
 # Loyal Spark Tokenomics
 
-> **Status: target model, not shipped.** `$LOYAL`, staking, the 8% / 0.5% swap fees, and the DAO described below are **not deployed** — there is no LOYAL contract on Base today. This document is the strategic design for a later phase.
+> **Status.** The allocation below is the **final** configuration for the `$LOYAL` launch on
+> [Vibestarter](https://app.vibestarter.xyz) and is enforced by the launch contract on Base.
+> Until that contract is deployed there is no LOYAL token in circulation.
 >
-> Live monetization is different and is described in [`docs/business/MONETIZATION_AND_PRICING.md`](../business/MONETIZATION_AND_PRICING.md): merchant SaaS and agent subscriptions in **USDC**, x402 / MPP per-request payments in **USDC**, and a mint fee % charged in the **merchant's own loyalty tokens**. Do not mix the two models in the same slide or financial model.
+> **`$LOYAL` is not the revenue model.** Platform revenue is USDC — merchant SaaS and agent
+> subscriptions plus x402 / MPP per-request payments — and is described in
+> [`docs/business/MONETIZATION_AND_PRICING.md`](../business/MONETIZATION_AND_PRICING.md).
+> `$LOYAL` is a governance and liquidity instrument, not a fee rail. Do not present it as ARR.
 
-## Token: LOYAL (ERC-20 Utility/Governance Token)
+## Token: LOYAL (ERC-20 governance token)
 
-**Total Supply:** 10,000,000,000 LOYAL
+**Total supply:** 1,000,000,000 LOYAL (fixed, 18 decimals)
 
-**Purpose:** LOYAL serves as collateral asset, base currency intermediary, and governance instrument (DAO).
+**Chain:** Base mainnet (8453)
 
----
+**Distribution:** Vibestarter launch contract with verifiable AI-agent provenance
 
-## 1. Token Allocation Strategy
-
-Total supply of 10 billion LOYAL ensures scalability for microtransactions and psychological appeal.
-
-| Category | Share | Amount (LOYAL) | Vesting / Unlock Conditions |
-|----------|-------|----------------|------------------------------|
-| **Ecosystem Fund / Treasury** | 41% | 4,100,000,000 | TGE 0%. Linear unlock over 5 years, controlled by DAO. Source of LP rewards and grants. |
-| **Token Sales (Seed, Private, Public)** | 30% | 3,000,000,000 | 12-18 month vesting. Minimal unlock at TGE. |
-| **Team & Advisors** | 20% | 2,000,000,000 | 1-year lock-up, then 3-year linear vesting. |
-| **Marketing & Early Users (Airdrop)** | 4% | 400,000,000 | Fast unlock to incentivize merchant adoption. |
-| **Liquidity Reserve (Initial DEX Liquidity - IDL)** | 5% | 500,000,000 | Full unlock at TGE. For creating initial LOYAL/USDC pool. |
+**Purpose:** Governance over the protocol treasury, permanent DEX liquidity for the token, and
+ecosystem incentives. Supply is fixed at launch — there is no ongoing emission and no minting key.
 
 ---
 
-## 2. Merchant Entry Model: Collateral Staking
+## 1. Token Allocation
 
-The platform requires merchants to stake refundable collateral in LOYAL tokens to access full functionality and activate liquidity for their loyalty tokens.
+Set in the Vibestarter launch contract. Percentages are fixed at deployment and cannot be changed
+afterwards.
 
-### Staking Requirements
+| Category | Share | Amount (LOYAL) | Unlock conditions |
+|----------|-------|----------------|-------------------|
+| **Backers** | 65.0% | 650,000,000 | Distributed to raise contributors per the launch contract's emission schedule |
+| **Liquidity** | 15.0% | 150,000,000 | **Permanently locked** in an Aerodrome pool — never withdrawable |
+| **Treasury** | 10.0% | 100,000,000 | Locked; released **only** through governance proposals voted on by token holders |
+| **Founder** | 7.5% | 75,000,000 | Time-locked, then linear vesting per the launch contract |
+| **Ecosystem (airdrop)** | 2.5% | 25,000,000 | Growth and adoption incentives |
 
-**Basic Deposit (Activation):** $1,000 in LOYAL (at current rate). Minimum requirement for participation.
+Two properties worth stating plainly to any investor:
 
-**Deposit Split:**
-- $500 goes to Main Stake (voting rights and slashing protection)
-- $500 goes to Liquidity Pool Reserve (LPR)
-
-**Return Guarantee:** When merchant exits, guaranteed return of at least 80% of nominal deposit value.
-
-### Merchant Tiers
-
-| Tier | Total Required Stake (USD-equivalent) | Unlocked Features |
-|------|--------------------------------------|-------------------|
-| **Basic** | $1,000 | Core loyalty programs, M-token liquidity |
-| **Pro** | $5,000 | Advanced analytics, API, custom NFT rewards |
-| **Enterprise** | $15,000 | White Label solutions, unlimited transaction limits |
+- **Backers hold the supermajority.** 65% goes to contributors, not to insiders. Founder allocation
+  is capped at 7.5% by the contract, so it cannot be raised later.
+- **Liquidity cannot be pulled.** The 15% liquidity allocation is locked permanently in Aerodrome,
+  which removes the standard rug vector.
 
 ---
 
-## 3. Liquidity Mechanism: Hub-and-Spoke & Buyback
+## 2. Governance
 
-This section describes how LOYAL becomes the central liquidity hub for all M-token loyalty tokens and how merchants gain economic benefits.
+**Voting:** Token holders vote on treasury proposals. Voting does **not** require staking or locking
+tokens — there is no staking contract.
 
-### 3.1. Liquidity Provisioning & Pricing (Buyback Mechanism)
+**What governance controls:** release of the 10% treasury allocation. Each disbursement is a separate
+proposal with a separate vote.
 
-**Multiple M-Tokens:** Merchants can issue multiple M-tokens (e.g., "miles" and "points").
-
-**Mandatory Base Pairs (Spokes):** For each M-token, merchant creates and funds a Buyback Pool in M-token / LOYAL pair.
-
-**Initial Pricing:** Initial M-token price is determined based on merchant's reward cost, minus conversion fee:
-
-```
-P_M-token = (C_reward / M-tokens_per_reward) × (1 - K_convert)
-```
-
-Where:
-- `C_reward` = Cost of reward to merchant
-- `K_convert` = Conversion fee percentage (e.g., 5-15%), set by merchant for exchanging M-tokens to LOYAL or USDC/stablecoins
-
-**Economic Advantage:** The K_convert fee built into initial price ensures that when customers cash out M-tokens, merchant effectively buys them back cheaper than full cost, thereby reducing actual loyalty program expenses.
-
-### 3.2. Centralized Liquidity Hub (DEX)
-
-**LOYAL as Base Pair:** LOYAL acts as universal intermediary currency (Hub) for all M-token / LOYAL pools (Spokes).
-
-**Cross-Network Exchange:** Any M-token A to M-token B swap happens automatically through two atomic swaps, using LOYAL as bridge:
-
-```
-M-token A → LOYAL → M-token B
-```
+**What governance does not control:** total supply (fixed), the allocation split (fixed at
+deployment), the locked liquidity position (permanent), and platform pricing (a business decision
+settled in USDC, not a token parameter).
 
 ---
 
-## 4. Deflationary Mechanics & Governance (DAO)
+## 3. Token Utility
 
-### 4.1. Deflation & Price Protection
+1. **Governance** — vote on treasury proposals.
+2. **Liquidity** — LOYAL is the tradable asset in the permanently locked Aerodrome pool.
+3. **Ecosystem incentives** — the 2.5% airdrop allocation funds adoption campaigns.
 
-**Deterrent Factor (Burning):** 8% deterrent fee on M-token → LOYAL transactions (selling points) is BURNED. This is the key deflationary mechanism that protects LOYAL price and incentivizes spending points on goods.
-
-**Stimulating Factor:** Only 0.5% fee on LOYAL → M-token transactions (buying points), going to LPR/Treasury.
-
-**Emission Balance:** 41% allocation to Ecosystem Fund allows DAO to balance emission and burning, aiming for zero net inflation for stability.
-
-### 4.2. Governance (DAO)
-
-**Voting Rights:** Only staked LOYAL tokens grant voting rights.
-
-**DAO-Controlled Parameters:**
-- Changes to merchant staking amounts
-- Changes to 8% Burn Fee
-- Control and distribution of Ecosystem Fund (41%)
+`$LOYAL` is deliberately **not** used for: paying platform fees, gating merchant access, or
+collateralising loyalty programs. Those all work in USDC or in the merchant's own loyalty token, and
+keeping them separate means the product does not depend on token price.
 
 ---
 
-## 5. Revenue Model
+## 4. Relationship to platform revenue
 
-*Applies to the `$LOYAL` phase only. For revenue as it works today, see [`MONETIZATION_AND_PRICING.md`](../business/MONETIZATION_AND_PRICING.md).*
+| Flow | Currency | Bypassable? |
+|------|----------|-------------|
+| Merchant SaaS subscriptions ($39 / $79 / $149 per month) | **USDC** on Base | No — prepaid |
+| Agent subscriptions ($49 / $129 per month) | **USDC** on Base | No — prepaid |
+| x402 / MPP per-request payments | **USDC** on Base | No — prepaid per call |
+| Mint protocol fee (1.25% / 0.5% / 0.25%) | Merchant's **own loyalty tokens** | Yes — off-chain enforcement only |
+| `$LOYAL` | — | Not a revenue flow at all |
 
-Loyal Spark would generate revenue through:
-
-1. **Staking Deposits:** Merchants stake LOYAL tokens (minimum 1-month lock-up)
-   - Basic: $1,000
-   - Pro: $5,000
-   - Enterprise: $15,000
-
-2. **Transaction Fees:**
-   - 8% burn fee on M-token → LOYAL swaps (deflation mechanism)
-   - 0.5% fee on LOYAL → M-token swaps (to Treasury/LPR)
-
-3. **Tier-Based Access:** Higher staking amounts unlock premium features
-
-4. **Liquidity Provider Rewards:** Platform earns from DEX trading activity
+Full detail, including why the mint fee is not counted as revenue, is in
+[`MONETIZATION_AND_PRICING.md`](../business/MONETIZATION_AND_PRICING.md) §3.1.
 
 ---
 
-## 6. Token Utility
+## 5. Removed from earlier drafts — do not reintroduce
 
-LOYAL token serves multiple purposes:
+Earlier versions of this document described a different, more complex token model. It has been
+dropped in favour of the Vibestarter launch above. These mechanics **do not exist** and should not
+appear in any deck, doc, or contract:
 
-1. **Collateral:** Required deposit for merchant access
-2. **Liquidity Hub:** Central trading pair for all M-tokens
-3. **Governance:** Stakers vote on protocol parameters
-4. **Fee Payment:** Platform transaction fees paid in LOYAL — *target state only.* Today the mint fee is paid in the merchant's own loyalty tokens and subscriptions in USDC.
-5. **Rewards:** Ecosystem fund distributes LOYAL for growth initiatives
-
----
-
-## 7. Deflationary Pressure
-
-Multiple mechanisms create deflationary pressure on LOYAL:
-
-1. **Burn Mechanism:** 8% of all M-token → LOYAL swaps are burned
-2. **Locked Collateral:** Merchant stakes remove LOYAL from circulation
-3. **Long-term Vesting:** Only 5% unlocked at TGE, gradual unlock over 5 years
-4. **Usage Growth:** More merchants = more locked LOYAL = less circulating supply
+| Removed | Why |
+|---------|-----|
+| Merchant collateral staking ($1,000 / $5,000 / $15,000 tiers) | Access is sold as a USDC subscription; requiring merchants to buy and lock a volatile token to run a loyalty program is a hard blocker for SMB adoption |
+| 8% burn on M-token → LOYAL swaps | Depended on the hub-and-spoke DEX, which is frozen (`src/components/marketplace/`); no burn mechanism exists in the launch contract |
+| 0.5% fee on LOYAL → M-token swaps | Same — no swap-fee mechanism in the launch contract |
+| LOYAL as hub currency between loyalty tokens | The DEX module is frozen; P2P trading today is a direct escrow swap with a 0.5% fee taken by `LoyaltyTokenEscrow`, unrelated to LOYAL |
+| Staking-based voting rights | Governance is by token holding, not staking |
+| "No monthly fees, only a staking requirement" | Factually wrong: the product is sold on monthly USDC subscriptions |
+| 10 billion supply, 41 / 30 / 20 / 5 / 4 split | Superseded by the fixed 1 billion supply and the allocation in §1 |
 
 ---
 
-## 8. Target Market Economics
-
-**Initial Focus:** Small and Medium Businesses (SMBs)
-
-**Market Size:** 50M+ SMB merchants worldwide
-
-**Adoption Strategy:**
-- Low barrier to entry ($1,000 basic tier)
-- Clear ROI through reduced loyalty program costs
-- No monthly fees, only staking requirement
-- Economic incentive through conversion fees
-
-**Revenue Projections:**
-
-| Metric | Year 1 | Year 2 | Year 3 |
-|--------|--------|--------|--------|
-| Active Merchants | 1,000 | 10,000 | 50,000 |
-| Average Stake | $2,000 | $2,500 | $3,000 |
-| Total Value Locked | $2M | $25M | $150M |
-| Transaction Volume | $500K | $10M | $100M |
-| Protocol Revenue | $50K | $1.5M | $12M |
-
----
-
-## 9. Seed Round Funding: $3.5M - $4M
+## 6. Seed Round Funding: $3.5M - $4M
 
 ### Use of Funds Breakdown
 
@@ -191,7 +121,7 @@ Multiple mechanisms create deflationary pressure on LOYAL:
 
 ---
 
-## 10. Team Structure (14 People)
+## 7. Team Structure (14 People)
 
 ### Product & Design (2 people - $450K/18 months)
 - **Product Manager:** Define roadmap, prioritize features for SMB merchants, user research
@@ -218,7 +148,7 @@ Multiple mechanisms create deflationary pressure on LOYAL:
 
 ---
 
-## 11. Community Building Strategy ($300K Budget)
+## 8. Community Building Strategy ($300K Budget)
 
 ### Merchant Community ($100K)
 - Early adopter program with bonus LOYAL rewards
@@ -238,7 +168,6 @@ Multiple mechanisms create deflationary pressure on LOYAL:
 - DAO governance participation rewards
 - Educational content about tokenomics and DeFi
 - Community-driven feature voting and proposals
-- Loyalty rewards for long-term stakers
 - Quarterly AMAs with leadership team
 
 ### Content & Social Media ($50K)
@@ -250,17 +179,33 @@ Multiple mechanisms create deflationary pressure on LOYAL:
 
 ---
 
-## 12. 18-Month Milestones
+## 9. Target Market
+
+**Initial Focus:** Small and Medium Businesses (SMBs)
+
+**Market Size:** 50M+ SMB merchants worldwide
+
+**Adoption Strategy:**
+- Low barrier to entry — $39/month, no token purchase and no collateral required
+- Clear ROI through reduced loyalty program costs
+- Customers own their points onchain and can transfer them
+- AI agents can run the whole loop through REST / MCP without a human operator
+
+---
+
+## 10. 18-Month Milestones
 
 By end of seed funding period, we aim to achieve:
 
 1. **1,000+ Active SMB Merchants** onboarded across multiple verticals
-2. **$2M+ Total Value Locked** in merchant stakes
+2. **Recurring USDC revenue** from merchant and agent subscriptions with positive unit economics
 3. **$500K+ Transaction Volume** through the platform
-4. **Product-Market Fit Validated** with positive unit economics
-5. **Clear Path to Profitability** with sustainable revenue model
+4. **Product-Market Fit Validated**
+5. **Clear Path to Profitability** on subscription and per-request revenue
 6. **Series A Ready** with strong metrics and growth trajectory
 
 ---
 
-*This tokenomics model creates a sustainable ecosystem where all participants benefit: merchants reduce costs, customers gain ownership, and the protocol generates revenue through staking and transaction fees rather than extractive monthly subscriptions.*
+*The product earns in USDC from subscriptions and per-request payments, so it does not depend on
+token price. `$LOYAL` adds governance over the treasury and permanently locked liquidity on top of a
+business that already works without it.*
