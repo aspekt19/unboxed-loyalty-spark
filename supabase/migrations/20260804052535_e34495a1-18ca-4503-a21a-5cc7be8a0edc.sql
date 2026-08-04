@@ -1,0 +1,1 @@
+ALTER TABLE public.rewards REPLICA IDENTITY FULL;
