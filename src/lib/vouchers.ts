@@ -204,8 +204,10 @@ export async function deleteReward(rewardId: string, tokenAddress?: string): Pro
     .eq('id', rewardId);
 
   if (error) {
+    console.error('[deleteReward] failed', error);
     return false;
   }
+
 
   invalidateRewardsCache(tokenAddress);
   return true;
