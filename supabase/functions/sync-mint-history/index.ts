@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { BASE_RPC_URL } from "../_shared/base-rpc.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,8 +13,26 @@ const TRANSFER_TOPIC =
 const ZERO_ADDRESS_TOPIC =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
 
-const MAX_BLOCK_RANGE = 50000;
-import { BASE_RPC_URL } from "../_shared/base-rpc.ts";
+// Public Base RPCs reject wide eth_getLogs ranges; keep chunks small.
+const MAX_BLOCK_RANGE = 9_000;
+// Max chunks scanned per program per invocation (cursor advances incrementally).
+const MAX_CHUNKS_PER_PROGRAM = 6;
+// Initial lookback for programs that were never synced (~3 days on Base).
+const INITIAL_LOOKBACK_BLOCKS = 120_000;
+// Wall-clock budget so the function always finishes and persists its cursor.
+const TIME_BUDGET_MS = 45_000;
+
+type Program = {
+  token_address: string;
+  merchant_address: string;
+  name: string;
+  symbol: string;
+};
+
+const isRealTokenAddress = (addr?: string | null) =>
+  !!addr &&
+  /^0x[a-fA-F0-9]{40}$/.test(addr) &&
+  !/^0x(?:(..)\1{19})$/.test(addr);
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -22,21 +41,24 @@ Deno.serve(async (req) => {
 
   // Auth check: only allow calls with service role key
   const authHeader = req.headers.get("Authorization")?.replace("Bearer ", "");
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (!serviceRoleKey || authHeader !== serviceRoleKey) {
+  const serviceRoleKeyEnv = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!serviceRoleKeyEnv || authHeader !== serviceRoleKeyEnv) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, serviceRoleKey);
+  const startedAt = Date.now();
 
-    // 1. Get all loyalty programs
-    const { data: programs, error: progErr } = await supabase
+  try {
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      serviceRoleKeyEnv,
+    );
+
+    // 1. Active programs
+    const { data: programsRaw, error: progErr } = await supabase
       .from("loyalty_programs")
       .select("token_address, merchant_address, name, symbol")
       .neq("status", "expired");
@@ -45,52 +67,93 @@ Deno.serve(async (req) => {
       throw new Error(`Failed to fetch programs: ${progErr.message}`);
     }
 
-    if (!programs || programs.length === 0) {
-      return new Response(
-        JSON.stringify({ message: "No programs to sync", synced: 0 }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    const programs: Program[] = (programsRaw || []).filter((p: Program) =>
+      isRealTokenAddress(p.token_address)
+    );
+
+    if (programs.length === 0) {
+      return json({ message: "No programs to sync", synced: 0 });
     }
 
-    // 2. Get current block number
+    // 2. Prioritise: tokens with pending (hash-less) rows first, then stalest cursor.
+    const { data: pendingRows } = await supabase
+      .from("token_mint_history")
+      .select("token_address")
+      .is("transaction_hash", null)
+      .limit(2000);
+
+    const pendingTokens = new Set(
+      (pendingRows || []).map((r: { token_address: string }) =>
+        r.token_address?.toLowerCase()
+      ),
+    );
+
+    const { data: statuses } = await supabase
+      .from("blockchain_sync_status")
+      .select("token_address, last_synced_block, last_synced_at");
+
+    const statusMap = new Map<
+      string,
+      { last_synced_block: number; last_synced_at: string | null }
+    >();
+    for (const s of statuses || []) {
+      statusMap.set(s.token_address?.toLowerCase(), s);
+    }
+
+    programs.sort((a, b) => {
+      const aP = pendingTokens.has(a.token_address.toLowerCase()) ? 0 : 1;
+      const bP = pendingTokens.has(b.token_address.toLowerCase()) ? 0 : 1;
+      if (aP !== bP) return aP - bP;
+      const aT = statusMap.get(a.token_address.toLowerCase())?.last_synced_at ?? "";
+      const bT = statusMap.get(b.token_address.toLowerCase())?.last_synced_at ?? "";
+      return aT.localeCompare(bT);
+    });
+
     const currentBlock = await getCurrentBlock();
-    let totalInserted = 0;
+    let totalSynced = 0;
+    let processed = 0;
 
     for (const program of programs) {
+      if (Date.now() - startedAt > TIME_BUDGET_MS) break;
       try {
-        const inserted = await syncProgram(
+        totalSynced += await syncProgram(
           supabase,
           program,
-          currentBlock
+          currentBlock,
+          statusMap.get(program.token_address.toLowerCase())
+            ?.last_synced_block ?? null,
+          startedAt,
         );
-        totalInserted += inserted;
+        processed++;
       } catch (err) {
-        console.error(
-          `[sync] Error syncing ${program.token_address}:`,
-          err
-        );
+        console.error(`[sync] Error syncing ${program.token_address}:`, err);
       }
     }
 
-    return new Response(
-      JSON.stringify({
-        message: "Sync complete",
-        synced: totalInserted,
-        programs: programs.length,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    console.log(
+      `[sync] done: ${totalSynced} rows across ${processed}/${programs.length} programs in ${
+        Date.now() - startedAt
+      }ms`,
     );
+
+    return json({
+      message: "Sync complete",
+      synced: totalSynced,
+      programs_processed: processed,
+      programs_total: programs.length,
+    });
   } catch (error) {
     console.error("[sync-mint-history] Error:", error);
-    return new Response(
-      JSON.stringify({ error: "Mint history sync failed" }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
+    return json({ error: "Mint history sync failed" }, 500);
   }
 });
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
 
 async function getCurrentBlock(): Promise<number> {
   const res = await fetch(BASE_RPC_URL, {
@@ -109,114 +172,114 @@ async function getCurrentBlock(): Promise<number> {
 
 async function syncProgram(
   supabase: any,
-  program: {
-    token_address: string;
-    merchant_address: string;
-    name: string;
-    symbol: string;
-  },
-  currentBlock: number
+  program: Program,
+  currentBlock: number,
+  lastSyncedBlock: number | null,
+  startedAt: number,
 ): Promise<number> {
   const tokenAddress = program.token_address.toLowerCase();
 
-  // Get last synced block
-  const { data: syncStatus } = await supabase
-    .from("blockchain_sync_status")
-    .select("last_synced_block")
-    .eq("token_address", tokenAddress)
-    .single();
+  const lastSynced = lastSyncedBlock ??
+    Math.max(0, currentBlock - INITIAL_LOOKBACK_BLOCKS);
 
-  // If no sync record, start from a reasonable point (current - 500k blocks ~ 2 weeks)
-  const lastSynced = syncStatus?.last_synced_block || Math.max(0, currentBlock - 500000);
-  
-  if (lastSynced >= currentBlock) {
-    return 0; // Already synced
-  }
+  if (lastSynced >= currentBlock) return 0;
 
-  let totalInserted = 0;
+  let totalSynced = 0;
   let fromBlock = lastSynced + 1;
+  let cursor = lastSynced;
+  let chunks = 0;
 
-  // Scan in chunks
-  while (fromBlock <= currentBlock) {
+  while (
+    fromBlock <= currentBlock &&
+    chunks < MAX_CHUNKS_PER_PROGRAM &&
+    Date.now() - startedAt < TIME_BUDGET_MS
+  ) {
     const toBlock = Math.min(fromBlock + MAX_BLOCK_RANGE - 1, currentBlock);
+    const result = await fetchLogs(tokenAddress, fromBlock, toBlock);
 
-    const logs = await fetchLogs(tokenAddress, fromBlock, toBlock);
+    // Never advance the cursor past a range we failed to read — otherwise the
+    // mints in that range are lost forever and stay "hash pending".
+    if (!result.ok) break;
 
-    if (logs.length > 0) {
-      const inserted = await processLogs(supabase, logs, program);
-      totalInserted += inserted;
+    if (result.logs.length > 0) {
+      totalSynced += await processLogs(supabase, result.logs, program);
     }
 
+    cursor = toBlock;
     fromBlock = toBlock + 1;
+    chunks++;
   }
 
-  // Update sync status
-  await supabase
-    .from("blockchain_sync_status")
-    .upsert(
-      {
-        token_address: tokenAddress,
-        last_synced_block: currentBlock,
-        last_synced_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "token_address" }
-    );
+  if (cursor > lastSynced) {
+    await supabase
+      .from("blockchain_sync_status")
+      .upsert(
+        {
+          token_address: tokenAddress,
+          last_synced_block: cursor,
+          last_synced_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "token_address" },
+      );
+  }
 
-  return totalInserted;
+  return totalSynced;
 }
 
 async function fetchLogs(
   tokenAddress: string,
   fromBlock: number,
-  toBlock: number
-): Promise<any[]> {
-  const res = await fetch(BASE_RPC_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id: 1,
-      method: "eth_getLogs",
-      params: [
-        {
-          address: tokenAddress,
-          topics: [TRANSFER_TOPIC, ZERO_ADDRESS_TOPIC, null],
-          fromBlock: "0x" + fromBlock.toString(16),
-          toBlock: "0x" + toBlock.toString(16),
-        },
-      ],
-    }),
-  });
+  toBlock: number,
+): Promise<{ ok: boolean; logs: any[] }> {
+  try {
+    const res = await fetch(BASE_RPC_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "eth_getLogs",
+        params: [
+          {
+            address: tokenAddress,
+            topics: [TRANSFER_TOPIC, ZERO_ADDRESS_TOPIC, null],
+            fromBlock: "0x" + fromBlock.toString(16),
+            toBlock: "0x" + toBlock.toString(16),
+          },
+        ],
+      }),
+    });
 
-  const data = await res.json();
+    const data = await res.json();
 
-  if (data.error) {
-    console.warn(
-      `[fetchLogs] RPC error for blocks ${fromBlock}-${toBlock}:`,
-      data.error.message
-    );
-    return [];
+    if (data.error) {
+      console.warn(
+        `[fetchLogs] RPC error ${tokenAddress} ${fromBlock}-${toBlock}:`,
+        data.error.message,
+      );
+      return { ok: false, logs: [] };
+    }
+
+    return { ok: true, logs: data.result || [] };
+  } catch (err) {
+    console.warn(`[fetchLogs] fetch failed ${tokenAddress}:`, err);
+    return { ok: false, logs: [] };
   }
-
-  return data.result || [];
 }
 
 async function processLogs(
   supabase: any,
   logs: any[],
-  program: {
-    token_address: string;
-    merchant_address: string;
-    name: string;
-    symbol: string;
-  }
+  program: Program,
 ): Promise<number> {
   const tokenAddress = program.token_address.toLowerCase();
   const merchantAddress = program.merchant_address.toLowerCase();
 
-  // Get existing tx hashes to avoid duplicates
-  const txHashes = logs.map((l: any) => l.transactionHash).filter(Boolean);
+  // Skip logs whose hash is already recorded
+  const txHashes = logs.map((l: any) => l.transactionHash?.toLowerCase()).filter(
+    Boolean,
+  );
   const { data: existing } = await supabase
     .from("token_mint_history")
     .select("transaction_hash")
@@ -224,50 +287,12 @@ async function processLogs(
     .in("transaction_hash", txHashes);
 
   const existingSet = new Set(
-    (existing || []).map((r: any) => r.transaction_hash?.toLowerCase())
+    (existing || []).map((r: any) => r.transaction_hash?.toLowerCase()),
   );
 
-  const newRecords = [];
-
-  for (const log of logs) {
-    const txHash = log.transactionHash?.toLowerCase();
-    if (existingSet.has(txHash)) continue;
-
-    // Decode recipient from topic[2] (padded address)
-    const recipientRaw = log.topics[2];
-    const recipient = "0x" + recipientRaw.slice(26).toLowerCase();
-
-    // Decode amount from data (uint256)
-    const amountHex = log.data;
-    const amountWei = BigInt(amountHex);
-    const amount = Number(amountWei) / 1e18;
-
-    // Get block timestamp
-    const blockNumber = parseInt(log.blockNumber, 16);
-
-    newRecords.push({
-      merchant_address: merchantAddress,
-      recipient_address: recipient,
-      amount,
-      token_address: tokenAddress,
-      token_name: program.name,
-      token_symbol: program.symbol,
-      transaction_hash: txHash,
-      created_at: new Date().toISOString(), // Will be overwritten below if we get block timestamp
-    });
-
-    existingSet.add(txHash); // prevent duplicates within batch
-  }
-
-  if (newRecords.length === 0) return 0;
-
-  // Try to get block timestamps for accuracy
-  const blockNumbers = [
-    ...new Set(logs.map((l: any) => l.blockNumber)),
-  ];
+  // Block timestamps (one call per distinct block)
   const blockTimestamps: Record<string, string> = {};
-
-  for (const blockHex of blockNumbers) {
+  for (const blockHex of [...new Set(logs.map((l: any) => l.blockNumber))]) {
     try {
       const res = await fetch(BASE_RPC_URL, {
         method: "POST",
@@ -281,67 +306,94 @@ async function processLogs(
       });
       const data = await res.json();
       if (data.result?.timestamp) {
-        const ts = parseInt(data.result.timestamp, 16);
-        blockTimestamps[blockHex] = new Date(ts * 1000).toISOString();
+        blockTimestamps[blockHex as string] = new Date(
+          parseInt(data.result.timestamp, 16) * 1000,
+        ).toISOString();
       }
     } catch {
-      // Skip timestamp fetch errors
+      // timestamp is best-effort
     }
   }
 
-  // Update created_at with actual block timestamps
-  for (let i = 0; i < newRecords.length; i++) {
-    const blockHex = logs[i]?.blockNumber;
-    if (blockHex && blockTimestamps[blockHex]) {
-      newRecords[i].created_at = blockTimestamps[blockHex];
-    }
+  const newRecords: any[] = [];
+  for (const log of logs) {
+    const txHash = log.transactionHash?.toLowerCase();
+    if (!txHash || existingSet.has(txHash)) continue;
+
+    const recipient = "0x" + log.topics[2].slice(26).toLowerCase();
+    const amount = Number(BigInt(log.data)) / 1e18;
+
+    newRecords.push({
+      merchant_address: merchantAddress,
+      recipient_address: recipient,
+      amount,
+      token_address: tokenAddress,
+      token_name: program.name,
+      token_symbol: program.symbol,
+      transaction_hash: txHash,
+      created_at: blockTimestamps[log.blockNumber] ?? new Date().toISOString(),
+    });
+
+    existingSet.add(txHash);
   }
 
-  // Backfill: many rows are recorded as intents (transaction_hash = null) before
-  // the tx is broadcast. Attach the on-chain hash to those rows instead of
-  // inserting a duplicate record.
-  const remaining: typeof newRecords = [];
+  if (newRecords.length === 0) return 0;
+
+  // Backfill: rows are written as intents (transaction_hash = null) before the
+  // tx is broadcast. Attach the on-chain hash instead of inserting a duplicate.
+  const { data: pending } = await supabase
+    .from("token_mint_history")
+    .select("id, amount, recipient_address")
+    .eq("token_address", tokenAddress)
+    .is("transaction_hash", null)
+    .order("created_at", { ascending: false })
+    .limit(500);
+
+  const pendingByRecipient = new Map<string, any[]>();
+  for (const row of pending || []) {
+    const key = row.recipient_address?.toLowerCase();
+    if (!key) continue;
+    if (!pendingByRecipient.has(key)) pendingByRecipient.set(key, []);
+    pendingByRecipient.get(key)!.push(row);
+  }
+
+  const remaining: any[] = [];
+  let backfilled = 0;
+
   for (const record of newRecords) {
-    const { data: pending } = await supabase
-      .from("token_mint_history")
-      .select("id, amount")
-      .eq("token_address", tokenAddress)
-      .eq("recipient_address", record.recipient_address)
-      .is("transaction_hash", null)
-      .order("created_at", { ascending: false })
-      .limit(20);
-
-    const match = (pending || []).find(
+    const candidates = pendingByRecipient.get(record.recipient_address) || [];
+    const idx = candidates.findIndex(
       (row: any) => Math.abs(Number(row.amount) - Number(record.amount)) < 1e-6,
     );
 
-    if (match) {
+    if (idx >= 0) {
+      const match = candidates[idx];
       const { error: updateErr } = await supabase
         .from("token_mint_history")
         .update({ transaction_hash: record.transaction_hash })
         .eq("id", match.id);
-      if (!updateErr) continue;
+      if (!updateErr) {
+        candidates.splice(idx, 1);
+        backfilled++;
+        continue;
+      }
     }
 
     remaining.push(record);
   }
 
-  if (remaining.length === 0) {
-    console.log(`[sync] Backfilled ${newRecords.length} mint hashes for ${tokenAddress}`);
-    return newRecords.length;
-  }
-
-  const { error: insertErr } = await supabase
-    .from("token_mint_history")
-    .insert(remaining);
-
-  if (insertErr) {
-    console.error("[processLogs] Insert error:", insertErr);
-    return 0;
+  if (remaining.length > 0) {
+    const { error: insertErr } = await supabase
+      .from("token_mint_history")
+      .insert(remaining);
+    if (insertErr) {
+      console.error("[processLogs] Insert error:", insertErr);
+      return backfilled;
+    }
   }
 
   console.log(
-    `[sync] Inserted ${remaining.length} mint records for ${tokenAddress}`
+    `[sync] ${tokenAddress}: backfilled ${backfilled}, inserted ${remaining.length}`,
   );
-  return newRecords.length;
+  return backfilled + remaining.length;
 }
