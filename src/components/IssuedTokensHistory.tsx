@@ -179,10 +179,18 @@ export function IssuedTokensHistory() {
 
             <ScrollArea className="h-[300px] pr-4">
               <div className="space-y-3 pb-4">
-                {filteredHistory.map((item, index) => (
-                  <div
+                {filteredHistory.map((item, index) => {
+                  const explorerUrl = item.transactionHash
+                    ? `https://basescan.org/tx/${item.transactionHash}`
+                    : `https://basescan.org/token/${item.tokenAddress}?a=${item.recipient}`;
+                  return (
+                  <a
                     key={`${item.transactionHash || index}-${index}`}
-                    className="flex flex-col gap-3 p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
+                    href={explorerUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={item.transactionHash ? 'View transaction on BaseScan' : 'View token transfers on BaseScan'}
+                    className="flex flex-col gap-3 p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 hover:border-primary/50 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -206,18 +214,13 @@ export function IssuedTokensHistory() {
                       </div>
                     </div>
 
-                    {item.transactionHash && (
-                      <a
-                        href={`https://basescan.org/tx/${item.transactionHash}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-primary hover:underline self-start"
-                      >
-                        View on BaseScan ↗
-                      </a>
-                    )}
-                  </div>
-                ))}
+                    <span className="text-xs text-primary self-start">
+                      {item.transactionHash ? 'View on BaseScan ↗' : 'View token transfers ↗'}
+                    </span>
+                  </a>
+                  );
+                })}
+
               </div>
             </ScrollArea>
           </div>
