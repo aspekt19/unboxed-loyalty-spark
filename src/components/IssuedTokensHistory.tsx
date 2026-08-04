@@ -22,6 +22,8 @@ interface IssuedToken {
   transactionHash: string | null;
 }
 
+const BASE_TRANSACTION_HASH = /^0x[a-fA-F0-9]{64}$/;
+
 export function IssuedTokensHistory() {
   const { address } = useAccount();
   const [selectedProgramFilter, setSelectedProgramFilter] = useState<string>('all');
@@ -180,18 +182,11 @@ export function IssuedTokensHistory() {
             <ScrollArea className="h-[300px] pr-4">
               <div className="space-y-3 pb-4">
                 {filteredHistory.map((item, index) => {
-                  const explorerUrl = item.transactionHash
-                    ? `https://basescan.org/tx/${item.transactionHash}`
-                    : `https://basescan.org/token/${item.tokenAddress}?a=${item.recipient}`;
-                  return (
-                  <a
-                    key={`${item.transactionHash || index}-${index}`}
-                    href={explorerUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title={item.transactionHash ? 'View transaction on BaseScan' : 'View token transfers on BaseScan'}
-                    className="flex flex-col gap-3 p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 hover:border-primary/50 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
+                  const hasTransactionHash = Boolean(
+                    item.transactionHash && BASE_TRANSACTION_HASH.test(item.transactionHash),
+                  );
+                  const content = (
+                    <>
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <Badge variant="outline" className="font-mono text-xs">
@@ -215,9 +210,30 @@ export function IssuedTokensHistory() {
                     </div>
 
                     <span className="text-xs text-primary self-start">
-                      {item.transactionHash ? 'View on BaseScan ↗' : 'View token transfers ↗'}
+                      {hasTransactionHash ? 'View on BaseScan ↗' : 'Transaction hash pending'}
                     </span>
-                  </a>
+                    </>
+                  );
+
+                  return hasTransactionHash ? (
+                    <a
+                      key={`${item.transactionHash}-${index}`}
+                      href={`https://basescan.org/tx/${item.transactionHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="View transaction on BaseScan"
+                      className="flex flex-col gap-3 p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 hover:border-primary/50 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {content}
+                    </a>
+                  ) : (
+                    <div
+                      key={`pending-${index}`}
+                      className="flex flex-col gap-3 p-4 rounded-lg border bg-muted/30"
+                      title="This history record does not have a confirmed transaction hash yet"
+                    >
+                      {content}
+                    </div>
                   );
                 })}
 
