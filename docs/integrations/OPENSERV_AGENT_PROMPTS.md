@@ -290,7 +290,7 @@ Loyal Spark enables:
 - **For Merchants**: Deploy branded ERC-20 loyalty tokens on Base, set up rewards catalogs, manage customer tiers, track analytics via CRM dashboard
 - **For Customers**: Earn tokens, redeem rewards, trade tokens on P2P marketplace, use vouchers at merchants
 - **For AI Agents**: Integrate via REST API (28 authenticated routes + public voucher status), MCP Server (**39** merchant + **20** recipient tools), or pay-per-request gateways (x402, MPP) — no API key needed for payment gateways
-- **Unique features**: Round-up micro-savings (DeFi yield on spare change), referral programs, automated reward rules
+- **Unique features**: Agent-native loyalty protocol (humans + AI agents share the same rails), gift certificates, referral programs, automated reward rules
 
 ## Available MCP Tools
 
