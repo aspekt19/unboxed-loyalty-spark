@@ -191,6 +191,7 @@ export function IssuedTokensHistory() {
                   const isRealToken =
                     /^0x[a-fA-F0-9]{40}$/.test(item.tokenAddress) &&
                     !/^0x(?:(..)\1{19})$/.test(item.tokenAddress);
+                  const isDemoToken = !isRealToken;
                   const fallbackHref = isRealToken
                     ? `https://basescan.org/token/${item.tokenAddress}?a=${item.recipient}`
                     : null;
@@ -204,6 +205,11 @@ export function IssuedTokensHistory() {
                         <Badge variant="outline" className="font-mono text-xs">
                           {item.tokenSymbol}
                         </Badge>
+                        {isDemoToken && (
+                          <Badge variant="secondary" className="text-xs" title="Demo/placeholder token — no BaseScan page exists">
+                            DEMO
+                          </Badge>
+                        )}
                         <span className="font-semibold text-primary">
                           +{parseFloat(item.amount).toFixed(2)} tokens
                         </span>
@@ -226,7 +232,9 @@ export function IssuedTokensHistory() {
                         ? 'View on BaseScan ↗'
                         : href
                           ? 'Hash pending — view token transfers ↗'
-                          : 'Transaction hash pending'}
+                          : isDemoToken
+                            ? 'DEMO token — hash pending'
+                            : 'Transaction hash pending'}
                     </span>
                     </>
                   );
