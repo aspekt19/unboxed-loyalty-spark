@@ -336,7 +336,7 @@ When triggered via Operations Workflow:
 1. **AI + Loyalty**: "The first loyalty protocol built for AI agents"
 2. **Merchant Empowerment**: Small businesses launching their own token in minutes
 3. **Onchain Benefits**: Transparency, composability, real ownership
-4. **DeFi meets Loyalty**: Round-up savings, token marketplace, yield on loyalty points
+4. **Onchain ownership**: Customers hold points as tokens; P2P escrow trades between programs (Round-Up / DEX modules are frozen — do not pitch as live)
 5. **Builder/Developer**: Open API, MCP tools, agent wallets
 6. **Web3 Movement**: Why the future of customer rewards is onchain
 7. **Ecosystem**: Base, OpenServ, and the broader AI-commerce stack

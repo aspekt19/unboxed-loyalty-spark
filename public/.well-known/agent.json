@@ -613,8 +613,8 @@
         "description": "Agents creating solo tokens must find holders themselves. Through Loyal Spark, agents access existing merchant customer bases instantly."
       },
       {
-        "title": "DeFi Yield Integration",
-        "description": "Loyalty tokens can be invested in Aave/Compound strategies via Round-Up feature. Tokens grow in value passively — impossible with a bare ERC-20."
+        "title": "Humans and Agents, Same Protocol",
+        "description": "Merchants run programs in the web portal; AI agents run the same loop via REST and MCP (lsk_/rwk_) with fee-first mint calldata and prepaid USDC rails (subscriptions, x402, MPP)."
       },
       {
         "title": "Composability via Single API",

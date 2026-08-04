@@ -22,9 +22,7 @@ Loyal Spark Farcaster App enables merchants and customers to participate in a to
 - **Collect Tokens**: Receive loyalty tokens from merchants
 - **View Portfolio**: Track all loyalty tokens in one dashboard
 - **Redeem Rewards**: Exchange tokens for merchant vouchers
-- **Trade on DEX**: Swap tokens on decentralized exchanges
-- **P2P Marketplace**: Trade loyalty tokens with other users
-- **Round-Up Investment**: Grow rewards through DeFi strategies
+- **P2P Marketplace**: Trade loyalty tokens with other users via escrow (DEX UI frozen)
 - **Referral Programs**: Earn bonuses by referring friends
 
 ### For AI Agents
