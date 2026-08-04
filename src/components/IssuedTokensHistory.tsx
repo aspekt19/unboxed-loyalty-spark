@@ -185,6 +185,18 @@ export function IssuedTokensHistory() {
                   const hasTransactionHash = Boolean(
                     item.transactionHash && BASE_TRANSACTION_HASH.test(item.transactionHash),
                   );
+                  // Fallback for records whose hash hasn't been synced yet: open the
+                  // token's transfer list filtered by the recipient. Skip demo/placeholder
+                  // token addresses (e.g. 0x1212...1212) which have no BaseScan page.
+                  const isRealToken =
+                    /^0x[a-fA-F0-9]{40}$/.test(item.tokenAddress) &&
+                    !/^0x(?:(..)\1{19})$/.test(item.tokenAddress);
+                  const fallbackHref = isRealToken
+                    ? `https://basescan.org/token/${item.tokenAddress}?a=${item.recipient}`
+                    : null;
+                  const href = hasTransactionHash
+                    ? `https://basescan.org/tx/${item.transactionHash}`
+                    : fallbackHref;
                   const content = (
                     <>
                     <div className="space-y-1">
@@ -209,19 +221,23 @@ export function IssuedTokensHistory() {
                       </div>
                     </div>
 
-                    <span className="text-xs text-primary self-start">
-                      {hasTransactionHash ? 'View on BaseScan ↗' : 'Transaction hash pending'}
+                    <span className={hasTransactionHash ? 'text-xs text-primary self-start' : 'text-xs text-muted-foreground self-start'}>
+                      {hasTransactionHash
+                        ? 'View on BaseScan ↗'
+                        : href
+                          ? 'Hash pending — view token transfers ↗'
+                          : 'Transaction hash pending'}
                     </span>
                     </>
                   );
 
-                  return hasTransactionHash ? (
+                  return href ? (
                     <a
-                      key={`${item.transactionHash}-${index}`}
-                      href={`https://basescan.org/tx/${item.transactionHash}`}
+                      key={`${item.transactionHash ?? 'pending'}-${index}`}
+                      href={href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      title="View transaction on BaseScan"
+                      title={hasTransactionHash ? 'View transaction on BaseScan' : 'Hash not synced yet — open token transfers for this recipient'}
                       className="flex flex-col gap-3 p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 hover:border-primary/50 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       {content}
@@ -236,6 +252,7 @@ export function IssuedTokensHistory() {
                     </div>
                   );
                 })}
+
 
               </div>
             </ScrollArea>

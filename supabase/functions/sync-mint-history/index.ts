@@ -297,9 +297,43 @@ async function processLogs(
     }
   }
 
+  // Backfill: many rows are recorded as intents (transaction_hash = null) before
+  // the tx is broadcast. Attach the on-chain hash to those rows instead of
+  // inserting a duplicate record.
+  const remaining: typeof newRecords = [];
+  for (const record of newRecords) {
+    const { data: pending } = await supabase
+      .from("token_mint_history")
+      .select("id, amount")
+      .eq("token_address", tokenAddress)
+      .eq("recipient_address", record.recipient_address)
+      .is("transaction_hash", null)
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    const match = (pending || []).find(
+      (row: any) => Math.abs(Number(row.amount) - Number(record.amount)) < 1e-6,
+    );
+
+    if (match) {
+      const { error: updateErr } = await supabase
+        .from("token_mint_history")
+        .update({ transaction_hash: record.transaction_hash })
+        .eq("id", match.id);
+      if (!updateErr) continue;
+    }
+
+    remaining.push(record);
+  }
+
+  if (remaining.length === 0) {
+    console.log(`[sync] Backfilled ${newRecords.length} mint hashes for ${tokenAddress}`);
+    return newRecords.length;
+  }
+
   const { error: insertErr } = await supabase
     .from("token_mint_history")
-    .insert(newRecords);
+    .insert(remaining);
 
   if (insertErr) {
     console.error("[processLogs] Insert error:", insertErr);
@@ -307,7 +341,7 @@ async function processLogs(
   }
 
   console.log(
-    `[sync] Inserted ${newRecords.length} mint records for ${tokenAddress}`
+    `[sync] Inserted ${remaining.length} mint records for ${tokenAddress}`
   );
   return newRecords.length;
 }
