@@ -423,10 +423,11 @@ Pricing: **$0.001–$0.005** per read · **$0.005–$0.05** per write · HTTP 40
 
 ### Catalogues & Registries
 
+- **[Official MCP Registry](https://registry.modelcontextprotocol.io)** — `io.github.aspekt19/loyal-spark` (remote Streamable HTTP → `api.loyalspark.online/loyalty-mcp`; see root `server.json`)
 - **[mppscan.com](https://mppscan.com)** — MPP service scanner (indexed via OpenAPI)
 - **[glama.ai](https://glama.ai)** — MCP server directory
 - **[mcp.so](https://mcp.so)** — MCP server registry
-- **[smithery.ai](https://smithery.ai)** — MCP marketplace
+- **[smithery.ai](https://smithery.ai)** — MCP marketplace (`loyalspark/loyalty-protocol`)
 
 ## Links & Resources
 

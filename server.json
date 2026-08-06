@@ -1,0 +1,26 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.aspekt19/loyal-spark",
+  "title": "Loyal Spark",
+  "description": "Onchain loyalty MCP on Base: programs, mint, rewards, vouchers for AI agents.",
+  "version": "1.0.0",
+  "websiteUrl": "https://loyalspark.online",
+  "repository": {
+    "url": "https://github.com/aspekt19/unboxed-loyalty-spark",
+    "source": "github"
+  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://api.loyalspark.online/loyalty-mcp",
+      "headers": [
+        {
+          "name": "x-api-key",
+          "description": "Merchant agent API key (lsk_...). Get at loyalspark.online/for-agents",
+          "isRequired": true,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}
