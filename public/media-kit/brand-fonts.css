@@ -1,0 +1,29 @@
+/**
+ * Loyal Spark brand fonts — mirrored from index.html + src/index.css.
+ * Primary UI typeface: Inter (Google Fonts).
+ */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+
+:root {
+  --ls-font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --ls-font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
+  --ls-font-weight-regular: 400;
+  --ls-font-weight-medium: 500;
+  --ls-font-weight-semibold: 600;
+  --ls-font-weight-bold: 700;
+  --ls-font-weight-extrabold: 800;
+  --ls-font-weight-black: 900;
+}
+
+.ls-font-sans {
+  font-family: var(--ls-font-sans);
+  font-feature-settings: var(--ls-font-feature-settings);
+}
+
+/* App-icon monogram weight (matches PNG "LS" marks) */
+.ls-font-monogram {
+  font-family: var(--ls-font-sans);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}

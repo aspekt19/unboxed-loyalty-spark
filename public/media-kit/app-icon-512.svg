@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Loyal Spark">
+  <title>Loyal Spark</title>
+  <rect width="512" height="512" fill="#000000"/>
+  <text
+    x="256.0"
+    y="256.0"
+    fill="#FFFFFF"
+    font-family="Inter, Helvetica Neue, Arial, sans-serif"
+    font-weight="800"
+    font-size="215"
+    text-anchor="middle"
+    dominant-baseline="central"
+    letter-spacing="-5"
+  >LS</text>
+</svg>

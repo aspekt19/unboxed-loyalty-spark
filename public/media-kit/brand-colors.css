@@ -1,0 +1,52 @@
+/**
+ * Loyal Spark brand colors — mirrored from src/index.css (light theme).
+ * HSL tokens match the app; hex aliases are for press / design tools.
+ */
+
+:root {
+  /* Core */
+  --ls-background: 250 100% 99%;
+  --ls-foreground: 260 50% 15%;
+  --ls-primary: 262 83% 58%;
+  --ls-primary-foreground: 0 0% 100%;
+  --ls-secondary: 24 100% 62%;
+  --ls-secondary-foreground: 0 0% 100%;
+  --ls-accent: 262 70% 68%;
+  --ls-muted: 250 50% 96%;
+  --ls-muted-foreground: 260 25% 50%;
+  --ls-border: 250 35% 92%;
+  --ls-success: 142 71% 45%;
+  --ls-destructive: 0 72% 55%;
+  --ls-ring: 262 83% 58%;
+
+  /* Named brand aliases (same as --uds-* in app) */
+  --ls-purple: 262 83% 58%;
+  --ls-purple-light: 262 70% 68%;
+  --ls-purple-dark: 260 45% 35%;
+  --ls-orange: 24 100% 62%;
+  --ls-orange-light: 30 100% 70%;
+  --ls-lavender: 250 50% 96%;
+  --ls-lavender-light: 250 100% 99%;
+
+  /* App icon monogram */
+  --ls-icon-bg: #000000;
+  --ls-icon-fg: #ffffff;
+
+  /* Hex (approximate conversions of the HSL tokens above) */
+  --ls-hex-primary: #8b45f0;
+  --ls-hex-primary-light: #a678f0;
+  --ls-hex-primary-dark: #4d2f7a;
+  --ls-hex-secondary: #ff8a3d;
+  --ls-hex-secondary-light: #ffb366;
+  --ls-hex-background: #faf8ff;
+  --ls-hex-foreground: #1f1433;
+  --ls-hex-muted: #f0edf7;
+  --ls-hex-border: #e4dff0;
+  --ls-hex-success: #22c55e;
+  --ls-hex-destructive: #e5484d;
+
+  /* Gradients */
+  --ls-gradient-primary: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(262 70% 68%) 100%);
+  --ls-gradient-secondary: linear-gradient(135deg, hsl(24 100% 62%) 0%, hsl(30 100% 70%) 100%);
+  --ls-gradient-brand: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(24 100% 62%) 100%);
+}

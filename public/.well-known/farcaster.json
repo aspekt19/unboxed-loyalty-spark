@@ -7,9 +7,9 @@
   "miniapp": {
     "version": "1",
     "name": "Loyal Spark",
-    "iconUrl": "https://loyalspark.online/app-icon-1024.png",
+    "iconUrl": "https://loyalspark.online/media-kit/app-icon-1024.png",
     "homeUrl": "https://loyalspark.online",
-    "splashImageUrl": "https://loyalspark.online/app-icon-200.png",
+    "splashImageUrl": "https://loyalspark.online/media-kit/app-icon-200.png",
     "splashBackgroundColor": "#000000",
     "subtitle": "Loyalty Rewards That Grow",
     "description": "Earn loyalty tokens, save automatically, and grow your rewards in DeFi. Onchain loyalty platform with automated investing on BASE Network.",
