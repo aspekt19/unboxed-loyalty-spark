@@ -371,8 +371,8 @@ export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: Merchant
           {hideTabsList ? (
             /* Mobile: show sub-tab bar only for "Home" group tabs */
             ['dashboard', 'customers', 'marketing', 'billing', 'agents'].includes(activeTab || 'dashboard') && (
-              <div className="overflow-x-auto -mx-3 px-3 pb-2">
-                <TabsList className="inline-flex w-auto min-w-full">
+              <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 pb-2">
+                <TabsList className="inline-flex w-auto min-w-full h-10">
                   <TabsTrigger value="dashboard" className="flex-shrink-0 text-xs px-2 whitespace-nowrap">
                     <LayoutDashboard className="h-3.5 w-3.5 mr-1" />Dashboard
                   </TabsTrigger>
