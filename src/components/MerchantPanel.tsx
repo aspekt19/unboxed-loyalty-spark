@@ -44,6 +44,44 @@ export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: Merchant
   const location = useLocation();
   const navigate = useNavigate();
   const VALID_TABS = ['dashboard', 'customers', 'programs', 'rewards', 'certificates', 'marketing', 'billing', 'agents', 'team'];
+
+  // Grouped navigation: top-level clusters, sub-tabs inside each cluster
+  const TAB_GROUPS = [
+    { value: 'overview', label: 'Overview', icon: LayoutDashboard, defaultTab: 'dashboard' },
+    { value: 'loyalty', label: 'Loyalty', icon: Wallet, defaultTab: 'programs' },
+    { value: 'growth', label: 'Growth', icon: Megaphone, defaultTab: 'customers' },
+    { value: 'business', label: 'Business', icon: Briefcase, defaultTab: 'billing' },
+  ] as const;
+
+  const SUB_TABS: Record<string, { value: string; label: string; icon: React.ElementType }[]> = {
+    loyalty: [
+      { value: 'programs', label: 'Programs', icon: Wallet },
+      { value: 'rewards', label: 'Rewards', icon: Gift },
+      { value: 'certificates', label: 'Certificates', icon: Gift },
+    ],
+    growth: [
+      { value: 'customers', label: 'Customers', icon: UserSearch },
+      { value: 'marketing', label: 'Marketing', icon: Megaphone },
+    ],
+    business: [
+      { value: 'billing', label: 'Billing', icon: CreditCard },
+      { value: 'agents', label: 'AI Agents', icon: Bot },
+      { value: 'team', label: 'Team', icon: Users },
+    ],
+  };
+
+  const TAB_TO_GROUP: Record<string, string> = {
+    dashboard: 'overview',
+    programs: 'loyalty',
+    rewards: 'loyalty',
+    certificates: 'loyalty',
+    customers: 'growth',
+    marketing: 'growth',
+    billing: 'business',
+    agents: 'business',
+    team: 'business',
+  };
+
   const tabFromUrl = (() => {
     const t = new URLSearchParams(location.search).get('tab');
     return t && VALID_TABS.includes(t) ? t : null;
