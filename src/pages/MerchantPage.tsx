@@ -126,12 +126,12 @@ const MerchantPage = () => {
     ? [{ id: 'nav:back', label: 'Back', icon: ArrowLeft }, ...(GROUP_ITEMS[navGroup] ?? [])]
     : rootNavItems;
 
-  // Derive which bottom nav item is active (home sub-tabs all highlight "Home")
+  // Derive which bottom nav item is active
   const activeBottomNav = navGroup
     ? mobileTab
-    : HOME_SUB_TABS.includes(mobileTab)
-      ? 'dashboard'
-      : (TAB_TO_GROUP[mobileTab] ? `group:${TAB_TO_GROUP[mobileTab]}` : mobileTab);
+    : TAB_TO_GROUP[mobileTab]
+      ? `group:${TAB_TO_GROUP[mobileTab]}`
+      : mobileTab;
 
   const desktopContent = showProfile ? (
     <div className="max-w-2xl mx-auto">
