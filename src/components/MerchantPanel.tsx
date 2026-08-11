@@ -1,3 +1,4 @@
+import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardTab } from './merchant/tabs/DashboardTab';
 import { CustomersTab } from './merchant/tabs/CustomersTab';
