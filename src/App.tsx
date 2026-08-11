@@ -8,6 +8,7 @@ import { WagmiProvider as PrivyWagmiProvider } from "@privy-io/wagmi";
 import { PrivyProvider } from "@privy-io/react-auth";
 import { browserPreviewWagmiConfig, detectFarcasterMiniApp, isEmbeddedWebview, isFarcasterContext, farcasterWagmiConfig, privyWagmiConfig } from "./config/wagmi";
 import { PRIVY_APP_ID, privyConfig } from "./config/privy";
+import { OAuthReturnHandler, hasPrivyOAuthParams } from "./components/auth/OAuthReturnHandler";
 import Index from "./pages/Index";
 import AppPage from "./pages/AppPage";
 import CustomerPage from "./pages/CustomerPage";
@@ -223,6 +224,7 @@ function BrowserProviders({ children }: { children: React.ReactNode }) {
           <PrivyWagmiProvider config={privyWagmiConfig}>
             <AuthProvider>
               <TooltipProvider>
+                <OAuthReturnHandler />
                 <ConnectorRecoveryListener />
                 <Toaster />
                 <Sonner />
@@ -263,7 +265,11 @@ const isLovablePreviewHost =
 const App = () => {
   const [isFarcaster, setIsFarcaster] = useState<boolean | null>(() => {
     if (isLovablePreviewHost) return false;
-    return isFarcasterContext() ? true : null;
+    if (isFarcasterContext()) return true;
+    // Returning from a Privy OAuth redirect (Google on mobile): mount the Privy
+    // tree immediately so the callback code is exchanged before it goes stale.
+    if (hasPrivyOAuthParams()) return false;
+    return null;
   });
 
   // Runs exactly once. Detection needs a dynamic import of the miniapp SDK
@@ -273,6 +279,7 @@ const App = () => {
   // remounts the whole app — which is exactly what showed up as a white screen.
   useEffect(() => {
     if (isLovablePreviewHost) return;
+    if (hasPrivyOAuthParams()) return;
 
     const embedded = isEmbeddedWebview();
     const detectionTimeout = embedded ? 3500 : 1200;
