@@ -15,6 +15,7 @@ export function AuthPrompt() {
   const { connect, connectors } = useConnect();
   const {
     login: privyLogin,
+    connectWallet: privyConnectWallet,
     user: privyUser,
     authenticated: privyAuthenticated,
     ready: privyReady,
