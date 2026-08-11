@@ -224,6 +224,7 @@ function BrowserProviders({ children }: { children: React.ReactNode }) {
           <PrivyWagmiProvider config={privyWagmiConfig}>
             <AuthProvider>
               <TooltipProvider>
+                <OAuthReturnHandler />
                 <ConnectorRecoveryListener />
                 <Toaster />
                 <Sonner />
