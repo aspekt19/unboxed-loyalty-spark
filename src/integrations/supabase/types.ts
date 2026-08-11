@@ -2453,6 +2453,10 @@ export type Database = {
           pending_fee_total: number
         }[]
       }
+      agent_plan_change_allowed: {
+        Args: { p_agent_id: string; p_owner_address: string; p_plan_id: string }
+        Returns: boolean
+      }
       cancel_stale_marketplace_offers: {
         Args: { p_max_age_days?: number }
         Returns: number
@@ -2576,6 +2580,10 @@ export type Database = {
       }
       mask_email: { Args: { email: string }; Returns: string }
       mask_phone: { Args: { phone: string }; Returns: string }
+      merchant_plan_change_allowed: {
+        Args: { p_merchant_address: string; p_plan_id: string }
+        Returns: boolean
+      }
       migrate_wallet_profile: {
         Args: { p_new_user_id: string; p_wallet_address: string }
         Returns: {
@@ -2600,6 +2608,10 @@ export type Database = {
           p_referral_code: string
           p_token_address: string
         }
+        Returns: boolean
+      }
+      profile_role_change_allowed: {
+        Args: { p_role: string; p_user_id: string }
         Returns: boolean
       }
       read_email_batch: {
