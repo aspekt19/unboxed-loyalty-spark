@@ -28,7 +28,6 @@ import {
 } from '@/hooks/useMerchantCustomerIndex';
 import { MERCHANT_TOKEN_STATS_QUERY_KEY } from '@/hooks/useTokenStats';
 
-const HOME_SUB_TABS = ['dashboard', 'customers', 'marketing', 'billing', 'agents'];
 
 const rootNavItems: NavItem[] = [
   { id: 'dashboard', label: 'Home', icon: LayoutDashboard },
