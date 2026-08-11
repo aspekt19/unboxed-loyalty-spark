@@ -30,14 +30,41 @@ import { MERCHANT_TOKEN_STATS_QUERY_KEY } from '@/hooks/useTokenStats';
 
 const HOME_SUB_TABS = ['dashboard', 'customers', 'marketing', 'billing', 'agents'];
 
-const merchantNavItems: NavItem[] = [
+const rootNavItems: NavItem[] = [
   { id: 'dashboard', label: 'Home', icon: LayoutDashboard },
-  { id: 'programs', label: 'Programs', icon: Package },
-  { id: 'rewards', label: 'Rewards', icon: Gift },
-  { id: 'certificates', label: 'Certs', icon: Ticket },
-  { id: 'team', label: 'Team', icon: Users },
+  { id: 'group:loyalty', label: 'Loyalty', icon: Package },
+  { id: 'group:growth', label: 'Growth', icon: Megaphone },
+  { id: 'group:business', label: 'Business', icon: Briefcase },
   { id: 'profile', label: 'Profile', icon: User },
 ];
+
+const GROUP_ITEMS: Record<string, NavItem[]> = {
+  loyalty: [
+    { id: 'programs', label: 'Programs', icon: Package },
+    { id: 'rewards', label: 'Rewards', icon: Gift },
+    { id: 'certificates', label: 'Certs', icon: Ticket },
+  ],
+  growth: [
+    { id: 'customers', label: 'Customers', icon: UserSearch },
+    { id: 'marketing', label: 'Marketing', icon: Megaphone },
+  ],
+  business: [
+    { id: 'billing', label: 'Billing', icon: CreditCard },
+    { id: 'agents', label: 'AI Agents', icon: Bot },
+    { id: 'team', label: 'Team', icon: Users },
+  ],
+};
+
+const TAB_TO_GROUP: Record<string, string> = {
+  programs: 'loyalty',
+  rewards: 'loyalty',
+  certificates: 'loyalty',
+  customers: 'growth',
+  marketing: 'growth',
+  billing: 'business',
+  agents: 'business',
+  team: 'business',
+};
 
 const MerchantPage = () => {
   const isMobile = useIsMobile();
