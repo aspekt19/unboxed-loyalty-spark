@@ -260,41 +260,22 @@ const isLovablePreviewHost =
   (window.location.hostname.endsWith(".lovableproject.com") ||
     window.location.hostname.startsWith("id-preview--"));
 
-/**
- * Miniapps (Base App / Farcaster) always run inside a frame or a native
- * webview bridge. Cold start of the SDK handshake used to take seconds, and
- * during that wait we rendered a near-empty placeholder — which reads as a
- * white screen on first launch. Framing is synchronous and reliable, so we can
- * commit to the Farcaster provider tree immediately and skip the wait.
- * The in-app *browser* (Coinbase/Base) is NOT framed, so Privy still works there.
- */
-function isMiniAppFrame(): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    if (window.parent && window.parent !== window) return true;
-    return Boolean((window as unknown as { ReactNativeWebView?: unknown }).ReactNativeWebView);
-  } catch {
-    // Cross-origin parent access throws → we are framed.
-    return true;
-  }
-}
-
 const App = () => {
   const [isFarcaster, setIsFarcaster] = useState<boolean | null>(() => {
     if (isLovablePreviewHost) return false;
-    if (isFarcasterContext()) return true;
-    // Committing synchronously avoids the blank first paint in Base App.
-    if (isMiniAppFrame()) return true;
-    return null;
+    return isFarcasterContext() ? true : null;
   });
 
-  // Only needed for non-framed contexts (rare): a short handshake decides
-  // whether we are a miniapp before the first provider tree is mounted.
+  // Runs exactly once. Detection needs a dynamic import of the miniapp SDK
+  // chunk plus a postMessage handshake with the host client. Inside an embedded
+  // webview (Base App / Farcaster) we give the handshake more room, because
+  // falling back to the Privy browser tree there and swapping providers later
+  // remounts the whole app — which is exactly what showed up as a white screen.
   useEffect(() => {
     if (isLovablePreviewHost) return;
-    if (isFarcaster !== null) return;
 
-    const detectionTimeout = 1200;
+    const embedded = isEmbeddedWebview();
+    const detectionTimeout = embedded ? 3500 : 1200;
 
     let settled = false;
     const graceTimer = window.setTimeout(() => {
@@ -306,7 +287,9 @@ const App = () => {
       .catch(() => false)
       .then((result) => {
         window.clearTimeout(graceTimer);
-        // Never swap providers after we already committed to a tree.
+        // Never swap providers after we already committed to a tree: remounting
+        // Privy/wagmi mid-session is what produced the Base App white screen.
+        // Late results only decide the very first commit.
         if (!settled) setIsFarcaster(result);
       });
 
@@ -314,7 +297,6 @@ const App = () => {
     return () => window.clearTimeout(graceTimer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
 
 
   if (isFarcaster === null) {
