@@ -265,7 +265,11 @@ const isLovablePreviewHost =
 const App = () => {
   const [isFarcaster, setIsFarcaster] = useState<boolean | null>(() => {
     if (isLovablePreviewHost) return false;
-    return isFarcasterContext() ? true : null;
+    if (isFarcasterContext()) return true;
+    // Returning from a Privy OAuth redirect (Google on mobile): mount the Privy
+    // tree immediately so the callback code is exchanged before it goes stale.
+    if (hasPrivyOAuthParams()) return false;
+    return null;
   });
 
   // Runs exactly once. Detection needs a dynamic import of the miniapp SDK
@@ -275,6 +279,7 @@ const App = () => {
   // remounts the whole app — which is exactly what showed up as a white screen.
   useEffect(() => {
     if (isLovablePreviewHost) return;
+    if (hasPrivyOAuthParams()) return;
 
     const embedded = isEmbeddedWebview();
     const detectionTimeout = embedded ? 3500 : 1200;
