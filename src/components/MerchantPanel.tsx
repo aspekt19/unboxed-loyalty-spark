@@ -417,6 +417,33 @@ export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: Merchant
           }}
           className="w-full"
         >
+          {hideTabsList && (() => {
+            const currentTab = activeTab !== undefined ? activeTab : internalTab;
+            const MOBILE_HOME_SUB_TABS = [
+              { value: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+              { value: 'customers', label: 'Customers', icon: UserSearch },
+              { value: 'marketing', label: 'Marketing', icon: Megaphone },
+              { value: 'billing', label: 'Billing', icon: CreditCard },
+              { value: 'agents', label: 'AI Agents', icon: Bot },
+            ];
+            if (!MOBILE_HOME_SUB_TABS.some((t) => t.value === currentTab)) return null;
+            return (
+              <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 pb-2">
+                <TabsList className="inline-flex w-auto min-w-full h-10">
+                  {MOBILE_HOME_SUB_TABS.map((sub) => (
+                    <TabsTrigger
+                      key={sub.value}
+                      value={sub.value}
+                      className="flex-shrink-0 text-xs px-2 whitespace-nowrap"
+                    >
+                      {sub.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </div>
+            );
+          })()}
+
           {!hideTabsList && (() => {
             const currentTab = activeTab !== undefined ? activeTab : internalTab;
             const currentGroup = TAB_TO_GROUP[currentTab] ?? 'overview';
