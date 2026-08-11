@@ -300,15 +300,25 @@ export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: Merchant
           ) : (
             /* Manager / Admin: multiple tabs */
             <Tabs defaultValue="programs" className="w-full">
-              <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-2">
-                <TabsList className="inline-flex w-auto min-w-full">
-                  <TabsTrigger value="programs" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Programs</TabsTrigger>
-                  <TabsTrigger value="customers" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Customers</TabsTrigger>
+              <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0 pb-2">
+                <TabsList className="inline-flex w-auto min-w-full h-10">
+                  <TabsTrigger value="programs" className="flex-shrink-0 text-xs lg:text-sm px-2 lg:px-3 whitespace-nowrap">
+                    <Wallet className="h-3.5 w-3.5 mr-1 hidden sm:inline" />Programs
+                  </TabsTrigger>
+                  <TabsTrigger value="customers" className="flex-shrink-0 text-xs lg:text-sm px-2 lg:px-3 whitespace-nowrap">
+                    <UserSearch className="h-3.5 w-3.5 mr-1 hidden sm:inline" />Customers
+                  </TabsTrigger>
                   {activeMembership!.role === 'admin' && (
                     <>
-                      <TabsTrigger value="dashboard" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Dashboard</TabsTrigger>
-                      <TabsTrigger value="rewards" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Rewards</TabsTrigger>
-                      <TabsTrigger value="marketing" className="flex-shrink-0 text-xs px-2 sm:px-3 md:px-4 md:text-sm whitespace-nowrap">Marketing</TabsTrigger>
+                      <TabsTrigger value="dashboard" className="flex-shrink-0 text-xs lg:text-sm px-2 lg:px-3 whitespace-nowrap">
+                        <LayoutDashboard className="h-3.5 w-3.5 mr-1 hidden sm:inline" />Dashboard
+                      </TabsTrigger>
+                      <TabsTrigger value="rewards" className="flex-shrink-0 text-xs lg:text-sm px-2 lg:px-3 whitespace-nowrap">
+                        <Gift className="h-3.5 w-3.5 mr-1 hidden sm:inline" />Rewards
+                      </TabsTrigger>
+                      <TabsTrigger value="marketing" className="flex-shrink-0 text-xs lg:text-sm px-2 lg:px-3 whitespace-nowrap">
+                        <Megaphone className="h-3.5 w-3.5 mr-1 hidden sm:inline" />Marketing
+                      </TabsTrigger>
                     </>
                   )}
                 </TabsList>
