@@ -9,7 +9,7 @@ import { TrialWelcomeBanner } from '@/components/onboarding/TrialWelcomeBanner';
 import { useAutoStartTrial } from '@/hooks/useStartTrial';
 import { MerchantProfileSection } from '@/components/merchant/MerchantProfileSection';
 
-import { ArrowLeft, LayoutDashboard, Package, Gift, Users, User, Ticket } from 'lucide-react';
+import { ArrowLeft, LayoutDashboard, Package, Gift, Users, User, Ticket, Megaphone, Briefcase, UserSearch, CreditCard, Bot } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import PageTransition from '@/components/PageTransition';
@@ -28,16 +28,42 @@ import {
 } from '@/hooks/useMerchantCustomerIndex';
 import { MERCHANT_TOKEN_STATS_QUERY_KEY } from '@/hooks/useTokenStats';
 
-const HOME_SUB_TABS = ['dashboard', 'customers', 'marketing', 'billing', 'agents'];
 
-const merchantNavItems: NavItem[] = [
+const rootNavItems: NavItem[] = [
   { id: 'dashboard', label: 'Home', icon: LayoutDashboard },
-  { id: 'programs', label: 'Programs', icon: Package },
-  { id: 'rewards', label: 'Rewards', icon: Gift },
-  { id: 'certificates', label: 'Certs', icon: Ticket },
-  { id: 'team', label: 'Team', icon: Users },
+  { id: 'group:loyalty', label: 'Loyalty', icon: Package },
+  { id: 'group:growth', label: 'Growth', icon: Megaphone },
+  { id: 'group:business', label: 'Business', icon: Briefcase },
   { id: 'profile', label: 'Profile', icon: User },
 ];
+
+const GROUP_ITEMS: Record<string, NavItem[]> = {
+  loyalty: [
+    { id: 'programs', label: 'Programs', icon: Package },
+    { id: 'rewards', label: 'Rewards', icon: Gift },
+    { id: 'certificates', label: 'Certs', icon: Ticket },
+  ],
+  growth: [
+    { id: 'customers', label: 'Customers', icon: UserSearch },
+    { id: 'marketing', label: 'Marketing', icon: Megaphone },
+  ],
+  business: [
+    { id: 'billing', label: 'Billing', icon: CreditCard },
+    { id: 'agents', label: 'AI Agents', icon: Bot },
+    { id: 'team', label: 'Team', icon: Users },
+  ],
+};
+
+const TAB_TO_GROUP: Record<string, string> = {
+  programs: 'loyalty',
+  rewards: 'loyalty',
+  certificates: 'loyalty',
+  customers: 'growth',
+  marketing: 'growth',
+  billing: 'business',
+  agents: 'business',
+  team: 'business',
+};
 
 const MerchantPage = () => {
   const isMobile = useIsMobile();
@@ -78,12 +104,33 @@ const MerchantPage = () => {
     ]);
   }, [queryClient]);
 
+  // Drill-down state for the bottom nav: null = root groups, otherwise group key
+  const [navGroup, setNavGroup] = useState<string | null>(null);
+
   const handleMobileTabChange = (tab: string) => {
+    if (tab === 'nav:back') {
+      setNavGroup(null);
+      return;
+    }
+    if (tab.startsWith('group:')) {
+      setNavGroup(tab.slice(6));
+      return;
+    }
+    setNavGroup(TAB_TO_GROUP[tab] ?? null);
     setMobileTab(tab);
   };
 
-  // Derive which bottom nav item is active (home sub-tabs all highlight "Home")
-  const activeBottomNav = HOME_SUB_TABS.includes(mobileTab) ? 'dashboard' : mobileTab;
+  // Bottom nav items: root groups, or the tabs inside the opened group + Back
+  const bottomNavItems: NavItem[] = navGroup
+    ? [{ id: 'nav:back', label: 'Back', icon: ArrowLeft }, ...(GROUP_ITEMS[navGroup] ?? [])]
+    : rootNavItems;
+
+  // Derive which bottom nav item is active
+  const activeBottomNav = navGroup
+    ? mobileTab
+    : TAB_TO_GROUP[mobileTab]
+      ? `group:${TAB_TO_GROUP[mobileTab]}`
+      : mobileTab;
 
   const desktopContent = showProfile ? (
     <div className="max-w-2xl mx-auto">
@@ -199,7 +246,7 @@ const MerchantPage = () => {
             activeTab={activeBottomNav}
             onTabChange={handleMobileTabChange}
             showProfileNav={Boolean(user)}
-            navItems={merchantNavItems}
+            navItems={bottomNavItems}
           />
         )}
       </div>
