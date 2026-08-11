@@ -203,7 +203,7 @@ const CustomerPage = () => {
           ) : (
             /* Mobile: content driven by bottom nav */
             <PullToRefresh onRefresh={handleRefresh}>
-              <div className="pb-24">
+              <div className="pb-28">
                 {renderContent()}
               </div>
             </PullToRefresh>

@@ -231,7 +231,7 @@ const MerchantPage = () => {
         <main className="container mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-8 md:py-12 relative">
           {isMobile ? (
             <PullToRefresh onRefresh={handleRefresh}>
-              <div>
+              <div className="pb-28">
                 {mobileContent()}
               </div>
             </PullToRefresh>
