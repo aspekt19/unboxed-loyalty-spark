@@ -417,7 +417,7 @@ export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: Merchant
           }}
           className="w-full"
         >
-          {(() => {
+          {!hideTabsList && (() => {
             const currentTab = activeTab !== undefined ? activeTab : internalTab;
             const currentGroup = TAB_TO_GROUP[currentTab] ?? 'overview';
             const subTabs = SUB_TABS[currentGroup] ?? [];
