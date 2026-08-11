@@ -38,6 +38,16 @@ export function AuthPrompt() {
     privyLogin();
   };
 
+  /** Already Privy-authenticated: login() is a no-op, must open the wallet picker. */
+  const handleConnectWallet = () => {
+    resetManualSignOut();
+    if (privyAuthenticated) {
+      privyConnectWallet();
+    } else {
+      privyLogin();
+    }
+  };
+
   const handleFarcasterConnect = () => {
     resetManualSignOut();
     connect({ connector: connectors[0] });
