@@ -2340,6 +2340,30 @@ export type Database = {
           },
         ]
       }
+      wallet_rate_windows: {
+        Row: {
+          request_count: number
+          scope: string
+          subject: string
+          updated_at: string
+          window_start: string
+        }
+        Insert: {
+          request_count?: number
+          scope: string
+          subject: string
+          updated_at?: string
+          window_start: string
+        }
+        Update: {
+          request_count?: number
+          scope?: string
+          subject?: string
+          updated_at?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       merchant_analytics: {
@@ -2464,6 +2488,10 @@ export type Database = {
       check_expiring_subscriptions: { Args: never; Returns: undefined }
       check_program_expiration: { Args: never; Returns: undefined }
       claim_gift_certificate: { Args: { p_code: string }; Returns: Json }
+      consume_agent_monthly_quota: {
+        Args: { p_max_calls: number; p_owner_address: string }
+        Returns: boolean
+      }
       consume_agent_rate_limit: {
         Args: {
           p_agent_id: string
@@ -2474,6 +2502,15 @@ export type Database = {
         Returns: boolean
       }
       consume_siwe_nonce: { Args: { p_nonce: string }; Returns: string }
+      consume_wallet_rate_limit: {
+        Args: {
+          p_limit: number
+          p_scope: string
+          p_subject: string
+          p_window_seconds?: number
+        }
+        Returns: boolean
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
