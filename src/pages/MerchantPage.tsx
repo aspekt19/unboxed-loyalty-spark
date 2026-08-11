@@ -9,7 +9,7 @@ import { TrialWelcomeBanner } from '@/components/onboarding/TrialWelcomeBanner';
 import { useAutoStartTrial } from '@/hooks/useStartTrial';
 import { MerchantProfileSection } from '@/components/merchant/MerchantProfileSection';
 
-import { ArrowLeft, LayoutDashboard, Package, Gift, Users, User, Ticket } from 'lucide-react';
+import { ArrowLeft, LayoutDashboard, Package, Gift, Users, User, Ticket, Megaphone, Briefcase, UserSearch, CreditCard, Bot } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import PageTransition from '@/components/PageTransition';
