@@ -15,6 +15,7 @@ export function AuthPrompt() {
   const { connect, connectors } = useConnect();
   const {
     login: privyLogin,
+    connectWallet: privyConnectWallet,
     user: privyUser,
     authenticated: privyAuthenticated,
     ready: privyReady,
@@ -35,6 +36,16 @@ export function AuthPrompt() {
   const handlePrivyLogin = () => {
     resetManualSignOut();
     privyLogin();
+  };
+
+  /** Already Privy-authenticated: login() is a no-op, must open the wallet picker. */
+  const handleConnectWallet = () => {
+    resetManualSignOut();
+    if (privyAuthenticated) {
+      privyConnectWallet();
+    } else {
+      privyLogin();
+    }
   };
 
   const handleFarcasterConnect = () => {
@@ -141,7 +152,7 @@ export function AuthPrompt() {
             Choose a wallet in the Privy window. After it connects, you will sign one message (SIWE)
             to link your wallet to Loyal Spark.
           </p>
-          <Button variant="uds" onClick={handlePrivyLogin} className={cn(INLINE_AUTH_CTA_CLASSNAME)} type="button">
+          <Button variant="uds" onClick={handleConnectWallet} className={cn(INLINE_AUTH_CTA_CLASSNAME)} type="button">
             <LogIn className="h-3.5 w-3.5 shrink-0" />
             Connect wallet
           </Button>

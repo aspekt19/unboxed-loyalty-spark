@@ -140,37 +140,37 @@ export const WelcomeFlow = ({ userRole }: WelcomeFlowProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden">
+      <DialogContent className="w-[calc(100vw-1.5rem)] max-w-[600px] sm:max-w-[600px] p-0 overflow-hidden rounded-xl">
         <div className="relative">
           {/* Progress bar */}
           <Progress value={progress} className="h-1 rounded-none" />
 
           {/* Content */}
-          <div className="p-8">
+          <div className="p-5 sm:p-8">
             {/* Icon */}
-            <div className="mb-6 flex justify-center">
-              <div className="p-4 rounded-full bg-primary/10">
-                <Icon className="h-12 w-12 text-primary" />
+            <div className="mb-4 sm:mb-6 flex justify-center">
+              <div className="p-3 sm:p-4 rounded-full bg-primary/10">
+                <Icon className="h-9 w-9 sm:h-12 sm:w-12 text-primary" />
               </div>
             </div>
 
             {/* Title and description */}
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold mb-2">{currentStepData.title}</h2>
-              <p className="text-lg text-muted-foreground mb-4">
+            <div className="text-center mb-4 sm:mb-6">
+              <h2 className="text-lg sm:text-2xl font-bold mb-2 text-balance break-words">{currentStepData.title}</h2>
+              <p className="text-sm sm:text-lg text-muted-foreground mb-2 sm:mb-4 text-balance break-words">
                 {currentStepData.description}
               </p>
             </div>
 
             {/* Content card */}
-            <Card className="mb-6">
-              <CardContent className="pt-6">
-                <p className="text-sm leading-relaxed">{currentStepData.content}</p>
+            <Card className="mb-4 sm:mb-6">
+              <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6">
+                <p className="text-xs sm:text-sm leading-relaxed break-words">{currentStepData.content}</p>
               </CardContent>
             </Card>
 
             {/* Step indicator */}
-            <div className="flex justify-center gap-2 mb-6">
+            <div className="flex justify-center gap-2 mb-4 sm:mb-6">
               {steps.map((_, index) => (
                 <div
                   key={index}
@@ -186,23 +186,24 @@ export const WelcomeFlow = ({ userRole }: WelcomeFlowProps) => {
             </div>
 
             {/* Navigation buttons */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <Button
                 variant="ghost"
+                size="sm"
                 onClick={handleSkip}
-                className="text-muted-foreground"
+                className="text-muted-foreground px-2 sm:px-4"
               >
-                Skip Tutorial
+                Skip
               </Button>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 ml-auto">
                 {currentStep > 0 && (
-                  <Button variant="outline" onClick={handleBack}>
+                  <Button variant="outline" size="sm" onClick={handleBack}>
                     <ChevronLeft className="h-4 w-4 mr-1" />
                     Back
                   </Button>
                 )}
-                <Button onClick={handleNext}>
+                <Button size="sm" onClick={handleNext}>
                   {isLastStep ? (
                     <>
                       Get Started

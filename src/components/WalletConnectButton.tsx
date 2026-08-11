@@ -41,7 +41,7 @@ export function WalletConnectButton() {
   } | null>(null);
 
   const isFarcaster = isFarcasterContext();
-  const { login: privyLogin, logout: privyLogout, user: privyUser, ready: privyReady, authenticated: privyAuthenticated, getAccessToken } = usePrivySafe();
+  const { login: privyLogin, logout: privyLogout, connectWallet: privyConnectWallet, user: privyUser, ready: privyReady, authenticated: privyAuthenticated, getAccessToken } = usePrivySafe();
   const prevPrivyUserRef = useRef(privyUser);
 
   const privyUserId = privyUser?.id ?? '';
@@ -314,7 +314,17 @@ export function WalletConnectButton() {
   }
 
   if (!user) {
-    return <SigningInButton onTimeout={retrySignIn} className={headerAuthButtonClass(
+    const handleRetry = async () => {
+      // Privy session exists but no wallet is connected: SIWE can never start,
+      // so open the wallet picker instead of retrying a no-op sign-in.
+      if (!isFarcaster && privyAuthenticated && !useTokenAuth && !isConnected) {
+        privyConnectWallet();
+        return;
+      }
+      await retrySignIn();
+    };
+
+    return <SigningInButton onTimeout={handleRetry} className={headerAuthButtonClass(
       'bg-primary text-primary-foreground shadow-clay-primary opacity-90 disabled:pointer-events-none disabled:opacity-50',
     )} />;
   }
