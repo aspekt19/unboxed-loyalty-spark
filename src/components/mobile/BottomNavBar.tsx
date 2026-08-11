@@ -93,7 +93,7 @@ export function BottomNavBar({ activeTab, onTabChange, showProfileNav = true, na
       className="fixed bottom-0 left-0 right-0 z-50 md:hidden"
       style={{ contain: 'layout paint', willChange: 'transform' }}
     >
-      <div className="bg-background border-t border-border/60 px-2 pb-[env(safe-area-inset-bottom,8px)]">
+      <div className="bg-background border-t border-border/60 px-2 pb-[calc(env(safe-area-inset-bottom,8px)+12px)]">
         <div className="flex items-center justify-around py-1.5">
           {items.map((item) => (
             <NavButton
