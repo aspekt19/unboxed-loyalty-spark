@@ -186,23 +186,24 @@ export const WelcomeFlow = ({ userRole }: WelcomeFlowProps) => {
             </div>
 
             {/* Navigation buttons */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <Button
                 variant="ghost"
+                size="sm"
                 onClick={handleSkip}
-                className="text-muted-foreground"
+                className="text-muted-foreground px-2 sm:px-4"
               >
-                Skip Tutorial
+                Skip
               </Button>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 ml-auto">
                 {currentStep > 0 && (
-                  <Button variant="outline" onClick={handleBack}>
+                  <Button variant="outline" size="sm" onClick={handleBack}>
                     <ChevronLeft className="h-4 w-4 mr-1" />
                     Back
                   </Button>
                 )}
-                <Button onClick={handleNext}>
+                <Button size="sm" onClick={handleNext}>
                   {isLastStep ? (
                     <>
                       Get Started
