@@ -105,12 +105,33 @@ const MerchantPage = () => {
     ]);
   }, [queryClient]);
 
+  // Drill-down state for the bottom nav: null = root groups, otherwise group key
+  const [navGroup, setNavGroup] = useState<string | null>(null);
+
   const handleMobileTabChange = (tab: string) => {
+    if (tab === 'nav:back') {
+      setNavGroup(null);
+      return;
+    }
+    if (tab.startsWith('group:')) {
+      setNavGroup(tab.slice(6));
+      return;
+    }
+    setNavGroup(TAB_TO_GROUP[tab] ?? null);
     setMobileTab(tab);
   };
 
+  // Bottom nav items: root groups, or the tabs inside the opened group + Back
+  const bottomNavItems: NavItem[] = navGroup
+    ? [{ id: 'nav:back', label: 'Back', icon: ArrowLeft }, ...(GROUP_ITEMS[navGroup] ?? [])]
+    : rootNavItems;
+
   // Derive which bottom nav item is active (home sub-tabs all highlight "Home")
-  const activeBottomNav = HOME_SUB_TABS.includes(mobileTab) ? 'dashboard' : mobileTab;
+  const activeBottomNav = navGroup
+    ? mobileTab
+    : HOME_SUB_TABS.includes(mobileTab)
+      ? 'dashboard'
+      : (TAB_TO_GROUP[mobileTab] ? `group:${TAB_TO_GROUP[mobileTab]}` : mobileTab);
 
   const desktopContent = showProfile ? (
     <div className="max-w-2xl mx-auto">
