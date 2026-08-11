@@ -247,7 +247,7 @@ const MerchantPage = () => {
             activeTab={activeBottomNav}
             onTabChange={handleMobileTabChange}
             showProfileNav={Boolean(user)}
-            navItems={merchantNavItems}
+            navItems={bottomNavItems}
           />
         )}
       </div>
