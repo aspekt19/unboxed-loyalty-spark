@@ -417,62 +417,72 @@ export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: Merchant
           }}
           className="w-full"
         >
-          {hideTabsList ? (
-            /* Mobile: show sub-tab bar only for "Home" group tabs */
-            ['dashboard', 'customers', 'marketing', 'billing', 'agents'].includes(activeTab || 'dashboard') && (
-              <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 pb-2">
-                <TabsList className="inline-flex w-auto min-w-full h-10">
-                  <TabsTrigger value="dashboard" className="flex-shrink-0 text-xs px-2 whitespace-nowrap">
-                    <LayoutDashboard className="h-3.5 w-3.5 mr-1" />Dashboard
-                  </TabsTrigger>
-                  <TabsTrigger value="customers" className="flex-shrink-0 text-xs px-2 whitespace-nowrap">
-                    <UserSearch className="h-3.5 w-3.5 mr-1" />Customers
-                  </TabsTrigger>
-                  <TabsTrigger value="marketing" className="flex-shrink-0 text-xs px-2 whitespace-nowrap">
-                    <Megaphone className="h-3.5 w-3.5 mr-1" />Marketing
-                  </TabsTrigger>
-                  <TabsTrigger value="billing" className="flex-shrink-0 text-xs px-2 whitespace-nowrap">
-                    <CreditCard className="h-3.5 w-3.5 mr-1" />Billing
-                  </TabsTrigger>
-                  <TabsTrigger value="agents" className="flex-shrink-0 text-xs px-2 whitespace-nowrap">
-                    <Bot className="h-3.5 w-3.5 mr-1" />Agents
-                  </TabsTrigger>
-                </TabsList>
+          {(() => {
+            const currentTab = activeTab !== undefined ? activeTab : internalTab;
+            const currentGroup = TAB_TO_GROUP[currentTab] ?? 'overview';
+            const subTabs = SUB_TABS[currentGroup] ?? [];
+
+            return (
+              <div className="space-y-2">
+                {/* Top-level groups */}
+                <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
+                  <div className="inline-flex w-auto min-w-full h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
+                    {TAB_GROUPS.map((group) => {
+                      const Icon = group.icon;
+                      const isActive = currentGroup === group.value;
+                      return (
+                        <button
+                          key={group.value}
+                          type="button"
+                          onClick={() => {
+                            const target = group.value === 'overview' ? 'dashboard' : SUB_TABS[group.value][0].value;
+                            if (activeTab !== undefined) {
+                              onTabChange?.(target);
+                            } else {
+                              setInternalTab(target);
+                              const params = new URLSearchParams(location.search);
+                              params.set('tab', target);
+                              navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+                            }
+                          }}
+                          className={cn(
+                            "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-xs sm:text-sm font-medium ring-offset-background transition-all",
+                            isActive
+                              ? "bg-background text-foreground shadow-sm"
+                              : "text-muted-foreground hover:text-foreground"
+                          )}
+                        >
+                          <Icon className="h-3.5 w-3.5 mr-1 hidden sm:inline" />
+                          {group.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Sub-tabs for the active group */}
+                {subTabs.length > 0 && (
+                  <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0 pb-2">
+                    <TabsList className="inline-flex w-auto min-w-full h-10">
+                      {subTabs.map((sub) => {
+                        const Icon = sub.icon;
+                        return (
+                          <TabsTrigger
+                            key={sub.value}
+                            value={sub.value}
+                            className="flex-shrink-0 text-xs lg:text-sm px-2 lg:px-3 whitespace-nowrap"
+                          >
+                            <Icon className="h-3.5 w-3.5 mr-1 hidden sm:inline" />
+                            {sub.label}
+                          </TabsTrigger>
+                        );
+                      })}
+                    </TabsList>
+                  </div>
+                )}
               </div>
-            )
-          ) : (
-            <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0 pb-2">
-              <TabsList className="inline-flex w-auto min-w-full h-10">
-                <TabsTrigger value="dashboard" className="flex-shrink-0 text-xs lg:text-sm px-2 lg:px-3 whitespace-nowrap">
-                  <LayoutDashboard className="h-3.5 w-3.5 mr-1 hidden sm:inline" />Dashboard
-                </TabsTrigger>
-                <TabsTrigger value="customers" className="flex-shrink-0 text-xs lg:text-sm px-2 lg:px-3 whitespace-nowrap">
-                  <UserSearch className="h-3.5 w-3.5 mr-1 hidden sm:inline" />Customers
-                </TabsTrigger>
-                <TabsTrigger value="programs" className="flex-shrink-0 text-xs lg:text-sm px-2 lg:px-3 whitespace-nowrap">
-                  <Wallet className="h-3.5 w-3.5 mr-1 hidden sm:inline" />Programs
-                </TabsTrigger>
-                <TabsTrigger value="rewards" className="flex-shrink-0 text-xs lg:text-sm px-2 lg:px-3 whitespace-nowrap">
-                  <Gift className="h-3.5 w-3.5 mr-1 hidden sm:inline" />Rewards
-                </TabsTrigger>
-                <TabsTrigger value="certificates" className="flex-shrink-0 text-xs lg:text-sm px-2 lg:px-3 whitespace-nowrap">
-                  <Gift className="h-3.5 w-3.5 mr-1 hidden sm:inline" />Certificates
-                </TabsTrigger>
-                <TabsTrigger value="marketing" className="flex-shrink-0 text-xs lg:text-sm px-2 lg:px-3 whitespace-nowrap">
-                  <Megaphone className="h-3.5 w-3.5 mr-1 hidden sm:inline" />Marketing
-                </TabsTrigger>
-                <TabsTrigger value="billing" className="flex-shrink-0 text-xs lg:text-sm px-2 lg:px-3 whitespace-nowrap">
-                  <CreditCard className="h-3.5 w-3.5 mr-1 hidden sm:inline" />Billing
-                </TabsTrigger>
-                <TabsTrigger value="agents" className="flex-shrink-0 text-xs lg:text-sm px-2 lg:px-3 whitespace-nowrap">
-                  <Bot className="h-3.5 w-3.5 mr-1 hidden sm:inline" />AI Agents
-                </TabsTrigger>
-                <TabsTrigger value="team" className="flex-shrink-0 text-xs lg:text-sm px-2 lg:px-3 whitespace-nowrap">
-                  <Users className="h-3.5 w-3.5 mr-1 hidden sm:inline" />Team
-                </TabsTrigger>
-              </TabsList>
-            </div>
-          )}
+            );
+          })()}
 
           <TabsContent value="dashboard" className="mt-6">
             <DashboardTab />
