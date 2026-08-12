@@ -388,9 +388,11 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
                       </SelectTrigger>
                     </TooltipTrigger>
                     {selectedToken && selectedBalance && (
-                      <TooltipContent side="top" className="max-w-xs">
+                      <TooltipContent side="top" className="max-w-sm break-all">
                         <p className="font-medium">{selectedToken.name} ({selectedToken.symbol})</p>
-                        <p className="text-xs text-muted-foreground">Exact balance: {selectedBalance.balance}</p>
+                        <p className="text-xs text-muted-foreground break-all">
+                          Exact balance: {selectedBalance.balance} {selectedToken.symbol}
+                        </p>
                       </TooltipContent>
                     )}
                   </Tooltip>
@@ -422,10 +424,12 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
                               align="start"
                               avoidCollisions
                               collisionPadding={16}
-                              className="max-w-xs z-[100]"
+                              className="max-w-sm z-[100] break-all"
                             >
                               <p className="font-medium">{token.name} ({token.symbol})</p>
-                              <p className="text-xs text-muted-foreground">Exact balance: {balance?.balance || '0'}</p>
+                              <p className="text-xs text-muted-foreground break-all">
+                                Exact balance: {balance?.balance || '0'} {token.symbol}
+                              </p>
                             </TooltipContent>
                           </Tooltip>
                         </SelectItem>
