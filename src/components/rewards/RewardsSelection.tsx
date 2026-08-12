@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useTierSummaries } from '@/hooks/useTierSummaries';
 import { CompactTierInline } from '@/components/tiers/CompactTierInline';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,6 +40,56 @@ interface TokenInfo {
 
 interface RewardsSelectionProps {
   filterByMerchant?: string | null;
+}
+
+interface ProgramNameTooltipProps {
+  token: TokenInfo;
+  balance?: { balance: string };
+  side?: 'top' | 'bottom' | 'left' | 'right';
+  align?: 'start' | 'center' | 'end';
+}
+
+/**
+ * Renders a truncated program name and only shows the tooltip
+ * (with the full name + exact balance) when the text is actually clipped.
+ */
+function ProgramNameTooltip({
+  token,
+  balance,
+  side = 'top',
+  align = 'start',
+}: ProgramNameTooltipProps) {
+  const [truncated, setTruncated] = useState(false);
+  const textRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const el = textRef.current;
+    if (!el) return;
+    setTruncated(el.scrollWidth > el.clientWidth);
+  }, [token.name, token.symbol]);
+
+  return (
+    <Tooltip open={truncated ? undefined : false}>
+      <TooltipTrigger asChild>
+        <span ref={textRef} className="truncate min-w-0">
+          {token.name} ({token.symbol})
+        </span>
+      </TooltipTrigger>
+      <TooltipContent
+        side={side}
+        sideOffset={8}
+        align={align}
+        avoidCollisions
+        collisionPadding={16}
+        className="max-w-sm z-[999] break-all"
+      >
+        <p className="font-medium">{token.name} ({token.symbol})</p>
+        <p className="text-xs text-muted-foreground break-all">
+          Exact balance: {balance?.balance || '0'} {token.symbol}
+        </p>
+      </TooltipContent>
+    </Tooltip>
+  );
 }
 
 export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
@@ -381,57 +431,30 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
                   onValueChange={setSelectedTokenAddress}
                   disabled={isPending || balancesLoading}
                 >
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <SelectTrigger id="program" className="max-w-full">
-                        <SelectValue placeholder="Select a program" />
-                      </SelectTrigger>
-                    </TooltipTrigger>
-                    {selectedToken && selectedBalance && (
-                      <TooltipContent side="top" className="max-w-sm break-all">
-                        <p className="font-medium">{selectedToken.name} ({selectedToken.symbol})</p>
-                        <p className="text-xs text-muted-foreground break-all">
-                          Exact balance: {selectedBalance.balance} {selectedToken.symbol}
-                        </p>
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
+                  <SelectTrigger id="program" className="max-w-full">
+                    <SelectValue placeholder="Select a program">
+                      {selectedToken ? (
+                        <ProgramNameTooltip token={selectedToken} balance={selectedBalance} />
+                      ) : undefined}
+                    </SelectValue>
+                  </SelectTrigger>
                   <SelectContent className="max-w-[calc(100vw-2rem)]">
                     {filteredTokensWithBalance.map(token => {
                       const balance = balances.find(b => b.address === token.address);
                       const ts = rewardTierSummaries[token.address.toLowerCase()];
                       return (
                         <SelectItem key={token.address} value={token.address}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="flex flex-col gap-0.5 py-0.5 min-w-0 max-w-full">
-                                <span className="flex items-baseline gap-1 min-w-0">
-                                  <span className="truncate min-w-0">
-                                    {token.name} ({token.symbol})
-                                  </span>
-                                  <span className="flex-shrink-0 font-semibold tabular-nums">
-                                    — {formatTokenBalance(balance?.balance)}
-                                  </span>
-                                </span>
-                                {ts && (ts.tierName || ts.toNextLine) && (
-                                  <CompactTierInline summary={ts} />
-                                )}
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent
-                              side="top"
-                              sideOffset={8}
-                              align="start"
-                              avoidCollisions
-                              collisionPadding={16}
-                              className="max-w-sm z-[100] break-all"
-                            >
-                              <p className="font-medium">{token.name} ({token.symbol})</p>
-                              <p className="text-xs text-muted-foreground break-all">
-                                Exact balance: {balance?.balance || '0'} {token.symbol}
-                              </p>
-                            </TooltipContent>
-                          </Tooltip>
+                          <div className="flex flex-col gap-0.5 py-0.5 min-w-0 max-w-full">
+                            <span className="flex items-baseline gap-1 min-w-0">
+                              <ProgramNameTooltip token={token} balance={balance} />
+                              <span className="flex-shrink-0 font-semibold tabular-nums">
+                                — {formatTokenBalance(balance?.balance)}
+                              </span>
+                            </span>
+                            {ts && (ts.tierName || ts.toNextLine) && (
+                              <CompactTierInline summary={ts} />
+                            )}
+                          </div>
                         </SelectItem>
                       );
                     })}
