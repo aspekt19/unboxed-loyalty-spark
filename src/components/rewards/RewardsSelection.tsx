@@ -395,49 +395,58 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
                   />
                 </div>
               )}
-              <TooltipProvider delayDuration={100}>
-                <Select
-                  value={selectedTokenAddress}
-                  onValueChange={setSelectedTokenAddress}
-                  disabled={isPending || balancesLoading}
+              <Select
+                value={selectedTokenAddress}
+                onValueChange={setSelectedTokenAddress}
+                disabled={isPending || balancesLoading}
+              >
+                <SelectTrigger
+                  id="program"
+                  className="max-w-full h-auto min-h-10 py-2 items-start text-left [&>span]:line-clamp-none [&>span]:whitespace-normal [&>span]:text-left"
                 >
-                  <SelectTrigger id="program" className="max-w-full">
-                    <SelectValue placeholder="Select a program">
-                      {selectedToken ? (
-                        <ProgramNameTooltip token={selectedToken} balance={selectedBalance} />
-                      ) : undefined}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="max-w-[calc(100vw-2rem)]">
-                    {filteredTokensWithBalance.map(token => {
-                      const balance = balances.find(b => b.address === token.address);
-                      const ts = rewardTierSummaries[token.address.toLowerCase()];
-                      return (
-                        <SelectItem key={token.address} value={token.address}>
-                          <div className="flex flex-col gap-0.5 py-0.5 min-w-0 max-w-full">
-                            <span className="flex items-baseline gap-1 min-w-0">
-                              <ProgramNameTooltip token={token} balance={balance} />
-                              <span className="flex-shrink-0 font-semibold tabular-nums">
-                                — {formatTokenBalance(balance?.balance)}
-                              </span>
+                  <SelectValue placeholder="Select a program">
+                    {selectedToken ? <ProgramName token={selectedToken} /> : undefined}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="max-w-[calc(100vw-2rem)]">
+                  {filteredTokensWithBalance.map(token => {
+                    const balance = balances.find(b => b.address === token.address);
+                    const ts = rewardTierSummaries[token.address.toLowerCase()];
+                    return (
+                      <SelectItem key={token.address} value={token.address}>
+                        <div className="flex flex-col gap-0.5 py-0.5 min-w-0 max-w-full">
+                          <span className="flex items-baseline gap-1 min-w-0 flex-wrap">
+                            <ProgramName token={token} />
+                            <span className="flex-shrink-0 font-semibold tabular-nums">
+                              — {formatTokenBalance(balance?.balance)}
                             </span>
-                            {ts && (ts.tierName || ts.toNextLine) && (
-                              <CompactTierInline summary={ts} />
-                            )}
-                          </div>
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
-              </TooltipProvider>
+                          </span>
+                          {ts && (ts.tierName || ts.toNextLine) && (
+                            <CompactTierInline summary={ts} />
+                          )}
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
             </div>
 
             {selectedToken && selectedBalance && (
               <>
-                <div className="text-sm text-muted-foreground break-words">
-                  Available: {formatTokenBalance(selectedBalance.balance)} {selectedToken.symbol}
+                <div className="text-sm text-muted-foreground break-words flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span className="break-all">
+                    Available: {showFullBalance ? selectedBalance.balance : formatTokenBalance(selectedBalance.balance)} {selectedToken.symbol}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowFullBalance(v => !v)}
+                    className="text-xs underline underline-offset-2 hover:text-foreground"
+                  >
+                    {showFullBalance ? 'Show rounded' : 'Show full'}
+                  </button>
                 </div>
+
                 {isMismatch && primaryAddress && address && (
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
