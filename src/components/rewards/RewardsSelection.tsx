@@ -42,55 +42,25 @@ interface RewardsSelectionProps {
   filterByMerchant?: string | null;
 }
 
-interface ProgramNameTooltipProps {
+interface ProgramNameProps {
   token: TokenInfo;
-  balance?: { balance: string };
-  side?: 'top' | 'bottom' | 'left' | 'right';
-  align?: 'start' | 'center' | 'end';
+  clamp?: boolean;
 }
 
 /**
- * Renders a truncated program name and only shows the tooltip
- * (with the full name + exact balance) when the text is actually clipped.
+ * Program name that wraps onto up to 3 lines instead of being truncated.
  */
-function ProgramNameTooltip({
-  token,
-  balance,
-  side = 'top',
-  align = 'start',
-}: ProgramNameTooltipProps) {
-  const [truncated, setTruncated] = useState(false);
-  const textRef = useRef<HTMLSpanElement>(null);
-
-  useEffect(() => {
-    const el = textRef.current;
-    if (!el) return;
-    setTruncated(el.scrollWidth > el.clientWidth);
-  }, [token.name, token.symbol]);
-
+function ProgramName({ token, clamp = true }: ProgramNameProps) {
   return (
-    <Tooltip open={truncated ? undefined : false}>
-      <TooltipTrigger asChild>
-        <span ref={textRef} className="truncate min-w-0">
-          {token.name} ({token.symbol})
-        </span>
-      </TooltipTrigger>
-      <TooltipContent
-        side={side}
-        sideOffset={8}
-        align={align}
-        avoidCollisions
-        collisionPadding={16}
-        className="max-w-sm z-[999] break-all"
-      >
-        <p className="font-medium">{token.name} ({token.symbol})</p>
-        <p className="text-xs text-muted-foreground break-all">
-          Exact balance: {balance?.balance || '0'} {token.symbol}
-        </p>
-      </TooltipContent>
-    </Tooltip>
+    <span
+      className={`min-w-0 break-words ${clamp ? 'line-clamp-3' : ''}`}
+      title={`${token.name} (${token.symbol})`}
+    >
+      {token.name} ({token.symbol})
+    </span>
   );
 }
+
 
 export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
   const { address } = useAccount();
