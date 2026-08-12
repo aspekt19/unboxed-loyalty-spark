@@ -416,7 +416,14 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
                                 )}
                               </div>
                             </TooltipTrigger>
-                            <TooltipContent side="right" className="max-w-xs">
+                            <TooltipContent
+                              side="top"
+                              sideOffset={8}
+                              align="start"
+                              avoidCollisions
+                              collisionPadding={16}
+                              className="max-w-xs z-[100]"
+                            >
                               <p className="font-medium">{token.name} ({token.symbol})</p>
                               <p className="text-xs text-muted-foreground">Exact balance: {balance?.balance || '0'}</p>
                             </TooltipContent>
