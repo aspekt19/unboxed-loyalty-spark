@@ -8,7 +8,7 @@ import { WagmiProvider as PrivyWagmiProvider } from "@privy-io/wagmi";
 import { PrivyProvider } from "@privy-io/react-auth";
 import { browserPreviewWagmiConfig, detectFarcasterMiniApp, isEmbeddedWebview, isFarcasterContext, farcasterWagmiConfig, privyWagmiConfig } from "./config/wagmi";
 import { PRIVY_APP_ID, privyConfig } from "./config/privy";
-import { OAuthReturnHandler, hasPrivyOAuthParams } from "./components/auth/OAuthReturnHandler";
+import { hasPrivyOAuthParams } from "./components/auth/OAuthReturnHandler";
 import Index from "./pages/Index";
 import AppPage from "./pages/AppPage";
 import CustomerPage from "./pages/CustomerPage";
@@ -224,7 +224,6 @@ function BrowserProviders({ children }: { children: React.ReactNode }) {
           <PrivyWagmiProvider config={privyWagmiConfig}>
             <AuthProvider>
               <TooltipProvider>
-                <OAuthReturnHandler />
                 <ConnectorRecoveryListener />
                 <Toaster />
                 <Sonner />
