@@ -26,6 +26,7 @@ import { resolveTokenStandard } from '@/lib/tokenStandard';
 import { isFarcasterContext } from '@/config/wagmi';
 import { Input } from '@/components/ui/input';
 import { useActiveLoyaltyPrograms } from '@/hooks/useActiveLoyaltyPrograms';
+import { formatTokenBalance } from '@/lib/utils';
 
 interface TokenInfo {
   address: string;
