@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTierSummaries } from '@/hooks/useTierSummaries';
 import { CompactTierInline } from '@/components/tiers/CompactTierInline';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import { AlertCircle, Loader2, Ticket, LogIn, Search } from 'lucide-react';
 import { useAccount } from 'wagmi';
@@ -42,55 +41,25 @@ interface RewardsSelectionProps {
   filterByMerchant?: string | null;
 }
 
-interface ProgramNameTooltipProps {
+interface ProgramNameProps {
   token: TokenInfo;
-  balance?: { balance: string };
-  side?: 'top' | 'bottom' | 'left' | 'right';
-  align?: 'start' | 'center' | 'end';
+  clamp?: boolean;
 }
 
 /**
- * Renders a truncated program name and only shows the tooltip
- * (with the full name + exact balance) when the text is actually clipped.
+ * Program name that wraps onto up to 3 lines instead of being truncated.
  */
-function ProgramNameTooltip({
-  token,
-  balance,
-  side = 'top',
-  align = 'start',
-}: ProgramNameTooltipProps) {
-  const [truncated, setTruncated] = useState(false);
-  const textRef = useRef<HTMLSpanElement>(null);
-
-  useEffect(() => {
-    const el = textRef.current;
-    if (!el) return;
-    setTruncated(el.scrollWidth > el.clientWidth);
-  }, [token.name, token.symbol]);
-
+function ProgramName({ token, clamp = true }: ProgramNameProps) {
   return (
-    <Tooltip open={truncated ? undefined : false}>
-      <TooltipTrigger asChild>
-        <span ref={textRef} className="truncate min-w-0">
-          {token.name} ({token.symbol})
-        </span>
-      </TooltipTrigger>
-      <TooltipContent
-        side={side}
-        sideOffset={8}
-        align={align}
-        avoidCollisions
-        collisionPadding={16}
-        className="max-w-sm z-[999] break-all"
-      >
-        <p className="font-medium">{token.name} ({token.symbol})</p>
-        <p className="text-xs text-muted-foreground break-all">
-          Exact balance: {balance?.balance || '0'} {token.symbol}
-        </p>
-      </TooltipContent>
-    </Tooltip>
+    <span
+      className={`min-w-0 break-words ${clamp ? 'line-clamp-3' : ''}`}
+      title={`${token.name} (${token.symbol})`}
+    >
+      {token.name} ({token.symbol})
+    </span>
   );
 }
+
 
 export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
   const { address } = useAccount();
@@ -104,6 +73,7 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
   const [profileVerified, setProfileVerified] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [programSearch, setProgramSearch] = useState('');
+  const [showFullBalance, setShowFullBalance] = useState(false);
 
   const { activeAddress, isMismatch, primaryAddress } = useActiveCustomerWallet();
   const { data: programsCatalog = [] } = useActiveLoyaltyPrograms({ includePaused: false });
@@ -425,49 +395,58 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
                   />
                 </div>
               )}
-              <TooltipProvider delayDuration={100}>
-                <Select
-                  value={selectedTokenAddress}
-                  onValueChange={setSelectedTokenAddress}
-                  disabled={isPending || balancesLoading}
+              <Select
+                value={selectedTokenAddress}
+                onValueChange={setSelectedTokenAddress}
+                disabled={isPending || balancesLoading}
+              >
+                <SelectTrigger
+                  id="program"
+                  className="max-w-full h-auto min-h-10 py-2 items-start text-left [&>span]:line-clamp-none [&>span]:whitespace-normal [&>span]:text-left"
                 >
-                  <SelectTrigger id="program" className="max-w-full">
-                    <SelectValue placeholder="Select a program">
-                      {selectedToken ? (
-                        <ProgramNameTooltip token={selectedToken} balance={selectedBalance} />
-                      ) : undefined}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="max-w-[calc(100vw-2rem)]">
-                    {filteredTokensWithBalance.map(token => {
-                      const balance = balances.find(b => b.address === token.address);
-                      const ts = rewardTierSummaries[token.address.toLowerCase()];
-                      return (
-                        <SelectItem key={token.address} value={token.address}>
-                          <div className="flex flex-col gap-0.5 py-0.5 min-w-0 max-w-full">
-                            <span className="flex items-baseline gap-1 min-w-0">
-                              <ProgramNameTooltip token={token} balance={balance} />
-                              <span className="flex-shrink-0 font-semibold tabular-nums">
-                                — {formatTokenBalance(balance?.balance)}
-                              </span>
+                  <SelectValue placeholder="Select a program">
+                    {selectedToken ? <ProgramName token={selectedToken} /> : undefined}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="max-w-[calc(100vw-2rem)]">
+                  {filteredTokensWithBalance.map(token => {
+                    const balance = balances.find(b => b.address === token.address);
+                    const ts = rewardTierSummaries[token.address.toLowerCase()];
+                    return (
+                      <SelectItem key={token.address} value={token.address}>
+                        <div className="flex flex-col gap-0.5 py-0.5 min-w-0 max-w-full">
+                          <span className="flex items-baseline gap-1 min-w-0 flex-wrap">
+                            <ProgramName token={token} />
+                            <span className="flex-shrink-0 font-semibold tabular-nums">
+                              — {formatTokenBalance(balance?.balance)}
                             </span>
-                            {ts && (ts.tierName || ts.toNextLine) && (
-                              <CompactTierInline summary={ts} />
-                            )}
-                          </div>
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
-              </TooltipProvider>
+                          </span>
+                          {ts && (ts.tierName || ts.toNextLine) && (
+                            <CompactTierInline summary={ts} />
+                          )}
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
             </div>
 
             {selectedToken && selectedBalance && (
               <>
-                <div className="text-sm text-muted-foreground break-words">
-                  Available: {formatTokenBalance(selectedBalance.balance)} {selectedToken.symbol}
+                <div className="text-sm text-muted-foreground break-words flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span className="break-all">
+                    Available: {showFullBalance ? selectedBalance.balance : formatTokenBalance(selectedBalance.balance)} {selectedToken.symbol}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowFullBalance(v => !v)}
+                    className="text-xs underline underline-offset-2 hover:text-foreground"
+                  >
+                    {showFullBalance ? 'Show rounded' : 'Show full'}
+                  </button>
                 </div>
+
                 {isMismatch && primaryAddress && address && (
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
