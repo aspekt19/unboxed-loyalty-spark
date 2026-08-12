@@ -53,3 +53,23 @@ export function truncateAddress(
   if (address.length <= startChars + endChars) return address;
   return `${address.slice(0, startChars)}...${address.slice(-endChars)}`;
 }
+
+/**
+ * Format a token balance for display: trims floating-point noise
+ * (e.g. "4.627800000000000008" -> "4.63") and groups thousands.
+ *
+ * @param value - Balance as string or number
+ * @param maxDecimals - Maximum decimals to show (default 2)
+ */
+export function formatTokenBalance(
+  value: string | number | undefined | null,
+  maxDecimals = 2,
+): string {
+  const num = typeof value === "number" ? value : parseFloat(value ?? "0");
+  if (!Number.isFinite(num)) return "0";
+  if (num !== 0 && Math.abs(num) < 0.01) return "<0.01";
+  return num.toLocaleString("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: maxDecimals,
+  });
+}
