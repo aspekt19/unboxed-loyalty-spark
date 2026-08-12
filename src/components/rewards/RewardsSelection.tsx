@@ -378,18 +378,23 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
                 onValueChange={setSelectedTokenAddress}
                 disabled={isPending || balancesLoading}
               >
-                <SelectTrigger id="program">
+                <SelectTrigger id="program" className="max-w-full">
                   <SelectValue placeholder="Select a program" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-w-[calc(100vw-2rem)]">
                   {filteredTokensWithBalance.map(token => {
                     const balance = balances.find(b => b.address === token.address);
                     const ts = rewardTierSummaries[token.address.toLowerCase()];
                     return (
                       <SelectItem key={token.address} value={token.address}>
-                        <div className="flex flex-col gap-0.5 py-0.5">
-                          <span>
-                            {token.name} ({token.symbol}) — {balance?.balance || '0'}
+                        <div className="flex flex-col gap-0.5 py-0.5 min-w-0 max-w-full">
+                          <span className="flex items-baseline gap-1 min-w-0">
+                            <span className="truncate min-w-0">
+                              {token.name} ({token.symbol})
+                            </span>
+                            <span className="flex-shrink-0 font-semibold tabular-nums">
+                              — {formatTokenBalance(balance?.balance)}
+                            </span>
                           </span>
                           {ts && (ts.tierName || ts.toNextLine) && (
                             <CompactTierInline summary={ts} />
@@ -404,8 +409,8 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
 
             {selectedToken && selectedBalance && (
               <>
-                <div className="text-sm text-muted-foreground">
-                  Available: {selectedBalance.balance} {selectedToken.symbol}
+                <div className="text-sm text-muted-foreground break-words">
+                  Available: {formatTokenBalance(selectedBalance.balance)} {selectedToken.symbol}
                 </div>
                 {isMismatch && primaryAddress && address && (
                   <Alert>
