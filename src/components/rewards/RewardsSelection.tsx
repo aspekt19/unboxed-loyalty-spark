@@ -74,6 +74,7 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
   const [profileVerified, setProfileVerified] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [programSearch, setProgramSearch] = useState('');
+  const [showFullBalance, setShowFullBalance] = useState(false);
 
   const { activeAddress, isMismatch, primaryAddress } = useActiveCustomerWallet();
   const { data: programsCatalog = [] } = useActiveLoyaltyPrograms({ includePaused: false });
