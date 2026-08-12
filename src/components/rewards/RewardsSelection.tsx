@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useTierSummaries } from '@/hooks/useTierSummaries';
 import { CompactTierInline } from '@/components/tiers/CompactTierInline';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
