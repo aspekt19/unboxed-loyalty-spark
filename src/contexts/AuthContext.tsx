@@ -314,6 +314,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         const message = error instanceof Error ? error.message : 'Failed to sign in';
         toast.error(message);
+        window.dispatchEvent(new CustomEvent('loyal-spark:oauth-error', {
+          detail: 'Google verified your identity, but Loyal Spark could not finish connecting your account. Please try again.',
+        }));
       }
     } finally {
       signingInRef.current = false;
