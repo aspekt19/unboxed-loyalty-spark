@@ -9,6 +9,7 @@ import { usePrivySafe } from '@/hooks/usePrivySafe';
 import { getPrivyLinkedAccounts, getPrivyPrimaryEmail, shouldUsePrivyTokenAuth } from '@/lib/privyAuth';
 import { cn } from '@/lib/utils';
 import { SigningInButton } from '@/components/auth/SigningInButton';
+import { rememberPostLoginPath } from '@/components/auth/OAuthReturnHandler';
 
 /**
  * Header row: wallet / Sign in. Matches landing nav clay-pill style (rounded-full pills).
@@ -247,6 +248,7 @@ export function WalletConnectButton() {
       } catch {}
     }
 
+    rememberPostLoginPath();
     privyLogin();
   };
 
