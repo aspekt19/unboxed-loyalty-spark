@@ -1,0 +1,25 @@
+{
+  "name": "Loyal Spark",
+  "short_name": "Loyal Spark",
+  "description": "Onchain loyalty rewards on Base — earn, redeem and trade loyalty tokens.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#0EA5E9",
+  "icons": [
+    {
+      "src": "/new-favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/media-kit/app-icon-512.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
