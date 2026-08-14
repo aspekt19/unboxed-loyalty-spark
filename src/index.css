@@ -165,6 +165,13 @@ All colors MUST be HSL.
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Faint technical dot grid used on landing surfaces */
+  .bg-dot-grid {
+    background-image: radial-gradient(hsl(var(--primary) / 0.35) 1px, transparent 1px);
+    background-size: 32px 32px;
+    opacity: 0.14;
+  }
   
   .scrollbar-hide {
     -ms-overflow-style: none;
