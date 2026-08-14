@@ -56,7 +56,7 @@ Base URL: https://api.loyalspark.online/agent-api
 | /workflow/program-status?token_address=0x... | $0.001 | Autonomous planner: current lifecycle step + next_actions[] |
 | /programs | $0.001 | List active loyalty programs |
 | /rewards?token_address=0x... | $0.001 | Rewards for a program |
-| /balance?token_address=0x...&wallet_address=0x... | $0.001 | Token balance and tier |
+| /balance?token_address=0x...&customer_address=0x... | $0.001 | Token balance and tier |
 | /customers?token_address=0x... | $0.002 | Customer list with balances |
 | /vouchers?token_address=0x... | $0.001 | Voucher list |
 | /vouchers/status?code=LOYAL-XXXX | free | Public voucher status check (no API key) |

@@ -6,12 +6,16 @@ These flows are documented for builders; optional helper scripts live under **`s
 
 ## Endpoints
 
+Production base URL: **`https://api.loyalspark.online`** (replaces raw `*.supabase.co/functions/v1` in prod).
+
 | Step | Method | URL |
 |------|--------|-----|
-| Nonce | POST | `{SUPABASE_URL}/functions/v1/siwe-nonce` |
-| Register | POST | `{SUPABASE_URL}/functions/v1/agent-register-siwe` |
+| Nonce | POST | `https://api.loyalspark.online/siwe-nonce` |
+| Register | POST | `https://api.loyalspark.online/agent-register-siwe` |
 
 Use header `apikey: {VITE_SUPABASE_PUBLISHABLE_KEY}` (anon key) on `siwe-nonce` if your client requires it — same as recipient flow.
+
+For local/dev against a Supabase project directly, substitute `{SUPABASE_URL}/functions/v1/…`.
 
 ### One-command script (nonce + sign + register)
 

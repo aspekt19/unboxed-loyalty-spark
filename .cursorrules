@@ -147,7 +147,7 @@ GET:
 - /workflow/program-status — $0.001 — autonomous planner: lifecycle step + next_actions[]
 - /programs         — $0.001  — list loyalty programs
 - /rewards          — $0.001  — rewards (param: token_address)
-- /balance          — $0.001  — balance & tier (params: token_address, wallet_address)
+- /balance          — $0.001  — balance & tier (params: token_address, customer_address)
 - /customers        — $0.002  — customer list (param: token_address)
 - /vouchers         — $0.001  — vouchers list (param: token_address)
 - /analytics        — $0.005  — program analytics (param: token_address)
@@ -161,6 +161,7 @@ POST (scopes: program lifecycle accepts **mint** or **create_program**):
 - /register-program — $0.01  — register token in DB
 - /activate-program — $0.01  — activation calldata
 - /program-status   — $0.005 — update program status
+- /update-program-config — $0.005 — update cashback_rate / points_per_dollar (scope: mint or create_program)
 - /rewards          — $0.01  — scope: manage_rewards — create reward
 - /mint             — $0.01  — scope: mint — fee-first mint calls[] + fee obligation
 - /mint/confirm     — free    — scope: mint — settle protocol fee on-chain (obligation_id + fee_tx_hash)
@@ -198,9 +199,9 @@ Facilitator (Base mainnet): CDP `https://api.cdp.coinbase.com/platform/v2/x402` 
 - trade           — P2P offers (create, accept, cancel)
 
 ## Pricing Tiers (canonical: docs/business/MONETIZATION_AND_PRICING.md)
-- Free:       $0/mo,       200 calls,    1 agent,   1.25% mint fee, 1,000 tokens/mo
+- Free:       $0/mo,       200 calls,    1 agent,   1.25% mint fee, 1,000 tokens/mo (mint cap: UI/metadata only until server enforcement)
 - Pro:        $49 USDC/mo, 10,000 calls, 5 agents,  0.5% mint fee, unlimited tokens
-- Enterprise: $129 USDC/mo, unlimited,  unlimited, 0.25% mint fee, unlimited tokens
+- Enterprise: $129 USDC/mo, unlimited calls, unlimited agents (agent cap: UI/metadata only until server enforcement), 0.25% mint fee, unlimited tokens
 Merchant SaaS (portal): Starter $39 / Growth $79 / Scale $149 — separate product line; paid via `verify-agent-plan-payment` with `product: "merchant"` (tables `merchant_plans`, `merchant_plan_subscriptions`).
 Subscription payment: onchain USDC on Base to `payment_settings.subscription_wallet_address`, auto-verified when BaseScan key is set.
 

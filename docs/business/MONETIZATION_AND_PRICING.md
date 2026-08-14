@@ -51,6 +51,8 @@ This document is the **single source of truth** for public pricing: it reflects 
 
 Subscriptions are paid in **USDC on Base** ($1 = 1 USDC) per current product flow.
 
+**Enforcement note (2026-08):** Monthly **API call** quotas are enforced in Edge Functions (`consume_agent_monthly_quota`). The Free plan **1,000 tokens/mo** mint cap and Enterprise **unlimited agents** limit are stored in plan metadata and shown in the merchant UI but are **not** hard-blocked in `agent-api` today — treat them as product targets until server-side enforcement lands.
+
 ### 3.1 What the mint fee actually is
 
 Be precise about this everywhere — public copy, decks, and investor material.

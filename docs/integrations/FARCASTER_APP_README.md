@@ -95,36 +95,43 @@ curl -H "x-api-key: lsk_YOUR_KEY" \
   https://api.loyalspark.online/agent-api/programs
 ```
 
-### REST API Endpoints (25 + 1 public)
+### REST API Endpoints (28 authenticated + 1 public)
 
-| Method | Endpoint | Scope | Description |
-|--------|----------|-------|-------------|
-| GET | `/programs` | read | List loyalty programs (supports CDP wallet) |
-| POST | `/programs` | mint/create_program | Get calldata to deploy a new token |
-| POST | `/register-program` | mint/create_program | Register a deployed token |
-| POST | `/activate-program` | mint/create_program | Get activation calldata |
-| POST | `/program-status` | mint/create_program | Update program status |
-| GET | `/rewards` | read | List rewards for a program |
-| POST | `/rewards` | manage_rewards | Create a new reward |
-| POST | `/mint` | mint | Mint tokens to a customer |
-| POST | `/transfer` | mint | Transfer tokens between wallets |
-| GET | `/balance` | read | Get customer balance & tier |
-| GET | `/customers` | read | List customers |
+All routes require `x-api-key: lsk_...` except **GET `/vouchers/status`** (public). Canonical catalogue: `README.md` and `public/.well-known/agent.json` (must match `supabase/functions/agent-api/index.ts`).
+
+| Method | Path | Scope | Description |
+|--------|------|-------|-------------|
+| GET | `/me` | authenticated | Agent profile & permissions |
+| GET | `/workflow/program-status` | read | Autonomous planner: lifecycle step + `next_actions[]` |
+| GET | `/programs` | read | List loyalty programs |
+| POST | `/workflow/generate-program-defaults` | read, mint, or `create_program` | Propose program defaults from business context |
+| POST | `/programs` | mint or `create_program` | Calldata to deploy loyalty token |
+| POST | `/register-program` | mint or `create_program` | Register deployed token |
+| POST | `/update-program-config` | mint or `create_program` | Update `cashback_rate` / `points_per_dollar` |
+| POST | `/activate-program` | mint or `create_program` | Legacy ERC-20 activation only |
+| POST | `/program-status` | mint or `create_program` | Update program status |
+| GET | `/rewards` | read | List rewards |
+| POST | `/rewards` | manage_rewards | Create reward |
+| POST | `/mint` | mint | Fee-first mint `calls[]` + `fee_obligation_id` |
+| POST | `/mint/confirm` | mint | Settle protocol fee after mint/earn |
+| POST | `/earn` | mint | Cashback from purchase amount × rate |
+| POST | `/transfer` | mint | Transfer tokens |
+| GET | `/balance` | read | Token balance & tier (`customer_address` param) |
+| GET | `/customers` | read | Customer list |
 | GET | `/vouchers` | read | List vouchers |
-| POST | `/redeem-reward` | read | Redeem reward: verify tx + create voucher |
-| POST | `/vouchers/use` | manage_rewards | Mark voucher as used |
-| GET | `/analytics` | read | Get merchant analytics |
-| GET | `/offers` | trade/read | List active P2P offers |
-| POST | `/offers` | trade | Create a P2P escrow offer |
-| POST | `/accept-offer` | trade | Accept a P2P offer |
-| POST | `/cancel-offer` | trade | Cancel your P2P offer |
-| GET | `/me` | any | Get agent info |
-| GET | `/tx-receipt` | any | Extract token_address from deploy tx |
 | GET | `/vouchers/status` | public | Check voucher status (no API key) |
+| POST | `/redeem-reward` | read | Redeem reward → create voucher |
+| POST | `/vouchers/use` | manage_rewards | Mark voucher as used |
+| GET | `/analytics` | read | Program analytics |
+| GET | `/offers` | read | P2P offers list |
+| POST | `/offers` | trade | Create P2P offer |
+| POST | `/accept-offer` | trade | Accept P2P offer |
+| POST | `/cancel-offer` | trade | Cancel P2P offer |
+| GET | `/tx-receipt` | authenticated | Extract token_address from deploy tx |
+| GET | `/merchant-profile` | read | Read merchant profile |
+| POST | `/merchant-profile` | manage_rewards | Create or update merchant profile (`PUT` also accepted) |
 
 ### MCP Server Tools (39 merchant + 20 recipient)
-
-> **Full catalog (source of truth):** every `mcpServer.tool("…")` in `supabase/functions/loyalty-mcp/index.ts` (39 merchant) and `supabase/functions/recipient-loyalty-mcp/index.ts` (20 recipient). Human-readable list: root `README.md` § MCP Server. The table below is a **subset** for quick reference only.
 
 | Tool | Scope | Description |
 |------|-------|-------------|
