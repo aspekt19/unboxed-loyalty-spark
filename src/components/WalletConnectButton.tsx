@@ -32,7 +32,7 @@ export function WalletConnectButton() {
   const { connect, connectors } = useConnect();
   const { disconnectAsync } = useDisconnect();
   const { address, isConnected } = useAccount();
-  const { user, signOut, signInWithWallet, signInWithPrivy, retrySignIn, resetManualSignOut } = useAuth();
+  const { user, signOut, signInWithWallet, retrySignIn, resetManualSignOut } = useAuth();
   const [isManuallyDisconnected, setIsManuallyDisconnected] = useState(false);
   const [farcasterUser, setFarcasterUser] = useState<{
     username?: string;
@@ -44,7 +44,6 @@ export function WalletConnectButton() {
   const { login: privyLogin, logout: privyLogout, connectWallet: privyConnectWallet, user: privyUser, ready: privyReady, authenticated: privyAuthenticated } = usePrivySafe();
   const prevPrivyUserRef = useRef(privyUser);
 
-  const privyUserId = privyUser?.id ?? '';
   /** Stable when Privy re-renders with a new `user` object reference. */
   const privyAuthRouteKey = useMemo(() => {
     if (!privyUser) return '';
