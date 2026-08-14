@@ -6,10 +6,11 @@ export const PRIVY_APP_ID = 'cmnx59voy00f80bl5mtkn0n10';
 export const privyConfig: PrivyClientConfig = {
   // Login methods available to users
   loginMethods: ['email', 'sms', 'google', 'wallet'],
-  // Keep redirect OAuth callbacks on one stable public URL. Privy defaults to
-  // the current URL; on mobile Safari that can preserve transient route/query
-  // state across the full-page Google redirect.
-  customOAuthRedirectUrl: typeof window !== 'undefined' ? `${window.location.origin}/` : undefined,
+  // Mobile browsers complete Google OAuth with a full-page redirect. Return to
+  // the public app entry (not the marketing homepage), because /app mounts the
+  // auth bridge that exchanges the restored Privy identity for the backend
+  // session. Returning to `/` leaves that bridge unmounted and looks signed out.
+  customOAuthRedirectUrl: typeof window !== 'undefined' ? `${window.location.origin}/app` : undefined,
   // Appearance
   appearance: {
     theme: 'light',

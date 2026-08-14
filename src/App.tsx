@@ -43,6 +43,7 @@ import { useBanStatus } from "./hooks/useBanStatus";
 import { BannedScreen } from "./components/BannedScreen";
 import { PrivyAvailableContext } from "./hooks/usePrivySafe";
 import { AppErrorBoundary } from "./components/AppErrorBoundary";
+import { PrivySessionBridge } from "./components/auth/PrivySessionBridge";
 
 
 /**
@@ -223,6 +224,7 @@ function BrowserProviders({ children }: { children: React.ReactNode }) {
         <QueryClientProvider client={queryClient}>
           <PrivyWagmiProvider config={privyWagmiConfig}>
             <AuthProvider>
+              <PrivySessionBridge />
               <TooltipProvider>
                 <ConnectorRecoveryListener />
                 <Toaster />
