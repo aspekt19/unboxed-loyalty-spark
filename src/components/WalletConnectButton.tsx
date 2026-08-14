@@ -41,7 +41,7 @@ export function WalletConnectButton() {
   } | null>(null);
 
   const isFarcaster = isFarcasterContext();
-  const { login: privyLogin, logout: privyLogout, connectWallet: privyConnectWallet, user: privyUser, ready: privyReady, authenticated: privyAuthenticated, getAccessToken } = usePrivySafe();
+  const { login: privyLogin, logout: privyLogout, connectWallet: privyConnectWallet, user: privyUser, ready: privyReady, authenticated: privyAuthenticated } = usePrivySafe();
   const prevPrivyUserRef = useRef(privyUser);
 
   const privyUserId = privyUser?.id ?? '';
@@ -68,16 +68,6 @@ export function WalletConnectButton() {
     if (!privyUser) return false;
     return shouldUsePrivyTokenAuth(privyUser);
   }, [privyUser, privyAuthRouteKey]);
-
-  useEffect(() => {
-    if (privyUser) {
-      (window as any).__privyUser = privyUser;
-      (window as any).__privyGetAccessToken = getAccessToken;
-    } else {
-      (window as any).__privyUser = null;
-      (window as any).__privyGetAccessToken = null;
-    }
-  }, [privyUser, getAccessToken]);
 
   useEffect(() => {
     if (!isFarcaster && privyReady && prevPrivyUserRef.current && !privyUser && user) {
@@ -140,26 +130,6 @@ export function WalletConnectButton() {
       window.removeEventListener('loyalspark:request-privy-logout', handleRequestPrivyLogout);
     };
   }, [isFarcaster, privyLogout, disconnectAsync]);
-
-  // Email / SMS / OAuth: Supabase via Privy token only — never SIWE here.
-  useEffect(() => {
-    if (isFarcaster || !privyReady || user || isManuallyDisconnected || !privyAuthenticated || !privyUserId) return;
-    if (!useTokenAuth) return;
-
-    const t = window.setTimeout(() => {
-      void signInWithPrivy();
-    }, 250);
-    return () => window.clearTimeout(t);
-  }, [
-    isFarcaster,
-    privyReady,
-    user,
-    isManuallyDisconnected,
-    privyAuthenticated,
-    privyUserId,
-    useTokenAuth,
-    signInWithPrivy,
-  ]);
 
   // Wallet-only Privy login (external wallet, no email/social):
   // Privy already required an explicit user gesture (clicking "Sign In" → wallet
