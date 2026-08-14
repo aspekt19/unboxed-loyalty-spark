@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePrivySafe } from '@/hooks/usePrivySafe';
 import { shouldUsePrivyTokenAuth } from '@/lib/privyAuth';
+import { OAuthReturnHandler } from '@/components/auth/OAuthReturnHandler';
 
 /**
  * Keeps the Privy identity bridge mounted on every browser route. Mobile OAuth
@@ -43,7 +44,7 @@ export function PrivySessionBridge() {
     return () => window.clearTimeout(timer);
   }, [privyReady, privyAuthenticated, privyUser, user, useTokenAuth, signInWithPrivy]);
 
-  return null;
+  return <OAuthReturnHandler />;
 }
 
 declare global {
