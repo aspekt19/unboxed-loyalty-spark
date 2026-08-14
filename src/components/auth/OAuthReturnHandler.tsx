@@ -1,8 +1,3 @@
-/**
- * PrivyProvider must be the only owner of the OAuth callback exchange.
- * This helper is used by App.tsx solely to select the browser provider tree
- * immediately on a mobile OAuth return, before Farcaster detection runs.
- */
 const OAUTH_PARAM_KEYS = [
   'privy_oauth_code',
   'privy_oauth_state',

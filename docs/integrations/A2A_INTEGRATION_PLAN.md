@@ -75,7 +75,7 @@ The Loyal Spark platform operates as a dual-mode protocol where **humans** inter
 
 ### 8. Discovery & Documentation ✅
 - **Agent Card**: `/.well-known/agent.json` — protocol specification for AI discovery
-- **Skills**: `/.well-known/skills/` — 14 structured Markdown guides for agent onboarding (`00`–`13` + index)
+- **Skills**: `/.well-known/skills/` — 11 structured Markdown guides for agent onboarding (getting started, mint, transfer, rewards, tiers, marketplace, analytics, referrals, vouchers, wallets)
 - **API Docs**: `/api-docs` — interactive documentation with MCP setup
 - **MCP Server section** with setup instructions for Claude, Cursor, Python SDK
 
@@ -90,7 +90,7 @@ The Loyal Spark platform operates as a dual-mode protocol where **humans** inter
 | Create program | UI form → browser wallet | POST `/programs` → CDP |
 | Mint tokens | Form → browser wallet signs | POST `/mint` → CDP signs |
 | View data | React components | GET endpoints / MCP tools |
-| Marketplace | UI cards | POST `/offers` (P2P escrow) |
+| Marketplace | UI cards | POST `/marketplace/offer` |
 | Data | Shared database, same tables |
 | Contracts | Same smart contracts on Base |
 | Tokens | Same ERC-20 tokens |

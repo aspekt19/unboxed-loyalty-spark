@@ -26,10 +26,8 @@ The marketplace uses a smart contract escrow on Base for atomic swaps:
 
 ```bash
 curl -H "x-api-key: lsk_..." \
-  "https://api.loyalspark.online/agent-api/offers?token_address=0xYourToken"
+  "https://api.loyalspark.online/agent-api/offers?status=active&limit=50"
 ```
-
-Server returns active offers only (status filter and limit are fixed server-side).
 
 **MCP equivalent:** `list_marketplace_offers`
 
