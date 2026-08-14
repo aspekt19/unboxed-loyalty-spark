@@ -133,6 +133,8 @@ All routes require `x-api-key: lsk_...` except **GET `/vouchers/status`** (publi
 
 ### MCP Server Tools (39 merchant + 20 recipient)
 
+> **Full catalog (source of truth):** every `mcpServer.tool("…")` in `supabase/functions/loyalty-mcp/index.ts` (39 merchant) and `supabase/functions/recipient-loyalty-mcp/index.ts` (20 recipient). Human-readable list: root `README.md` § MCP Server. The table below is a **subset** for quick reference only.
+
 | Tool | Scope | Description |
 |------|-------|-------------|
 | `get_platform_info` | any | Protocol metadata |
