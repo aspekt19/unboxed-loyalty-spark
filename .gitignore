@@ -38,3 +38,7 @@ supabase/functions/_shared/bot-cluster-wallets.json
 
 # Local fundraising notes / application copy — private, never commit
 docs/fundraising/
+
+# Lovable working files — plan drafts, not part of the app
+.lovable/plan.md
+.lovable/plan/
