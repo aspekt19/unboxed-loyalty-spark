@@ -8,7 +8,7 @@ import { WagmiProvider as PrivyWagmiProvider } from "@privy-io/wagmi";
 import { PrivyProvider } from "@privy-io/react-auth";
 import { browserPreviewWagmiConfig, detectFarcasterMiniApp, isEmbeddedWebview, isFarcasterContext, farcasterWagmiConfig, privyWagmiConfig } from "./config/wagmi";
 import { PRIVY_APP_ID, privyConfig } from "./config/privy";
-import { hasPrivyOAuthParams, OAuthReturnHandler } from "./components/auth/OAuthReturnHandler";
+import { hasPrivyOAuthParams } from "./components/auth/OAuthReturnHandler";
 import Index from "./pages/Index";
 import AppPage from "./pages/AppPage";
 import CustomerPage from "./pages/CustomerPage";
@@ -161,7 +161,6 @@ function AnimatedRoutes() {
   return (
     <BanGate>
       <PageMeta />
-      <OAuthReturnHandler />
       <RouteShell>
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<Index />} />
