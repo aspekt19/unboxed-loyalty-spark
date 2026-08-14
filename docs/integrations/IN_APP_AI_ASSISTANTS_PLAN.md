@@ -66,7 +66,7 @@
 ### 2. Shopper Assistant (for customers)
 - **OpenServ agent**: new `shopper-concierge` agent, scoped to one `wallet`.
 - **Scenarios**: "how many points do I have at Starbucks", "what rewards can I redeem right now", "find merchants with > 10% discount nearby", "redeem my 500 points for a voucher".
-- **Tools**: recipient MCP (`get_balance`, `list_rewards`, `redeem_reward`, `list_p2p_offers`, `accept_p2p_offer`, `prepare_loyalty_token_transfer`).
+- **Tools**: recipient MCP (`get_my_loyalty_balance`, `list_rewards_for_program`, `redeem_my_reward`, `list_p2p_offers`, `accept_p2p_offer`, `prepare_loyalty_token_transfer`).
 - **Permissions**: redeem / accept / transfer require confirmation + signature (Privy embedded wallet → **sync gesture**, per Core memory rule).
 
 ---

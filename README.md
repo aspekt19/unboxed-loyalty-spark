@@ -142,7 +142,7 @@ curl -H "x-api-key: lsk_YOUR_KEY" \
 curl -X POST \
   -H "x-api-key: lsk_YOUR_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"token_address":"0x...","recipient":"0x...","amount":100}' \
+  -d '{"token_address":"0x...","recipient_address":"0x...","amount":100}' \
   https://api.loyalspark.online/agent-api/mint
 ```
 
@@ -155,7 +155,7 @@ All routes below require `x-api-key: lsk_...` except **GET `/vouchers/status`** 
 | GET | `/me` | authenticated | Agent profile & permissions |
 | GET | `/workflow/program-status` | read | Autonomous planner: lifecycle step + `next_actions[]` |
 | GET | `/programs` | read | List loyalty programs |
-| POST | `/workflow/generate-program-defaults` | mint | Propose program name, symbol, economics, and starter rewards from business context |
+| POST | `/workflow/generate-program-defaults` | read, mint, or `create_program` | Propose program name, symbol, economics, and starter rewards from business context |
 | POST | `/programs` | mint or `create_program` | Calldata to deploy loyalty token (**B20 default**, or legacy ERC-20 with `token_standard: "erc20"`) |
 | POST | `/register-program` | mint or `create_program` | Register deployed token (optional `cashback_rate`, `points_per_dollar`) |
 | POST | `/update-program-config` | mint or `create_program` | Update `cashback_rate` / `points_per_dollar` for a program |

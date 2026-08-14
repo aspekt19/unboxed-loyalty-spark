@@ -1,5 +1,7 @@
 # Round-Up Strategies — Deployment Instructions
 
+> **Frozen module.** RoundUp / DeFi investment UI and contracts are **not** in active product development. This runbook is kept for historical reference and on-chain address lookup only. Do not deploy or extend without an explicit unfreeze decision.
+
 ## Overview
 
 Deploy 3 smart contracts on **Base Mainnet** in order:
