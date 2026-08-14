@@ -8,7 +8,6 @@ import { usePrivySafe } from '@/hooks/usePrivySafe';
 import { getPrivyPrimaryEmail, shouldUsePrivyTokenAuth } from '@/lib/privyAuth';
 import { INLINE_AUTH_CTA_CLASSNAME } from '@/components/WalletConnectButton';
 import { cn } from '@/lib/utils';
-import { rememberPostLoginPath } from '@/components/auth/OAuthReturnHandler';
 
 export function AuthPrompt() {
   const { user, signInWithWallet, signInWithPrivy, isLoading, resetManualSignOut } = useAuth();
@@ -36,7 +35,6 @@ export function AuthPrompt() {
 
   const handlePrivyLogin = () => {
     resetManualSignOut();
-    rememberPostLoginPath();
     privyLogin();
   };
 
@@ -46,7 +44,6 @@ export function AuthPrompt() {
     if (privyAuthenticated) {
       privyConnectWallet();
     } else {
-      rememberPostLoginPath();
       privyLogin();
     }
   };
