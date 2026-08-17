@@ -300,7 +300,7 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
       CONTRACTS.LOYAL_SPARK_ERC20.abi,
       reward.merchantAddress,
     );
-  }, [address, session, profileVerified, isMismatch, isProgramPaused, selectedTokenAddress, selectedRewardId, availableRewards, balances, burnTokens]);
+  }, [address, session, profileVerified, isMismatch, isProgramPaused, tokens, selectedTokenAddress, selectedRewardId, availableRewards, balances, burnTokens]);
 
   const needsApproval = () => false;
 
