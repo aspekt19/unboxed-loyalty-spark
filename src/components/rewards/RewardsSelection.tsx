@@ -356,6 +356,7 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
   }, [filteredTokensWithBalance, selectedTokenAddress]);
 
   const selectedToken = filteredTokensWithBalance.find(t => t.address === selectedTokenAddress);
+  const isSelectedProgramExpired = selectedToken?.status === 'expired';
   const selectedBalance = balances.find(b => b.address === selectedTokenAddress);
   const selectedReward = availableRewards.find(r => r.id === selectedRewardId);
 
