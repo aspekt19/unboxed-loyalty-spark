@@ -270,6 +270,11 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
     if (!session || !profileVerified) { toast.error('Please sign in first'); return; }
     if (isMismatch) { toast.error('Connect your primary wallet before activating a voucher'); return; }
     if (isProgramPaused) { toast.error('This loyalty program is currently inactive.'); return; }
+    if (tokens.find(t => t.address === selectedTokenAddress)?.status === 'expired') {
+      toast.error('This loyalty program has expired. Vouchers can no longer be activated.');
+      return;
+    }
+
     if (!selectedTokenAddress) { toast.error('Please select a loyalty program'); return; }
     if (!selectedRewardId) { toast.error('Please select a reward'); return; }
 
