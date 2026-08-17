@@ -177,14 +177,20 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
 
     const mapped = (programsCatalog ?? [])
       .filter((p) => p.merchant_address.toLowerCase() !== address.toLowerCase())
-      .map((p) => ({
-        address: p.token_address,
-        name: p.name,
-        symbol: p.symbol,
-        merchantAddress: p.merchant_address,
-        expirationDate: p.expiration_date || undefined,
-        status: p.status as 'active' | 'expiring_soon' | 'expired',
-      }));
+      .map((p) => {
+        // Fall back to the date: DB status is refreshed by a periodic sweep,
+        // so a program can be past its expiration before the status flips.
+        const pastDue = !!p.expiration_date && new Date(p.expiration_date).getTime() <= Date.now();
+        return {
+          address: p.token_address,
+          name: p.name,
+          symbol: p.symbol,
+          merchantAddress: p.merchant_address,
+          expirationDate: p.expiration_date || undefined,
+          status: (pastDue ? 'expired' : p.status) as 'active' | 'expiring_soon' | 'expired',
+        };
+      });
+
 
     setTokens(mapped);
     if (mapped.length > 0) {
