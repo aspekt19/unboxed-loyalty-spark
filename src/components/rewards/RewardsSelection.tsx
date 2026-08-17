@@ -545,11 +545,11 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
                   <Button
                     type="button"
                     onClick={handleActivate}
-                    disabled={!selectedRewardId || isPending || balancesLoading || isProgramPaused || isLoadingRewards || isMismatch}
+                    disabled={!selectedRewardId || isPending || balancesLoading || isProgramPaused || isSelectedProgramExpired || isLoadingRewards || isMismatch}
                     className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
                   >
                     {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {isProgramPaused ? 'Program Inactive' : 'Activate Voucher'}
+                    {isSelectedProgramExpired ? 'Program Expired' : isProgramPaused ? 'Program Inactive' : 'Activate Voucher'}
                   </Button>
                 )}
               </>
