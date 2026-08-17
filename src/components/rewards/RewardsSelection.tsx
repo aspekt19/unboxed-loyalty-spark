@@ -177,14 +177,20 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
 
     const mapped = (programsCatalog ?? [])
       .filter((p) => p.merchant_address.toLowerCase() !== address.toLowerCase())
-      .map((p) => ({
-        address: p.token_address,
-        name: p.name,
-        symbol: p.symbol,
-        merchantAddress: p.merchant_address,
-        expirationDate: p.expiration_date || undefined,
-        status: p.status as 'active' | 'expiring_soon' | 'expired',
-      }));
+      .map((p) => {
+        // Fall back to the date: DB status is refreshed by a periodic sweep,
+        // so a program can be past its expiration before the status flips.
+        const pastDue = !!p.expiration_date && new Date(p.expiration_date).getTime() <= Date.now();
+        return {
+          address: p.token_address,
+          name: p.name,
+          symbol: p.symbol,
+          merchantAddress: p.merchant_address,
+          expirationDate: p.expiration_date || undefined,
+          status: (pastDue ? 'expired' : p.status) as 'active' | 'expiring_soon' | 'expired',
+        };
+      });
+
 
     setTokens(mapped);
     if (mapped.length > 0) {
@@ -264,6 +270,11 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
     if (!session || !profileVerified) { toast.error('Please sign in first'); return; }
     if (isMismatch) { toast.error('Connect your primary wallet before activating a voucher'); return; }
     if (isProgramPaused) { toast.error('This loyalty program is currently inactive.'); return; }
+    if (tokens.find(t => t.address === selectedTokenAddress)?.status === 'expired') {
+      toast.error('This loyalty program has expired. Vouchers can no longer be activated.');
+      return;
+    }
+
     if (!selectedTokenAddress) { toast.error('Please select a loyalty program'); return; }
     if (!selectedRewardId) { toast.error('Please select a reward'); return; }
 
@@ -289,7 +300,7 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
       CONTRACTS.LOYAL_SPARK_ERC20.abi,
       reward.merchantAddress,
     );
-  }, [address, session, profileVerified, isMismatch, isProgramPaused, selectedTokenAddress, selectedRewardId, availableRewards, balances, burnTokens]);
+  }, [address, session, profileVerified, isMismatch, isProgramPaused, tokens, selectedTokenAddress, selectedRewardId, availableRewards, balances, burnTokens]);
 
   const needsApproval = () => false;
 
@@ -345,6 +356,7 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
   }, [filteredTokensWithBalance, selectedTokenAddress]);
 
   const selectedToken = filteredTokensWithBalance.find(t => t.address === selectedTokenAddress);
+  const isSelectedProgramExpired = selectedToken?.status === 'expired';
   const selectedBalance = balances.find(b => b.address === selectedTokenAddress);
   const selectedReward = availableRewards.find(r => r.id === selectedRewardId);
 
@@ -533,11 +545,11 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
                   <Button
                     type="button"
                     onClick={handleActivate}
-                    disabled={!selectedRewardId || isPending || balancesLoading || isProgramPaused || isLoadingRewards || isMismatch}
+                    disabled={!selectedRewardId || isPending || balancesLoading || isProgramPaused || isSelectedProgramExpired || isLoadingRewards || isMismatch}
                     className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
                   >
                     {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {isProgramPaused ? 'Program Inactive' : 'Activate Voucher'}
+                    {isSelectedProgramExpired ? 'Program Expired' : isProgramPaused ? 'Program Inactive' : 'Activate Voucher'}
                   </Button>
                 )}
               </>

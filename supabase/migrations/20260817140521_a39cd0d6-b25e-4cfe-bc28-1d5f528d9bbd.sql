@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.check_program_expiration() FROM anon, authenticated;
