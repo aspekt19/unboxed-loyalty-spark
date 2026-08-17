@@ -39,10 +39,15 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Auth check: only allow calls with service role key
+  // Auth: service role key OR the cron shared secret (cron cannot read env secrets)
   const authHeader = req.headers.get("Authorization")?.replace("Bearer ", "");
+  const cronHeader = req.headers.get("x-cron-secret");
   const serviceRoleKeyEnv = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (!serviceRoleKeyEnv || authHeader !== serviceRoleKeyEnv) {
+  const cronSecret = Deno.env.get("CRON_SHARED_SECRET");
+  const authorized =
+    (!!serviceRoleKeyEnv && authHeader === serviceRoleKeyEnv) ||
+    (!!cronSecret && (cronHeader === cronSecret || authHeader === cronSecret));
+  if (!serviceRoleKeyEnv || !authorized) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
