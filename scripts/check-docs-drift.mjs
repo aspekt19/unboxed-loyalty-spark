@@ -115,11 +115,62 @@ for (const file of files) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// public/openapi.json must list exactly the paid x402 resources we actually serve:
+//   merchant REST  -> x402-gateway/index.ts PRICING (price > 0)
+//   recipient REST -> _shared/recipient-paid-routes.ts (price > 0)
+//   paid MCP tools -> _shared/{,recipient-}mcp-bazaar-tools.ts
+// ---------------------------------------------------------------------------
+function paidRoutes(src, header) {
+  const block = src.split(header)[1]?.split("\n};")[0] ?? "";
+  return [...block.matchAll(/["']?([\w/-]+)["']?\s*:\s*"([\d.]+)"/g)]
+    .filter((m) => Number(m[2]) > 0)
+    .map((m) => m[1]);
+}
+function bazaarNames(file) {
+  return [...read(file).matchAll(/name:\s*["'`]([\w-]+)["'`]/g)].map((m) => m[1]);
+}
+
+let openapiChecked = 0;
+try {
+  const merchantRest = paidRoutes(
+    read("supabase/functions/x402-gateway/index.ts"),
+    "const PRICING: Record<string, Record<string, string>> = {",
+  );
+  const recipientRest = paidRoutes(
+    read("supabase/functions/_shared/recipient-paid-routes.ts"),
+    "export const RECIPIENT_REST_ROUTE_USD: Record<string, Record<string, string>> = {",
+  );
+  const merchantMcp = bazaarNames("supabase/functions/_shared/mcp-bazaar-tools.ts").map((n) => `mcp-tools/${n}`);
+  const recipientMcp = bazaarNames("supabase/functions/_shared/recipient-mcp-bazaar-tools.ts").map(
+    (n) => `recipient-mcp-tools/${n}`,
+  );
+
+  const expected = new Set([...merchantRest, ...recipientRest, ...merchantMcp, ...recipientMcp]);
+  const documented = new Set(
+    Object.keys(JSON.parse(read("public/openapi.json")).paths)
+      .filter((p) => p.startsWith("/x402-gateway/"))
+      .map((p) => p.slice("/x402-gateway/".length)),
+  );
+  openapiChecked = documented.size;
+
+  const undocumented = [...expected].filter((r) => !documented.has(r));
+  const stale = [...documented].filter((r) => !expected.has(r));
+  if (undocumented.length)
+    errors.push(`public/openapi.json: paid resource(s) missing: ${undocumented.join(", ")}`);
+  if (stale.length)
+    errors.push(`public/openapi.json: documented but not priced/registered: ${stale.join(", ")}`);
+} catch (e) {
+  errors.push(`openapi drift check failed: ${e.message}`);
+}
+
 console.log(`Merchant MCP tools: ${merchantCount}`);
 console.log(`Recipient MCP tools: ${recipientCount}`);
 console.log(`Total: ${merchantCount + recipientCount}`);
 console.log(`Paid x402 MCP tools: ${paidMerchant} merchant / ${paidRecipient} recipient`);
+console.log(`OpenAPI paid resources: ${openapiChecked}`);
 console.log(`Scanned ${files.length} doc/discovery files.`);
+
 
 if (errors.length) {
   console.error(`\n${errors.length} drift issue(s):`);
