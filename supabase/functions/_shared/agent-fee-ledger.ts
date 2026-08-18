@@ -30,9 +30,12 @@ export type FeeObligation = {
   status: string;
 };
 
+// Structurally compatible with a Supabase client (whose `rpc()` returns a
+// thenable builder, not a plain Promise) — keep it `PromiseLike` so passing
+// `createClient(...)` typechecks.
 type Db = {
   from: (table: string) => any;
-  rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
+  rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: any; error: any }>;
 };
 
 /** Records a pending protocol-fee obligation for a prepared mint. */

@@ -554,7 +554,7 @@ async function trackUsage(d: any, ownerAddress: string, mintAmount: number, feeT
       api_calls_count: (existing.api_calls_count || 0) + 1,
       mint_operations_count: (existing.mint_operations_count || 0) + 1,
       mint_total_amount: (existing.mint_total_amount || 0) + mintAmount,
-      fees_collected_usdc: (existing.fees_collected_usdc || 0) + feeUsdc,
+      fees_collected_usdc: (existing.fees_collected_usdc || 0) + feeTokens,
       updated_at: new Date().toISOString(),
     }).eq("id", existing.id);
   } else {
@@ -565,7 +565,7 @@ async function trackUsage(d: any, ownerAddress: string, mintAmount: number, feeT
       api_calls_count: 1,
       mint_operations_count: 1,
       mint_total_amount: mintAmount,
-      fees_collected_usdc: feeUsdc,
+      fees_collected_usdc: feeTokens,
     });
   }
 }
