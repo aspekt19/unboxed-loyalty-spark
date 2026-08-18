@@ -1497,7 +1497,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
 }
 
 
-app.all("/*", async (c) => {
+app.all("/*", async (c: any) => {
   const apiKey = resolveMcpApiKey((name) => c.req.header(name), "lsk_");
   let agent: any = null;
   let authFailure: AuthFailure = apiKey ? null : "missing_key";

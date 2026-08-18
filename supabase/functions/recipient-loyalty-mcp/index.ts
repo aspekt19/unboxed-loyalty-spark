@@ -688,7 +688,7 @@ function createRecipientMcpServer(
   return mcpServer;
 }
 
-app.all("/*", async (c) => {
+app.all("/*", async (c: any) => {
   const apiKey = resolveMcpApiKey((name) => c.req.header(name), "rwk_");
   const transport = new StreamableHttpTransport();
 
