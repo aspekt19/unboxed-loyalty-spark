@@ -10,9 +10,10 @@
  * Run: npm run check:docs
  */
 import { readFileSync, readdirSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const ROOT = new URL("..", import.meta.url).pathname.replace(/\/$/, "");
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const errors = [];
 
 function read(p) {
