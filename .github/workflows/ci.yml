@@ -26,6 +26,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Docs / MCP tool-count drift
+        run: npm run check:docs
+
       - name: Build
         run: npm run build
         env:

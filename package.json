@@ -10,6 +10,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
+    "check:docs": "node scripts/check-docs-drift.mjs",
     "test:deno-helpers": "deno test --no-check --allow-env --allow-read --allow-net --node-modules-dir=auto supabase/functions/_shared/",
     "preview": "vite preview"
   },
