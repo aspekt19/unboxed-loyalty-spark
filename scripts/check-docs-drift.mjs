@@ -58,7 +58,21 @@ const recipientCount = compare(
   "RECIPIENT_MCP_TOOL_NAMES",
 );
 
-const validCounts = new Set([merchantCount, recipientCount, merchantCount + recipientCount]);
+// Paid x402 (Bazaar) subsets are legitimately smaller than the direct tool count.
+function paidToolCount(file) {
+  return [...read(file).matchAll(/name:\s*["'`][\w-]+["'`]/g)].length;
+}
+const paidMerchant = paidToolCount("supabase/functions/_shared/mcp-bazaar-tools.ts");
+const paidRecipient = paidToolCount("supabase/functions/_shared/recipient-mcp-bazaar-tools.ts");
+
+const validCounts = new Set([
+  merchantCount,
+  recipientCount,
+  merchantCount + recipientCount,
+  paidMerchant,
+  paidRecipient,
+  paidMerchant + paidRecipient,
+]);
 
 // Docs scan: any "<N> ... tools" phrasing referring to MCP must match a real count.
 const SCAN_DIRS = ["docs", "public/.well-known", "public/skills", "skills"];
@@ -95,7 +109,7 @@ for (const file of files) {
     if (!Number.isFinite(n) || validCounts.has(n)) continue;
     const line = src.slice(0, match.index).split("\n").length;
     errors.push(
-      `${relative(".", file)}:${line}: "${match[0].trim()}" — no such count (merchant=${merchantCount}, recipient=${recipientCount}, total=${merchantCount + recipientCount})`,
+      `${relative(".", file)}:${line}: "${match[0].trim()}" — no such count (direct merchant=${merchantCount}, recipient=${recipientCount}, total=${merchantCount + recipientCount}; paid x402 merchant=${paidMerchant}, recipient=${paidRecipient})`,
     );
   }
 }
@@ -103,6 +117,7 @@ for (const file of files) {
 console.log(`Merchant MCP tools: ${merchantCount}`);
 console.log(`Recipient MCP tools: ${recipientCount}`);
 console.log(`Total: ${merchantCount + recipientCount}`);
+console.log(`Paid x402 MCP tools: ${paidMerchant} merchant / ${paidRecipient} recipient`);
 console.log(`Scanned ${files.length} doc/discovery files.`);
 
 if (errors.length) {
