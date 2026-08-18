@@ -15,6 +15,7 @@ export const MCP_TOOL_NAMES = [
   "mint_loyalty_tokens",
   "transfer_loyalty_tokens",
   "earn_points",
+  "confirm_mint_fee",
   "get_token_balance",
   "get_program_analytics",
   "list_marketplace_offers",
