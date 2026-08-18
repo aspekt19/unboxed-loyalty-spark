@@ -49,3 +49,6 @@ jobs:
 
       - name: Run _shared Deno tests
         run: deno test --no-check --allow-env --allow-read --allow-net --node-modules-dir=auto supabase/functions/_shared/
+
+      - name: Typecheck edge functions
+        run: deno check --config supabase/functions/deno.json --node-modules-dir=auto supabase/functions/*/index.ts supabase/functions/_shared/*.ts
