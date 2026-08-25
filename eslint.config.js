@@ -11,6 +11,8 @@ export default tseslint.config(
       // Deno Edge Functions are not part of the Vite/React ESLint surface.
       "supabase/functions/**",
       "scripts/**",
+      // Lovable-managed generated auth bridge; validated by TypeScript/build instead.
+      "src/integrations/supabase/previewAuthStorage.ts",
     ],
   },
   {
