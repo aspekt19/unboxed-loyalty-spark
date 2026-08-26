@@ -111,6 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const manualSignOutRef = useRef(false);
   const isFarcasterContext = useRef(false);
   const signingInRef = useRef(false);
+  const signInPromiseRef = useRef<Promise<void> | null>(null);
   const lastFailureAtRef = useRef(0);
   const retryBlockedUntilRef = useRef(0);
   const lastRateLimitToastAtRef = useRef(0);
@@ -177,7 +178,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signInWithPrivy = useCallback(async () => {
-    if (signingInRef.current || manualSignOutRef.current) return;
+    if (manualSignOutRef.current) return;
+    if (signingInRef.current) {
+      await signInPromiseRef.current;
+      return;
+    }
 
     const privyUser = (window as any).__privyUser;
     const getAccessToken = (window as any).__privyGetAccessToken as (() => Promise<string | null>) | undefined;
@@ -197,6 +202,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (now - lastFailureAtRef.current < 8000) return;
     lastSignInAttemptAtRef.current = now;
 
+    let finishSignIn: (() => void) | null = null;
+    const currentSignIn = new Promise<void>((resolve) => {
+      finishSignIn = resolve;
+    });
+    signInPromiseRef.current = currentSignIn;
     signingInRef.current = true;
     try {
       const { data: { session: existingSession } } = await supabase.auth.getSession();
@@ -320,6 +330,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } finally {
       signingInRef.current = false;
+      finishSignIn?.();
+      if (signInPromiseRef.current === currentSignIn) {
+        signInPromiseRef.current = null;
+      }
       setIsLoading(false);
     }
   }, [address]);
@@ -328,7 +342,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Hard guard: never auto- or manually-trigger SIWE while the user is in
     // an explicit signed-out state. The user must click "Sign in" again,
     // which calls resetManualSignOut() before invoking this function.
-    if (manualSignOutRef.current || signingInRef.current) return;
+    if (manualSignOutRef.current) return;
+    if (signingInRef.current) {
+      await signInPromiseRef.current;
+      return;
+    }
 
     const privyUser = (window as any).__privyUser;
 
@@ -348,6 +366,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (now - lastFailureAtRef.current < 8000) return;
     lastSignInAttemptAtRef.current = now;
 
+    let finishSignIn: (() => void) | null = null;
+    const currentSignIn = new Promise<void>((resolve) => {
+      finishSignIn = resolve;
+    });
+    signInPromiseRef.current = currentSignIn;
     signingInRef.current = true;
     try {
       const { data: { session: existingSession }, error: sessionError } = await supabase.auth.getSession();
@@ -374,6 +397,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               setUser(existingSession.user);
               setIsLoading(false);
               window.dispatchEvent(new Event('sessionReady'));
+              signingInRef.current = false;
+              finishSignIn?.();
+              if (signInPromiseRef.current === currentSignIn) signInPromiseRef.current = null;
               return;
             }
             await supabase.auth.signOut();
@@ -393,6 +419,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(existingSession.user);
             setIsLoading(false);
             window.dispatchEvent(new Event('sessionReady'));
+            signingInRef.current = false;
+            finishSignIn?.();
+            if (signInPromiseRef.current === currentSignIn) signInPromiseRef.current = null;
             return;
           }
         }
@@ -486,6 +515,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } finally {
       signingInRef.current = false;
+      finishSignIn?.();
+      if (signInPromiseRef.current === currentSignIn) {
+        signInPromiseRef.current = null;
+      }
       setIsLoading(false);
     }
   }, [address, isConnected, signInWithPrivy, signMessageAsync]);
@@ -496,6 +529,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setStoredManualSignOut(true);
       // Reset back-off / signing refs so a stale "in flight" flag does not
       // block a future fresh sign-in after the user clicks Sign in again.
+      signInPromiseRef.current = null;
       signingInRef.current = false;
       lastSignInAttemptAtRef.current = 0;
       lastFailureAtRef.current = 0;
@@ -541,10 +575,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * being provisioned).
    */
   const retrySignIn = useCallback(async () => {
+    if (signInPromiseRef.current) {
+      await signInPromiseRef.current;
+    }
     lastFailureAtRef.current = 0;
     lastSignInAttemptAtRef.current = 0;
     retryBlockedUntilRef.current = 0;
-    signingInRef.current = false;
     manualSignOutRef.current = false;
     setStoredManualSignOut(false);
 
