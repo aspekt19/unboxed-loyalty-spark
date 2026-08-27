@@ -90,7 +90,12 @@ export function PrivySessionBridge() {
       }
       lifecycleTimerRef.current = window.setTimeout(() => {
         lifecycleTimerRef.current = null;
-        if (active) schedule();
+        if (!active) return;
+        // A genuine lifecycle event (returning to foreground, network back)
+        // restarts recovery from the fastest backoff step; the debounce and
+        // the shared in-flight auth promise still prevent duplicate exchanges.
+        attemptRef.current = 0;
+        schedule();
       }, LIFECYCLE_DEBOUNCE_MS);
     };
 
