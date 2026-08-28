@@ -91,7 +91,7 @@ export default function TrustPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground space-y-2">
-              <p>Found a vulnerability? Please email <a className="text-primary underline" href="mailto:security@loyalspark.online">security@loyalspark.online</a> with details and reproduction steps. We respond within 72 hours and do not pursue good-faith researchers.</p>
+              <p>Found a vulnerability? Please email <a className="text-primary underline" href="mailto:admin@loyalspark.online">admin@loyalspark.online</a> with details and reproduction steps. We respond within 72 hours and do not pursue good-faith researchers.</p>
             </CardContent>
           </Card>
         </section>
