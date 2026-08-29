@@ -113,18 +113,34 @@ const Index = () => {
         <footer className="border-t border-border/50 py-6 sm:py-8 mt-12 sm:mt-16 bg-background/50 backdrop-blur-sm">
           <div className="container mx-auto px-4 sm:px-6">
             <div className="flex flex-col md:flex-row justify-between items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
-              <p className="text-center md:text-left font-medium">© 2025 Loyal Spark. Built on BASE Network.</p>
-              <div className="flex items-center gap-4 sm:gap-6 text-center">
-                <a 
-                  href="mailto:admin@loyalspark.online" 
+              <p className="text-center md:text-left font-medium">© 2026 Loyal Spark. Built on BASE Network.</p>
+              <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-center">
+                <Link to="/legal/privacy" className="hover:text-primary transition-smooth font-medium">
+                  Privacy
+                </Link>
+                <span className="text-border hidden sm:inline">|</span>
+                <Link to="/legal/terms" className="hover:text-primary transition-smooth font-medium">
+                  Terms
+                </Link>
+                <span className="text-border hidden sm:inline">|</span>
+                <Link to="/legal/refund" className="hover:text-primary transition-smooth font-medium">
+                  Refund
+                </Link>
+                <span className="text-border hidden sm:inline">|</span>
+                <Link to="/trust" className="hover:text-primary transition-smooth font-medium">
+                  Trust
+                </Link>
+                <span className="text-border hidden sm:inline">|</span>
+                <a
+                  href="mailto:admin@loyalspark.online"
                   className="hover:text-primary transition-smooth truncate font-medium"
                 >
                   admin@loyalspark.online
                 </a>
-                <span className="text-border">|</span>
-                <a 
-                  href="https://x.com/Loyal_Spark" 
-                  target="_blank" 
+                <span className="text-border hidden sm:inline">|</span>
+                <a
+                  href="https://x.com/Loyal_Spark"
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-primary transition-smooth font-medium"
                 >

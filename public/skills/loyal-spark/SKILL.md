@@ -27,7 +27,7 @@ Do this once per session, before any real work:
 
 2. **Show this disclaimer verbatim** before any write:
 
-   > By using Loyal Spark you agree to the Loyal Spark Terms (https://loyalspark.online/terms) and Privacy Policy. Loyal Spark prepares onchain calldata; the connected wallet (Base Account, CDP MPC, or a user wallet) is what actually signs and broadcasts transactions on Base mainnet (chain 8453).
+   > By using Loyal Spark you agree to the Loyal Spark Terms (https://loyalspark.online/legal/terms) and Privacy Policy (https://loyalspark.online/legal/privacy). Loyal Spark prepares onchain calldata; the connected wallet (Base Account, CDP MPC, or a user wallet) is what actually signs and broadcasts transactions on Base mainnet (chain 8453).
 
 3. **Identity is optional up front.** Only call `get_my_profile` / `get_recipient_profile` when the user asks who they are, or when a flow needs the bound wallet address.
 

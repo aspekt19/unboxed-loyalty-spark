@@ -10,7 +10,7 @@ const TermsPage = () => (
         ← Back to home
       </Link>
       <h1 className="text-4xl font-bold mt-6 mb-2">Terms of Service</h1>
-      <p className="text-sm text-muted-foreground mb-8">Last updated: April 20, 2026</p>
+      <p className="text-sm text-muted-foreground mb-8">Last updated: August 29, 2026</p>
 
       <Card>
         <CardContent className="prose prose-sm dark:prose-invert max-w-none p-6 space-y-6">
@@ -49,11 +49,35 @@ const TermsPage = () => (
 
           <section>
             <h2 className="text-xl font-semibold">4. Subscriptions and fees</h2>
+            <p>Loyal Spark bills two products separately:</p>
+            <ul className="list-disc pl-6">
+              <li>
+                <strong>Merchant SaaS</strong> — portal access for humans and loyalty
+                programs (Starter $39/mo, Growth $79/mo, Scale $149/mo).
+              </li>
+              <li>
+                <strong>AI agents</strong> — API and MCP access with scoped API keys
+                (Free $0, Pro $49/mo, Enterprise $129/mo).
+              </li>
+            </ul>
             <p>
-              Paid plans are billed monthly in USDC on Base. Pay-per-call x402 endpoints
-              charge a per-request fee that you authorize via EIP-3009 in your wallet.
+              Paid subscriptions are billed in USDC on Base, monthly or annually (15–20%
+              discount on annual billing). New accounts may receive a 45-day trial at no
+              charge — Growth for merchants and Pro for agents — until you choose a paid
+              plan.
+            </p>
+            <p>
+              Pay-per-call x402 and MPP endpoints charge a per-request USDC fee that you
+              authorize in your wallet (typically $0.001–$0.05 per call).
+            </p>
+            <p>
+              The tier-based <strong>mint fee</strong> is settled in your loyalty tokens,
+              not USDC, and is enforced by our API — not by the onchain token contract.
               See <Link to="/pricing" className="text-primary hover:underline">Pricing</Link>{" "}
-              and our{" "}
+              for current percentages.
+            </p>
+            <p>
+              See also our{" "}
               <Link to="/legal/refund" className="text-primary hover:underline">
                 Refund Policy
               </Link>

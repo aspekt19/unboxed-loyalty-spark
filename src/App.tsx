@@ -172,6 +172,7 @@ function AnimatedRoutes() {
           <Route path="/shop/:merchantAddress" element={<ShopPage />} />
           {/* /premium deprecated → redirect to public pricing */}
           <Route path="/premium" element={<Navigate to="/pricing" replace />} />
+          <Route path="/terms" element={<Navigate to="/legal/terms" replace />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/pitch" element={<PitchDeck />} />
           <Route path="/guide" element={<GuidePage />} />
