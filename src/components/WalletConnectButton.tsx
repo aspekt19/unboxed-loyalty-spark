@@ -216,7 +216,9 @@ export function WalletConnectButton() {
       } catch {}
     }
 
+    rememberPostLoginPath();
     privyLogin();
+
   };
 
   const headerAuthButtonClass = (extra: string) =>
