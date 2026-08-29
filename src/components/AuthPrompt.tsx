@@ -35,6 +35,7 @@ export function AuthPrompt() {
 
   const handlePrivyLogin = () => {
     resetManualSignOut();
+    rememberPostLoginPath();
     privyLogin();
   };
 
@@ -44,9 +45,11 @@ export function AuthPrompt() {
     if (privyAuthenticated) {
       privyConnectWallet();
     } else {
+      rememberPostLoginPath();
       privyLogin();
     }
   };
+
 
   const handleFarcasterConnect = () => {
     resetManualSignOut();
