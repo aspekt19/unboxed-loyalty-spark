@@ -3,6 +3,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { usePrivySafe } from '@/hooks/usePrivySafe';
 import { shouldUsePrivyTokenAuth } from '@/lib/privyAuth';
 import { OAuthReturnHandler } from '@/components/auth/OAuthReturnHandler';
+import { consumePostLoginPath } from '@/lib/postLoginRedirect';
+
 
 /** Backoff schedule for recovering an unfinished Privy -> app session exchange. */
 const SESSION_RECOVERY_DELAYS_MS = [250, 2_000, 5_000, 10_000, 20_000];
@@ -46,6 +48,19 @@ export function PrivySessionBridge() {
   useEffect(() => {
     attemptRef.current = 0;
   }, [privyUser, user]);
+
+  // Mobile OAuth returns to the public root. Once the app session exists, send
+  // the user back to the page they started sign-in from.
+  useEffect(() => {
+    if (!user) return;
+    const target = consumePostLoginPath();
+    if (!target) return;
+    const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (target === current) return;
+    window.history.pushState({}, '', target);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  }, [user]);
+
 
   useEffect(() => {
     const pending = privyReady && privyAuthenticated && Boolean(privyUser) && !user && useTokenAuth;

@@ -7,10 +7,12 @@ export const privyConfig: PrivyClientConfig = {
   // Login methods available to users
   loginMethods: ['email', 'sms', 'google', 'wallet'],
   // Mobile browsers complete Google OAuth with a full-page redirect. Return to
-  // the public app entry (not the marketing homepage), because /app mounts the
-  // auth bridge that exchanges the restored Privy identity for the backend
-  // session. Returning to `/` leaves that bridge unmounted and looks signed out.
-  customOAuthRedirectUrl: typeof window !== 'undefined' ? `${window.location.origin}/app` : undefined,
+  // the public origin root: it is never behind an auth guard, so the callback
+  // is exchanged by the always-mounted session bridge without a protected route
+  // bouncing the user mid-exchange. The intended path is restored afterwards
+  // (see src/lib/postLoginRedirect.ts).
+  customOAuthRedirectUrl: typeof window !== 'undefined' ? `${window.location.origin}/` : undefined,
+
   // Appearance
   appearance: {
     theme: 'light',
