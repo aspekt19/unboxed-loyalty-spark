@@ -30,6 +30,24 @@ export default defineConfig({
         hasTouch: true,
       },
     },
+    {
+      name: "tablet-portrait",
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 768, height: 1024 },
+        isMobile: true,
+        hasTouch: true,
+      },
+    },
+    {
+      name: "tablet-landscape",
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 1024, height: 768 },
+        isMobile: true,
+        hasTouch: true,
+      },
+    },
   ],
   webServer: {
     command: "bun run dev",
