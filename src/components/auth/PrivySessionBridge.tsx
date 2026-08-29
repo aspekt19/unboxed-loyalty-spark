@@ -3,6 +3,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { usePrivySafe } from '@/hooks/usePrivySafe';
 import { shouldUsePrivyTokenAuth } from '@/lib/privyAuth';
 import { OAuthReturnHandler } from '@/components/auth/OAuthReturnHandler';
+import { consumePostLoginPath } from '@/lib/postLoginRedirect';
+
 
 /** Backoff schedule for recovering an unfinished Privy -> app session exchange. */
 const SESSION_RECOVERY_DELAYS_MS = [250, 2_000, 5_000, 10_000, 20_000];
