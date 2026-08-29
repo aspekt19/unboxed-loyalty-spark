@@ -42,3 +42,7 @@ docs/fundraising/
 # Lovable working files — plan drafts, not part of the app
 .lovable/plan.md
 .lovable/plan/
+
+# Playwright
+test-results/
+playwright-report/

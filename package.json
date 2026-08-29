@@ -12,7 +12,8 @@
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "check:docs": "node scripts/check-docs-drift.mjs",
     "test:deno-helpers": "deno test --no-check --allow-env --allow-read --allow-net --node-modules-dir=auto supabase/functions/_shared/",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@blackbox-vision/react-qr-reader": "^5.0.0",
