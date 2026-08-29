@@ -47,6 +47,19 @@ export function PrivySessionBridge() {
     attemptRef.current = 0;
   }, [privyUser, user]);
 
+  // Mobile OAuth returns to the public root. Once the app session exists, send
+  // the user back to the page they started sign-in from.
+  useEffect(() => {
+    if (!user) return;
+    const target = consumePostLoginPath();
+    if (!target) return;
+    const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (target === current) return;
+    window.history.pushState({}, '', target);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  }, [user]);
+
+
   useEffect(() => {
     const pending = privyReady && privyAuthenticated && Boolean(privyUser) && !user && useTokenAuth;
 
