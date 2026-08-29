@@ -31,6 +31,15 @@ export default defineConfig({
       },
     },
     {
+      name: "mobile-412",
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 412, height: 915 },
+        isMobile: true,
+        hasTouch: true,
+      },
+    },
+    {
       name: "tablet-portrait",
       use: {
         ...devices["Desktop Chrome"],
