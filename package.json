@@ -12,7 +12,8 @@
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "check:docs": "node scripts/check-docs-drift.mjs",
     "test:deno-helpers": "deno test --no-check --allow-env --allow-read --allow-net --node-modules-dir=auto supabase/functions/_shared/",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:e2e": "LD_LIBRARY_PATH=$NIX_LD_LIBRARY_PATH playwright test"
   },
   "dependencies": {
     "@blackbox-vision/react-qr-reader": "^5.0.0",
@@ -90,6 +91,7 @@
     "@eslint/js": "^9.32.0",
     "@lovable.dev/vite-plugin-dev-server-bridge": "^1.0.2",
     "@lovable.dev/vite-plugin-hmr-gate": "^1.8.0",
+    "@playwright/test": "1.56.0",
     "@tailwindcss/typography": "^0.5.16",
     "@types/node": "^22.16.5",
     "@types/react": "^18.3.23",
