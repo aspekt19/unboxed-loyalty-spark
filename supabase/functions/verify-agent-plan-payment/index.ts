@@ -255,6 +255,14 @@ Deno.serve(async (req) => {
       const caller = await resolveCallerWallet(req, supabaseUrl, anonKey, db);
       if (!caller) return jsonResponse({ error: "Unauthorized" }, 401);
 
+      const { data: retrySettings } = await db
+        .from("payment_settings")
+        .select("subscription_wallet_address")
+        .limit(1)
+        .single();
+      const retryWallet = retrySettings?.subscription_wallet_address;
+      if (!retryWallet) return jsonResponse({ error: "Subscription wallet not configured" }, 500);
+
       const table = product === "merchant" ? "merchant_plan_subscriptions" : "agent_plan_subscriptions";
       const { data: pending, error: pendingError } = await db
         .from(table)
@@ -285,7 +293,7 @@ Deno.serve(async (req) => {
 
       const verification = await verifyUsdcTransferToWallet(
         pending.transaction_hash,
-        subscriptionWallet,
+        retryWallet,
         Number(pending.amount_usdc),
       );
       if (!verification.verified) {
@@ -596,7 +604,7 @@ Deno.serve(async (req) => {
     return jsonResponse(
       {
         error: "Unknown action",
-        available: ["get_payment_info", "verify_payment", "admin_verify"],
+        available: ["get_payment_info", "verify_payment", "retry_verification", "admin_verify"],
         hint: 'Use body.product: "agent" (default) or "merchant"; body.billing_cycle: "monthly" (default) or "annual"',
       },
       400,
