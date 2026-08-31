@@ -53,6 +53,30 @@ interface AgentWalletRow {
   wallet_type: string;
   wallet_address: string;
 }
+
+interface AgentPlanRow {
+  name: string;
+  slug: string;
+  max_api_calls_monthly: number | null;
+  max_agents: number;
+  max_mint_amount_monthly: number | string | null;
+}
+
+interface AgentUsageRow {
+  api_calls_count: number | null;
+  mint_total_amount: number | string | null;
+}
+
+function currentPeriodStart(): string {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString().split('T')[0];
+}
+
+function formatLimit(used: number, limit: number | null): { text: string; remaining: number | null } {
+  if (limit === null || limit <= 0) return { text: `${used.toLocaleString()} used · Unlimited`, remaining: null };
+  const remaining = Math.max(0, limit - used);
+  return { text: `${used.toLocaleString()} / ${limit.toLocaleString()}`, remaining };
+}
 export function AgentManagement() {
   const { address } = useAccount();
   const queryClient = useQueryClient();
