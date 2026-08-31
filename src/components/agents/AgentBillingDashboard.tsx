@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -137,6 +137,24 @@ export function AgentBillingDashboard() {
     enabled: !!address,
   });
 
+  const { data: pendingSub } = useQuery({
+    queryKey: ['agent-pending-subscription', address],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('agent_plan_subscriptions')
+        .select('id, status, transaction_hash, created_at, amount_usdc')
+        .eq('owner_address', (address || '').toLowerCase())
+        .eq('status', 'pending_verification')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+    enabled: !!address,
+    refetchInterval: 15000,
+  });
+
   const currentPlanSlug = activeSub ? (activeSub as any).agent_plans?.slug : 'free';
   const currentPlan = plans.find(p => p.slug === currentPlanSlug) || plans[0];
 
@@ -163,6 +181,13 @@ export function AgentBillingDashboard() {
     setUpgradeDialogOpen(true);
   };
 
+  const refreshBilling = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['agent-plan-subscription'] });
+    queryClient.invalidateQueries({ queryKey: ['agent-pending-subscription'] });
+    queryClient.invalidateQueries({ queryKey: ['agents'] });
+    queryClient.invalidateQueries({ queryKey: ['effective-plan'] });
+  }, [queryClient]);
+
   const handleVerifyPayment = async () => {
     if (!txHash.trim() || !selectedPlan || !address) return;
     setIsVerifying(true);
@@ -182,13 +207,11 @@ export function AgentBillingDashboard() {
       if (data.verified) {
         toast.success(data.message);
         setUpgradeDialogOpen(false);
-        queryClient.invalidateQueries({ queryKey: ['agent-plan-subscription'] });
-        queryClient.invalidateQueries({ queryKey: ['agents'] });
-        // PlanFeatureGate reads useEffectivePlan, not the raw subscription row.
-        queryClient.invalidateQueries({ queryKey: ['effective-plan'] });
+        refreshBilling();
       } else {
         toast.info(data.message);
         setUpgradeDialogOpen(false);
+        refreshBilling();
       }
     } catch (err: any) {
       toast.error(err.message || 'Verification failed');
@@ -196,6 +219,40 @@ export function AgentBillingDashboard() {
       setIsVerifying(false);
     }
   };
+
+  const handleRetryVerification = async () => {
+    if (!pendingSub?.id) return;
+    setIsVerifying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-agent-plan-payment', {
+        body: { action: 'retry_verification', subscription_id: pendingSub.id, product: 'agent' },
+      });
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+      if (data.verified) toast.success(data.message);
+      else toast.info(data.message);
+      refreshBilling();
+    } catch (err: any) {
+      toast.error(err.message || 'Retry failed');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!pendingSub?.id) return;
+    const retry = async () => {
+      const { data, error } = await supabase.functions.invoke('verify-agent-plan-payment', {
+        body: { action: 'retry_verification', subscription_id: pendingSub.id, product: 'agent' },
+      });
+      if (!error && data?.verified) {
+        toast.success(data.message);
+        refreshBilling();
+      }
+    };
+    const timer = window.setInterval(retry, 15000);
+    return () => window.clearInterval(timer);
+  }, [pendingSub?.id, refreshBilling]);
 
   return (
     <div className="space-y-6">
@@ -289,6 +346,21 @@ export function AgentBillingDashboard() {
               </div>
             </CardContent>
           </Card>
+
+          {pendingSub && (
+            <Alert>
+              <Loader2 className="h-4 w-4" />
+              <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
+                <span>
+                  Payment of <strong>{Number(pendingSub.amount_usdc).toLocaleString()} USDC</strong> is awaiting onchain confirmation.
+                </span>
+                <Button variant="outline" size="sm" onClick={handleRetryVerification} disabled={isVerifying}>
+                  {isVerifying ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : null}
+                  Check again
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
         </TabsContent>
 
         {/* PLANS TAB */}

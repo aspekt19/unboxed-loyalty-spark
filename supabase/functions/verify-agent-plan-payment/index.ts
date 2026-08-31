@@ -58,6 +58,11 @@ function expiresAtForCycle(cycle: BillingCycle): Date {
   return d;
 }
 
+function cycleForStoredAmount(monthlyPrice: number, slug: string, amount: number): BillingCycle {
+  const annualAmount = expectedAmountForCycle(monthlyPrice, "annual", slug);
+  return Math.abs(amount - annualAmount) < 0.01 ? "annual" : "monthly";
+}
+
 /**
  * Verify USDC transfer to subscription wallet via ERC-20 Transfer logs (6 decimals).
  *
@@ -66,7 +71,7 @@ function expiresAtForCycle(cycle: BillingCycle): Date {
  * request, which silently parked all paid subscriptions in
  * `pending_verification` — never reintroduce that dependency here.
  */
-async function verifyUsdcTransferToWallet(
+async function verifyUsdcTransferOnce(
   transactionHash: string,
   subscriptionWallet: string,
   minAmountUsdc: number,
@@ -113,6 +118,32 @@ async function verifyUsdcTransferToWallet(
   }
   return { verified: false, method: "no_matching_transfer" };
 }
+
+/**
+ * Same check, but tolerant of a transaction that is not mined/propagated yet.
+ * Only transient outcomes (`tx_not_found`, `rpc_error`) are retried — a wrong
+ * amount or a missing transfer is final and must fail fast.
+ */
+async function verifyUsdcTransferToWallet(
+  transactionHash: string,
+  subscriptionWallet: string,
+  minAmountUsdc: number,
+  attempts = 5,
+  delayMs = 2500,
+): Promise<{ verified: boolean; method: string; transferred?: number }> {
+  let last = await verifyUsdcTransferOnce(transactionHash, subscriptionWallet, minAmountUsdc);
+  for (let i = 1; i < attempts; i++) {
+    if (last.verified) return last;
+    if (last.method !== "tx_not_found" && last.method !== "rpc_error") return last;
+    await new Promise((r) => setTimeout(r, delayMs));
+    last = await verifyUsdcTransferOnce(transactionHash, subscriptionWallet, minAmountUsdc);
+  }
+  return last;
+}
+
+/** A pending subscription is retryable only while the payment can still land. */
+const PENDING_RETRY_WINDOW_HOURS = 48;
+
 
 
 /** Resolve caller's wallet from JWT. Returns null if unauthenticated. */
@@ -213,6 +244,93 @@ Deno.serve(async (req) => {
         chain: "base",
         chain_id: 8453,
         plans: plans || [],
+      });
+    }
+
+    if (action === "retry_verification") {
+      if (!subscription_id) {
+        return jsonResponse({ error: "Missing: subscription_id" }, 400);
+      }
+
+      const caller = await resolveCallerWallet(req, supabaseUrl, anonKey, db);
+      if (!caller) return jsonResponse({ error: "Unauthorized" }, 401);
+
+      const { data: retrySettings } = await db
+        .from("payment_settings")
+        .select("subscription_wallet_address")
+        .limit(1)
+        .single();
+      const retryWallet = retrySettings?.subscription_wallet_address;
+      if (!retryWallet) return jsonResponse({ error: "Subscription wallet not configured" }, 500);
+
+      const table = product === "merchant" ? "merchant_plan_subscriptions" : "agent_plan_subscriptions";
+      const { data: pending, error: pendingError } = await db
+        .from(table)
+        .select("id, owner_address, plan_id, status, amount_usdc, transaction_hash, created_at")
+        .eq("id", subscription_id)
+        .eq("owner_address", caller.wallet)
+        .maybeSingle();
+
+      if (pendingError) return jsonResponse({ error: pendingError.message }, 500);
+      if (!pending || pending.status !== "pending_verification") {
+        return jsonResponse({ error: "Pending subscription not found" }, 404);
+      }
+      if (!pending.transaction_hash) {
+        return jsonResponse({ error: "Subscription has no transaction hash" }, 400);
+      }
+      const createdAt = new Date(pending.created_at).getTime();
+      if (!Number.isFinite(createdAt) || Date.now() - createdAt > PENDING_RETRY_WINDOW_HOURS * 60 * 60 * 1000) {
+        return jsonResponse({ error: "Verification window expired; contact support" }, 410);
+      }
+
+      const planTable = product === "merchant" ? "merchant_plans" : "agent_plans";
+      const { data: plan, error: planError } = await db
+        .from(planTable)
+        .select("id, name, slug, price_usdc_monthly")
+        .eq("id", pending.plan_id)
+        .single();
+      if (planError || !plan) return jsonResponse({ error: "Plan not found" }, 404);
+
+      const verification = await verifyUsdcTransferToWallet(
+        pending.transaction_hash,
+        retryWallet,
+        Number(pending.amount_usdc),
+      );
+      if (!verification.verified) {
+        return jsonResponse({
+          product,
+          subscription: pending,
+          verified: false,
+          verification_method: verification.method,
+          transferred_usdc: verification.transferred,
+          message: "⏳ Payment is still being confirmed. We will keep checking shortly.",
+        });
+      }
+
+      const cycle = cycleForStoredAmount(Number(plan.price_usdc_monthly), plan.slug, Number(pending.amount_usdc));
+      const expiresAt = expiresAtForCycle(cycle);
+      const { data: updated, error: updateError } = await db
+        .from(table)
+        .update({ status: "active", paid_at: new Date().toISOString(), expires_at: expiresAt.toISOString() })
+        .eq("id", subscription_id)
+        .eq("status", "pending_verification")
+        .select("id, status, expires_at")
+        .single();
+      if (updateError || !updated) return jsonResponse({ error: updateError?.message || "Subscription update failed" }, 500);
+
+      if (product === "merchant") {
+        await db.from("merchant_profiles").update({ merchant_plan_id: pending.plan_id }).eq("merchant_address", caller.wallet);
+      } else {
+        await db.from("agent_registry").update({ plan_id: pending.plan_id }).eq("owner_address", caller.wallet);
+      }
+
+      return jsonResponse({
+        product,
+        subscription: updated,
+        verified: true,
+        verification_method: verification.method,
+        transferred_usdc: verification.transferred,
+        message: `✅ ${plan.name} plan activated!`,
       });
     }
 
@@ -322,8 +440,8 @@ Deno.serve(async (req) => {
           billing_cycle: cycle,
           plan: plan.name,
           message: verified
-            ? `✅ ${plan.name} (${cycle}) merchant plan activated.`
-            : "⏳ Payment recorded. It will be verified shortly (or contact support if BaseScan key is off).",
+          ? `✅ ${plan.name} (${cycle}) merchant plan activated.`
+          : "⏳ Payment recorded. It will be verified automatically once the Base network confirms it.",
         });
       }
 
@@ -396,7 +514,7 @@ Deno.serve(async (req) => {
         plan: plan.name,
         message: verified
           ? `✅ ${plan.name} (${cycle}) plan activated! Your agents now have ${plan.name}-tier benefits.`
-          : "⏳ Payment recorded. Will be verified by admin shortly.",
+          : "⏳ Payment recorded. It will be verified automatically once the Base network confirms it.",
       });
     }
 
@@ -486,7 +604,7 @@ Deno.serve(async (req) => {
     return jsonResponse(
       {
         error: "Unknown action",
-        available: ["get_payment_info", "verify_payment", "admin_verify"],
+        available: ["get_payment_info", "verify_payment", "retry_verification", "admin_verify"],
         hint: 'Use body.product: "agent" (default) or "merchant"; body.billing_cycle: "monthly" (default) or "annual"',
       },
       400,
