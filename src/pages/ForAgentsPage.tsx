@@ -387,6 +387,31 @@ export default function ForAgentsPage() {
                 </Card>
               ))}
             </div>
+            <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold">Ready to subscribe?</p>
+                  <p className="text-xs text-muted-foreground">
+                    Pay in USDC on Base from your wallet — no manual transfer, activation is automatic.
+                  </p>
+                </div>
+                <Button asChild size="sm">
+                  <Link to="/for-agents/subscribe">Pay for a plan</Link>
+                </Button>
+              </div>
+              <ol className="grid sm:grid-cols-3 gap-3 text-xs text-muted-foreground">
+                {[
+                  "Connect the owner wallet of your agents on Base.",
+                  "Choose Pro or Enterprise and monthly or annual billing.",
+                  "Confirm one USDC transaction — limits unlock automatically.",
+                ].map((s, i) => (
+                  <li key={s} className="rounded-md border bg-background p-3">
+                    <span className="font-semibold text-foreground">Step {i + 1}. </span>
+                    {s}
+                  </li>
+                ))}
+              </ol>
+            </div>
             <p className="text-xs text-muted-foreground">
               Annual billing: 15% off Pro, 20% off Enterprise. Payment in USDC on Base. Details:{" "}
               <Link to="/pricing" className="text-primary underline underline-offset-4">
