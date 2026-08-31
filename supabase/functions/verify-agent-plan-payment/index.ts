@@ -66,7 +66,7 @@ function expiresAtForCycle(cycle: BillingCycle): Date {
  * request, which silently parked all paid subscriptions in
  * `pending_verification` — never reintroduce that dependency here.
  */
-async function verifyUsdcTransferToWallet(
+async function verifyUsdcTransferOnce(
   transactionHash: string,
   subscriptionWallet: string,
   minAmountUsdc: number,
@@ -113,6 +113,32 @@ async function verifyUsdcTransferToWallet(
   }
   return { verified: false, method: "no_matching_transfer" };
 }
+
+/**
+ * Same check, but tolerant of a transaction that is not mined/propagated yet.
+ * Only transient outcomes (`tx_not_found`, `rpc_error`) are retried — a wrong
+ * amount or a missing transfer is final and must fail fast.
+ */
+async function verifyUsdcTransferToWallet(
+  transactionHash: string,
+  subscriptionWallet: string,
+  minAmountUsdc: number,
+  attempts = 5,
+  delayMs = 2500,
+): Promise<{ verified: boolean; method: string; transferred?: number }> {
+  let last = await verifyUsdcTransferOnce(transactionHash, subscriptionWallet, minAmountUsdc);
+  for (let i = 1; i < attempts; i++) {
+    if (last.verified) return last;
+    if (last.method !== "tx_not_found" && last.method !== "rpc_error") return last;
+    await new Promise((r) => setTimeout(r, delayMs));
+    last = await verifyUsdcTransferOnce(transactionHash, subscriptionWallet, minAmountUsdc);
+  }
+  return last;
+}
+
+/** A pending subscription is retryable only while the payment can still land. */
+const PENDING_RETRY_WINDOW_HOURS = 48;
+
 
 
 /** Resolve caller's wallet from JWT. Returns null if unauthenticated. */
