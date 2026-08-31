@@ -137,6 +137,24 @@ export function AgentBillingDashboard() {
     enabled: !!address,
   });
 
+  const { data: pendingSub } = useQuery({
+    queryKey: ['agent-pending-subscription', address],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('agent_plan_subscriptions')
+        .select('id, status, transaction_hash, created_at, amount_usdc')
+        .eq('owner_address', (address || '').toLowerCase())
+        .eq('status', 'pending_verification')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+    enabled: !!address,
+    refetchInterval: 15000,
+  });
+
   const currentPlanSlug = activeSub ? (activeSub as any).agent_plans?.slug : 'free';
   const currentPlan = plans.find(p => p.slug === currentPlanSlug) || plans[0];
 
@@ -163,6 +181,13 @@ export function AgentBillingDashboard() {
     setUpgradeDialogOpen(true);
   };
 
+  const refreshBilling = () => {
+    queryClient.invalidateQueries({ queryKey: ['agent-plan-subscription'] });
+    queryClient.invalidateQueries({ queryKey: ['agent-pending-subscription'] });
+    queryClient.invalidateQueries({ queryKey: ['agents'] });
+    queryClient.invalidateQueries({ queryKey: ['effective-plan'] });
+  };
+
   const handleVerifyPayment = async () => {
     if (!txHash.trim() || !selectedPlan || !address) return;
     setIsVerifying(true);
@@ -182,16 +207,33 @@ export function AgentBillingDashboard() {
       if (data.verified) {
         toast.success(data.message);
         setUpgradeDialogOpen(false);
-        queryClient.invalidateQueries({ queryKey: ['agent-plan-subscription'] });
-        queryClient.invalidateQueries({ queryKey: ['agents'] });
-        // PlanFeatureGate reads useEffectivePlan, not the raw subscription row.
-        queryClient.invalidateQueries({ queryKey: ['effective-plan'] });
+        refreshBilling();
       } else {
         toast.info(data.message);
         setUpgradeDialogOpen(false);
+        refreshBilling();
       }
     } catch (err: any) {
       toast.error(err.message || 'Verification failed');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleRetryVerification = async () => {
+    if (!pendingSub?.id) return;
+    setIsVerifying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-agent-plan-payment', {
+        body: { action: 'retry_verification', subscription_id: pendingSub.id, product: 'agent' },
+      });
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+      if (data.verified) toast.success(data.message);
+      else toast.info(data.message);
+      refreshBilling();
+    } catch (err: any) {
+      toast.error(err.message || 'Retry failed');
     } finally {
       setIsVerifying(false);
     }
