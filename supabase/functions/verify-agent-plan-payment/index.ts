@@ -247,6 +247,85 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "retry_verification") {
+      if (!subscription_id) {
+        return jsonResponse({ error: "Missing: subscription_id" }, 400);
+      }
+
+      const caller = await resolveCallerWallet(req, supabaseUrl, anonKey, db);
+      if (!caller) return jsonResponse({ error: "Unauthorized" }, 401);
+
+      const table = product === "merchant" ? "merchant_plan_subscriptions" : "agent_plan_subscriptions";
+      const { data: pending, error: pendingError } = await db
+        .from(table)
+        .select("id, owner_address, plan_id, status, amount_usdc, transaction_hash, created_at")
+        .eq("id", subscription_id)
+        .eq("owner_address", caller.wallet)
+        .maybeSingle();
+
+      if (pendingError) return jsonResponse({ error: pendingError.message }, 500);
+      if (!pending || pending.status !== "pending_verification") {
+        return jsonResponse({ error: "Pending subscription not found" }, 404);
+      }
+      if (!pending.transaction_hash) {
+        return jsonResponse({ error: "Subscription has no transaction hash" }, 400);
+      }
+      const createdAt = new Date(pending.created_at).getTime();
+      if (!Number.isFinite(createdAt) || Date.now() - createdAt > PENDING_RETRY_WINDOW_HOURS * 60 * 60 * 1000) {
+        return jsonResponse({ error: "Verification window expired; contact support" }, 410);
+      }
+
+      const planTable = product === "merchant" ? "merchant_plans" : "agent_plans";
+      const { data: plan, error: planError } = await db
+        .from(planTable)
+        .select("id, name, slug, price_usdc_monthly")
+        .eq("id", pending.plan_id)
+        .single();
+      if (planError || !plan) return jsonResponse({ error: "Plan not found" }, 404);
+
+      const verification = await verifyUsdcTransferToWallet(
+        pending.transaction_hash,
+        subscriptionWallet,
+        Number(pending.amount_usdc),
+      );
+      if (!verification.verified) {
+        return jsonResponse({
+          product,
+          subscription: pending,
+          verified: false,
+          verification_method: verification.method,
+          transferred_usdc: verification.transferred,
+          message: "⏳ Payment is still being confirmed. We will keep checking shortly.",
+        });
+      }
+
+      const cycle = cycleForStoredAmount(Number(plan.price_usdc_monthly), plan.slug, Number(pending.amount_usdc));
+      const expiresAt = expiresAtForCycle(cycle);
+      const { data: updated, error: updateError } = await db
+        .from(table)
+        .update({ status: "active", paid_at: new Date().toISOString(), expires_at: expiresAt.toISOString() })
+        .eq("id", subscription_id)
+        .eq("status", "pending_verification")
+        .select("id, status, expires_at")
+        .single();
+      if (updateError || !updated) return jsonResponse({ error: updateError?.message || "Subscription update failed" }, 500);
+
+      if (product === "merchant") {
+        await db.from("merchant_profiles").update({ merchant_plan_id: pending.plan_id }).eq("merchant_address", caller.wallet);
+      } else {
+        await db.from("agent_registry").update({ plan_id: pending.plan_id }).eq("owner_address", caller.wallet);
+      }
+
+      return jsonResponse({
+        product,
+        subscription: updated,
+        verified: true,
+        verification_method: verification.method,
+        transferred_usdc: verification.transferred,
+        message: `✅ ${plan.name} plan activated!`,
+      });
+    }
+
     if (action === "verify_payment") {
       if (!transaction_hash || !plan_slug) {
         return jsonResponse(
