@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getTransactionReceipt } from "../_shared/base-rpc.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,7 +9,7 @@ const corsHeaders = {
 
 // USDC on Base
 const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
-const BASESCAN_API = "https://api.basescan.org/api";
+
 
 const TRANSFER_TOPIC =
   "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
@@ -57,35 +58,41 @@ function expiresAtForCycle(cycle: BillingCycle): Date {
   return d;
 }
 
-/** Verify USDC transfer to subscription wallet via ERC-20 Transfer logs (6 decimals). */
+/**
+ * Verify USDC transfer to subscription wallet via ERC-20 Transfer logs (6 decimals).
+ *
+ * Reads the receipt straight from Base RPC (multi-provider failover). The old
+ * BaseScan V1 endpoint was retired by Etherscan and returned NOTOK for every
+ * request, which silently parked all paid subscriptions in
+ * `pending_verification` — never reintroduce that dependency here.
+ */
 async function verifyUsdcTransferToWallet(
   transactionHash: string,
   subscriptionWallet: string,
   minAmountUsdc: number,
-  basescanApiKey: string,
 ): Promise<{ verified: boolean; method: string; transferred?: number }> {
-  if (!basescanApiKey) {
-    return { verified: false, method: "no_basescan_key" };
-  }
   try {
-    const url = `${BASESCAN_API}?module=proxy&action=eth_getTransactionReceipt&txhash=${transactionHash}&apikey=${basescanApiKey}`;
-    const res = await fetch(url);
-    const data = await res.json();
+    const receipt = await getTransactionReceipt(transactionHash);
 
-    if (!data.result || data.result.status !== "0x1") {
+    if (!receipt) {
+      return { verified: false, method: "tx_not_found" };
+    }
+    if (receipt.status !== "0x1") {
       return { verified: false, method: "tx_not_success" };
     }
 
     const usdcLower = USDC_BASE.toLowerCase();
     const walletPadded = subscriptionWallet.toLowerCase().replace("0x", "").padStart(64, "0");
 
-    for (const log of data.result.logs || []) {
+    for (const log of receipt.logs || []) {
       if (
-        log.address.toLowerCase() === usdcLower &&
-        log.topics[0] === TRANSFER_TOPIC &&
-        log.topics[2]?.toLowerCase() === "0x" + walletPadded
+        String(log.address).toLowerCase() === usdcLower &&
+        String(log.topics?.[0]).toLowerCase() === TRANSFER_TOPIC &&
+        String(log.topics?.[2] ?? "").toLowerCase() === "0x" + walletPadded
       ) {
-        const transferredAmount = parseInt(log.data, 16) / 1e6;
+        // USDC has 6 decimals; parse as BigInt to stay exact for large amounts.
+        const raw = BigInt(log.data);
+        const transferredAmount = Number(raw) / 1e6;
         // Allow tiny rounding tolerance (1¢)
         if (transferredAmount + 0.01 >= minAmountUsdc) {
           console.log(
@@ -93,17 +100,20 @@ async function verifyUsdcTransferToWallet(
           );
           return {
             verified: true,
-            method: "onchain_basescan",
+            method: "onchain_rpc",
             transferred: transferredAmount,
           };
         }
+        return { verified: false, method: "amount_too_low", transferred: transferredAmount };
       }
     }
   } catch (err) {
-    console.error("[verify-plan] BaseScan verification failed:", err);
+    console.error("[verify-plan] RPC verification failed:", err);
+    return { verified: false, method: "rpc_error" };
   }
-  return { verified: false, method: "basescan_no_match" };
+  return { verified: false, method: "no_matching_transfer" };
 }
+
 
 /** Resolve caller's wallet from JWT. Returns null if unauthenticated. */
 /** Supabase client typed against the untyped public schema (edge functions have no generated Database types). */
@@ -140,7 +150,6 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-  const basescanApiKey = Deno.env.get("BASESCAN_API_KEY") || "";
   const db = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
@@ -270,7 +279,6 @@ Deno.serve(async (req) => {
           transaction_hash,
           subscriptionWallet,
           expectedAmountUSDC,
-          basescanApiKey,
         );
 
         const expiresAt = expiresAtForCycle(cycle);
@@ -344,7 +352,6 @@ Deno.serve(async (req) => {
         transaction_hash,
         subscriptionWallet,
         expectedAmountUSDC,
-        basescanApiKey,
       );
 
       const expiresAt = expiresAtForCycle(cycle);
