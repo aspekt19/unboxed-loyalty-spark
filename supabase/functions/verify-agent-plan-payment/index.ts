@@ -514,7 +514,7 @@ Deno.serve(async (req) => {
         plan: plan.name,
         message: verified
           ? `✅ ${plan.name} (${cycle}) plan activated! Your agents now have ${plan.name}-tier benefits.`
-          : "⏳ Payment recorded. Will be verified by admin shortly.",
+          : "⏳ Payment recorded. It will be verified automatically once the Base network confirms it.",
       });
     }
 
