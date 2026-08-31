@@ -150,7 +150,6 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-  const basescanApiKey = Deno.env.get("BASESCAN_API_KEY") || "";
   const db = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
@@ -280,7 +279,6 @@ Deno.serve(async (req) => {
           transaction_hash,
           subscriptionWallet,
           expectedAmountUSDC,
-          basescanApiKey,
         );
 
         const expiresAt = expiresAtForCycle(cycle);
@@ -354,7 +352,6 @@ Deno.serve(async (req) => {
         transaction_hash,
         subscriptionWallet,
         expectedAmountUSDC,
-        basescanApiKey,
       );
 
       const expiresAt = expiresAtForCycle(cycle);
