@@ -21,6 +21,7 @@ import GuidePage from "./pages/GuidePage";
 import InstallPage from "./pages/InstallPage";
 import ApiDocsPage from "./pages/ApiDocsPage";
 import ForAgentsPage from "./pages/ForAgentsPage";
+import AgentSubscribePage from "./pages/AgentSubscribePage";
 import ExamplesPage from "./pages/ExamplesPage";
 import PricingPage from "./pages/PricingPage";
 import TermsPage from "./pages/legal/TermsPage";
@@ -179,6 +180,7 @@ function AnimatedRoutes() {
           <Route path="/install" element={<InstallPage />} />
           <Route path="/api-docs" element={<ApiDocsPage />} />
           <Route path="/for-agents" element={<ForAgentsPage />} />
+          <Route path="/for-agents/subscribe" element={<AgentSubscribePage />} />
           <Route path="/examples" element={<ExamplesPage />} />
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="/legal/terms" element={<TermsPage />} />
