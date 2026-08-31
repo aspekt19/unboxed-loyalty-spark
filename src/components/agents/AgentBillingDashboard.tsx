@@ -181,12 +181,12 @@ export function AgentBillingDashboard() {
     setUpgradeDialogOpen(true);
   };
 
-  const refreshBilling = () => {
+  const refreshBilling = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['agent-plan-subscription'] });
     queryClient.invalidateQueries({ queryKey: ['agent-pending-subscription'] });
     queryClient.invalidateQueries({ queryKey: ['agents'] });
     queryClient.invalidateQueries({ queryKey: ['effective-plan'] });
-  };
+  }, [queryClient]);
 
   const handleVerifyPayment = async () => {
     if (!txHash.trim() || !selectedPlan || !address) return;
