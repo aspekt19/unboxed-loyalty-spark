@@ -335,8 +335,66 @@ export default function ForAgentsPage() {
               .
             </p>
           </section>
-
-
+          <section className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="text-lg font-semibold">Agent plans &amp; limits</h3>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/pricing">Full pricing</Link>
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Limits apply per owner wallet and reset on the 1st of each month (UTC). Usage is visible live in the
+              dashboard's Plan Usage card. New agent owners get <strong>Pro free for 45 days</strong> — no card required.
+            </p>
+            <div className="grid sm:grid-cols-3 gap-4">
+              {[
+                {
+                  name: "Free",
+                  price: "$0",
+                  rows: ["1 agent (API key)", "200 API calls / month", "Mint cap 1,000 tokens / month", "Mint fee 1.25%"],
+                },
+                {
+                  name: "Pro",
+                  price: "$49/mo",
+                  rows: ["Up to 5 agents", "10,000 API calls / month", "Unlimited minting", "Mint fee 0.50%"],
+                  highlighted: true,
+                },
+                {
+                  name: "Enterprise",
+                  price: "$129/mo",
+                  rows: ["Unlimited agents", "Unlimited API calls", "Unlimited minting", "Mint fee 0.25%"],
+                },
+              ].map((p) => (
+                <Card key={p.name} className={p.highlighted ? "border-primary/40" : undefined}>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <CardTitle className="text-base">{p.name}</CardTitle>
+                      <Badge variant={p.highlighted ? "default" : "secondary"} className="text-xs">
+                        {p.price}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-1.5 text-xs text-muted-foreground">
+                      {p.rows.map((r) => (
+                        <li key={r} className="flex items-start gap-1.5">
+                          <Check className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                          <span>{r}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Annual billing: 15% off Pro, 20% off Enterprise. Payment in USDC on Base. Details:{" "}
+              <Link to="/pricing" className="text-primary underline underline-offset-4">
+                loyalspark.online/pricing
+              </Link>
+              .
+            </p>
+          </section>
 
           <section className="space-y-4">
             <h3 className="text-lg font-semibold flex items-center gap-2">
