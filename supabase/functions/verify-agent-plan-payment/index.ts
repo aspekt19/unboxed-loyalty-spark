@@ -58,6 +58,11 @@ function expiresAtForCycle(cycle: BillingCycle): Date {
   return d;
 }
 
+function cycleForStoredAmount(monthlyPrice: number, slug: string, amount: number): BillingCycle {
+  const annualAmount = expectedAmountForCycle(monthlyPrice, "annual", slug);
+  return Math.abs(amount - annualAmount) < 0.01 ? "annual" : "monthly";
+}
+
 /**
  * Verify USDC transfer to subscription wallet via ERC-20 Transfer logs (6 decimals).
  *
