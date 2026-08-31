@@ -13,7 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { Check, Copy, ExternalLink, Loader2, Wallet, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import WalletConnectButton from '@/components/WalletConnectButton';
+import { WalletConnectButton } from '@/components/WalletConnectButton';
 import {
   BillingCycleToggle,
   type BillingCycle,
@@ -191,6 +191,8 @@ export default function AgentPlanCheckout() {
         functionName: 'transfer',
         args: [subscriptionWallet as `0x${string}`, parseUnits(String(amount), 6)],
         chainId: base.id,
+        account: address as `0x${string}`,
+        chain: base,
       });
       toast.success('Payment sent — confirming onchain…');
       await submitHash(hash);
