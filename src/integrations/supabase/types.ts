@@ -2488,6 +2488,14 @@ export type Database = {
       check_expiring_subscriptions: { Args: never; Returns: undefined }
       check_program_expiration: { Args: never; Returns: undefined }
       claim_gift_certificate: { Args: { p_code: string }; Returns: Json }
+      consume_agent_mint_quota: {
+        Args: {
+          p_agent_id: string
+          p_mint_amount: number
+          p_owner_address: string
+        }
+        Returns: boolean
+      }
       consume_agent_monthly_quota: {
         Args: { p_max_calls: number; p_owner_address: string }
         Returns: boolean

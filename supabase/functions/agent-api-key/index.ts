@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkAgentSeatLimit } from "../_shared/agent-plan-limits.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -89,15 +90,11 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Check agent limit (max 10 per owner)
-      const { count } = await serviceClient
-        .from("agent_registry")
-        .select("id", { count: "exact", head: true })
-        .eq("owner_address", profile.wallet_address);
-
-      if ((count ?? 0) >= 10) {
-        return new Response(JSON.stringify({ error: "Maximum 10 agents per account" }), {
-          status: 400,
+      // Plan seat limit (Free 1 / Pro 5 / Enterprise 100); admin wallets bypass.
+      const seatCheck = await checkAgentSeatLimit(serviceClient, profile.wallet_address);
+      if (!seatCheck.ok) {
+        return new Response(JSON.stringify({ error: seatCheck.message, ...seatCheck.details }), {
+          status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }

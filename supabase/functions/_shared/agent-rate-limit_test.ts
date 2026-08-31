@@ -7,6 +7,11 @@ import {
   resolveAgentRateLimitKind,
   type RateLimitResult,
 } from "./agent-rate-limit.ts";
+import { preloadAdminWallets } from "./admin-wallets.ts";
+
+// The admin-wallet list decrypts once at module load. Await it here so the
+// async crypto work never resolves in the middle of a test (op leak).
+await preloadAdminWallets();
 
 const TEST_AGENT = {
   id: "11111111-1111-1111-1111-111111111111",
