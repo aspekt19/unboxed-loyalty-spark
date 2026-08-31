@@ -2,9 +2,16 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.aspekt19/loyal-spark",
   "title": "Loyal Spark",
-  "description": "Onchain loyalty MCP on Base: programs, mint, rewards, vouchers for AI agents.",
-  "version": "1.0.0",
-  "websiteUrl": "https://loyalspark.online",
+  "description": "Base loyalty MCP (39 tools): programs, mint, rewards, vouchers. lsk_ via SIWE or /for-agents.",
+  "version": "1.0.1",
+  "websiteUrl": "https://loyalspark.online/for-agents",
+  "icons": [
+    {
+      "src": "https://loyalspark.online/media-kit/app-icon-1024.png",
+      "mimeType": "image/png",
+      "sizes": ["any"]
+    }
+  ],
   "repository": {
     "url": "https://github.com/aspekt19/unboxed-loyalty-spark",
     "source": "github"
@@ -16,9 +23,16 @@
       "headers": [
         {
           "name": "x-api-key",
-          "description": "Merchant agent API key (lsk_...). Get at loyalspark.online/for-agents",
+          "description": "Merchant agent API key (lsk_...). Get at loyalspark.online/for-agents or SIWE.",
           "isRequired": true,
           "isSecret": true
+        },
+        {
+          "name": "Authorization",
+          "description": "Alternative auth: Bearer lsk_... (same key as x-api-key).",
+          "isRequired": false,
+          "isSecret": true,
+          "placeholder": "Bearer lsk_..."
         }
       ]
     }
