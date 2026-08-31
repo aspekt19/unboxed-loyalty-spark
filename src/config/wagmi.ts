@@ -91,12 +91,15 @@ const transport = fallback(
   BASE_RPC_URLS.map((url) => http(url, { batch: false, retryCount: 2, retryDelay: 1000 })),
 );
 
+// wagmi, @privy-io/wagmi and this project resolve different viem copies whose
+// Transport types are nominally incompatible (identical at runtime). Cast once
+// so all three wagmi configs can share the same fallback transport.
+const transports = { [base.id]: transport } as unknown as Record<number, never>;
+
 // Farcaster config: standard wagmi with farcasterMiniApp connector
 export const farcasterWagmiConfig = createWagmiConfig({
   chains: [base],
-  transports: {
-    [base.id]: transport,
-  },
+  transports,
   connectors: [farcasterMiniApp()],
   ssr: false,
 });
@@ -104,17 +107,13 @@ export const farcasterWagmiConfig = createWagmiConfig({
 // Privy wagmi config: used for regular browser (Privy manages connectors)
 export const privyWagmiConfig = createPrivyWagmiConfig({
   chains: [base],
-  transports: {
-    [base.id]: transport,
-  },
+  transports,
 });
 
 // Preview fallback: render the app even if Privy iframe init fails inside Lovable preview.
 export const browserPreviewWagmiConfig = createWagmiConfig({
   chains: [base],
-  transports: {
-    [base.id]: transport,
-  },
+  transports,
   connectors: [injected()],
   ssr: false,
 });

@@ -7,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Bot, Plus, Key, Copy, Check, RefreshCw, Power, PowerOff, Eye, FileText, ExternalLink, Cpu, Wallet, Loader2, BookOpen, Trash2, Pencil } from 'lucide-react';
+import { Bot, Plus, Key, Copy, Check, RefreshCw, Power, PowerOff, Eye, FileText, ExternalLink, Cpu, Wallet, Loader2, BookOpen, Trash2, Pencil, Gauge } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,6 +53,30 @@ interface AgentWalletRow {
   wallet_type: string;
   wallet_address: string;
 }
+
+interface AgentPlanRow {
+  name: string;
+  slug: string;
+  max_api_calls_monthly: number | null;
+  max_agents: number;
+  max_mint_amount_monthly: number | string | null;
+}
+
+interface AgentUsageRow {
+  api_calls_count: number | null;
+  mint_total_amount: number | string | null;
+}
+
+function currentPeriodStart(): string {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString().split('T')[0];
+}
+
+function formatLimit(used: number, limit: number | null): { text: string; remaining: number | null } {
+  if (limit === null || limit <= 0) return { text: `${used.toLocaleString()} used · Unlimited`, remaining: null };
+  const remaining = Math.max(0, limit - used);
+  return { text: `${used.toLocaleString()} / ${limit.toLocaleString()}`, remaining };
+}
 export function AgentManagement() {
   const { address } = useAccount();
   const queryClient = useQueryClient();
@@ -79,6 +103,42 @@ export function AgentManagement() {
       return (data || []) as AgentRow[];
     },
     enabled: !!address,
+  });
+
+  // Plan of the owner wallet (any agent carrying a paid plan_id upgrades the
+  // whole wallet — mirrors resolveOwnerPlanLimits in agent-plan-limits.ts).
+  const ownerPlanId = agents.find((a) => a.plan_id)?.plan_id ?? null;
+  const { data: plan } = useQuery({
+    queryKey: ['agent-plan', ownerPlanId],
+    queryFn: async () => {
+      const query = supabase
+        .from('agent_plans')
+        .select('name, slug, max_api_calls_monthly, max_agents, max_mint_amount_monthly');
+      const { data, error } = ownerPlanId
+        ? await query.eq('id', ownerPlanId).maybeSingle()
+        : await query.eq('slug', 'free').maybeSingle();
+      if (error) throw error;
+      return (data ?? null) as AgentPlanRow | null;
+    },
+    enabled: !!address && !isLoading,
+    staleTime: 60_000,
+  });
+
+  // Current-month usage counters (RLS: owners read their own rows).
+  const { data: usage } = useQuery({
+    queryKey: ['agent-usage', address],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('agent_usage')
+        .select('api_calls_count, mint_total_amount')
+        .eq('owner_address', address!.toLowerCase())
+        .eq('period_start', currentPeriodStart())
+        .maybeSingle();
+      if (error) throw error;
+      return (data ?? null) as AgentUsageRow | null;
+    },
+    enabled: !!address,
+    staleTime: 30_000,
   });
 
   const handleCreate = async () => {
@@ -268,6 +328,54 @@ export function AgentManagement() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Plan limits & remaining quota */}
+      {address && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Gauge className="h-5 w-5 text-primary flex-shrink-0" />
+              Plan Usage
+              {plan && (
+                <Badge variant="secondary" className="text-xs capitalize ml-1">
+                  {plan.name}
+                </Badge>
+              )}
+            </CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
+              Monthly limits for your wallet — usage resets on the 1st of each month (UTC)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {(() => {
+              const apiLimit = plan?.max_api_calls_monthly ?? null;
+              const mintLimit = plan?.max_mint_amount_monthly == null ? null : Number(plan.max_mint_amount_monthly);
+              const seatLimit = plan?.max_agents ?? null;
+              const api = formatLimit(Number(usage?.api_calls_count ?? 0), apiLimit);
+              const mint = formatLimit(Number(usage?.mint_total_amount ?? 0), mintLimit);
+              const seats = formatLimit(agents.length, seatLimit);
+              const rows = [
+                { label: 'API calls', ...api },
+                { label: 'Tokens minted', ...mint },
+                { label: 'Agent seats', ...seats },
+              ];
+              return rows.map((row) => (
+                <div key={row.label} className="rounded-md border p-3 space-y-1">
+                  <p className="text-xs text-muted-foreground">{row.label}</p>
+                  <p className="text-sm font-semibold">{row.text}</p>
+                  <p className={`text-xs ${row.remaining !== null && row.remaining <= 0 ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+                    {row.remaining === null
+                      ? 'No cap on your plan'
+                      : row.remaining > 0
+                        ? `${row.remaining.toLocaleString()} left before blocking`
+                        : 'Limit reached — upgrade to continue'}
+                  </p>
+                </div>
+              ));
+            })()}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Create Agent */}
       <Card>
