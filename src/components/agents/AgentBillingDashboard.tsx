@@ -252,7 +252,7 @@ export function AgentBillingDashboard() {
     };
     const timer = window.setInterval(retry, 15000);
     return () => window.clearInterval(timer);
-  }, [pendingSub?.id]);
+  }, [pendingSub?.id, refreshBilling]);
 
   return (
     <div className="space-y-6">
