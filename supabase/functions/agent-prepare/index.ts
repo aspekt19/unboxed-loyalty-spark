@@ -23,6 +23,7 @@ import {
   toTokenWei,
 } from "../_shared/loyalspark-agent-helpers.ts";
 import { assertFeeCompliance, recordFeeObligation } from "../_shared/agent-fee-ledger.ts";
+import { consumeAgentMintQuota } from "../_shared/agent-plan-limits.ts";
 
 import {
   B20_FACTORY_ADDRESS,
@@ -362,6 +363,10 @@ Deno.serve(async (req: Request) => {
         unpaid_fee_mints: compliance.pendingCount,
         unpaid_fee_total: compliance.pendingFeeTotal,
       }, compliance.status ?? 402);
+    }
+    const quota = await consumeAgentMintQuota(db, agent.agentId, merchantAddress, amount);
+    if (!quota.ok) {
+      return json({ error: quota.message, ...quota.details }, 403);
     }
     const feePercent = await getAgentFeePercent(db, agent.agentId);
     const feeAmount = computeMintFeeAmount(amount, feePercent);

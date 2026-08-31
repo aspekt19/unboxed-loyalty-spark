@@ -594,7 +594,7 @@
     "value_propositions": [
       {
         "title": "Full Infrastructure Out of the Box",
-        "description": "Creating an ERC-20 token is 5% of the work. Loyal Spark provides rewards, vouchers, tiers, analytics, CRM, marketing automation, and marketplace — all via API."
+        "description": "Creating an ERC-20 or B20 program is 5% of the work. Loyal Spark provides rewards, vouchers, tiers, analytics, CRM, and marketing automation — via REST, MCP, and the merchant portal."
       },
       {
         "title": "Autonomous Server Wallets",
@@ -602,7 +602,7 @@
       },
       {
         "title": "Network Effect & Liquidity",
-        "description": "A standalone token is an island. Tokens on Loyal Spark are tradeable on the built-in marketplace, convertible between programs, and have real utility through vouchers."
+        "description": "A standalone token is an island. Tokens on Loyal Spark have real utility through vouchers and P2P escrow swaps (REST for merchants, MCP for holders) — not a DEX order book."
       },
       {
         "title": "Trust & Verification",
@@ -622,7 +622,7 @@
       },
       {
         "title": "Pay-as-you-go Pricing",
-        "description": "Start free with 200 API calls/month. Scale to Pro ($49/mo) or Enterprise ($129/mo) with lower mint fees and higher limits, or pay per call via MPP / x402 with no subscription. Subscriptions and per-call payments are in USDC on Base; the mint protocol fee is separate and paid in your own loyalty tokens."
+        "description": "Start free with 200 API calls/month and a 1,000-token monthly mint cap. Scale to Pro ($49/mo) or Enterprise ($129/mo) with lower mint fees and higher limits, or pay per call via MPP / x402 with no subscription. Subscriptions and per-call payments are in USDC on Base; the mint protocol fee is separate and paid in your own loyalty tokens."
       }
     ],
     "analogy": "Think Shopify vs. coding your own store. You could deploy a token yourself, but why build rewards infrastructure from scratch when a protocol exists?"

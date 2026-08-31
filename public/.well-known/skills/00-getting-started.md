@@ -95,7 +95,7 @@ For autonomous onchain transactions, create a Coinbase MPC wallet:
 
 ```bash
 curl -X POST \
-  "https://api.loyalspark.online/agent-api" \
+  "https://api.loyalspark.online/agent-wallet" \
   -H "x-api-key: lsk_..." \
   -H "Content-Type: application/json" \
   -d '{"action": "create_wallet"}'

@@ -162,15 +162,6 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: seatCheck.message, ...seatCheck.details }, 403);
     }
 
-    const { count } = await serviceClient
-      .from("agent_registry")
-      .select("id", { count: "exact", head: true })
-      .eq("owner_address", address);
-
-    if ((count ?? 0) >= 10) {
-      return jsonResponse({ error: "Maximum 10 agents per wallet address" }, 400);
-    }
-
     const validScopes = ["read", "create_program", "mint", "trade", "manage_rewards"];
     let filteredScopes: string[];
     if (Array.isArray(scopesRaw)) {

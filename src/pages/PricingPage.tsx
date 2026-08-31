@@ -92,6 +92,7 @@ const agentPlans: Plan[] = [
     features: [
       { text: "1 API key (lsk_ or rwk_)", included: true },
       { text: "200 API calls / month", included: true },
+      { text: "1,000 loyalty tokens minted / month", included: true },
       { text: "All MCP & REST endpoints", included: true },
       { text: "Mint fee 1.25%", included: true },
       { text: "Multiple agents", included: false },
@@ -299,10 +300,12 @@ const PricingPage = () => {
               </Badge>
               <CardTitle className="text-2xl">Pay-per-call via x402 & MPP</CardTitle>
               <p className="text-muted-foreground mt-2">
-                Any agent can call our paid endpoints with a one-time payment per request —
-                no account, no key. <strong>x402</strong>: USDC on Base (EIP-3009, discoverable
-                via Coinbase Bazaar). <strong>MPP</strong>: pathUSD or USDC on Tempo. Same USD
-                price list on both rails.
+                Pay per request instead of a monthly subscription — no Pro or Enterprise plan
+                required. Merchant write actions still need a free <strong>lsk_</strong> key (or{" "}
+                <strong>rwk_</strong> for holder tools) for identity and scopes; x402/MPP cover the
+                per-call fee. <strong>x402</strong>: USDC on Base (EIP-3009, discoverable via
+                Coinbase Bazaar). <strong>MPP</strong>: pathUSD or USDC on Tempo. Same USD price
+                list on both rails.
               </p>
             </CardHeader>
             <CardContent>

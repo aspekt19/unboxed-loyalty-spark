@@ -27,6 +27,7 @@ const EXCLUDE = new Set<string>([
   "/preview-3d",
   "/native/shopper",
   "/native/business",
+  "/terms", // redirect → /legal/terms; canonical URL is indexed instead
 ]);
 
 // Per-route metadata. Anything not listed here gets sensible defaults.
