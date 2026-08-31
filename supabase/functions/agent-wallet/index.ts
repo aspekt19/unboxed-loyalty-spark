@@ -11,6 +11,7 @@ import {
 
 import { payAndCall, type TypedDataSigner } from "../_shared/x402-pay-client.ts";
 import { authenticateRecipientAgent, insertRecipientActivity } from "../_shared/recipient-agent-auth.ts";
+import { consumeAgentMintQuota } from "../_shared/agent-plan-limits.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -537,7 +538,13 @@ async function handleX402PayAndCall(d: any, agent: any, body: any) {
 
 // `fees_collected_usdc` is a legacy column name: it accumulates mint fee amounts
 // denominated in the merchant's loyalty tokens, never USDC.
-async function trackUsage(d: any, ownerAddress: string, mintAmount: number, feeTokens: number) {
+async function trackUsage(
+  d: any,
+  ownerAddress: string,
+  mintAmount: number,
+  feeTokens: number,
+  mintAlreadyCounted: boolean,
+) {
   const now = new Date();
   const periodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
   const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0];
@@ -547,13 +554,19 @@ async function trackUsage(d: any, ownerAddress: string, mintAmount: number, feeT
     .select("id, api_calls_count, mint_operations_count, mint_total_amount, fees_collected_usdc")
     .eq("owner_address", ownerAddress.toLowerCase())
     .eq("period_start", periodStart)
-    .single();
+    .maybeSingle();
+
+  const mintFields = mintAlreadyCounted
+    ? {}
+    : {
+        mint_operations_count: ((existing?.mint_operations_count as number | null) || 0) + 1,
+        mint_total_amount: ((existing?.mint_total_amount as number | null) || 0) + mintAmount,
+      };
 
   if (existing) {
     await d.from("agent_usage").update({
       api_calls_count: (existing.api_calls_count || 0) + 1,
-      mint_operations_count: (existing.mint_operations_count || 0) + 1,
-      mint_total_amount: (existing.mint_total_amount || 0) + mintAmount,
+      ...mintFields,
       fees_collected_usdc: (existing.fees_collected_usdc || 0) + feeTokens,
       updated_at: new Date().toISOString(),
     }).eq("id", existing.id);
@@ -563,8 +576,8 @@ async function trackUsage(d: any, ownerAddress: string, mintAmount: number, feeT
       period_start: periodStart,
       period_end: periodEnd,
       api_calls_count: 1,
-      mint_operations_count: 1,
-      mint_total_amount: mintAmount,
+      mint_operations_count: mintAlreadyCounted ? 1 : 1,
+      mint_total_amount: mintAlreadyCounted ? mintAmount : mintAmount,
       fees_collected_usdc: feeTokens,
     });
   }
@@ -611,6 +624,10 @@ async function handleServerMint(d: any, agent: any, body: any) {
 
   if (!prog) return jsonResponse({ error: "Program not found or not owned" }, 404);
   if (prog.status !== "active") return jsonResponse({ error: `Program is ${prog.status}` }, 400);
+
+  // Reserve the monthly mint allowance before paying the fee or minting on-chain.
+  const quota = await consumeAgentMintQuota(d, agent.agentId, agent.ownerAddress, amount);
+  if (!quota.ok) return jsonResponse({ error: quota.message, ...quota.details }, 403);
 
   const feePercent = await getAgentFeePercent(d, agent.agentId);
   const feeAmount = computeMintFeeAmount(amount, feePercent);
@@ -745,7 +762,7 @@ async function handleServerMint(d: any, agent: any, body: any) {
   });
 
   // Track monthly usage
-  await trackUsage(d, agent.ownerAddress, amount, feeAmount);
+  await trackUsage(d, agent.ownerAddress, amount, feeAmount, quota.counted);
 
   await d.from("agent_activity_log").insert({
     agent_id: agent.agentId, action: "server_mint",

@@ -18,6 +18,7 @@ import {
 } from "../_shared/agent-fee-ledger.ts";
 
 import { authenticateAgent, type AgentContext } from "./auth.ts";
+import { consumeAgentMintQuota } from "../_shared/agent-plan-limits.ts";
 import { isPaidGatewayRequest } from "../_shared/paid-gateway-auth.ts";
 import { corsHeaders, jsonResponse } from "./http.ts";
 import { parseOptionalCashbackRate, parseOptionalPointsPerDollar } from "../_shared/program-economics.ts";
@@ -1007,6 +1008,16 @@ Deno.serve(async (req) => {
         }, status);
       }
 
+      // Reserve the monthly mint allowance before creating the mint intent.
+      const quota = await consumeAgentMintQuota(serviceClient, agent.agentId, agent.ownerAddress, amount);
+      if (!quota.ok) {
+        await logActivity(serviceClient, agent.agentId, "mint_tokens", body, 403, {
+          error: quota.message,
+          ...quota.details,
+        }, ip);
+        return jsonResponse({ error: quota.message, ...quota.details }, 403);
+      }
+
       const feePercent = await getAgentFeePercent(serviceClient, agent.agentId);
       const feeAmount = computeMintFeeAmount(amount, feePercent);
       const calls = buildMintCallBundle({
@@ -1171,6 +1182,15 @@ Deno.serve(async (req) => {
           unpaid_fee_mints: earnCompliance.pendingCount,
           unpaid_fee_total: earnCompliance.pendingFeeTotal,
         }, status);
+      }
+
+      const quota = await consumeAgentMintQuota(serviceClient, agent.agentId, agent.ownerAddress, tokensToMint);
+      if (!quota.ok) {
+        await logActivity(serviceClient, agent.agentId, "earn_points", body, 403, {
+          error: quota.message,
+          ...quota.details,
+        }, ip);
+        return jsonResponse({ error: quota.message, ...quota.details }, 403);
       }
 
       const feePercent = await getAgentFeePercent(serviceClient, agent.agentId);
