@@ -440,8 +440,8 @@ Deno.serve(async (req) => {
           billing_cycle: cycle,
           plan: plan.name,
           message: verified
-            ? `✅ ${plan.name} (${cycle}) merchant plan activated.`
-            : "⏳ Payment recorded. It will be verified shortly (or contact support if BaseScan key is off).",
+          ? `✅ ${plan.name} (${cycle}) merchant plan activated.`
+          : "⏳ Payment recorded. It will be verified automatically once the Base network confirms it.",
         });
       }
 
