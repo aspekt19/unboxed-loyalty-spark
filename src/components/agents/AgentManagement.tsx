@@ -105,6 +105,42 @@ export function AgentManagement() {
     enabled: !!address,
   });
 
+  // Plan of the owner wallet (any agent carrying a paid plan_id upgrades the
+  // whole wallet — mirrors resolveOwnerPlanLimits in agent-plan-limits.ts).
+  const ownerPlanId = agents.find((a) => a.plan_id)?.plan_id ?? null;
+  const { data: plan } = useQuery({
+    queryKey: ['agent-plan', ownerPlanId],
+    queryFn: async () => {
+      const query = supabase
+        .from('agent_plans')
+        .select('name, slug, max_api_calls_monthly, max_agents, max_mint_amount_monthly');
+      const { data, error } = ownerPlanId
+        ? await query.eq('id', ownerPlanId).maybeSingle()
+        : await query.eq('slug', 'free').maybeSingle();
+      if (error) throw error;
+      return (data ?? null) as AgentPlanRow | null;
+    },
+    enabled: !!address && !isLoading,
+    staleTime: 60_000,
+  });
+
+  // Current-month usage counters (RLS: owners read their own rows).
+  const { data: usage } = useQuery({
+    queryKey: ['agent-usage', address],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('agent_usage')
+        .select('api_calls_count, mint_total_amount')
+        .eq('owner_address', address!.toLowerCase())
+        .eq('period_start', currentPeriodStart())
+        .maybeSingle();
+      if (error) throw error;
+      return (data ?? null) as AgentUsageRow | null;
+    },
+    enabled: !!address,
+    staleTime: 30_000,
+  });
+
   const handleCreate = async () => {
     if (!name.trim()) {
       toast.error('Please enter an agent name');
