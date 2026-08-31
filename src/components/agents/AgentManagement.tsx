@@ -329,6 +329,54 @@ export function AgentManagement() {
         </CardContent>
       </Card>
 
+      {/* Plan limits & remaining quota */}
+      {address && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Gauge className="h-5 w-5 text-primary flex-shrink-0" />
+              Plan Usage
+              {plan && (
+                <Badge variant="secondary" className="text-xs capitalize ml-1">
+                  {plan.name}
+                </Badge>
+              )}
+            </CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
+              Monthly limits for your wallet — usage resets on the 1st of each month (UTC)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {(() => {
+              const apiLimit = plan?.max_api_calls_monthly ?? null;
+              const mintLimit = plan?.max_mint_amount_monthly == null ? null : Number(plan.max_mint_amount_monthly);
+              const seatLimit = plan?.max_agents ?? null;
+              const api = formatLimit(Number(usage?.api_calls_count ?? 0), apiLimit);
+              const mint = formatLimit(Number(usage?.mint_total_amount ?? 0), mintLimit);
+              const seats = formatLimit(agents.length, seatLimit);
+              const rows = [
+                { label: 'API calls', ...api },
+                { label: 'Tokens minted', ...mint },
+                { label: 'Agent seats', ...seats },
+              ];
+              return rows.map((row) => (
+                <div key={row.label} className="rounded-md border p-3 space-y-1">
+                  <p className="text-xs text-muted-foreground">{row.label}</p>
+                  <p className="text-sm font-semibold">{row.text}</p>
+                  <p className={`text-xs ${row.remaining !== null && row.remaining <= 0 ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+                    {row.remaining === null
+                      ? 'No cap on your plan'
+                      : row.remaining > 0
+                        ? `${row.remaining.toLocaleString()} left before blocking`
+                        : 'Limit reached — upgrade to continue'}
+                  </p>
+                </div>
+              ));
+            })()}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Create Agent */}
       <Card>
         <CardHeader>
