@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -239,6 +239,21 @@ export function AgentBillingDashboard() {
     }
   };
 
+  useEffect(() => {
+    if (!pendingSub?.id) return;
+    const retry = async () => {
+      const { data, error } = await supabase.functions.invoke('verify-agent-plan-payment', {
+        body: { action: 'retry_verification', subscription_id: pendingSub.id, product: 'agent' },
+      });
+      if (!error && data?.verified) {
+        toast.success(data.message);
+        refreshBilling();
+      }
+    };
+    const timer = window.setInterval(retry, 15000);
+    return () => window.clearInterval(timer);
+  }, [pendingSub?.id]);
+
   return (
     <div className="space-y-6">
       <Tabs defaultValue="usage">
@@ -331,6 +346,21 @@ export function AgentBillingDashboard() {
               </div>
             </CardContent>
           </Card>
+
+          {pendingSub && (
+            <Alert>
+              <Loader2 className="h-4 w-4" />
+              <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
+                <span>
+                  Payment of <strong>{Number(pendingSub.amount_usdc).toLocaleString()} USDC</strong> is awaiting onchain confirmation.
+                </span>
+                <Button variant="outline" size="sm" onClick={handleRetryVerification} disabled={isVerifying}>
+                  {isVerifying ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : null}
+                  Check again
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
         </TabsContent>
 
         {/* PLANS TAB */}
