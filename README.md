@@ -270,7 +270,7 @@ Agents can create their own Coinbase MPC wallets on Base for autonomous transact
 curl -X POST \
   -H "x-api-key: lsk_YOUR_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"action":"create_server_wallet"}' \
+  -d '{"action":"create_wallet"}' \
   https://api.loyalspark.online/agent-wallet
 ```
 
@@ -289,7 +289,7 @@ Benefits:
 
 **Merchant SaaS (portal):** Starter **$39** / Growth **$79** / Scale **$149** per month (annual discount 15–20% optional) — details in [docs/business/MONETIZATION_AND_PRICING.md](./docs/business/MONETIZATION_AND_PRICING.md).
 
-Payments for agent plans on-chain in USDC on Base ($1 = 1 USDC).
+Payments for agent plans on-chain in USDC on Base ($1 = 1 USDC). Plan limits (API calls, agent seats, Free-tier mint cap) are enforced server-side in Edge Functions — see [MONETIZATION_AND_PRICING.md](./docs/business/MONETIZATION_AND_PRICING.md).
 
 **Mint fee is not USDC.** It is charged in the merchant's own loyalty tokens — a second `mint(address,uint256)` to the platform fee wallet on the same token contract, returned first in the `calls[]` bundle. The token contract has no `mintWithFee`, so settlement is tracked off-chain: each prepared mint creates a fee obligation, and 5+ obligations unpaid for over 60 minutes block further mints with HTTP 402. Confirm with `POST /agent-api/mint/confirm`.
 

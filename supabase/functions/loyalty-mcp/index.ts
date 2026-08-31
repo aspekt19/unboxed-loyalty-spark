@@ -21,6 +21,7 @@ import {
   recordFeeObligation,
   settleFeeObligation,
 } from "../_shared/agent-fee-ledger.ts";
+import { consumeAgentMintQuota } from "../_shared/agent-plan-limits.ts";
 
 import {
   B20_FACTORY_ADDRESS,
@@ -475,6 +476,8 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
       if (prog.status !== "active") return T(JSON.stringify({ error: `Program is ${prog.status}` }));
       const compliance = await assertFeeCompliance(d, agent.agentId);
       if (!compliance.ok) return T(JSON.stringify({ error: compliance.message, unpaid_fee_mints: compliance.pendingCount, unpaid_fee_total: compliance.pendingFeeTotal, status: compliance.status ?? 402 }));
+      const quota = await consumeAgentMintQuota(d, agent.agentId, agent.ownerAddress, amount);
+      if (!quota.ok) return T(JSON.stringify({ error: quota.message, ...quota.details }));
       const feePercent = await getAgentFeePercent(d, agent.agentId);
       const feeAmount = computeMintFeeAmount(amount, feePercent);
       const calls = buildMintCallBundle({ tokenAddress: token_address, recipientAddress: recipient, amount, feeAmount });
@@ -539,6 +542,8 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
       if (tokensToMint <= 0) return T('{"error":"Calculated token amount is zero"}');
       const earnCompliance = await assertFeeCompliance(d, agent.agentId);
       if (!earnCompliance.ok) return T(JSON.stringify({ error: earnCompliance.message, unpaid_fee_mints: earnCompliance.pendingCount, unpaid_fee_total: earnCompliance.pendingFeeTotal, status: earnCompliance.status ?? 402 }));
+      const quota = await consumeAgentMintQuota(d, agent.agentId, agent.ownerAddress, tokensToMint);
+      if (!quota.ok) return T(JSON.stringify({ error: quota.message, ...quota.details }));
       const feePercent = await getAgentFeePercent(d, agent.agentId);
       const feeAmount = computeMintFeeAmount(tokensToMint, feePercent);
       const calls = buildMintCallBundle({ tokenAddress: token_address, recipientAddress: customer_address, amount: tokensToMint, feeAmount });

@@ -50,7 +50,7 @@ The Loyal Spark platform operates as a dual-mode protocol where **humans** inter
 
 ### 4. CDP Server Wallets (MPC) ✅
 - **Edge Function**: `agent-wallet` — creates and manages Coinbase MPC wallets
-- **Actions**: `create_server_wallet`, `server_mint`, `sign_transaction`
+- **Actions**: `create_wallet`, `server_mint`, `sign_transaction`
 - **Auth**: Direct REST API calls to CDP v2 (no heavy SDK)
 - **JWT**: Ed25519 Bearer token + ES256 X-Wallet-Auth for write operations
 - **Table**: `agent_wallets` — stores wallet addresses linked to agents

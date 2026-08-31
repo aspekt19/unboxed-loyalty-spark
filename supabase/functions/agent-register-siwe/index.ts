@@ -9,6 +9,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createPublicClient, http, fallback } from "npm:viem@2.46.0";
 import { base } from "npm:viem@2.46.0/chains";
 import { BASE_RPC_URLS } from "../_shared/base-rpc.ts";
+import { checkAgentSeatLimit } from "../_shared/agent-plan-limits.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -154,6 +155,11 @@ Deno.serve(async (req) => {
     }
     if (!consumedNonce) {
       return jsonResponse({ error: "Invalid or already used nonce" }, 401);
+    }
+
+    const seatCheck = await checkAgentSeatLimit(serviceClient, address);
+    if (!seatCheck.ok) {
+      return jsonResponse({ error: seatCheck.message, ...seatCheck.details }, 403);
     }
 
     const { count } = await serviceClient

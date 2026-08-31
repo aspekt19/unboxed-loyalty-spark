@@ -23,10 +23,10 @@ Loyal Spark integrates Coinbase CDP (Coinbase Developer Platform) MPC wallets:
 
 ```bash
 curl -X POST \
-  "https://api.loyalspark.online/agent-api" \
+  "https://api.loyalspark.online/agent-wallet" \
   -H "x-api-key: lsk_..." \
   -H "Content-Type: application/json" \
-  -d '{"action": "create_server_wallet"}'
+  -d '{"action": "create_wallet"}'
 ```
 
 **Response:**

@@ -2,8 +2,8 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.aspekt19/loyal-spark",
   "title": "Loyal Spark",
-  "description": "Base loyalty MCP (39 tools): programs, mint, rewards, vouchers. lsk_ via SIWE or /for-agents. Plans per owner wallet (reset monthly, UTC): Free $0 — 1 agent, 200 API calls/mo, mint cap 1,000 tokens/mo, mint fee 1.25%; Pro $49/mo — up to 5 agents, 10,000 calls/mo, unlimited mint, fee 0.50%; Enterprise $129/mo — unlimited agents/calls/mint, fee 0.25%. New owners get Pro free for 45 days. Full pricing: loyalspark.online/pricing",
-  "version": "1.0.2",
+  "description": "Base MCP (39 tools) on Base: programs, mint, rewards. lsk_ key; plan limits enforced. /for-agents",
+  "version": "1.0.3",
   "websiteUrl": "https://loyalspark.online/for-agents",
   "icons": [
     {

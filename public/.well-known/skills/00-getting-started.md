@@ -98,7 +98,7 @@ curl -X POST \
   "https://api.loyalspark.online/agent-api" \
   -H "x-api-key: lsk_..." \
   -H "Content-Type: application/json" \
-  -d '{"action": "create_server_wallet"}'
+  -d '{"action": "create_wallet"}'
 ```
 
 ## Success Criteria

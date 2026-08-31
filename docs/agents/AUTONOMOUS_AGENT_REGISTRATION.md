@@ -70,7 +70,8 @@ If `scopes` is omitted or empty, default is **`["read"]`**. Allowed values: `rea
 
 ## Limits
 
-- Up to **10** agents per wallet address (same as dashboard).
+- Up to **10** agents per wallet address (platform ceiling).
+- **Plan seat limits** also apply (Free **1**, Pro **5**, Enterprise unlimited) — same as the merchant dashboard; enforced on SIWE register and in `agent-api-key`.
 - Nonce replay protection via `siwe_nonces`.
 - Usage and billing follow the same **agent plans** as keys created in the merchant UI.
 
