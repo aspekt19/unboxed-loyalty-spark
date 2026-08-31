@@ -251,7 +251,7 @@ export type Database = {
           features: Json | null
           id: string
           is_active: boolean | null
-          max_agents: number
+          max_agents: number | null
           max_api_calls_monthly: number | null
           max_mint_amount_monthly: number | null
           name: string
@@ -267,7 +267,7 @@ export type Database = {
           features?: Json | null
           id?: string
           is_active?: boolean | null
-          max_agents?: number
+          max_agents?: number | null
           max_api_calls_monthly?: number | null
           max_mint_amount_monthly?: number | null
           name: string
@@ -283,7 +283,7 @@ export type Database = {
           features?: Json | null
           id?: string
           is_active?: boolean | null
-          max_agents?: number
+          max_agents?: number | null
           max_api_calls_monthly?: number | null
           max_mint_amount_monthly?: number | null
           name?: string
