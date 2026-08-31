@@ -1759,17 +1759,13 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Missing or invalid tx_hash query param" }, 400);
       }
 
-      const basescanKey = Deno.env.get("BASESCAN_API_KEY") || "";
-      const receiptUrl = `https://api.basescan.org/api?module=proxy&action=eth_getTransactionReceipt&txhash=${txHash}&apikey=${basescanKey}`;
-
       try {
-        const res = await fetch(receiptUrl);
-        const data = await res.json();
-        if (!data.result || !data.result.logs) {
+        // Base RPC with multi-provider failover (BaseScan V1 was retired by Etherscan).
+        const receipt = await getTransactionReceipt(txHash);
+        if (!receipt || !receipt.logs) {
           return jsonResponse({ error: "Transaction not found or not yet confirmed", tx_hash: txHash }, 404);
         }
 
-        const receipt = data.result;
 
         const factoryLower = FACTORY_ADDRESS.toLowerCase();
         const b20FactoryLower = B20_FACTORY_ADDRESS.toLowerCase();
