@@ -9,14 +9,14 @@ If both servers are connected, keep this division of labor.
 
 ## Detection
 
-Check whether Base MCP tools such as `send_transaction`, `send_calls`, `get_address`, and `get_balance` are exposed alongside Loyal Spark tools. If yes, use the paired flow. If only Loyal Spark is connected, use the Loyal Spark CDP MPC wallet path (`use_agent_wallet: true`) or ask for a signer.
+Check whether Base MCP tools such as `send_calls`, `get_wallets`, and balance/history tools are exposed alongside Loyal Spark tools. If yes, use the paired flow. If only Loyal Spark is connected, use the Loyal Spark CDP MPC wallet path (`use_agent_wallet: true`) or ask for a signer.
 
 ## Paired flows
 
 ### 1. Deploy a new B20 loyalty program (default)
 
 1. `create_loyalty_program(name, symbol, ...)` → returns one B20 factory call.
-2. Base MCP `send_transaction({ to: factory, data, value: 0 })` or `send_calls([{ to, data, value }])`.
+2. Base MCP `send_calls([{ to: factory, data, value: "0x0" }])`.
 3. Wait for the receipt; extract `token_address` from `B20Created` `topics[1]`, or call `GET /agent-api/tx-receipt?tx_hash=…`.
 4. `register_loyalty_program({ token_address, token_standard: "b20", ... })`.
 5. The program is active. Do **not** send `activate_loyalty_program` for B20.
@@ -34,7 +34,7 @@ Check whether Base MCP tools such as `send_transaction`, `send_calls`, `get_addr
 ### 3. Mint loyalty points
 
 1. `mint_loyalty_tokens({ token_address, recipient, amount })` → fee-first `calls[]` plus `fee_obligation_id`.
-2. Prefer one EIP-5792 `send_calls` batch in the returned order: protocol fee, then recipient mint.
+2. One EIP-5792 `send_calls` batch in the returned order: protocol fee, then recipient mint.
 3. Call `confirm_mint_fee` with the confirmed fee tx hash (and recipient tx hash when returned).
 
 ### 4. Redeem a reward

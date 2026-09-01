@@ -34,8 +34,8 @@ Loyal Spark advertises its own tool catalog (39 merchant + 20 recipient tools). 
 | Topic | Reference |
 | --- | --- |
 | Two API personas: `lsk_` vs `rwk_` | [references/auth.md](references/auth.md) |
-| B20 native spec and roles/policies | [../../public/.well-known/skills/14-b20-native-spec.md](../../public/.well-known/skills/14-b20-native-spec.md) |
-| Payment choices: x402 exact, MPP, subscriptions | [references/x402-paid.md](references/x402-paid.md) |
+| B20 native spec and roles/policies | [references/b20-native-spec.md](references/b20-native-spec.md) |
+| Payment choices: x402 exact, MPP, subscriptions | [references/payment-scenarios.md](references/payment-scenarios.md) · [references/x402-paid.md](references/x402-paid.md) |
 | Calldata execution and fee obligations | [references/calldata-flow.md](references/calldata-flow.md) |
 | Pairing with Base MCP for signing | [references/base-mcp-integration.md](references/base-mcp-integration.md) |
 | Gift certificates | [references/gift-certificates.md](references/gift-certificates.md) |
@@ -44,7 +44,7 @@ Loyal Spark advertises its own tool catalog (39 merchant + 20 recipient tools). 
 
 ## Pairing with Base MCP
 
-Loyal Spark tools return **ready-to-sign calldata**, not signed transactions. With Base MCP: call the tool, pass `{ to, data, value }` to `send_transaction` or `send_calls`, let Base Account approve, wait for a receipt, then run any required sync endpoint. Use EIP-5792 batching when the response returns multiple calls. For autonomous agents without Base Account, use a Loyal Spark CDP MPC wallet (`agent-wallet` endpoint).
+Loyal Spark tools return **ready-to-sign calldata**, not signed transactions. With Base MCP: call the tool, pass `{ to, data, value }` to **`send_calls`** (EIP-5792 batch when multiple calls), let Base Account approve, wait for a receipt, then run any required sync endpoint. For autonomous agents without Base Account, use a Loyal Spark CDP MPC wallet (`agent-wallet` endpoint).
 
 ## Installation
 

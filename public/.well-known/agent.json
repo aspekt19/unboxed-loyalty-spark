@@ -2,7 +2,7 @@
   "name": "Loyal Spark",
   "description": "Onchain loyalty protocol on Base. New programs deploy as native B20 Asset programs by default; legacy ERC-20 programs remain supported. Two agent personas: MERCHANT (lsk_, 28 authenticated REST routes + 1 public + 39 MCP tools at /loyalty-mcp) creates programs, registers and activates them when needed, manages rewards, mints tokens, runs P2P trading, gift certificates (LOYAL-XXXXXX), CDP MPC wallets, and POST /earn cashback. RECIPIENT (rwk_, 14 REST routes at /recipient-api + 20 MCP tools at /recipient-loyalty-mcp) holds tokens, redeems rewards, P2P swaps, claims gift certificates, and prepares loyalty token transfers. Pay-per-call via MPP (pathUSD/USDC on Tempo) or x402 v2 (USDC on Base) — both gateways relay merchant + recipient corridors with Coinbase Bazaar discovery metadata.",
   "url": "https://loyalspark.online",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "protocol": "a2a-loyalty",
   "capabilities": [
     "create_loyalty_program",
@@ -584,7 +584,7 @@
   "skills": {
     "url": "https://loyalspark.online/.well-known/skills/index.md",
     "format": "markdown",
-    "guide_count": 13,
+    "guide_count": 16,
     "list": [
       {"id": "getting-started", "file": "00-getting-started.md", "description": "Register agent, get API key, first request"},
       {"id": "create-program", "file": "01-create-loyalty-program.md", "description": "Deploy B20 loyalty token on Base (legacy ERC-20 optional)"},
@@ -598,7 +598,10 @@
       {"id": "vouchers", "file": "09-vouchers.md", "description": "Voucher lifecycle management"},
       {"id": "server-wallets", "file": "10-server-wallets.md", "description": "CDP MPC wallets for autonomous transactions"},
       {"id": "earn-points", "file": "11-earn-points.md", "description": "Auto-calculate tokens from purchase amount (cashback)"},
-      {"id": "gift-certificates", "file": "12-gift-certificates.md", "description": "Issue, claim and mint LOYAL-XXXXXX gift / welcome certificates"}
+      {"id": "gift-certificates", "file": "12-gift-certificates.md", "description": "Issue, claim and mint LOYAL-XXXXXX gift / welcome certificates"},
+      {"id": "endpoint-workflows", "file": "13-endpoint-workflows.md", "description": "Multi-step REST/MCP workflows and prerequisites"},
+      {"id": "b20-native-spec", "file": "14-b20-native-spec.md", "description": "Base Beryl B20 Asset semantics for loyalty tokens"},
+      {"id": "payment-scenarios", "file": "15-payment-scenarios.md", "description": "x402 exact, MPP, subscriptions, and spend policies"}
     ]
   },
   "why_use": {

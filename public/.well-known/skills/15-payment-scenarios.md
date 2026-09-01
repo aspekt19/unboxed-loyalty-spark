@@ -85,7 +85,7 @@ Pay once a month in USDC on Base instead of per call:
 
 | Plan | Price | API calls/mo | Agents | Mint fee |
 |------|-------|--------------|--------|----------|
-| Free | $0 | 200 | 1 | 1.25% |
+| Free | $0 | 200 | 1 | 1,000 tokens/mo · 1.25% |
 | Pro | $49 USDC | 10,000 | 5 | 0.5% |
 | Enterprise | $129 USDC | Unlimited | Unlimited | 0.25% |
 

@@ -65,7 +65,7 @@ Subscriptions replace per-call charges for recurring use and also change the min
 
 | Plan | Price | API calls/month | Agents | Mint fee |
 |------|-------|-----------------|--------|----------|
-| Free | $0 | 200 | 1 | 1.25% |
+| Free | $0 | 200 | 1 | 1,000 tokens/mo · 1.25% mint fee |
 | Pro | $49 USDC/month | 10,000 | 5 | 0.50% |
 | Enterprise | $129 USDC/month | Unlimited | Unlimited | 0.25% |
 
@@ -87,6 +87,7 @@ The Base payments lifecycle also describes variable `upto` authorizations, parti
 
 ## Next references
 
-- [B20 Native Spec](../../.well-known/skills/14-b20-native-spec.md)
+- [B20 Native Spec](./b20-native-spec.md)
+- [Payment scenarios](./payment-scenarios.md)
 - [Base MCP integration](./base-mcp-integration.md)
 - [Calldata flow](./calldata-flow.md)

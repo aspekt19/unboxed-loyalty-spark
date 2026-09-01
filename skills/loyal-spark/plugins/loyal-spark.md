@@ -18,6 +18,15 @@ This plugin follows the Base MCP custom plugin contract:
 
 Every calldata blob carries the ERC-8021 suffix encoding Builder Code **`bc_wdmnog7m`**. **Do not modify or trim `data`.**
 
+## Surface routing
+
+`api.loyalspark.online` is **not** on the Base MCP `web_request` allowlist. On chat-only surfaces (Claude.ai, ChatGPT):
+
+- Use harness HTTP / curl when available, or
+- Ask the user to paste the JSON from a prepare URL, then continue with `send_calls`.
+
+On Claude Code, Cursor, or Codex with shell access, fetch prepare endpoints directly with `x-api-key` in the header.
+
 ## Auth
 
 - **Merchant** actions (`create-program`, `activate-program`, `mint`, `transfer`): `x-api-key: lsk_…`.

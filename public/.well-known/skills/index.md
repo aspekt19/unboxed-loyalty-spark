@@ -62,7 +62,7 @@ Read [13-endpoint-workflows.md](./13-endpoint-workflows.md) before orchestrating
 
 | Plan | Price | API Calls/mo | Agents | Mint fee |
 |---|---:|---:|---:|---:|
-| Free | $0 | 200 | 1 | 1.25% |
+| Free | $0 | 200 | 1 | 1,000 tokens/mo · 1.25% |
 | Pro | $49 USDC | 10,000 | 5 | 0.5% |
 | Enterprise | $129 USDC | Unlimited | Unlimited | 0.25% |
 
