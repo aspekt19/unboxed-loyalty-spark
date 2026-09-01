@@ -514,7 +514,7 @@ export default function ForAgentsPage() {
             </h3>
             <p className="text-sm text-muted-foreground">
               Sixteen step-by-step guides (<code className="text-xs bg-muted px-1 rounded">00</code>–
-              <code className="text-xs bg-muted px-1 rounded">11</code>) live under{" "}
+              <code className="text-xs bg-muted px-1 rounded">15</code>) live under{" "}
               <code className="text-xs bg-muted px-1 rounded">/.well-known/skills/</code>.
             </p>
             <Button asChild variant="outline" size="sm">
