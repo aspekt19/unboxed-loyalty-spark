@@ -31,6 +31,19 @@ const RECIPIENT_MCP_URL = `${API_ORIGIN}/recipient-loyalty-mcp`;
 // ---- Pricing tables (kept aligned with supabase/functions/_shared/*) ----
 
 // Two-phase P2P accept body (kept in sync with supabase/functions/_shared/marketplace-p2p.ts)
+/** Handler-owned GET /recipient-api/offers 200 body: marketplaceListOffers always returns `offers`. */
+const RECIPIENT_API_OFFERS_SUCCESS_SCHEMA = {
+  type: "object",
+  required: ["offers"],
+  additionalProperties: true,
+  properties: {
+    offers: {
+      type: "array",
+      items: { type: "object", additionalProperties: true },
+    },
+  },
+};
+
 const ACCEPT_OFFER_BODY = {
   type: "object",
   required: ["offer_id"],
@@ -93,7 +106,12 @@ const RECIPIENT_REST = {
     "/recipient-api/balance": { price: "0.001", summary: "Get balance for one loyalty token", desc: "Returns balance and tier for the holder for a single loyalty token." },
     "/recipient-api/rewards": { price: "0.001", summary: "List rewards available to the holder", desc: "Lists redeemable rewards in programs where the holder has activity." },
     "/recipient-api/vouchers": { price: "0.001", summary: "List vouchers issued to the holder", desc: "Returns the holder's vouchers (redeemed rewards) with status." },
-    "/recipient-api/offers": { price: "0.001", summary: "List P2P marketplace offers visible to the holder", desc: "Lists P2P swap offers the holder can accept (filterable by token_address)." },
+    "/recipient-api/offers": {
+      price: "0.001",
+      summary: "List P2P marketplace offers visible to the holder",
+      desc: "Lists P2P swap offers the holder can accept (filterable by token_address).",
+      successSchema: RECIPIENT_API_OFFERS_SUCCESS_SCHEMA,
+    },
     "/recipient-api/workflow/reward-status": { price: "0.001", summary: "Autonomous reward redemption status", desc: "Returns the current reward redemption step and machine-readable next_actions[] for the holder." },
   },
   POST: {
@@ -178,8 +196,8 @@ function paymentInfo(price) {
   };
 }
 
-function jsonOk() {
-  return { description: "Successful response", content: { "application/json": { schema: { type: "object" } } } };
+function jsonOk(schema = { type: "object" }) {
+  return { description: "Successful response", content: { "application/json": { schema } } };
 }
 
 function paid402() {
@@ -204,7 +222,7 @@ function buildRestOp(method, path, meta, kind) {
     summary: meta.summary,
     description: meta.desc,
     tags: [kind === "merchant" ? "Merchant REST" : "Recipient REST"],
-    responses: { "200": jsonOk(), "402": paid402() },
+    responses: { "200": jsonOk(meta.successSchema), "402": paid402() },
     "x-input-schema": meta.body ?? flexibleInputSchema,
   };
   if (meta.price && meta.price !== "0") {

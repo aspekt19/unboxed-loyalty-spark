@@ -175,6 +175,42 @@ function publicFunctionUrl(requestUrl: URL, supabaseUrl: string, fnName: string)
 /** CDP validates `extensions.bazaar.info` against `extensions.bazaar.schema` (x402 bazaar spec). */
 const JSON_SCHEMA_2020_12 = "https://json-schema.org/draft/2020-12/schema" as const;
 
+/** GET recipient-api/offers 200: marketplaceListOffers always returns `offers` (possibly empty). */
+export const RECIPIENT_API_OFFERS_SUCCESS_SCHEMA = {
+  $schema: JSON_SCHEMA_2020_12,
+  type: "object",
+  required: ["offers"],
+  additionalProperties: true,
+  properties: {
+    offers: {
+      type: "array",
+      items: { type: "object", additionalProperties: true },
+    },
+  },
+} as const;
+
+function restApplicationOutput(method: string, resource: string): {
+  schema: Record<string, unknown>;
+  example: Record<string, unknown>;
+  includeBazaarOutputSchema: boolean;
+} {
+  if (method === "GET" && resource === "recipient-api/offers") {
+    return {
+      schema: { ...RECIPIENT_API_OFFERS_SUCCESS_SCHEMA },
+      example: { offers: [] },
+      includeBazaarOutputSchema: true,
+    };
+  }
+  return {
+    schema: {
+      $schema: "https://json-schema.org/draft/2020-12/schema",
+      type: "object",
+    },
+    example: { ok: true, resource },
+    includeBazaarOutputSchema: false,
+  };
+}
+
 function bazaarSchemaHttpQuery(method: "GET" | "HEAD" | "DELETE"): Record<string, unknown> {
   return {
     $schema: JSON_SCHEMA_2020_12,
@@ -788,6 +824,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
   // Canonical per-route JSON Schema — reused for both `outputSchema.input.inputSchema`
   // (x402 v2 outputSchema) and `extensions.bazaar.info.inputSchema` (CDP Bazaar discovery).
   const inputSchema = getRestInfoInputSchema(method, p.resource);
+  const applicationOutput = restApplicationOutput(method, p.resource);
 
   const accept: Record<string, unknown> = {
     scheme: "exact",
@@ -817,10 +854,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
       output: {
         type: "json",
         description: "JSON from Loyal Spark agent-api or recipient-api. See OpenAPI for response shape.",
-        schema: {
-          $schema: "https://json-schema.org/draft/2020-12/schema",
-          type: "object",
-        },
+        schema: applicationOutput.schema,
       },
     },
     extensions: {
@@ -848,10 +882,16 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
             // JSON body for POST). Validators (agentic.market, x402scan) flip
             // "INPUT SCHEMA PRESENT" → yes when this field is present at info level.
             inputSchema,
-            output: {
-              type: "json",
-              example: { ok: true, resource: p.resource },
-            },
+            output: applicationOutput.includeBazaarOutputSchema
+              ? {
+                type: "json",
+                example: applicationOutput.example,
+                schema: applicationOutput.schema,
+              }
+              : {
+                type: "json",
+                example: applicationOutput.example,
+              },
           },
           schema: isQuery
             ? bazaarSchemaHttpQuery(method as "GET" | "HEAD" | "DELETE")
