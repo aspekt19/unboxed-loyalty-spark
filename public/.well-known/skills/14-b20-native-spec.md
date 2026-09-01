@@ -54,7 +54,7 @@ Admin exit rules:
 Pause is per `PausableFeature`, not global: `TRANSFER`, `MINT`, `BURN`, `SEIZE`.
 A merchant can stop issuance (pause `MINT`) while customers keep spending existing points (`TRANSFER` still live). Loyal Spark's program-expiry logic is enforced in the backend (`check_program_expiration()`), not by pausing.
 
-## 5. Memos — recommended for loyalty attribution
+## 5. Memos — optional onchain attribution
 
 B20 adds memo-carrying variants: `transferWithMemo`, `mintWithMemo`, `burnWithMemo`, …
 
@@ -62,7 +62,7 @@ B20 adds memo-carrying variants: `transferWithMemo`, `mintWithMemo`, `burnWithMe
 - Indexers join by `(txHash, logIndex - 1)`.
 - Use for order ids, voucher codes, campaign ids: `memo = keccak256("order:12345")` or a 32-byte raw ASCII tag.
 
-Loyal Spark currently emits standard `mint` / `transfer` calldata (no memo). If your agent needs onchain attribution today, sign the memo variant yourself against the token address returned by `register-program`; a first-class `memo` field on `POST /agent-api/mint` is a roadmap item.
+Loyal Spark currently emits standard `mint` / `transfer` calldata (no memo). The public API does not currently accept a `memo` field; a first-class memo request is a roadmap item. Agents must not claim memo attribution was recorded unless the returned calldata explicitly identifies a memo variant.
 
 ## 6. Other spec facts worth knowing
 

@@ -58,13 +58,14 @@ The API returns calldata for `transfer(address,uint256)`:
 
 Merchants use `lsk_` + `transfer_loyalty_tokens`. **Token holders** (customer / autonomous agent bound to one wallet) use **`rwk_`**:
 
-- **MCP:** `prepare_loyalty_token_transfer` on `recipient-loyalty-mcp` (same calldata: `transfer(address,uint256)` + Builder Code; amount in human units, 18 decimals in encoding — same as merchant tool).
+- **MCP:** `prepare_loyalty_token_transfer` on `recipient-loyalty-mcp` (B20-compatible `transfer(address,uint256)` + Builder Code; amount in human units, 18 decimals in encoding — same as merchant tool).
 - **REST:** `POST …/recipient-api/prepare-transfer` with JSON `{ "token_address", "to", "amount" }` and header `x-api-key: rwk_…`.
 
-The loyalty program must exist and be **`active`** in Loyal Spark. The signing EOA must be the wallet bound to the `rwk_` key; recipients can send to **any** address — transferable loyalty points are standard ERC-20 transfers from the holder.
+The loyalty program must exist and be **`active`** in Loyal Spark. The signing EOA must be the wallet bound to the `rwk_` key; recipients can send to **any** address when the B20 transfer policy allows it. For Base smart accounts, use normal `approve` calldata for escrow: B20 ERC-2612 permit uses version `"1"` and does not accept ERC-1271 contract signatures.
 
 ## Important Notes
 - Transfer requires the sender to hold sufficient token balance
+- If a B20 transfer reverts, inspect `TRANSFER_SENDER` / `TRANSFER_RECEIVER` policy scopes and granular `TRANSFER` pause before assuming a balance problem
 - The calldata includes Base Builder Code for attribution
 - Program must be in `active` status
 

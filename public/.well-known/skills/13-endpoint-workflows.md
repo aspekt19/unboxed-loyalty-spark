@@ -34,8 +34,9 @@ Teach AI agents how to compose Loyal Spark endpoints into complete business flow
    - `merchant_address`
 
 4. **B20 is the default for new programs.**
-   - `b20`: one deploy tx, active immediately after `register-program`
-   - `erc20`: legacy path, requires explicit activation flow
+   - `b20`: Base-native Asset precompile, one deploy tx, active immediately after `register-program`
+   - `erc20`: legacy Loyal Spark path, requires explicit activation flow
+   - B20 remains ERC-20-compatible for the existing balance, transfer, allowance, mint, escrow, and voucher interfaces
 
 5. **Onchain-first operations need confirmation before follow-up.**
    If a response returns calldata or depends on a tx hash, broadcast the tx, wait for confirmation, then continue.
@@ -205,9 +206,17 @@ This is always a multi-step flow.
 - If the user asks to "redeem", expect an onchain transfer step.
 - If the agent only has a recipient key (`rwk_`), do not use merchant-only endpoints.
 
+## Payment selection
+
+- Fixed-price per-call requests: use x402 v2 `exact` with USDC on Base, after validating the 402 requirements.
+- Tempo-native machine payments: use MPP with its published Tempo currency.
+- Recurring usage: use the agent subscription paid in USDC on Base.
+- The current gateways do **not** expose `upto`, partial capture, void, refund, payout, or split operations. Do not emulate those flows.
+
 ## Success Criteria
 
 - The agent knows the next required step after every lifecycle endpoint
-- The agent distinguishes `b20` from legacy `erc20`
-- The agent does not mint into inactive programs
+- The agent distinguishes B20 Asset from legacy `erc20`
+- The agent does not mint into inactive or expired programs
 - The agent does not try to redeem rewards before onchain payment confirmation
+- The agent chooses a payment rail based on the actual published scheme
