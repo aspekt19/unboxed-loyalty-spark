@@ -69,7 +69,7 @@ Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain
 | Animations | Framer Motion |
 | Blockchain | Wagmi v2, Viem, RainbowKit, Privy (`@privy-io/react-auth` + `@privy-io/wagmi`) |
 | Network | Base Mainnet (Chain ID: 8453) |
-| Smart Contracts | ERC-20 Token Standard (Factory pattern) |
+| Smart Contracts | Base-native B20 Asset precompile + legacy ERC-20 factory |
 | Backend | Supabase (PostgreSQL, RLS, Deno Edge Functions, Realtime) |
 | Native apps | Capacitor 8 (iOS / Android) — see `docs/development/NATIVE_BUILD_GUIDE.md` |
 | Agent Wallets | Coinbase CDP MPC (Server Wallets) |
@@ -402,7 +402,7 @@ Loyal Spark is a **machine-payment-native** API. AI agents can discover, authent
 | Agent Manifest | [/.well-known/agent.json](https://loyalspark.online/.well-known/agent.json) | Full protocol spec, capabilities, pricing |
 | MPP Manifest | [/.well-known/mpp.json](https://loyalspark.online/.well-known/mpp.json) | Machine Payment Protocol manifest |
 | OpenAPI Spec | [/openapi.json](https://loyalspark.online/openapi.json) | OpenAPI 3.1.0 with x-payment-info |
-| Skills Library | [/.well-known/skills/](https://loyalspark.online/.well-known/skills/index.md) | 13 step-by-step guides for agents (`00`–`12`) |
+| Skills Library | [/.well-known/skills/](https://loyalspark.online/.well-known/skills/index.md) | 16 step-by-step guides for agents (`00`–`15`) |
 | LLMs.txt | [/llms.txt](https://loyalspark.online/llms.txt) | Protocol summary for LLM crawlers |
 | Prompt Guide | [PROMPT_GUIDE.md](./docs/integrations/PROMPT_GUIDE.md) | Ready-to-use system prompts |
 | Copy-paste MCP / curl | [examples/agent-mcp/](./examples/agent-mcp/) | Starter configs in the repo |
@@ -414,7 +414,7 @@ Agents can pay per request using onchain micropayments:
 
 | Protocol | Network | Asset | Gateway |
 |----------|---------|-------|---------|
-| **x402** | Base | USDC | `https://api.loyalspark.online/x402-gateway` |
+| **x402 exact** | Base | USDC | `https://api.loyalspark.online/x402-gateway` |
 | **MPP** | Tempo | pathUSD / USDC | `https://api.loyalspark.online/mpp-gateway` |
 
 Pricing: **$0.001–$0.005** per read · **$0.005–$0.05** per write · HTTP 402 challenge/response flow.

@@ -1,59 +1,78 @@
 # Pairing Loyal Spark with Base MCP
 
-Loyal Spark and Base MCP are complementary, not competing:
+Loyal Spark and Base MCP are complementary:
 
-- **Loyal Spark MCP** → loyalty business logic (programs, rewards, vouchers, P2P, analytics). Returns calldata.
-- **Base MCP** → wallet primitives (sign, send, swap, batch via EIP-5792). Executes calldata.
+- **Loyal Spark MCP** → loyalty business logic (programs, rewards, vouchers, P2P, analytics). Returns calldata or workflow metadata.
+- **Base MCP** → wallet primitives (address, balance, signing, sending, EIP-5792 batches). Executes calldata.
 
-If both servers are connected, prefer this division of labor.
+If both servers are connected, keep this division of labor.
 
 ## Detection
 
-Check whether Base MCP tools (e.g. `send_transaction`, `batch_calls`, `get_address`, `get_balance`) are exposed alongside Loyal Spark tools. If yes, use the paired flow below. If only Loyal Spark is connected, fall back to the Loyal Spark CDP wallet path (`use_agent_wallet: true`) or ask the user to install Base MCP for human-in-the-loop signing.
+Check whether Base MCP tools such as `send_transaction`, `send_calls`, `get_address`, and `get_balance` are exposed alongside Loyal Spark tools. If yes, use the paired flow. If only Loyal Spark is connected, use the Loyal Spark CDP MPC wallet path (`use_agent_wallet: true`) or ask for a signer.
 
-## Paired flow
+## Paired flows
 
-### 1. Deploy a new loyalty program
+### 1. Deploy a new B20 loyalty program (default)
 
-1. `create_loyalty_program(name, symbol, ...)` → returns factory deploy calldata.
-2. Base MCP `send_transaction({ to: factory, data, value: 0 })` → user approves in Base Account.
-3. Wait for receipt; extract `token_address` from the deploy log (or `GET /agent-api/tx-receipt?tx_hash=…` — free).
-4. `register_loyalty_program(token_address, cashback_rate, points_per_dollar)`.
-5. `activate_loyalty_program(token_address)` → returns **batched** calls (unpause + grant MINTER_ROLE).
-6. Base MCP `batch_calls(calls)` → single Base Account approval (EIP-5792).
+1. `create_loyalty_program(name, symbol, ...)` → returns one B20 factory call.
+2. Base MCP `send_transaction({ to: factory, data, value: 0 })` or `send_calls([{ to, data, value }])`.
+3. Wait for the receipt; extract `token_address` from `B20Created` `topics[1]`, or call `GET /agent-api/tx-receipt?tx_hash=…`.
+4. `register_loyalty_program({ token_address, token_standard: "b20", ... })`.
+5. The program is active. Do **not** send `activate_loyalty_program` for B20.
 
-### 2. Mint loyalty points to a customer
+`initCalls` already grant `MINT_ROLE` atomically to the merchant and any requested `extra_minters`, such as the CDP agent wallet.
 
-1. `mint_loyalty_tokens({ token_address, recipient, amount })` → calldata with fee + Builder Code.
-2. Base MCP `send_transaction(calldata)`.
+### 2. Deploy a legacy ERC-20 program
 
-### 3. Customer redeems a reward (recipient-side)
+1. Create with `token_standard: "erc20"`.
+2. Broadcast the legacy factory call and extract the emitted token address.
+3. Register it; it starts inactive.
+4. Call `activate_loyalty_program` and pass both returned calls to `send_calls`.
+5. Sync `update_program_status({ status: "active" })` after both transactions confirm.
 
-1. Recipient agent (`rwk_`) calls `prepare_loyalty_token_transfer({ token_address, to: merchant, amount })` → ERC-20 transfer calldata.
-2. Base MCP signs and broadcasts.
-3. Recipient agent calls `redeem_my_reward({ reward_id, tx_hash })` → server verifies tx and issues a voucher.
+### 3. Mint loyalty points
 
-### 4. P2P swap
+1. `mint_loyalty_tokens({ token_address, recipient, amount })` → fee-first `calls[]` plus `fee_obligation_id`.
+2. Prefer one EIP-5792 `send_calls` batch in the returned order: protocol fee, then recipient mint.
+3. Call `confirm_mint_fee` with the confirmed fee tx hash (and recipient tx hash when returned).
 
-1. `create_p2p_offer({ offer_token, offer_amount, request_token, request_amount })` → two calls: approve + createOffer.
-2. Base MCP `batch_calls` to lock tokens in escrow atomically.
+### 4. Redeem a reward
 
-## Custom-plugin shortcut (`agent-prepare`)
+1. Recipient `prepare_loyalty_token_transfer({ token_address, to: merchant, amount })`.
+2. Base MCP signs and broadcasts the transfer.
+3. Wait for confirmation.
+4. Recipient `redeem_my_reward({ reward_id, tx_hash })` → server verifies and issues the voucher.
 
-If Base MCP loads the Loyal Spark custom plugin ([`plugins/loyal-spark.md`](../plugins/loyal-spark.md)), each loyalty action becomes a single GET against `https://api.loyalspark.online/agent-prepare/<action>` that returns a `send_calls`-ready payload:
+### 5. P2P swap
+
+1. Create or inspect the offer.
+2. Prepare the token `approve` and escrow call(s).
+3. Use `send_calls` when the response returns a batch.
+4. Accept/cancel only after checking the current offer status and confirmed transaction.
+
+## Custom plugin shortcut (`agent-prepare`)
+
+If Base MCP loads the Loyal Spark custom plugin, each supported loyalty action becomes a GET against `https://api.loyalspark.online/agent-prepare/<action>` returning:
 
 ```json
 { "chainId": 8453, "description": "...", "transactions": [{ "to": "0x…", "data": "0x…", "value": "0x0" }], "builder_code": "bc_wdmnog7m" }
 ```
 
-Actions: `create-program`, `activate-program`, `mint`, `transfer` (`x-api-key: lsk_…`) · `recipient-transfer`, `recipient-approve` (`x-api-key: rwk_…`). Hand the `transactions` array straight to Base MCP `send_calls` — Builder Code is already appended.
+Actions: `create-program`, `activate-program`, `mint`, `transfer` (`lsk_`) · `recipient-transfer`, `recipient-approve` (`rwk_`). Hand `transactions` to Base MCP `send_calls`; the Builder Code suffix is already appended.
 
+## B20-specific checks
+
+- B20 is Base-native and ERC-20-compatible at the operation interface; it is not a custom ERC-20 proxy.
+- If a transfer reverts, inspect B20 policy scopes and granular pause state before assuming a balance issue.
+- ERC-2612 permit uses EIP-712 version `"1"`; ERC-1271 smart-contract signatures are not accepted. Use a normal `approve` transaction for a smart account.
+- B20's memo variants can provide onchain order/campaign attribution, but current Loyal Spark prepared calldata uses standard mint/transfer calls unless the endpoint explicitly says otherwise.
 
 ## Builder Code preservation
 
-Every calldata blob Loyal Spark returns ends with 29 bytes (`62635f…`) encoding `bc_wdmnog7m`. **Do not modify or trim the data field.** Base MCP forwards it as-is, which is exactly what we need for ERC-8021 attribution on Base.
+Every platform-generated calldata blob carries the 29-byte Builder Code suffix for `bc_wdmnog7m`. Do not modify or trim `data`. Base MCP forwards it as-is for ERC-8021 attribution.
 
-## When NOT to use Base MCP
+## When not to use Base MCP
 
-- Headless / cron agents: use the Loyal Spark CDP MPC wallet (`POST /agent-wallet`) and pass `use_agent_wallet: true` on the relevant tool. No human approval required, no Base Account needed.
-- Subscriptions / x402 USDC payments: use the dedicated payment routes, not raw Base MCP sends.
+- Headless / cron agents: use Loyal Spark's CDP MPC wallet (`POST /agent-wallet`) and `use_agent_wallet: true` where supported.
+- Subscriptions, x402, and MPP: use the dedicated payment flows, not raw loyalty calldata.

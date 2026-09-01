@@ -232,7 +232,7 @@ export default function ForAgentsPage() {
               REST + MCP stack — humans never need to touch that. Public voucher lookup needs no key.
             </p>
             <p className="text-xs text-muted-foreground max-w-2xl mx-auto">
-              New programs deploy as <strong>B20</strong> on Base by default (one tx, active after register). Legacy <strong>ERC-20</strong> factory remains available via{" "}
+              New programs deploy as Base-native <strong>B20 Asset</strong> programs by default (one factory-precompile tx, active after register). Legacy <strong>ERC-20</strong> factory remains available via{" "}
               <code className="bg-muted px-1 rounded">token_standard: &quot;erc20&quot;</code>.
             </p>
             <p className="text-xs text-muted-foreground max-w-2xl mx-auto">
@@ -283,7 +283,7 @@ export default function ForAgentsPage() {
               <CardHeader className="pb-2">
                 <Link2 className="h-6 w-6 text-primary mb-1" />
                 <CardTitle className="text-base">Pay per call</CardTitle>
-                <CardDescription>x402 (USDC Base) · MPP (Tempo)</CardDescription>
+                <CardDescription>x402 exact (USDC Base) · MPP (Tempo)</CardDescription>
               </CardHeader>
               <CardContent className="text-xs text-muted-foreground space-y-2">
                 <p className="break-all">x402: {X402}</p>
@@ -513,7 +513,7 @@ export default function ForAgentsPage() {
               Skills (Markdown)
             </h3>
             <p className="text-sm text-muted-foreground">
-              Twelve step-by-step guides (<code className="text-xs bg-muted px-1 rounded">00</code>–
+              Sixteen step-by-step guides (<code className="text-xs bg-muted px-1 rounded">00</code>–
               <code className="text-xs bg-muted px-1 rounded">11</code>) live under{" "}
               <code className="text-xs bg-muted px-1 rounded">/.well-known/skills/</code>.
             </p>

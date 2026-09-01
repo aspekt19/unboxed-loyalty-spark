@@ -10,15 +10,17 @@ Deploy a new **B20** loyalty token on Base (default) and register an **active** 
 - Launch a new loyalty/rewards program for a business
 - Autonomous agents: B20 grants `MINT_ROLE` to merchant + CDP wallet in one deploy tx
 
-## B20 flow (default — 2 steps)
+## B20 flow (default — deploy, then register)
 
 This skill covers only the **program creation** portion. A usable loyalty rollout usually continues with:
 
 1. create the program
-2. create at least one reward
-3. then mint / earn points
+2. broadcast the one B20 factory transaction
+3. register the emitted token address
+4. create at least one reward
+5. then mint / earn points
 
-For the full business sequence, see [13-endpoint-workflows.md](./13-endpoint-workflows.md).
+For the full business sequence, see [13-endpoint-workflows.md](./13-endpoint-workflows.md) and the [B20 native specification](./14-b20-native-spec.md).
 
 ### Step 1: Get B20 deploy calldata
 
@@ -111,10 +113,12 @@ POST /mint               → distribute tokens
 - x402 / MCP mint and transfer work without activation
 
 ## Notes
-- B20 is ERC-20 compatible — balances, transfer, escrow, vouchers unchanged
-- Builder Code `bc_wdmnog7m` appended to deploy calldata
+- B20 is a Base-native precompile-based ERC-20 superset. Its compatible balance, transfer, allowance, and mint interfaces keep the existing escrow and voucher flows usable.
+- B20 Asset roles, policies, granular pause, memo variants, and permit limitations are documented in [14-b20-native-spec.md](./14-b20-native-spec.md).
+- Builder Code `bc_wdmnog7m` is appended to deploy calldata
 - Existing ERC-20 programs keep working; only **new** deploys default to B20
 
 ## Next skills
 - [Mint Tokens](./02-mint-tokens.md)
 - [Manage Rewards](./04-manage-rewards.md)
+- [B20 Native Spec](./14-b20-native-spec.md)

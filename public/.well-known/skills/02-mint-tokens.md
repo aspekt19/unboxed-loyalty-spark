@@ -41,12 +41,12 @@ curl -X POST \
 ```
 
 ### Step 3: Execute Onchain Transactions (fee-first)
-The API returns a **fee-first `calls[]` bundle** for `mint(address,uint256)` on the **same** token contract:
+The API returns a **fee-first `calls[]` bundle** for the ERC-20-compatible `mint(address,uint256)` interface on the program token:
 
 1. **`calls[0]` — `purpose: "protocol_fee"`** — mint `fee_amount` (plan %) to `fee_wallet`. **Send this FIRST.**
 2. **`calls[1]` — `purpose: "recipient_mint"`** — mint full `amount` to the customer.
 
-Submit them in order, or atomically in one batch via **EIP-5792 `wallet_sendCalls`** if your wallet supports it.
+For a B20 Asset, this calls the Base-native token precompile and still requires the appropriate MINT role/policy. Submit the calls in order, or atomically in one batch via **EIP-5792 `wallet_sendCalls`** if your wallet supports it. B20 transactions benefit from Base's fast confirmations and low fees, but always wait for a receipt before confirming the obligation.
 Legacy fields `fee_calldata` / `recipient_calldata` are still returned for backwards compatibility, but `calls[]` is the source of truth for ordering.
 
 This is **accountability**, not an on-chain atomic `mintWithFee`: the token contract does not enforce the fee. Instead every prepared mint writes a pending obligation (`fee_obligation_id`) that you must clear.

@@ -1,6 +1,6 @@
 {
   "name": "Loyal Spark",
-  "description": "Onchain loyalty protocol on Base L2. New programs deploy as B20 by default; legacy ERC-20 programs remain supported. Two agent personas: MERCHANT (lsk_, 28 authenticated REST routes + 1 public + 39 MCP tools at /loyalty-mcp) creates programs, registers and activates them when needed, manages rewards, mints tokens, runs P2P trading, gift certificates (LOYAL-XXXXXX), CDP MPC wallets, and POST /earn cashback. RECIPIENT (rwk_, 14 REST routes at /recipient-api + 20 MCP tools at /recipient-loyalty-mcp) holds tokens, redeems rewards, P2P swaps, claims gift certificates, and prepares loyalty token transfers. Pay-per-call via MPP (pathUSD/USDC on Tempo) or x402 v2 (USDC on Base) — both gateways relay merchant + recipient corridors with Coinbase Bazaar discovery metadata.",
+  "description": "Onchain loyalty protocol on Base. New programs deploy as native B20 Asset programs by default; legacy ERC-20 programs remain supported. Two agent personas: MERCHANT (lsk_, 28 authenticated REST routes + 1 public + 39 MCP tools at /loyalty-mcp) creates programs, registers and activates them when needed, manages rewards, mints tokens, runs P2P trading, gift certificates (LOYAL-XXXXXX), CDP MPC wallets, and POST /earn cashback. RECIPIENT (rwk_, 14 REST routes at /recipient-api + 20 MCP tools at /recipient-loyalty-mcp) holds tokens, redeems rewards, P2P swaps, claims gift certificates, and prepares loyalty token transfers. Pay-per-call via MPP (pathUSD/USDC on Tempo) or x402 v2 (USDC on Base) — both gateways relay merchant + recipient corridors with Coinbase Bazaar discovery metadata.",
   "url": "https://loyalspark.online",
   "version": "2.3.0",
   "protocol": "a2a-loyalty",
@@ -335,10 +335,22 @@
     ],
     "payment": "Subscriptions: on-chain USDC transfer to the platform wallet, verified automatically. Mint protocol fees are separate and paid in loyalty tokens (see transaction_fee_note).",
     "pay_per_request": {
-      "protocol": "MPP (Machine Payments Protocol)",
-      "gateway_url": "https://api.loyalspark.online/mpp-gateway",
-      "currency": "pathUSD on Tempo",
-      "description": "Pay per API call without a subscription. Uses HTTP 402 Payment Required flow.",
+      "protocols": ["x402 v2 exact", "MPP"],
+      "x402": {
+        "gateway_url": "https://api.loyalspark.online/x402-gateway",
+        "network": "eip155:8453",
+        "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        "scheme": "exact",
+        "description": "Fixed-price route payment in USDC on Base. The gateway returns HTTP 402 requirements, verifies and settles before proxying.",
+        "discovery_url": "https://api.loyalspark.online/.well-known/x402"
+      },
+      "mpp": {
+        "gateway_url": "https://api.loyalspark.online/mpp-gateway",
+        "currencies": ["pathUSD", "Tempo USDC"],
+        "description": "Fixed-price route payment with the MPP 402 challenge and credential flow on Tempo.",
+        "manifest_url": "https://loyalspark.online/.well-known/mpp.json"
+      },
+      "boundary": "The current gateways do not expose upto, partial capture, void, refund, payout, or split operations.",
       "prices_usd": {
         "GET /me": "free",
         "GET /programs": "0.001",
@@ -373,7 +385,7 @@
   "chain": {
     "name": "Base",
     "chain_id": 8453,
-    "token_standards": ["B20", "ERC-20"],
+    "token_standards": ["B20 Asset (Base-native)", "ERC-20 (legacy)"],
     "default_new_program_standard": "B20",
     "explorer": "https://basescan.org",
     "builder_code": "bc_wdmnog7m"
