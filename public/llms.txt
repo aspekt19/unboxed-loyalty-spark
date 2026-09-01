@@ -1,6 +1,6 @@
 # Loyal Spark — Onchain Loyalty Protocol
 
-> Loyalty-as-a-Service for AI agents on Base L2. **New programs deploy as B20** (Base native ERC-20 superset, 1 tx, active immediately). Legacy ERC-20 programs remain supported. Two agent personas: **merchants** (`lsk_`) issue loyalty tokens — REST 28 authenticated routes + 1 public GET, MCP 39 tools at /loyalty-mcp; **recipients** (`rwk_`) hold/spend tokens — REST 14 routes at /recipient-api, MCP 20 tools at /recipient-loyalty-mcp (incl. P2P offers and prepare_loyalty_token_transfer). Pay per call via MPP (pathUSD/USDC on Tempo) or x402 v2 (USDC on Base) — both gateways expose the same REST + MCP corridors with Coinbase Bazaar discovery metadata.
+> Loyalty-as-a-Service for AI agents on Base. **New programs deploy as Base-native B20 Asset** programs (1 factory-precompile tx, active immediately after registration). Legacy ERC-20 programs remain supported. Two agent personas: **merchants** (`lsk_`) issue loyalty tokens — REST 28 authenticated routes + 1 public GET, MCP 39 tools at /loyalty-mcp; **recipients** (`rwk_`) hold/spend tokens — REST 14 routes at /recipient-api, MCP 20 tools at /recipient-loyalty-mcp (incl. P2P offers and prepare_loyalty_token_transfer). Pay per call via MPP (pathUSD/USDC on Tempo) or x402 v2 exact (USDC on Base) — both gateways expose the same REST + MCP corridors with Coinbase Bazaar discovery metadata.
 
 
 ## Live agent usage (evidence)
@@ -33,8 +33,8 @@ Pay per request with USDC or pathUSD on Tempo chain. No API key required for pay
 - SDK: mppx (npm install -g mppx)
 - Pricing: $0.001–$0.05 per request
 
-### x402 (Coinbase Payment Protocol) — v2
-Pay per request with USDC on Base. HTTP **402** with **x402 v2** `accepts` (CAIP-2 `eip155:8453`). Verify/settle on Base **mainnet** use **Coinbase CDP** (`https://api.cdp.coinbase.com/platform/v2/x402`) when the gateway is configured with CDP API keys (see repo `supabase/functions/x402-gateway`).
+### x402 (Coinbase Payment Protocol) — v2 exact
+Pay per request with the exact advertised USDC amount on Base. HTTP **402** with **x402 v2** `accepts` (CAIP-2 `eip155:8453`). Verify/settle on Base **mainnet** use **Coinbase CDP** (`https://api.cdp.coinbase.com/platform/v2/x402`) when the gateway is configured with CDP API keys (see repo `supabase/functions/x402-gateway`).
 - Gateway: https://api.loyalspark.online/x402-gateway
 - **Paid MCP (Bazaar-oriented metadata in 402 body):** `POST …/x402-gateway/mcp-tools/<tool_name>` — JSON-RPC `tools/call`, header `x-api-key: lsk_…` after payment. Tool ids + argument schemas: repo `supabase/functions/_shared/mcp-bazaar-tools.ts`
 - Currency: USDC on Base (0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
@@ -121,7 +121,7 @@ Merchant SaaS (portal): Starter $39 / Growth $79 / Scale $149 per month — see 
 
 ## Chain
 - Network: Base (Chain ID: 8453)
-- Token Standards: B20 (default for new programs), legacy ERC-20
+- Token Standards: Base-native B20 Asset (default for new programs), legacy ERC-20
 - Builder Code: bc_wdmnog7m
 
 ## x402 Gateway (Coinbase)

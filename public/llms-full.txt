@@ -1,6 +1,6 @@
 # Loyal Spark — Onchain Loyalty Protocol (Full Reference)
 
-> Loyalty-as-a-Service for AI agents and merchants on Base L2. Two API personas: **merchant** (`lsk_` — issue and manage loyalty programs) and **recipient** (`rwk_` — wallet that holds loyalty tokens, redeems rewards, trades P2P). Deploy **B20** loyalty tokens by default (legacy ERC-20 optional), manage rewards, earn points from purchases, trade on P2P marketplace — via REST API, MCP Server, or pay-per-request gateways (MPP / x402 v2).
+> Loyalty-as-a-Service for AI agents and merchants on Base. Two API personas: **merchant** (`lsk_` — issue and manage loyalty programs) and **recipient** (`rwk_` — wallet that holds loyalty tokens, redeems rewards, trades P2P). Deploy **Base-native B20 Asset** loyalty tokens by default (legacy ERC-20 optional), manage rewards, earn points from purchases, trade on P2P marketplace — via REST API, MCP Server, or pay-per-request gateways (MPP / x402 v2).
 
 
 ## Live agent usage (evidence)
@@ -232,9 +232,10 @@ Base URL: https://api.loyalspark.online/recipient-api · Auth: `x-api-key: rwk_�
 - Flow: Request → 402 challenge → pay → retry with credential
 - SDK: `npm install -g mppx`
 
-### x402 (Coinbase Protocol) — v2
+### x402 (Coinbase Protocol) — v2 exact
 - Gateway: https://api.loyalspark.online/x402-gateway
-- Currency: USDC on Base (0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913) · network CAIP-2 `eip155:8453`
+- Currency: exact USDC on Base (0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913) · network CAIP-2 `eip155:8453`
+- The current gateway does not expose `upto`, partial capture, void, refund, payout, or split operations.
 - **Paid MCP:** `POST …/x402-gateway/mcp-tools/<tool_name>` — JSON-RPC `tools/call`, header `x-api-key: lsk_…` after payment. Tool ids + argument schemas: `supabase/functions/_shared/mcp-bazaar-tools.ts` (repo). Bazaar: 402 body includes `extensions.bazaar` for MCP routes.
 - Facilitator (Base mainnet production): Coinbase CDP `https://api.cdp.coinbase.com/platform/v2/x402` (gateway uses CDP JWT when configured). Public facilitator reference: https://x402.org/facilitator (Sepolia-focused v2 listings differ from Base mainnet CDP)
 - SDK: `@x402/fetch`, `@x402/evm`
@@ -305,7 +306,7 @@ Protocol fee: 0.5% on completed swaps.
 
 ## Skills (Step-by-Step Guides)
 
-13 structured Markdown guides at `/.well-known/skills/`:
+16 structured Markdown guides at `/.well-known/skills/`:
 - 00: Getting Started (register, API key, first request)
 - 01: Create Loyalty Program (B20 default, or legacy ERC-20)
 - 02: Mint Tokens
@@ -319,6 +320,9 @@ Protocol fee: 0.5% on completed swaps.
 - 10: Server Wallets (CDP MPC)
 - 11: Earn Points (cashback from purchases)
 - 12: Gift Certificates (LOYAL-XXXXXX welcome / gift codes, batch up to 100)
+- 13: Endpoint Workflows
+- 14: B20 Native Spec (Beryl)
+- 15: Payment Scenarios (x402 exact, MPP, subscriptions)
 
 ## Tags
 
