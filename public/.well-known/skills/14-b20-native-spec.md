@@ -62,7 +62,7 @@ B20 adds memo-carrying variants: `transferWithMemo`, `mintWithMemo`, `burnWithMe
 - Indexers join by `(txHash, logIndex - 1)`.
 - Use for order ids, voucher codes, campaign ids: `memo = keccak256("order:12345")` or a 32-byte raw ASCII tag.
 
-Loyal Spark's `POST /agent-api/mint` accepts an optional `memo` string; when present the returned calldata uses `mintWithMemo`.
+Loyal Spark currently emits standard `mint` / `transfer` calldata (no memo). If your agent needs onchain attribution today, sign the memo variant yourself against the token address returned by `register-program`; a first-class `memo` field on `POST /agent-api/mint` is a roadmap item.
 
 ## 6. Other spec facts worth knowing
 
