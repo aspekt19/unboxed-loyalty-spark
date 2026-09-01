@@ -2146,7 +2146,20 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "object",
+                  "required": [
+                    "offers"
+                  ],
+                  "additionalProperties": true,
+                  "properties": {
+                    "offers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    }
+                  }
                 }
               }
             }
