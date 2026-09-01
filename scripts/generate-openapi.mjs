@@ -31,18 +31,20 @@ const RECIPIENT_MCP_URL = `${API_ORIGIN}/recipient-loyalty-mcp`;
 // ---- Pricing tables (kept aligned with supabase/functions/_shared/*) ----
 
 // Two-phase P2P accept body (kept in sync with supabase/functions/_shared/marketplace-p2p.ts)
-/** Handler-owned GET /recipient-api/offers 200 body: marketplaceListOffers always returns `offers`. */
-const RECIPIENT_API_OFFERS_SUCCESS_SCHEMA = {
-  type: "object",
-  required: ["offers"],
-  additionalProperties: true,
-  properties: {
-    offers: {
-      type: "array",
-      items: { type: "object", additionalProperties: true },
+/** Handler-owned GET list 200 bodies — keep in sync with x402-bazaar-accept.ts REST_LIST_SUCCESS_OUTPUTS. */
+function restArraySuccessSchema(arrayField) {
+  return {
+    type: "object",
+    required: [arrayField],
+    additionalProperties: true,
+    properties: {
+      [arrayField]: {
+        type: "array",
+        items: { type: "object", additionalProperties: true },
+      },
     },
-  },
-};
+  };
+}
 
 const ACCEPT_OFFER_BODY = {
   type: "object",
@@ -71,7 +73,13 @@ const MERCHANT_REST = {
     "/vouchers": { price: "0.001", auth: "lsk", summary: "List vouchers issued by the merchant", desc: "Returns vouchers issued by the authenticated merchant; filterable by customer_address." },
     "/vouchers/status": { price: "0", auth: "none", summary: "Public voucher verification", desc: "Public endpoint: check whether a voucher code or id is valid, used or expired. No API key required." },
     "/analytics": { price: "0.005", auth: "lsk", summary: "Program analytics", desc: "Returns aggregated metrics for a loyalty token: minted, holders, redemptions, top customers, RFM distribution." },
-    "/offers": { price: "0.001", auth: "lsk", summary: "List P2P marketplace offers", desc: "Returns active P2P swap offers across loyalty tokens (filterable by token_address)." },
+    "/offers": {
+      price: "0.001",
+      auth: "lsk",
+      summary: "List P2P marketplace offers",
+      desc: "Returns active P2P swap offers across loyalty tokens (filterable by token_address).",
+      successSchema: restArraySuccessSchema("offers"),
+    },
     "/tx-receipt": { price: "0", auth: "lsk", summary: "Fetch transaction receipt", desc: "Fetches a Base L2 transaction receipt by hash. Free helper for agents tracking on-chain confirmations." },
     "/merchant-profile": { price: "0.001", auth: "lsk", summary: "Read merchant profile", desc: "Returns the merchant public profile (name, logo, description) for the authenticated agent owner." },
     "/workflow/program-status": { price: "0.001", auth: "lsk", summary: "Autonomous program workflow status", desc: "Returns the current merchant program lifecycle step and machine-readable next_actions[] for self-orchestration." },
@@ -102,15 +110,30 @@ const MERCHANT_REST = {
 const RECIPIENT_REST = {
   GET: {
     "/recipient-api/me": { price: "0", summary: "Get recipient agent profile", desc: "Returns the recipient (holder) agent profile bound to its wallet (rwk_ key)." },
-    "/recipient-api/balances": { price: "0.001", summary: "List all loyalty balances for the holder", desc: "Returns balances and tiers across every loyalty program the holder participates in." },
+    "/recipient-api/balances": {
+      price: "0.001",
+      summary: "List all loyalty balances for the holder",
+      desc: "Returns balances and tiers across every loyalty program the holder participates in.",
+      successSchema: restArraySuccessSchema("balances"),
+    },
     "/recipient-api/balance": { price: "0.001", summary: "Get balance for one loyalty token", desc: "Returns balance and tier for the holder for a single loyalty token." },
-    "/recipient-api/rewards": { price: "0.001", summary: "List rewards available to the holder", desc: "Lists redeemable rewards in programs where the holder has activity." },
-    "/recipient-api/vouchers": { price: "0.001", summary: "List vouchers issued to the holder", desc: "Returns the holder's vouchers (redeemed rewards) with status." },
+    "/recipient-api/rewards": {
+      price: "0.001",
+      summary: "List rewards available to the holder",
+      desc: "Lists redeemable rewards in programs where the holder has activity.",
+      successSchema: restArraySuccessSchema("rewards"),
+    },
+    "/recipient-api/vouchers": {
+      price: "0.001",
+      summary: "List vouchers issued to the holder",
+      desc: "Returns the holder's vouchers (redeemed rewards) with status.",
+      successSchema: restArraySuccessSchema("vouchers"),
+    },
     "/recipient-api/offers": {
       price: "0.001",
       summary: "List P2P marketplace offers visible to the holder",
       desc: "Lists P2P swap offers the holder can accept (filterable by token_address).",
-      successSchema: RECIPIENT_API_OFFERS_SUCCESS_SCHEMA,
+      successSchema: restArraySuccessSchema("offers"),
     },
     "/recipient-api/workflow/reward-status": { price: "0.001", summary: "Autonomous reward redemption status", desc: "Returns the current reward redemption step and machine-readable next_actions[] for the holder." },
   },

@@ -11,7 +11,7 @@
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "check:docs": "node scripts/check-docs-drift.mjs",
-    "test:recipient-offers-contract": "node scripts/test-recipient-api-offers-output-contract.mjs",
+    "test:rest-list-contract": "node scripts/test-rest-list-output-contract.mjs",
     "test:deno-helpers": "deno test --no-check --allow-env --allow-read --allow-net --node-modules-dir=auto supabase/functions/_shared/",
     "preview": "vite preview",
     "test:e2e": "LD_LIBRARY_PATH=$NIX_LD_LIBRARY_PATH playwright test"

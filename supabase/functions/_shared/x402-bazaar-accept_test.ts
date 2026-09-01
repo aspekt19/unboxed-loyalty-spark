@@ -58,6 +58,32 @@ function bazaarOutput(accept: Record<string, unknown>): Record<string, unknown> 
   return extensions.bazaar?.info?.output ?? {};
 }
 
+Deno.test("GET list routes project handler-owned arrays on every output surface", () => {
+  const cases: Array<[string, string]> = [
+    ["offers", "offers"],
+    ["recipient-api/offers", "offers"],
+    ["recipient-api/balances", "balances"],
+    ["recipient-api/vouchers", "vouchers"],
+    ["recipient-api/rewards", "rewards"],
+  ];
+
+  for (const [resource, arrayField] of cases) {
+    const { accept } = restAccept(resource, "0.001");
+    const schema = restOutputSchema(accept);
+    assertEquals(schema.required, [arrayField]);
+    const properties = schema.properties as Record<string, { type?: string; items?: Record<string, unknown> }>;
+    assertEquals(properties[arrayField]?.type, "array");
+    assertEquals(properties[arrayField]?.items?.type, "object");
+    assert(!Array.isArray(properties[arrayField]?.items?.required), `${resource} must not require nested fields`);
+
+    const output = bazaarOutput(accept);
+    assertEquals(output.type, "json");
+    assertEquals(output.example, { [arrayField]: [] });
+    const bazaarSchema = output.schema as { required?: string[] };
+    assertEquals(bazaarSchema.required, [arrayField]);
+  }
+});
+
 Deno.test("GET recipient-api/offers projects handler-owned offers on every free output surface", () => {
   const { accept } = restAccept("recipient-api/offers", "0.001");
   assertEquals(accept.amount, "1000");
@@ -65,27 +91,10 @@ Deno.test("GET recipient-api/offers projects handler-owned offers on every free 
   assertEquals(String(accept.payTo).toLowerCase(), PAY_TO.toLowerCase());
   assertEquals(accept.network, "eip155:8453");
   assertEquals(accept.asset, "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913");
-
-  const schema = restOutputSchema(accept);
-  assertEquals(schema.required, ["offers"]);
-  const properties = schema.properties as { offers?: { type?: string; items?: Record<string, unknown> } };
-  assertEquals(properties.offers?.type, "array");
-  assertEquals(properties.offers?.items?.type, "object");
-  assert(!Array.isArray(properties.offers?.items?.required), "must not require nested offer fields");
-
-  const output = bazaarOutput(accept);
-  assertEquals(output.type, "json");
-  assertEquals(output.example, { offers: [] });
-  const bazaarSchema = output.schema as { required?: string[] };
-  assertEquals(bazaarSchema.required, ["offers"]);
-
-  const wrapper = (accept.extensions as { bazaar: { schema: { properties: { output: { required: string[] } } } } })
-    .bazaar.schema.properties.output;
-  assertEquals(wrapper.required, ["type"]);
 });
 
 Deno.test("unrelated REST routes keep unconstrained output and the generic example", () => {
-  for (const resource of ["recipient-api/balance", "offers", "recipient-api/rewards"]) {
+  for (const resource of ["recipient-api/balance", "recipient-api/redeem-reward"]) {
     const { accept } = restAccept(resource, "0.001");
     const schema = restOutputSchema(accept);
     assertEquals(schema.type, "object");
@@ -96,14 +105,15 @@ Deno.test("unrelated REST routes keep unconstrained output and the generic examp
   }
 });
 
-Deno.test("GET recipient-api/offers must not require example-only ok/resource fields", () => {
-  const { accept } = restAccept("recipient-api/offers");
-  const schema = restOutputSchema(accept);
-  assertEquals(schema.required, ["offers"]);
-  const required = new Set(schema.required as string[]);
-  assert(!required.has("ok"));
-  assert(!required.has("resource"));
-  assert(!required.has("count"));
+Deno.test("GET list routes must not require example-only ok/resource fields", () => {
+  for (const resource of ["offers", "recipient-api/balances", "recipient-api/vouchers", "recipient-api/rewards"]) {
+    const { accept } = restAccept(resource);
+    const schema = restOutputSchema(accept);
+    const required = new Set(schema.required as string[]);
+    assert(!required.has("ok"));
+    assert(!required.has("resource"));
+    assert(!required.has("count"));
+  }
 });
 
 Deno.test("validateClientAcceptedMatches rejects tampered payTo / network / underpayment", () => {

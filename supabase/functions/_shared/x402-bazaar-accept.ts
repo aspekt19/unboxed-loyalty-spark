@@ -175,29 +175,44 @@ function publicFunctionUrl(requestUrl: URL, supabaseUrl: string, fnName: string)
 /** CDP validates `extensions.bazaar.info` against `extensions.bazaar.schema` (x402 bazaar spec). */
 const JSON_SCHEMA_2020_12 = "https://json-schema.org/draft/2020-12/schema" as const;
 
-/** GET recipient-api/offers 200: marketplaceListOffers always returns `offers` (possibly empty). */
-export const RECIPIENT_API_OFFERS_SUCCESS_SCHEMA = {
-  $schema: JSON_SCHEMA_2020_12,
-  type: "object",
-  required: ["offers"],
-  additionalProperties: true,
-  properties: {
-    offers: {
-      type: "array",
-      items: { type: "object", additionalProperties: true },
+/** Handler-owned GET list routes: success body always includes a top-level array field (possibly empty). */
+export function restArraySuccessSchema(arrayField: string): Record<string, unknown> {
+  return {
+    $schema: JSON_SCHEMA_2020_12,
+    type: "object",
+    required: [arrayField],
+    additionalProperties: true,
+    properties: {
+      [arrayField]: {
+        type: "array",
+        items: { type: "object", additionalProperties: true },
+      },
     },
-  },
-} as const;
+  };
+}
+
+/** @deprecated Use restArraySuccessSchema("offers") — kept for existing imports/tests. */
+export const RECIPIENT_API_OFFERS_SUCCESS_SCHEMA = restArraySuccessSchema("offers");
+
+const REST_LIST_SUCCESS_OUTPUTS: Record<string, string> = {
+  "GET:offers": "offers",
+  "GET:recipient-api/offers": "offers",
+  "GET:recipient-api/balances": "balances",
+  "GET:recipient-api/vouchers": "vouchers",
+  "GET:recipient-api/rewards": "rewards",
+};
 
 function restApplicationOutput(method: string, resource: string): {
   schema: Record<string, unknown>;
   example: Record<string, unknown>;
   includeBazaarOutputSchema: boolean;
 } {
-  if (method === "GET" && resource === "recipient-api/offers") {
+  const arrayField = REST_LIST_SUCCESS_OUTPUTS[`${method}:${resource}`];
+  if (arrayField) {
+    const example = { [arrayField]: [] };
     return {
-      schema: { ...RECIPIENT_API_OFFERS_SUCCESS_SCHEMA },
-      example: { offers: [] },
+      schema: restArraySuccessSchema(arrayField),
+      example,
       includeBazaarOutputSchema: true,
     };
   }
