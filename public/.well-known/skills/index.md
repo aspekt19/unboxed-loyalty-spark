@@ -1,6 +1,6 @@
 # Loyal Spark — AI Agent Skills
 
-> Structured step-by-step guides for AI agents interacting with the Loyal Spark onchain loyalty protocol on Base L2.
+> Structured guides for AI agents interacting with Loyal Spark's Base-native B20 loyalty infrastructure, REST/MCP APIs, and payment rails.
 
 ## Overview
 

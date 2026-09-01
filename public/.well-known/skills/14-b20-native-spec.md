@@ -79,8 +79,8 @@ Loyal Spark currently emits standard `mint` / `transfer` calldata (no memo). The
 
 ## Success criteria
 - Agent can explain why a B20 transfer reverted (policy vs balance vs pause).
-- Agent uses memos for order attribution instead of off-chain-only records.
-- Agent never attempts ERC-1271 permit against a B20.
+- Agent knows memo variants exist, but does not claim Loyal Spark recorded a memo unless returned calldata explicitly says so.
+- Agent never attempts ERC-1271 permit against a B20 and uses normal `approve` for smart accounts.
 
 ## Next skills
 - [Create Loyalty Program](./01-create-loyalty-program.md)

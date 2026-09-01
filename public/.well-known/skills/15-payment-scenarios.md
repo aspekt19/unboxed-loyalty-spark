@@ -11,28 +11,34 @@ None for paying; the underlying tool still needs its own scope after settlement.
 | Situation | Use |
 |-----------|-----|
 | Agent already has an `lsk_` / `rwk_` key and a plan | **API key** — no payment per call |
-| One-off call, fixed price, no account | **x402 `exact`** |
-| Usage-based call where cost is known only after execution (bulk mint, export, analytics window) | **x402 `upto`** |
+| One-off call with a published fixed price | **x402 v2 `exact`** |
 | Harness speaks Machine Payments Protocol / Tempo | **MPP gateway** |
-| Recurring monthly quota (10k calls, lower mint fee) | **Agent plan subscription in USDC** |
+| Recurring monthly quota and lower mint fee | **Agent plan subscription in USDC** |
+| Variable amount, partial capture, refund, payout, or split required | **Not currently exposed by Loyal Spark gateways** — do not emulate it |
 
 ## 1. Payment lifecycle (Base model)
+
+Base documents a broader lifecycle:
 
 ```
 Request → Authorize → Capture (full or partial) → Verify → Refund / Payout / Split
                     ↘ Void
 ```
 
-How it maps to Loyal Spark:
+Loyal Spark currently exposes a narrower fixed-price request lifecycle:
+
+```
+Request → 402 challenge → Authorize exact amount → Verify → Settle → Retry request
+```
 
 | Phase | Loyal Spark behaviour |
 |-------|----------------------|
-| **Request** | Call the gateway route with no payment → HTTP **402** + `extensions.bazaar` metadata (price, asset, network, schema) |
-| **Authorize** | Client signs an EIP-3009 `exact` (or `upto` max) authorization for USDC on Base and retries with `X-PAYMENT` |
-| **Capture** | Gateway settles through the Coinbase CDP facilitator. `upto` settles the **measured** amount, never more than the authorized max |
-| **Void** | Unknown route → **404**, no settlement. Upstream failure before execution → authorization is not captured |
-| **Verify** | Settlement is a hard gate: if it fails the gateway returns 402 with `X-Payment-Error: Settlement failed` and does **not** forward the upstream response |
-| **Refund / Payout** | Handled off-protocol by Loyal Spark support; agent plan overpayments are reconciled by `verify-agent-plan-payment` |
+| **Request** | Call a mapped gateway route with no payment → HTTP **402** + payment requirements and Bazaar metadata |
+| **Authorize** | x402 client signs the exact advertised USDC amount on Base; MPP client obtains its Tempo payment credential |
+| **Capture / Settle** | x402 gateway verifies and settles the exact amount through the configured facilitator before proxying; MPP returns a receipt after its charge succeeds |
+| **Void** | Unknown route → **404**, no settlement. A failed settlement is a hard 402 and is not proxied upstream |
+| **Verify** | Inspect the payment response and upstream JSON separately; a settled payment does not turn a failed business operation into success |
+| **Refund / Payout / Split** | Not customer-callable operations in the current gateways. Subscription payment verification only activates the selected plan after a matching Base USDC transfer |
 
 ## 2. x402 `exact` — fixed-price call
 
@@ -50,15 +56,11 @@ POST https://api.loyalspark.online/x402-gateway/recipient-mcp-tools/<n>   # hold
 - Use `@x402/fetch` (or any x402 client) so the 402 → sign → retry loop is automatic.
 - Prices per tool: `_shared/mcp-bazaar-tools.ts` (merchant) and `_shared/recipient-mcp-bazaar-tools.ts` (holder).
 
-## 3. x402 `upto` — usage-based call
+## 3. Variable-charge boundary
 
-Use when the final amount depends on the work done (e.g. minting to N recipients, exporting a large customer segment, analytics over a wide window).
+The public x402 gateway advertises `scheme: "exact"` for fixed route prices. It does **not** expose `scheme: "upto"`, metered capture, or a variable-price batch operation. Bulk work is represented by the route's published fixed price and normal request validation; never invent an `upto` payload or sign more than the server's exact requirement.
 
-1. Authorize a **maximum** you accept (`scheme: "upto"`, `maxAmountRequired`).
-2. The gateway executes, measures the units consumed, and settles **only the measured amount**.
-3. The unsettled remainder of the authorization expires — no void call needed.
-
-> Agent rule: always set an `upto` ceiling from your own spend policy, never from the price the server suggests.
+The same boundary applies to MPP: use the challenge and credential format returned by the MPP gateway, not x402 payload fields.
 
 ## 4. Spend policies (before signing anything)
 
@@ -91,16 +93,16 @@ Flow: `https://loyalspark.online/for-agents/subscribe` → pick plan → pay USD
 
 The **mint fee is paid in your own loyalty tokens** (an extra `mint()` to the platform fee wallet), not in USDC. Only subscriptions and x402 / MPP calls are USDC.
 
-## 7. High-frequency batching
+## 7. High-frequency usage
 
-For many small charges, prefer batching over one payment per call:
-- Subscribe (§6) and use the API key — cheapest for >200 calls/month.
-- Or accumulate work and pay once with a single `upto` authorization covering the batch.
+For many small charges, prefer a subscription and use the API key — the plan limits and mint commission are enforced server-side. If using pay-per-call, pay each published route price independently and reuse the same authorization only for a network retry of that same request.
 
 ## Success criteria
 - Agent never signs a payment that violates its own spend policy.
-- `upto` is used for variable-cost calls instead of over-paying with `exact`.
-- Subscription is chosen once monthly volume beats per-call pricing.
+- x402 requests use the server-advertised `exact` amount and asset.
+- MPP requests use the MPP challenge/credential flow.
+- Subscription is chosen once monthly volume and plan entitlements justify it.
+- Agent does not claim `upto`, refund, payout, split, or partial capture support.
 
 ## Next skills
 - [Getting Started](./00-getting-started.md)
