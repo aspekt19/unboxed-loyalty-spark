@@ -58,8 +58,8 @@ Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain
 - **Server Wallets**: Coinbase CDP MPC wallets for autonomous onchain operations
 - **Scoped Permissions**: Granular access control (read, mint, manage_rewards, trade)
 - **Activity Logging**: Full audit trail of all agent operations
-- **Tiered Pricing (agents)**: Free (200 calls/mo, 1.25% mint fee) → Pro ($49/mo, 0.5%) → Enterprise ($129/mo, 0.25%) — subscriptions in USDC, mint fee in loyalty tokens; see [docs/business/MONETIZATION_AND_PRICING.md](./docs/business/MONETIZATION_AND_PRICING.md)
-- **Skills Documentation**: 13 structured step-by-step guides (`00`–`12` under `/.well-known/skills/`) for agent onboarding and operations
+- **Tiered Pricing (agents)**: Free (200 calls/mo, 1 agent, 1,000 tokens minted/mo, 1.25% mint fee) → Pro ($49/mo, 0.5%) → Enterprise ($129/mo, 0.25%) — subscriptions in USDC, mint fee in loyalty tokens; see [docs/business/MONETIZATION_AND_PRICING.md](./docs/business/MONETIZATION_AND_PRICING.md)
+- **Skills Documentation**: 16 structured step-by-step guides (`00`–`15` under `/.well-known/skills/`) for agent onboarding, B20 semantics, and payment rails
 
 ## Technology Stack
 
@@ -238,7 +238,7 @@ Example MCP fragment: [`examples/recipient-agent-mcp/cursor-mcp.json`](./example
 
 AI agents can discover the protocol automatically via:
 - `/.well-known/agent.json` — Full protocol specification, capabilities, pricing
-- `/.well-known/skills/` — 13 structured Skills (`00`–`12`, step-by-step guides)
+- `/.well-known/skills/` — 16 structured Skills (`00`–`15`, step-by-step guides)
 - `/api-docs` — Interactive API documentation
 
 ### Skills for AI Agents
@@ -259,6 +259,12 @@ Structured Markdown guides that teach agents how to use the protocol:
 | 09 | Vouchers | Voucher lifecycle management |
 | 10 | Server Wallets | CDP MPC wallets for autonomous transactions |
 | 11 | Earn Points (Cashback) | Mint from purchase amount × cashback rate |
+| 12 | Gift Certificates | Issue, claim, and mint `LOYAL-XXXXXX` certificates |
+| 13 | Endpoint Workflows | Multi-step REST/MCP flows and prerequisites |
+| 14 | B20 Native Spec | Base Beryl B20 Asset semantics for loyalty tokens |
+| 15 | Payment Scenarios | x402 exact, MPP, subscriptions, spend policies |
+
+Installable skill bundle (CLI): `npx skills add aspekt19/unboxed-loyalty-spark --skill loyal-spark` — source in [`skills/loyal-spark/`](./skills/loyal-spark/).
 
 Skills index: `https://loyalspark.online/.well-known/skills/index.md`
 
@@ -408,9 +414,9 @@ Loyal Spark is a **machine-payment-native** API. AI agents can discover, authent
 | Copy-paste MCP / curl | [examples/agent-mcp/](./examples/agent-mcp/) | Starter configs in the repo |
 | Repo quickstart (keys, SIWE, x402) | [docs/agents/QUICKSTART.md](./docs/agents/QUICKSTART.md) | Short paths for coding agents |
 
-### Payment Gateways (No API Key Needed)
+### Payment Gateways (pay per call — no subscription)
 
-Agents can pay per request using onchain micropayments:
+Agents can pay per request with onchain micropayments instead of a monthly plan. **Write actions still need a free `lsk_` or `rwk_` key** for identity and scopes; x402/MPP cover the per-call USDC/pathUSD fee only.
 
 | Protocol | Network | Asset | Gateway |
 |----------|---------|-------|---------|
