@@ -29,6 +29,9 @@ jobs:
       - name: Docs / MCP tool-count drift
         run: npm run check:docs
 
+      - name: Recipient offers OpenAPI contract (PR #4)
+        run: npm run test:recipient-offers-contract
+
       - name: Build
         run: npm run build
         env:
