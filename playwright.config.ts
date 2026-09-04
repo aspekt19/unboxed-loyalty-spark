@@ -62,9 +62,13 @@ export default defineConfig({
   ],
   webServer: {
     // npm-only: CI images have Node but not Bun (see .github/workflows/ci.yml).
-    command: "npm run dev -- --host 127.0.0.1 --port 8080 --strictPort",
+    // On CI serve the production build — the dev server is far too slow on 2-core runners.
+    command: process.env.CI
+      ? "npm run build && npm run preview -- --host 127.0.0.1 --port 8080 --strictPort"
+      : "npm run dev -- --host 127.0.0.1 --port 8080 --strictPort",
     url: "http://localhost:8080",
-    reuseExistingServer: true,
-    timeout: 120_000,
+    reuseExistingServer: !process.env.CI,
+    timeout: 300_000,
   },
 });
+
