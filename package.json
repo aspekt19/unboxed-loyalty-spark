@@ -14,12 +14,13 @@
     "test:rest-list-contract": "node scripts/test-rest-list-output-contract.mjs",
     "test:deno-helpers": "deno test --no-check --allow-env --allow-read --allow-net --node-modules-dir=auto supabase/functions/_shared/",
     "preview": "vite preview",
+    "audit:prod": "npm audit --omit=dev",
     "test:e2e": "LD_LIBRARY_PATH=$NIX_LD_LIBRARY_PATH playwright test"
   },
   "dependencies": {
     "@blackbox-vision/react-qr-reader": "^5.0.0",
     "@capacitor/android": "^8.4.1",
-    "@capacitor/cli": "^8.4.1",
+    
     "@capacitor/core": "^8.4.1",
     "@capacitor/ios": "^8.4.1",
     "@farcaster/auth-kit": "^0.8.2",
@@ -84,11 +85,12 @@
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.9",
     "viem": "^2.47.4",
-    "vite-plugin-pwa": "^1.3.0",
+    
     "wagmi": "^2.19.5",
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.4.1",
     "@eslint/js": "^9.32.0",
     "@lovable.dev/vite-plugin-dev-server-bridge": "^1.0.2",
     "@lovable.dev/vite-plugin-hmr-gate": "^1.8.0",
@@ -108,9 +110,11 @@
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0",
-    "vite": "^5.4.19"
+    "vite": "^5.4.19",
+    "vite-plugin-pwa": "^1.3.0"
   },
   "overrides": {
+    "@faker-js/faker": "^10.5.0",
     "axios": "^1.20.0",
     "ws": "^8.21.3",
     "hono": "^4.13.5",
