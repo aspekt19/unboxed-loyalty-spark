@@ -111,7 +111,7 @@ const DualBenefits = () => {
           transition={{ duration: 0.4, delay: 0.3 }}
         >
           <p className="text-sm font-semibold text-primary">
-            Free to start for both customers and businesses. No subscription — pay only when your rewards grow.
+            Always free for customers. Businesses start with a free trial — paid plans start at $39/mo.
           </p>
         </motion.div>
       </div>

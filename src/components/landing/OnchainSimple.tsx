@@ -16,7 +16,7 @@ const simplifications = [
   {
     icon: Eye,
     title: 'Blockchain under the hood',
-    description: 'You see balances, rewards, and vouchers — not transaction hashes and gas fees. We handle the complexity.',
+    description: 'You see balances, rewards, and vouchers instead of raw transaction data. Customers never pay gas; businesses keep a small amount of ETH on Base for onchain actions.',
   },
   {
     icon: Lock,

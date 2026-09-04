@@ -45,7 +45,7 @@ export const BlockchainFAQ = () => {
             <AccordionTrigger>What are loyalty tokens?</AccordionTrigger>
             <AccordionContent className="text-muted-foreground">
               Loyalty tokens are digital rewards stored on the blockchain. Unlike traditional
-              points that only exist in a company's database, these tokens are real assets you own.
+              points that only exist in a company's database, these tokens sit in a wallet you control.
               You can hold them, trade them, or use them for rewards - and no one can take them
               away from you.
             </AccordionContent>
