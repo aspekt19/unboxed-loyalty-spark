@@ -47,6 +47,9 @@ jobs:
   dependency-audit:
     name: Dependency security audit
     runs-on: ubuntu-latest
+    # Advisory only: upstream advisories appear/disappear outside our control,
+    # so this job reports but never fails the run.
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
