@@ -108,9 +108,9 @@ const PitchDeck = () => {
         agents: {
           title: 'AI Agents (API + MCP)',
           tiers: [
-            { name: 'Free', price: '$0', detail: '200 calls/mo · 1 agent · 1.25% mint fee' },
-            { name: 'Pro', price: '$49 / mo', detail: '10,000 calls · 5 agents · 0.50% mint fee' },
-            { name: 'Enterprise', price: '$129 / mo', detail: 'Unlimited calls & agents · 0.25% mint fee' },
+            { name: 'Free', price: '$0', detail: '200 calls/mo · 1 agent · 1,000 tokens mint/mo · 1.25% mint fee' },
+            { name: 'Pro', price: '$49 / mo', detail: '10,000 calls · 5 agents · unlimited mint · 0.50% mint fee' },
+            { name: 'Enterprise', price: '$129 / mo', detail: 'Unlimited calls, agents & mint · 0.25% mint fee' },
           ],
         },
         ppc: {

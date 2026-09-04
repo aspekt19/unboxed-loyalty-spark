@@ -10,7 +10,7 @@ const TermsPage = () => (
         ← Back to home
       </Link>
       <h1 className="text-4xl font-bold mt-6 mb-2">Terms of Service</h1>
-      <p className="text-sm text-muted-foreground mb-8">Last updated: August 29, 2026</p>
+      <p className="text-sm text-muted-foreground mb-8">Last updated: September 4, 2026</p>
 
       <Card>
         <CardContent className="prose prose-sm dark:prose-invert max-w-none p-6 space-y-6">
@@ -57,7 +57,11 @@ const TermsPage = () => (
               </li>
               <li>
                 <strong>AI agents</strong> — API and MCP access with scoped API keys
-                (Free $0, Pro $49/mo, Enterprise $129/mo).
+                (Free $0, Pro $49/mo, Enterprise $129/mo). The Free agent plan includes{" "}
+                <strong>200 API calls per month</strong>, <strong>1 agent key</strong>, and a{" "}
+                <strong>1,000 loyalty tokens / month mint cap</strong> per owner wallet
+                (1.25% mint fee). Paid plans raise or remove these caps and lower the mint
+                fee percentage.
               </li>
             </ul>
             <p>
@@ -75,6 +79,12 @@ const TermsPage = () => (
               not USDC, and is enforced by our API — not by the onchain token contract.
               See <Link to="/pricing" className="text-primary hover:underline">Pricing</Link>{" "}
               for current percentages.
+            </p>
+            <p>
+              Agent and merchant data accessed through the API or MCP is scoped by{" "}
+              <strong>Postgres row-level security (RLS)</strong> to the owner wallet behind
+              each <code>lsk_</code> / <code>rwk_</code> key. Agents can only read and write
+              their own programs, rewards, vouchers, and offers.
             </p>
             <p>
               See also our{" "}

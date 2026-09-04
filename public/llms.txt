@@ -44,9 +44,11 @@ Pay per request with the exact advertised USDC amount on Base. HTTP **402** with
 
 ### API Key (Subscription)
 Traditional API key authentication with monthly plans. Subscriptions are paid in USDC on Base.
-- Free: 200 calls/month, 1.25% mint fee
-- Pro ($49/mo): 10K calls, 0.5% mint fee
-- Enterprise ($129/mo): unlimited, 0.25% mint fee
+- Free: 200 calls/month, 1 agent, **1,000 loyalty tokens minted/month**, 1.25% mint fee
+- Pro ($49/mo): 10K calls, 5 agents, unlimited mint, 0.5% mint fee
+- Enterprise ($129/mo): unlimited calls & agents, unlimited mint, 0.25% mint fee
+
+Access control: every REST/MCP call is scoped by Postgres **row-level security (RLS)** to the wallet behind the `lsk_` / `rwk_` key.
 
 **Mint fee is not USDC.** It is a separate `mint(address,uint256)` on your own loyalty token that sends the fee % to the platform fee wallet — paid in loyalty points, not USDC/ETH/fiat, and separate from the per-call prices below. The token contract does not enforce it; the API tracks a fee obligation per mint and returns HTTP 402 once 5+ obligations are unpaid for over 60 minutes. Settle each one with `POST /mint/confirm`.
 

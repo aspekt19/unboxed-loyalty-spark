@@ -88,7 +88,7 @@ Total Slides: 12
 ### AI Agents (API + MCP)
 | Tier | Price | Detail |
 |------|-------|--------|
-| Free | $0 | 200 calls/mo · 1 agent · 1.25% mint fee |
+| Free | $0 | 200 calls/mo · 1 agent · 1,000 tokens mint/mo · 1.25% mint fee |
 | Pro | $49 / mo | 10,000 calls · 5 agents · 0.50% mint fee |
 | Enterprise | $129 / mo | Unlimited calls & agents · 0.25% mint fee |
 

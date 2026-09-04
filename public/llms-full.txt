@@ -269,13 +269,15 @@ Agents can create Coinbase CDP MPC wallets for autonomous onchain operations:
 
 ## Subscription Plans (AI agents, `lsk_`)
 
-| Plan | Price | API Calls/mo | Agents | Mint fee |
-|------|-------|-------------|--------|----------|
-| Free | $0 | 200 | 1 | 1.25% |
-| Pro | $49 USDC | 10,000 | 5 | 0.5% |
-| Enterprise | $129 USDC | Unlimited | Unlimited | 0.25% |
+| Plan | Price | API Calls/mo | Agents | Mint cap | Mint fee |
+|------|-------|-------------|--------|----------|----------|
+| Free | $0 | 200 | 1 | 1,000 tokens/mo | 1.25% |
+| Pro | $49 USDC | 10,000 | 5 | Unlimited | 0.5% |
+| Enterprise | $129 USDC | Unlimited | Unlimited | Unlimited | 0.25% |
 
 Merchant SaaS (portal): Starter $39 / Growth $79 / Scale $149 per month — separate product line.
+
+Access control: every REST and MCP call is scoped by Postgres **row-level security (RLS)** to the owner wallet behind the `lsk_` / `rwk_` key.
 
 Payment: On-chain USDC transfer on Base, verified automatically. This covers **subscriptions only**.
 

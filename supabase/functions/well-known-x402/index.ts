@@ -239,13 +239,19 @@ function buildDiscoveryDocument(req: Request): Record<string, unknown> {
       range: "00-15",
     },
     planLimits: {
-      free: { max_mint_amount_monthly: 1000, max_agents: 1, transaction_fee_percent: 1.25 },
-      note: "Monthly mint quota is enforced atomically server-side; exceeding it returns HTTP 402.",
+      free: {
+        api_calls_monthly: 200,
+        max_mint_amount_monthly: 1000,
+        max_agents: 1,
+        transaction_fee_percent: 1.25,
+      },
+      note:
+        "Free plan: 200 API calls/mo and 1,000 loyalty tokens minted/mo per owner wallet, enforced server-side; exceeding either returns HTTP 402. Paid plans raise or remove these caps.",
     },
     accessControl: {
       model: "row-level-security",
       description:
-        "Agents only read and write rows owned by the wallet behind their lsk_/rwk_ key; RLS policies are enforced in Postgres.",
+        "Every REST and MCP call is scoped by Postgres row-level security to the owner wallet behind the lsk_/rwk_ key — agents only read and write their own programs, rewards, vouchers, and offers.",
     },
     network: NETWORK_CAIP2,
     asset: USDC_BASE,

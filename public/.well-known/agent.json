@@ -2,7 +2,7 @@
   "name": "Loyal Spark",
   "description": "Onchain loyalty protocol on Base. New programs deploy as native B20 Asset programs by default; legacy ERC-20 programs remain supported. Two agent personas: MERCHANT (lsk_, 28 authenticated REST routes + 1 public + 39 MCP tools at /loyalty-mcp) creates programs, registers and activates them when needed, manages rewards, mints tokens, runs P2P trading, gift certificates (LOYAL-XXXXXX), CDP MPC wallets, and POST /earn cashback. RECIPIENT (rwk_, 14 REST routes at /recipient-api + 20 MCP tools at /recipient-loyalty-mcp) holds tokens, redeems rewards, P2P swaps, claims gift certificates, and prepares loyalty token transfers. Pay-per-call via MPP (pathUSD/USDC on Tempo) or x402 v2 (USDC on Base) — both gateways relay merchant + recipient corridors with Coinbase Bazaar discovery metadata.",
   "url": "https://loyalspark.online",
-  "version": "2.3.1",
+  "version": "2.3.2",
   "protocol": "a2a-loyalty",
   "capabilities": [
     "create_loyalty_program",
@@ -311,6 +311,7 @@
         "limits": {
           "api_calls_monthly": 200,
           "agents": 1,
+          "max_mint_amount_monthly": 1000,
           "transaction_fee": "1.25%"
         }
       },
@@ -320,6 +321,7 @@
         "limits": {
           "api_calls_monthly": 10000,
           "agents": 5,
+          "max_mint_amount_monthly": "unlimited",
           "transaction_fee": "0.5%"
         }
       },
@@ -329,11 +331,17 @@
         "limits": {
           "api_calls_monthly": "unlimited",
           "agents": "unlimited",
+          "max_mint_amount_monthly": "unlimited",
           "transaction_fee": "0.25%"
         }
       }
     ],
+    "plan_limits_note": "Free plan mint quota (1,000 loyalty tokens/mo per owner wallet) is enforced server-side; exceeding it returns HTTP 402. Paid plans remove the mint cap.",
     "payment": "Subscriptions: on-chain USDC transfer to the platform wallet, verified automatically. Mint protocol fees are separate and paid in loyalty tokens (see transaction_fee_note).",
+    "access_control": {
+      "model": "row-level-security",
+      "description": "Every REST and MCP call is scoped by Postgres row-level security to the owner wallet behind the lsk_/rwk_ key — agents only read and write their own programs, rewards, vouchers, and offers."
+    },
     "pay_per_request": {
       "protocols": ["x402 v2 exact", "MPP"],
       "x402": {

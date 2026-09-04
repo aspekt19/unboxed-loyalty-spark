@@ -45,11 +45,12 @@
     },
     "x-plan-limits": {
       "free": {
+        "api_calls_monthly": 200,
         "max_mint_amount_monthly": 1000,
         "max_agents": 1,
         "transaction_fee_percent": 1.25
       },
-      "note": "Monthly mint quota is enforced atomically server-side (consume_agent_mint_quota); exceeding it returns HTTP 402."
+      "note": "Free plan: 200 API calls/mo and 1,000 loyalty tokens minted/mo per owner wallet, enforced server-side (consume_agent_mint_quota / call quotas); exceeding either returns HTTP 402. Paid plans raise or remove these caps."
     },
     "x-access-control": {
       "model": "row-level-security",

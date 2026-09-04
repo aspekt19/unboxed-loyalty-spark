@@ -815,6 +815,7 @@ export default function GuidePage() {
                       <ul className="text-sm text-muted-foreground space-y-1">
                         <li>• 1 agent (lsk_ or rwk_)</li>
                         <li>• 200 API calls / month</li>
+                        <li>• 1,000 loyalty tokens minted / month</li>
                         <li>• All MCP & REST endpoints</li>
                         <li>• Mint fee 1.25%</li>
                       </ul>
