@@ -243,16 +243,12 @@ Deno.test("checkAgentSeatLimit treats NULL/0 max_agents as unlimited (Enterprise
 });
 
 Deno.test("admin wallets bypass seat and mint quotas entirely", async () => {
-  const adminWallet = "0x5cc0aa9ed773f413f81f78a62f2e94109ce26205";
-  Deno.env.set("ADMIN_WALLETS", adminWallet);
-  // Dynamic import: the admin set is memoised at module evaluation time.
-  const mod = await import(`./agent-plan-limits.ts#admin-${Date.now()}`);
   const db = mockDb(tableResponder({}), () => ({ data: false }));
-  assertEquals(await mod.checkAgentSeatLimit(db, adminWallet), { ok: true });
-  assertEquals(await mod.consumeAgentMintQuota(db, AGENT, adminWallet, 10_000_000), {
+  assertEquals(await checkAgentSeatLimit(db, ADMIN_WALLET_FIXTURE), { ok: true });
+  assertEquals(await consumeAgentMintQuota(db, AGENT, ADMIN_WALLET_FIXTURE, 10_000_000), {
     ok: true,
     counted: false,
   });
+  assertEquals(await checkAgentMintQuota(db, AGENT, ADMIN_WALLET_FIXTURE, 10_000_000), { ok: true });
   assertEquals(db.rpcCalls.length, 0);
-  Deno.env.delete("ADMIN_WALLETS");
 });
