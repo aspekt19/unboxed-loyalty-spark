@@ -101,6 +101,7 @@
     },
   },
   "overrides": {
+    "@faker-js/faker": "^10.5.0",
     "@remix-run/router": "^1.23.4",
     "axios": "^1.20.0",
     "bn.js": "^5.2.5",
@@ -403,7 +404,7 @@
 
     "@ethereumjs/util": ["@ethereumjs/util@8.1.0", "", { "dependencies": { "@ethereumjs/rlp": "^4.0.1", "ethereum-cryptography": "^2.0.0", "micro-ftch": "^0.3.1" } }, "sha512-zQ0IqbdX8FZ9aw11vP+dZkKDkS+kgIvQPHnSAXzP9pLu+Rfu3D3XEeLbicvoXJTYnhZiPmsZUxgdzXwNKxRPbA=="],
 
-    "@faker-js/faker": ["@faker-js/faker@7.6.0", "", {}, "sha512-XK6BTq1NDMo9Xqw/YkYyGjSsg44fbNwYRx7QK2CuoQgyy+f1rrTDHoExVM5PsyXCtfl2vs2vVJ0MN0yN6LppRw=="],
+    "@faker-js/faker": ["@faker-js/faker@10.6.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@faker-js/faker/-/faker-10.6.0.tgz", {}, "sha512-3RQHgEtvL1Frl/d1cSreo7qhJ3Gk1OdNUai/CtZ8G+wYeRQnJih3s9xJ9/kgYekPQRdwgh0HXRPqMlzWGwivIQ=="],
 
     "@farcaster/auth-client": ["@farcaster/auth-client@0.7.1", "", { "dependencies": { "neverthrow": "^6.1.0", "viem": "^2.29.2" } }, "sha512-Mo5FnQPCfcV1ECSEvLz/WeFbH5F0ok5SJkRtwyO27KTQIuXKeL8O8oq6PlcVEEP8rkDnGkGkQ5rnT5Re9DDyNA=="],
 
