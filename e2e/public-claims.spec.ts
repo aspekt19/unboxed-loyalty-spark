@@ -19,6 +19,10 @@ const FORBIDDEN_COPY = [
 
 async function bodyText(page: import("@playwright/test").Page, path: string) {
   await page.goto(path, { waitUntil: "domcontentloaded" });
+  // Routes are lazy-loaded behind Suspense; wait until the shell has rendered copy.
+  await expect
+    .poll(async () => (await page.locator("body").innerText()).trim().length, { timeout: 30_000 })
+    .toBeGreaterThan(200);
   await page.waitForLoadState("networkidle").catch(() => {});
   return (await page.locator("body").innerText()).replace(/\s+/g, " ");
 }
