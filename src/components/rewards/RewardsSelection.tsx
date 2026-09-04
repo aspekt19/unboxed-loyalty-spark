@@ -11,6 +11,7 @@ import { AlertCircle, Loader2, Ticket, LogIn, Search } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { useBurnTokens } from '@/hooks/useBurnTokens';
 import { useApproveTokens, useCheckAllowance } from '@/hooks/useApproveTokens';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useMultiTokenBalance } from '@/hooks/useMultiTokenBalance';
 import { useActiveCustomerWallet } from '@/hooks/useActiveCustomerWallet';
 import { useVoucherVerification } from '@/hooks/useVoucherVerification';
