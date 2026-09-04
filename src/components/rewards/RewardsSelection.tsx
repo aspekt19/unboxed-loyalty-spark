@@ -11,6 +11,7 @@ import { AlertCircle, Loader2, Ticket, LogIn, Search } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { useBurnTokens } from '@/hooks/useBurnTokens';
 import { useApproveTokens, useCheckAllowance } from '@/hooks/useApproveTokens';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useMultiTokenBalance } from '@/hooks/useMultiTokenBalance';
 import { useActiveCustomerWallet } from '@/hooks/useActiveCustomerWallet';
 import { useVoucherVerification } from '@/hooks/useVoucherVerification';
@@ -76,7 +77,12 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
   const [showFullBalance, setShowFullBalance] = useState(false);
 
   const { activeAddress, isMismatch, primaryAddress } = useActiveCustomerWallet();
-  const { data: programsCatalog = [] } = useActiveLoyaltyPrograms({ includePaused: false });
+  // Share the same query cache as TokenList / Filters (paused rows are filtered below)
+  const { data: programsCatalogRaw = [], isLoading: programsLoading } = useActiveLoyaltyPrograms();
+  const programsCatalog = useMemo(
+    () => programsCatalogRaw.filter((p) => (p.status ?? '').toLowerCase() !== 'paused'),
+    [programsCatalogRaw],
+  );
   const { balances, isLoading: balancesLoading } = useMultiTokenBalance(tokens, activeAddress);
   const { burnTokens, isPending, isSuccess, hash } = useBurnTokens();
   const { approveTokens, isPending: isApproving, isSuccess: isApproved } = useApproveTokens();
@@ -372,7 +378,14 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
         <CardDescription>Spend your loyalty tokens to unlock rewards and get a redeemable voucher.</CardDescription>
       </CardHeader>
       <CardContent>
-        {filteredTokensWithBalance.length === 0 ? (
+        {filteredTokensWithBalance.length === 0 && (programsLoading || balancesLoading) ? (
+          <div className="space-y-3">
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        ) : filteredTokensWithBalance.length === 0 ? (
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
