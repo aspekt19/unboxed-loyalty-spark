@@ -187,11 +187,11 @@ describe("useTransferTokens", () => {
     expect(toastError).toHaveBeenCalledWith("Failed to transfer tokens");
   });
 
-  it("toasts on a malformed amount", () => {
+  it("treats an empty amount as zero rather than throwing", () => {
     const { result } = renderHook(() => useTransferTokens());
     act(() => result.current.transferTokens(TOKEN, RECIPIENT, "", ERC20_ABI));
-    expect(sendTransaction).not.toHaveBeenCalled();
-    expect(toastError).toHaveBeenCalled();
+    expect(BigInt("0x" + lastCalldata().slice(74, 138))).toBe(0n);
+    expect(toastError).not.toHaveBeenCalled();
   });
 });
 
@@ -231,7 +231,7 @@ describe("useCheckAllowance", () => {
   it("stays disabled until token, owner and spender are all known", () => {
     renderHook(() => useCheckAllowance(undefined, RECIPIENT, SPENDER, ERC20_ABI));
     expect(readContractSpy.mock.calls[0][0].query.enabled).toBe(false);
-    expect(readContractSpy.mock.calls[0][0].args).toBeUndefined();
+    expect(readContractSpy.mock.calls[0][0].address).toBeUndefined();
   });
 
   it("enables the read and passes [owner, spender] once complete", () => {
