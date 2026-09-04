@@ -92,6 +92,49 @@ export function builderCodeExtension(): {
   };
 }
 
+/**
+ * CDP / x402 facilitator reads `a` from **paymentPayload.extensions["builder-code"]**
+ * (not only from paymentRequirements) when appending ERC-8021 settle calldata.
+ * Many agent clients never echo the server's app code into the payload — settle then
+ * lands with only `w=cdp_facil*` and Loyal Spark disappears from Base builder dashboards.
+ *
+ * Mutates `paymentPayload` in place: force `info.a` to our code while preserving any
+ * client `s` / other fields. Call before `/verify` and `/settle`.
+ */
+export function ensureBuilderCodeOnPaymentPayload(
+  paymentPayload: Record<string, unknown>,
+): void {
+  const existing =
+    paymentPayload.extensions &&
+    typeof paymentPayload.extensions === "object" &&
+    !Array.isArray(paymentPayload.extensions)
+      ? (paymentPayload.extensions as Record<string, unknown>)
+      : {};
+
+  const prevBc = existing[BUILDER_CODE_EXTENSION_KEY];
+  const prevInfo =
+    prevBc && typeof prevBc === "object" && !Array.isArray(prevBc)
+      ? ((prevBc as Record<string, unknown>).info as Record<string, unknown> | undefined)
+      : undefined;
+
+  const info: Record<string, unknown> = {
+    ...(prevInfo && typeof prevInfo === "object" ? prevInfo : {}),
+    a: LOYAL_SPARK_BUILDER_CODE,
+  };
+
+  paymentPayload.extensions = {
+    ...existing,
+    [BUILDER_CODE_EXTENSION_KEY]: {
+      ...(prevBc && typeof prevBc === "object" && !Array.isArray(prevBc)
+        ? (prevBc as Record<string, unknown>)
+        : {}),
+      info,
+      // Keep schema so facilitator validation matches declareBuilderCodeExtension.
+      schema: BUILDER_CODE_SCHEMA,
+    },
+  };
+}
+
 export type BuildAcceptParams = {
   price: string;
   resource: string;

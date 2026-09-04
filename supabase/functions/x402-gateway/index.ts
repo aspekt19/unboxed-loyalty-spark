@@ -2,7 +2,7 @@ import { getMcpBazaarTool, isMcpToolResource } from "../_shared/mcp-bazaar-tools
 import { getRecipientMcpBazaarTool } from "../_shared/recipient-mcp-bazaar-tools.ts";
 import { RECIPIENT_REST_ROUTE_USD } from "../_shared/recipient-paid-routes.ts";
 import { resolveMcpApiKey } from "../_shared/mcp-http-api-key.ts";
-import { buildAcceptEntry, paymentRequirementsForFacilitator, validateClientAcceptedMatches } from "../_shared/x402-bazaar-accept.ts";
+import { buildAcceptEntry, ensureBuilderCodeOnPaymentPayload, paymentRequirementsForFacilitator, validateClientAcceptedMatches } from "../_shared/x402-bazaar-accept.ts";
 import { paidGatewayUpstreamHeaders, type PaidGatewayKind } from "../_shared/paid-gateway-auth.ts";
 
 const corsHeaders = {
@@ -253,6 +253,7 @@ async function verifyPayment(
     if (!guard.ok) {
       return { valid: false, error: guard.reason };
     }
+    ensureBuilderCodeOnPaymentPayload(paymentPayload);
     const paymentRequirements = paymentRequirementsForFacilitator(paymentPayload, accept);
 
     // Must match @x402/core HTTPFacilitatorClient — facilitator rejects { payload, requirements }.
@@ -301,6 +302,7 @@ async function settlePayment(
       network: BASE_NETWORK,
       supabaseUrl,
     });
+    ensureBuilderCodeOnPaymentPayload(paymentPayload);
     const paymentRequirements = paymentRequirementsForFacilitator(paymentPayload, accept);
 
     const settleBody = {

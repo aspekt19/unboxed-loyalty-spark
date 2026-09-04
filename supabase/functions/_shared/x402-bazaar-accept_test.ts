@@ -2,6 +2,7 @@ import { assert, assertEquals } from "https://deno.land/std@0.224.0/assert/mod.t
 import {
   buildAcceptEntry,
   builderCodeExtension,
+  ensureBuilderCodeOnPaymentPayload,
   LOYAL_SPARK_BUILDER_CODE,
   validateClientAcceptedMatches,
 } from "./x402-bazaar-accept.ts";
@@ -15,6 +16,30 @@ Deno.test("builder code extension carries the Loyal Spark app code", () => {
   const ext = builderCodeExtension();
   assertEquals(ext.info.a, LOYAL_SPARK_BUILDER_CODE);
   assertEquals(LOYAL_SPARK_BUILDER_CODE, "bc_wdmnog7m");
+});
+
+Deno.test("ensureBuilderCodeOnPaymentPayload injects a when client omitted extensions", () => {
+  const payload: Record<string, unknown> = { x402Version: 2 };
+  ensureBuilderCodeOnPaymentPayload(payload);
+  const ext = (payload.extensions as Record<string, unknown>)["builder-code"] as {
+    info: { a: string };
+  };
+  assertEquals(ext.info.a, LOYAL_SPARK_BUILDER_CODE);
+});
+
+Deno.test("ensureBuilderCodeOnPaymentPayload overwrites wrong a but keeps client s", () => {
+  const payload: Record<string, unknown> = {
+    x402Version: 2,
+    extensions: {
+      "builder-code": { info: { a: "wrong_code", s: ["agent_client"] } },
+    },
+  };
+  ensureBuilderCodeOnPaymentPayload(payload);
+  const info = ((payload.extensions as Record<string, unknown>)["builder-code"] as {
+    info: { a: string; s: string[] };
+  }).info;
+  assertEquals(info.a, LOYAL_SPARK_BUILDER_CODE);
+  assertEquals(info.s, ["agent_client"]);
 });
 
 Deno.test("buildAcceptEntry prices MCP tools in micro-USDC", () => {

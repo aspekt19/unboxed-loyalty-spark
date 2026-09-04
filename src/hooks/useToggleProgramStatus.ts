@@ -1,5 +1,6 @@
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { toast } from 'sonner';
+import { encodeWithBuilderCode } from '@/config/builder-code';
 import { type TokenAddress, TOKEN_STATUS_ABI, txLog } from './types/transaction';
 
 const HOOK_NAME = 'ToggleProgramStatus';
@@ -7,7 +8,7 @@ const HOOK_NAME = 'ToggleProgramStatus';
 /** Handle common transaction errors with user-friendly messages */
 function handleTransactionError(err: unknown, action: string): void {
   const message = err instanceof Error ? err.message : String(err);
-  
+
   if (message.includes('User denied') || message.includes('User rejected')) {
     toast.error('Transaction cancelled by user');
   } else if (message.includes('gas')) {
@@ -18,19 +19,19 @@ function handleTransactionError(err: unknown, action: string): void {
 }
 
 export function useToggleProgramStatus() {
-  const { data: hash, writeContract, isPending, error } = useWriteContract();
-  
+  // sendTransaction + encodeWithBuilderCode — writeContract cannot carry the ERC-8021 suffix.
+  const { data: hash, sendTransaction, isPending, error } = useSendTransaction();
+
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
 
   const pauseProgram = async (tokenAddress: TokenAddress) => {
     try {
-      await writeContract({
-        address: tokenAddress,
-        abi: TOKEN_STATUS_ABI.pauseUtility,
-        functionName: 'pauseUtility',
-      } as any);
+      sendTransaction({
+        to: tokenAddress,
+        data: encodeWithBuilderCode(TOKEN_STATUS_ABI.pauseUtility, 'pauseUtility'),
+      });
     } catch (err) {
       txLog(HOOK_NAME, 'error', 'Pause failed', err);
       handleTransactionError(err, 'paused');
@@ -39,12 +40,11 @@ export function useToggleProgramStatus() {
 
   const unpauseUtility = async (tokenAddress: TokenAddress) => {
     try {
-      await writeContract({
-        address: tokenAddress,
-        abi: TOKEN_STATUS_ABI.unpauseUtility,
-        functionName: 'unpauseUtility',
-      } as any);
-      
+      sendTransaction({
+        to: tokenAddress,
+        data: encodeWithBuilderCode(TOKEN_STATUS_ABI.unpauseUtility, 'unpauseUtility'),
+      });
+
       txLog(HOOK_NAME, 'info', 'Unpause transaction sent');
     } catch (err) {
       txLog(HOOK_NAME, 'error', 'Unpause failed', err);
@@ -55,12 +55,11 @@ export function useToggleProgramStatus() {
 
   const enableMinting = async (tokenAddress: TokenAddress) => {
     try {
-      await writeContract({
-        address: tokenAddress,
-        abi: TOKEN_STATUS_ABI.enableMinting,
-        functionName: 'enableMinting',
-      } as any);
-      
+      sendTransaction({
+        to: tokenAddress,
+        data: encodeWithBuilderCode(TOKEN_STATUS_ABI.enableMinting, 'enableMinting'),
+      });
+
       txLog(HOOK_NAME, 'info', 'Enable minting transaction sent');
     } catch (err) {
       txLog(HOOK_NAME, 'error', 'Enable minting failed', err);

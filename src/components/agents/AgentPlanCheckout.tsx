@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useAccount, useChainId, useSwitchChain, useWriteContract } from 'wagmi';
+import { useAccount, useChainId, useSwitchChain, useSendTransaction } from 'wagmi';
 import { base } from 'wagmi/chains';
 import { parseUnits } from 'viem';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -14,6 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import { Check, Copy, ExternalLink, Loader2, Wallet, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { WalletConnectButton } from '@/components/WalletConnectButton';
+import { encodeWithBuilderCode } from '@/config/builder-code';
 import {
   BillingCycleToggle,
   type BillingCycle,
@@ -54,7 +55,7 @@ export default function AgentPlanCheckout() {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const { switchChainAsync } = useSwitchChain();
-  const { writeContractAsync } = useWriteContract();
+  const { sendTransactionAsync } = useSendTransaction();
   const queryClient = useQueryClient();
 
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
@@ -185,14 +186,15 @@ export default function AgentPlanCheckout() {
       if (chainId !== base.id) {
         await switchChainAsync({ chainId: base.id });
       }
-      const hash = await writeContractAsync({
-        address: USDC_BASE,
-        abi: ERC20_TRANSFER_ABI,
-        functionName: 'transfer',
-        args: [subscriptionWallet as `0x${string}`, parseUnits(String(amount), 6)],
+      const data = encodeWithBuilderCode(ERC20_TRANSFER_ABI, 'transfer', [
+        subscriptionWallet as `0x${string}`,
+        parseUnits(String(amount), 6),
+      ]);
+      const hash = await sendTransactionAsync({
+        to: USDC_BASE,
+        data,
         chainId: base.id,
         account: address as `0x${string}`,
-        chain: base,
       });
       toast.success('Payment sent — confirming onchain…');
       await submitHash(hash);
