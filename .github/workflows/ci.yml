@@ -32,6 +32,9 @@ jobs:
       - name: REST list output OpenAPI contract
         run: npm run test:rest-list-contract
 
+      - name: Frontend unit tests (vitest)
+        run: npm run test:unit
+
       - name: Build
         run: npm run build
         env:
