@@ -4,8 +4,8 @@
     "title": "Loyal Spark — Onchain Loyalty Protocol on Base",
     "version": "2.2.0",
     "summary": "AI-agent-native loyalty-as-a-service protocol on Base L2 with paid x402 + MPP corridors.",
-    "description": "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create B20 loyalty programs (legacy ERC-20 optional), mint tokens to customer wallets, manage reward catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics — all via paid x402 endpoints (USDC on Base) or via standard REST with x-api-key. Coverage: 88 paid operations across 82 paths (x402 corridor). Direct MCP (x-api-key) exposes 39 merchant + 20 recipient tools; paid x402 MCP prices 34 merchant + 16 recipient tools (confirm_mint_fee is lsk_-only settlement, not x402-priced). Builder Code bc_wdmnog7m.",
-    "x-guidance": "Loyal Spark on Base L2 (chain 8453, USDC native).\n\nAuth modes:\n• Merchant agents — header x-api-key: lsk_... (or Authorization: Bearer lsk_...). Get a key in https://loyalspark.online/merchant → AI Agents.\n• Holder agents — header x-api-key: rwk_... (or Authorization: Bearer rwk_...). Issued via SIWE: https://loyalspark.online/.well-known/agent.json.\n• x402 corridor — pay USDC on Base per call. Discovery: https://api.loyalspark.online/.well-known/x402 (static mirror: https://loyalspark.online/.well-known/x402.json).\n\nTypical merchant flow (B20 default):\n1. GET /me — profile and scopes\n2. POST /programs — B20 createB20 calldata\n3. POST /register-program — persist program (status active)\n4. POST /update-program-config — set cashback_rate / points_per_dollar\n5. POST /rewards — catalog\n6. POST /mint or POST /earn — fee-first calls[] + fee_obligation_id\n7. POST /mint/confirm — settle protocol fee on-chain\n8. GET /analytics — metrics\n\nLegacy ERC-20: add POST /activate-program + program-status after register.\n\nDirect MCP: 39 merchant tools at https://api.loyalspark.online/loyalty-mcp and 20 recipient tools at https://api.loyalspark.online/recipient-loyalty-mcp. Paid x402 MCP paths: /x402-gateway/mcp-tools/<name> (34) and /x402-gateway/recipient-mcp-tools/<name> (16).\n\nDocs: https://loyalspark.online/api-docs · llms: https://loyalspark.online/llms.txt · agent manifest: https://loyalspark.online/.well-known/agent.json",
+    "description": "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create B20 loyalty programs (legacy ERC-20 optional), mint tokens to customer wallets, manage reward catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics — all via paid x402 endpoints (USDC on Base) or via standard REST with x-api-key. Coverage: 88 paid operations across 82 paths (x402 corridor). Direct MCP (x-api-key) exposes 39 merchant + 20 recipient tools; paid x402 MCP prices 34 merchant + 16 recipient tools (confirm_mint_fee is lsk_-only settlement, not x402-priced). Builder Code bc_wdmnog7m. Free plan: 1,000 loyalty tokens minted per month per owner wallet, 1 API key, 1.25% protocol fee (paid plans raise or remove the cap). Access control: every REST and MCP call is scoped by Postgres row-level security to the owner wallet behind the lsk_/rwk_ key — agents only read and write their own programs, rewards, vouchers and offers. 16 agent skill guides (00-15): https://loyalspark.online/.well-known/skills/index.md",
+    "x-guidance": "Loyal Spark on Base L2 (chain 8453, USDC native).\n\nAuth modes:\n• Merchant agents — header x-api-key: lsk_... (or Authorization: Bearer lsk_...). Get a key in https://loyalspark.online/merchant → AI Agents.\n• Holder agents — header x-api-key: rwk_... (or Authorization: Bearer rwk_...). Issued via SIWE: https://loyalspark.online/.well-known/agent.json.\n• x402 corridor — pay USDC on Base per call. Discovery: https://api.loyalspark.online/.well-known/x402 (static mirror: https://loyalspark.online/.well-known/x402.json).\n\nTypical merchant flow (B20 default):\n1. GET /me — profile and scopes\n2. POST /programs — B20 createB20 calldata\n3. POST /register-program — persist program (status active)\n4. POST /update-program-config — set cashback_rate / points_per_dollar\n5. POST /rewards — catalog\n6. POST /mint or POST /earn — fee-first calls[] + fee_obligation_id\n7. POST /mint/confirm — settle protocol fee on-chain\n8. GET /analytics — metrics\n\nLegacy ERC-20: add POST /activate-program + program-status after register.\n\nDirect MCP: 39 merchant tools at https://api.loyalspark.online/loyalty-mcp and 20 recipient tools at https://api.loyalspark.online/recipient-loyalty-mcp. Paid x402 MCP paths: /x402-gateway/mcp-tools/<name> (34) and /x402-gateway/recipient-mcp-tools/<name> (16).\n\nDocs: https://loyalspark.online/api-docs · llms: https://loyalspark.online/llms.txt · agent manifest: https://loyalspark.online/.well-known/agent.json\n\nPlan limits: Free plan: 1,000 loyalty tokens minted per month per owner wallet, 1 API key, 1.25% protocol fee (paid plans raise or remove the cap).\n\nAccess control: every REST and MCP call is scoped by Postgres row-level security to the owner wallet behind the lsk_/rwk_ key — agents only read and write their own programs, rewards, vouchers and offers.\n\nSkills: 16 agent skill guides (00-15): https://loyalspark.online/.well-known/skills/index.md",
     "contact": {
       "name": "Loyal Spark",
       "email": "admin@loyalspark.online",
@@ -37,6 +37,23 @@
       "gatewayBaseUrl": "https://api.loyalspark.online/x402-gateway",
       "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
       "network": "eip155:8453"
+    },
+    "x-skills": {
+      "url": "https://loyalspark.online/.well-known/skills/index.md",
+      "guide_count": 16,
+      "range": "00-15"
+    },
+    "x-plan-limits": {
+      "free": {
+        "max_mint_amount_monthly": 1000,
+        "max_agents": 1,
+        "transaction_fee_percent": 1.25
+      },
+      "note": "Monthly mint quota is enforced atomically server-side (consume_agent_mint_quota); exceeding it returns HTTP 402."
+    },
+    "x-access-control": {
+      "model": "row-level-security",
+      "description": "Access control: every REST and MCP call is scoped by Postgres row-level security to the owner wallet behind the lsk_/rwk_ key — agents only read and write their own programs, rewards, vouchers and offers."
     }
   },
   "servers": [
