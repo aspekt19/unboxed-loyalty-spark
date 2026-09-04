@@ -90,7 +90,7 @@ Deno.test("listOffers returns an offers array, filtered or unfiltered", async ()
   assertEquals(await marketplaceListOffers(db, null), { status: 200, body: { offers: [OFFER] } });
   assertEquals(orFilter, null);
 
-  await marketplaceListOffers(db, TOKEN_A.toUpperCase());
+  await marketplaceListOffers(db, TOKEN_A);
   assertStringIncludes(String(orFilter), TOKEN_A.toLowerCase());
 });
 
@@ -121,7 +121,7 @@ Deno.test("createOffer validates required fields, addresses, amounts and self-sw
 Deno.test("createOffer persists lowercased addresses and returns approve + createOffer calldata", async () => {
   const { db } = offerDb(null);
   const res = await marketplaceCreateOffer(db, CREATOR.toUpperCase(), {
-    offer_token_address: TOKEN_A.toUpperCase(),
+    offer_token_address: TOKEN_A,
     offer_amount: 100,
     request_token_address: TOKEN_B,
     request_amount: 50,

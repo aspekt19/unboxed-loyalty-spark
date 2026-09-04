@@ -34,13 +34,18 @@ export async function baseRpcCall<T = unknown>(
     try {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
-        signal: controller.signal,
-      });
-      clearTimeout(timer);
+      let resp: Response;
+      try {
+        resp = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+          signal: controller.signal,
+        });
+      } finally {
+        // Always clear: a transport failure must not leave a dangling timer.
+        clearTimeout(timer);
+      }
 
       if (!resp.ok) {
         lastError = new Error(`${url} HTTP ${resp.status}`);
