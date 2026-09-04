@@ -925,21 +925,26 @@ const reward = await fetch(\`\${BASE}/rewards\`, {
             <CardContent>
               <div className="space-y-2">
                 {[
-                  { id: '00', name: 'Getting Started', desc: 'Register agent, get API key, first request' },
-                  { id: '01', name: 'Create Loyalty Program', desc: 'Deploy B20 loyalty token on Base (default; legacy ERC-20 optional)' },
-                  { id: '02', name: 'Mint Tokens', desc: 'Mint tokens to customer wallets' },
-                  { id: '03', name: 'Transfer Tokens', desc: 'Transfer tokens between wallets' },
-                  { id: '04', name: 'Manage Rewards', desc: 'Create redeemable rewards catalog' },
-                  { id: '05', name: 'Balance & Tiers', desc: 'Check balances and tier status' },
-                  { id: '06', name: 'Marketplace Trading', desc: 'P2P token trading with atomic escrow' },
-                  { id: '07', name: 'Analytics & CRM', desc: 'Program analytics and CRM data' },
-                  { id: '08', name: 'Referrals', desc: 'Referral programs for organic growth' },
-                  { id: '09', name: 'Vouchers', desc: 'Voucher lifecycle management' },
-                  { id: '10', name: 'Server Wallets', desc: 'CDP MPC wallets for autonomous transactions' },
+                  { id: '00', slug: 'getting-started', name: 'Getting Started', desc: 'Register agent, get API key, first request' },
+                  { id: '01', slug: 'create-loyalty-program', name: 'Create Loyalty Program', desc: 'Deploy B20 loyalty token on Base (default; legacy ERC-20 optional)' },
+                  { id: '02', slug: 'mint-tokens', name: 'Mint Tokens', desc: 'Mint tokens to customer wallets' },
+                  { id: '03', slug: 'transfer-tokens', name: 'Transfer Tokens', desc: 'Transfer tokens between wallets' },
+                  { id: '04', slug: 'manage-rewards', name: 'Manage Rewards', desc: 'Create redeemable rewards catalog' },
+                  { id: '05', slug: 'balance-and-tiers', name: 'Balance & Tiers', desc: 'Check balances and tier status' },
+                  { id: '06', slug: 'marketplace-trading', name: 'Marketplace Trading', desc: 'P2P token trading with atomic escrow' },
+                  { id: '07', slug: 'analytics-crm', name: 'Analytics & CRM', desc: 'Program analytics and CRM data' },
+                  { id: '08', slug: 'referrals', name: 'Referrals', desc: 'Referral programs for organic growth' },
+                  { id: '09', slug: 'vouchers', name: 'Vouchers', desc: 'Voucher lifecycle management' },
+                  { id: '10', slug: 'server-wallets', name: 'Server Wallets', desc: 'CDP MPC wallets for autonomous transactions' },
+                  { id: '11', slug: 'earn-points', name: 'Earn Points', desc: 'Award points from purchases and automations' },
+                  { id: '12', slug: 'gift-certificates', name: 'Gift Certificates', desc: 'Issue and redeem LOYAL-XXXXXX certificates' },
+                  { id: '13', slug: 'endpoint-workflows', name: 'Endpoint Workflows', desc: 'End-to-end flows across every endpoint' },
+                  { id: '14', slug: 'b20-native-spec', name: 'B20 Native Spec', desc: 'Roles, policies, and memo events of the native B20 standard' },
+                  { id: '15', slug: 'payment-scenarios', name: 'Payment Scenarios', desc: 'x402 exact, MPP, subscriptions, autonomous CDP payments' },
                 ].map((skill) => (
                   <a
                     key={skill.id}
-                    href={`/.well-known/skills/${skill.id}-${skill.name.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-')}.md`}
+                    href={`/.well-known/skills/${skill.id}-${skill.slug}.md`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors group"
