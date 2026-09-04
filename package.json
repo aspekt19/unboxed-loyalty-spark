@@ -15,7 +15,8 @@
     "test:deno-helpers": "deno test --no-check --allow-env --allow-read --allow-net --node-modules-dir=auto supabase/functions/_shared/",
     "preview": "vite preview",
     "audit:prod": "npm audit --omit=dev",
-    "test:e2e": "LD_LIBRARY_PATH=$NIX_LD_LIBRARY_PATH playwright test"
+    "test:e2e": "LD_LIBRARY_PATH=$NIX_LD_LIBRARY_PATH playwright test",
+    "test:unit": "vitest run"
   },
   "dependencies": {
     "@blackbox-vision/react-qr-reader": "^5.0.0",
