@@ -6,11 +6,13 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./e2e",
-  timeout: 60_000,
+  timeout: process.env.CI ? 120_000 : 60_000,
   fullyParallel: true,
+  workers: process.env.CI ? 2 : undefined,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [["github"], ["list"]] : "list",
+
   use: {
     baseURL: "http://localhost:8080",
     trace: "retain-on-failure",
@@ -60,9 +62,13 @@ export default defineConfig({
   ],
   webServer: {
     // npm-only: CI images have Node but not Bun (see .github/workflows/ci.yml).
-    command: "npm run dev -- --host 127.0.0.1 --port 8080 --strictPort",
+    // On CI serve the production build — the dev server is far too slow on 2-core runners.
+    command: process.env.CI
+      ? "npm run build && npm run preview -- --host 127.0.0.1 --port 8080 --strictPort"
+      : "npm run dev -- --host 127.0.0.1 --port 8080 --strictPort",
     url: "http://localhost:8080",
-    reuseExistingServer: true,
-    timeout: 120_000,
+    reuseExistingServer: !process.env.CI,
+    timeout: 300_000,
   },
 });
+
