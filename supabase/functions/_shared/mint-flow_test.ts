@@ -2,6 +2,7 @@
  * Mint pipeline: amount encoding, protocol-fee math, call bundle ordering and
  * monthly plan quota enforcement (Free = 1,000 tokens/month).
  */
+import { ADMIN_WALLET_FIXTURE } from "./testing/admin-wallet-fixture.ts";
 import { assert, assertEquals, assertStringIncludes, assertThrows } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   BUILDER_SUFFIX,
