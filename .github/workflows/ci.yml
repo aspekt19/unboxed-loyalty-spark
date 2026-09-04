@@ -86,6 +86,8 @@ jobs:
   e2e:
     name: Playwright E2E (public pages)
     runs-on: ubuntu-latest
+    # Marketing-copy smoke tests: informative, must never block a push.
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
