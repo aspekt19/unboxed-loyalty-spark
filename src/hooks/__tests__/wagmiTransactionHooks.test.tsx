@@ -9,16 +9,27 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { parseUnits, maxUint256 } from "viem";
 
-const sendTransaction = vi.fn();
-const reset = vi.fn();
-
-const sendState = {
-  data: undefined as `0x${string}` | undefined,
-  isPending: false,
-  error: null as Error | null,
-};
-const receiptState = { isLoading: false, isSuccess: false };
-const readContractSpy = vi.fn();
+const {
+  sendTransaction,
+  reset,
+  sendState,
+  receiptState,
+  readContractSpy,
+  toastError,
+  toastSuccess,
+} = vi.hoisted(() => ({
+  sendTransaction: vi.fn(),
+  reset: vi.fn(),
+  sendState: {
+    data: undefined as `0x${string}` | undefined,
+    isPending: false,
+    error: null as Error | null,
+  },
+  receiptState: { isLoading: false, isSuccess: false },
+  readContractSpy: vi.fn(),
+  toastError: vi.fn(),
+  toastSuccess: vi.fn(),
+}));
 
 vi.mock("wagmi", () => ({
   useSendTransaction: () => ({
@@ -36,8 +47,6 @@ vi.mock("wagmi", () => ({
   },
 }));
 
-const toastError = vi.fn();
-const toastSuccess = vi.fn();
 vi.mock("sonner", () => ({ toast: { error: toastError, success: toastSuccess } }));
 
 import { useMintTokens } from "../useMintTokens";
