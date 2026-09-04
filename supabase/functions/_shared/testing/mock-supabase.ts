@@ -23,9 +23,13 @@ export type QueryResult = { data?: unknown; error?: unknown; count?: number | nu
 export type Responder = (state: QueryState) => QueryResult | Promise<QueryResult>;
 export type RpcResponder = (fn: string, args: Record<string, unknown>) => QueryResult | Promise<QueryResult>;
 
+// Must stay assignable to the `Db` structural types used by the modules under
+// test (e.g. agent-fee-ledger expects `{ data: any; error: any }`).
+export type RpcResult = { data: any; error: any; count: number | null };
+
 export type MockDb = {
   from: (table: string) => any;
-  rpc: (fn: string, args: Record<string, unknown>) => Promise<QueryResult>;
+  rpc: (fn: string, args: Record<string, unknown>) => Promise<RpcResult>;
   /** Every query the code under test issued, in order. */
   calls: QueryState[];
   rpcCalls: Array<{ fn: string; args: Record<string, unknown> }>;
@@ -117,10 +121,13 @@ export function mockDb(responder: Responder, rpcResponder?: RpcResponder): MockD
     from(table: string) {
       return builder({ table, op: "select", filters: [], head: false, terminal: null });
     },
-    async rpc(fn: string, args: Record<string, unknown>) {
+    async rpc(fn: string, args: Record<string, unknown>): Promise<RpcResult> {
       rpcCalls.push({ fn, args });
-      if (!rpcResponder) return normalize({ data: null, error: { message: `no rpc stub for ${fn}` } });
-      return normalize(await rpcResponder(fn, args));
+      const result = !rpcResponder
+        ? { data: null, error: { message: `no rpc stub for ${fn}` } }
+        : await rpcResponder(fn, args);
+      const n = normalize(result);
+      return { data: n.data, error: n.error, count: n.count ?? null };
     },
   };
 }
