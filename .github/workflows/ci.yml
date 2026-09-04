@@ -75,3 +75,35 @@ jobs:
 
       - name: Typecheck edge functions
         run: deno check --config supabase/functions/deno.json --node-modules-dir=auto supabase/functions/*/index.ts supabase/functions/_shared/*.ts
+
+  e2e:
+    name: Playwright E2E (public pages)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: npx playwright test
+        env:
+          CI: "true"
+          VITE_SUPABASE_URL: https://bzxmejzssxjazswgwqqs.supabase.co
+          VITE_SUPABASE_PROJECT_ID: bzxmejzssxjazswgwqqs
+          VITE_SUPABASE_PUBLISHABLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ6eG1lanpzc3hqYXpzd2d3cXFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3MDI4NjcsImV4cCI6MjA3NjI3ODg2N30.U10RsJRxIm3zPWcJPHpHuKf0X6FGO6P1bj4c21PN42o
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
