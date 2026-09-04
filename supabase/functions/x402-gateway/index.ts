@@ -61,7 +61,7 @@ async function buildFacilitatorHeaders(
 
   if (id && secret) {
     // Lazy import via esm.sh to avoid pulling the heavy CDP SDK into the edge bundle at build time.
-    const mod = await import("https://esm.sh/@coinbase/cdp-sdk@1.47.0/auth");
+    const mod = await import("https://esm.sh/@coinbase/cdp-sdk@1.55.0/auth");
     const generateJwt = (mod as unknown as { generateJwt: (opts: Record<string, string>) => Promise<string> }).generateJwt;
     const jwt = await generateJwt({
       apiKeyId: id,

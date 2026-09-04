@@ -19,12 +19,30 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "viem": [
+        "./node_modules/viem"
+      ],
+      "viem/*": [
+        "./node_modules/viem/*"
+      ],
+      "wagmi": [
+        "./node_modules/wagmi"
+      ],
+      "wagmi/*": [
+        "./node_modules/wagmi/*"
+      ],
+      "abitype": [
+        "./node_modules/abitype"
       ]
     },
     "skipLibCheck": true,
     "strict": false,
     "target": "ES2020",
-    "useDefineForClassFields": true
+    "useDefineForClassFields": true,
+    "types": [
+      "vitest/globals"
+    ]
   },
   "include": [
     "src"
