@@ -19,7 +19,9 @@ export function useTransferTokens(): TransferTokensResult {
 
   const transferTokens = (tokenAddress: string, recipientAddress: string, amount: string, tokenAbi: readonly unknown[]) => {
     try {
-      const amountInWei = parseUnits(amount, 18);
+      // Empty / whitespace → 0. Newer viem (ox) rejects `""`; older accepted it as zero.
+      const normalizedAmount = amount.trim() === "" ? "0" : amount.trim();
+      const amountInWei = parseUnits(normalizedAmount, 18);
       
       txLog(HOOK_NAME, 'info', 'Initiating transfer', { tokenAddress, recipientAddress, amount });
       
