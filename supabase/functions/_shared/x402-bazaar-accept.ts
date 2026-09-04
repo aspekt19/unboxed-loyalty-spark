@@ -355,7 +355,7 @@ function restApiKeyHint(resource: string): string {
  * not just an endpoint label.
  */
 function getRestRouteDescription(_resource: string, _method: string): string {
-  return "Onchain loyalty platform on Base Network. Businesses launch branded rewards in minutes. Customers earn real value with every purchase. AI agents automate the rest.";
+  return "Onchain loyalty platform on Base Network. Businesses launch branded rewards in minutes, customers earn real value with every purchase, and AI agents automate the rest via REST and MCP. Free plan mints up to 1,000 tokens per month; every call is scoped by row-level security to the wallet behind the API key. 16 skill guides at loyalspark.online/.well-known/skills/index.md.";
 }
 
 // `getRestInputSchema` (generic, method-only) was removed in 2.2.2 — both

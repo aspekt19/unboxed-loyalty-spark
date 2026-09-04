@@ -209,7 +209,7 @@ function buildDiscoveryDocument(req: Request): Record<string, unknown> {
   const items = buildAllItems(req);
   const name = "Loyal Spark — Onchain Loyalty Protocol on Base";
   const description =
-    "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create B20 loyalty programs, mint tokens to customer wallets, manage rewards catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics — all via paid x402 endpoints (USDC on Base). Includes 88 paid resources: merchant REST (agent-api), recipient REST (recipient-api), 34 merchant MCP tools and 16 recipient MCP tools via paid x402 corridor (direct MCP exposes 39 merchant + 20 recipient tools with x-api-key). Builder Code bc_wdmnog7m.";
+    "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create B20 loyalty programs, mint tokens to customer wallets, manage rewards catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics — all via paid x402 endpoints (USDC on Base). Includes 88 paid resources: merchant REST (agent-api), recipient REST (recipient-api), 34 merchant MCP tools and 16 recipient MCP tools via paid x402 corridor (direct MCP exposes 39 merchant + 20 recipient tools with x-api-key). Free plan mints up to 1,000 loyalty tokens per month per owner wallet (1 API key, 1.25% protocol fee); paid plans raise the cap. Every REST and MCP call is scoped by row-level security to the wallet behind the lsk_/rwk_ key. 16 agent skill guides (00-15): https://loyalspark.online/.well-known/skills/index.md. Builder Code bc_wdmnog7m.";
   return {
     x402Version: 1,
     name,
@@ -233,6 +233,20 @@ function buildDiscoveryDocument(req: Request): Record<string, unknown> {
       website: "https://loyalspark.online",
     },
     builderCode: "bc_wdmnog7m",
+    skills: {
+      url: "https://loyalspark.online/.well-known/skills/index.md",
+      guide_count: 16,
+      range: "00-15",
+    },
+    planLimits: {
+      free: { max_mint_amount_monthly: 1000, max_agents: 1, transaction_fee_percent: 1.25 },
+      note: "Monthly mint quota is enforced atomically server-side; exceeding it returns HTTP 402.",
+    },
+    accessControl: {
+      model: "row-level-security",
+      description:
+        "Agents only read and write rows owned by the wallet behind their lsk_/rwk_ key; RLS policies are enforced in Postgres.",
+    },
     network: NETWORK_CAIP2,
     asset: USDC_BASE,
     tags: ["loyalty", "rewards", "onchain", "base", "mcp", "rest", "erc20", "ai-agents"],
