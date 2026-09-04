@@ -7,7 +7,7 @@ const features = [
   { icon: Shield, title: 'Secure', description: 'Smart contract based security', delay: 0, link: '/guide' },
   { icon: Zap, title: 'Fast', description: 'Instant transactions on BASE', delay: 0.1 },
   { icon: Globe, title: 'Decentralized', description: 'True ownership of rewards', delay: 0.2 },
-  { icon: TrendingUp, title: 'Tradeable', description: 'Exchange on any DEX', delay: 0.3 },
+  { icon: TrendingUp, title: 'Transferable', description: 'P2P escrow swaps on Base', delay: 0.3 },
   { icon: Bot, title: 'AI-Ready', description: `REST, MCP (${MCP_TOOL_COUNT} tools), onboarding`, delay: 0.4, link: '/for-agents' },
   { icon: Code, title: 'Composable', description: 'Build on top of the protocol', delay: 0.5, link: '/api-docs' },
 ];

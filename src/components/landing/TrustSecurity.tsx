@@ -10,7 +10,7 @@ const trustItems = [
   {
     icon: Lock,
     title: 'Row-Level Security',
-    description: 'Every database query enforced by RLS policies. Data isolation guaranteed at the infrastructure level.',
+    description: 'App queries run under RLS policies; privileged server functions add explicit ownership and scope checks.',
   },
   {
     icon: Fingerprint,
@@ -50,7 +50,7 @@ const TrustSecurity = () => {
             <span className="text-xs font-semibold text-primary uppercase tracking-wider">Trust & Security</span>
           </div>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 tracking-tight">
-            Enterprise-Grade Security
+            Security by Design
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
             Built with zero-trust architecture. Your keys, your tokens, your data — protected at every layer from wallet to database.

@@ -31,7 +31,7 @@ const LandingHero = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        Loyalty rewards that work like real assets
+        Loyalty rewards that live in your own wallet
       </motion.p>
       
       <motion.h1 
@@ -40,7 +40,7 @@ const LandingHero = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
       >
-        Earn rewards. Watch them grow.
+        Earn rewards. Own them onchain.
       </motion.h1>
       
       <motion.p 
@@ -58,7 +58,7 @@ const LandingHero = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.5 }}
       >
-        Free to start for both customers and businesses. No subscription needed.
+        Always free for customers. Businesses start with a free trial, then a paid plan from $39/mo.
       </motion.p>
 
       <motion.div 

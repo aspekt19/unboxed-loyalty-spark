@@ -86,7 +86,7 @@ const Preview3D = () => {
                   Unlock Exclusive Rewards with Crypto
                 </h1>
                 <p className="text-sm sm:text-base text-muted-foreground mb-6">
-                  Your loyalty, powered by blockchain. Earn tokens at your favorite stores, watch them grow.
+                  Your loyalty, powered by blockchain. Earn tokens at your favorite stores and redeem them for real perks.
                 </p>
                 <ClayButton variant="secondary">Join Now</ClayButton>
               </div>
