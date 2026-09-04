@@ -121,10 +121,13 @@ export function mockDb(responder: Responder, rpcResponder?: RpcResponder): MockD
     from(table: string) {
       return builder({ table, op: "select", filters: [], head: false, terminal: null });
     },
-    async rpc(fn: string, args: Record<string, unknown>) {
+    async rpc(fn: string, args: Record<string, unknown>): Promise<RpcResult> {
       rpcCalls.push({ fn, args });
-      if (!rpcResponder) return normalize({ data: null, error: { message: `no rpc stub for ${fn}` } });
-      return normalize(await rpcResponder(fn, args));
+      const result = !rpcResponder
+        ? { data: null, error: { message: `no rpc stub for ${fn}` } }
+        : await rpcResponder(fn, args);
+      const n = normalize(result);
+      return { data: n.data, error: n.error, count: n.count ?? null };
     },
   };
 }
