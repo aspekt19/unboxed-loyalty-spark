@@ -377,7 +377,14 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
         <CardDescription>Spend your loyalty tokens to unlock rewards and get a redeemable voucher.</CardDescription>
       </CardHeader>
       <CardContent>
-        {filteredTokensWithBalance.length === 0 ? (
+        {filteredTokensWithBalance.length === 0 && (programsLoading || balancesLoading) ? (
+          <div className="space-y-3">
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        ) : filteredTokensWithBalance.length === 0 ? (
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
