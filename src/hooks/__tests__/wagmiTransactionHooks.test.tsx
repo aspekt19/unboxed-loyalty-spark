@@ -44,7 +44,7 @@ import { useMintTokens } from "../useMintTokens";
 import { useTransferTokens } from "../useTransferTokens";
 import { useApproveTokens, useCheckAllowance } from "../useApproveTokens";
 import { useTokenBalance } from "../useTokenBalance";
-import { BUILDER_SUFFIX } from "@/config/builder-code";
+import { BUILDER_CODE_SUFFIX } from "@/config/builder-code";
 
 const TOKEN = "0x2222222222222222222222222222222222222222";
 const RECIPIENT = "0x3333333333333333333333333333333333333333";
@@ -105,7 +105,7 @@ describe("useMintTokens", () => {
     const call = sendTransaction.mock.calls[0][0];
     expect(call.to).toBe(TOKEN);
     expect(call.data.startsWith("0x40c10f19")).toBe(true);
-    expect(call.data.endsWith(BUILDER_SUFFIX.replace(/^0x/, ""))).toBe(true);
+    expect(call.data.endsWith(BUILDER_CODE_SUFFIX.replace(/^0x/, ""))).toBe(true);
     // recipient right-aligned in a 32-byte word
     expect(call.data.slice(10, 74)).toBe(RECIPIENT.slice(2).padStart(64, "0"));
     // amount word equals parseUnits("25.5", 18)
@@ -195,7 +195,7 @@ describe("useApproveTokens", () => {
     expect(data.startsWith("0x095ea7b3")).toBe(true);
     expect(data.slice(10, 74)).toBe(SPENDER.slice(2).padStart(64, "0"));
     expect(BigInt("0x" + data.slice(74, 138))).toBe(maxUint256);
-    expect(data.endsWith(BUILDER_SUFFIX.replace(/^0x/, ""))).toBe(true);
+    expect(data.endsWith(BUILDER_CODE_SUFFIX.replace(/^0x/, ""))).toBe(true);
   });
 
   it("toasts a submitted notice once a hash appears", () => {
