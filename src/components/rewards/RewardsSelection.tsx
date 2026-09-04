@@ -76,7 +76,12 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
   const [showFullBalance, setShowFullBalance] = useState(false);
 
   const { activeAddress, isMismatch, primaryAddress } = useActiveCustomerWallet();
-  const { data: programsCatalog = [] } = useActiveLoyaltyPrograms({ includePaused: false });
+  // Share the same query cache as TokenList / Filters (paused rows are filtered below)
+  const { data: programsCatalogRaw = [], isLoading: programsLoading } = useActiveLoyaltyPrograms();
+  const programsCatalog = useMemo(
+    () => programsCatalogRaw.filter((p) => (p.status ?? '').toLowerCase() !== 'paused'),
+    [programsCatalogRaw],
+  );
   const { balances, isLoading: balancesLoading } = useMultiTokenBalance(tokens, activeAddress);
   const { burnTokens, isPending, isSuccess, hash } = useBurnTokens();
   const { approveTokens, isPending: isApproving, isSuccess: isApproved } = useApproveTokens();
