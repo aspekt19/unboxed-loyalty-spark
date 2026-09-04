@@ -89,6 +89,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.4.1",
     "@eslint/js": "^9.32.0",
     "@lovable.dev/vite-plugin-dev-server-bridge": "^1.0.2",
     "@lovable.dev/vite-plugin-hmr-gate": "^1.8.0",
