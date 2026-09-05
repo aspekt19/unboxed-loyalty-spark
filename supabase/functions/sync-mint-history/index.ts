@@ -282,20 +282,13 @@ async function processLogs(
   const blockTimestamps: Record<string, string> = {};
   for (const blockHex of [...new Set(logs.map((l: any) => l.blockNumber))]) {
     try {
-      const res = await fetch(BASE_RPC_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          id: 1,
-          method: "eth_getBlockByNumber",
-          params: [blockHex, false],
-        }),
-      });
-      const data = await res.json();
-      if (data.result?.timestamp) {
+      const block = await baseRpcCall<{ timestamp?: string } | null>(
+        "eth_getBlockByNumber",
+        [blockHex, false],
+      );
+      if (block?.timestamp) {
         blockTimestamps[blockHex as string] = new Date(
-          parseInt(data.result.timestamp, 16) * 1000,
+          parseInt(block.timestamp, 16) * 1000,
         ).toISOString();
       }
     } catch {
