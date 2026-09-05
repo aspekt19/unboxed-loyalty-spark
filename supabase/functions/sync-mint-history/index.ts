@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { BASE_RPC_URL } from "../_shared/base-rpc.ts";
+import { baseRpcCall } from "../_shared/base-rpc.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -161,18 +161,8 @@ function json(body: unknown, status = 200) {
 }
 
 async function getCurrentBlock(): Promise<number> {
-  const res = await fetch(BASE_RPC_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id: 1,
-      method: "eth_blockNumber",
-      params: [],
-    }),
-  });
-  const data = await res.json();
-  return parseInt(data.result, 16);
+  const result = await baseRpcCall<string>("eth_blockNumber", []);
+  return parseInt(result, 16);
 }
 
 async function syncProgram(
@@ -237,40 +227,33 @@ async function fetchLogs(
   fromBlock: number,
   toBlock: number,
 ): Promise<{ ok: boolean; logs: any[] }> {
-  try {
-    const res = await fetch(BASE_RPC_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: 1,
-        method: "eth_getLogs",
-        params: [
-          {
-            address: tokenAddress,
-            topics: [TRANSFER_TOPIC, ZERO_ADDRESS_TOPIC, null],
-            fromBlock: "0x" + fromBlock.toString(16),
-            toBlock: "0x" + toBlock.toString(16),
-          },
-        ],
-      }),
-    });
+  // Multi-provider failover + short backoff: a single public endpoint
+  // regularly answers "over rate limit", which used to stall the cursor.
+  const params = [
+    {
+      address: tokenAddress,
+      topics: [TRANSFER_TOPIC, ZERO_ADDRESS_TOPIC, null],
+      fromBlock: "0x" + fromBlock.toString(16),
+      toBlock: "0x" + toBlock.toString(16),
+    },
+  ];
 
-    const data = await res.json();
-
-    if (data.error) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const logs = await baseRpcCall<any[]>("eth_getLogs", params);
+      return { ok: true, logs: logs || [] };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
       console.warn(
-        `[fetchLogs] RPC error ${tokenAddress} ${fromBlock}-${toBlock}:`,
-        data.error.message,
+        `[fetchLogs] attempt ${attempt + 1} failed ${tokenAddress} ${fromBlock}-${toBlock}: ${msg}`,
       );
-      return { ok: false, logs: [] };
+      if (attempt < 2) {
+        await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+      }
     }
-
-    return { ok: true, logs: data.result || [] };
-  } catch (err) {
-    console.warn(`[fetchLogs] fetch failed ${tokenAddress}:`, err);
-    return { ok: false, logs: [] };
   }
+
+  return { ok: false, logs: [] };
 }
 
 async function processLogs(
@@ -299,20 +282,13 @@ async function processLogs(
   const blockTimestamps: Record<string, string> = {};
   for (const blockHex of [...new Set(logs.map((l: any) => l.blockNumber))]) {
     try {
-      const res = await fetch(BASE_RPC_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          id: 1,
-          method: "eth_getBlockByNumber",
-          params: [blockHex, false],
-        }),
-      });
-      const data = await res.json();
-      if (data.result?.timestamp) {
+      const block = await baseRpcCall<{ timestamp?: string } | null>(
+        "eth_getBlockByNumber",
+        [blockHex, false],
+      );
+      if (block?.timestamp) {
         blockTimestamps[blockHex as string] = new Date(
-          parseInt(data.result.timestamp, 16) * 1000,
+          parseInt(block.timestamp, 16) * 1000,
         ).toISOString();
       }
     } catch {
