@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { BASE_RPC_URL } from "../_shared/base-rpc.ts";
+import { baseRpcCall } from "../_shared/base-rpc.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -161,18 +161,8 @@ function json(body: unknown, status = 200) {
 }
 
 async function getCurrentBlock(): Promise<number> {
-  const res = await fetch(BASE_RPC_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id: 1,
-      method: "eth_blockNumber",
-      params: [],
-    }),
-  });
-  const data = await res.json();
-  return parseInt(data.result, 16);
+  const result = await baseRpcCall<string>("eth_blockNumber", []);
+  return parseInt(result, 16);
 }
 
 async function syncProgram(
