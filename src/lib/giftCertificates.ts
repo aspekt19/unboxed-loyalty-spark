@@ -157,8 +157,15 @@ export async function uploadCertificateImage(
   merchantAddress: string,
   file: File,
 ): Promise<string | null> {
-  const ext = file.name.split('.').pop() || 'png';
-  const path = `${merchantAddress.toLowerCase()}/${Date.now()}.${ext}`;
+  const rawExt = file.name.split('.').pop()?.toLowerCase() ?? '';
+  const ext = /^(png|jpg|jpeg|webp|gif|svg)$/.test(rawExt) ? rawExt : 'png';
+  // Unguessable object name: prevents enumeration of other merchants' artwork
+  // in the public bucket (timestamp-based names were predictable).
+  const unique =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
+  const path = `${merchantAddress.toLowerCase()}/${unique}.${ext}`;
   const { error } = await supabase.storage
     .from('certificate-images')
     .upload(path, file, { cacheControl: '3600', upsert: false });
@@ -166,3 +173,4 @@ export async function uploadCertificateImage(
   const { data } = supabase.storage.from('certificate-images').getPublicUrl(path);
   return data.publicUrl;
 }
+
