@@ -258,7 +258,7 @@ export const CreateAutomationRule = ({
                 />
               </div>
               <p className="col-span-3 text-xs text-muted-foreground">
-                A unique certificate will be auto-issued (every hour) to qualifying customers who had activity in the last 24h. Mint button appears in your Certificates tab once they redeem.
+                When automation processing runs, a unique certificate is issued to qualifying customers with activity in the last 24h. Mint button appears in your Certificates tab once they redeem.
               </p>
             </div>
           )}

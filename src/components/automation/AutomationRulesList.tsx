@@ -24,17 +24,20 @@ interface AutomationRulesListProps {
 const ruleTypeIcons: Record<string, typeof TrendingUp> = {
   at_risk_offer: TrendingUp,
   tier_upgrade: Activity,
-  voucher_expiring: Clock,
   inactive_reminder: Gift,
+  welcome_gift_certificate: Gift,
+  // Legacy DB rows only — not offered in create UI / not implemented in processor
+  voucher_expiring: Clock,
   birthday_bonus: Cake,
 };
 
 const ruleTypeLabels: Record<string, string> = {
   at_risk_offer: "At-Risk Customer Offers",
   tier_upgrade: "Tier Upgrade Congratulations",
-  voucher_expiring: "Voucher Expiring Reminders",
   inactive_reminder: "Inactive Customer Reminders",
-  birthday_bonus: "Birthday Bonuses",
+  welcome_gift_certificate: "Welcome Gift Certificates",
+  voucher_expiring: "Voucher Expiring Reminders (unsupported)",
+  birthday_bonus: "Birthday Bonuses (unsupported)",
 };
 
 export const AutomationRulesList = ({ programs, selectedProgram, onProgramChange }: AutomationRulesListProps) => {

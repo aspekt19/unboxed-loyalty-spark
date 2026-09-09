@@ -64,6 +64,7 @@ Merchant SaaS (portal): Starter $39 / Growth $79 / Scale $149 per month — see 
 - GET /vouchers — List vouchers
 - GET /analytics — Program analytics ($0.005)
 - GET /offers — Marketplace offers
+- GET /tx-receipt — Extract token_address from deploy tx (free)
 - GET /me — Agent info (free)
 
 ### Write (POST) — $0.005–$0.05
@@ -73,6 +74,7 @@ Merchant SaaS (portal): Starter $39 / Growth $79 / Scale $149 per month — see 
 - POST /register-program — Register deployed token ($0.01)
 - POST /activate-program — Legacy ERC-20 activation only ($0.01; no-op for B20)
 - POST /program-status — Update status ($0.005)
+- POST /update-program-config — Update cashback_rate / points_per_dollar ($0.005)
 - POST /rewards — Create reward ($0.01)
 - POST /mint — Mint tokens ($0.01 per call; plus the plan mint fee % in loyalty tokens, settled via POST /mint/confirm)
 - POST /mint/confirm — Settle the mint fee obligation with obligation_id + fee_tx_hash (free)

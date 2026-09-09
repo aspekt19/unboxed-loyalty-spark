@@ -41,7 +41,7 @@ Each subdirectory is one deployable function (`index.ts` entry). Shared Deno mod
 | `check-premium-expiration` | Subscription expiry |
 | `check-program-expiration` | Loyalty program expiry |
 | `sync-mint-history` | Onchain mint history sync |
-| `process-automation` | Automation triggers |
+| `process-automation` | Automation triggers (inactive / at-risk / welcome cert / etc.). Auth: service role or `x-cron-secret`. **No `pg_cron` schedule in repo migrations** — rules only fire when this function is invoked externally. |
 | `customer-export` | CRM export |
 | `get-token-holders` | Holder analytics |
 

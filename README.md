@@ -287,11 +287,11 @@ Benefits:
 
 ### Pricing
 
-| Plan | Monthly | API Calls | Agents | Mint fee |
-|------|---------|-----------|--------|----------|
-| Free | $0 | 200 | 1 | 1.25% |
-| Pro | $49 USDC | 10,000 | 5 | 0.5% |
-| Enterprise | $129 USDC | Unlimited | Unlimited | 0.25% |
+| Plan | Monthly | API Calls | Agents | Mint fee | Mint cap |
+|------|---------|-----------|--------|----------|----------|
+| Free | $0 | 200 | 1 | 1.25% | 1,000 tokens/mo |
+| Pro | $49 USDC | 10,000 | 5 | 0.5% | Unlimited |
+| Enterprise | $129 USDC | Unlimited | Unlimited | 0.25% | Unlimited |
 
 **Merchant SaaS (portal):** Starter **$39** / Growth **$79** / Scale **$149** per month (annual discount 15–20% optional) — details in [docs/business/MONETIZATION_AND_PRICING.md](./docs/business/MONETIZATION_AND_PRICING.md).
 

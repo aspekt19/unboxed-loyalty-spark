@@ -134,7 +134,7 @@ You are responsible for:
 ## Website Details
 
 - **Production URL**: https://loyalspark.online
-- **Key pages**: / (landing), /app (main app), /merchant (merchant panel; **Team** tab = branches & staff invite codes; Profile in header only after sign-in), /customer (customer panel), /api-docs (documentation), /guide (getting started), /premium (subscription plans), /pitch (investor deck). Human UX: [PORTALS_AND_TEAM.md](../development/PORTALS_AND_TEAM.md).
+- **Key pages**: / (landing), /app (main app), /merchant (merchant panel; **Team** tab = branches & staff invite codes; Profile in header only after sign-in), /customer (customer panel), /api-docs (documentation), /guide (getting started), /pricing (subscription plans; /premium redirects here), /pitch (investor deck). Human UX: [PORTALS_AND_TEAM.md](../development/PORTALS_AND_TEAM.md).
 - **Tech stack**: React SPA (Vite), deployed on Lovable
 - **Sitemap**: https://loyalspark.online/sitemap.xml
 - **Robots.txt**: https://loyalspark.online/robots.txt
