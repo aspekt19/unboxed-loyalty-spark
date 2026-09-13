@@ -1,0 +1,6 @@
+name = "loyalspark-api-proxy"
+main = "worker.js"
+compatibility_date = "2026-05-01"
+
+# Custom domain api.loyalspark.online is attached in the Cloudflare dashboard
+# (Workers → Triggers → Custom Domains). Do not put secrets here.

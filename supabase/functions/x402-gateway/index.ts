@@ -144,10 +144,14 @@ const PRICING: Record<string, Record<string, string>> = {
 /**
  * Supabase Edge / reverse proxies often surface `req.url` as `http://` while browsers and
  * @x402/fetch use `https://`. Payment verify/settle must use the same canonical URL as the client.
+ *
+ * Cleartext client HTTP must never reach this function with a 402 body — that is enforced at
+ * Cloudflare (`cloudflare/loyalspark-api-proxy/worker.js` → 308 to https). Here we only
+ * normalize the URL used in `resource` / verify/settle (prefer worker-set x-forwarded-proto).
  */
 function publicRequestUrl(req: Request): URL {
   const url = new URL(req.url);
-  const forwarded = req.headers.get("x-forwarded-proto");
+  const forwarded = req.headers.get("x-forwarded-proto")?.split(",")[0]?.trim().toLowerCase();
   if (forwarded === "https" && url.protocol === "http:") {
     url.protocol = "https:";
   } else if (url.hostname.endsWith(".supabase.co") && url.protocol === "http:") {

@@ -19,12 +19,20 @@ type: integration
 
 **Никогда** не ставить `PUBLIC_BASE_URL=https://loyalspark.online` — сайт не проксирует Edge Functions.
 
-Cloudflare Worker `loyalspark-api-proxy` (gerassyk.workers.dev) проксирует все запросы с `https://api.loyalspark.online/*` на `https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/*`.
+Cloudflare Worker `loyalspark-api-proxy` проксирует `https://api.loyalspark.online/*` → `https://bzxmejzssxjazswgwqqs.supabase.co/functions/v1/*`.
+
+**Source of truth in-repo:** [`cloudflare/loyalspark-api-proxy/worker.js`](../../../cloudflare/loyalspark-api-proxy/worker.js) (deploy from Dashboard or Wrangler).
+
+### HTTP → HTTPS (Coppice 2026-09-13)
+
+Plain `http://api.loyalspark.online/x402-gateway/…` must **not** return a 402 payment envelope. The Worker returns **308** to the same path on `https://` first. Edge Functions alone cannot fix this: the Worker used to strip `x-forwarded-*`, so Deno always saw an internal `http://…supabase.co…` URL.
+
+Also enable Cloudflare zone **Always Use HTTPS** as defense in depth.
 
 ## Что сохраняется
-- Все заголовки кроме CF-internal (`cf-*`, `host`, `x-forwarded-*`)
+- Client headers except CF-internal (`cf-*`, `host`); Worker sets `x-forwarded-proto: https` and `x-forwarded-host` for Edge
 - Тело запроса для POST/PUT/PATCH/DELETE
-- Статусы (включая 402 для x402-flow)
+- Статусы (включая 402 для x402-flow) **только по HTTPS**
 - Хедеры `payment-required`, `x-payment-required`, `x-payment-response`, CORS
 - Добавляется `x-proxied-by: loyalspark-cf-worker`
 
