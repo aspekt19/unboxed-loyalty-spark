@@ -313,6 +313,7 @@ async function settlePayment(
       supabaseUrl,
     });
     ensureBuilderCodeOnPaymentPayload(paymentPayload);
+    paymentPayload.x402Version = normalizeX402Version(paymentPayload.x402Version);
     const paymentRequirements = paymentRequirementsForFacilitator(paymentPayload, accept);
 
     const settleBody = {
