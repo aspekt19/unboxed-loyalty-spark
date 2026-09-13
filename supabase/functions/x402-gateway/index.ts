@@ -232,6 +232,12 @@ function buildPaymentRequired(price: string, resource: string, requestUrl: URL):
   });
 }
 
+/** CDP requires a numeric protocol version; default to v2 when absent/mistyped. */
+function normalizeX402Version(raw: unknown): number {
+  const n = typeof raw === "string" ? Number(raw) : raw;
+  return n === 1 || n === 2 ? n : 2;
+}
+
 async function verifyPayment(
   paymentSignature: string,
   price: string,
@@ -254,6 +260,10 @@ async function verifyPayment(
       return { valid: false, error: guard.reason };
     }
     ensureBuilderCodeOnPaymentPayload(paymentPayload);
+    // Normalize the protocol version BEFORE building requirements: a missing or
+    // string-typed `x402Version` made the requirements fall back to the v1 shape
+    // while CDP validated against v2 (or rejected `x402Version: undefined`) → 400.
+    paymentPayload.x402Version = normalizeX402Version(paymentPayload.x402Version);
     const paymentRequirements = paymentRequirementsForFacilitator(paymentPayload, accept);
 
     // Must match @x402/core HTTPFacilitatorClient — facilitator rejects { payload, requirements }.
@@ -303,6 +313,7 @@ async function settlePayment(
       supabaseUrl,
     });
     ensureBuilderCodeOnPaymentPayload(paymentPayload);
+    paymentPayload.x402Version = normalizeX402Version(paymentPayload.x402Version);
     const paymentRequirements = paymentRequirementsForFacilitator(paymentPayload, accept);
 
     const settleBody = {
