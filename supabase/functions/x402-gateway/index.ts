@@ -232,6 +232,12 @@ function buildPaymentRequired(price: string, resource: string, requestUrl: URL):
   });
 }
 
+/** CDP requires a numeric protocol version; default to v2 when absent/mistyped. */
+function normalizeX402Version(raw: unknown): number {
+  const n = typeof raw === "string" ? Number(raw) : raw;
+  return n === 1 || n === 2 ? n : 2;
+}
+
 async function verifyPayment(
   paymentSignature: string,
   price: string,
