@@ -41,7 +41,7 @@ export async function checkProgramValidityForPayment(
   program: ProgramValidityRow | null | undefined,
   receipt: any,
 ): Promise<string | null> {
-  if (!program) return "Loyalty program not found for this token";
+  if (!program) return null;
 
   const status = String(program.status ?? "").toLowerCase();
   const expiresAt = program.expiration_date
