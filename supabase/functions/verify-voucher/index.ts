@@ -251,6 +251,13 @@ Deno.serve(async (req) => {
       throw new Error('Transaction failed on blockchain');
     }
 
+    // Reject only when the payment itself happened after the program expired.
+    const validityError = await checkProgramValidityForPayment(program, receipt);
+    if (validityError) {
+      throw new Error(validityError);
+    }
+
+
     console.log('Transaction receipt confirmed, checking sender and contract...');
 
     let tx: any = null;
