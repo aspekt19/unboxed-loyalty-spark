@@ -1,4 +1,6 @@
 import { getTransactionReceipt } from "../_shared/base-rpc.ts";
+import { checkProgramValidityForPayment } from "../_shared/program-validity.ts";
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   appendBuilderCode,

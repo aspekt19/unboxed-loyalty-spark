@@ -33,6 +33,8 @@ import { parseOptionalCashbackRate, parseOptionalPointsPerDollar } from "../_sha
 import { discoverResources, discoverMcpServers, probeX402Endpoint } from "../_shared/bazaar-discovery.ts";
 import { generateProgramDefaults, generateProgramExamples, getMerchantProgramFieldCatalog, merchantProgramWorkflow, wrapWorkflow } from "../_shared/agent-workflows.ts";
 import { getTransactionReceipt } from "../_shared/base-rpc.ts";
+import { checkProgramValidityForPayment } from "../_shared/program-validity.ts";
+
 import { isAdminWallet } from "../_shared/admin-wallets.ts";
 
 
