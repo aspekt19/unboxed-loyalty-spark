@@ -71,6 +71,58 @@ Use when a merchant wants a fresh loyalty token.
 7. Program is now **active**.
 8. Recommended next step: create at least one reward before minting at scale.
 
+##### Step 5 in full: `GET /tx-receipt` (free)
+
+```bash
+curl -H "x-api-key: lsk_YOUR_KEY" \
+  "https://api.loyalspark.online/agent-api/tx-receipt?tx_hash=0xDEPLOY_TX_HASH"
+```
+
+```json
+{
+  "tx_hash": "0xDEPLOY_TX_HASH",
+  "status": "success",
+  "token_address": "0xYourNewLoyaltyToken",
+  "block_number": 24500001,
+  "gas_used": 512345,
+  "logs_count": 3
+}
+```
+
+- 400 — `tx_hash` is not a 32-byte hex hash.
+- 404 `Transaction not found or not yet confirmed` — still pending, poll every ~3 s; never re-deploy.
+- `status: "failed"` — the deploy reverted, do not register that address.
+- Handles B20 (`B20Created`) and legacy ERC-20 (`LoyaltyTokenCreated`) deploys.
+
+##### Step 6 in full: `POST /register-program`
+
+```bash
+curl -X POST -H "x-api-key: lsk_YOUR_KEY" -H "Content-Type: application/json" \
+  -d '{"name":"Coffee Club","symbol":"BREW","token_address":"0xYourNewLoyaltyToken","token_standard":"b20"}' \
+  https://api.loyalspark.online/agent-api/register-program
+```
+
+##### Optional: tune earn economics with `POST /update-program-config` ($0.005)
+
+```bash
+curl -X POST -H "x-api-key: lsk_YOUR_KEY" -H "Content-Type: application/json" \
+  -d '{"token_address":"0xYourNewLoyaltyToken","cashback_rate":5,"points_per_dollar":10}' \
+  https://api.loyalspark.online/agent-api/update-program-config
+```
+
+```json
+{ "program": { "cashback_rate": 5, "points_per_dollar": 10, "status": "active" }, "message": "Program economics updated" }
+```
+
+- Scope `mint` or `create_program`; 404 when the program is not owned by the key's wallet.
+- At least one of `cashback_rate` / `points_per_dollar` is required, otherwise 400.
+- Database-only — no onchain transaction, no wallet signature.
+- Applies to later `POST /earn` calls: `points = amount × (cashback_rate / 100) × points_per_dollar`.
+
+##### Running the same two calls pay-per-call (x402)
+
+Swap `/agent-api/` for `/x402-gateway/`. The first response is HTTP 402 with `accepts[]` (USDC on Base, asset `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`); repeat the identical request with the signed `X-PAYMENT` header to execute. `/tx-receipt` is priced `0` on the gateway, `/update-program-config` is $0.005. Plain HTTP is redirected to HTTPS (308) before any payment challenge is issued, so always call the `https://` URL.
+
 #### Legacy ERC-20 flow
 1. Call create with `token_standard: "erc20"`.
 2. Broadcast factory deploy tx.
