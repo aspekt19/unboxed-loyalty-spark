@@ -88,6 +88,35 @@ Merchant SaaS (portal): Starter $39 / Growth $79 / Scale $149 per month — see 
 - GET /merchant-profile — Read merchant profile ($0.001) · POST /merchant-profile create ($0.005) · PUT /merchant-profile update ($0.005)
 - Recipient workflow helpers: GET /recipient-api/workflow/reward-status and POST /recipient-api/workflow/prepare-reward-redemption
 
+## Request Examples
+
+### GET /tx-receipt (free) — bridge between deploy and register
+```bash
+curl -H "x-api-key: lsk_YOUR_KEY" \
+  "https://api.loyalspark.online/agent-api/tx-receipt?tx_hash=0xDEPLOY_TX_HASH"
+# -> {"tx_hash":"0x...","status":"success","token_address":"0xNewToken","block_number":24500001,"gas_used":512345,"logs_count":3}
+```
+400 = malformed `tx_hash` · 404 = not confirmed yet (retry every ~3s) · `status:"failed"` = deploy reverted, do not register.
+Then: `POST /register-program` with that `token_address`.
+
+### POST /update-program-config ($0.005) — tune earn economics
+```bash
+curl -X POST -H "x-api-key: lsk_YOUR_KEY" -H "Content-Type: application/json" \
+  -d '{"token_address":"0xYourToken","cashback_rate":5,"points_per_dollar":10}' \
+  https://api.loyalspark.online/agent-api/update-program-config
+# -> {"program":{...,"cashback_rate":5,"points_per_dollar":10},"message":"Program economics updated"}
+```
+Scope `mint` or `create_program` · at least one of `cashback_rate` / `points_per_dollar` required (else 400) · 404 if the program is not owned by the key · database-only, no onchain tx · affects future `POST /earn` calls: `points = amount × (cashback_rate/100) × points_per_dollar`.
+
+### Pay-per-call variant (x402, no subscription)
+```bash
+curl -X POST https://api.loyalspark.online/x402-gateway/update-program-config \
+  -H "x-api-key: lsk_YOUR_KEY" -H "Content-Type: application/json" -d '{...}'
+# -> HTTP 402 + accepts[] (USDC on Base, asset 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
+# repeat the same request with the signed X-PAYMENT header to execute
+```
+HTTP is redirected to HTTPS (308) before any 402 body is returned. `/tx-receipt` is priced `0` on the gateway.
+
 ## Workflow Rules for AI Agents
 
 - Do not assume one endpoint equals one complete task

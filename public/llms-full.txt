@@ -112,6 +112,75 @@ curl -X POST \
 
 The fee is charged **in the loyalty tokens being minted**, not in USDC. The token contract does not enforce it — once 5 or more obligations stay unpaid for over 60 minutes, further mints return HTTP 402.
 
+### Example: GET /tx-receipt (free) — extract token_address after deploy
+
+Call this right after the deploy transaction is confirmed on Base; it is the bridge between `POST /programs` and `POST /register-program`.
+
+```bash
+curl -H "x-api-key: lsk_YOUR_KEY" \
+  "https://api.loyalspark.online/agent-api/tx-receipt?tx_hash=0xDEPLOY_TX_HASH"
+```
+
+Response:
+
+```json
+{
+  "tx_hash": "0xDEPLOY_TX_HASH",
+  "status": "success",
+  "token_address": "0xYourNewLoyaltyToken",
+  "block_number": 24500001,
+  "gas_used": 512345,
+  "logs_count": 3
+}
+```
+
+Rules:
+- `tx_hash` must match `^0x[a-fA-F0-9]{64}$`, otherwise HTTP 400.
+- HTTP 404 `Transaction not found or not yet confirmed` means the tx is still pending — retry every ~3 s instead of re-deploying.
+- `status: "failed"` means the deploy reverted; do not register that address.
+- Works for both B20 (`B20Created`) and legacy ERC-20 (`LoyaltyTokenCreated`) deploys.
+- Free route, but it still requires a valid `lsk_` key. Over x402 the price is `0`:
+  `curl "https://api.loyalspark.online/x402-gateway/tx-receipt?tx_hash=0x..." -H "x-api-key: lsk_YOUR_KEY"`
+
+### Example: POST /update-program-config ($0.005) — tune earn economics
+
+Changes how many points a purchase generates: `points = amount × (cashback_rate / 100) × points_per_dollar`. Database-only, no onchain transaction.
+
+```bash
+curl -X POST \
+  -H "x-api-key: lsk_YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"token_address":"0xYourLoyaltyToken","cashback_rate":5,"points_per_dollar":10}' \
+  https://api.loyalspark.online/agent-api/update-program-config
+```
+
+Response:
+
+```json
+{
+  "program": {
+    "id": "uuid",
+    "name": "Coffee Club",
+    "symbol": "BREW",
+    "token_address": "0xYourLoyaltyToken",
+    "status": "active",
+    "cashback_rate": 5,
+    "points_per_dollar": 10,
+    "expiration_date": "2027-01-01T00:00:00Z",
+    "created_at": "2026-01-01T00:00:00Z"
+  },
+  "message": "Program economics updated"
+}
+```
+
+Rules:
+- Scope `mint` or `create_program`; the program must belong to the key's wallet (otherwise HTTP 404).
+- Send at least one of `cashback_rate` / `points_per_dollar` — sending neither returns HTTP 400.
+- Both fields are optional individually, so you can raise cashback without touching the points rate.
+- New values apply to subsequent `POST /earn` calls only; already minted balances are untouched.
+- Over x402 (no API key needed for payment, key still identifies the merchant):
+  `curl -X POST https://api.loyalspark.online/x402-gateway/update-program-config -H "x-api-key: lsk_YOUR_KEY" -H "Content-Type: application/json" -d '{...}'` → HTTP 402 with the USDC challenge, then repeat with the `X-PAYMENT` header.
+
 ## MCP Server — 39 Tools (Merchant)
 
 URL: https://api.loyalspark.online/loyalty-mcp
