@@ -43,12 +43,6 @@ export async function recipientRedeemReward(
     .eq("token_address", reward.token_address.toLowerCase())
     .maybeSingle();
 
-  const programExpired =
-    program?.status === "expired" ||
-    (!!program?.expiration_date && new Date(program.expiration_date).getTime() <= Date.now());
-  if (programExpired) {
-    return { status: 400, body: { error: "Loyalty program has expired" } };
-  }
 
 
   const merchAddr = (reward.merchant_address as string).toLowerCase();
