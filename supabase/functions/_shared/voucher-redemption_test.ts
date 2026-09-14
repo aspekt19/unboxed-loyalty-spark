@@ -118,17 +118,28 @@ Deno.test("redeem 409s when a voucher already exists for the transaction (replay
 
 Deno.test("redeem 400s when the loyalty program status is expired", async () => {
   const { db } = redeemDb({ program: { status: "expired" } });
-  const res = await recipientRedeemReward(db, WALLET, REWARD.id, TX);
-  assertEquals(res.status, 400);
-  assertEquals(res.body.error, "Loyalty program has expired");
+  const rpc = stubReceipt(payingReceipt());
+  try {
+    const res = await recipientRedeemReward(db, WALLET, REWARD.id, TX);
+    assertEquals(res.status, 400);
+    assertStringIncludes(String(res.body.error), "expired");
+  } finally {
+    rpc.restore();
+  }
 });
 
 Deno.test("redeem 400s when the program expiration date is in the past", async () => {
   const { db } = redeemDb({ program: { expiration_date: new Date(Date.now() - 86_400_000).toISOString() } });
-  const res = await recipientRedeemReward(db, WALLET, REWARD.id, TX);
-  assertEquals(res.status, 400);
-  assertEquals(res.body.error, "Loyalty program has expired");
+  const rpc = stubReceipt(payingReceipt());
+  try {
+    const res = await recipientRedeemReward(db, WALLET, REWARD.id, TX);
+    assertEquals(res.status, 400);
+    assertStringIncludes(String(res.body.error), "expired");
+  } finally {
+    rpc.restore();
+  }
 });
+
 
 Deno.test("redeem allows a future expiration date", async () => {
   const { db } = redeemDb({ program: { expiration_date: new Date(Date.now() + 86_400_000).toISOString() } });

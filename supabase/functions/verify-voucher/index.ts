@@ -1,6 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.1';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { baseRpcCall } from '../_shared/base-rpc.ts';
+import { checkProgramValidityForPayment } from '../_shared/program-validity.ts';
+
 
 
 interface BasescanV2Response {
@@ -192,8 +194,8 @@ Deno.serve(async (req) => {
       throw new Error('Reward merchant address missing');
     }
 
-    // Authoritative guard: never issue a voucher for a paused or expired loyalty program.
-    // The DB `status` sweep can lag, so the expiration date is checked directly too.
+    // Program validity is enforced against the payment's block timestamp below,
+    // once the receipt is confirmed (the customer already paid on-chain here).
     const { data: program } = await supabaseClient
       .from('loyalty_programs')
       .select('status, expiration_date')
@@ -204,16 +206,6 @@ Deno.serve(async (req) => {
       throw new Error('Loyalty program not found for this token');
     }
 
-    const programStatus = String(program.status ?? '').toLowerCase();
-    const pastDue = !!program.expiration_date &&
-      new Date(program.expiration_date).getTime() <= Date.now();
-
-    if (programStatus === 'paused') {
-      throw new Error('This loyalty program is currently inactive. Vouchers cannot be activated.');
-    }
-    if (programStatus === 'expired' || pastDue) {
-      throw new Error('This loyalty program has expired. Vouchers can no longer be activated.');
-    }
 
     // Verify the transaction on blockchain using Base JSON-RPC with provider failover
     const maxAttempts = 5;
@@ -260,6 +252,13 @@ Deno.serve(async (req) => {
       console.error('Transaction failed on blockchain:', receipt.status);
       throw new Error('Transaction failed on blockchain');
     }
+
+    // Reject only when the payment itself happened after the program expired.
+    const validityError = await checkProgramValidityForPayment(program, receipt);
+    if (validityError) {
+      throw new Error(validityError);
+    }
+
 
     console.log('Transaction receipt confirmed, checking sender and contract...');
 

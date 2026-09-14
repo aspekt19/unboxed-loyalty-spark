@@ -33,6 +33,8 @@ import { parseOptionalCashbackRate, parseOptionalPointsPerDollar } from "../_sha
 import { discoverResources, discoverMcpServers, probeX402Endpoint } from "../_shared/bazaar-discovery.ts";
 import { generateProgramDefaults, generateProgramExamples, getMerchantProgramFieldCatalog, merchantProgramWorkflow, wrapWorkflow } from "../_shared/agent-workflows.ts";
 import { getTransactionReceipt } from "../_shared/base-rpc.ts";
+import { checkProgramValidityForPayment } from "../_shared/program-validity.ts";
+
 import { isAdminWallet } from "../_shared/admin-wallets.ts";
 
 
@@ -681,7 +683,10 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
       }
       if (transferredWei < requiredWei) return T(JSON.stringify({ error: `Insufficient token transfer: required ${reward.cost}` }));
 
-      const { data: prog } = await d.from("loyalty_programs").select("symbol").eq("token_address", reward.token_address.toLowerCase()).maybeSingle();
+      const { data: prog } = await d.from("loyalty_programs").select("symbol, status, expiration_date").eq("token_address", reward.token_address.toLowerCase()).maybeSingle();
+      const progValidityError = await checkProgramValidityForPayment(prog, receipt);
+      if (progValidityError) return T(JSON.stringify({ error: progValidityError }));
+
       const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
       const _rand = new Uint8Array(16); crypto.getRandomValues(_rand);
       const code = "LOYAL-" + Array.from({ length: 4 }, (_, i) => Array.from({ length: 4 }, (__, j) => chars[_rand[i * 4 + j] % chars.length]).join("")).join("-");

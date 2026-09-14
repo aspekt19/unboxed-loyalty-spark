@@ -1,5 +1,7 @@
 import { walletHasEngagement } from "./recipient-queries.ts";
 import { getTransactionReceipt } from "./base-rpc.ts";
+import { checkProgramValidityForPayment } from "./program-validity.ts";
+
 
 export type RecipientRedeemResult = { status: number; body: Record<string, unknown> };
 
@@ -43,12 +45,6 @@ export async function recipientRedeemReward(
     .eq("token_address", reward.token_address.toLowerCase())
     .maybeSingle();
 
-  const programExpired =
-    program?.status === "expired" ||
-    (!!program?.expiration_date && new Date(program.expiration_date).getTime() <= Date.now());
-  if (programExpired) {
-    return { status: 400, body: { error: "Loyalty program has expired" } };
-  }
 
 
   const merchAddr = (reward.merchant_address as string).toLowerCase();
@@ -84,6 +80,12 @@ export async function recipientRedeemReward(
   if (receipt.status && receipt.status !== "0x1") {
     return { status: 400, body: { error: "Transaction failed on blockchain" } };
   }
+
+  const validityError = await checkProgramValidityForPayment(program, receipt);
+  if (validityError) {
+    return { status: 400, body: { error: validityError } };
+  }
+
 
   const ERC20_TRANSFER = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
   const logs = Array.isArray(receipt.logs) ? receipt.logs : [];

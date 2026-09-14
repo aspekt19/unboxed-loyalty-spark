@@ -1,4 +1,6 @@
 import { getTransactionReceipt } from "../_shared/base-rpc.ts";
+import { checkProgramValidityForPayment } from "../_shared/program-validity.ts";
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   appendBuilderCode,
@@ -1439,12 +1441,13 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Voucher already created for this transaction" }, 409);
       }
 
-      // Get the loyalty program for token_symbol
+      // Get the loyalty program for token_symbol + validity check
       const { data: program } = await serviceClient
         .from("loyalty_programs")
-        .select("symbol")
+        .select("symbol, status, expiration_date")
         .eq("token_address", reward.token_address.toLowerCase())
         .maybeSingle();
+
 
       // Verify the transaction on blockchain via Base RPC (multi-provider failover)
       const normalizedTxHash = transaction_hash.startsWith("0x") ? transaction_hash : `0x${transaction_hash}`;
@@ -1471,6 +1474,14 @@ Deno.serve(async (req) => {
         await logActivity(serviceClient, agent.agentId, "redeem_reward", body, 400, { error: "Tx failed onchain" }, ip);
         return jsonResponse({ error: "Transaction failed on blockchain" }, 400);
       }
+
+      // Reject only when the payment happened after the program stopped being valid.
+      const programValidityError = await checkProgramValidityForPayment(program, receipt);
+      if (programValidityError) {
+        await logActivity(serviceClient, agent.agentId, "redeem_reward", body, 400, { error: programValidityError }, ip);
+        return jsonResponse({ error: programValidityError }, 400);
+      }
+
 
       // Verify ERC-20 Transfer log: customer → merchant
       const ERC20_TRANSFER = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
