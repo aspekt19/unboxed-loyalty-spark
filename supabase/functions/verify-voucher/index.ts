@@ -1,6 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.1';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { baseRpcCall } from '../_shared/base-rpc.ts';
+import { checkProgramValidityForPayment } from '../_shared/program-validity.ts';
+
 
 
 interface BasescanV2Response {
