@@ -5,7 +5,7 @@
 import { assert, assertEquals, assertStringIncludes } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { recipientRedeemReward } from "./recipient-redeem.ts";
 import { mockDb, type QueryResult, type QueryState } from "./testing/mock-supabase.ts";
-import { receipt, stubBaseRpc, stubReceipt, stubRpcDown, transferLog } from "./testing/mock-rpc.ts";
+import { receipt, stubBaseRpc, stubReceipt, stubReceiptWithBlockTime, stubRpcDown, transferLog } from "./testing/mock-rpc.ts";
 
 const TOKEN = "0x1111111111111111111111111111111111111111";
 const MERCHANT = "0x2222222222222222222222222222222222222222";
@@ -140,6 +140,44 @@ Deno.test("redeem 400s when the program expiration date is in the past", async (
   }
 });
 
+Deno.test("redeem allows payment made before expiry even if the program is past due now", async () => {
+  const expiresAtMs = Date.now() - 86_400_000;
+  const paidSec = Math.floor((expiresAtMs - 3_600_000) / 1000);
+  const { db } = redeemDb({
+    program: { status: "expired", expiration_date: new Date(expiresAtMs).toISOString() },
+  });
+  const rpc = stubReceiptWithBlockTime(
+    receipt({
+      blockNumber: "0xabc",
+      logs: [
+        transferLog({
+          token: TOKEN,
+          from: WALLET,
+          to: MERCHANT,
+          valueWei: BigInt(Math.round(50 * 1e6)) * 10n ** 12n,
+        }),
+      ],
+    }),
+    paidSec,
+  );
+  try {
+    const res = await recipientRedeemReward(db, WALLET, REWARD.id, TX);
+    assertEquals(res.status, 201);
+  } finally {
+    rpc.restore();
+  }
+});
+
+Deno.test("redeem allows a paused program after on-chain payment (no paused_at)", async () => {
+  const { db } = redeemDb({ program: { status: "paused", expiration_date: null } });
+  const rpc = stubReceipt(payingReceipt());
+  try {
+    const res = await recipientRedeemReward(db, WALLET, REWARD.id, TX);
+    assertEquals(res.status, 201);
+  } finally {
+    rpc.restore();
+  }
+});
 
 Deno.test("redeem allows a future expiration date", async () => {
   const { db } = redeemDb({ program: { expiration_date: new Date(Date.now() + 86_400_000).toISOString() } });

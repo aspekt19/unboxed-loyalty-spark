@@ -58,6 +58,20 @@ export function stubReceipt(receipt: unknown): RpcStub {
   return stubBaseRpc(() => ({ kind: "result", result: receipt }));
 }
 
+/**
+ * Receipt stub that also answers `eth_getBlockByNumber` with a fixed timestamp
+ * (seconds). Used by program-validity tests that need payment-before-expiry.
+ */
+export function stubReceiptWithBlockTime(txReceipt: unknown, blockTimestampSec: number): RpcStub {
+  const tsHex = "0x" + BigInt(Math.max(0, Math.floor(blockTimestampSec))).toString(16);
+  return stubBaseRpc(({ method }) => {
+    if (method === "eth_getBlockByNumber") {
+      return { kind: "result", result: { timestamp: tsHex } };
+    }
+    return { kind: "result", result: txReceipt };
+  });
+}
+
 /** Every provider fails — `baseRpcCall` then throws. */
 export function stubRpcDown(): RpcStub {
   return stubBaseRpc(() => ({ kind: "networkError", message: "Archive requests require a personal token" }));
@@ -91,11 +105,13 @@ export function transferLog(params: {
 export function receipt(params: {
   status?: string;
   to?: string;
+  blockNumber?: string;
   logs?: Array<{ address: string; topics: string[]; data: string }>;
 }) {
   return {
     status: params.status ?? "0x1",
     to: params.to ?? null,
+    blockNumber: params.blockNumber,
     logs: params.logs ?? [],
   };
 }

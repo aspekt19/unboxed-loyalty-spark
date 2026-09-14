@@ -3,13 +3,17 @@
  *
  * Every voucher entry point (web `verify-voucher`, `agent-api/redeem-reward`,
  * `loyalty-mcp/redeem_reward`, recipient redeem) runs AFTER the customer has
- * already paid on-chain. Rejecting purely on "the program is expired right now"
- * strands the customer: tokens are gone, no voucher.
+ * already paid on-chain. Rejecting purely on "the program is expired/paused
+ * right now" strands the customer: tokens are gone, no voucher.
  *
  * So the rule is: reject only when the payment itself happened after the
  * program stopped being valid. The block timestamp of the payment transaction
  * is the authoritative "paid at" time; when it cannot be read we fall back to
  * the current time (conservative).
+ *
+ * Pause has no `paused_at` column — after a confirmed payment we honour it
+ * (same anti-strand race as expiry). Status `expired` without an
+ * `expiration_date` still rejects (no payment-time anchor).
  */
 
 import { baseRpcCall } from "./base-rpc.ts";
@@ -48,16 +52,27 @@ export async function checkProgramValidityForPayment(
     ? new Date(program.expiration_date).getTime()
     : null;
 
-  const isFlagged = status === "expired" || status === "paused";
-  if (!isFlagged && !(expiresAt !== null && expiresAt <= Date.now())) return null;
+  const pastDue = expiresAt !== null && expiresAt <= Date.now();
+  const markedExpired = status === "expired";
+  const markedPaused = status === "paused";
 
-  const paidAt = (await getPaymentTimestampMs(receipt)) ?? Date.now();
+  // Fast path: still looks valid by status and calendar.
+  if (!pastDue && !markedExpired && !markedPaused) return null;
 
-  // Paid while the program was still within its validity window — honour it.
-  if (expiresAt !== null && paidAt <= expiresAt) return null;
-
-  if (status === "paused" && expiresAt === null) {
-    return "This loyalty program is currently inactive. Vouchers cannot be activated.";
+  // Calendar end is the only clock we can compare to the payment block time.
+  if (expiresAt !== null) {
+    const paidAt = (await getPaymentTimestampMs(receipt)) ?? Date.now();
+    if (paidAt <= expiresAt) return null;
+    return "This loyalty program has expired. Vouchers can no longer be activated.";
   }
-  return "This loyalty program has expired. Vouchers can no longer be activated.";
+
+  // No expiration_date — cannot prove payment-vs-calendar.
+  // Pause without paused_at: honour the confirmed payment (anti-strand).
+  if (markedPaused) return null;
+
+  if (markedExpired) {
+    return "This loyalty program has expired. Vouchers can no longer be activated.";
+  }
+
+  return null;
 }
