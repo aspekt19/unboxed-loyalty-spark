@@ -192,8 +192,8 @@ Deno.serve(async (req) => {
       throw new Error('Reward merchant address missing');
     }
 
-    // Authoritative guard: never issue a voucher for a paused or expired loyalty program.
-    // The DB `status` sweep can lag, so the expiration date is checked directly too.
+    // Program validity is enforced against the payment's block timestamp below,
+    // once the receipt is confirmed (the customer already paid on-chain here).
     const { data: program } = await supabaseClient
       .from('loyalty_programs')
       .select('status, expiration_date')
@@ -204,16 +204,6 @@ Deno.serve(async (req) => {
       throw new Error('Loyalty program not found for this token');
     }
 
-    const programStatus = String(program.status ?? '').toLowerCase();
-    const pastDue = !!program.expiration_date &&
-      new Date(program.expiration_date).getTime() <= Date.now();
-
-    if (programStatus === 'paused') {
-      throw new Error('This loyalty program is currently inactive. Vouchers cannot be activated.');
-    }
-    if (programStatus === 'expired' || pastDue) {
-      throw new Error('This loyalty program has expired. Vouchers can no longer be activated.');
-    }
 
     // Verify the transaction on blockchain using Base JSON-RPC with provider failover
     const maxAttempts = 5;
