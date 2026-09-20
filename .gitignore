@@ -15,6 +15,11 @@ dist-ssr
 # Local Deno cache lock for supabase/functions — not used by CI or the web build
 deno.lock
 
+# Canonical package manager is npm (package-lock.json + npm ci in CI).
+# Ignore Bun lockfiles so they cannot reappear and confuse agents/auditors.
+bun.lock
+bun.lockb
+
 # Env — keep secrets and local overrides out of git (.env.example is tracked)
 .env
 .env.*
