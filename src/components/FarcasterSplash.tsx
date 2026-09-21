@@ -36,7 +36,7 @@ const FarcasterSplash = ({ onLaunch }: FarcasterSplashProps) => {
 
       {/* Tagline */}
       <p className="mt-4 text-sm text-muted-foreground max-w-md text-center px-4">
-        Loyalty rewards that grow. Earn tokens, save automatically, invest in DeFi.
+        Earn loyalty tokens on Base and redeem them with merchants.
       </p>
 
       {/* Links */}

@@ -30,8 +30,8 @@ const examples = [
     title: "Fashion Brand — Tier-based perks",
     sector: "Tokenized loyalty",
     summary:
-      "An online apparel brand issues SPARK tokens with Bronze, Silver, and Gold tiers. Holders unlock early product drops, free shipping, and resale rights on the in-app P2P marketplace.",
-    metrics: ["3 customer tiers, fully onchain", "P2P marketplace with 0.5% protocol fee", "RFM segmentation + automation rules"],
+      "An online apparel brand issues SPARK tokens with Bronze, Silver, and Gold tiers. Holders unlock early product drops, free shipping, and can swap tokens through P2P escrow.",
+    metrics: ["3 customer tiers in the merchant portal", "P2P escrow with 0.5% protocol fee", "RFM segmentation + hourly automation"],
     keywords: ["tokenized loyalty", "B20 customer rewards"],
   },
   {

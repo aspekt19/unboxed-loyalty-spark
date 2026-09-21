@@ -82,7 +82,7 @@ const customerSteps = [
     title: "Your Tokens Have Real Value",
     description: "Unlike traditional points, your tokens can be traded or sold.",
     icon: TrendingUp,
-    content: "Because they're on the blockchain, you can trade tokens on decentralized exchanges (DEX) or send them to friends!",
+    content: "They live in your wallet. You can send them to someone else or swap them through Loyal Spark P2P escrow — they are not listed on a DEX.",
   },
 ];
 

@@ -1,7 +1,9 @@
 # Skill: Marketplace Trading
 
 ## Goal
-Create and manage P2P token trading offers on the onchain marketplace with atomic escrow swaps.
+Create and manage P2P token trading offers on the onchain escrow with atomic swaps.
+
+This is **escrow between two wallets**, not a DEX order book. Round-Up / Aave / Compound are frozen and are not available through these endpoints. The merchant portal has no Marketplace tab: customers use the Exchange tab; agents use the routes below.
 
 ## Required Scope
 `trade`

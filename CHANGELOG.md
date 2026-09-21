@@ -4,6 +4,18 @@ All notable changes to the Loyal Spark agent-facing API surface (REST, MCP, x402
 
 Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.4.0] – 2026-09-21
+
+### Fixed — public claims match what the protocol actually does
+
+- Mint fee copy (README, pricing, guide, skills index) states the fee is loyalty tokens tracked off-chain. The token contract still has no `mintWithFee`.
+- DEX / DeFi / Round-Up are no longer described as a live product on the Farcaster manifest, splash, onboarding, or guide. P2P escrow stays (customer Exchange + agent REST/MCP). DEX shortcut removed from merchant and customer profiles.
+- `process-automation` runs hourly via `pg_cron` (`process-automation-hourly`).
+
+### Confirmed — discovery counts (unchanged, still current)
+
+Direct MCP: **39 merchant** tools (`loyalty-mcp`) + **20 recipient** tools (`recipient-loyalty-mcp`). Paid x402 MCP corridor: **34 merchant** + **16 recipient** (`confirm_mint_fee` and the four `bazaar_*` tools are not x402-priced). Merchant REST: **28 authenticated + 1 public**. Older changelog entries that say 32 / 14 describe the catalog as of May 2026.
+
 ## [2.3.0] – 2026-05-24
 
 ### Security — closed x402 payment bypass in `x402-gateway`

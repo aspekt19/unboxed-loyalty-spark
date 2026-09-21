@@ -10,7 +10,6 @@ import { WalletQRCode } from '@/components/WalletQRCode';
 import { ReferralCard } from '@/components/referral/ReferralCard';
 import { ReferralCodeInput } from '@/components/referral/ReferralCodeInput';
 import { CustomerReviewsSection } from '@/components/reviews/CustomerReviewsSection';
-import { DexIntegration } from '@/components/DexIntegration';
 import { LinkedAccounts } from '@/components/identity/LinkedAccounts';
 import { CdpWalletSetup } from '@/components/customer/CdpWalletSetup';
 import { supabase } from '@/integrations/supabase/client';
@@ -399,7 +398,6 @@ export function CustomerProfileSection() {
       <ReferralCodeInput />
       <ReferralCard />
       <CustomerReviewsSection />
-      <DexIntegration />
 
       <AlertDialog
         open={pendingPrimary !== null}

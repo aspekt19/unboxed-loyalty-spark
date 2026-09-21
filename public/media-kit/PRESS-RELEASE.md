@@ -119,7 +119,7 @@ Loyal Spark is the first dual-mode loyalty protocol on Base, serving both human 
 ### Hashtags
 
 Primary: #LoyalSpark #Web3Loyalty #AIAgents #Base #MCP
-Secondary: #DeFi #A2A #LoyaltyAsAService #CryptoRewards #B20 #Base
+Secondary: #A2A #LoyaltyAsAService #CryptoRewards #B20 #Base
 
 ---
 

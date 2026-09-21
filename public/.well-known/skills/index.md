@@ -66,4 +66,4 @@ Read [13-endpoint-workflows.md](./13-endpoint-workflows.md) before orchestrating
 | Pro | $49 USDC | 10,000 | 5 | 0.5% |
 | Enterprise | $129 USDC | Unlimited | Unlimited | 0.25% |
 
-The mint fee is paid in the agent's own loyalty tokens as a separate fee mint, not USDC. Subscriptions and x402 / MPP per-call charges are payment-rail charges. See [15-payment-scenarios.md](./15-payment-scenarios.md).
+The mint fee is paid in the agent's own loyalty tokens as a separate fee mint, not USDC. The token contract does not enforce it (no `mintWithFee`); the API records an obligation and blocks further mints after 5 unpaid fees older than 60 minutes. Subscriptions and x402 / MPP per-call charges are payment-rail charges. See [15-payment-scenarios.md](./15-payment-scenarios.md).

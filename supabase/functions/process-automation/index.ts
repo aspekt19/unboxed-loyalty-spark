@@ -19,15 +19,7 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Auth: service role key OR the cron shared secret (cron cannot read env secrets)
-  const authHeader = req.headers.get('Authorization')?.replace('Bearer ', '');
-  const cronHeader = req.headers.get('x-cron-secret');
-  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  const cronSecret = Deno.env.get('CRON_SHARED_SECRET');
-  const authorized =
-    (!!serviceRoleKey && authHeader === serviceRoleKey) ||
-    (!!cronSecret && (cronHeader === cronSecret || authHeader === cronSecret));
-  if (!authorized) {
+  if (!(await isAutomationAuthorized(req))) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -84,6 +76,29 @@ Deno.serve(async (req) => {
     );
   }
 });
+
+/** Service role, CRON_SHARED_SECRET, or the pg_cron secret in internal_job_secrets. */
+async function isAutomationAuthorized(req: Request): Promise<boolean> {
+  const authHeader = req.headers.get('Authorization')?.replace('Bearer ', '');
+  const cronHeader = req.headers.get('x-cron-secret');
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const cronSecret = Deno.env.get('CRON_SHARED_SECRET');
+  if (serviceRoleKey && authHeader === serviceRoleKey) return true;
+  if (cronSecret && (cronHeader === cronSecret || authHeader === cronSecret)) return true;
+
+  const presented = cronHeader || '';
+  if (!presented || !serviceRoleKey) return false;
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  if (!supabaseUrl) return false;
+
+  const supabase = createClient(supabaseUrl, serviceRoleKey);
+  const { data } = await supabase
+    .from('internal_job_secrets')
+    .select('secret')
+    .eq('job_name', 'process-automation')
+    .maybeSingle();
+  return !!data?.secret && presented === data.secret;
+}
 
 async function processRule(supabase: any, rule: AutomationRule) {
   console.log(`Processing rule: ${rule.rule_type} (${rule.id})`);

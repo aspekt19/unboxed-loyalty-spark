@@ -22,7 +22,7 @@ const previewCases = [
   {
     icon: Briefcase,
     title: 'Cross-merchant Network',
-    description: 'Independent merchants accept each other’s loyalty tokens through a shared marketplace.',
+    description: 'Holders can swap loyalty tokens through P2P escrow — not a DEX listing.',
   },
 ];
 

@@ -2,7 +2,6 @@ import { WalletQRCode } from '@/components/WalletQRCode';
 import { ReferralCard } from '@/components/referral/ReferralCard';
 import { ReferralCodeInput } from '@/components/referral/ReferralCodeInput';
 import { CustomerReviewsSection } from '@/components/reviews/CustomerReviewsSection';
-import { DexIntegration } from '@/components/DexIntegration';
 import { LinkedAccounts } from '@/components/identity/LinkedAccounts';
 import { useAccount } from 'wagmi';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -44,7 +43,6 @@ export function MobileProfileTab(_props: MobileProfileTabProps) {
       <ReferralCodeInput />
       <ReferralCard />
       <CustomerReviewsSection />
-      <DexIntegration />
     </div>
   );
 }

@@ -155,7 +155,7 @@ export default function GuidePage() {
                         Real Value
                       </h3>
                       <p className="text-sm text-muted-foreground">
-                        Tokens can be traded on decentralized exchanges, giving them real market value beyond merchant rewards.
+                        Tokens sit in the customer wallet and can be sent or swapped through P2P escrow — not a public DEX listing.
                       </p>
                     </div>
 
@@ -208,8 +208,8 @@ export default function GuidePage() {
                       <div>
                         <h4 className="font-medium mb-1">Tokens Have Real Market Value</h4>
                         <p className="text-sm text-muted-foreground">
-                          Because they're on the blockchain, loyalty tokens can be traded on decentralized exchanges.
-                          This means they have real liquidity and market-determined value.
+                          Because they are onchain, customers can send them or swap them through Loyal Spark P2P escrow.
+                          That is wallet ownership, not a DEX market.
                         </p>
                       </div>
                     </div>
@@ -407,20 +407,20 @@ export default function GuidePage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Repeat className="h-5 w-5" />
-                    Step 6: Trade on the P2P Marketplace
+                    Step 6: P2P escrow swaps
                   </CardTitle>
-                  <CardDescription>Atomic onchain swaps between loyalty tokens — 0.5% protocol fee</CardDescription>
+                  <CardDescription>Holder-to-holder escrow on Base — 0.5% protocol fee. Not a DEX, and not DeFi yield.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <p className="text-sm text-muted-foreground">
-                    The Marketplace lets merchants and holders exchange loyalty tokens through a smart-contract escrow on Base — both transfers happen in one transaction or neither does.
+                    Holders exchange loyalty tokens through the escrow contract. Both sides move in one transaction, or neither does. The merchant panel has no Marketplace tab. Round-Up, Aave, and Compound are frozen and are not part of this flow.
                   </p>
                   <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-                    <li>Open the <strong>Marketplace</strong> tab in the Merchant panel</li>
-                    <li>Click <strong>Create Offer</strong> — pick the token you offer and the token you want in return</li>
-                    <li>Approve the escrow contract to lock your tokens</li>
-                    <li>Browse active offers and click <strong>Accept</strong> to swap atomically</li>
-                    <li>Cancel your own stale offers anytime to unlock the escrowed tokens</li>
+                    <li>Customers use the <strong>Exchange</strong> tab in the customer portal</li>
+                    <li>Agents use REST <code className="bg-muted px-1 rounded">/offers</code> or MCP <code className="bg-muted px-1 rounded">list_marketplace_offers</code> / <code className="bg-muted px-1 rounded">create_p2p_offer</code></li>
+                    <li>The creator approves the escrow contract and locks the offered tokens</li>
+                    <li>The counterparty accepts; the swap settles atomically</li>
+                    <li>Either side can cancel an open offer to unlock escrowed tokens</li>
                   </ol>
                 </CardContent>
               </Card>
@@ -845,7 +845,8 @@ export default function GuidePage() {
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
                     Subscriptions paid in USDC on Base ($1 = 1 USDC), verified onchain. The mint fee is
-                    separate and charged in your own loyalty tokens, not USDC. See the full breakdown on the{" "}
+                    separate and charged in your own loyalty tokens, not USDC. The token contract does not
+                    enforce it — the API tracks an off-chain obligation. See the full breakdown on the{" "}
                     <Link to="/pricing" className="underline text-primary">Pricing page</Link>.
                   </p>
                 </CardContent>

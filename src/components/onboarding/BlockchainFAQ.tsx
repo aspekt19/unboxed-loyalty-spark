@@ -58,7 +58,7 @@ export const BlockchainFAQ = () => {
               <ul className="list-disc list-inside mt-2 space-y-1">
                 <li><strong>True ownership:</strong> You own your tokens, not the company</li>
                 <li><strong>Transparency:</strong> All transactions are visible and verifiable</li>
-                <li><strong>Liquidity:</strong> Tokens can be traded on decentralized exchanges</li>
+                <li><strong>Transferable:</strong> Send tokens to another wallet or swap them via P2P escrow</li>
                 <li><strong>Security:</strong> Cryptographically secured and tamper-proof</li>
                 <li><strong>Interoperability:</strong> Use tokens across different platforms</li>
               </ul>
@@ -115,14 +115,13 @@ export const BlockchainFAQ = () => {
           <AccordionItem value="can-i-sell">
             <AccordionTrigger>Can I sell or trade my tokens?</AccordionTrigger>
             <AccordionContent className="text-muted-foreground">
-              Yes! Because your loyalty tokens are real blockchain assets, you can:
+              Yes. Loyalty tokens sit in your wallet. You can:
               <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>Trade them on decentralized exchanges (DEX)</li>
-                <li>Send them to friends or family</li>
-                <li>Hold them for future use</li>
-                <li>Sell them for other cryptocurrencies</li>
+                <li>Send them to another wallet</li>
+                <li>Swap them through Loyal Spark P2P escrow (customer Exchange, or an agent)</li>
+                <li>Hold them and redeem merchant rewards</li>
               </ul>
-              This gives your loyalty rewards real, tangible value beyond just merchant discounts.
+              They are not listed on a DEX by default, and there is no DeFi yield product.
             </AccordionContent>
           </AccordionItem>
 
@@ -134,8 +133,8 @@ export const BlockchainFAQ = () => {
               redeem them with that specific merchant anymore, you still own them and could
               potentially:
               <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>Trade them on DEX exchanges</li>
-                <li>Hold them as digital collectibles</li>
+                <li>Hold them in your wallet</li>
+                <li>Send them to another address</li>
                 <li>Use them if another business accepts them</li>
               </ul>
               This is very different from traditional loyalty points which disappear when a company
@@ -146,7 +145,7 @@ export const BlockchainFAQ = () => {
           <AccordionItem value="network">
             <AccordionTrigger>Which blockchain network do you use?</AccordionTrigger>
             <AccordionContent className="text-muted-foreground">
-              We use Base Sepolia (testnet) for development and Base (mainnet) for production. Base
+              Production runs on Base mainnet (chain 8453). Base
               is an Ethereum Layer 2 network that offers:
               <ul className="list-disc list-inside mt-2 space-y-1">
                 <li>Very low transaction fees (typically under $0.01)</li>

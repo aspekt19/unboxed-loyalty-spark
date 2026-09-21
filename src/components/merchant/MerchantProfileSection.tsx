@@ -8,7 +8,6 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { PlanStatusBadge } from '@/components/billing/PlanStatusBadge';
 import { MerchantProfileForm } from './MerchantProfileForm';
 import { WalletQRCode } from '@/components/WalletQRCode';
-import { DexIntegration } from '@/components/DexIntegration';
 import { LinkedAccounts } from '@/components/identity/LinkedAccounts';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -175,7 +174,6 @@ export function MerchantProfileSection(_props: MerchantProfileSectionProps) {
 
       <WalletQRCode />
       <LinkedAccounts />
-      <DexIntegration />
     </div>
   );
 }
