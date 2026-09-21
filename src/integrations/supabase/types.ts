@@ -979,6 +979,24 @@ export type Database = {
         }
         Relationships: []
       }
+      internal_job_secrets: {
+        Row: {
+          created_at: string
+          job_name: string
+          secret: string
+        }
+        Insert: {
+          created_at?: string
+          job_name: string
+          secret: string
+        }
+        Update: {
+          created_at?: string
+          job_name?: string
+          secret?: string
+        }
+        Relationships: []
+      }
       loyalty_programs: {
         Row: {
           cashback_rate: number
