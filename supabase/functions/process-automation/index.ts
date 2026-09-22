@@ -295,7 +295,9 @@ async function processAtRiskOffers(supabase: any, rule: AutomationRule) {
       .eq('customer_address', customer.wallet_address)
       .eq('token_address', rule.token_address)
       .eq('is_active', true)
-      .single();
+      .gt('valid_until', new Date().toISOString())
+      .limit(1)
+      .maybeSingle();
 
     if (existingOffer) continue; // Skip if offer already exists
 
@@ -358,7 +360,8 @@ async function processTierUpgrades(supabase: any, rule: AutomationRule) {
       .eq('customer_address', upgrade.customer_address)
       .eq('action_taken', 'sent_tier_upgrade_congratulations')
       .gte('triggered_at', upgrade.tier_achieved_at)
-      .single();
+      .limit(1)
+      .maybeSingle();
 
     if (existingTrigger) continue;
 
@@ -428,7 +431,8 @@ async function processInactiveReminders(supabase: any, rule: AutomationRule) {
       .eq('customer_address', customerAddress)
       .eq('action_taken', 'sent_inactive_reminder')
       .gte('triggered_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
-      .single();
+      .limit(1)
+      .maybeSingle();
 
     if (recentReminder) continue;
 
