@@ -1,3 +1,4 @@
+import { assertOnchainAvailable } from "@/lib/cobalt";
 import {
   useSendTransaction,
   useWaitForTransactionReceipt,
@@ -58,6 +59,7 @@ export function useDeployB20Token() {
       try {
         const { data } = encodeCreateB20Asset(address, name, symbol, 18, extraMinters);
         txLog(HOOK_NAME, 'info', 'Deploying B20 token', { name, symbol, extraMinters });
+        assertOnchainAvailable();
         sendTransaction({
           to: B20_FACTORY_ADDRESS,
           data,

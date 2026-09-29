@@ -1,3 +1,4 @@
+import { assertOnchainAvailable } from "@/lib/cobalt";
 import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { CONTRACTS } from '@/config/contracts';
 import { parseUnits } from 'viem';
@@ -35,6 +36,7 @@ export function useMintTokens(): MintTokensResult {
         [recipientAddress as WalletAddress, amountInWei]
       );
 
+      assertOnchainAvailable();
       sendTransaction({
         to: tokenAddress as TokenAddress,
         data: mintData,

@@ -1,3 +1,4 @@
+import { assertOnchainAvailable } from "@/lib/cobalt";
 import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { parseUnits } from 'viem';
 import { toast } from 'sonner';
@@ -31,6 +32,7 @@ export function useTransferTokens(): TransferTokensResult {
         [recipientAddress as WalletAddress, amountInWei]
       );
 
+      assertOnchainAvailable();
       sendTransaction({
         to: tokenAddress as TokenAddress,
         data: transferData,
