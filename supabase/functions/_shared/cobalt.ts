@@ -1,0 +1,33 @@
+// Base Cobalt hardfork helpers for Edge Functions.
+export const COBALT_MAINNET_ACTIVATION = Date.UTC(2026, 8, 30, 18, 0, 0);
+export const COBALT_MAINTENANCE_START = Date.UTC(2026, 8, 30, 17, 30, 0);
+export const COBALT_MAINTENANCE_END = Date.UTC(2026, 8, 30, 19, 0, 0);
+
+export function isInCobaltMaintenance(now = Date.now()): boolean {
+  return now >= COBALT_MAINTENANCE_START && now < COBALT_MAINTENANCE_END;
+}
+
+export function isCobaltActive(now = Date.now()): boolean {
+  return now >= COBALT_MAINNET_ACTIVATION;
+}
+
+export function gasTokenEnabled(): boolean {
+  return Deno.env.get("COBALT_GAS_TOKEN_ENABLED") === "true" && isCobaltActive();
+}
+
+/** Returns a 503 Response during the upgrade window, otherwise null. */
+export function maintenanceResponse(
+  headers: Record<string, string>,
+  now = Date.now(),
+): Response | null {
+  if (!isInCobaltMaintenance(now)) return null;
+  const retryAfter = Math.max(1, Math.ceil((COBALT_MAINTENANCE_END - now) / 1000));
+  return new Response(
+    JSON.stringify({
+      error: "network_upgrade",
+      message: "Base Cobalt upgrade in progress. Onchain actions resume at 19:00 UTC on 2026-09-30.",
+      retry_after_seconds: retryAfter,
+    }),
+    { status: 503, headers: { ...headers, "Content-Type": "application/json", "Retry-After": String(retryAfter) } },
+  );
+}

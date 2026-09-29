@@ -24,6 +24,7 @@ import {
 } from "../_shared/loyalspark-agent-helpers.ts";
 import { assertFeeCompliance, recordFeeObligation } from "../_shared/agent-fee-ledger.ts";
 import { consumeAgentMintQuota } from "../_shared/agent-plan-limits.ts";
+import { gasTokenEnabled, maintenanceResponse } from "../_shared/cobalt.ts";
 
 import {
   B20_FACTORY_ADDRESS,
@@ -143,6 +144,14 @@ Deno.serve(async (req: Request) => {
       },
       docs: "https://loyalspark.online/skills/loyal-spark/plugins/loyal-spark.md",
     });
+  }
+
+  const maintenance = maintenanceResponse(corsHeaders);
+  if (maintenance) return maintenance;
+
+  const gasToken = url.searchParams.get("gas_token");
+  if (gasToken && !gasTokenEnabled()) {
+    return json({ error: "gas_token_unavailable", message: "Paying gas in B20 tokens is not enabled yet. Omit gas_token." }, 400);
   }
 
   const apiKey = extractApiKey(req, url);

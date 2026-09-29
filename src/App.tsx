@@ -163,6 +163,7 @@ function AnimatedRoutes() {
   return (
     <BanGate>
       <PageMeta />
+      <CobaltUpgradeBanner />
       <RouteShell>
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<Index />} />
