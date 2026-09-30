@@ -3,6 +3,7 @@ import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
 import { useEffect, useState, useCallback } from 'react';
 import { encodeWithBuilderCode } from '@/config/builder-code';
+import { assertOnchainAvailable, OnchainMaintenanceError } from '@/lib/cobalt';
 import { type TokenAddress, txLog } from './types/transaction';
 
 const HOOK_NAME = 'DeployToken';
@@ -63,13 +64,14 @@ export function useDeployLoyaltyToken() {
         [name, symbol, address]
       );
 
+      assertOnchainAvailable();
       sendTransaction({
         to: CONTRACTS.LOYALTY_TOKEN_FACTORY.address,
         data: deployData,
       });
     } catch (err) {
       txLog(HOOK_NAME, 'error', 'Deploy failed', err);
-      toast.error('Failed to create loyalty token');
+      toast.error(err instanceof OnchainMaintenanceError ? err.message : 'Failed to create loyalty token');
     }
   }, [address, sendTransaction]);
 

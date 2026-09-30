@@ -1,5 +1,6 @@
 import { getTransactionReceipt } from "../_shared/base-rpc.ts";
 import { checkProgramValidityForPayment } from "../_shared/program-validity.ts";
+import { maintenanceResponse } from "../_shared/cobalt.ts";
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
@@ -256,6 +257,12 @@ Deno.serve(async (req) => {
     const apiIdx = path.indexOf("agent-api");
     const resource = path[apiIdx + 1] || path[path.length - 1] || "";
     const subResource = path[apiIdx + 2] || "";
+
+    // Cobalt upgrade window: pause mutations that prepare or settle Base txs.
+    if (req.method !== "GET" && req.method !== "HEAD") {
+      const maintenance = maintenanceResponse(corsHeaders);
+      if (maintenance) return maintenance;
+    }
 
     let body: any = {};
     if (req.method === "POST" || req.method === "PUT" || req.method === "PATCH") {

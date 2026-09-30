@@ -1,4 +1,4 @@
-import { assertOnchainAvailable } from "@/lib/cobalt";
+import { assertOnchainAvailable, OnchainMaintenanceError } from "@/lib/cobalt";
 import {
   useSendTransaction,
   useWaitForTransactionReceipt,
@@ -66,7 +66,7 @@ export function useDeployB20Token() {
         });
       } catch (err) {
         txLog(HOOK_NAME, 'error', 'Deploy failed', err);
-        toast.error('Failed to encode B20 deploy transaction');
+        toast.error(err instanceof OnchainMaintenanceError ? err.message : 'Failed to encode B20 deploy transaction');
       }
     },
     [address, sendTransaction],

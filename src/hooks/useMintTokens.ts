@@ -1,4 +1,4 @@
-import { assertOnchainAvailable } from "@/lib/cobalt";
+import { assertOnchainAvailable, OnchainMaintenanceError } from "@/lib/cobalt";
 import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { CONTRACTS } from '@/config/contracts';
 import { parseUnits } from 'viem';
@@ -43,7 +43,7 @@ export function useMintTokens(): MintTokensResult {
       });
     } catch (err) {
       txLog(HOOK_NAME, 'error', 'Mint failed', err);
-      toast.error('Failed to mint tokens');
+      toast.error(err instanceof OnchainMaintenanceError ? err.message : 'Failed to mint tokens');
     }
   };
 

@@ -26,6 +26,7 @@ import {
   recipientRewardWorkflow,
   wrapWorkflow,
 } from "../_shared/agent-workflows.ts";
+import { maintenanceResponse } from "../_shared/cobalt.ts";
 
 const publicClient = createPublicClient({
   chain: base,
@@ -61,6 +62,12 @@ Deno.serve(async (req) => {
   const apiIdx = path.indexOf("recipient-api");
   const resource = path[apiIdx + 1] || path[path.length - 1] || "";
   const subResource = path[apiIdx + 2] || "";
+
+  // Cobalt upgrade: pause holder mutations that prepare Base txs (allow SIWE register + GETs).
+  if (req.method !== "GET" && req.method !== "HEAD" && resource !== "register") {
+    const maintenance = maintenanceResponse(corsHeaders);
+    if (maintenance) return maintenance;
+  }
 
   let body: Record<string, unknown> = {};
   if (req.method === "POST" || req.method === "PUT" || req.method === "PATCH") {

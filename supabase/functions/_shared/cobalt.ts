@@ -15,6 +15,31 @@ export function gasTokenEnabled(): boolean {
   return Deno.env.get("COBALT_GAS_TOKEN_ENABLED") === "true" && isCobaltActive();
 }
 
+/** MCP tool ids that prepare or settle Base txs — blocked during the upgrade window. */
+export const COBALT_BLOCKED_MCP_TOOLS = new Set([
+  "create_loyalty_program",
+  "activate_loyalty_program",
+  "mint_loyalty_tokens",
+  "transfer_loyalty_tokens",
+  "earn_points",
+  "confirm_mint_fee",
+  "cancel_stale_offers",
+  "create_personalized_offer",
+  "redeem_reward",
+  "use_voucher",
+  "create_gift_certificate",
+  "revoke_gift_certificate",
+  "mark_gift_certificate_minted",
+  "prepare_loyalty_token_transfer",
+  "prepare_reward_redemption",
+  "redeem_my_reward",
+  "create_p2p_offer",
+  "accept_p2p_offer",
+  "cancel_p2p_offer",
+  "claim_gift_certificate",
+  "bazaar_pay_and_call",
+]);
+
 /** Returns a 503 Response during the upgrade window, otherwise null. */
 export function maintenanceResponse(
   headers: Record<string, string>,

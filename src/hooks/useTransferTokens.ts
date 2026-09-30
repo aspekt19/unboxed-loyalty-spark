@@ -1,4 +1,4 @@
-import { assertOnchainAvailable } from "@/lib/cobalt";
+import { assertOnchainAvailable, OnchainMaintenanceError } from "@/lib/cobalt";
 import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { parseUnits } from 'viem';
 import { toast } from 'sonner';
@@ -39,7 +39,7 @@ export function useTransferTokens(): TransferTokensResult {
       });
     } catch (err) {
       txLog(HOOK_NAME, 'error', 'Transfer failed', err);
-      toast.error('Failed to transfer tokens');
+      toast.error(err instanceof OnchainMaintenanceError ? err.message : 'Failed to transfer tokens');
     }
   };
 

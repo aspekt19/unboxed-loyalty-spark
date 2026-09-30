@@ -12,6 +12,7 @@ import {
 import { payAndCall, type TypedDataSigner } from "../_shared/x402-pay-client.ts";
 import { authenticateRecipientAgent, insertRecipientActivity } from "../_shared/recipient-agent-auth.ts";
 import { consumeAgentMintQuota } from "../_shared/agent-plan-limits.ts";
+import { maintenanceResponse } from "../_shared/cobalt.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1048,6 +1049,11 @@ Deno.serve(async (req) => {
 
     try {
       const body = await req.json().catch(() => ({}));
+      // Pause Base-settling actions during Cobalt upgrade; wallet CRUD stays available.
+      if (body.action === "server_mint" || body.action === "sign_transaction") {
+        const maintenance = maintenanceResponse(corsHeaders);
+        if (maintenance) return maintenance;
+      }
       switch (body.action) {
         case "create_wallet": return await handleCreateWallet(d, agent, body);
         case "get_wallet": return await handleGetWallet(d, agent, body);
@@ -1082,6 +1088,10 @@ Deno.serve(async (req) => {
 
     try {
       const body = await req.json().catch(() => ({}));
+      if (body.action === "recipient_x402_pay_and_call") {
+        const maintenance = maintenanceResponse(corsHeaders);
+        if (maintenance) return maintenance;
+      }
       switch (body.action) {
         case "recipient_x402_pay_and_call":
           return await handleRecipientX402PayAndCall(d, agent, body, ip);

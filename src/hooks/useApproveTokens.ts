@@ -3,6 +3,7 @@ import { useSendTransaction, useWaitForTransactionReceipt, useReadContract } fro
 import { maxUint256 } from 'viem';
 import { toast } from 'sonner';
 import { encodeWithBuilderCode } from '@/config/builder-code';
+import { assertOnchainAvailable, OnchainMaintenanceError } from '@/lib/cobalt';
 import { type TransactionResult, type TokenAddress, type WalletAddress, txLog } from './types/transaction';
 
 const HOOK_NAME = 'ApproveTokens';
@@ -36,6 +37,7 @@ export function useApproveTokens(): ApproveTokensResult {
     txLog(HOOK_NAME, 'info', 'Initiating approval', { tokenAddress, spenderAddress });
     
     try {
+      assertOnchainAvailable();
       const approveData = encodeWithBuilderCode(
         tokenAbi,
         'approve',
@@ -48,7 +50,7 @@ export function useApproveTokens(): ApproveTokensResult {
       });
     } catch (err) {
       txLog(HOOK_NAME, 'error', 'Approval initiation failed', err);
-      toast.error('Failed to initiate approval');
+      toast.error(err instanceof OnchainMaintenanceError ? err.message : 'Failed to initiate approval');
     }
   }, [sendTransaction]);
 

@@ -1,6 +1,7 @@
 import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { toast } from 'sonner';
 import { encodeWithBuilderCode } from '@/config/builder-code';
+import { assertOnchainAvailable, OnchainMaintenanceError } from '@/lib/cobalt';
 import { type TokenAddress, TOKEN_STATUS_ABI, txLog } from './types/transaction';
 
 const HOOK_NAME = 'ToggleProgramStatus';
@@ -9,7 +10,9 @@ const HOOK_NAME = 'ToggleProgramStatus';
 function handleTransactionError(err: unknown, action: string): void {
   const message = err instanceof Error ? err.message : String(err);
 
-  if (message.includes('User denied') || message.includes('User rejected')) {
+  if (err instanceof OnchainMaintenanceError) {
+    toast.error(err.message);
+  } else if (message.includes('User denied') || message.includes('User rejected')) {
     toast.error('Transaction cancelled by user');
   } else if (message.includes('gas')) {
     toast.error(`Transaction gas estimation failed. The program may already be ${action} or the contract version is incompatible.`);
@@ -28,6 +31,7 @@ export function useToggleProgramStatus() {
 
   const pauseProgram = async (tokenAddress: TokenAddress) => {
     try {
+      assertOnchainAvailable();
       sendTransaction({
         to: tokenAddress,
         data: encodeWithBuilderCode(TOKEN_STATUS_ABI.pauseUtility, 'pauseUtility'),
@@ -40,6 +44,7 @@ export function useToggleProgramStatus() {
 
   const unpauseUtility = async (tokenAddress: TokenAddress) => {
     try {
+      assertOnchainAvailable();
       sendTransaction({
         to: tokenAddress,
         data: encodeWithBuilderCode(TOKEN_STATUS_ABI.unpauseUtility, 'unpauseUtility'),
@@ -55,6 +60,7 @@ export function useToggleProgramStatus() {
 
   const enableMinting = async (tokenAddress: TokenAddress) => {
     try {
+      assertOnchainAvailable();
       sendTransaction({
         to: tokenAddress,
         data: encodeWithBuilderCode(TOKEN_STATUS_ABI.enableMinting, 'enableMinting'),
@@ -63,7 +69,8 @@ export function useToggleProgramStatus() {
       txLog(HOOK_NAME, 'info', 'Enable minting transaction sent');
     } catch (err) {
       txLog(HOOK_NAME, 'error', 'Enable minting failed', err);
-      toast.error('Failed to enable minting');
+      if (err instanceof OnchainMaintenanceError) toast.error(err.message);
+      else toast.error('Failed to enable minting');
       throw err;
     }
   };

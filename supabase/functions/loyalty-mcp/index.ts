@@ -36,6 +36,7 @@ import { getTransactionReceipt } from "../_shared/base-rpc.ts";
 import { checkProgramValidityForPayment } from "../_shared/program-validity.ts";
 
 import { isAdminWallet } from "../_shared/admin-wallets.ts";
+import { COBALT_BLOCKED_MCP_TOOLS, isInCobaltMaintenance, COBALT_MAINTENANCE_END } from "../_shared/cobalt.ts";
 
 
 const app = new Hono();
@@ -1508,6 +1509,35 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
 
 
 app.all("/*", async (c: any) => {
+  try {
+    const peek = await c.req.raw.clone().json();
+    if (peek?.method === "tools/call") {
+      const toolName = peek?.params?.name;
+      if (typeof toolName === "string" && COBALT_BLOCKED_MCP_TOOLS.has(toolName) && isInCobaltMaintenance()) {
+        const retryAfter = Math.max(1, Math.ceil((COBALT_MAINTENANCE_END - Date.now()) / 1000));
+        return new Response(
+          JSON.stringify({
+            jsonrpc: "2.0",
+            id: peek.id ?? null,
+            result: {
+              content: [{
+                type: "text",
+                text: JSON.stringify({
+                  error: "network_upgrade",
+                  message: "Base Cobalt upgrade in progress. Onchain actions resume at 19:00 UTC on 2026-09-30.",
+                  retry_after_seconds: retryAfter,
+                }),
+              }],
+            },
+          }),
+          { headers: { "Content-Type": "application/json", "Retry-After": String(retryAfter) } },
+        );
+      }
+    }
+  } catch {
+    // Non-JSON or probe request — fall through to MCP transport.
+  }
+
   const apiKey = resolveMcpApiKey((name) => c.req.header(name), "lsk_");
   let agent: any = null;
   let authFailure: AuthFailure = apiKey ? null : "missing_key";
