@@ -13,10 +13,11 @@ const TRANSFER_TOPIC =
 const ZERO_ADDRESS_TOPIC =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
 
-// Public Base RPCs reject wide eth_getLogs ranges; keep chunks small.
-const MAX_BLOCK_RANGE = 9_000;
+// mainnet.base.org (the only keyless provider that serves eth_getLogs) caps
+// the range at 2,000 blocks; other free RPCs reject wider ranges entirely.
+const MAX_BLOCK_RANGE = 1_900;
 // Max chunks scanned per program per invocation (cursor advances incrementally).
-const MAX_CHUNKS_PER_PROGRAM = 6;
+const MAX_CHUNKS_PER_PROGRAM = 20;
 // Initial lookback for programs that were never synced (~3 days on Base).
 const INITIAL_LOOKBACK_BLOCKS = 120_000;
 // Wall-clock budget so the function always finishes and persists its cursor.
