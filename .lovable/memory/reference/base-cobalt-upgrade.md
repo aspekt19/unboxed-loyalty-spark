@@ -1,19 +1,18 @@
 ---
 name: Base Cobalt upgrade
-description: Cobalt hardfork (mainnet 2026-09-30 18:00 UTC) — B20 fee payment, Union/Intersect policies, validity transactions; opportunities for LoyalSpark gasless UX
+description: Cobalt hardfork (live on mainnet 2026-09-30) — validity transactions, B20 Union/Intersect policies, multiplier, seize; NO gas-in-B20
 type: reference
 ---
 
-Studied 2026-09-29. Cobalt = Base hardfork after Beryl. Sepolia live 2026-09-23, Mainnet 2026-09-30 18:00 UTC (node v1.4.2+).
+Rechecked 2026-09-30 against the official spec. Cobalt is live on Base mainnet (2026-09-30), Sepolia since 2026-09-23.
 
-## Features relevant to LoyalSpark
-- **Pay gas in B20 tokens** — users pay network fees in loyalty tokens, no ETH. Directly serves the gasless UX target.
-- **Union/Intersect policies** — combinable allow/block lists on B20 tokens (transfer sender/receiver, mint receiver scopes).
-- **Validity transactions** — tx included only when onchain predicates (balance, storage, block number, Flashblock index) match. Use for conditional voucher redemption, scheduled rewards.
-- **EIP-8130 native AA** (gas sponsorship, batch calls, session keys) announced with Cobalt cycle; mainnet date for AA itself not confirmed separately.
-- TEE registration migration + dynamic upgrades (metrics-only) — infra, no app impact.
+## Actually in Cobalt
+- **Validity transactions** — tx included only when onchain predicates (balance, storage, block number, Flashblock index) match.
+- **B20 changes** — Union/Intersect composite policies, scheduled multiplier updates (ERC-8056), seize surface + burnBlocked deprecation.
+- Dynamic upgrades (metrics-only), TEE registration migration — no app impact.
 
-## Ops notes
-- Binance paused Base transfers 2026-09-30 17:00 UTC; avoid onchain ops/deploys in the 17:00–20:00 UTC window.
-- Existing B20 + legacy ERC-20 programs keep working; no migration needed.
-- Docs: https://docs.base.org/base-chain/specs/upgrades/cobalt/overview
+## NOT in Cobalt
+- Paying gas in B20 tokens is NOT part of Cobalt (earlier note was wrong). Plan Stage 1 "gas in points" cannot ship on Cobalt.
+- EIP-8130 native AA not part of Cobalt.
+
+Docs: https://docs.base.org/base-chain/specs/upgrades/cobalt/overview · B20 changelog: https://docs.base.org/base-chain/specs/reference/b20/changelog
