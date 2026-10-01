@@ -20,15 +20,17 @@ export async function loadAccountContext(
   service: Db,
   role: "merchant" | "shopper",
   wallet: string,
+  question = "",
 ): Promise<string> {
   if (role === "merchant") return merchantContext(service, wallet);
-  return shopperContext(service, wallet);
+  return shopperContext(service, wallet, question);
 }
 
-async function shopperContext(service: Db, wallet: string): Promise<string> {
-  const [held, spends, vouchersRes, certsRes, offersRes] = await Promise.all([
+async function shopperContext(service: Db, wallet: string, question: string): Promise<string> {
+  const [held, spends, askedTx, vouchersRes, certsRes, offersRes] = await Promise.all([
     shopperBalanceLines(service, wallet),
     recentSpendLines(service, wallet),
+    askedTxLine(question),
     service.from("vouchers").select("reward_name, status, token_symbol, cost, activated_at").ilike("customer_address", wallet).order("activated_at", { ascending: false }).limit(5),
     service.from("gift_certificates").select("title, status, token_symbol, token_amount").ilike("redeemed_by", wallet).limit(10),
     service.from("marketplace_offers").select("status, offer_amount, request_amount").ilike("creator_address", wallet).eq("status", "active").limit(8),
@@ -44,7 +46,8 @@ async function shopperContext(service: Db, wallet: string): Promise<string> {
   return [
     `Wallet ${wallet}. This is the signed-in shopper only. Balances are on-chain and sorted highest first, the same numbers as the customer portal.`,
     lines("Loyalty balances (stores they hold points with)", held),
-    lines("Recent on-chain point sends, newest first. The first row is what they just used", spends),
+    askedTx ? `Transaction the user named, read from the Base receipt:\n${askedTx}` : "Transaction the user named: none",
+    lines("Chain transfers from this wallet, newest first. Block number and tx hash are from Base, not from the database", spends),
     lines("Recent reward redemptions, newest first", vouchers),
     lines("Gift certificates claimed", certs),
     lines("Open P2P offers they created", offers),
@@ -58,10 +61,29 @@ async function recentSpendLines(service: Db, wallet: string): Promise<string[]> 
       loadRecentLoyaltySpends(service, wallet),
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error("spend timeout")), 4_000)),
     ]);
-    return rows.map((row) => `- ${row.label}: ${amt(row.amount)} sent`);
+    return rows.map((row) =>
+      `- block ${row.blockNumber} tx ${row.txHash}: ${row.label} ${amt(row.amount)} sent. https://basescan.org/tx/${row.txHash}`
+    );
   } catch (err) {
     console.error("[concierge-account] recent spends", err);
     return [];
+  }
+}
+
+async function askedTxLine(question: string): Promise<string> {
+  const match = question.match(/0x[a-fA-F0-9]{64}/);
+  if (!match) return "";
+  try {
+    const { loadTxReceiptBlock } = await import("./recipient-onchain-balances.ts");
+    const receipt = await Promise.race([
+      loadTxReceiptBlock(match[0]),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("receipt timeout")), 4_000)),
+    ]);
+    if (!receipt) return "";
+    return `- block ${receipt.blockNumber} status ${receipt.status} tx ${receipt.txHash}. https://basescan.org/tx/${receipt.txHash}`;
+  } catch (err) {
+    console.error("[concierge-account] receipt", err);
+    return "";
   }
 }
 

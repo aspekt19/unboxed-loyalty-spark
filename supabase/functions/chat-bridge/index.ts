@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
     let accountContext = "";
     if (wallet) {
       try {
-        accountContext = await loadAccountContext(service, role, wallet);
+        accountContext = await loadAccountContext(service, role, wallet, lastUser);
       } catch (err) {
         console.error("[chat-bridge] account", err);
       }

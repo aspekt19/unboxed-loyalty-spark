@@ -7,7 +7,7 @@
 // UI (which queries chain directly) showed non-zero amounts. This helper makes
 // API parity with UI.
 
-import { createPublicClient, http, fallback, formatUnits, type Address } from "npm:viem@2.46.0";
+import { createPublicClient, http, fallback, formatUnits, parseAbiItem, type Address } from "npm:viem@2.46.0";
 import { base } from "npm:viem@2.46.0/chains";
 import { BASE_RPC_URLS } from "./base-rpc.ts";
 
@@ -221,21 +221,23 @@ export async function loadHolderBalancesFast(
   return out;
 }
 
-const TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+const transferEvent = parseAbiItem(
+  "event Transfer(address indexed from, address indexed to, uint256 value)",
+);
 
 /** Newest outgoing loyalty-token transfers from this wallet. One log query, short block window. */
 export async function loadRecentLoyaltySpends(
   serviceClient: any,
   walletAddress: string,
-): Promise<Array<{ label: string; amount: number; blockNumber: string }>> {
-  const wallet = walletAddress.toLowerCase();
+): Promise<Array<{ label: string; amount: number; blockNumber: string; txHash: string }>> {
+  const wallet = walletAddress.toLowerCase() as Address;
   const latest = await fastClient.getBlockNumber();
   const fromBlock = latest > 10000n ? latest - 10000n : 0n;
-  const fromTopic = `0x${wallet.slice(2).padStart(64, "0")}` as `0x${string}`;
   const logs = await fastClient.getLogs({
+    event: transferEvent,
+    args: { from: wallet },
     fromBlock,
     toBlock: latest,
-    topics: [TRANSFER_TOPIC, fromTopic],
   });
   const recent = [...logs].reverse().slice(0, 20);
   const tokenAddrs = [...new Set(recent.map((log) => log.address.toLowerCase()))];
@@ -250,19 +252,31 @@ export async function loadRecentLoyaltySpends(
     nameBy.set(program.token_address.toLowerCase(), { name: program.name, symbol: program.symbol });
   }
 
-  const out: Array<{ label: string; amount: number; blockNumber: string }> = [];
+  const out: Array<{ label: string; amount: number; blockNumber: string; txHash: string }> = [];
   for (const log of recent) {
     const program = nameBy.get(log.address.toLowerCase());
     if (!program || out.length >= 5) continue;
-    const raw = BigInt(log.data);
+    const raw = log.args.value ?? 0n;
     if (raw <= 0n) continue;
     out.push({
       label: `${program.name} (${program.symbol})`,
       amount: Number(formatUnits(raw, 18)),
       blockNumber: log.blockNumber?.toString() ?? "",
+      txHash: log.transactionHash ?? "",
     });
   }
   return out;
+}
+
+/** Block and status of one transaction, read from a Base receipt. */
+export async function loadTxReceiptBlock(txHash: string): Promise<{ blockNumber: string; status: string; txHash: string } | null> {
+  const hash = (txHash.startsWith("0x") ? txHash : `0x${txHash}`) as `0x${string}`;
+  const receipt = await fastClient.getTransactionReceipt({ hash });
+  return {
+    blockNumber: receipt.blockNumber.toString(),
+    status: receipt.status,
+    txHash: receipt.transactionHash,
+  };
 }
 
 /**
