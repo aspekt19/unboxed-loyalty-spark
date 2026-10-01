@@ -320,29 +320,60 @@ async function fetchTokentx(query: string): Promise<ExplorerTokenTx[] | null> {
   return null;
 }
 
+type ExplorerBalanceRow = {
+  value?: string;
+  token?: {
+    address_hash?: string;
+    decimals?: string;
+    symbol?: string;
+    name?: string;
+    type?: string;
+  };
+};
+
+async function fetchExplorerTokenBalances(wallet: string): Promise<ExplorerBalanceRow[]> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 14_000);
+  try {
+    const resp = await fetch(`https://base.blockscout.com/api/v2/addresses/${wallet}/token-balances`, {
+      signal: controller.signal,
+      headers: { accept: "application/json" },
+    });
+    const body = await resp.json();
+    if (!Array.isArray(body)) throw new Error("explorer token balances");
+    return body as ExplorerBalanceRow[];
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export type LoyaltyExplorerTransfer = {
+  label: string;
+  amount: number;
+  blockNumber: string;
+  txHash: string;
+  direction: "sent" | "received";
+  standard: string;
+};
+
+export type LoyaltyExplorerView = {
+  balances: Array<{ tokenAddress: string; label: string; amount: number }>;
+  transfers: LoyaltyExplorerTransfer[];
+};
+
 /**
- * Loyalty transfers for a wallet, from a public Base explorer.
- * Reads the address token history (several pages), not only tokens still held.
- * alsoContracts repeats a few known program contracts so one of them is not
- * buried under unrelated token transfers.
+ * Portal balances and loyalty transfers for one wallet, from a public Base explorer.
+ * Balances come from the address token list, kept when the contract is a loyalty program.
+ * Transfers are that token's own history, so other tokens cannot crowd them out.
+ * extraTokens are included even at zero balance (a reward just spent in full).
  */
-export async function loadExplorerLoyaltyTransfers(
+export async function loadLoyaltyExplorerView(
   serviceClient: any,
   walletAddress: string,
-  alsoContracts: string[] = [],
-): Promise<Array<{ label: string; amount: number; blockNumber: string; txHash: string; direction: "sent" | "received"; standard: string }>> {
+  extraTokens: string[] = [],
+): Promise<LoyaltyExplorerView> {
   const wallet = walletAddress.toLowerCase();
-  const history = [1, 2, 3, 4].map((page) =>
-    `module=account&action=tokentx&address=${wallet}&page=${page}&offset=100&sort=desc`
-  );
-  const extra = [...new Set(alsoContracts.map((addr) => addr.toLowerCase()).filter((addr) => /^0x[a-f0-9]{40}$/.test(addr)))].slice(0, 8);
-  const focused = extra.map((addr) =>
-    `module=account&action=tokentx&address=${wallet}&contractaddress=${addr}&page=1&offset=10&sort=desc`
-  );
-  const batches = await Promise.all([...history, ...focused].map((query) => fetchTokentx(query)));
-  if (batches.every((batch) => batch === null)) throw new Error("explorer token transfers failed");
-  const txs = batches.flatMap((batch) => batch ?? []);
-
+  const listed = await fetchExplorerTokenBalances(wallet);
   const { data, error } = await serviceClient
     .from("loyalty_programs")
     .select("token_address, name, symbol, token_standard")
@@ -358,14 +389,53 @@ export async function loadExplorerLoyaltyTransfers(
     });
   }
 
+  const balances: LoyaltyExplorerView["balances"] = [];
+  for (const row of listed) {
+    const tokenAddress = (row.token?.address_hash ?? "").toLowerCase();
+    const program = programBy.get(tokenAddress);
+    if (!program) continue;
+    const decimals = Number(row.token?.decimals ?? "18");
+    const safeDecimals = Number.isInteger(decimals) && decimals >= 0 && decimals <= 36 ? decimals : 18;
+    let raw = 0n;
+    try {
+      raw = BigInt(row.value ?? "0");
+    } catch {
+      continue;
+    }
+    if (raw <= 0n) continue;
+    balances.push({
+      tokenAddress,
+      label: `${program.name} (${program.symbol})`,
+      amount: Number(formatUnits(raw, safeDecimals)),
+    });
+  }
+  balances.sort((a, b) => b.amount - a.amount);
+
+  const contracts = [...new Set([
+    ...balances.map((row) => row.tokenAddress),
+    ...extraTokens.map((addr) => addr.toLowerCase()).filter((addr) => programBy.has(addr)),
+  ])].slice(0, 12);
+
+  const batches = await Promise.all(contracts.map((addr) =>
+    fetchTokentx(`module=account&action=tokentx&address=${wallet}&contractaddress=${addr}&page=1&offset=15&sort=desc`)
+  ));
+  if (contracts.length > 0 && batches.every((batch) => batch === null)) {
+    throw new Error("explorer token transfers failed");
+  }
+
   const seen = new Set<string>();
-  const out: Array<{ label: string; amount: number; blockNumber: string; txHash: string; direction: "sent" | "received"; standard: string }> = [];
-  const ordered = [...txs].sort((a, b) => Number(b.blockNumber ?? 0) - Number(a.blockNumber ?? 0));
+  const transfers: LoyaltyExplorerTransfer[] = [];
+  const ordered = batches.flatMap((batch) => batch ?? []).sort((a, b) => Number(b.blockNumber ?? 0) - Number(a.blockNumber ?? 0));
   for (const tx of ordered) {
     const contract = (tx.contractAddress ?? "").toLowerCase();
     const program = programBy.get(contract);
-    if (!program || out.length >= 8) continue;
-    const raw = BigInt(tx.value ?? "0");
+    if (!program) continue;
+    let raw = 0n;
+    try {
+      raw = BigInt(tx.value ?? "0");
+    } catch {
+      continue;
+    }
     if (raw <= 0n) continue;
     const direction = (tx.from ?? "").toLowerCase() === wallet ? "sent" as const : "received" as const;
     const key = `${tx.hash}:${contract}:${direction}:${tx.value}`;
@@ -373,7 +443,7 @@ export async function loadExplorerLoyaltyTransfers(
     seen.add(key);
     const decimals = Number(tx.tokenDecimal ?? "18");
     const safeDecimals = Number.isInteger(decimals) && decimals >= 0 && decimals <= 36 ? decimals : 18;
-    out.push({
+    transfers.push({
       label: `${program.name} (${program.symbol})`,
       amount: Number(formatUnits(raw, safeDecimals)),
       blockNumber: tx.blockNumber ?? "",
@@ -381,8 +451,20 @@ export async function loadExplorerLoyaltyTransfers(
       direction,
       standard: program.standard,
     });
+    if (transfers.length >= 8) break;
   }
-  return out;
+
+  return { balances, transfers };
+}
+
+/** @deprecated Use loadLoyaltyExplorerView. Kept so older callers still compile. */
+export async function loadExplorerLoyaltyTransfers(
+  serviceClient: any,
+  walletAddress: string,
+  alsoContracts: string[] = [],
+): Promise<LoyaltyExplorerTransfer[]> {
+  const view = await loadLoyaltyExplorerView(serviceClient, walletAddress, alsoContracts);
+  return view.transfers;
 }
 
 /** Block and status of one transaction, read from a Base receipt. */

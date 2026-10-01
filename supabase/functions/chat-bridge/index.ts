@@ -79,6 +79,15 @@ Deno.serve(async (req) => {
       }
     }
 
+    if (role === "shopper" && asksAboutLastSpend(lastUser)) {
+      return json({
+        reply: modelFallback(lastUser, accountContext),
+        role,
+        wallet,
+        source: "explorer",
+      });
+    }
+
     if (servConfigured()) {
       try {
         const serv = await servConciergeReply({ role, messages, accountContext });
@@ -239,15 +248,20 @@ function modelFallback(lastUser: string, accountContext: string): string {
         : `${who}\nPortal balances:\n${held}\nThe Base transfer read failed. That is not proof there was no spend.`;
     }
     const spends = sectionLines(accountContext, "Explorer transfers");
-    if (spends.length === 0) {
+    const sent = spends.filter((row) => row.includes(": sent "));
+    const received = spends.filter((row) => row.includes(": received "));
+    if (sent.length === 0 && received.length === 0) {
       return ru
-        ? `${who}\nСейчас в портале:\n${held}\nВ недавней истории переводов этого кошелька нет перевода баллов лояльности.`
-        : `${who}\nPortal balances:\n${held}\nThis wallet's recent token history has no loyalty-program transfer.`;
+        ? `${who}\nСейчас в портале:\n${held}\nИсходящих переводов этих баллов в обозревателе Base нет.`
+        : `${who}\nPortal balances:\n${held}\nThe Base explorer has no outgoing transfer of these loyalty tokens.`;
     }
-    const lines = spends.map((row) => `• ${row}`).join("\n");
-    return ru
-      ? `${who}\nСейчас в портале:\n${held}\nПоследние списания в сети:\n${lines}`
-      : `${who}\nPortal balances:\n${held}\nLatest spends on Base:\n${lines}`;
+    const sentBlock = sent.length > 0
+      ? (ru ? `Списания, от новых к старым:\n${sent.map((row) => `• ${row}`).join("\n")}` : `Spends, newest first:\n${sent.map((row) => `• ${row}`).join("\n")}`)
+      : (ru ? "Исходящих списаний по этим токенам в обозревателе нет." : "No outgoing spend of these tokens in the explorer.");
+    const inBlock = received.length > 0
+      ? (ru ? `\nВходящие переводы:\n${received.map((row) => `• ${row}`).join("\n")}` : `\nIncoming transfers:\n${received.map((row) => `• ${row}`).join("\n")}`)
+      : "";
+    return `${who}\n${ru ? "Сейчас в портале" : "Portal balances"}:\n${held}\n${sentBlock}${inBlock}`;
   }
   if (!asksAboutOwnHoldings(lastUser)) {
     return ru

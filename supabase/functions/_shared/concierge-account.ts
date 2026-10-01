@@ -27,8 +27,7 @@ export async function loadAccountContext(
 }
 
 async function shopperContext(service: Db, wallet: string, question: string): Promise<string> {
-  const [held, vouchersRes, certsRes, offersRes] = await Promise.all([
-    shopperBalanceLines(service, wallet),
+  const [vouchersRes, certsRes, offersRes] = await Promise.all([
     service.from("vouchers").select("reward_name, status, token_symbol, token_address, cost, activated_at").ilike("customer_address", wallet).order("activated_at", { ascending: false }).limit(5),
     service.from("gift_certificates").select("title, status, token_symbol, token_amount").ilike("redeemed_by", wallet).limit(10),
     service.from("marketplace_offers").select("status, offer_amount, request_amount").ilike("creator_address", wallet).eq("status", "active").limit(8),
@@ -42,16 +41,11 @@ async function shopperContext(service: Db, wallet: string, question: string): Pr
     cost: number;
     activated_at: string;
   }>;
-  const [spends, askedTx] = await Promise.all([
-    recentSpendLines(service, wallet, [
-      ...held.tokenAddresses,
-      ...voucherRows.map((v) => v.token_address ?? ""),
-    ]),
-    askedTxLine(question),
-  ]);
-  const spendSection = spends.status === "failed"
+  const portal = await portalFromExplorer(service, wallet, voucherRows.map((v) => v.token_address ?? ""));
+  const askedTx = await askedTxLine(question);
+  const spendSection = portal.status === "failed"
     ? "Explorer transfers: lookup failed. Do not claim that no transfer exists."
-    : lines("Explorer transfers for this wallet, newest first. Already read from the wallet token history on a public Base explorer. A row is included when the token is any loyalty program, even if the wallet no longer holds it. sent is a spend. Do not offer to look this up again", spends.rows);
+    : lines("Explorer transfers for this wallet, newest first. sent is a spend. Each row is one loyalty-token transfer from the Base explorer, with block and tx hash", portal.transfers);
 
   const vouchers = voucherRows
     .map((v) => `- ${v.activated_at}: spent ${amt(Number(v.cost))} ${v.token_symbol} on ${v.reward_name} [${v.status}]`);
@@ -62,7 +56,7 @@ async function shopperContext(service: Db, wallet: string, question: string): Pr
 
   return [
     `Wallet ${wallet}. This is the signed-in shopper. Name this address in the answer. Do not ask them to send it again.`,
-    lines("Loyalty balances, same list as the customer portal (on-chain balance above zero only)", held.lines),
+    lines("Loyalty balances, same list as the customer portal (explorer token list, loyalty programs only)", portal.balances),
     spendSection,
     askedTx ? `Transaction the user named, read from the Base receipt:\n${askedTx}` : "Transaction the user named: none",
     lines("Recent reward redemptions, newest first. A voucher row is not the block number", vouchers),
@@ -71,26 +65,27 @@ async function shopperContext(service: Db, wallet: string, question: string): Pr
   ].join("\n");
 }
 
-async function recentSpendLines(
+async function portalFromExplorer(
   service: Db,
   wallet: string,
-  alsoContracts: string[],
-): Promise<{ rows: string[]; status: "ok" | "failed" | "no-tokens" }> {
+  extraTokens: string[],
+): Promise<{ balances: string[]; transfers: string[]; status: "ok" | "failed" }> {
   try {
-    const { loadExplorerLoyaltyTransfers } = await import("./recipient-onchain-balances.ts");
-    const rows = await Promise.race([
-      loadExplorerLoyaltyTransfers(service, wallet, alsoContracts),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("explorer timeout")), 12_000)),
+    const { loadLoyaltyExplorerView } = await import("./recipient-onchain-balances.ts");
+    const view = await Promise.race([
+      loadLoyaltyExplorerView(service, wallet, extraTokens),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("explorer timeout")), 18_000)),
     ]);
     return {
       status: "ok",
-      rows: rows.map((row) =>
+      balances: view.balances.map((row) => `- ${row.label}: ${amt(row.amount)}`),
+      transfers: view.transfers.map((row) =>
         `- block ${row.blockNumber} tx ${row.txHash}: ${row.direction} ${amt(row.amount)} ${row.label} [${row.standard}]. https://basescan.org/tx/${row.txHash}`
       ),
     };
   } catch (err) {
-    console.error("[concierge-account] explorer transfers", err);
-    return { rows: [], status: "failed" };
+    console.error("[concierge-account] explorer", err);
+    return { balances: [], transfers: [], status: "failed" };
   }
 }
 
@@ -108,36 +103,6 @@ async function askedTxLine(question: string): Promise<string> {
   } catch (err) {
     console.error("[concierge-account] receipt", err);
     return "";
-  }
-}
-
-/** On-chain balances only. A historical mint amount is not what the portal shows. */
-async function shopperBalanceLines(
-  service: Db,
-  wallet: string,
-): Promise<{ lines: string[]; tokenAddresses: string[] }> {
-  try {
-    const { loadHolderBalancesFast } = await import("./recipient-onchain-balances.ts");
-    const rows = await Promise.race([
-      loadHolderBalancesFast(service, wallet),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("balance timeout")), 8_000)),
-    ]);
-    const positive = rows
-      .filter((row) => row.current_balance > 0)
-      .sort((a, b) => b.current_balance - a.current_balance);
-    return {
-      tokenAddresses: positive.map((row) => row.token_address),
-      lines: positive.map((row) => {
-        const label = row.program ? `${row.program.name} (${row.program.symbol})` : row.token_address;
-        return `- ${label}: ${amt(row.current_balance)}`;
-      }),
-    };
-  } catch (err) {
-    console.error("[concierge-account] chain balances", err);
-    return {
-      tokenAddresses: [],
-      lines: ["- on-chain balance read failed. Do not guess amounts from old mints or from another wallet."],
-    };
   }
 }
 
