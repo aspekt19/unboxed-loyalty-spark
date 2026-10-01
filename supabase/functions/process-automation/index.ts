@@ -245,7 +245,7 @@ async function processWelcomeGiftCertificates(supabase: any, rule: AutomationRul
     });
 
     if (!insErr) {
-      console.log(`Issued welcome certificate ${cert?.code} to ${customer}`);
+      console.log(`Issued welcome certificate id=${cert?.id}`);
     }
   }
 }
