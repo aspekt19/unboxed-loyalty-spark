@@ -283,6 +283,95 @@ export async function loadRecentLoyaltySpends(
   return out;
 }
 
+type ExplorerTokenTx = {
+  blockNumber?: string;
+  hash?: string;
+  from?: string;
+  to?: string;
+  contractAddress?: string;
+  value?: string;
+  tokenName?: string;
+  tokenSymbol?: string;
+  tokenDecimal?: string;
+};
+
+const EXPLORER_TOKEN_TX = [
+  (wallet: string) =>
+    `https://base.blockscout.com/api?module=account&action=tokentx&address=${wallet}&page=1&offset=100&sort=desc`,
+  (wallet: string) =>
+    `https://api.routescan.io/v2/network/mainnet/evm/8453/etherscan/api?module=account&action=tokentx&address=${wallet}&page=1&offset=100&sort=desc`,
+];
+
+async function fetchExplorerTokenTxs(wallet: string): Promise<ExplorerTokenTx[]> {
+  let lastError: unknown = null;
+  for (const buildUrl of EXPLORER_TOKEN_TX) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8_000);
+    try {
+      const resp = await fetch(buildUrl(wallet), { signal: controller.signal });
+      const body = await resp.json();
+      if (Array.isArray(body?.result)) return body.result as ExplorerTokenTx[];
+      lastError = body?.message ?? body?.result ?? resp.status;
+    } catch (err) {
+      lastError = err;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  throw new Error(`explorer token transfers failed: ${String(lastError)}`);
+}
+
+/**
+ * Latest B20 and ERC-20 loyalty transfers for a wallet, from a public Base explorer.
+ * The explorer returns every token the address touched. Rows are kept only when the
+ * contract is one of our loyalty programs.
+ */
+export async function loadExplorerLoyaltyTransfers(
+  serviceClient: any,
+  walletAddress: string,
+): Promise<Array<{ label: string; amount: number; blockNumber: string; txHash: string; direction: "sent" | "received"; standard: string }>> {
+  const wallet = walletAddress.toLowerCase();
+  const txs = await fetchExplorerTokenTxs(wallet);
+  const contracts = [...new Set(txs.map((tx) => (tx.contractAddress ?? "").toLowerCase()).filter((addr) => /^0x[a-f0-9]{40}$/.test(addr)))];
+  if (contracts.length === 0) return [];
+
+  const { data, error } = await serviceClient
+    .from("loyalty_programs")
+    .select("token_address, name, symbol, token_standard")
+    .or(contracts.map((addr) => `token_address.ilike.${addr}`).join(","));
+  if (error) throw error;
+
+  const programBy = new Map<string, { name: string; symbol: string; standard: string }>();
+  for (const program of (data ?? []) as Array<{ token_address: string; name: string; symbol: string; token_standard: string | null }>) {
+    programBy.set(program.token_address.toLowerCase(), {
+      name: program.name,
+      symbol: program.symbol,
+      standard: (program.token_standard ?? "erc20").toLowerCase(),
+    });
+  }
+
+  const out: Array<{ label: string; amount: number; blockNumber: string; txHash: string; direction: "sent" | "received"; standard: string }> = [];
+  for (const tx of txs) {
+    const contract = (tx.contractAddress ?? "").toLowerCase();
+    const program = programBy.get(contract);
+    if (!program || out.length >= 8) continue;
+    const raw = BigInt(tx.value ?? "0");
+    if (raw <= 0n) continue;
+    const decimals = Number(tx.tokenDecimal ?? "18");
+    const safeDecimals = Number.isInteger(decimals) && decimals >= 0 && decimals <= 36 ? decimals : 18;
+    const direction = (tx.from ?? "").toLowerCase() === wallet ? "sent" as const : "received" as const;
+    out.push({
+      label: `${program.name} (${program.symbol})`,
+      amount: Number(formatUnits(raw, safeDecimals)),
+      blockNumber: tx.blockNumber ?? "",
+      txHash: tx.hash ?? "",
+      direction,
+      standard: program.standard,
+    });
+  }
+  return out;
+}
+
 /** Block and status of one transaction, read from a Base receipt. */
 export async function loadTxReceiptBlock(txHash: string): Promise<{ blockNumber: string; status: string; txHash: string } | null> {
   const hash = (txHash.startsWith("0x") ? txHash : `0x${txHash}`) as `0x${string}`;

@@ -238,11 +238,11 @@ function modelFallback(lastUser: string, accountContext: string): string {
         ? `${who}\nСейчас в портале:\n${held}\nЧтение переводов в Base не удалось. Это не значит, что списания не было.`
         : `${who}\nPortal balances:\n${held}\nThe Base transfer read failed. That is not proof there was no spend.`;
     }
-    const spends = sectionLines(accountContext, "Chain transfers");
+    const spends = sectionLines(accountContext, "Explorer transfers");
     if (spends.length === 0) {
       return ru
-        ? `${who}\nСейчас в портале:\n${held}\nЗа последние 10000 блоков Base исходящего перевода этих баллов нет.`
-        : `${who}\nPortal balances:\n${held}\nNo outgoing transfer of these tokens in the last 10000 Base blocks.`;
+        ? `${who}\nСейчас в портале:\n${held}\nВ последних 100 переводах токенов на Base нет перевода баллов лояльности.`
+        : `${who}\nPortal balances:\n${held}\nThe latest 100 token transfers on Base include no loyalty-program token.`;
     }
     const lines = spends.map((row) => `• ${row}`).join("\n");
     return ru

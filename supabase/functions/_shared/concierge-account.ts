@@ -42,19 +42,15 @@ async function shopperContext(service: Db, wallet: string, question: string): Pr
     cost: number;
     activated_at: string;
   }>;
-  const spendTokens = [
-    ...voucherRows.map((v) => v.token_address ?? ""),
-    ...held.tokenAddresses,
-  ];
   const [spends, askedTx] = await Promise.all([
-    recentSpendLines(service, wallet, spendTokens),
+    recentSpendLines(service, wallet),
     askedTxLine(question),
   ]);
   const spendSection = spends.status === "failed"
     ? "Chain transfers: lookup failed. Do not claim that no transfer exists."
     : spends.status === "no-tokens"
     ? "Chain transfers: lookup not run, because the portal token list was empty."
-    : lines("Chain transfers from this wallet, newest first. Block number and tx hash are from Base. Status none means none in the last 10000 blocks for this wallet", spends.rows);
+    : lines("Explorer transfers for this wallet, newest first. Public Base explorer, loyalty tokens only (B20 and ERC-20). sent is a spend. none means none of the latest 100 token transfers are loyalty programs", spends.rows);
 
   const vouchers = voucherRows
     .map((v) => `- ${v.activated_at}: spent ${amt(Number(v.cost))} ${v.token_symbol} on ${v.reward_name} [${v.status}]`);
@@ -65,9 +61,9 @@ async function shopperContext(service: Db, wallet: string, question: string): Pr
 
   return [
     `Wallet ${wallet}. This is the signed-in shopper. Name this address in the answer. Do not ask them to send it again.`,
+    lines("Loyalty balances, same list as the customer portal (on-chain balance above zero only)", held.lines),
     spendSection,
     askedTx ? `Transaction the user named, read from the Base receipt:\n${askedTx}` : "Transaction the user named: none",
-    lines("Loyalty balances, same list as the customer portal (on-chain balance above zero only)", held.lines),
     lines("Recent reward redemptions, newest first. A voucher row is not the block number", vouchers),
     lines("Gift certificates claimed", certs),
     lines("Open P2P offers they created", offers),
@@ -77,24 +73,21 @@ async function shopperContext(service: Db, wallet: string, question: string): Pr
 async function recentSpendLines(
   service: Db,
   wallet: string,
-  tokenAddresses: string[],
 ): Promise<{ rows: string[]; status: "ok" | "failed" | "no-tokens" }> {
-  const tokens = [...new Set(tokenAddresses.map((addr) => addr.trim().toLowerCase()).filter((addr) => /^0x[a-f0-9]{40}$/.test(addr)))];
-  if (tokens.length === 0) return { rows: [], status: "no-tokens" };
   try {
-    const { loadRecentLoyaltySpends } = await import("./recipient-onchain-balances.ts");
+    const { loadExplorerLoyaltyTransfers } = await import("./recipient-onchain-balances.ts");
     const rows = await Promise.race([
-      loadRecentLoyaltySpends(service, wallet, tokens),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("spend timeout")), 6_000)),
+      loadExplorerLoyaltyTransfers(service, wallet),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("explorer timeout")), 9_000)),
     ]);
     return {
       status: "ok",
       rows: rows.map((row) =>
-        `- block ${row.blockNumber} tx ${row.txHash}: ${row.label} ${amt(row.amount)} sent. https://basescan.org/tx/${row.txHash}`
+        `- block ${row.blockNumber} tx ${row.txHash}: ${row.direction} ${amt(row.amount)} ${row.label} [${row.standard}]. https://basescan.org/tx/${row.txHash}`
       ),
     };
   } catch (err) {
-    console.error("[concierge-account] recent spends", err);
+    console.error("[concierge-account] explorer transfers", err);
     return { rows: [], status: "failed" };
   }
 }
