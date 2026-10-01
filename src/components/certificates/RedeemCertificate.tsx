@@ -87,7 +87,7 @@ export function RedeemCertificate({ onRedeemed }: { onRedeemed?: () => void }) {
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                 className="font-mono tracking-[0.3em] text-center uppercase"
-                maxLength={12}
+                maxLength={24}
               />
               <Button onClick={() => handlePreview(code)} disabled={previewing || !code}>
                 {previewing ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Check'}

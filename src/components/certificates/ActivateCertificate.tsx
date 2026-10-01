@@ -120,7 +120,7 @@ export function ActivateCertificate({ onActivated }: ActivateCertificateProps) {
                   value={code}
                   onChange={(e) => setCode(e.target.value.toUpperCase().replace(/\s/g, ''))}
                   className="font-mono tracking-[0.4em] text-center text-lg"
-                  maxLength={12}
+                  maxLength={24}
                 />
                 <Button onClick={() => handleLookup(code)} disabled={looking || !code}>
                   {looking ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Find'}
