@@ -49,7 +49,20 @@ const ALLOW = [
   /\bredeem/i,
   /обмен/i,
   /начисл/i,
+  /магазин/i,
+  /\bstores?\b/i,
+  /\bshops?\b/i,
+  /\btokens?\b/i,
+  /токен/i,
+  /балл/i,
+  /\bpoints?\b/i,
 ];
+
+/** Shopper/merchant asking for their own programs, stores, or balances. */
+export function asksForOwnLoyaltyList(text: string): boolean {
+  return /магазин|stores?\b|shops?\b|какие у меня|what do i have|мои программ|my programs|my stores|my merchants|available to me|мои токен|my tokens|мои балл|my points|мой баланс|my balance/i
+    .test(text);
+}
 
 export const LOYAL_SPARK_REFUSAL =
   "I only help with Loyal Spark: loyalty programs, rewards, vouchers, certificates, balances, and agent APIs on Base. I can't help with that.";

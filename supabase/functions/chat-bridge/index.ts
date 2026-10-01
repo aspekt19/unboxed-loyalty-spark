@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { isLoyalSparkScoped, LOYAL_SPARK_REFUSAL } from "../_shared/loyal-spark-scope.ts";
+import { asksForOwnLoyaltyList, isLoyalSparkScoped, LOYAL_SPARK_REFUSAL } from "../_shared/loyal-spark-scope.ts";
+import { loadOnchainLoyaltyBalances } from "../_shared/recipient-onchain-balances.ts";
 import { servConciergeReply, servConfigured } from "../_shared/serv-reasoning.ts";
 
 const corsHeaders = {
@@ -76,6 +77,11 @@ Deno.serve(async (req) => {
         message: `Daily assistant limit (${DAILY_LIMIT}) reached. Try again tomorrow.`,
         disabled: false,
       }, 429);
+    }
+
+    if (asksForOwnLoyaltyList(lastUser)) {
+      const reply = await answerOwnLoyaltyList(service, role, wallet, lastUser);
+      return json({ reply, role, wallet, source: "account" });
     }
 
     if (Date.now() < openservDisabledUntil) {
@@ -238,6 +244,66 @@ function localScopedReply(role: ChatRole, lastUser: string): string {
     return "Check balances and redeem under your loyalty wallet / rewards. Recipient agents use `rwk_` MCP (`list_my_loyalty_balances`, `redeem_my_reward`). I only help with Loyal Spark — which merchant program?";
   }
   return "I'm the Loyal Spark shopper assistant. I only help with balances, rewards, vouchers, certificates, and P2P escrow on Base — not general chat. What do you need?";
+}
+
+async function answerOwnLoyaltyList(
+  service: ReturnType<typeof createClient>,
+  role: ChatRole,
+  wallet: string | null,
+  question: string,
+): Promise<string> {
+  const ru = /[а-яё]/i.test(question);
+  if (!wallet) {
+    return ru
+      ? "Подключите кошелёк к профилю — тогда я покажу магазины, от которых у вас есть баллы."
+      : "Connect a wallet to your profile and I can list the stores you have loyalty with.";
+  }
+
+  try {
+    if (role === "merchant") {
+      const { data, error } = await service
+        .from("loyalty_programs")
+        .select("name, symbol, status")
+        .eq("merchant_address", wallet)
+        .in("status", ["active", "expiring_soon", "paused"]);
+      if (error) throw error;
+      const rows = (data ?? []) as { name: string; symbol: string; status: string }[];
+      if (rows.length === 0) {
+        return ru
+          ? "У этого кошелька нет своих программ лояльности."
+          : "This wallet has no loyalty programs of its own.";
+      }
+      const lines = rows.map((p) => `• ${p.name} (${p.symbol}) — ${p.status}`);
+      return (ru ? "Ваши программы:\n" : "Your programs:\n") + lines.join("\n");
+    }
+
+    const balances = await loadOnchainLoyaltyBalances(service, wallet);
+    const held = balances.filter((b) => b.current_balance > 0 && b.program);
+    if (held.length === 0) {
+      return ru
+        ? "На этом кошельке нет баллов ни в одной программе."
+        : "This wallet has no loyalty balances yet.";
+    }
+    const lines = held.map((b) => {
+      const name = b.program?.name ?? b.token_address;
+      const symbol = b.program?.symbol ? ` (${b.program.symbol})` : "";
+      return `• ${name}${symbol} — ${formatAmount(b.current_balance)}`;
+    });
+    return (ru
+      ? "Магазины, от которых у вас есть программа лояльности:\n"
+      : "Stores you have loyalty with:\n") + lines.join("\n");
+  } catch (err) {
+    console.error("[chat-bridge] holdings", err);
+    return ru
+      ? "Не смог прочитать балансы. Обновите страницу и спросите ещё раз."
+      : "I couldn't read your balances. Refresh the page and ask again.";
+  }
+}
+
+function formatAmount(n: number): string {
+  if (!Number.isFinite(n)) return "0";
+  const rounded = Math.round(n * 100) / 100;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
 }
 
 function json(body: unknown, status = 200) {
