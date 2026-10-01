@@ -236,6 +236,7 @@ export async function loadRecentLoyaltySpends(
   if (tokens.length === 0) return [];
   const latest = await fastClient.getBlockNumber();
   const fromBlock = latest > 10000n ? latest - 10000n : 0n;
+  let failures = 0;
   const batches = await Promise.all(tokens.map(async (token) => {
     try {
       return await fastClient.getLogs({
@@ -246,10 +247,12 @@ export async function loadRecentLoyaltySpends(
         toBlock: latest,
       });
     } catch (err) {
+      failures += 1;
       console.error("[loyalty-spends] getLogs", token, err);
       return [];
     }
   }));
+  if (failures === tokens.length) throw new Error("all loyalty transfer lookups failed");
   const logs = batches.flat();
   const recent = [...logs].sort((a, b) => Number((b.blockNumber ?? 0n) - (a.blockNumber ?? 0n))).slice(0, 20);
   const tokenAddrs = [...new Set(recent.map((log) => log.address.toLowerCase()))];

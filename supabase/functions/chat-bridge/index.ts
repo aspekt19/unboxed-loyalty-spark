@@ -227,16 +227,27 @@ function modelFallback(lastUser: string, accountContext: string): string {
   const ru = /[а-яё]/i.test(lastUser);
   const guide = "https://loyalspark.online/guide";
   if (asksAboutLastSpend(lastUser)) {
+    const wallet = accountContext.match(/Wallet (0x[a-fA-F0-9]{40})/)?.[1] ?? "";
+    const balances = sectionLines(accountContext, "Loyalty balances");
+    const held = balances.length > 0 ? balances.map((row) => `• ${row}`).join("\n") : (ru ? "список портала пуст" : "portal list is empty");
+    const who = wallet
+      ? (ru ? `Кошелёк ${wallet}.` : `Wallet ${wallet}.`)
+      : (ru ? "Кошелёк сессии не найден." : "No session wallet.");
+    if (accountContext.includes("Chain transfers: lookup failed")) {
+      return ru
+        ? `${who}\nСейчас в портале:\n${held}\nЧтение переводов в Base не удалось. Это не значит, что списания не было.`
+        : `${who}\nPortal balances:\n${held}\nThe Base transfer read failed. That is not proof there was no spend.`;
+    }
     const spends = sectionLines(accountContext, "Chain transfers");
     if (spends.length === 0) {
       return ru
-        ? "За последние 10000 блоков Base исходящего перевода баллов с этого кошелька нет. Список текущих балансов это не история списания."
-        : "No outgoing loyalty transfer from this wallet in the last 10000 Base blocks. Current balances are not a spend history.";
+        ? `${who}\nСейчас в портале:\n${held}\nЗа последние 10000 блоков Base исходящего перевода этих баллов нет.`
+        : `${who}\nPortal balances:\n${held}\nNo outgoing transfer of these tokens in the last 10000 Base blocks.`;
     }
     const lines = spends.map((row) => `• ${row}`).join("\n");
     return ru
-      ? `Последние списания в сети, с номера блока и хеша транзакции:\n${lines}`
-      : `Latest spends on Base, with block number and tx hash:\n${lines}`;
+      ? `${who}\nСейчас в портале:\n${held}\nПоследние списания в сети:\n${lines}`
+      : `${who}\nPortal balances:\n${held}\nLatest spends on Base:\n${lines}`;
   }
   if (!asksAboutOwnHoldings(lastUser)) {
     return ru
