@@ -59,6 +59,17 @@ export function isLoyalSparkScoped(text) {
     /токен/,
     /балл/,
     /\bpoints?\b/,
+    /\bprograms?\b/,
+    /гайд/,
+    /\bguides?\b/,
+    /инструкц/,
+    /\bfaq\b/,
+    /\bbilling\b/,
+    /биллинг/,
+    /\bportal\b/,
+    /портал/,
+    /\bhow to\b/,
+    /как (созда|польз|найти|откры|подключ|работает)/,
   ];
   return allow.some((re) => re.test(t));
 }
@@ -97,6 +108,8 @@ async function main() {
   assert(isLoyalSparkScoped("Какие магазины мне доступны?"), "RU stores query must be allowed");
   assert(isLoyalSparkScoped("Which stores are available to me?"), "EN stores query must be allowed");
   assert(!isLoyalSparkScoped("Привет, как дела?"), "small talk must be denied");
+  assert(isLoyalSparkScoped("Где гайд для мерчанта?"), "RU guide query must be allowed");
+  assert(isLoyalSparkScoped("How to create a loyalty program?"), "how-to must be allowed");
   console.log("   off-topic refusal copy:", REFUSAL);
 
   if (!API_KEY || API_KEY.includes("replace_me")) {

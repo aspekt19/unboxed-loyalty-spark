@@ -56,6 +56,17 @@ const ALLOW = [
   /токен/i,
   /балл/i,
   /\bpoints?\b/i,
+  /\bprograms?\b/i,
+  /гайд/i,
+  /\bguides?\b/i,
+  /инструкц/i,
+  /\bfaq\b/i,
+  /\bbilling\b/i,
+  /биллинг/i,
+  /\bportal\b/i,
+  /портал/i,
+  /\bhow to\b/i,
+  /как (созда|польз|найти|откры|подключ|работает)/i,
 ];
 
 /** Shopper/merchant asking for their own programs, stores, or balances. */

@@ -247,6 +247,9 @@ async function bumpDailyUsage(
 
 function localScopedReply(role: ChatRole, lastUser: string): string {
   const q = lastUser.toLowerCase();
+  if (/гайд|guide|how to|faq|инструкц|как созда|как польз|как найти/.test(q)) {
+    return "Start at https://loyalspark.online/guide (Getting Started, For Merchants, For Customers, For AI Agents, FAQ). Merchants: https://loyalspark.online/merchant — programs, rewards, certificates, customers, billing, AI agents. Shoppers: https://loyalspark.online/customer. Agents: https://loyalspark.online/for-agents.";
+  }
   if (role === "merchant") {
     if (/mint|начисл|earn|cashback/.test(q)) {
       return "To mint or earn points: open **Programs**, select a program, then Mint / Earn. Agent path: MCP `mint_loyalty_tokens` / `earn_points` (then confirm fee). I stay on Loyal Spark only — say what program or customer you mean.";

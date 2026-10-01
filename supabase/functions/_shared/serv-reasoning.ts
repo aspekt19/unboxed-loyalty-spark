@@ -9,7 +9,35 @@
  */
 
 const SERV_URL = "https://inference-api.openserv.ai/v1/chat/completions";
-const PROMPT_VERSION = "ls-concierge-v2";
+const PROMPT_VERSION = "ls-concierge-v3";
+
+const PRODUCT_MAP = `How Loyal Spark works (use this to answer usage questions; do not invent pages):
+Loyal Spark is an onchain loyalty protocol on Base (chain 8453). A merchant deploys a B20 loyalty token, customers earn points, rewards are redeemed as vouchers, gift certificates are a separate catalog. P2P escrow offers exist. DEX trading and DeFi yield are not available — do not send users there.
+
+When the user asks how to do something, name the page and the click path, and link the guide. Reply in the user's language.
+
+Guides and docs:
+- Human guide (tabs inside the page): https://loyalspark.online/guide — Getting Started, For Merchants, For Customers, For AI Agents, FAQ
+- Agent onboarding: https://loyalspark.online/for-agents
+- Agent skill guides: https://loyalspark.online/.well-known/skills/index.md (00 getting started through 15 payments)
+- API reference: https://loyalspark.online/api-docs
+- Pricing: https://loyalspark.online/pricing
+- Examples: https://loyalspark.online/examples
+
+Merchant portal https://loyalspark.online/merchant
+- Home: ?tab=dashboard
+- Programs, rewards, certificates: ?tab=programs ?tab=rewards ?tab=certificates
+- Customers, marketing: ?tab=customers ?tab=marketing
+- Billing, AI agents (lsk_ keys), this assistant, team: ?tab=billing ?tab=agents ?tab=assistant ?tab=team
+Create a program under Programs. Mint and earn are inside the selected program. Billing is USDC on Base.
+
+Customer portal https://loyalspark.online/customer
+- Loyalty: token balances, rewards, vouchers, certificates
+- Discover: find merchants
+- Exchange: P2P offers
+Sign-in can be email, SMS, Google, or a wallet. Balances belong to the connected wallet.
+
+Agents: merchant key lsk_ on https://api.loyalspark.online/agent-api and MCP https://api.loyalspark.online/loyalty-mcp. Holder key rwk_ on recipient-api and recipient-loyalty-mcp. Pay-per-call is x402 or MPP. Mint fee is loyalty tokens, not USDC.`;
 
 const MERCHANT_SYSTEM = `You are the Loyal Spark merchant assistant on Base (loyalspark.online).
 
@@ -51,7 +79,7 @@ export async function servConciergeReply(args: {
   if (!apiKey) throw new Error("SERV_API_KEY missing");
 
   const model = Deno.env.get("SERV_MODEL")?.trim() || "gpt-5.4-mini";
-  const base = args.role === "shopper" ? SHOPPER_SYSTEM : MERCHANT_SYSTEM;
+  const base = `${args.role === "shopper" ? SHOPPER_SYSTEM : MERCHANT_SYSTEM}\n\n${PRODUCT_MAP}`;
   const system = args.accountContext
     ? `${base}\n\nACCOUNT DATA (private, this signed-in user only):\n${args.accountContext.slice(0, 6000)}`
     : base;
@@ -87,7 +115,7 @@ export async function servConciergeReply(args: {
                   hint: {
                     type: "string",
                     default:
-                      "Stay on Loyal Spark. Use ACCOUNT DATA for this user's numbers. Off-topic must use the exact refusal sentence. Do not invent balances.",
+                      "Stay on Loyal Spark. Use ACCOUNT DATA for this user's numbers and the product map for how-to answers. Off-topic must use the exact refusal sentence. Do not invent pages or balances.",
                   },
                   max_iterations: { type: "integer", default: 2 },
                 },
