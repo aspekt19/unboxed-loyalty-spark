@@ -7,9 +7,9 @@
 // UI (which queries chain directly) showed non-zero amounts. This helper makes
 // API parity with UI.
 
-import { createPublicClient, http, fallback, formatUnits, parseAbiItem, type Address } from "npm:viem@2.46.0";
+import { createPublicClient, http, fallback, formatUnits, parseAbiItem, decodeAbiParameters, type Address } from "npm:viem@2.46.0";
 import { base } from "npm:viem@2.46.0/chains";
-import { BASE_RPC_URLS } from "./base-rpc.ts";
+import { BASE_RPC_URLS, baseRpcCall } from "./base-rpc.ts";
 
 const ERC20_BALANCE_ABI = [
   {
@@ -364,73 +364,95 @@ export type LastLoyaltySpend = {
   standard: string;
 };
 
-type ExplorerTransferItem = {
-  block_number?: number;
-  transaction_hash?: string;
-  token?: { address_hash?: string; decimals?: string; symbol?: string; name?: string };
-  total?: { decimals?: string; value?: string };
+const TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+
+type RpcLog = {
+  address?: string;
+  blockNumber?: string;
+  data?: string;
+  transactionHash?: string;
+  logIndex?: string;
 };
 
-/** Newest outgoing loyalty-token transfer. Asks the explorer for sends from this wallet, not for the largest balances. */
+async function tokenLabel(serviceClient: any, tokenAddress: string): Promise<{ label: string; standard: string }> {
+  const token = tokenAddress.toLowerCase();
+  const { data } = await serviceClient
+    .from("loyalty_programs")
+    .select("name, symbol, token_standard")
+    .ilike("token_address", token)
+    .maybeSingle();
+  const program = data as { name?: string; symbol?: string; token_standard?: string | null } | null;
+  if (program?.name && program.symbol) {
+    return {
+      label: `${program.name} (${program.symbol})`,
+      standard: (program.token_standard ?? "erc20").toLowerCase(),
+    };
+  }
+  const readString = async (selector: string): Promise<string> => {
+    const raw = await baseRpcCall<string>("eth_call", [{ to: token, data: selector }, "latest"]);
+    if (!raw || raw === "0x") return "";
+    try {
+      const [value] = decodeAbiParameters([{ type: "string" }], raw as `0x${string}`);
+      return value;
+    } catch {
+      return "";
+    }
+  };
+  const [name, symbol] = await Promise.all([readString("0x06fdde03"), readString("0x95d89b41")]);
+  const standard = token.startsWith("0xb200") ? "b20" : "erc20";
+  if (name && symbol) return { label: `${name} (${symbol})`, standard };
+  return { label: token, standard };
+}
+
+/**
+ * Newest outgoing ERC-20 transfer from this wallet, read from Base itself.
+ * Blockscout lags Basescan, so an explorer index is not the source.
+ * Public RPC getLogs is capped at 2000 blocks, so the search walks backward in those slices.
+ */
 export async function loadLastLoyaltySpend(
   serviceClient: any,
   walletAddress: string,
 ): Promise<LastLoyaltySpend | null> {
-  const wallet = walletAddress.toLowerCase();
-  const { data, error } = await serviceClient
-    .from("loyalty_programs")
-    .select("token_address, name, symbol, token_standard")
-    .limit(2000);
-  if (error) throw error;
-  const programBy = new Map<string, { name: string; symbol: string; standard: string }>();
-  for (const program of (data ?? []) as Array<{ token_address: string; name: string; symbol: string; token_standard: string | null }>) {
-    programBy.set(program.token_address.toLowerCase(), {
-      name: program.name,
-      symbol: program.symbol,
-      standard: (program.token_standard ?? "erc20").toLowerCase(),
-    });
-  }
-
-  let page: Record<string, string | number> | null = null;
-  for (let i = 0; i < 4; i++) {
-    const url = new URL(`https://base.blockscout.com/api/v2/addresses/${wallet}/token-transfers`);
-    url.searchParams.set("type", "ERC-20");
-    url.searchParams.set("filter", "from");
-    if (page) {
-      for (const [key, value] of Object.entries(page)) url.searchParams.set(key, String(value));
-    }
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 8_000);
-    let body: { items?: ExplorerTransferItem[]; next_page_params?: Record<string, string | number> | null };
-    try {
-      const resp = await fetch(url, { signal: controller.signal, headers: { accept: "application/json" } });
-      body = await resp.json();
-    } finally {
-      clearTimeout(timer);
-    }
-    for (const item of body.items ?? []) {
-      const tokenAddress = (item.token?.address_hash ?? "").toLowerCase();
-      const program = programBy.get(tokenAddress);
-      if (!program) continue;
+  const wallet = walletAddress.toLowerCase().replace(/^0x/, "");
+  const fromTopic = `0x${"0".repeat(24)}${wallet}`;
+  const latestHex = await baseRpcCall<string>("eth_blockNumber", []);
+  let tip = BigInt(latestHex);
+  const span = 2000n;
+  for (let i = 0; i < 8; i++) {
+    const fromBlock = tip > span ? tip - span + 1n : 0n;
+    const logs = await baseRpcCall<RpcLog[]>("eth_getLogs", [{
+      fromBlock: `0x${fromBlock.toString(16)}`,
+      toBlock: `0x${tip.toString(16)}`,
+      topics: [TRANSFER_TOPIC, fromTopic],
+    }]);
+    const rows = logs ?? [];
+    if (rows.length > 0) {
+      rows.sort((a, b) => {
+        const blockDelta = BigInt(b.blockNumber ?? "0x0") - BigInt(a.blockNumber ?? "0x0");
+        if (blockDelta !== 0n) return blockDelta > 0n ? 1 : -1;
+        return Number(BigInt(b.logIndex ?? "0x0") - BigInt(a.logIndex ?? "0x0"));
+      });
+      const log = rows[0];
+      const token = (log.address ?? "").toLowerCase();
       let raw = 0n;
       try {
-        raw = BigInt(item.total?.value ?? "0");
+        raw = BigInt(log.data ?? "0x0");
       } catch {
-        continue;
+        raw = 0n;
       }
-      if (raw <= 0n || !item.transaction_hash) continue;
-      const decimals = Number(item.total?.decimals ?? item.token?.decimals ?? "18");
-      const safeDecimals = Number.isInteger(decimals) && decimals >= 0 && decimals <= 36 ? decimals : 18;
-      return {
-        label: `${program.name} (${program.symbol})`,
-        amount: Number(formatUnits(raw, safeDecimals)),
-        blockNumber: String(item.block_number ?? ""),
-        txHash: item.transaction_hash,
-        standard: program.standard,
-      };
+      if (raw > 0n && log.transactionHash && token) {
+        const named = await tokenLabel(serviceClient, token);
+        return {
+          label: named.label,
+          amount: Number(formatUnits(raw, 18)),
+          blockNumber: BigInt(log.blockNumber ?? "0x0").toString(),
+          txHash: log.transactionHash,
+          standard: named.standard,
+        };
+      }
     }
-    page = body.next_page_params ?? null;
-    if (!page) break;
+    if (fromBlock === 0n) break;
+    tip = fromBlock - 1n;
   }
   return null;
 }
