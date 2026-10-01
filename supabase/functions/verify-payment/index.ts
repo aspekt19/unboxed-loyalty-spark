@@ -185,11 +185,19 @@ Deno.serve(async (req) => {
 
     // Calculate actual amount (USDC has 6 decimals)
     const actualAmount = parseFloat(transaction.value) / Math.pow(10, parseInt(transaction.tokenDecimal));
-    const expectedAmount = paymentRequest.amount;
+    const listedPrice = Number(settings.usdc_price);
+    if (!Number.isFinite(listedPrice) || listedPrice <= 0) {
+      throw new Error('Payment price is not configured');
+    }
+    // The price comes from server settings; a client-chosen lower amount is never accepted.
+    if (Number(paymentRequest.amount) + 0.01 < listedPrice) {
+      throw new Error(`Payment amount is below the listed price of ${listedPrice} USDC`);
+    }
+    const expectedAmount = Math.max(Number(paymentRequest.amount), listedPrice);
 
     console.log('Amount verification:', { actualAmount, expectedAmount });
 
-    if (Math.abs(actualAmount - expectedAmount) > 0.01) {
+    if (actualAmount + 0.01 < expectedAmount) {
       throw new Error(`Amount mismatch: expected ${expectedAmount} USDC, got ${actualAmount} USDC`);
     }
 
