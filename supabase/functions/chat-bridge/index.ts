@@ -70,7 +70,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    const usage = await bumpDailyUsage(service, actor);
+    let usage = 0;
+    try {
+      usage = await bumpDailyUsage(service, actor);
+    } catch (err) {
+      // Quota tracking must never break the assistant — log and continue.
+      console.error("[chat-bridge] usage tracking failed", err);
+    }
     if (usage > DAILY_LIMIT) {
       return json({
         error: "daily_limit",
@@ -187,7 +193,10 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("[chat-bridge]", err);
-    return json({ error: "Internal error" }, 500);
+    return json({
+      error: "assistant_unavailable",
+      message: "Assistant temporarily unavailable. Please try again in a few minutes.",
+    }, 503);
   }
 });
 

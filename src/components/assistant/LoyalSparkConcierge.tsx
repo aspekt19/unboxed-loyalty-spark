@@ -75,7 +75,14 @@ export function LoyalSparkConcierge({ role, className, title }: Props) {
         body: { role, messages: next },
       });
 
-      if (fnErr) throw fnErr;
+      if (fnErr) {
+        // Non-2xx from chat-bridge: surface its friendly message if present.
+        const friendly =
+          (data && typeof data === "object" && (data as { message?: string }).message) ||
+          "Assistant is temporarily unavailable. Please try again in a few minutes.";
+        setError(friendly);
+        return;
+      }
       if (data?.disabled) {
         setDisabled(true);
         setMessages((m) => [
@@ -98,7 +105,8 @@ export function LoyalSparkConcierge({ role, className, title }: Props) {
       else if (data?.refused) setEngine("Loyal Spark scope");
       setMessages((m) => [...m, { role: "assistant", content: reply }]);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Request failed");
+      console.error("[concierge] send failed", e);
+      setError("Assistant is temporarily unavailable. Please try again in a few minutes.");
     } finally {
       setBusy(false);
     }
