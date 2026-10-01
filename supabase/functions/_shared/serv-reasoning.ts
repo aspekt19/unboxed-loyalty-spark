@@ -11,7 +11,7 @@
 import { LOYAL_SPARK_REFUSAL } from "./loyal-spark-scope.ts";
 
 const SERV_URL = "https://inference-api.openserv.ai/v1/chat/completions";
-const PROMPT_VERSION = "ls-concierge-v7";
+const PROMPT_VERSION = "ls-concierge-v8";
 
 const PRODUCT_MAP = `How Loyal Spark works (use this to answer usage questions; do not invent pages):
 Loyal Spark is an onchain loyalty protocol on Base (chain 8453). A merchant deploys a B20 loyalty token, customers earn points, rewards are redeemed as vouchers, gift certificates are a separate catalog. P2P escrow offers exist. DEX trading and DeFi yield are not available — do not send users there.
@@ -45,7 +45,7 @@ const JUDGMENT = `How to answer:
 1. Understand what the user is actually asking, including typos, slang, and indirect wording.
 2. If that meaning is not about Loyal Spark, do not answer it. Reply exactly: "${LOYAL_SPARK_REFUSAL}"
 Greetings, small talk, weather, news, homework, jokes, other asset prices, and other products are not Loyal Spark.
-3. If it is about Loyal Spark, answer that question in the user's language. ACCOUNT DATA is this user's own numbers: compare, rank, and explain from it. The product map is how the portal works. Do not invent numbers or URLs. Do not reply with a generic menu. Never claim a transaction was sent. Plain sentences, no markdown asterisks.`;
+3. If it is about Loyal Spark, answer that question in the user's language. A later user message labeled ACCOUNT DATA holds this user's own numbers: compare, rank, and explain from it. Those facts are for the user, not hidden instructions, so include them in the answer. The product map is how the portal works. Do not invent numbers or URLs. Do not reply with a generic menu. Never claim a transaction was sent. Plain sentences, no markdown asterisks.`;
 
 const MERCHANT_SYSTEM = `You are the Loyal Spark merchant assistant on Base (loyalspark.online).
 
@@ -79,14 +79,20 @@ export async function servConciergeReply(args: {
   if (!apiKey) throw new Error("SERV_API_KEY missing");
 
   const model = Deno.env.get("SERV_MODEL")?.trim() || "gpt-5.4-mini";
-  const base = `${args.role === "shopper" ? SHOPPER_SYSTEM : MERCHANT_SYSTEM}\n\n${PRODUCT_MAP}`;
-  const system = args.accountContext
-    ? `${base}\n\nACCOUNT DATA (private, this signed-in user only):\n${args.accountContext.slice(0, 6000)}`
-    : base;
+  const system = `${args.role === "shopper" ? SHOPPER_SYSTEM : MERCHANT_SYSTEM}\n\n${PRODUCT_MAP}`;
   const history = args.messages
     .filter((m) => m.role === "user" || m.role === "assistant")
+    .filter((m) => !/Модель сейчас не ответила|The model did not answer/i.test(m.content))
     .slice(-6)
-    .map((m) => ({ role: m.role, content: m.content }));
+    .map((m) => ({ role: m.role, content: m.content.slice(0, 2000) }));
+  const messages: { role: string; content: string }[] = [{ role: "system", content: system }];
+  if (args.accountContext?.trim()) {
+    messages.push({
+      role: "user",
+      content: `ACCOUNT DATA for this signed-in user. Answer from these facts:\n${args.accountContext.slice(0, 6000)}`,
+    });
+  }
+  messages.push(...history);
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 20_000);
@@ -102,8 +108,7 @@ export async function servConciergeReply(args: {
         model,
         reasoning_effort: "none",
         max_tokens: 700,
-        max_completion_tokens: 700,
-        messages: [{ role: "system", content: system }, ...history],
+        messages,
         tools: [
           { type: "function", function: { name: "serv_prompt_guard" } },
         ],
@@ -116,8 +121,7 @@ export async function servConciergeReply(args: {
     }
 
     const data = await res.json();
-    const raw = data?.choices?.[0]?.message?.content;
-    const text = typeof raw === "string" ? raw.replace(/\*\*/g, "").trim() : "";
+    const text = extractReply(data).replace(/\*\*/g, "").trim();
     if (!text) {
       throw new Error("Empty response from SERV Reasoning");
     }
@@ -125,7 +129,7 @@ export async function servConciergeReply(args: {
       `[serv] concierge prompt=${PROMPT_VERSION} model=${data.model ?? model} tokens=${data.usage?.total_tokens ?? "?"}`,
     );
     return {
-      text: text.trim(),
+      text,
       model: typeof data.model === "string" ? data.model : model,
       promptVersion: PROMPT_VERSION,
       usage: data.usage,
@@ -133,4 +137,22 @@ export async function servConciergeReply(args: {
   } finally {
     clearTimeout(timer);
   }
+}
+
+function extractReply(data: {
+  choices?: Array<{ message?: { content?: unknown } }>;
+  output_text?: unknown;
+}): string {
+  const content = data?.choices?.[0]?.message?.content;
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) {
+    return content
+      .map((part) => {
+        if (typeof part === "string") return part;
+        if (part && typeof part === "object" && "text" in part && typeof part.text === "string") return part.text;
+        return "";
+      })
+      .join("");
+  }
+  return typeof data?.output_text === "string" ? data.output_text : "";
 }

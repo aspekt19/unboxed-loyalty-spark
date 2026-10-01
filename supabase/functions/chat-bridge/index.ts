@@ -184,17 +184,41 @@ async function bumpDailyUsage(
   return next;
 }
 
+function sectionLines(accountContext: string, title: string): string[] {
+  const block = accountContext.split("\n");
+  const start = block.findIndex((line) => line.startsWith(title));
+  if (start < 0) return [];
+  const rows: string[] = [];
+  for (let i = start + 1; i < block.length; i++) {
+    if (!block[i].startsWith("- ")) break;
+    rows.push(block[i].replace(/^- /, ""));
+  }
+  return rows;
+}
+
 function modelFallback(lastUser: string, accountContext: string): string {
   const ru = /[а-яё]/i.test(lastUser);
   const guide = "https://loyalspark.online/guide";
-  if (accountContext.trim()) {
-    return ru
-      ? `Модель сейчас не ответила. Данные вашего аккаунта:\n${accountContext}\nГайд: ${guide}`
-      : `The model did not answer. Your account data:\n${accountContext}\nGuide: ${guide}`;
+  const balances = sectionLines(accountContext, "Loyalty balances");
+  const vouchers = sectionLines(accountContext, "Vouchers");
+  const programs = sectionLines(accountContext, "Programs");
+  const parts: string[] = [];
+  if (balances.length > 0) {
+    parts.push(ru
+      ? `Ваши баллы, от большего к меньшему:\n${balances.map((row) => `• ${row}`).join("\n")}\nБольше всего баллов в ${balances[0]}.`
+      : `Your points, highest first:\n${balances.map((row) => `• ${row}`).join("\n")}\nYou have the most points in ${balances[0]}.`);
+  } else if (programs.length > 0) {
+    parts.push(ru
+      ? `Ваши программы:\n${programs.map((row) => `• ${row}`).join("\n")}`
+      : `Your programs:\n${programs.map((row) => `• ${row}`).join("\n")}`);
   }
-  return ru
-    ? `Модель сейчас не ответила. Как устроен Loyal Spark: ${guide}`
-    : `The model did not answer. How Loyal Spark works: ${guide}`;
+  if (vouchers.length > 0) {
+    parts.push(ru
+      ? `Ваучеры:\n${vouchers.map((row) => `• ${row}`).join("\n")}`
+      : `Vouchers:\n${vouchers.map((row) => `• ${row}`).join("\n")}`);
+  }
+  parts.push(ru ? `Гайд: ${guide}` : `Guide: ${guide}`);
+  return parts.join("\n");
 }
 
 function json(body: unknown, status = 200) {
