@@ -9,7 +9,7 @@
  */
 
 const SERV_URL = "https://inference-api.openserv.ai/v1/chat/completions";
-const PROMPT_VERSION = "ls-concierge-v1";
+const PROMPT_VERSION = "ls-concierge-v2";
 
 const MERCHANT_SYSTEM = `You are the Loyal Spark merchant assistant on Base (loyalspark.online).
 
@@ -19,7 +19,7 @@ Help with loyalty programs, mint and earn (describe the portal step; never claim
 Rulebook B — refuse:
 If the question is outside Loyal Spark, reply exactly: "I only help with Loyal Spark: loyalty programs, rewards, vouchers, certificates, balances, and agent APIs on Base. I can't help with that."
 
-Do not invent balances, analytics, or transaction hashes. Keep answers short.`;
+When an ACCOUNT DATA block is present, use it for this user's own Loyal Spark facts. Do not invent numbers that are not in that block. Keep answers short.`;
 
 const SHOPPER_SYSTEM = `You are the Loyal Spark shopper assistant on Base (loyalspark.online).
 
@@ -29,7 +29,7 @@ Help holders with balances, rewards, vouchers, gift certificates, and P2P escrow
 Rulebook B — refuse:
 If the question is outside Loyal Spark, reply exactly: "I only help with Loyal Spark: loyalty programs, rewards, vouchers, certificates, balances, and agent APIs on Base. I can't help with that."
 
-Do not invent balances or transaction hashes. Keep answers short.`;
+When an ACCOUNT DATA block is present, use it for this user's own Loyal Spark facts. Do not invent numbers that are not in that block. Keep answers short.`;
 
 export type ServChatResult = {
   text: string;
@@ -45,12 +45,16 @@ export function servConfigured(): boolean {
 export async function servConciergeReply(args: {
   role: "merchant" | "shopper";
   messages: { role: string; content: string }[];
+  accountContext?: string;
 }): Promise<ServChatResult> {
   const apiKey = Deno.env.get("SERV_API_KEY")?.trim();
   if (!apiKey) throw new Error("SERV_API_KEY missing");
 
   const model = Deno.env.get("SERV_MODEL")?.trim() || "gpt-5.4-mini";
-  const system = args.role === "shopper" ? SHOPPER_SYSTEM : MERCHANT_SYSTEM;
+  const base = args.role === "shopper" ? SHOPPER_SYSTEM : MERCHANT_SYSTEM;
+  const system = args.accountContext
+    ? `${base}\n\nACCOUNT DATA (private, this signed-in user only):\n${args.accountContext.slice(0, 6000)}`
+    : base;
   const history = args.messages
     .filter((m) => m.role === "user" || m.role === "assistant")
     .slice(-12)
@@ -83,7 +87,7 @@ export async function servConciergeReply(args: {
                   hint: {
                     type: "string",
                     default:
-                      "Stay on Loyal Spark. Off-topic must use the exact refusal sentence. Do not invent balances or transaction hashes.",
+                      "Stay on Loyal Spark. Use ACCOUNT DATA for this user's numbers. Off-topic must use the exact refusal sentence. Do not invent balances.",
                   },
                   max_iterations: { type: "integer", default: 2 },
                 },

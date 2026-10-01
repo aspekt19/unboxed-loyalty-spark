@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { asksForOwnLoyaltyList, isLoyalSparkScoped, LOYAL_SPARK_REFUSAL } from "../_shared/loyal-spark-scope.ts";
 import { loadOnchainLoyaltyBalances } from "../_shared/recipient-onchain-balances.ts";
+import { loadAccountContext } from "../_shared/concierge-account.ts";
 import { servConciergeReply, servConfigured } from "../_shared/serv-reasoning.ts";
 
 const corsHeaders = {
@@ -85,6 +86,15 @@ Deno.serve(async (req) => {
       }, 429);
     }
 
+    let accountContext = "";
+    if (wallet) {
+      try {
+        accountContext = await loadAccountContext(service, role, wallet);
+      } catch (err) {
+        console.error("[chat-bridge] account", err);
+      }
+    }
+
     if (asksForOwnLoyaltyList(lastUser)) {
       const reply = await answerOwnLoyaltyList(service, role, wallet, lastUser);
       return json({ reply, role, wallet, source: "account" });
@@ -99,7 +109,7 @@ Deno.serve(async (req) => {
 
     if (servConfigured()) {
       try {
-        const serv = await servConciergeReply({ role, messages });
+        const serv = await servConciergeReply({ role, messages, accountContext });
         openservFailStreak = 0;
         return json({
           reply: serv.text,
@@ -140,7 +150,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             session_id: `${role}:${wallet}`,
             messages,
-            context: { wallet, role, user_id: user.id },
+            context: { wallet, role, user_id: user.id, account: accountContext },
           }),
           signal: controller.signal,
         });
