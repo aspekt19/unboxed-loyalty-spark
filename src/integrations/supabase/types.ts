@@ -600,6 +600,27 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_bridge_usage: {
+        Row: {
+          day: string
+          message_count: number
+          updated_at: string
+          wallet_address: string
+        }
+        Insert: {
+          day: string
+          message_count?: number
+          updated_at?: string
+          wallet_address: string
+        }
+        Update: {
+          day?: string
+          message_count?: number
+          updated_at?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       customer_profiles: {
         Row: {
           cdp_wallet_address: string | null
