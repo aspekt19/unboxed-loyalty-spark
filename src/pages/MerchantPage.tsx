@@ -8,6 +8,7 @@ import { PlanStatusBadge } from '@/components/billing/PlanStatusBadge';
 import { TrialWelcomeBanner } from '@/components/onboarding/TrialWelcomeBanner';
 import { useAutoStartTrial } from '@/hooks/useStartTrial';
 import { MerchantProfileSection } from '@/components/merchant/MerchantProfileSection';
+import { ConciergeDock } from '@/components/assistant/ConciergeDock';
 
 import { ArrowLeft, LayoutDashboard, Package, Gift, Users, User, Ticket, Megaphone, Briefcase, UserSearch, CreditCard, Bot, MessageSquare } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
@@ -241,6 +242,7 @@ const MerchantPage = () => {
             desktopContent
           )}
           <SupportBanner />
+          <ConciergeDock role="merchant" />
         </main>
 
         {isMobile && (

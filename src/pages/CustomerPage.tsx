@@ -20,6 +20,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { ConciergeDock } from '@/components/assistant/ConciergeDock';
 import { CUSTOMER_PROGRAMS_QUERY_KEY } from '@/hooks/useActiveLoyaltyPrograms';
 import { CUSTOMER_BALANCES_QUERY_KEY } from '@/hooks/useMultiTokenBalance';
 
@@ -209,6 +210,7 @@ const CustomerPage = () => {
             </PullToRefresh>
           )}
           <SupportBanner />
+          <ConciergeDock role="shopper" />
         </main>
 
         {/* Bottom Navigation for mobile */}
