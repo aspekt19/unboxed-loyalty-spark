@@ -200,7 +200,8 @@ function normalizeMessages(raw: unknown): ChatMessage[] {
 }
 
 async function bumpDailyUsage(
-  service: ReturnType<typeof createClient>,
+  // deno-lint-ignore no-explicit-any
+  service: any,
   wallet: string,
 ): Promise<number> {
   const day = new Date().toISOString().slice(0, 10);
