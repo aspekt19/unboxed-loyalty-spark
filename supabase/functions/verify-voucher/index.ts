@@ -331,7 +331,10 @@ Deno.serve(async (req) => {
     // For a plain `transfer(address,uint256)` call, we can also parse calldata.
     const TRANSFER_SELECTOR = '0xa9059cbb';
     let hasCalldataMatch = false;
-    if (!hasExpectedTransfer && typeof tx?.input === 'string' && tx.input.startsWith(TRANSFER_SELECTOR)) {
+    // Calldata is only trusted when the customer sent the call directly to the program token.
+    const directTokenCallFromCustomer =
+      String(tx?.to || '').toLowerCase() === tokenAddr && String(tx?.from || '').toLowerCase() === customerAddr;
+    if (!hasExpectedTransfer && directTokenCallFromCustomer && typeof tx?.input === 'string' && tx.input.startsWith(TRANSFER_SELECTOR)) {
       try {
         // input: 4 bytes selector + 32 bytes recipient + 32 bytes amount + optional attribution suffix
         // recipient is last 20 bytes of the 32-byte word.
