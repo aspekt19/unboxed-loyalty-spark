@@ -221,6 +221,50 @@ export async function loadHolderBalancesFast(
   return out;
 }
 
+const TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+
+/** Newest outgoing loyalty-token transfers from this wallet. One log query, short block window. */
+export async function loadRecentLoyaltySpends(
+  serviceClient: any,
+  walletAddress: string,
+): Promise<Array<{ label: string; amount: number; blockNumber: string }>> {
+  const wallet = walletAddress.toLowerCase();
+  const latest = await fastClient.getBlockNumber();
+  const fromBlock = latest > 10000n ? latest - 10000n : 0n;
+  const fromTopic = `0x${wallet.slice(2).padStart(64, "0")}` as `0x${string}`;
+  const logs = await fastClient.getLogs({
+    fromBlock,
+    toBlock: latest,
+    topics: [TRANSFER_TOPIC, fromTopic],
+  });
+  const recent = [...logs].reverse().slice(0, 20);
+  const tokenAddrs = [...new Set(recent.map((log) => log.address.toLowerCase()))];
+  if (tokenAddrs.length === 0) return [];
+
+  const { data } = await serviceClient
+    .from("loyalty_programs")
+    .select("token_address, name, symbol")
+    .or(tokenAddrs.map((addr) => `token_address.ilike.${addr}`).join(","));
+  const nameBy = new Map<string, { name: string; symbol: string }>();
+  for (const program of (data ?? []) as Array<{ token_address: string; name: string; symbol: string }>) {
+    nameBy.set(program.token_address.toLowerCase(), { name: program.name, symbol: program.symbol });
+  }
+
+  const out: Array<{ label: string; amount: number; blockNumber: string }> = [];
+  for (const log of recent) {
+    const program = nameBy.get(log.address.toLowerCase());
+    if (!program || out.length >= 5) continue;
+    const raw = BigInt(log.data);
+    if (raw <= 0n) continue;
+    out.push({
+      label: `${program.name} (${program.symbol})`,
+      amount: Number(formatUnits(raw, 18)),
+      blockNumber: log.blockNumber?.toString() ?? "",
+    });
+  }
+  return out;
+}
+
 /**
  * Read on-chain balance for a single (wallet, token) pair, merging tier metadata.
  */

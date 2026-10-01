@@ -26,15 +26,16 @@ export async function loadAccountContext(
 }
 
 async function shopperContext(service: Db, wallet: string): Promise<string> {
-  const held = await shopperBalanceLines(service, wallet);
-  const [vouchersRes, certsRes, offersRes] = await Promise.all([
-    service.from("vouchers").select("reward_name, status, token_symbol, code").ilike("customer_address", wallet).limit(15),
+  const [held, spends, vouchersRes, certsRes, offersRes] = await Promise.all([
+    shopperBalanceLines(service, wallet),
+    recentSpendLines(service, wallet),
+    service.from("vouchers").select("reward_name, status, token_symbol, cost, activated_at").ilike("customer_address", wallet).order("activated_at", { ascending: false }).limit(5),
     service.from("gift_certificates").select("title, status, token_symbol, token_amount").ilike("redeemed_by", wallet).limit(10),
     service.from("marketplace_offers").select("status, offer_amount, request_amount").ilike("creator_address", wallet).eq("status", "active").limit(8),
   ]);
 
-  const vouchers = ((vouchersRes.data ?? []) as Array<{ reward_name: string; status: string; token_symbol: string; code: string }>)
-    .map((v) => `- ${v.reward_name} [${v.status}] ${v.token_symbol} code ${v.code}`);
+  const vouchers = ((vouchersRes.data ?? []) as Array<{ reward_name: string; status: string; token_symbol: string; cost: number; activated_at: string }>)
+    .map((v) => `- ${v.activated_at}: spent ${amt(Number(v.cost))} ${v.token_symbol} on ${v.reward_name} [${v.status}]`);
   const certs = ((certsRes.data ?? []) as Array<{ title: string; status: string; token_symbol: string | null; token_amount: number }>)
     .map((c) => `- ${c.title} [${c.status}] ${amt(c.token_amount)} ${c.token_symbol ?? ""}`.trim());
   const offers = ((offersRes.data ?? []) as Array<{ status: string; offer_amount: number; request_amount: number }>)
@@ -43,10 +44,25 @@ async function shopperContext(service: Db, wallet: string): Promise<string> {
   return [
     `Wallet ${wallet}. This is the signed-in shopper only. Balances are on-chain and sorted highest first, the same numbers as the customer portal.`,
     lines("Loyalty balances (stores they hold points with)", held),
-    lines("Vouchers", vouchers),
+    lines("Recent on-chain point sends, newest first. The first row is what they just used", spends),
+    lines("Recent reward redemptions, newest first", vouchers),
     lines("Gift certificates claimed", certs),
     lines("Open P2P offers they created", offers),
   ].join("\n");
+}
+
+async function recentSpendLines(service: Db, wallet: string): Promise<string[]> {
+  try {
+    const { loadRecentLoyaltySpends } = await import("./recipient-onchain-balances.ts");
+    const rows = await Promise.race([
+      loadRecentLoyaltySpends(service, wallet),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("spend timeout")), 4_000)),
+    ]);
+    return rows.map((row) => `- ${row.label}: ${amt(row.amount)} sent`);
+  } catch (err) {
+    console.error("[concierge-account] recent spends", err);
+    return [];
+  }
 }
 
 /** On-chain balances when the RPC answers in time, otherwise the portal ledger. */
