@@ -32,6 +32,7 @@ export function LoyalSparkConcierge({ role, className, title }: Props) {
   const [busy, setBusy] = useState(false);
   const [disabled, setDisabled] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [engine, setEngine] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -92,6 +93,9 @@ export function LoyalSparkConcierge({ role, className, title }: Props) {
         return;
       }
       const reply = typeof data?.reply === "string" ? data.reply : "No reply.";
+      if (data?.source === "serv") setEngine("OpenServ SERV Reasoning");
+      else if (data?.source === "openserv") setEngine("OpenServ Concierge");
+      else if (data?.refused) setEngine("Loyal Spark scope");
       setMessages((m) => [...m, { role: "assistant", content: reply }]);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Request failed");
@@ -106,7 +110,9 @@ export function LoyalSparkConcierge({ role, className, title }: Props) {
         <Bot className="h-4 w-4 text-primary" />
         <div>
           <p className="text-sm font-semibold">{title ?? (role === "merchant" ? "Merchant assistant" : "Shopper assistant")}</p>
-          <p className="text-xs text-muted-foreground">Loyal Spark only — off-topic is refused</p>
+          <p className="text-xs text-muted-foreground">
+            {engine ?? "Loyal Spark only — off-topic is refused before the model"}
+          </p>
         </div>
       </div>
 

@@ -3,13 +3,17 @@ import { MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { LoyalSparkConcierge } from "@/components/assistant/LoyalSparkConcierge";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Role = "merchant" | "shopper";
 
-/** Always-visible chat launcher. Tab placement was too easy to miss. */
+/** Chat launcher. Visible only after sign-in; sending also requires that session. */
 export function ConciergeDock({ role }: { role: Role }) {
+  const { session } = useAuth();
   const [open, setOpen] = useState(false);
   const title = role === "merchant" ? "Merchant assistant" : "Shopper assistant";
+
+  if (!session?.access_token) return null;
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>

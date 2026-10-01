@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { isLoyalSparkScoped, LOYAL_SPARK_REFUSAL } from "../_shared/loyal-spark-scope.ts";
+import { servConciergeReply, servConfigured } from "../_shared/serv-reasoning.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -46,9 +47,7 @@ Deno.serve(async (req) => {
       .eq("user_id", user.id)
       .maybeSingle();
     const wallet = profile?.wallet_address?.toLowerCase() ?? null;
-    if (!wallet) {
-      return json({ error: "Connect a wallet to your profile before using the assistant." }, 400);
-    }
+    const actor = wallet ?? `user:${user.id}`;
 
     const body = await req.json().catch(() => ({}));
     const role: ChatRole = body.role === "shopper" ? "shopper" : "merchant";
@@ -66,10 +65,11 @@ Deno.serve(async (req) => {
         refused: true,
         role,
         wallet,
+        source: "scope",
       });
     }
 
-    const usage = await bumpDailyUsage(service, wallet);
+    const usage = await bumpDailyUsage(service, actor);
     if (usage > DAILY_LIMIT) {
       return json({
         error: "daily_limit",
@@ -83,6 +83,32 @@ Deno.serve(async (req) => {
         disabled: true,
         reply: "Assistant temporarily unavailable. Please try again in a few minutes.",
       }, 503);
+    }
+
+    if (servConfigured()) {
+      try {
+        const serv = await servConciergeReply({ role, messages });
+        openservFailStreak = 0;
+        return json({
+          reply: serv.text,
+          role,
+          wallet,
+          source: "serv",
+          model: serv.model,
+          prompt_version: serv.promptVersion,
+        });
+      } catch (err) {
+        console.error("[chat-bridge] serv", err);
+        openservFailStreak += 1;
+        if (openservFailStreak >= 3) {
+          openservDisabledUntil = Date.now() + 5 * 60_000;
+          openservFailStreak = 0;
+        }
+        return json({
+          disabled: true,
+          reply: "Assistant temporarily unavailable. Please try again shortly.",
+        }, 503);
+      }
     }
 
     const openservUrl = Deno.env.get("OPENSERV_CONCIERGE_URL")?.replace(/\/$/, "");
@@ -151,7 +177,7 @@ Deno.serve(async (req) => {
       role,
       wallet,
       source: "local_stub",
-      hint: "Set OPENSERV_CONCIERGE_URL + OPENSERV_CONCIERGE_API_KEY to route to hosted Concierge agents.",
+      hint: "Set SERV_API_KEY (OpenServ Reasoning) to answer via SERV. Hosted Concierge URL is the fallback.",
     });
   } catch (err) {
     console.error("[chat-bridge]", err);

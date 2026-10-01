@@ -6,12 +6,14 @@ Concierge prompts: [OPENSERV_CONCIERGE_PROMPTS.md](./OPENSERV_CONCIERGE_PROMPTS.
 ## Architecture (B + C)
 
 ```
-Merchant / Customer UI
+Merchant / Customer UI (button only after sign-in)
   → supabase.functions.invoke("chat-bridge")  [JWT]
-    → HARD SCOPE gate (_shared/loyal-spark-scope.ts)
+    → HARD SCOPE gate (_shared/loyal-spark-scope.ts)   // verdict, not the model
     → daily quota (chat_bridge_usage)
-    → OpenServ Concierge HTTP (Bearer)  OR  local scoped stub
+    → SERV Reasoning (primary)  OR  hosted Concierge  OR  local scoped stub
 ```
+
+SERV is the same product AllowLatch used for drafting: `POST https://inference-api.openserv.ai/v1/chat/completions` with a required system prompt, `serv_prompt_guard`, and `serv_shadow_agent`. The key stays in Supabase (`SERV_API_KEY`). Scope refusal happens in our code and does not call SERV.
 
 | Piece | Location |
 |-------|----------|
@@ -26,9 +28,11 @@ Merchant / Customer UI
 
 | Secret | Purpose |
 |--------|---------|
-| `OPENSERV_CONCIERGE_URL` | Base URL of hosted Concierge HTTP API (no trailing slash) |
-| `OPENSERV_CONCIERGE_API_KEY` | Bearer token for that API |
-| `CHAT_MESSAGES_PER_DAY` | Optional; default `40` per wallet |
+| `SERV_API_KEY` | OpenServ Reasoning key (console.openserv.ai → Reasoning). Primary chat brain. |
+| `SERV_MODEL` | Optional; default `gpt-5.4-mini` |
+| `OPENSERV_CONCIERGE_URL` | Fallback hosted Concierge HTTP API (no trailing slash) |
+| `OPENSERV_CONCIERGE_API_KEY` | Bearer token for that fallback |
+| `CHAT_MESSAGES_PER_DAY` | Optional; default `40` per signed-in actor |
 
 Without OpenServ secrets, bridge returns **scoped local stub** replies (still refuses off-topic). Kill-switch: 3 consecutive upstream failures → 503 for 5 minutes.
 
