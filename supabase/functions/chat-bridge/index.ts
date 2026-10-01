@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { loadAccountContext } from "../_shared/concierge-account.ts";
+import { isLoyalSparkScoped, LOYAL_SPARK_REFUSAL } from "../_shared/loyal-spark-scope.ts";
 import { servConciergeReply, servConfigured } from "../_shared/serv-reasoning.ts";
 
 const corsHeaders = {
@@ -42,7 +43,7 @@ Deno.serve(async (req) => {
       .select("wallet_address")
       .eq("user_id", user.id)
       .maybeSingle();
-    const wallet = profile?.wallet_address?.toLowerCase() ?? null;
+    const wallet = await portalWallet(userClient, profile?.wallet_address ?? null);
     const actor = wallet ?? `user:${user.id}`;
 
     const body = await req.json().catch(() => ({}));
@@ -184,6 +185,22 @@ async function bumpDailyUsage(
   return next;
 }
 
+async function portalWallet(
+  // deno-lint-ignore no-explicit-any
+  userClient: any,
+  profileWallet: string | null,
+): Promise<string | null> {
+  try {
+    const { data } = await userClient.rpc("get_my_identity_summary");
+    const primary = data && typeof data === "object" ? (data as { primary_wallet?: string | null }).primary_wallet : null;
+    const chosen = (primary || profileWallet || "").trim().toLowerCase();
+    return chosen || null;
+  } catch (err) {
+    console.error("[chat-bridge] identity", err);
+    return profileWallet?.toLowerCase() ?? null;
+  }
+}
+
 function sectionLines(accountContext: string, title: string): string[] {
   const block = accountContext.split("\n");
   const start = block.findIndex((line) => line.startsWith(title));
@@ -197,9 +214,10 @@ function sectionLines(accountContext: string, title: string): string[] {
 }
 
 function modelFallback(lastUser: string, accountContext: string): string {
+  if (!isLoyalSparkScoped(lastUser)) return LOYAL_SPARK_REFUSAL;
   const ru = /[а-яё]/i.test(lastUser);
   const guide = "https://loyalspark.online/guide";
-  const balances = sectionLines(accountContext, "Loyalty balances");
+  const balances = sectionLines(accountContext, "Loyalty balances").slice(0, 8);
   const vouchers = sectionLines(accountContext, "Vouchers");
   const programs = sectionLines(accountContext, "Programs");
   const parts: string[] = [];
