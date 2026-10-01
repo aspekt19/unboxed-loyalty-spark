@@ -134,7 +134,7 @@ export function LoyalSparkConcierge({ role, className, title }: Props) {
           <div
             key={`${m.role}-${i}`}
             className={cn(
-              "max-w-[90%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap",
+              "max-w-[90%] min-w-0 rounded-lg px-3 py-2 text-sm whitespace-pre-wrap break-words [overflow-wrap:anywhere]",
               m.role === "user" ? "ml-auto bg-primary text-primary-foreground" : "bg-muted text-foreground",
             )}
           >
