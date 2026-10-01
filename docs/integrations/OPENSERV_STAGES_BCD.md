@@ -8,13 +8,12 @@ Concierge prompts: [OPENSERV_CONCIERGE_PROMPTS.md](./OPENSERV_CONCIERGE_PROMPTS.
 ```
 Merchant / Customer UI (button only after sign-in)
   → supabase.functions.invoke("chat-bridge")  [JWT]
-    → HARD SCOPE gate (_shared/loyal-spark-scope.ts)   // verdict, not the model
     → daily quota (chat_bridge_usage)
     → account snapshot for this wallet
-    → SERV Reasoning (answers the question)  OR  hosted Concierge  OR  account snapshot
+    → SERV Reasoning understands the question, answers if it is Loyal Spark, otherwise refuses
 ```
 
-SERV is the same product AllowLatch used for drafting: `POST https://inference-api.openserv.ai/v1/chat/completions` with a required system prompt and `serv_prompt_guard`. The key stays in Supabase (`SERV_API_KEY`). The scope gate only blocks off-topic and small talk. Every other question goes to SERV with that user's account data, so wording does not need its own rule.
+SERV is the same product AllowLatch used for drafting: `POST https://inference-api.openserv.ai/v1/chat/completions` with a required system prompt and `serv_prompt_guard`. The key stays in Supabase (`SERV_API_KEY`). The concierge does not match phrases first. SERV reads the question, answers Loyal Spark questions from that user's account data, and refuses anything else with the fixed sentence.
 
 | Piece | Location |
 |-------|----------|
@@ -35,7 +34,7 @@ SERV is the same product AllowLatch used for drafting: `POST https://inference-a
 | `OPENSERV_CONCIERGE_API_KEY` | Bearer token for that fallback |
 | `CHAT_MESSAGES_PER_DAY` | Optional; default `40` per signed-in actor |
 
-Without OpenServ secrets, or if SERV fails, the bridge returns this user's account snapshot (balances, vouchers, certificates) instead of a generic stub. Off-topic is still refused before any model call.
+Without OpenServ secrets, or if SERV fails, the bridge returns this user's account snapshot (balances, vouchers, certificates) instead of a generic stub. When SERV is up, it refuses off-topic only after reading the question.
 
 ### Deploy
 

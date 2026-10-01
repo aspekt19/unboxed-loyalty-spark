@@ -119,7 +119,7 @@ export function LoyalSparkConcierge({ role, className, title }: Props) {
         <div>
           <p className="text-sm font-semibold">{title ?? (role === "merchant" ? "Merchant assistant" : "Shopper assistant")}</p>
           <p className="text-xs text-muted-foreground">
-            {engine ?? "Loyal Spark only — off-topic is refused before the model"}
+            {engine ?? "Understands the question, then stays on Loyal Spark"}
           </p>
         </div>
       </div>

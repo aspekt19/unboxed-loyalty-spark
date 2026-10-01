@@ -1,5 +1,4 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { isLoyalSparkScoped, LOYAL_SPARK_REFUSAL } from "../_shared/loyal-spark-scope.ts";
 import { loadAccountContext } from "../_shared/concierge-account.ts";
 import { servConciergeReply, servConfigured } from "../_shared/serv-reasoning.ts";
 
@@ -53,17 +52,6 @@ Deno.serve(async (req) => {
 
     if (!lastUser.trim()) {
       return json({ error: "Empty message" }, 400);
-    }
-
-    // HARD SCOPE — refuse before OpenServ / quota
-    if (!isLoyalSparkScoped(lastUser)) {
-      return json({
-        reply: LOYAL_SPARK_REFUSAL,
-        refused: true,
-        role,
-        wallet,
-        source: "scope",
-      });
     }
 
     let usage = 0;

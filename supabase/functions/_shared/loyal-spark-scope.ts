@@ -1,7 +1,7 @@
 /**
  * Loyal Spark–only scope for protocol-paid OpenServ / chat-bridge.
- * Off-topic and small talk never call the model.
- * Anything else is allowed through: the model reads the question, not a phrase list.
+ * Used by the Stage A analyst smoke check. The in-app concierge does not
+ * use this list: SERV reads the question and refuses if it is not Loyal Spark.
  */
 
 const DENY = [
