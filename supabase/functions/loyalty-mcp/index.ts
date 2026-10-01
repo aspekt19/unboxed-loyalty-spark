@@ -1209,7 +1209,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
   });
 
   mcpServer.tool("create_gift_certificate", {
-    description: "Create a gift / welcome certificate (UDS-style) with a unique 6-character redemption code (LOYAL-XXXXXX). Customer redeems via QR or by entering the code; merchant then mints tokens on-chain. Use for welcome bonuses, promo campaigns, partnership gifts.",
+    description: "Create a gift / welcome certificate (UDS-style) with a unique random redemption code (LOYAL-XXXX-XXXX-XXXX). Customer redeems via QR or by entering the code; merchant then mints tokens on-chain. Use for welcome bonuses, promo campaigns, partnership gifts.",
     inputSchema: {
       type: "object" as const,
       required: ["token_address", "usd_amount"],
