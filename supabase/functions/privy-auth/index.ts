@@ -200,8 +200,9 @@ function extractWalletAddress(privyUser: any, fallback?: string | null): string 
 
 function extractWalletAddresses(privyUser: any, fallback?: string | null): string[] {
   const linkedAccounts = getLinkedAccounts(privyUser);
+  // Only wallets proven by the verified Privy token are trusted. A caller-supplied
+  // fallback is used solely to choose which verified wallet comes first.
   const candidates = [
-    fallback,
     privyUser?.wallet?.address,
     privyUser?.smartWallet?.address,
     ...linkedAccounts
@@ -209,13 +210,18 @@ function extractWalletAddresses(privyUser: any, fallback?: string | null): strin
       .map((account) => account?.address),
   ];
 
-  return Array.from(
+  const verified = Array.from(
     new Set(
       candidates
         .map((value) => value?.trim().toLowerCase())
         .filter((value): value is string => Boolean(value))
     )
   );
+  const preferred = fallback?.trim().toLowerCase();
+  if (preferred && verified.includes(preferred)) {
+    return [preferred, ...verified.filter((w) => w !== preferred)];
+  }
+  return verified;
 }
 
 async function verifyPrivyToken(token: string, appId: string, origin?: string): Promise<any> {
