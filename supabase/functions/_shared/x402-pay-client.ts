@@ -116,6 +116,12 @@ async function readBody(res: Response) {
   return { contentType: ct, body: parsed, raw: text };
 }
 
+/** Paid calls from custodial/delegated wallets may only target Loyal Spark's own paid API. */
+export const APPROVED_PAY_HOSTS = ["api.loyalspark.online", "bzxmejzssxjazswgwqqs.supabase.co"];
+export function isApprovedPayHost(host: string): boolean {
+  return APPROVED_PAY_HOSTS.includes(host.toLowerCase());
+}
+
 export async function payAndCall(opts: PayAndCallOpts): Promise<PayAndCallResult> {
   const method = (opts.method || "GET").toUpperCase() as PayAndCallOpts["method"];
   const allowedNetworks = (opts.allowedNetworks || ["base"]).map((n) => n.toLowerCase());
@@ -126,6 +132,9 @@ export async function payAndCall(opts: PayAndCallOpts): Promise<PayAndCallResult
   let u: URL;
   try { u = new URL(opts.url); } catch { return { paid: false, status: 0, contentType: null, body: null, reason: "invalid_url" }; }
   if (u.protocol !== "https:") return { paid: false, status: 0, contentType: null, body: null, reason: "https_required" };
+  if (!isApprovedPayHost(u.hostname)) {
+    return { paid: false, status: 0, contentType: null, body: null, reason: "destination_not_approved" };
+  }
 
   const baseHeaders: Record<string, string> = {
     Accept: "application/json",
