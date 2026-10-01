@@ -318,12 +318,6 @@ async function answerOwnLoyaltyList(
   }
 }
 
-function formatAmount(n: number): string {
-  if (!Number.isFinite(n)) return "0";
-  const rounded = Math.round(n * 100) / 100;
-  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
-}
-
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
