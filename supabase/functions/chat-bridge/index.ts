@@ -237,31 +237,26 @@ function modelFallback(lastUser: string, accountContext: string): string {
   const guide = "https://loyalspark.online/guide";
   if (asksAboutLastSpend(lastUser)) {
     const wallet = accountContext.match(/Wallet (0x[a-fA-F0-9]{40})/)?.[1] ?? "";
-    const balances = sectionLines(accountContext, "Loyalty balances");
-    const held = balances.length > 0 ? balances.map((row) => `• ${row}`).join("\n") : (ru ? "список портала пуст" : "portal list is empty");
-    const who = wallet
-      ? (ru ? `Кошелёк ${wallet}.` : `Wallet ${wallet}.`)
-      : (ru ? "Кошелёк сессии не найден." : "No session wallet.");
-    if (accountContext.includes("lookup failed")) {
+    const who = wallet ? (ru ? `Кошелёк ${wallet}.` : `Wallet ${wallet}.`) : "";
+    const line = accountContext.match(/Last loyalty spend: (.+)/)?.[1]?.trim() ?? "";
+    if (!line || line === "lookup failed") {
       return ru
-        ? `${who}\nСейчас в портале:\n${held}\nЧтение переводов в Base не удалось. Это не значит, что списания не было.`
-        : `${who}\nPortal balances:\n${held}\nThe Base transfer read failed. That is not proof there was no spend.`;
+        ? `${who}\nОбозреватель Base не ответил. Повторите вопрос.`
+        : `${who}\nThe Base explorer did not answer. Ask again.`;
     }
-    const spends = sectionLines(accountContext, "Explorer transfers");
-    const sent = spends.filter((row) => row.includes(": sent "));
-    const received = spends.filter((row) => row.includes(": received "));
-    if (sent.length === 0 && received.length === 0) {
+    if (line === "none") {
       return ru
-        ? `${who}\nСейчас в портале:\n${held}\nИсходящих переводов этих баллов в обозревателе Base нет.`
-        : `${who}\nPortal balances:\n${held}\nThe Base explorer has no outgoing transfer of these loyalty tokens.`;
+        ? `${who}\nИсходящего перевода баллов лояльности в обозревателе Base нет.`
+        : `${who}\nThe Base explorer has no outgoing loyalty-token transfer.`;
     }
-    const sentBlock = sent.length > 0
-      ? (ru ? `Списания, от новых к старым:\n${sent.map((row) => `• ${row}`).join("\n")}` : `Spends, newest first:\n${sent.map((row) => `• ${row}`).join("\n")}`)
-      : (ru ? "Исходящих списаний по этим токенам в обозревателе нет." : "No outgoing spend of these tokens in the explorer.");
-    const inBlock = received.length > 0
-      ? (ru ? `\nВходящие переводы:\n${received.map((row) => `• ${row}`).join("\n")}` : `\nIncoming transfers:\n${received.map((row) => `• ${row}`).join("\n")}`)
-      : "";
-    return `${who}\n${ru ? "Сейчас в портале" : "Portal balances"}:\n${held}\n${sentBlock}${inBlock}`;
+    const amount = line.match(/^(\S+)/)?.[1] ?? "";
+    const label = line.match(/^\S+\s+(.+?)\s+\[/)?.[1] ?? "";
+    const block = line.match(/block\s+(\d+)/)?.[1] ?? "";
+    const tx = line.match(/tx\s+(0x[a-fA-F0-9]{64})/)?.[1] ?? "";
+    const url = line.match(/https:\/\/basescan\.org\/tx\/0x[a-fA-F0-9]{64}/)?.[0] ?? "";
+    return ru
+      ? `${who}\nПоследнее списание: ${amount} ${label}.\nБлок ${block}.\nТранзакция ${tx}.\n${url}`
+      : `${who}\nLast spend: ${amount} ${label}.\nBlock ${block}.\nTransaction ${tx}.\n${url}`;
   }
   if (!asksAboutOwnHoldings(lastUser)) {
     return ru

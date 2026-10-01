@@ -26,7 +26,12 @@ export async function loadAccountContext(
   return shopperContext(service, wallet, question);
 }
 
+function asksAboutLastSpend(text: string): boolean {
+  return /списа|потрат|spent|just used|последн|which block|каком блоке/i.test(text);
+}
+
 async function shopperContext(service: Db, wallet: string, question: string): Promise<string> {
+  if (asksAboutLastSpend(question)) return lastSpendContext(service, wallet);
   const [vouchersRes, certsRes, offersRes] = await Promise.all([
     service.from("vouchers").select("reward_name, status, token_symbol, token_address, cost, activated_at").ilike("customer_address", wallet).order("activated_at", { ascending: false }).limit(5),
     service.from("gift_certificates").select("title, status, token_symbol, token_amount").ilike("redeemed_by", wallet).limit(10),
@@ -63,6 +68,24 @@ async function shopperContext(service: Db, wallet: string, question: string): Pr
     lines("Gift certificates claimed", certs),
     lines("Open P2P offers they created", offers),
   ].join("\n");
+}
+
+async function lastSpendContext(service: Db, wallet: string): Promise<string> {
+  try {
+    const { loadLastLoyaltySpend } = await import("./recipient-onchain-balances.ts");
+    const spend = await Promise.race([
+      loadLastLoyaltySpend(service, wallet),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("spend timeout")), 12_000)),
+    ]);
+    if (!spend) return `Wallet ${wallet}.\nLast loyalty spend: none`;
+    return [
+      `Wallet ${wallet}.`,
+      `Last loyalty spend: ${amt(spend.amount)} ${spend.label} [${spend.standard}] | block ${spend.blockNumber} | tx ${spend.txHash} | https://basescan.org/tx/${spend.txHash}`,
+    ].join("\n");
+  } catch (err) {
+    console.error("[concierge-account] last spend", err);
+    return `Wallet ${wallet}.\nLast loyalty spend: lookup failed`;
+  }
 }
 
 async function portalFromExplorer(

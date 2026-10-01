@@ -356,6 +356,85 @@ export type LoyaltyExplorerTransfer = {
   standard: string;
 };
 
+export type LastLoyaltySpend = {
+  label: string;
+  amount: number;
+  blockNumber: string;
+  txHash: string;
+  standard: string;
+};
+
+type ExplorerTransferItem = {
+  block_number?: number;
+  transaction_hash?: string;
+  token?: { address_hash?: string; decimals?: string; symbol?: string; name?: string };
+  total?: { decimals?: string; value?: string };
+};
+
+/** Newest outgoing loyalty-token transfer. Asks the explorer for sends from this wallet, not for the largest balances. */
+export async function loadLastLoyaltySpend(
+  serviceClient: any,
+  walletAddress: string,
+): Promise<LastLoyaltySpend | null> {
+  const wallet = walletAddress.toLowerCase();
+  const { data, error } = await serviceClient
+    .from("loyalty_programs")
+    .select("token_address, name, symbol, token_standard")
+    .limit(2000);
+  if (error) throw error;
+  const programBy = new Map<string, { name: string; symbol: string; standard: string }>();
+  for (const program of (data ?? []) as Array<{ token_address: string; name: string; symbol: string; token_standard: string | null }>) {
+    programBy.set(program.token_address.toLowerCase(), {
+      name: program.name,
+      symbol: program.symbol,
+      standard: (program.token_standard ?? "erc20").toLowerCase(),
+    });
+  }
+
+  let page: Record<string, string | number> | null = null;
+  for (let i = 0; i < 4; i++) {
+    const url = new URL(`https://base.blockscout.com/api/v2/addresses/${wallet}/token-transfers`);
+    url.searchParams.set("type", "ERC-20");
+    url.searchParams.set("filter", "from");
+    if (page) {
+      for (const [key, value] of Object.entries(page)) url.searchParams.set(key, String(value));
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8_000);
+    let body: { items?: ExplorerTransferItem[]; next_page_params?: Record<string, string | number> | null };
+    try {
+      const resp = await fetch(url, { signal: controller.signal, headers: { accept: "application/json" } });
+      body = await resp.json();
+    } finally {
+      clearTimeout(timer);
+    }
+    for (const item of body.items ?? []) {
+      const tokenAddress = (item.token?.address_hash ?? "").toLowerCase();
+      const program = programBy.get(tokenAddress);
+      if (!program) continue;
+      let raw = 0n;
+      try {
+        raw = BigInt(item.total?.value ?? "0");
+      } catch {
+        continue;
+      }
+      if (raw <= 0n || !item.transaction_hash) continue;
+      const decimals = Number(item.total?.decimals ?? item.token?.decimals ?? "18");
+      const safeDecimals = Number.isInteger(decimals) && decimals >= 0 && decimals <= 36 ? decimals : 18;
+      return {
+        label: `${program.name} (${program.symbol})`,
+        amount: Number(formatUnits(raw, safeDecimals)),
+        blockNumber: String(item.block_number ?? ""),
+        txHash: item.transaction_hash,
+        standard: program.standard,
+      };
+    }
+    page = body.next_page_params ?? null;
+    if (!page) break;
+  }
+  return null;
+}
+
 export type LoyaltyExplorerView = {
   balances: Array<{ tokenAddress: string; label: string; amount: number }>;
   transfers: LoyaltyExplorerTransfer[];
