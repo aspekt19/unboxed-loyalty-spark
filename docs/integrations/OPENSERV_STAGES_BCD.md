@@ -10,10 +10,11 @@ Merchant / Customer UI (button only after sign-in)
   → supabase.functions.invoke("chat-bridge")  [JWT]
     → HARD SCOPE gate (_shared/loyal-spark-scope.ts)   // verdict, not the model
     → daily quota (chat_bridge_usage)
-    → SERV Reasoning (primary)  OR  hosted Concierge  OR  local scoped stub
+    → account snapshot for this wallet
+    → SERV Reasoning (answers the question)  OR  hosted Concierge  OR  account snapshot
 ```
 
-SERV is the same product AllowLatch used for drafting: `POST https://inference-api.openserv.ai/v1/chat/completions` with a required system prompt, `serv_prompt_guard`, and `serv_shadow_agent`. The key stays in Supabase (`SERV_API_KEY`). Scope refusal happens in our code and does not call SERV.
+SERV is the same product AllowLatch used for drafting: `POST https://inference-api.openserv.ai/v1/chat/completions` with a required system prompt and `serv_prompt_guard`. The key stays in Supabase (`SERV_API_KEY`). The scope gate only blocks off-topic and small talk. Every other question goes to SERV with that user's account data, so wording does not need its own rule.
 
 | Piece | Location |
 |-------|----------|
@@ -34,7 +35,7 @@ SERV is the same product AllowLatch used for drafting: `POST https://inference-a
 | `OPENSERV_CONCIERGE_API_KEY` | Bearer token for that fallback |
 | `CHAT_MESSAGES_PER_DAY` | Optional; default `40` per signed-in actor |
 
-Without OpenServ secrets, bridge returns **scoped local stub** replies (still refuses off-topic). Kill-switch: 3 consecutive upstream failures → 503 for 5 minutes.
+Without OpenServ secrets, or if SERV fails, the bridge returns this user's account snapshot (balances, vouchers, certificates) instead of a generic stub. Off-topic is still refused before any model call.
 
 ### Deploy
 

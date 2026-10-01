@@ -28,6 +28,12 @@ const publicClient = createPublicClient({
   ),
 });
 
+/** One-shot client for the assistant. No retry chain — a slow RPC must not stall chat. */
+const fastClient = createPublicClient({
+  chain: base,
+  transport: http(BASE_RPC_URLS[0], { batch: true, timeout: 4_000, retryCount: 0 }),
+});
+
 export interface OnchainLoyaltyBalance {
   token_address: string;
   current_balance: number; // human (formatUnits 18)
@@ -149,6 +155,69 @@ export async function loadOnchainLoyaltyBalances(
     });
   }
 
+  return out;
+}
+
+/**
+ * Balances the customer portal shows, without walking every token one RPC at a time.
+ * One SQL read of active programs, then batched balanceOf. Throws if the chain read fails
+ * so the caller can fall back to the portal ledger.
+ */
+export async function loadHolderBalancesFast(
+  serviceClient: any,
+  walletAddress: string,
+): Promise<OnchainLoyaltyBalance[]> {
+  const wallet = walletAddress.toLowerCase();
+  const { data, error } = await serviceClient
+    .from("loyalty_programs")
+    .select("token_address, name, symbol, status, merchant_address")
+    .in("status", ["active", "expiring_soon", "paused"]);
+  if (error) throw error;
+  const programs = (data ?? []) as Array<{
+    token_address: string;
+    name: string;
+    symbol: string;
+    status: string;
+    merchant_address: string;
+  }>;
+  if (programs.length === 0) return [];
+
+  const contracts = programs.map((program) => ({
+    address: program.token_address as Address,
+    abi: ERC20_BALANCE_ABI,
+    functionName: "balanceOf" as const,
+    args: [wallet as Address],
+  }));
+
+  const chunks: typeof contracts[] = [];
+  for (let i = 0; i < contracts.length; i += 60) chunks.push(contracts.slice(i, i + 60));
+  const settled = await Promise.all(
+    chunks.map((chunk) => fastClient.multicall({ contracts: chunk, allowFailure: true })),
+  );
+  const results = settled.flat();
+
+  const out: OnchainLoyaltyBalance[] = [];
+  programs.forEach((program, i) => {
+    const result = results[i];
+    if (!result || result.status !== "success") return;
+    const raw = result.result as bigint;
+    if (raw <= 0n) return;
+    const human = Number(formatUnits(raw, 18));
+    out.push({
+      token_address: program.token_address.toLowerCase(),
+      current_balance: human,
+      raw_balance: raw.toString(),
+      tokens_earned_total: human,
+      current_tier_id: null,
+      last_calculated_at: null,
+      program: {
+        name: program.name,
+        symbol: program.symbol,
+        status: program.status,
+        merchant_address: program.merchant_address,
+      },
+    });
+  });
   return out;
 }
 

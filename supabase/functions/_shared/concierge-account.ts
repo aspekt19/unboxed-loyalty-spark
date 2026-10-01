@@ -26,8 +26,8 @@ export async function loadAccountContext(
 }
 
 async function shopperContext(service: Db, wallet: string): Promise<string> {
-  const [held, vouchersRes, certsRes, offersRes] = await Promise.all([
-    shopperHoldingLines(service, wallet),
+  const held = await shopperBalanceLines(service, wallet);
+  const [vouchersRes, certsRes, offersRes] = await Promise.all([
     service.from("vouchers").select("reward_name, status, token_symbol, code").ilike("customer_address", wallet).limit(15),
     service.from("gift_certificates").select("title, status, token_symbol, token_amount").ilike("redeemed_by", wallet).limit(10),
     service.from("marketplace_offers").select("status, offer_amount, request_amount").ilike("creator_address", wallet).eq("status", "active").limit(8),
@@ -41,7 +41,7 @@ async function shopperContext(service: Db, wallet: string): Promise<string> {
     .map((o) => `- P2P ${o.status}: offer ${amt(o.offer_amount)} for ${amt(o.request_amount)}`);
 
   return [
-    `Wallet ${wallet}. This is the signed-in shopper only. Balances are the portal ledger, not a fresh chain read.`,
+    `Wallet ${wallet}. This is the signed-in shopper only. Balances are on-chain and sorted highest first, the same numbers as the customer portal.`,
     lines("Loyalty balances (stores they hold points with)", held),
     lines("Vouchers", vouchers),
     lines("Gift certificates claimed", certs),
@@ -49,7 +49,29 @@ async function shopperContext(service: Db, wallet: string): Promise<string> {
   ].join("\n");
 }
 
-/** DB balances for tokens this wallet already touched. No full-catalog chain scan. */
+/** On-chain balances when the RPC answers in time, otherwise the portal ledger. */
+async function shopperBalanceLines(service: Db, wallet: string): Promise<string[]> {
+  try {
+    const { loadHolderBalancesFast } = await import("./recipient-onchain-balances.ts");
+    const rows = await Promise.race([
+      loadHolderBalancesFast(service, wallet),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("balance timeout")), 4_000)),
+    ]);
+    const linesOut = rows
+      .filter((row) => row.current_balance > 0)
+      .sort((a, b) => b.current_balance - a.current_balance)
+      .map((row) => {
+        const label = row.program ? `${row.program.name} (${row.program.symbol})` : row.token_address;
+        return `- ${label}: ${amt(row.current_balance)}`;
+      });
+    if (linesOut.length > 0) return linesOut;
+  } catch (err) {
+    console.error("[concierge-account] chain balances", err);
+  }
+  return shopperHoldingLines(service, wallet);
+}
+
+/** DB balances for tokens this wallet already touched. Used when the chain read fails. */
 export async function shopperHoldingLines(service: Db, wallet: string): Promise<string[]> {
   const [tiersRes, mintsRes] = await Promise.all([
     service.from("customer_tier_status").select("token_address, current_balance").ilike("customer_address", wallet).limit(30),

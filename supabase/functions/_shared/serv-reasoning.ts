@@ -1,7 +1,7 @@
 /**
  * OpenServ SERV Reasoning for the in-app Concierge.
  * Same shape AllowLatch used for policy drafting: OpenAI-compatible
- * chat completions, system prompt required, serv_prompt_guard + serv_shadow_agent.
+ * chat completions, system prompt required, serv_prompt_guard.
  * Docs: https://docs.openserv.ai/serv-reasoning/tools
  *
  * SERV drafts the reply. Loyal Spark scope (loyal-spark-scope.ts) decides
@@ -9,7 +9,7 @@
  */
 
 const SERV_URL = "https://inference-api.openserv.ai/v1/chat/completions";
-const PROMPT_VERSION = "ls-concierge-v5";
+const PROMPT_VERSION = "ls-concierge-v6";
 
 const PRODUCT_MAP = `How Loyal Spark works (use this to answer usage questions; do not invent pages):
 Loyal Spark is an onchain loyalty protocol on Base (chain 8453). A merchant deploys a B20 loyalty token, customers earn points, rewards are redeemed as vouchers, gift certificates are a separate catalog. P2P escrow offers exist. DEX trading and DeFi yield are not available — do not send users there.
@@ -47,7 +47,7 @@ Help with loyalty programs, mint and earn (describe the portal step; never claim
 Rulebook B — refuse:
 If the question is outside Loyal Spark, reply exactly: "I only help with Loyal Spark: loyalty programs, rewards, vouchers, certificates, balances, and agent APIs on Base. I can't help with that."
 
-When an ACCOUNT DATA block is present, use it for this user's own Loyal Spark facts. Do not invent numbers that are not in that block. Keep answers short.`;
+Answer the question the user actually asked, in their language. When an ACCOUNT DATA block is present, it is this user's own Loyal Spark data: compare, rank, and explain from those numbers. Do not invent numbers or URLs. Do not reply with a generic menu of what you can do. Keep answers short.`;
 
 const SHOPPER_SYSTEM = `You are the Loyal Spark shopper assistant on Base (loyalspark.online).
 
@@ -57,7 +57,7 @@ Help holders with balances, rewards, vouchers, gift certificates, and P2P escrow
 Rulebook B — refuse:
 If the question is outside Loyal Spark, reply exactly: "I only help with Loyal Spark: loyalty programs, rewards, vouchers, certificates, balances, and agent APIs on Base. I can't help with that."
 
-When an ACCOUNT DATA block is present, use it for this user's own Loyal Spark facts. Do not invent numbers that are not in that block. Keep answers short.`;
+Answer the question the user actually asked, in their language. When an ACCOUNT DATA block is present, it is this user's own Loyal Spark data: compare, rank, and explain from those numbers. Do not invent numbers or URLs. Do not reply with a generic menu of what you can do. Keep answers short.`;
 
 export type ServChatResult = {
   text: string;
@@ -101,7 +101,8 @@ export async function servConciergeReply(args: {
       body: JSON.stringify({
         model,
         reasoning_effort: "none",
-        max_tokens: 350,
+        max_tokens: 700,
+        max_completion_tokens: 700,
         messages: [{ role: "system", content: system }, ...history],
         tools: [
           { type: "function", function: { name: "serv_prompt_guard" } },

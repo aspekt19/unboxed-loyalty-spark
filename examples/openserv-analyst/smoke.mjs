@@ -6,76 +6,41 @@
 const MCP_URL = process.env.LOYAL_SPARK_MCP_URL || "https://api.loyalspark.online/loyalty-mcp";
 const API_KEY = process.env.LOYAL_SPARK_API_KEY || "";
 
-/** Returns false for off-topic prompts that must not burn OpenServ / MCP quota. */
+function isSmallTalk(text) {
+  const t = String(text || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[!?.…]+/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!t) return true;
+  if (/^(привет|здравствуйте|здравствуй|добрый день|добрый вечер|доброе утро|хай|hello|hi|hey|yo)$/.test(t)) {
+    return true;
+  }
+  if (/^(как дела|как ты|how are you|whats up|what's up)$/.test(t)) return true;
+  if (/^(привет|hello|hi|hey)[, ]+(как дела|как ты|how are you)$/.test(t)) return true;
+  return false;
+}
+
+/** Off-topic and small talk stay local. Every other question reaches the model. */
 export function isLoyalSparkScoped(text) {
-  const t = String(text || "").toLowerCase().trim();
-  if (!t) return false;
-
+  const t = String(text || "").trim();
+  if (!t || isSmallTalk(t)) return false;
   const deny = [
-    /\bweather\b/,
-    /\bпогод/,
-    /\bnews\b/,
-    /\bновост/,
-    /\bhomework\b/,
-    /\bдомашн/,
-    /\bjoke\b/,
-    /\bанекдот/,
-    /\bwho won the\b/,
-    /\bprice of (btc|eth|bitcoin|ethereum)\b/,
-    /\bjust chat\b/,
-    /\bрасскажи (анекдот|сказку)\b/,
+    /\bweather\b/i,
+    /погод/i,
+    /\bnews\b/i,
+    /новост/i,
+    /\bhomework\b/i,
+    /домашн/i,
+    /\bjoke\b/i,
+    /анекдот/i,
+    /\bwho won the\b/i,
+    /\bprice of (btc|eth|bitcoin|ethereum)\b/i,
+    /\bjust chat\b/i,
+    /расскажи (анекдот|сказку)/i,
   ];
-  if (deny.some((re) => re.test(t))) return false;
-
-  const allow = [
-    /\bloyal\s*spark\b/,
-    /\bloyalty\b/,
-    /программ/,
-    /\breward/,
-    /\bvoucher/,
-    /ваучер/,
-    /\bmint\b/,
-    /\bcashback\b/,
-    /\bmcp\b/,
-    /\bx402\b/,
-    /\bcertificate/,
-    /сертификат/,
-    /\bmerchant/,
-    /мерчант/,
-    /\bbalance\b/,
-    /баланс/,
-    /\bp2p\b/,
-    /\bescrow\b/,
-    /\bagent[_ ]?api\b/,
-    /\breport\b/,
-    /\banalytics\b/,
-    /\bcustomer/,
-    /погашен/,
-    /лояльн/,
-    /магазин/,
-    /\bstores?\b/,
-    /\bshops?\b/,
-    /\btokens?\b/,
-    /токен/,
-    /балл|балы/,
-    /заработ/,
-    /потрат/,
-    /\bearn\b/,
-    /\bspend\b/,
-    /\bpoints?\b/,
-    /\bprograms?\b/,
-    /гайд/,
-    /\bguides?\b/,
-    /инструкц/,
-    /\bfaq\b/,
-    /\bbilling\b/,
-    /биллинг/,
-    /\bportal\b/,
-    /портал/,
-    /\bhow to\b/,
-    /как (созда|польз|найти|откры|подключ|работает)/,
-  ];
-  return allow.some((re) => re.test(t));
+  return !deny.some((re) => re.test(t));
 }
 
 const REFUSAL =
@@ -116,6 +81,10 @@ async function main() {
   assert(isLoyalSparkScoped("How to create a loyalty program?"), "how-to must be allowed");
   assert(isLoyalSparkScoped("Как заработать балы?"), "RU earn typo must be allowed");
   assert(isLoyalSparkScoped("как потратить балы?"), "RU spend typo must be allowed");
+  assert(!isLoyalSparkScoped("Как дела?"), "small talk how-are-you must be denied");
+  assert(isLoyalSparkScoped("Каких баллов лояльности у меня больше всего?"), "which points are most");
+  assert(isLoyalSparkScoped("Каких токенов у меня больше всего?"), "which tokens are most");
+  assert(isLoyalSparkScoped("что мне показать на кассе?"), "unlisted wording must still reach the model");
   console.log("   off-topic refusal copy:", REFUSAL);
 
   if (!API_KEY || API_KEY.includes("replace_me")) {

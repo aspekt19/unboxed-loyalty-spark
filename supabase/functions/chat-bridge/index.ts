@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { asksForOwnLoyaltyList, isLoyalSparkScoped, LOYAL_SPARK_REFUSAL } from "../_shared/loyal-spark-scope.ts";
-import { loadAccountContext, shopperHoldingLines } from "../_shared/concierge-account.ts";
+import { isLoyalSparkScoped, LOYAL_SPARK_REFUSAL } from "../_shared/loyal-spark-scope.ts";
+import { loadAccountContext } from "../_shared/concierge-account.ts";
 import { servConciergeReply, servConfigured } from "../_shared/serv-reasoning.ts";
 
 const corsHeaders = {
@@ -13,10 +13,6 @@ type ChatRole = "merchant" | "shopper";
 type ChatMessage = { role: "user" | "assistant" | "system"; content: string };
 
 const DAILY_LIMIT = Number(Deno.env.get("CHAT_MESSAGES_PER_DAY") || "40");
-
-/** In-isolate health gate for OpenServ (plan kill-switch). */
-let openservFailStreak = 0;
-let openservDisabledUntil = 0;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -85,16 +81,6 @@ Deno.serve(async (req) => {
       }, 429);
     }
 
-    if (asksForOwnLoyaltyList(lastUser)) {
-      const reply = await answerOwnLoyaltyList(service, role, wallet, lastUser);
-      return json({ reply, role, wallet, source: "account" });
-    }
-
-    const quick = quickGuideReply(role, lastUser);
-    if (quick) {
-      return json({ reply: quick, role, wallet, source: "guide" });
-    }
-
     let accountContext = "";
     if (wallet) {
       try {
@@ -104,10 +90,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (servConfigured() && Date.now() >= openservDisabledUntil) {
+    if (servConfigured()) {
       try {
         const serv = await servConciergeReply({ role, messages, accountContext });
-        openservFailStreak = 0;
         return json({
           reply: serv.text,
           role,
@@ -118,11 +103,6 @@ Deno.serve(async (req) => {
         });
       } catch (err) {
         console.error("[chat-bridge] serv", err);
-        openservFailStreak += 1;
-        if (openservFailStreak >= 3) {
-          openservDisabledUntil = Date.now() + 5 * 60_000;
-          openservFailStreak = 0;
-        }
       }
     }
 
@@ -149,14 +129,7 @@ Deno.serve(async (req) => {
         });
         clearTimeout(timer);
 
-        if (!upstream.ok) {
-          openservFailStreak += 1;
-          if (openservFailStreak >= 3) {
-            openservDisabledUntil = Date.now() + 5 * 60_000;
-            openservFailStreak = 0;
-          }
-        } else {
-          openservFailStreak = 0;
+        if (upstream.ok) {
           const data = await upstream.json().catch(() => ({}));
           const reply =
             typeof data.reply === "string"
@@ -170,21 +143,14 @@ Deno.serve(async (req) => {
         }
       } catch {
         clearTimeout(timer);
-        openservFailStreak += 1;
-        if (openservFailStreak >= 3) {
-          openservDisabledUntil = Date.now() + 5 * 60_000;
-          openservFailStreak = 0;
-        }
       }
     }
 
-    // Local scoped stub until OpenServ Concierge URL is configured (still HARD SCOPE).
     return json({
-      reply: localScopedReply(role, lastUser),
+      reply: modelFallback(lastUser, accountContext),
       role,
       wallet,
-      source: "local_stub",
-      hint: "Set SERV_API_KEY (OpenServ Reasoning) to answer via SERV. Hosted Concierge URL is the fallback.",
+      source: "account",
     });
   } catch (err) {
     console.error("[chat-bridge]", err);
@@ -230,106 +196,17 @@ async function bumpDailyUsage(
   return next;
 }
 
-function quickGuideReply(role: ChatRole, lastUser: string): string | null {
-  const q = lastUser.toLowerCase();
+function modelFallback(lastUser: string, accountContext: string): string {
   const ru = /[а-яё]/i.test(lastUser);
-  const earn = /заработ|earn|начисл|получить бал/.test(q);
-  const spend = /потрат|spend|redeem|погас|использовать бал|активир/.test(q);
-
-  if (role === "shopper" && earn && !spend) {
+  const guide = "https://loyalspark.online/guide";
+  if (accountContext.trim()) {
     return ru
-      ? "Баллы начисляет магазин. Откройте https://loyalspark.online/customer, вкладка Loyalty, и покажите QR-код или адрес кошелька на кассе. Токены появятся в блоке Your Loyalty Tokens. Подробности: https://loyalspark.online/guide, вкладка For Customers."
-      : "A merchant issues the points. Open https://loyalspark.online/customer, Loyalty tab, and show your QR code or wallet address at checkout. Tokens show up under Your Loyalty Tokens. Guide: https://loyalspark.online/guide, For Customers.";
+      ? `Модель сейчас не ответила. Данные вашего аккаунта:\n${accountContext}\nГайд: ${guide}`
+      : `The model did not answer. Your account data:\n${accountContext}\nGuide: ${guide}`;
   }
-  if (role === "shopper" && spend) {
-    return ru
-      ? "Потратить баллы можно на награду. На https://loyalspark.online/customer откройте каталог Rewards у программы, где хватает баланса, нажмите Activate Voucher и подтвердите транзакцию. Ваучер появится в My Vouchers — покажите его QR магазину. Гайд: https://loyalspark.online/guide, вкладка For Customers."
-      : "Spend points on a reward. On https://loyalspark.online/customer open Rewards for a program where your balance is enough, press Activate Voucher, and confirm. The voucher appears in My Vouchers with a QR code for the store. Guide: https://loyalspark.online/guide, For Customers.";
-  }
-  if (role === "merchant" && (earn || /\bmint\b/.test(q))) {
-    return ru
-      ? "Начисление делает мерчант. Откройте https://loyalspark.online/merchant?tab=programs, выберите программу и Mint или Earn. Покупатель показывает QR в портале https://loyalspark.online/customer. Гайд: https://loyalspark.online/guide, вкладка For Merchants."
-      : "Minting is a merchant step. Open https://loyalspark.online/merchant?tab=programs, select the program, then Mint or Earn. The customer shows the QR from https://loyalspark.online/customer. Guide: https://loyalspark.online/guide, For Merchants.";
-  }
-  if (/гайд|guide|how to|faq|инструкц|как созда|как польз|как найти|как работает/.test(q)) {
-    return ru
-      ? "Гайд: https://loyalspark.online/guide — вкладки Getting Started, For Merchants, For Customers, For AI Agents, FAQ. Портал мерчанта: https://loyalspark.online/merchant. Портал покупателя: https://loyalspark.online/customer. Агенты: https://loyalspark.online/for-agents."
-      : "Guide: https://loyalspark.online/guide — Getting Started, For Merchants, For Customers, For AI Agents, FAQ. Merchant portal: https://loyalspark.online/merchant. Customer portal: https://loyalspark.online/customer. Agents: https://loyalspark.online/for-agents.";
-  }
-  return null;
-}
-
-function localScopedReply(role: ChatRole, lastUser: string): string {
-  const q = lastUser.toLowerCase();
-  if (/гайд|guide|how to|faq|инструкц|как созда|как польз|как найти/.test(q)) {
-    return "Start at https://loyalspark.online/guide (Getting Started, For Merchants, For Customers, For AI Agents, FAQ). Merchants: https://loyalspark.online/merchant — programs, rewards, certificates, customers, billing, AI agents. Shoppers: https://loyalspark.online/customer. Agents: https://loyalspark.online/for-agents.";
-  }
-  if (role === "merchant") {
-    if (/mint|начисл|earn|cashback/.test(q)) {
-      return "To mint or earn points: open **Programs**, select a program, then Mint / Earn. Agent path: MCP `mint_loyalty_tokens` / `earn_points` (then confirm fee). I stay on Loyal Spark only — say what program or customer you mean.";
-    }
-    if (/reward|ваучер|voucher|сертификат|certificate/.test(q)) {
-      return "Rewards & vouchers live under **Rewards**; gift certificates under **Certificates**. Agents: `create_reward`, `create_gift_certificate`, `use_voucher`. Ask a Loyal Spark–specific next step.";
-    }
-    if (/analy|stat|customer|клиент|report/.test(q)) {
-      return "Use **Dashboard** / **Customers** for live numbers, or the Stage A Analyst OpenServ workflow (`send_report`). I can guide Loyal Spark metrics only — which program should we inspect?";
-    }
-    return "I'm the Loyal Spark merchant assistant. I only help with programs, minting, rewards, vouchers, certificates, team, billing, and agent APIs on Base. What do you want to do in the portal?";
-  }
-  if (/balance|баланс|reward|redeem|обмен|voucher|ваучер/.test(q)) {
-    return "Check balances and redeem under your loyalty wallet / rewards. Recipient agents use `rwk_` MCP (`list_my_loyalty_balances`, `redeem_my_reward`). I only help with Loyal Spark — which merchant program?";
-  }
-  return "I'm the Loyal Spark shopper assistant. I only help with balances, rewards, vouchers, certificates, and P2P escrow on Base — not general chat. What do you need?";
-}
-
-async function answerOwnLoyaltyList(
-  // deno-lint-ignore no-explicit-any
-  service: any,
-  role: ChatRole,
-  wallet: string | null,
-  question: string,
-): Promise<string> {
-  const ru = /[а-яё]/i.test(question);
-  if (!wallet) {
-    return ru
-      ? "Подключите кошелёк к профилю — тогда я покажу магазины, от которых у вас есть баллы."
-      : "Connect a wallet to your profile and I can list the stores you have loyalty with.";
-  }
-
-  try {
-    if (role === "merchant") {
-      const { data, error } = await service
-        .from("loyalty_programs")
-        .select("name, symbol, status")
-        .eq("merchant_address", wallet)
-        .in("status", ["active", "expiring_soon", "paused"]);
-      if (error) throw error;
-      const rows = (data ?? []) as { name: string; symbol: string; status: string }[];
-      if (rows.length === 0) {
-        return ru
-          ? "У этого кошелька нет своих программ лояльности."
-          : "This wallet has no loyalty programs of its own.";
-      }
-      const lines = rows.map((p) => `• ${p.name} (${p.symbol}) — ${p.status}`);
-      return (ru ? "Ваши программы:\n" : "Your programs:\n") + lines.join("\n");
-    }
-
-    const held = await shopperHoldingLines(service, wallet);
-    if (held.length === 0) {
-      return ru
-        ? "На этом кошельке нет баллов ни в одной программе."
-        : "This wallet has no loyalty balances yet.";
-    }
-    const lines = held.map((line) => line.replace(/^- /, "• "));
-    return (ru
-      ? "Магазины, от которых у вас есть программа лояльности:\n"
-      : "Stores you have loyalty with:\n") + lines.join("\n");
-  } catch (err) {
-    console.error("[chat-bridge] holdings", err);
-    return ru
-      ? "Не смог прочитать балансы. Обновите страницу и спросите ещё раз."
-      : "I couldn't read your balances. Refresh the page and ask again.";
-  }
+  return ru
+    ? `Модель сейчас не ответила. Как устроен Loyal Spark: ${guide}`
+    : `The model did not answer. How Loyal Spark works: ${guide}`;
 }
 
 function json(body: unknown, status = 200) {
