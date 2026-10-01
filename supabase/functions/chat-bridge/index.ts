@@ -233,7 +233,7 @@ function modelFallback(lastUser: string, accountContext: string): string {
     const who = wallet
       ? (ru ? `Кошелёк ${wallet}.` : `Wallet ${wallet}.`)
       : (ru ? "Кошелёк сессии не найден." : "No session wallet.");
-    if (accountContext.includes("Chain transfers: lookup failed")) {
+    if (accountContext.includes("lookup failed")) {
       return ru
         ? `${who}\nСейчас в портале:\n${held}\nЧтение переводов в Base не удалось. Это не значит, что списания не было.`
         : `${who}\nPortal balances:\n${held}\nThe Base transfer read failed. That is not proof there was no spend.`;
@@ -241,8 +241,8 @@ function modelFallback(lastUser: string, accountContext: string): string {
     const spends = sectionLines(accountContext, "Explorer transfers");
     if (spends.length === 0) {
       return ru
-        ? `${who}\nСейчас в портале:\n${held}\nВ последних 100 переводах токенов на Base нет перевода баллов лояльности.`
-        : `${who}\nPortal balances:\n${held}\nThe latest 100 token transfers on Base include no loyalty-program token.`;
+        ? `${who}\nСейчас в портале:\n${held}\nВ недавней истории переводов этого кошелька нет перевода баллов лояльности.`
+        : `${who}\nPortal balances:\n${held}\nThis wallet's recent token history has no loyalty-program transfer.`;
     }
     const lines = spends.map((row) => `• ${row}`).join("\n");
     return ru

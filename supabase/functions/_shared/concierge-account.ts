@@ -43,14 +43,15 @@ async function shopperContext(service: Db, wallet: string, question: string): Pr
     activated_at: string;
   }>;
   const [spends, askedTx] = await Promise.all([
-    recentSpendLines(service, wallet),
+    recentSpendLines(service, wallet, [
+      ...held.tokenAddresses,
+      ...voucherRows.map((v) => v.token_address ?? ""),
+    ]),
     askedTxLine(question),
   ]);
   const spendSection = spends.status === "failed"
-    ? "Chain transfers: lookup failed. Do not claim that no transfer exists."
-    : spends.status === "no-tokens"
-    ? "Chain transfers: lookup not run, because the portal token list was empty."
-    : lines("Explorer transfers for this wallet, newest first. Public Base explorer, loyalty tokens only (B20 and ERC-20). sent is a spend. none means none of the latest 100 token transfers are loyalty programs", spends.rows);
+    ? "Explorer transfers: lookup failed. Do not claim that no transfer exists."
+    : lines("Explorer transfers for this wallet, newest first. Already read from the wallet token history on a public Base explorer. A row is included when the token is any loyalty program, even if the wallet no longer holds it. sent is a spend. Do not offer to look this up again", spends.rows);
 
   const vouchers = voucherRows
     .map((v) => `- ${v.activated_at}: spent ${amt(Number(v.cost))} ${v.token_symbol} on ${v.reward_name} [${v.status}]`);
@@ -73,12 +74,13 @@ async function shopperContext(service: Db, wallet: string, question: string): Pr
 async function recentSpendLines(
   service: Db,
   wallet: string,
+  alsoContracts: string[],
 ): Promise<{ rows: string[]; status: "ok" | "failed" | "no-tokens" }> {
   try {
     const { loadExplorerLoyaltyTransfers } = await import("./recipient-onchain-balances.ts");
     const rows = await Promise.race([
-      loadExplorerLoyaltyTransfers(service, wallet),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("explorer timeout")), 9_000)),
+      loadExplorerLoyaltyTransfers(service, wallet, alsoContracts),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("explorer timeout")), 12_000)),
     ]);
     return {
       status: "ok",

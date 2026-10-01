@@ -295,20 +295,18 @@ type ExplorerTokenTx = {
   tokenDecimal?: string;
 };
 
-const EXPLORER_TOKEN_TX = [
-  (wallet: string) =>
-    `https://base.blockscout.com/api?module=account&action=tokentx&address=${wallet}&page=1&offset=100&sort=desc`,
-  (wallet: string) =>
-    `https://api.routescan.io/v2/network/mainnet/evm/8453/etherscan/api?module=account&action=tokentx&address=${wallet}&page=1&offset=100&sort=desc`,
+const EXPLORER_HOSTS = [
+  (query: string) => `https://base.blockscout.com/api?${query}`,
+  (query: string) => `https://api.routescan.io/v2/network/mainnet/evm/8453/etherscan/api?${query}`,
 ];
 
-async function fetchExplorerTokenTxs(wallet: string): Promise<ExplorerTokenTx[]> {
+async function fetchTokentx(query: string): Promise<ExplorerTokenTx[] | null> {
   let lastError: unknown = null;
-  for (const buildUrl of EXPLORER_TOKEN_TX) {
+  for (const buildUrl of EXPLORER_HOSTS) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 8_000);
     try {
-      const resp = await fetch(buildUrl(wallet), { signal: controller.signal });
+      const resp = await fetch(buildUrl(query), { signal: controller.signal });
       const body = await resp.json();
       if (Array.isArray(body?.result)) return body.result as ExplorerTokenTx[];
       lastError = body?.message ?? body?.result ?? resp.status;
@@ -318,27 +316,37 @@ async function fetchExplorerTokenTxs(wallet: string): Promise<ExplorerTokenTx[]>
       clearTimeout(timer);
     }
   }
-  throw new Error(`explorer token transfers failed: ${String(lastError)}`);
+  console.error("[explorer] tokentx", query, lastError);
+  return null;
 }
 
 /**
- * Latest B20 and ERC-20 loyalty transfers for a wallet, from a public Base explorer.
- * The explorer returns every token the address touched. Rows are kept only when the
- * contract is one of our loyalty programs.
+ * Loyalty transfers for a wallet, from a public Base explorer.
+ * Reads the address token history (several pages), not only tokens still held.
+ * alsoContracts repeats a few known program contracts so one of them is not
+ * buried under unrelated token transfers.
  */
 export async function loadExplorerLoyaltyTransfers(
   serviceClient: any,
   walletAddress: string,
+  alsoContracts: string[] = [],
 ): Promise<Array<{ label: string; amount: number; blockNumber: string; txHash: string; direction: "sent" | "received"; standard: string }>> {
   const wallet = walletAddress.toLowerCase();
-  const txs = await fetchExplorerTokenTxs(wallet);
-  const contracts = [...new Set(txs.map((tx) => (tx.contractAddress ?? "").toLowerCase()).filter((addr) => /^0x[a-f0-9]{40}$/.test(addr)))];
-  if (contracts.length === 0) return [];
+  const history = [1, 2, 3, 4].map((page) =>
+    `module=account&action=tokentx&address=${wallet}&page=${page}&offset=100&sort=desc`
+  );
+  const extra = [...new Set(alsoContracts.map((addr) => addr.toLowerCase()).filter((addr) => /^0x[a-f0-9]{40}$/.test(addr)))].slice(0, 8);
+  const focused = extra.map((addr) =>
+    `module=account&action=tokentx&address=${wallet}&contractaddress=${addr}&page=1&offset=10&sort=desc`
+  );
+  const batches = await Promise.all([...history, ...focused].map((query) => fetchTokentx(query)));
+  if (batches.every((batch) => batch === null)) throw new Error("explorer token transfers failed");
+  const txs = batches.flatMap((batch) => batch ?? []);
 
   const { data, error } = await serviceClient
     .from("loyalty_programs")
     .select("token_address, name, symbol, token_standard")
-    .or(contracts.map((addr) => `token_address.ilike.${addr}`).join(","));
+    .limit(2000);
   if (error) throw error;
 
   const programBy = new Map<string, { name: string; symbol: string; standard: string }>();
@@ -350,16 +358,21 @@ export async function loadExplorerLoyaltyTransfers(
     });
   }
 
+  const seen = new Set<string>();
   const out: Array<{ label: string; amount: number; blockNumber: string; txHash: string; direction: "sent" | "received"; standard: string }> = [];
-  for (const tx of txs) {
+  const ordered = [...txs].sort((a, b) => Number(b.blockNumber ?? 0) - Number(a.blockNumber ?? 0));
+  for (const tx of ordered) {
     const contract = (tx.contractAddress ?? "").toLowerCase();
     const program = programBy.get(contract);
     if (!program || out.length >= 8) continue;
     const raw = BigInt(tx.value ?? "0");
     if (raw <= 0n) continue;
+    const direction = (tx.from ?? "").toLowerCase() === wallet ? "sent" as const : "received" as const;
+    const key = `${tx.hash}:${contract}:${direction}:${tx.value}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
     const decimals = Number(tx.tokenDecimal ?? "18");
     const safeDecimals = Number.isInteger(decimals) && decimals >= 0 && decimals <= 36 ? decimals : 18;
-    const direction = (tx.from ?? "").toLowerCase() === wallet ? "sent" as const : "received" as const;
     out.push({
       label: `${program.name} (${program.symbol})`,
       amount: Number(formatUnits(raw, safeDecimals)),

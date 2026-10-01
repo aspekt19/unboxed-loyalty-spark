@@ -11,7 +11,7 @@
 import { LOYAL_SPARK_REFUSAL } from "./loyal-spark-scope.ts";
 
 const SERV_URL = "https://inference-api.openserv.ai/v1/chat/completions";
-const PROMPT_VERSION = "ls-concierge-v15";
+const PROMPT_VERSION = "ls-concierge-v16";
 
 const PRODUCT_MAP = `How Loyal Spark works (use this to answer usage questions; do not invent pages):
 Loyal Spark is an onchain loyalty protocol on Base (chain 8453). A merchant deploys a B20 loyalty token, customers earn points, rewards are redeemed as vouchers, gift certificates are a separate catalog. P2P escrow offers exist. DEX trading and DeFi yield are not available — do not send users there.
@@ -45,7 +45,7 @@ const JUDGMENT = `How to answer:
 1. Understand what the user is actually asking, including typos, slang, and indirect wording.
 2. If that meaning is not about Loyal Spark, do not answer it. Reply exactly: "${LOYAL_SPARK_REFUSAL}"
 Greetings, small talk, weather, news, homework, jokes, other asset prices, and other products are not Loyal Spark.
-3. If it is about Loyal Spark, answer that question in the user's language. A later user message labeled ACCOUNT DATA holds this user's own numbers. The first sentence of any answer about their points must name the Wallet address and the Loyalty balances (program and amount). That list is the customer portal. Do not add programs that are not in it, and do not replace them with older mint amounts. Name every Loyalty balances line, not only the largest. If they ask which points were just spent, or which block a transfer was written in, answer from Explorer transfers: those rows are B20 and ERC-20 loyalty transfers from a public Base explorer. Quote direction, amount, block number, tx hash, and the basescan link. A sent row is a spend. If that section says none, say the latest 100 token transfers on Base include no loyalty-program token. If that section says the lookup failed, say the explorer read failed. Do not claim there was no transfer when the lookup failed. Do not ask them to resend the wallet. Do not invent a block. A voucher row is not chain proof. The product map is how the portal works. Do not invent numbers or URLs that are not in the account data or the product map. Do not reply with a generic menu. Never claim a transaction was sent. Plain sentences, no markdown asterisks.`;
+3. If it is about Loyal Spark, answer that question in the user's language. A later user message labeled ACCOUNT DATA holds this user's own numbers. The first sentence of any answer about their points must name the Wallet address and the Loyalty balances (program and amount). That list is the customer portal. Do not add programs that are not in it, and do not replace them with older mint amounts. Name every Loyalty balances line, not only the largest. If they ask which points were just spent, or which block a transfer was written in, the Explorer transfers section is already the result of reading that wallet's token history. Quote the newest sent row: program, amount, block number, tx hash, and the basescan link. Do not offer to check later and do not describe the lookup as something you still might do. If that section says none, say this wallet's recent token history has no loyalty-program transfer. If that section says the lookup failed, say the explorer read failed. Do not claim there was no transfer when the lookup failed. Do not ask them to resend the wallet. Do not invent a block. A voucher row is not chain proof. The product map is how the portal works. Do not invent numbers or URLs that are not in the account data or the product map. Do not reply with a generic menu. Never claim a transaction was sent. Plain sentences, no markdown asterisks.`;
 
 const MERCHANT_SYSTEM = `You are the Loyal Spark merchant assistant on Base (loyalspark.online).
 
@@ -78,7 +78,7 @@ export async function servConciergeReply(args: {
   const apiKey = Deno.env.get("SERV_API_KEY")?.trim();
   if (!apiKey) throw new Error("SERV_API_KEY missing");
 
-  const model = Deno.env.get("SERV_MODEL")?.trim() || "gpt-5.4-mini";
+  const model = Deno.env.get("SERV_MODEL")?.trim() || "gpt-5.5";
   const system = `${args.role === "shopper" ? SHOPPER_SYSTEM : MERCHANT_SYSTEM}\n\n${PRODUCT_MAP}`;
   const question = [...args.messages].reverse().find((m) => m.role === "user")?.content?.slice(0, 2000) ?? "";
   const messages: { role: string; content: string }[] = [{ role: "system", content: system }];
@@ -116,7 +116,7 @@ async function completeServ(
   body: Record<string, unknown>,
 ): Promise<Omit<ServChatResult, "promptVersion"> | null> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 12_000);
+  const timer = setTimeout(() => controller.abort(), 22_000);
   try {
     const res = await fetch(SERV_URL, {
       method: "POST",

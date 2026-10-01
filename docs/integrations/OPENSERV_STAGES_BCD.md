@@ -29,7 +29,7 @@ SERV is the same product AllowLatch used for drafting: `POST https://inference-a
 | Secret | Purpose |
 |--------|---------|
 | `SERV_API_KEY` | OpenServ Reasoning key (console.openserv.ai → Reasoning). Primary chat brain. |
-| `SERV_MODEL` | Optional; default `gpt-5.4-mini` |
+| `SERV_MODEL` | Optional; default `gpt-5.5`. A saved `gpt-5.4-mini` overrides the default. |
 | `OPENSERV_CONCIERGE_URL` | Fallback hosted Concierge HTTP API (no trailing slash) |
 | `OPENSERV_CONCIERGE_API_KEY` | Bearer token for that fallback |
 | `CHAT_MESSAGES_PER_DAY` | Optional; default `40` per signed-in actor |
