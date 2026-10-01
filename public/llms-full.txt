@@ -212,7 +212,7 @@ Auth: x-api-key header
 21. `cancel_stale_offers` — Cancel old marketplace offers (admin-only)
 22. `redeem_reward` — Redeem reward: verify tx + create voucher
 23. `use_voucher` — Mark voucher as used
-24. `check_voucher_status` — Public voucher status lookup (no API key)
+24. `check_voucher_status` — Voucher status lookup for the key owner's store (lsk_ required)
 25. `create_personalized_offer` — Create targeted offer for a customer
 26. `update_reward_status` — Activate/deactivate rewards
 27. `export_customers` — Export customer data for analytics

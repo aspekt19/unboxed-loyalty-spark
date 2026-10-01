@@ -156,7 +156,8 @@ function normalizeMessages(raw: unknown): ChatMessage[] {
     .filter((m) => m && typeof m === "object")
     .map((m) => {
       const o = m as Record<string, unknown>;
-      const role = o.role === "assistant" || o.role === "system" ? o.role : "user";
+      // Roles are server-owned: caller text is always treated as user input.
+      const role = "user";
       const content = typeof o.content === "string" ? o.content.slice(0, 4000) : "";
       return { role, content } as ChatMessage;
     })

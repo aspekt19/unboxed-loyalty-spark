@@ -464,7 +464,7 @@ function createRecipientMcpServer(
   });
 
   mcpServer.tool("lookup_gift_certificate", {
-    description: "Preview a gift certificate by its 6-character code (LOYAL-XXXXXX). Returns title, USD/token amount, merchant, expiry and status — without claiming it. Anyone can preview.",
+    description: "Preview a gift certificate by its code (LOYAL-XXXX-XXXX-XXXX). Returns title, USD/token amount, merchant, expiry and status — without claiming it. Anyone can preview.",
     inputSchema: {
       type: "object" as const,
       required: ["code"],

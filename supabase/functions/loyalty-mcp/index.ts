@@ -745,7 +745,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
   });
 
   mcpServer.tool("check_voucher_status", {
-    description: "Check voucher status by code or ID. Public endpoint — no API key or authentication required.",
+    description: "Check voucher status by code or ID. Requires a merchant agent key; only vouchers issued by the key owner's store are returned.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -754,12 +754,15 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
       },
     },
     handler: async ({ code, voucher_id }: any) => {
+      const authErr = authGuard(["read"]);
+      if (authErr) return T(authErr);
       if (!code && !voucher_id) return T(JSON.stringify({ error: "Provide code or voucher_id" }));
 
       const d = db();
       let q = d.from("vouchers").select("id, code, reward_name, reward_description, cost, status, token_address, token_symbol, merchant_address, activated_at, used_at");
       if (code) q = q.eq("code", code);
       else q = q.eq("id", voucher_id);
+      q = q.eq("merchant_address", String(agent.ownerAddress || "").toLowerCase());
 
       const { data: v, error: e } = await q.maybeSingle();
       if (e || !v) return T(JSON.stringify({ error: "Voucher not found" }));
@@ -1206,7 +1209,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
   });
 
   mcpServer.tool("create_gift_certificate", {
-    description: "Create a gift / welcome certificate (UDS-style) with a unique 6-character redemption code (LOYAL-XXXXXX). Customer redeems via QR or by entering the code; merchant then mints tokens on-chain. Use for welcome bonuses, promo campaigns, partnership gifts.",
+    description: "Create a gift / welcome certificate (UDS-style) with a unique random redemption code (LOYAL-XXXX-XXXX-XXXX). Customer redeems via QR or by entering the code; merchant then mints tokens on-chain. Use for welcome bonuses, promo campaigns, partnership gifts.",
     inputSchema: {
       type: "object" as const,
       required: ["token_address", "usd_amount"],

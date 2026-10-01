@@ -95,8 +95,9 @@ export async function probeX402Endpoint(targetUrl: string) {
   let u: URL;
   try { u = new URL(targetUrl); } catch { return { ok: false, error: "invalid_url" }; }
   if (u.protocol !== "https:") return { ok: false, error: "https_required" };
+  if (isPrivateHost(u.hostname)) return { ok: false, error: "destination_not_allowed" };
 
-  const res = await fetch(u.toString(), { method: "GET", headers: { Accept: "application/json" } });
+  const res = await fetch(u.toString(), { method: "GET", headers: { Accept: "application/json" }, redirect: "manual" });
   const text = await res.text();
   let body: unknown;
   try { body = JSON.parse(text); } catch { body = { raw: text.slice(0, 500) }; }
@@ -105,4 +106,19 @@ export async function probeX402Endpoint(targetUrl: string) {
     return { ok: true, status: 402, requires_payment: true, accepts: (body as any)?.accepts || body };
   }
   return { ok: true, status: res.status, requires_payment: false, body };
+}
+
+function isPrivateHost(hostname: string): boolean {
+  const h = hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  if (h === "localhost" || h.endsWith(".localhost") || h.endsWith(".internal") || h.endsWith(".local")) return true;
+  if (h === "metadata.google.internal") return true;
+  const m = h.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
+  if (m) {
+    const [a, b] = [Number(m[1]), Number(m[2])];
+    if (a === 10 || a === 127 || a === 0 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127)) return true;
+  }
+  if (h.includes(":")) {
+    if (h === "::1" || h === "::" || h.startsWith("fc") || h.startsWith("fd") || h.startsWith("fe80") || h.startsWith("::ffff:")) return true;
+  }
+  return false;
 }
