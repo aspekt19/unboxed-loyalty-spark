@@ -247,7 +247,8 @@ function localScopedReply(role: ChatRole, lastUser: string): string {
 }
 
 async function answerOwnLoyaltyList(
-  service: ReturnType<typeof createClient>,
+  // deno-lint-ignore no-explicit-any
+  service: any,
   role: ChatRole,
   wallet: string | null,
   question: string,
