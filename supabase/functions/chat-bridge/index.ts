@@ -1,7 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { asksForOwnLoyaltyList, isLoyalSparkScoped, LOYAL_SPARK_REFUSAL } from "../_shared/loyal-spark-scope.ts";
-import { loadOnchainLoyaltyBalances } from "../_shared/recipient-onchain-balances.ts";
-import { loadAccountContext } from "../_shared/concierge-account.ts";
+import { loadAccountContext, shopperHoldingLines } from "../_shared/concierge-account.ts";
 import { servConciergeReply, servConfigured } from "../_shared/serv-reasoning.ts";
 
 const corsHeaders = {
@@ -86,8 +85,9 @@ Deno.serve(async (req) => {
       }, 429);
     }
 
+    const howTo = /гайд|guide|how to|faq|инструкц|как созда|как польз|как найти|как работает/i.test(lastUser);
     let accountContext = "";
-    if (wallet) {
+    if (wallet && !howTo) {
       try {
         accountContext = await loadAccountContext(service, role, wallet);
       } catch (err) {
@@ -300,18 +300,13 @@ async function answerOwnLoyaltyList(
       return (ru ? "Ваши программы:\n" : "Your programs:\n") + lines.join("\n");
     }
 
-    const balances = await loadOnchainLoyaltyBalances(service, wallet);
-    const held = balances.filter((b) => b.current_balance > 0 && b.program);
+    const held = await shopperHoldingLines(service, wallet);
     if (held.length === 0) {
       return ru
         ? "На этом кошельке нет баллов ни в одной программе."
         : "This wallet has no loyalty balances yet.";
     }
-    const lines = held.map((b) => {
-      const name = b.program?.name ?? b.token_address;
-      const symbol = b.program?.symbol ? ` (${b.program.symbol})` : "";
-      return `• ${name}${symbol} — ${formatAmount(b.current_balance)}`;
-    });
+    const lines = held.map((line) => line.replace(/^- /, "• "));
     return (ru
       ? "Магазины, от которых у вас есть программа лояльности:\n"
       : "Stores you have loyalty with:\n") + lines.join("\n");

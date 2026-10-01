@@ -9,7 +9,7 @@
  */
 
 const SERV_URL = "https://inference-api.openserv.ai/v1/chat/completions";
-const PROMPT_VERSION = "ls-concierge-v3";
+const PROMPT_VERSION = "ls-concierge-v4";
 
 const PRODUCT_MAP = `How Loyal Spark works (use this to answer usage questions; do not invent pages):
 Loyal Spark is an onchain loyalty protocol on Base (chain 8453). A merchant deploys a B20 loyalty token, customers earn points, rewards are redeemed as vouchers, gift certificates are a separate catalog. P2P escrow offers exist. DEX trading and DeFi yield are not available — do not send users there.
@@ -85,7 +85,7 @@ export async function servConciergeReply(args: {
     : base;
   const history = args.messages
     .filter((m) => m.role === "user" || m.role === "assistant")
-    .slice(-12)
+    .slice(-6)
     .map((m) => ({ role: m.role, content: m.content }));
 
   const controller = new AbortController();
@@ -100,28 +100,11 @@ export async function servConciergeReply(args: {
       signal: controller.signal,
       body: JSON.stringify({
         model,
-        reasoning_effort: "low",
+        reasoning_effort: "none",
+        max_tokens: 350,
         messages: [{ role: "system", content: system }, ...history],
         tools: [
           { type: "function", function: { name: "serv_prompt_guard" } },
-          {
-            type: "function",
-            function: {
-              name: "serv_shadow_agent",
-              description: "Enable SERV shadow-agent validation.",
-              parameters: {
-                type: "object",
-                properties: {
-                  hint: {
-                    type: "string",
-                    default:
-                      "Stay on Loyal Spark. Use ACCOUNT DATA for this user's numbers and the product map for how-to answers. Off-topic must use the exact refusal sentence. Do not invent pages or balances.",
-                  },
-                  max_iterations: { type: "integer", default: 2 },
-                },
-              },
-            },
-          },
         ],
       }),
     });

@@ -26,18 +26,12 @@ export async function loadAccountContext(
 }
 
 async function shopperContext(service: Db, wallet: string): Promise<string> {
-  const { loadOnchainLoyaltyBalances } = await import("./recipient-onchain-balances.ts");
-  const [balances, vouchersRes, certsRes, offersRes] = await Promise.all([
-    loadOnchainLoyaltyBalances(service, wallet),
+  const [held, vouchersRes, certsRes, offersRes] = await Promise.all([
+    shopperHoldingLines(service, wallet),
     service.from("vouchers").select("reward_name, status, token_symbol, code").ilike("customer_address", wallet).limit(15),
     service.from("gift_certificates").select("title, status, token_symbol, token_amount").ilike("redeemed_by", wallet).limit(10),
     service.from("marketplace_offers").select("status, offer_amount, request_amount").ilike("creator_address", wallet).eq("status", "active").limit(8),
   ]);
-
-  const held = (balances as Array<{ current_balance: number; program: { name: string; symbol: string } | null }>)
-    .filter((b) => b.current_balance > 0 && b.program)
-    .slice(0, 20)
-    .map((b) => `- ${b.program!.name} (${b.program!.symbol}): ${amt(b.current_balance)}`);
 
   const vouchers = ((vouchersRes.data ?? []) as Array<{ reward_name: string; status: string; token_symbol: string; code: string }>)
     .map((v) => `- ${v.reward_name} [${v.status}] ${v.token_symbol} code ${v.code}`);
@@ -47,12 +41,46 @@ async function shopperContext(service: Db, wallet: string): Promise<string> {
     .map((o) => `- P2P ${o.status}: offer ${amt(o.offer_amount)} for ${amt(o.request_amount)}`);
 
   return [
-    `Wallet ${wallet}. This is the signed-in shopper only.`,
+    `Wallet ${wallet}. This is the signed-in shopper only. Balances are the portal ledger, not a fresh chain read.`,
     lines("Loyalty balances (stores they hold points with)", held),
     lines("Vouchers", vouchers),
     lines("Gift certificates claimed", certs),
     lines("Open P2P offers they created", offers),
   ].join("\n");
+}
+
+/** DB balances for tokens this wallet already touched. No full-catalog chain scan. */
+export async function shopperHoldingLines(service: Db, wallet: string): Promise<string[]> {
+  const [tiersRes, mintsRes] = await Promise.all([
+    service.from("customer_tier_status").select("token_address, current_balance").ilike("customer_address", wallet).limit(30),
+    service.from("token_mint_history").select("token_address, amount").ilike("recipient_address", wallet).limit(40),
+  ]);
+  const byToken = new Map<string, number>();
+  for (const row of (tiersRes.data ?? []) as Array<{ token_address: string; current_balance: number | null }>) {
+    byToken.set(row.token_address.toLowerCase(), Number(row.current_balance ?? 0));
+  }
+  for (const row of (mintsRes.data ?? []) as Array<{ token_address: string; amount: number }>) {
+    const key = row.token_address.toLowerCase();
+    if (!byToken.has(key)) byToken.set(key, Number(row.amount ?? 0));
+  }
+  const addresses = [...byToken.keys()];
+  if (addresses.length === 0) return [];
+  const { data: programs } = await service
+    .from("loyalty_programs")
+    .select("token_address, name, symbol")
+    .in("token_address", addresses);
+  const nameBy = new Map<string, { name: string; symbol: string }>();
+  for (const p of (programs ?? []) as Array<{ token_address: string; name: string; symbol: string }>) {
+    nameBy.set(p.token_address.toLowerCase(), { name: p.name, symbol: p.symbol });
+  }
+  return addresses
+    .filter((addr) => (byToken.get(addr) ?? 0) > 0)
+    .slice(0, 20)
+    .map((addr) => {
+      const program = nameBy.get(addr);
+      const label = program ? `${program.name} (${program.symbol})` : addr;
+      return `- ${label}: ${amt(byToken.get(addr) ?? 0)}`;
+    });
 }
 
 async function merchantContext(service: Db, wallet: string): Promise<string> {
