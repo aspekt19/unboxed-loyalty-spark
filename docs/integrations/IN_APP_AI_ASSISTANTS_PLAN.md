@@ -1,6 +1,6 @@
 # In-app AI Assistants (OpenServ-backed) — Research & Implementation Plan
 
-> **Status:** Research only. No code changes yet. Revisit when ready to build.
+> **Status:** Research for in-app Concierge (Stage B+). **Stage A (Analyst ops) is active** — see [OPENSERV_STAGE_A.md](./OPENSERV_STAGE_A.md). All OpenServ usage is **Loyal Spark–only** (protocol pays; refuse weather/off-topic).
 > **Architecture decision:** go **straight to Option B** — OpenServ-hosted agents as the "brain" from day one. The Lovable AI Gateway fallback (Option A) is intentionally skipped to avoid throwaway code and to lock in OpenServ's lower per-request cost from the start. These costs are borne by the protocol, not by merchants.
 
 ## TL;DR — Is it possible?
