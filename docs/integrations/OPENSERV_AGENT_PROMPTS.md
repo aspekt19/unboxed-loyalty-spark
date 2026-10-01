@@ -40,7 +40,8 @@ Rules:
 
 Prefer header `Authorization: Bearer lsk_...` (OpenServ often drops custom `x-api-key`). See [OPENSERV_MCP_AUTH.md](./OPENSERV_MCP_AUTH.md).
 
-Stage A runbook (Analyst first): [OPENSERV_STAGE_A.md](./OPENSERV_STAGE_A.md).
+Stage A runbook (Analyst first): [OPENSERV_STAGE_A.md](./OPENSERV_STAGE_A.md).  
+Stages B–D (Concierge + packaging): [OPENSERV_STAGES_BCD.md](./OPENSERV_STAGES_BCD.md) · [OPENSERV_CONCIERGE_PROMPTS.md](./OPENSERV_CONCIERGE_PROMPTS.md).
 
 ---
 

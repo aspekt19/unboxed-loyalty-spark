@@ -60,6 +60,7 @@ supabase/functions/
   agent-api/              # REST API for AI agents
   agent-api-key/          # API key issuance / rotation
   agent-reports/          # Merchant reporting
+  chat-bridge/            # In-app Concierge → OpenServ (JWT; LS-only scope)
   agent-wallet/           # CDP MPC wallet + server-side mint
   loyalty-mcp/            # MCP (JSON-RPC) for LLM tools
   privy-auth/             # Privy → Supabase session bridge

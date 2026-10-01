@@ -48,3 +48,6 @@ verify_jwt = false
 [functions.agent-prepare]
 verify_jwt = false
 
+[functions.chat-bridge]
+verify_jwt = true
+

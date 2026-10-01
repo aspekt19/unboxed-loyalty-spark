@@ -44,6 +44,7 @@ const merchantPlans: Plan[] = [
       { text: "Branded B20 loyalty token", included: true },
       { text: "RFM segmentation & campaigns", included: false },
       { text: "Team & branch management", included: false },
+      { text: "Merchant Concierge (Loyal Spark–only AI)", included: false },
     ],
     cta: "Start with Starter",
     href: "/merchant?tab=billing",
@@ -59,6 +60,7 @@ const merchantPlans: Plan[] = [
       { text: "Marketing campaigns & personalized offers", included: true },
       { text: "Team & branch management", included: true },
       { text: "AI automation rules", included: true },
+      { text: "Merchant Concierge (Loyal Spark–only AI)", included: true },
       { text: "Priority support", included: true },
     ],
     cta: "Upgrade to Growth",
@@ -72,6 +74,7 @@ const merchantPlans: Plan[] = [
     description: "Corporate-style budgets and priority",
     features: [
       { text: "Everything in Growth", included: true },
+      { text: "Priority Concierge & ops routing", included: true },
       { text: "Priority routing & SLA", included: true },
       { text: "Dedicated onboarding", included: true },
       { text: "Custom integrations", included: true },

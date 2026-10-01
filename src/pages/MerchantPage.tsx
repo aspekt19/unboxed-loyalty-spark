@@ -9,7 +9,7 @@ import { TrialWelcomeBanner } from '@/components/onboarding/TrialWelcomeBanner';
 import { useAutoStartTrial } from '@/hooks/useStartTrial';
 import { MerchantProfileSection } from '@/components/merchant/MerchantProfileSection';
 
-import { ArrowLeft, LayoutDashboard, Package, Gift, Users, User, Ticket, Megaphone, Briefcase, UserSearch, CreditCard, Bot } from 'lucide-react';
+import { ArrowLeft, LayoutDashboard, Package, Gift, Users, User, Ticket, Megaphone, Briefcase, UserSearch, CreditCard, Bot, MessageSquare } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import PageTransition from '@/components/PageTransition';
@@ -50,6 +50,7 @@ const GROUP_ITEMS: Record<string, NavItem[]> = {
   business: [
     { id: 'billing', label: 'Billing', icon: CreditCard },
     { id: 'agents', label: 'AI Agents', icon: Bot },
+    { id: 'assistant', label: 'Assistant', icon: MessageSquare },
     { id: 'team', label: 'Team', icon: Users },
   ],
 };
@@ -62,6 +63,7 @@ const TAB_TO_GROUP: Record<string, string> = {
   marketing: 'growth',
   billing: 'business',
   agents: 'business',
+  assistant: 'business',
   team: 'business',
 };
 
@@ -80,7 +82,7 @@ const MerchantPage = () => {
   // Sync mobile tab with ?tab= query param so deep links from banners work
   useEffect(() => {
     const t = new URLSearchParams(location.search).get('tab');
-    const valid = ['dashboard', 'customers', 'programs', 'rewards', 'certificates', 'marketing', 'billing', 'agents', 'team'];
+    const valid = ['dashboard', 'customers', 'programs', 'rewards', 'certificates', 'marketing', 'billing', 'agents', 'assistant', 'team'];
     if (t && valid.includes(t)) {
       setMobileTab(t);
       setShowProfile(false);

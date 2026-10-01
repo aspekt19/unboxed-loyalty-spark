@@ -21,6 +21,7 @@ Each subdirectory is one deployable function (`index.ts` entry). Shared Deno mod
 | `agent-api-key` | API key issuance / rotation (dashboard, JWT) |
 | `agent-register-siwe` | **Free `lsk_` registration via SIWE** (no web login; same limits as dashboard) |
 | `agent-reports` | Merchant reporting |
+| `chat-bridge` | In-app Merchant/Shopper Concierge → OpenServ (JWT; Loyal Spark–only scope) |
 
 ## Auth and payments
 

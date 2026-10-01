@@ -12,7 +12,7 @@ Start at the repo root **[AGENTS.md](../AGENTS.md)** (links to rules, APIs, and 
 |------|----------|
 | [agents/](./agents/) | [Quickstart](./agents/QUICKSTART.md), [autonomous `lsk_` (SIWE)](./agents/AUTONOMOUS_AGENT_REGISTRATION.md), [Base / Claude / ChatGPT skill distribution](./agents/BASE_SKILLS_SUBMISSION.md); x402 MCP: `mcp-bazaar-tools.ts`, `recipient-mcp-bazaar-tools.ts`, `x402-bazaar-accept.ts` (Bazaar metadata on 402) |
 | [development/](./development/) | Build, deploy, Capacitor; [LOYALTY_PROGRAM_CONTRACTS.md](./development/LOYALTY_PROGRAM_CONTRACTS.md) (B20 default + legacy ERC-20); [PORTALS_AND_TEAM.md](./development/PORTALS_AND_TEAM.md) |
-| [integrations/](./integrations/) | Farcaster, OpenServ ([Stage A Analyst](./integrations/OPENSERV_STAGE_A.md), [prompts](./integrations/OPENSERV_AGENT_PROMPTS.md), [MCP auth](./integrations/OPENSERV_MCP_AUTH.md)), A2A, prompts, adaptation plans |
+| [integrations/](./integrations/) | Farcaster, OpenServ ([Stage A](./integrations/OPENSERV_STAGE_A.md), [Stages B–D](./integrations/OPENSERV_STAGES_BCD.md), [prompts](./integrations/OPENSERV_AGENT_PROMPTS.md), [Concierge prompts](./integrations/OPENSERV_CONCIERGE_PROMPTS.md), [MCP auth](./integrations/OPENSERV_MCP_AUTH.md)), A2A, prompts, adaptation plans |
 | [pitch-deck/](./pitch-deck/) | Investor deck source notes (Markdown); live UI route: `/pitch` |
 | [supabase/](./supabase/) | Supabase-specific runbooks (e.g. expiration cron) |
 
@@ -29,6 +29,7 @@ Start at the repo root **[AGENTS.md](../AGENTS.md)** (links to rules, APIs, and 
 - [Farcaster](./integrations/FARCASTER_APP_README.md)
 - [OpenServ agents setup](./integrations/OPENSERV_AGENTS_SETUP.md)
 - [OpenServ Stage A — Analyst (Loyal Spark only)](./integrations/OPENSERV_STAGE_A.md)
+- [OpenServ Stages B–D — Concierge + AI ops packaging](./integrations/OPENSERV_STAGES_BCD.md)
 - [OpenServ MCP auth troubleshooting](./integrations/OPENSERV_MCP_AUTH.md)
 - [OpenServ prompts](./integrations/OPENSERV_AGENT_PROMPTS.md)
 - [Prompt guide (LLMs)](./integrations/PROMPT_GUIDE.md)

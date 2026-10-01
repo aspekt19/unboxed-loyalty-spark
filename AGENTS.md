@@ -64,4 +64,6 @@ Optional **local** scripts (not used by the web app build): **`scripts/x402-paid
 - [`docs/integrations/PROMPT_GUIDE.md`](./docs/integrations/PROMPT_GUIDE.md) — copy-paste system prompts.
 - [`docs/integrations/OPENSERV_AGENTS_SETUP.md`](./docs/integrations/OPENSERV_AGENTS_SETUP.md) — OpenServ-oriented notes (see disclaimer there about files not shipped in this repo).
 - [`docs/integrations/OPENSERV_STAGE_A.md`](./docs/integrations/OPENSERV_STAGE_A.md) — **Stage A:** weekly Analyst + **Loyal Spark–only** scope (protocol-paid OpenServ).
+- [`docs/integrations/OPENSERV_STAGES_BCD.md`](./docs/integrations/OPENSERV_STAGES_BCD.md) — **Stages B–D:** `chat-bridge`, Merchant/Shopper Concierge UI, pricing packaging.
+- [`docs/integrations/OPENSERV_CONCIERGE_PROMPTS.md`](./docs/integrations/OPENSERV_CONCIERGE_PROMPTS.md) — Merchant + Shopper Concierge system prompts.
 - [`docs/integrations/OPENSERV_AGENT_PROMPTS.md`](./docs/integrations/OPENSERV_AGENT_PROMPTS.md) — CEO/SEO/Growth/Analyst prompts with HARD SCOPE guard.

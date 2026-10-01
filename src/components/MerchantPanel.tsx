@@ -15,8 +15,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMintTokens } from '@/hooks/useMintTokens';
 import { useAccount } from 'wagmi';
 import { toast } from 'sonner';
-import { Wallet, Bot, Users, Building2, Briefcase, CreditCard, LayoutDashboard, UserSearch, Megaphone, Gift } from 'lucide-react';
+import { Wallet, Bot, Users, Building2, Briefcase, CreditCard, LayoutDashboard, UserSearch, Megaphone, Gift, MessageSquare } from 'lucide-react';
 import { MerchantBillingDashboard } from '@/components/merchant/MerchantBillingDashboard';
+import { LoyalSparkConcierge } from '@/components/assistant/LoyalSparkConcierge';
 import { useCheckProgramStatus } from '@/hooks/useCheckProgramStatus';
 import { mintTokensSchema } from '@/lib/validationSchemas';
 import { useQuery } from '@tanstack/react-query';
@@ -43,7 +44,7 @@ export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: Merchant
   const { address } = useAccount();
   const location = useLocation();
   const navigate = useNavigate();
-  const VALID_TABS = ['dashboard', 'customers', 'programs', 'rewards', 'certificates', 'marketing', 'billing', 'agents', 'team'];
+  const VALID_TABS = ['dashboard', 'customers', 'programs', 'rewards', 'certificates', 'marketing', 'billing', 'agents', 'assistant', 'team'];
 
   // Grouped navigation: top-level clusters, sub-tabs inside each cluster
   const TAB_GROUPS = [
@@ -66,6 +67,7 @@ export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: Merchant
     business: [
       { value: 'billing', label: 'Billing', icon: CreditCard },
       { value: 'agents', label: 'AI Agents', icon: Bot },
+      { value: 'assistant', label: 'Assistant', icon: MessageSquare },
       { value: 'team', label: 'Team', icon: Users },
     ],
   };
@@ -79,6 +81,7 @@ export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: Merchant
     marketing: 'growth',
     billing: 'business',
     agents: 'business',
+    assistant: 'business',
     team: 'business',
   };
 
@@ -521,6 +524,9 @@ export function MerchantPanel({ activeTab, onTabChange, hideTabsList }: Merchant
           </TabsContent>
           <TabsContent value="agents" className="mt-6">
             <AgentsTab />
+          </TabsContent>
+          <TabsContent value="assistant" className="mt-6">
+            <LoyalSparkConcierge role="merchant" title="Merchant Concierge" />
           </TabsContent>
           <TabsContent value="team" className="mt-6">
             <TeamTab />

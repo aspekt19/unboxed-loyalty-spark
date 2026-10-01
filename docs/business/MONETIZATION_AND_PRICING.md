@@ -30,12 +30,18 @@ This document is the **single source of truth** for public pricing: it reflects 
 | Plan | USD / month | Role |
 |------|-------------|------|
 | **Starter** | **$39** | SMB entry |
-| **Growth** | **$79** | Upsell for scale and depth. |
-| **Scale** | **$149** | Corporate-style budgets and priority. |
+| **Growth** | **$79** | Upsell for scale and depth. Includes in-app **Merchant Concierge** (Loyal Spark–only) + Analyst reports. |
+| **Scale** | **$149** | Corporate-style budgets and priority. Concierge + priority ops routing; dedicated onboarding. |
 
 **Annual billing (optional):** **15–20%** off vs 12× monthly — typical B2B SaaS.
 
 **Honest positioning:** Do not claim parity with UDS on features you have not shipped (e.g. white-label mobile app). Compete on **on-chain programs + agents + transparency** at a **comparable loyalty/CRM-light** price point.
+
+### 2.1 In-app AI assistants (OpenServ Concierge)
+
+- Protocol pays OpenServ; assistants **refuse off-topic** (weather, general chat, etc.).
+- Runtime: Edge `chat-bridge` + hosted Concierge agents — see [OPENSERV_STAGES_BCD.md](../integrations/OPENSERV_STAGES_BCD.md).
+- Not a substitute for agent API plans (`lsk_` / `rwk_`); portal Concierge is a merchant/shopper UX surface.
 
 ---
 

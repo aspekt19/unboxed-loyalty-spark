@@ -1,0 +1,88 @@
+# OpenServ Stages B–D — Concierge + AI ops packaging
+
+Loyal Spark–only. Protocol pays OpenServ. Stage A Analyst: [OPENSERV_STAGE_A.md](./OPENSERV_STAGE_A.md).  
+Concierge prompts: [OPENSERV_CONCIERGE_PROMPTS.md](./OPENSERV_CONCIERGE_PROMPTS.md).
+
+## Architecture (B + C)
+
+```
+Merchant / Customer UI
+  → supabase.functions.invoke("chat-bridge")  [JWT]
+    → HARD SCOPE gate (_shared/loyal-spark-scope.ts)
+    → daily quota (chat_bridge_usage)
+    → OpenServ Concierge HTTP (Bearer)  OR  local scoped stub
+```
+
+| Piece | Location |
+|-------|----------|
+| Scope gate | `supabase/functions/_shared/loyal-spark-scope.ts` |
+| Bridge | `supabase/functions/chat-bridge/index.ts` |
+| Usage table | `supabase/migrations/20261001120000_chat_bridge_usage.sql` |
+| Merchant UI | Merchant portal → Business → **Assistant** (`?tab=assistant`) |
+| Shopper UI | Customer portal → **Shopper assistant** dock |
+| Chat component | `src/components/assistant/LoyalSparkConcierge.tsx` |
+
+### Secrets (Supabase)
+
+| Secret | Purpose |
+|--------|---------|
+| `OPENSERV_CONCIERGE_URL` | Base URL of hosted Concierge HTTP API (no trailing slash) |
+| `OPENSERV_CONCIERGE_API_KEY` | Bearer token for that API |
+| `CHAT_MESSAGES_PER_DAY` | Optional; default `40` per wallet |
+
+Without OpenServ secrets, bridge returns **scoped local stub** replies (still refuses off-topic). Kill-switch: 3 consecutive upstream failures → 503 for 5 minutes.
+
+### Deploy
+
+```bash
+supabase db push   # or apply migration
+supabase functions deploy chat-bridge
+```
+
+### Definition of Done — Stage B
+
+- [ ] Merchant sees Assistant tab; signed-in chat works.
+- [ ] Off-topic refused in UI (and at bridge) with no OpenServ spend intent.
+- [ ] With secrets set: replies come from OpenServ (`source: "openserv"`).
+- [ ] Mint guidance never auto-broadcasts; confirms first.
+
+### Definition of Done — Stage C
+
+- [ ] Shopper dock visible when signed in on customer portal.
+- [ ] Same HARD SCOPE; holder tools only when OpenServ Shopper agent is wired.
+
+## Stage D — Growth / Scale AI ops packaging
+
+Product packaging (not a new runtime):
+
+| Audience | What ships |
+|----------|------------|
+| **Merchant Growth+** | In-app Merchant Concierge + Stage A Analyst reports in portal |
+| **Merchant Scale** | Priority Concierge routing (ops), dedicated onboarding; higher chat quota via `CHAT_MESSAGES_PER_DAY` / plan policy later |
+| **Agent Pro / Enterprise** | Same MCP/REST; OpenServ ops agents (CEO/SEO/Growth/Analyst) remain protocol-ops, not sold as “unlimited chat” |
+
+Public copy: Pricing page features + [MONETIZATION_AND_PRICING.md](../business/MONETIZATION_AND_PRICING.md) §2.1.
+
+**Do not** market OpenServ as general-purpose AI. Refuse off-topic at Concierge and ops agents.
+
+## Manual OpenServ Phase 0 (outside this repo)
+
+1. Provision Merchant + Shopper Concierge agents from Concierge prompts doc.  
+2. Point secrets at their chat URLs.  
+3. Keep Analyst Stage A green before turning on Growth/SEO automation.
+
+## Smoke (scope unit)
+
+```bash
+cd examples/openserv-analyst && npm run smoke
+```
+
+Bridge off-topic probe (with session JWT):
+
+```bash
+curl -sS "$SUPABASE_URL/functions/v1/chat-bridge" \
+  -H "Authorization: Bearer $JWT" \
+  -H "Content-Type: application/json" \
+  -d '{"role":"merchant","messages":[{"role":"user","content":"What is the weather in Berlin?"}]}'
+# expect refused: true
+```

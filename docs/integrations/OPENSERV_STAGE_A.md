@@ -54,10 +54,10 @@ mint / create_program / activate / bazaar_pay_and_call / gift-certificate mintin
 - [ ] Off-topic probe refuses with **0** MCP calls (check OpenServ / MCP logs).
 - [ ] No mint, deploy, or non-LS tools appear in the run log.
 
-## What comes next (not Stage A)
+## What comes next
 
-- **Stage B:** Merchant Concierge (chat UI + bridge) — same HARD SCOPE.  
-- **Stage C:** Shopper Concierge (`rwk_`).  
+- **Stages B–D (in repo):** [OPENSERV_STAGES_BCD.md](./OPENSERV_STAGES_BCD.md) — `chat-bridge`, Merchant/Shopper Concierge UI, pricing packaging.  
+- **Concierge prompts:** [OPENSERV_CONCIERGE_PROMPTS.md](./OPENSERV_CONCIERGE_PROMPTS.md).  
 - Full CEO/SEO/Growth workflow only after Analyst is green for 2–3 weeks.
 
 ## Local smoke (optional)
