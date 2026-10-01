@@ -57,7 +57,11 @@ export function isLoyalSparkScoped(text) {
     /\bshops?\b/,
     /\btokens?\b/,
     /токен/,
-    /балл/,
+    /балл|балы/,
+    /заработ/,
+    /потрат/,
+    /\bearn\b/,
+    /\bspend\b/,
     /\bpoints?\b/,
     /\bprograms?\b/,
     /гайд/,
@@ -110,6 +114,8 @@ async function main() {
   assert(!isLoyalSparkScoped("Привет, как дела?"), "small talk must be denied");
   assert(isLoyalSparkScoped("Где гайд для мерчанта?"), "RU guide query must be allowed");
   assert(isLoyalSparkScoped("How to create a loyalty program?"), "how-to must be allowed");
+  assert(isLoyalSparkScoped("Как заработать балы?"), "RU earn typo must be allowed");
+  assert(isLoyalSparkScoped("как потратить балы?"), "RU spend typo must be allowed");
   console.log("   off-topic refusal copy:", REFUSAL);
 
   if (!API_KEY || API_KEY.includes("replace_me")) {

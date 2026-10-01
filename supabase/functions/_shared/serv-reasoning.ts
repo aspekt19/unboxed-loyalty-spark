@@ -9,12 +9,12 @@
  */
 
 const SERV_URL = "https://inference-api.openserv.ai/v1/chat/completions";
-const PROMPT_VERSION = "ls-concierge-v4";
+const PROMPT_VERSION = "ls-concierge-v5";
 
 const PRODUCT_MAP = `How Loyal Spark works (use this to answer usage questions; do not invent pages):
 Loyal Spark is an onchain loyalty protocol on Base (chain 8453). A merchant deploys a B20 loyalty token, customers earn points, rewards are redeemed as vouchers, gift certificates are a separate catalog. P2P escrow offers exist. DEX trading and DeFi yield are not available — do not send users there.
 
-When the user asks how to do something, name the page and the click path, and link the guide. Reply in the user's language.
+When the user asks how to do something, name the page and the click path, and link the guide. Reply in the user's language. Plain sentences only: no markdown asterisks, and no URLs that are not listed here.
 
 Guides and docs:
 - Human guide (tabs inside the page): https://loyalspark.online/guide — Getting Started, For Merchants, For Customers, For AI Agents, FAQ
@@ -115,8 +115,9 @@ export async function servConciergeReply(args: {
     }
 
     const data = await res.json();
-    const text = data?.choices?.[0]?.message?.content;
-    if (typeof text !== "string" || !text.trim()) {
+    const raw = data?.choices?.[0]?.message?.content;
+    const text = typeof raw === "string" ? raw.replace(/\*\*/g, "").trim() : "";
+    if (!text) {
       throw new Error("Empty response from SERV Reasoning");
     }
     console.error(

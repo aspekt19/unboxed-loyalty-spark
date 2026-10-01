@@ -85,9 +85,18 @@ Deno.serve(async (req) => {
       }, 429);
     }
 
-    const howTo = /гайд|guide|how to|faq|инструкц|как созда|как польз|как найти|как работает/i.test(lastUser);
+    if (asksForOwnLoyaltyList(lastUser)) {
+      const reply = await answerOwnLoyaltyList(service, role, wallet, lastUser);
+      return json({ reply, role, wallet, source: "account" });
+    }
+
+    const quick = quickGuideReply(role, lastUser);
+    if (quick) {
+      return json({ reply: quick, role, wallet, source: "guide" });
+    }
+
     let accountContext = "";
-    if (wallet && !howTo) {
+    if (wallet) {
       try {
         accountContext = await loadAccountContext(service, role, wallet);
       } catch (err) {
@@ -95,19 +104,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (asksForOwnLoyaltyList(lastUser)) {
-      const reply = await answerOwnLoyaltyList(service, role, wallet, lastUser);
-      return json({ reply, role, wallet, source: "account" });
-    }
-
-    if (Date.now() < openservDisabledUntil) {
-      return json({
-        disabled: true,
-        reply: "Assistant temporarily unavailable. Please try again in a few minutes.",
-      }, 503);
-    }
-
-    if (servConfigured()) {
+    if (servConfigured() && Date.now() >= openservDisabledUntil) {
       try {
         const serv = await servConciergeReply({ role, messages, accountContext });
         openservFailStreak = 0;
@@ -126,10 +123,6 @@ Deno.serve(async (req) => {
           openservDisabledUntil = Date.now() + 5 * 60_000;
           openservFailStreak = 0;
         }
-        return json({
-          disabled: true,
-          reply: "Assistant temporarily unavailable. Please try again shortly.",
-        }, 503);
       }
     }
 
@@ -162,23 +155,19 @@ Deno.serve(async (req) => {
             openservDisabledUntil = Date.now() + 5 * 60_000;
             openservFailStreak = 0;
           }
-          return json({
-            disabled: true,
-            reply: "Assistant temporarily unavailable. Please try again shortly.",
-          }, 503);
+        } else {
+          openservFailStreak = 0;
+          const data = await upstream.json().catch(() => ({}));
+          const reply =
+            typeof data.reply === "string"
+              ? data.reply
+              : typeof data.message === "string"
+              ? data.message
+              : typeof data.content === "string"
+              ? data.content
+              : JSON.stringify(data);
+          return json({ reply, role, wallet, source: "openserv" });
         }
-
-        openservFailStreak = 0;
-        const data = await upstream.json().catch(() => ({}));
-        const reply =
-          typeof data.reply === "string"
-            ? data.reply
-            : typeof data.message === "string"
-            ? data.message
-            : typeof data.content === "string"
-            ? data.content
-            : JSON.stringify(data);
-        return json({ reply, role, wallet, source: "openserv" });
       } catch {
         clearTimeout(timer);
         openservFailStreak += 1;
@@ -186,10 +175,6 @@ Deno.serve(async (req) => {
           openservDisabledUntil = Date.now() + 5 * 60_000;
           openservFailStreak = 0;
         }
-        return json({
-          disabled: true,
-          reply: "Assistant temporarily unavailable. Please try again shortly.",
-        }, 503);
       }
     }
 
@@ -243,6 +228,35 @@ async function bumpDailyUsage(
     { onConflict: "wallet_address,day" },
   );
   return next;
+}
+
+function quickGuideReply(role: ChatRole, lastUser: string): string | null {
+  const q = lastUser.toLowerCase();
+  const ru = /[а-яё]/i.test(lastUser);
+  const earn = /заработ|earn|начисл|получить бал/.test(q);
+  const spend = /потрат|spend|redeem|погас|использовать бал|активир/.test(q);
+
+  if (role === "shopper" && earn && !spend) {
+    return ru
+      ? "Баллы начисляет магазин. Откройте https://loyalspark.online/customer, вкладка Loyalty, и покажите QR-код или адрес кошелька на кассе. Токены появятся в блоке Your Loyalty Tokens. Подробности: https://loyalspark.online/guide, вкладка For Customers."
+      : "A merchant issues the points. Open https://loyalspark.online/customer, Loyalty tab, and show your QR code or wallet address at checkout. Tokens show up under Your Loyalty Tokens. Guide: https://loyalspark.online/guide, For Customers.";
+  }
+  if (role === "shopper" && spend) {
+    return ru
+      ? "Потратить баллы можно на награду. На https://loyalspark.online/customer откройте каталог Rewards у программы, где хватает баланса, нажмите Activate Voucher и подтвердите транзакцию. Ваучер появится в My Vouchers — покажите его QR магазину. Гайд: https://loyalspark.online/guide, вкладка For Customers."
+      : "Spend points on a reward. On https://loyalspark.online/customer open Rewards for a program where your balance is enough, press Activate Voucher, and confirm. The voucher appears in My Vouchers with a QR code for the store. Guide: https://loyalspark.online/guide, For Customers.";
+  }
+  if (role === "merchant" && (earn || /\bmint\b/.test(q))) {
+    return ru
+      ? "Начисление делает мерчант. Откройте https://loyalspark.online/merchant?tab=programs, выберите программу и Mint или Earn. Покупатель показывает QR в портале https://loyalspark.online/customer. Гайд: https://loyalspark.online/guide, вкладка For Merchants."
+      : "Minting is a merchant step. Open https://loyalspark.online/merchant?tab=programs, select the program, then Mint or Earn. The customer shows the QR from https://loyalspark.online/customer. Guide: https://loyalspark.online/guide, For Merchants.";
+  }
+  if (/гайд|guide|how to|faq|инструкц|как созда|как польз|как найти|как работает/.test(q)) {
+    return ru
+      ? "Гайд: https://loyalspark.online/guide — вкладки Getting Started, For Merchants, For Customers, For AI Agents, FAQ. Портал мерчанта: https://loyalspark.online/merchant. Портал покупателя: https://loyalspark.online/customer. Агенты: https://loyalspark.online/for-agents."
+      : "Guide: https://loyalspark.online/guide — Getting Started, For Merchants, For Customers, For AI Agents, FAQ. Merchant portal: https://loyalspark.online/merchant. Customer portal: https://loyalspark.online/customer. Agents: https://loyalspark.online/for-agents.";
+  }
+  return null;
 }
 
 function localScopedReply(role: ChatRole, lastUser: string): string {
