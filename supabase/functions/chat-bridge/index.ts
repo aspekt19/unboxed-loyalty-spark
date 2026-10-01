@@ -214,30 +214,29 @@ function sectionLines(accountContext: string, title: string): string[] {
   return rows;
 }
 
+function asksAboutOwnHoldings(text: string): boolean {
+  return /у меня|мои |мой |моя |моих |my points|my balance|my tokens|сколько у меня|больше всего|the most|what do i have/i.test(text);
+}
+
 function modelFallback(lastUser: string, accountContext: string): string {
   if (!isLoyalSparkScoped(lastUser)) return LOYAL_SPARK_REFUSAL;
   const ru = /[а-яё]/i.test(lastUser);
   const guide = "https://loyalspark.online/guide";
+  if (!asksAboutOwnHoldings(lastUser)) {
+    return ru
+      ? `Баллы начисляет магазин. В https://loyalspark.online/customer откройте Loyalty и покажите QR-код или адрес кошелька на кассе. Токены появятся в Your Loyalty Tokens. Потратить их можно в Rewards: кнопка Activate Voucher, затем QR ваучера магазину. Гайд: ${guide}`
+      : `A merchant issues the points. On https://loyalspark.online/customer open Loyalty and show your QR code or wallet address at checkout. Tokens show up under Your Loyalty Tokens. Spend them under Rewards with Activate Voucher, then show the voucher QR. Guide: ${guide}`;
+  }
   const balances = sectionLines(accountContext, "Loyalty balances").slice(0, 8);
-  const vouchers = sectionLines(accountContext, "Vouchers");
-  const programs = sectionLines(accountContext, "Programs");
-  const parts: string[] = [];
-  if (balances.length > 0) {
-    parts.push(ru
-      ? `Ваши баллы, от большего к меньшему:\n${balances.map((row) => `• ${row}`).join("\n")}\nБольше всего баллов в ${balances[0]}.`
-      : `Your points, highest first:\n${balances.map((row) => `• ${row}`).join("\n")}\nYou have the most points in ${balances[0]}.`);
-  } else if (programs.length > 0) {
-    parts.push(ru
-      ? `Ваши программы:\n${programs.map((row) => `• ${row}`).join("\n")}`
-      : `Your programs:\n${programs.map((row) => `• ${row}`).join("\n")}`);
+  if (balances.length === 0) {
+    return ru
+      ? `На этом кошельке пока нет баллов. Их начисляет магазин, когда вы показываете QR на вкладке Loyalty. Гайд: ${guide}`
+      : `This wallet has no points yet. A merchant issues them when you show the QR on the Loyalty tab. Guide: ${guide}`;
   }
-  if (vouchers.length > 0) {
-    parts.push(ru
-      ? `Ваучеры:\n${vouchers.map((row) => `• ${row}`).join("\n")}`
-      : `Vouchers:\n${vouchers.map((row) => `• ${row}`).join("\n")}`);
-  }
-  parts.push(ru ? `Гайд: ${guide}` : `Guide: ${guide}`);
-  return parts.join("\n");
+  const lines = balances.map((row) => `• ${row}`).join("\n");
+  return ru
+    ? `Ваши баллы, от большего к меньшему:\n${lines}\nБольше всего баллов в ${balances[0]}.`
+    : `Your points, highest first:\n${lines}\nYou have the most points in ${balances[0]}.`;
 }
 
 function json(body: unknown, status = 200) {

@@ -11,7 +11,7 @@
 import { LOYAL_SPARK_REFUSAL } from "./loyal-spark-scope.ts";
 
 const SERV_URL = "https://inference-api.openserv.ai/v1/chat/completions";
-const PROMPT_VERSION = "ls-concierge-v9";
+const PROMPT_VERSION = "ls-concierge-v10";
 
 const PRODUCT_MAP = `How Loyal Spark works (use this to answer usage questions; do not invent pages):
 Loyal Spark is an onchain loyalty protocol on Base (chain 8453). A merchant deploys a B20 loyalty token, customers earn points, rewards are redeemed as vouchers, gift certificates are a separate catalog. P2P escrow offers exist. DEX trading and DeFi yield are not available — do not send users there.
@@ -80,22 +80,43 @@ export async function servConciergeReply(args: {
 
   const model = Deno.env.get("SERV_MODEL")?.trim() || "gpt-5.4-mini";
   const system = `${args.role === "shopper" ? SHOPPER_SYSTEM : MERCHANT_SYSTEM}\n\n${PRODUCT_MAP}`;
-  const history = args.messages
-    .filter((m) => m.role === "user" || m.role === "assistant")
-    .filter((m) => !/Модель сейчас не ответила|The model did not answer|Ваши баллы, от большего|Your points, highest first/i.test(m.content))
-    .slice(-6)
-    .map((m) => ({ role: m.role, content: m.content.slice(0, 2000) }));
+  const question = [...args.messages].reverse().find((m) => m.role === "user")?.content?.slice(0, 2000) ?? "";
   const messages: { role: string; content: string }[] = [{ role: "system", content: system }];
   if (args.accountContext?.trim()) {
     messages.push({
       role: "user",
-      content: `ACCOUNT DATA for this signed-in user. Answer from these facts:\n${args.accountContext.slice(0, 6000)}`,
+      content: `ACCOUNT DATA for this signed-in user. Use it only if the question is about their own points, vouchers, or programs:\n${args.accountContext.slice(0, 4000)}`,
     });
   }
-  messages.push(...history);
+  if (question.trim()) messages.push({ role: "user", content: question });
 
+  const guarded = await completeServ(apiKey, {
+    model,
+    reasoning_effort: "none",
+    max_completion_tokens: 800,
+    messages,
+    tools: [
+      { type: "function", function: { name: "serv_prompt_guard" } },
+      { type: "function", function: { name: "serv_disable_content_filter" } },
+    ],
+  });
+  if (guarded) return { ...guarded, promptVersion: PROMPT_VERSION };
+
+  const plain = await completeServ(apiKey, {
+    model,
+    max_completion_tokens: 800,
+    messages,
+  });
+  if (plain) return { ...plain, promptVersion: PROMPT_VERSION };
+  throw new Error("Empty response from SERV Reasoning");
+}
+
+async function completeServ(
+  apiKey: string,
+  body: Record<string, unknown>,
+): Promise<Omit<ServChatResult, "promptVersion"> | null> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 20_000);
+  const timer = setTimeout(() => controller.abort(), 12_000);
   try {
     const res = await fetch(SERV_URL, {
       method: "POST",
@@ -104,37 +125,30 @@ export async function servConciergeReply(args: {
         "Content-Type": "application/json",
       },
       signal: controller.signal,
-      body: JSON.stringify({
-        model,
-        reasoning_effort: "none",
-        max_tokens: 700,
-        messages,
-        tools: [
-          { type: "function", function: { name: "serv_prompt_guard" } },
-          { type: "function", function: { name: "serv_disable_content_filter" } },
-        ],
-      }),
+      body: JSON.stringify(body),
     });
-
     if (!res.ok) {
       const detail = await res.text();
-      throw new Error(`SERV ${res.status}: ${detail.slice(0, 240)}`);
+      console.error(`[serv] ${res.status}: ${detail.slice(0, 240)}`);
+      return null;
     }
-
     const data = await res.json();
     const text = extractReply(data).replace(/\*\*/g, "").trim();
     if (!text) {
-      throw new Error("Empty response from SERV Reasoning");
+      console.error("[serv] empty content");
+      return null;
     }
     console.error(
-      `[serv] concierge prompt=${PROMPT_VERSION} model=${data.model ?? model} tokens=${data.usage?.total_tokens ?? "?"}`,
+      `[serv] concierge prompt=${PROMPT_VERSION} model=${data.model ?? body.model} tokens=${data.usage?.total_tokens ?? "?"}`,
     );
     return {
       text,
-      model: typeof data.model === "string" ? data.model : model,
-      promptVersion: PROMPT_VERSION,
+      model: typeof data.model === "string" ? data.model : String(body.model ?? ""),
       usage: data.usage,
     };
+  } catch (err) {
+    console.error("[serv] call failed", err);
+    return null;
   } finally {
     clearTimeout(timer);
   }
