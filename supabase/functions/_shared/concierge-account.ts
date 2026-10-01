@@ -27,16 +27,31 @@ export async function loadAccountContext(
 }
 
 async function shopperContext(service: Db, wallet: string, question: string): Promise<string> {
-  const [held, spends, askedTx, vouchersRes, certsRes, offersRes] = await Promise.all([
+  const [held, vouchersRes, certsRes, offersRes] = await Promise.all([
     shopperBalanceLines(service, wallet),
-    recentSpendLines(service, wallet),
-    askedTxLine(question),
-    service.from("vouchers").select("reward_name, status, token_symbol, cost, activated_at").ilike("customer_address", wallet).order("activated_at", { ascending: false }).limit(5),
+    service.from("vouchers").select("reward_name, status, token_symbol, token_address, cost, activated_at").ilike("customer_address", wallet).order("activated_at", { ascending: false }).limit(5),
     service.from("gift_certificates").select("title, status, token_symbol, token_amount").ilike("redeemed_by", wallet).limit(10),
     service.from("marketplace_offers").select("status, offer_amount, request_amount").ilike("creator_address", wallet).eq("status", "active").limit(8),
   ]);
 
-  const vouchers = ((vouchersRes.data ?? []) as Array<{ reward_name: string; status: string; token_symbol: string; cost: number; activated_at: string }>)
+  const voucherRows = (vouchersRes.data ?? []) as Array<{
+    reward_name: string;
+    status: string;
+    token_symbol: string;
+    token_address: string | null;
+    cost: number;
+    activated_at: string;
+  }>;
+  const spendTokens = [
+    ...voucherRows.map((v) => v.token_address ?? ""),
+    ...held.tokenAddresses,
+  ];
+  const [spends, askedTx] = await Promise.all([
+    recentSpendLines(service, wallet, spendTokens),
+    askedTxLine(question),
+  ]);
+
+  const vouchers = voucherRows
     .map((v) => `- ${v.activated_at}: spent ${amt(Number(v.cost))} ${v.token_symbol} on ${v.reward_name} [${v.status}]`);
   const certs = ((certsRes.data ?? []) as Array<{ title: string; status: string; token_symbol: string | null; token_amount: number }>)
     .map((c) => `- ${c.title} [${c.status}] ${amt(c.token_amount)} ${c.token_symbol ?? ""}`.trim());
@@ -44,22 +59,24 @@ async function shopperContext(service: Db, wallet: string, question: string): Pr
     .map((o) => `- P2P ${o.status}: offer ${amt(o.offer_amount)} for ${amt(o.request_amount)}`);
 
   return [
-    `Wallet ${wallet}. This is the signed-in shopper only. Balances are on-chain and sorted highest first, the same numbers as the customer portal.`,
-    lines("Loyalty balances (stores they hold points with)", held),
+    `Wallet ${wallet}. This is the signed-in shopper. Do not ask them to send this address again.`,
+    lines("Chain transfers from this wallet, newest first. Block number and tx hash are from Base. Empty means none in the last 10000 blocks, not an unknown wallet", spends),
     askedTx ? `Transaction the user named, read from the Base receipt:\n${askedTx}` : "Transaction the user named: none",
-    lines("Chain transfers from this wallet, newest first. Block number and tx hash are from Base, not from the database", spends),
-    lines("Recent reward redemptions, newest first", vouchers),
+    lines("Loyalty balances, same list as the customer portal (on-chain balance above zero only)", held.lines),
+    lines("Recent reward redemptions, newest first. A voucher row is not the block number", vouchers),
     lines("Gift certificates claimed", certs),
     lines("Open P2P offers they created", offers),
   ].join("\n");
 }
 
-async function recentSpendLines(service: Db, wallet: string): Promise<string[]> {
+async function recentSpendLines(service: Db, wallet: string, tokenAddresses: string[]): Promise<string[]> {
+  const tokens = [...new Set(tokenAddresses.map((addr) => addr.trim().toLowerCase()).filter((addr) => /^0x[a-f0-9]{40}$/.test(addr)))];
+  if (tokens.length === 0) return [];
   try {
     const { loadRecentLoyaltySpends } = await import("./recipient-onchain-balances.ts");
     const rows = await Promise.race([
-      loadRecentLoyaltySpends(service, wallet),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("spend timeout")), 4_000)),
+      loadRecentLoyaltySpends(service, wallet, tokens),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("spend timeout")), 6_000)),
     ]);
     return rows.map((row) =>
       `- block ${row.blockNumber} tx ${row.txHash}: ${row.label} ${amt(row.amount)} sent. https://basescan.org/tx/${row.txHash}`
@@ -87,60 +104,34 @@ async function askedTxLine(question: string): Promise<string> {
   }
 }
 
-/** On-chain balances when the RPC answers in time, otherwise the portal ledger. */
-async function shopperBalanceLines(service: Db, wallet: string): Promise<string[]> {
+/** On-chain balances only. A historical mint amount is not what the portal shows. */
+async function shopperBalanceLines(
+  service: Db,
+  wallet: string,
+): Promise<{ lines: string[]; tokenAddresses: string[] }> {
   try {
     const { loadHolderBalancesFast } = await import("./recipient-onchain-balances.ts");
     const rows = await Promise.race([
       loadHolderBalancesFast(service, wallet),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("balance timeout")), 4_000)),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("balance timeout")), 8_000)),
     ]);
-    const linesOut = rows
+    const positive = rows
       .filter((row) => row.current_balance > 0)
-      .sort((a, b) => b.current_balance - a.current_balance)
-      .map((row) => {
+      .sort((a, b) => b.current_balance - a.current_balance);
+    return {
+      tokenAddresses: positive.map((row) => row.token_address),
+      lines: positive.map((row) => {
         const label = row.program ? `${row.program.name} (${row.program.symbol})` : row.token_address;
         return `- ${label}: ${amt(row.current_balance)}`;
-      });
-    if (linesOut.length > 0) return linesOut;
+      }),
+    };
   } catch (err) {
     console.error("[concierge-account] chain balances", err);
+    return {
+      tokenAddresses: [],
+      lines: ["- on-chain balance read failed. Do not guess amounts from old mints or from another wallet."],
+    };
   }
-  return shopperHoldingLines(service, wallet);
-}
-
-/** DB balances for tokens this wallet already touched. Used when the chain read fails. */
-export async function shopperHoldingLines(service: Db, wallet: string): Promise<string[]> {
-  const [tiersRes, mintsRes] = await Promise.all([
-    service.from("customer_tier_status").select("token_address, current_balance").ilike("customer_address", wallet).limit(30),
-    service.from("token_mint_history").select("token_address, amount").ilike("recipient_address", wallet).limit(40),
-  ]);
-  const byToken = new Map<string, number>();
-  for (const row of (tiersRes.data ?? []) as Array<{ token_address: string; current_balance: number | null }>) {
-    byToken.set(row.token_address.toLowerCase(), Number(row.current_balance ?? 0));
-  }
-  for (const row of (mintsRes.data ?? []) as Array<{ token_address: string; amount: number }>) {
-    const key = row.token_address.toLowerCase();
-    if (!byToken.has(key)) byToken.set(key, Number(row.amount ?? 0));
-  }
-  const addresses = [...byToken.keys()];
-  if (addresses.length === 0) return [];
-  const { data: programs } = await service
-    .from("loyalty_programs")
-    .select("token_address, name, symbol")
-    .in("token_address", addresses);
-  const nameBy = new Map<string, { name: string; symbol: string }>();
-  for (const p of (programs ?? []) as Array<{ token_address: string; name: string; symbol: string }>) {
-    nameBy.set(p.token_address.toLowerCase(), { name: p.name, symbol: p.symbol });
-  }
-  return addresses
-    .filter((addr) => (byToken.get(addr) ?? 0) > 0)
-    .slice(0, 20)
-    .map((addr) => {
-      const program = nameBy.get(addr);
-      const label = program ? `${program.name} (${program.symbol})` : addr;
-      return `- ${label}: ${amt(byToken.get(addr) ?? 0)}`;
-    });
 }
 
 async function merchantContext(service: Db, wallet: string): Promise<string> {

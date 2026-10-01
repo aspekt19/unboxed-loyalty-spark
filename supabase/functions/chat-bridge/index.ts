@@ -218,10 +218,26 @@ function asksAboutOwnHoldings(text: string): boolean {
   return /у меня|мои |мой |моя |моих |my points|my balance|my tokens|сколько у меня|больше всего|the most|what do i have/i.test(text);
 }
 
+function asksAboutLastSpend(text: string): boolean {
+  return /списа|потрат|spent|just used|последн|which block|каком блоке/i.test(text);
+}
+
 function modelFallback(lastUser: string, accountContext: string): string {
   if (!isLoyalSparkScoped(lastUser)) return LOYAL_SPARK_REFUSAL;
   const ru = /[а-яё]/i.test(lastUser);
   const guide = "https://loyalspark.online/guide";
+  if (asksAboutLastSpend(lastUser)) {
+    const spends = sectionLines(accountContext, "Chain transfers");
+    if (spends.length === 0) {
+      return ru
+        ? "За последние 10000 блоков Base исходящего перевода баллов с этого кошелька нет. Список текущих балансов это не история списания."
+        : "No outgoing loyalty transfer from this wallet in the last 10000 Base blocks. Current balances are not a spend history.";
+    }
+    const lines = spends.map((row) => `• ${row}`).join("\n");
+    return ru
+      ? `Последние списания в сети, с номера блока и хеша транзакции:\n${lines}`
+      : `Latest spends on Base, with block number and tx hash:\n${lines}`;
+  }
   if (!asksAboutOwnHoldings(lastUser)) {
     return ru
       ? `Баллы начисляет магазин. В https://loyalspark.online/customer откройте Loyalty и покажите QR-код или адрес кошелька на кассе. Токены появятся в Your Loyalty Tokens. Потратить их можно в Rewards: кнопка Activate Voucher, затем QR ваучера магазину. Гайд: ${guide}`

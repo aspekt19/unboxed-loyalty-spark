@@ -225,21 +225,33 @@ const transferEvent = parseAbiItem(
   "event Transfer(address indexed from, address indexed to, uint256 value)",
 );
 
-/** Newest outgoing loyalty-token transfers from this wallet. One log query, short block window. */
+/** Newest outgoing transfers of the portal's loyalty tokens. One log query per token, short block window. */
 export async function loadRecentLoyaltySpends(
   serviceClient: any,
   walletAddress: string,
+  tokenAddresses: string[],
 ): Promise<Array<{ label: string; amount: number; blockNumber: string; txHash: string }>> {
   const wallet = walletAddress.toLowerCase() as Address;
+  const tokens = [...new Set(tokenAddresses.map((addr) => addr.toLowerCase()))].slice(0, 12);
+  if (tokens.length === 0) return [];
   const latest = await fastClient.getBlockNumber();
   const fromBlock = latest > 10000n ? latest - 10000n : 0n;
-  const logs = await fastClient.getLogs({
-    event: transferEvent,
-    args: { from: wallet },
-    fromBlock,
-    toBlock: latest,
-  });
-  const recent = [...logs].reverse().slice(0, 20);
+  const batches = await Promise.all(tokens.map(async (token) => {
+    try {
+      return await fastClient.getLogs({
+        address: token as Address,
+        event: transferEvent,
+        args: { from: wallet },
+        fromBlock,
+        toBlock: latest,
+      });
+    } catch (err) {
+      console.error("[loyalty-spends] getLogs", token, err);
+      return [];
+    }
+  }));
+  const logs = batches.flat();
+  const recent = [...logs].sort((a, b) => Number((b.blockNumber ?? 0n) - (a.blockNumber ?? 0n))).slice(0, 20);
   const tokenAddrs = [...new Set(recent.map((log) => log.address.toLowerCase()))];
   if (tokenAddrs.length === 0) return [];
 
