@@ -11,7 +11,7 @@
 import { LOYAL_SPARK_REFUSAL } from "./loyal-spark-scope.ts";
 
 const SERV_URL = "https://inference-api.openserv.ai/v1/chat/completions";
-const PROMPT_VERSION = "ls-concierge-v16";
+const PROMPT_VERSION = "ls-concierge-v17";
 
 const PRODUCT_MAP = `How Loyal Spark works (use this to answer usage questions; do not invent pages):
 Loyal Spark is an onchain loyalty protocol on Base (chain 8453). A merchant deploys a B20 loyalty token, customers earn points, rewards are redeemed as vouchers, gift certificates are a separate catalog. P2P escrow offers exist. DEX trading and DeFi yield are not available — do not send users there.
@@ -57,7 +57,7 @@ const SHOPPER_SYSTEM = `You are the Loyal Spark shopper assistant on Base (loyal
 
 ${JUDGMENT}
 
-Shopper topics include their balances, rewards, vouchers, gift certificates, and P2P escrow. Point to the customer portal. Do not give merchant mint or program-deploy steps.`;
+Shopper topics include their balances, rewards, vouchers, gift certificates, and P2P escrow. When they want a voucher, tell them to say so in this chat — the app will list affordable rewards and ask them to sign. Point to the customer portal for QR and My Vouchers. Do not give merchant mint or program-deploy steps. Never claim a voucher was issued without a signed transfer.`;
 
 export type ServChatResult = {
   text: string;

@@ -1,5 +1,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { loadAccountContext } from "../_shared/concierge-account.ts";
+import {
+  asksAboutLastSpend,
+  asksAboutRedeem,
+  prepareRedeemAction,
+  shopperRedeemIntentReply,
+} from "../_shared/concierge-redeem.ts";
 import { isLoyalSparkScoped, LOYAL_SPARK_REFUSAL } from "../_shared/loyal-spark-scope.ts";
 import { servConciergeReply, servConfigured } from "../_shared/serv-reasoning.ts";
 
@@ -48,6 +54,35 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const role: ChatRole = body.role === "shopper" ? "shopper" : "merchant";
+    const action = body.action && typeof body.action === "object"
+      ? body.action as Record<string, unknown>
+      : null;
+
+    // Structured redeem prepare — no chat message required, does not burn daily quota.
+    if (role === "shopper" && action?.type === "prepare_redeem") {
+      if (!wallet) {
+        return json({
+          reply: "Подключите кошелёк покупателя, чтобы выпустить ваучер.",
+          role,
+          wallet: null,
+          source: "redeem",
+        });
+      }
+      const rewardId = typeof action.reward_id === "string" ? action.reward_id : "";
+      if (!rewardId) return json({ error: "reward_id required" }, 400);
+      const prepared = await prepareRedeemAction(service, wallet, rewardId);
+      if ("action" in prepared) {
+        return json({
+          reply: prepared.reply,
+          role,
+          wallet,
+          source: "redeem",
+          action: prepared.action,
+        });
+      }
+      return json({ reply: prepared.reply, role, wallet, source: "redeem" });
+    }
+
     const messages = normalizeMessages(body.messages);
     const lastUser = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
 
@@ -59,7 +94,6 @@ Deno.serve(async (req) => {
     try {
       usage = await bumpDailyUsage(service, actor);
     } catch (err) {
-      // Quota tracking must never break the assistant — log and continue.
       console.error("[chat-bridge] usage tracking failed", err);
     }
     if (usage > DAILY_LIMIT) {
@@ -77,6 +111,17 @@ Deno.serve(async (req) => {
       } catch (err) {
         console.error("[chat-bridge] account", err);
       }
+    }
+
+    if (role === "shopper" && wallet && asksAboutRedeem(lastUser)) {
+      const redeem = await shopperRedeemIntentReply(service, wallet, lastUser);
+      return json({
+        reply: redeem.reply,
+        role,
+        wallet,
+        source: redeem.source,
+        action: redeem.action,
+      });
     }
 
     if (role === "shopper" && asksAboutLastSpend(lastUser)) {
@@ -165,7 +210,6 @@ function normalizeMessages(raw: unknown): ChatMessage[] {
     .filter((m) => m && typeof m === "object")
     .map((m) => {
       const o = m as Record<string, unknown>;
-      // Roles are server-owned: caller text is always treated as user input.
       const role = "user";
       const content = typeof o.content === "string" ? o.content.slice(0, 4000) : "";
       return { role, content } as ChatMessage;
@@ -227,10 +271,6 @@ function asksAboutOwnHoldings(text: string): boolean {
   return /у меня|мои |мой |моя |моих |my points|my balance|my tokens|сколько у меня|больше всего|the most|what do i have/i.test(text);
 }
 
-function asksAboutLastSpend(text: string): boolean {
-  return /списа|потрат|spent|just used|последн|which block|каком блоке/i.test(text);
-}
-
 function modelFallback(lastUser: string, accountContext: string): string {
   if (!isLoyalSparkScoped(lastUser)) return LOYAL_SPARK_REFUSAL;
   const ru = /[а-яё]/i.test(lastUser);
@@ -260,8 +300,8 @@ function modelFallback(lastUser: string, accountContext: string): string {
   }
   if (!asksAboutOwnHoldings(lastUser)) {
     return ru
-      ? `Баллы начисляет магазин. В https://loyalspark.online/customer откройте Loyalty и покажите QR-код или адрес кошелька на кассе. Токены появятся в Your Loyalty Tokens. Потратить их можно в Rewards: кнопка Activate Voucher, затем QR ваучера магазину. Гайд: ${guide}`
-      : `A merchant issues the points. On https://loyalspark.online/customer open Loyalty and show your QR code or wallet address at checkout. Tokens show up under Your Loyalty Tokens. Spend them under Rewards with Activate Voucher, then show the voucher QR. Guide: ${guide}`;
+      ? `Баллы начисляет магазин. В https://loyalspark.online/customer откройте Loyalty и покажите QR-код или адрес кошелька на кассе. Токены появятся в Your Loyalty Tokens. Потратить их можно здесь в ассистенте («выпусти ваучер») или во вкладке Rewards. Гайд: ${guide}`
+      : `A merchant issues the points. On https://loyalspark.online/customer open Loyalty and show your QR or wallet at checkout. Spend them here in the assistant (“issue a voucher”) or under Rewards. Guide: ${guide}`;
   }
   const balances = sectionLines(accountContext, "Loyalty balances").slice(0, 8);
   if (balances.length === 0) {

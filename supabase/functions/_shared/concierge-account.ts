@@ -27,7 +27,12 @@ export async function loadAccountContext(
 }
 
 function asksAboutLastSpend(text: string): boolean {
-  return /списа|потрат|spent|just used|последн|which block|каком блоке/i.test(text);
+  // Keep in sync with concierge-redeem.asksAboutLastSpend (avoid stealing redeem intents).
+  if (/ваучер|voucher|redeem|активир|получить\s+ваучер|потратить\s+(балл|очк|points)/i.test(text)) {
+    return false;
+  }
+  return /списан|списали|списани|just\s+used|just\s+spent|which\s+block|каком\s+блоке|последн(ее|яя)\s+списа|last\s+spend|last\s+transfer/i
+    .test(text);
 }
 
 async function shopperContext(service: Db, wallet: string, question: string): Promise<string> {

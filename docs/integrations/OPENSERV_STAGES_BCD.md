@@ -52,8 +52,20 @@ supabase functions deploy chat-bridge
 
 ### Definition of Done — Stage C
 
-- [ ] Shopper dock visible when signed in on customer portal.
-- [ ] Same HARD SCOPE; holder tools only when OpenServ Shopper agent is wired.
+- [x] Shopper dock visible when signed in on customer portal.
+- [x] Same HARD SCOPE; spend questions answered from Base logs.
+- [x] Shopper can redeem from Concierge: pick reward → confirm → wallet sign → `verify-voucher` → code in chat / My Vouchers.
+- [ ] Hosted OpenServ Shopper agent with MCP (optional parallel path) when secrets are set.
+
+## Shopper redeem (in-app)
+
+1. User asks for a voucher / reward / redeem.
+2. `chat-bridge` lists affordable rewards (`source: "redeem"`, `action: pick_reward`) or prepares one match (`action: confirm_redeem`).
+3. UI shows pick buttons or **Подписать и выпустить**.
+4. Wallet signs ERC-20 transfer to merchant (same path as Activate Voucher).
+5. Client calls `verify-voucher`; Concierge shows the code and fires `vouchersUpdated`.
+
+Signing never happens server-side. `SERV_API_KEY` is unchanged.
 
 ## Stage D — Growth / Scale AI ops packaging
 
