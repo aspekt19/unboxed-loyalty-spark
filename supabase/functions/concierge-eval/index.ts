@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
   const { data: allowed } = await service.rpc("consume_wallet_rate_limit", {
     p_scope: "concierge-eval",
     p_subject: "global",
-    p_limit: 40,
+    p_limit: 200,
     p_window_seconds: 3600,
   });
   if (allowed === false) return out({ error: "rate_limited" }, 429);
