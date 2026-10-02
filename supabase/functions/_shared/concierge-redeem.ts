@@ -157,21 +157,19 @@ export function resolveVoucherStatusFromHistory(
   if (fromLast !== "all") return fromLast;
 
   for (const m of [...messages].reverse().slice(0, 24)) {
-    const fromLine = voucherStatusFilter(m.content);
-    if (fromLine !== "all") return fromLine;
-    // Assistant titles from shopperVoucherHistoryReply
-    if (/неактивн|inactive \(expired\)|inactive vouchers \(expired/i.test(m.content)) {
-      return "inactive";
+    if (m.role === "user") {
+      const fromLine = voucherStatusFilter(m.content);
+      if (fromLine !== "all") return fromLine;
+      // Newest explicit voucher question had no filter ("все мои ваучеры") — keep "all".
+      if (asksAboutMyVouchers(m.content)) return "all";
+      continue;
     }
-    if (/использованн|used vouchers\.|Использованные ваучеры/i.test(m.content)) {
-      return "used";
-    }
-    if (
-      /активные ваучер|active vouchers\.|Активные ваучеры/i.test(m.content) &&
-      !/неактив/i.test(m.content)
-    ) {
-      return "active";
-    }
+    // Assistant: read only the reply title, never the "[used]/[active]" row tags.
+    const title = m.content.split("\n").slice(0, 2).join("\n");
+    if (/Неактивные ваучеры|Inactive vouchers \(expired/i.test(title)) return "inactive";
+    if (/Использованные ваучеры|Used vouchers\./i.test(title)) return "used";
+    if (/Активные ваучеры|Active vouchers\./.test(title)) return "active";
+    if (/Ваши ваучеры\.|Your vouchers\./i.test(title)) return "all";
   }
   return "all";
 }
