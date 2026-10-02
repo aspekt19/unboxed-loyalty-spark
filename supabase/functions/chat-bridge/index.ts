@@ -13,7 +13,6 @@ import {
   resolveVoucherStatusFromHistory,
   shopperRedeemIntentReply,
   shopperVoucherHistoryReply,
-  voucherStatusFilter,
   wantsVoucherCountOnly,
 } from "../_shared/concierge-redeem.ts";
 import { isLoyalSparkScoped, LOYAL_SPARK_REFUSAL } from "../_shared/loyal-spark-scope.ts";
