@@ -109,7 +109,7 @@ export async function buildShopperAgentContext(
     .select("code, reward_name, status, token_symbol, cost, activated_at")
     .ilike("customer_address", wallet)
     .order("activated_at", { ascending: false })
-    .limit(5)
+    .limit(15)
     .then((r: { data: unknown[] | null; error: unknown }) => {
       if (r.error) throw r.error;
       return (r.data ?? []) as ShopperAgentContext["vouchers_recent"];
@@ -163,7 +163,7 @@ export async function buildShopperAgentContext(
         basescan_url: `https://basescan.org/tx/${last.txHash}`,
       }
       : null,
-    capabilities: ["answer_balances", "answer_last_spend", "pick_reward", "confirm_redeem"],
+    capabilities: ["answer_balances", "answer_last_spend", "answer_vouchers", "pick_reward", "confirm_redeem"],
     as_of: new Date().toISOString(),
     source_notes: notes,
   };

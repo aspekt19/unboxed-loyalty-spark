@@ -6,9 +6,11 @@ import {
 } from "../_shared/agent-context.ts";
 import {
   asksAboutLastSpend,
+  asksAboutMyVouchers,
   asksAboutRedeem,
   prepareRedeemAction,
   shopperRedeemIntentReply,
+  shopperVoucherHistoryReply,
 } from "../_shared/concierge-redeem.ts";
 import { isLoyalSparkScoped, LOYAL_SPARK_REFUSAL } from "../_shared/loyal-spark-scope.ts";
 import { servConciergeReply, servConfigured } from "../_shared/serv-reasoning.ts";
@@ -112,6 +114,7 @@ Deno.serve(async (req) => {
     let accountContext = "";
     let shopperCtx: ShopperAgentContext | null = null;
     const redeemIntent = role === "shopper" && asksAboutRedeem(lastUser);
+    const voucherHistoryIntent = role === "shopper" && asksAboutMyVouchers(lastUser);
     if (wallet) {
       try {
         if (role === "shopper") {
@@ -124,6 +127,22 @@ Deno.serve(async (req) => {
       } catch (err) {
         console.error("[chat-bridge] agent context", err);
       }
+    }
+
+    // List/status of existing vouchers BEFORE redeem (word "ваучер" alone is not "issue").
+    if (role === "shopper" && wallet && voucherHistoryIntent) {
+      const vouchers = await shopperVoucherHistoryReply(
+        service,
+        wallet,
+        lastUser,
+        shopperCtx?.vouchers_recent ?? null,
+      );
+      return json({
+        reply: vouchers.reply,
+        role,
+        wallet,
+        source: vouchers.source,
+      });
     }
 
     if (role === "shopper" && wallet && redeemIntent) {

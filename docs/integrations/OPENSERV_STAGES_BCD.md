@@ -109,7 +109,7 @@ curl -sS "$SUPABASE_URL/functions/v1/chat-bridge" \
 
 - **Who builds it:** `chat-bridge`, once per message after JWT + wallet resolution (`buildShopperAgentContext` / `buildMerchantAgentContext`). In-isolate TTL 15 s.
 - **Shopper contract:** `identity`, `balances` (portal multicall over `loyalty_programs`, Blockscout token-balances fallback, sorted desc), `rewards_affordable` (active rewards with cost ≤ balance), `vouchers_recent` (last 5 from DB), `last_outgoing` (Base RPC `eth_getLogs`, from = wallet), `capabilities`, `as_of`, `source_notes`.
-- **Who reads it:** redeem replies (`rewards_affordable` + rank by balance), last-spend replies (`last_outgoing`), balance fallback and SERV ACCOUNT DATA (`contextText`, rendered from the same object).
+- **Who reads it:** redeem replies (`rewards_affordable` + rank by balance) only when the user clearly asks to **issue** a voucher; voucher history (`vouchers_recent` / DB) for “my vouchers / inactive”; last-spend replies (`last_outgoing`); balance fallback and SERV ACCOUNT DATA (`contextText`, rendered from the same object). Word “voucher” alone is not redeem.
 - **Failure rule:** a failed source yields empty/null plus a note; replies say the lookup failed instead of "none".
 - **Not:** a replacement for MCP/REST (`lsk_`/`rwk_`), nor server-side signing. Writes stay action → UI confirm → user wallet.
 - **Merchant:** minimal in this pass (identity + text from the existing merchant DB snapshot).

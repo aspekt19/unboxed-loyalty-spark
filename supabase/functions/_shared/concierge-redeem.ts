@@ -51,16 +51,122 @@ function amt(n: number): string {
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
 }
 
+/**
+ * Intent: user wants to ISSUE a voucher (spend points → sign).
+ * Must NOT match questions about existing vouchers ("мои ваучеры", "неактивные").
+ */
 export function asksAboutRedeem(text: string): boolean {
-  return /ваучер|voucher|redeem|выпуст|обмен(ить)?\s+(балл|наград)|активир|получить\s+ваучер|потратить\s+(балл|очк|points)|spend\s+(points|my)|activate\s+voucher|наград[уыа]|созда(й|ть).{0,60}ваучер/i
+  if (asksAboutMyVouchers(text)) return false;
+  return /созда(й|ть).{0,80}ваучер|выпуст.{0,40}ваучер|issue\s+(a\s+)?voucher|redeem(\s+a)?\s+reward|redeem(\s+my)?\s+points|обмен(ить)?\s+(балл|наград)|потратить\s+(балл|очк|points)|spend\s+(my\s+)?points|activate\s+(a\s+)?(voucher|reward)|активир(уй|овать)\s+(ваучер|наград)|получить\s+ваучер|хочу\s+ваучер|дай\s+ваучер|сделай\s+ваучер|create\s+(a\s+)?voucher/i
     .test(text);
 }
 
-/** Last-spend lookup — must not steal redeem intents. */
-export function asksAboutLastSpend(text: string): boolean {
-  if (asksAboutRedeem(text)) return false;
-  return /списан|списали|списани|just\s+used|just\s+spent|which\s+block|каком\s+блоке|последн(ее|яя)\s+списа|last\s+spend|last\s+transfer/i
+/**
+ * Intent: list / status of vouchers the shopper already has (active, used, expired).
+ */
+export function asksAboutMyVouchers(text: string): boolean {
+  return /мои?\s+ваучер|ваучер[аыов]*.{0,40}(не\s*)?актив|(не\s*)?активн.{0,40}ваучер|неактивн.{0,40}ваучер|использованн.{0,40}ваучер|истек.{0,40}ваучер|(какие|список|последн|узнать|покажи|show|list).{0,60}ваучер|my\s+vouchers?|inactive\s+vouchers?|used\s+vouchers?|expired\s+vouchers?|voucher\s+status|статус\s+ваучер|про\s+.{0,40}ваучер/i
     .test(text);
+}
+
+/** Last on-chain spend — must not steal redeem or voucher-list intents. */
+export function asksAboutLastSpend(text: string): boolean {
+  if (asksAboutRedeem(text) || asksAboutMyVouchers(text)) return false;
+  return /списан|списали|списани|just\s+used|just\s+spent|which\s+block|каком\s+блоке|последн(ее|яя|ий)\s+списа|last\s+spend|last\s+transfer|на\s+каком\s+блоке/i
+    .test(text);
+}
+
+export type VoucherStatusFilter = "all" | "active" | "inactive";
+
+export function voucherStatusFilter(text: string): VoucherStatusFilter {
+  if (/не\s*актив|неактивн|использован|истек|used|expired|inactive/i.test(text)) return "inactive";
+  if (/\bactive\b|активн(?!о)/i.test(text) && !/не\s*актив|неактивн/i.test(text)) return "active";
+  return "all";
+}
+
+export type SnapshotVoucher = {
+  code?: string;
+  reward_name: string;
+  status: string;
+  cost: number;
+  token_symbol: string;
+  activated_at: string;
+};
+
+/** Prefer snapshot rows; if inactive/all need more, read DB. */
+export async function shopperVoucherHistoryReply(
+  service: Db,
+  wallet: string,
+  question: string,
+  snapshot: SnapshotVoucher[] | null,
+): Promise<{ reply: string; source: "vouchers" }> {
+  const ru = /[а-яё]/i.test(question);
+  const filter = voucherStatusFilter(question);
+  let rows = [...(snapshot ?? [])];
+
+  const needsDb =
+    filter === "inactive" ||
+    rows.length === 0 ||
+    (filter === "all" && rows.length < 5);
+
+  if (needsDb) {
+    try {
+      let q = service
+        .from("vouchers")
+        .select("code, reward_name, status, token_symbol, cost, activated_at")
+        .ilike("customer_address", wallet)
+        .order("activated_at", { ascending: false })
+        .limit(20);
+      if (filter === "inactive") q = q.in("status", ["used", "expired"]);
+      if (filter === "active") q = q.eq("status", "active");
+      const { data, error } = await q;
+      if (error) throw error;
+      rows = ((data ?? []) as SnapshotVoucher[]).map((v) => ({ ...v, cost: Number(v.cost) }));
+    } catch (err) {
+      console.error("[concierge-redeem] voucher history", err);
+      return {
+        source: "vouchers",
+        reply: ru
+          ? "Не удалось загрузить ваучеры. Повторите вопрос через минуту."
+          : "Could not load vouchers. Ask again in a moment.",
+      };
+    }
+  } else if (filter === "active") {
+    rows = rows.filter((v) => v.status === "active");
+  } else if (filter === "inactive") {
+    rows = rows.filter((v) => v.status === "used" || v.status === "expired");
+  }
+
+  if (rows.length === 0) {
+    const label =
+      filter === "inactive"
+        ? (ru ? "неактивных ваучеров" : "inactive vouchers")
+        : filter === "active"
+        ? (ru ? "активных ваучеров" : "active vouchers")
+        : (ru ? "ваучеров" : "vouchers");
+    return {
+      source: "vouchers",
+      reply: ru
+        ? `У кошелька ${wallet} сейчас нет ${label} в истории.`
+        : `Wallet ${wallet} has no ${label} in history.`,
+    };
+  }
+
+  const lines = rows.slice(0, 12).map((v) => {
+    const code = v.code ? ` ${v.code}` : "";
+    return `• ${v.reward_name}${code} [${v.status}] — ${amt(Number(v.cost))} ${v.token_symbol} (${v.activated_at})`;
+  });
+  const title =
+    filter === "inactive"
+      ? (ru ? "Неактивные ваучеры (used / expired), новые сверху:" : "Inactive vouchers (used / expired), newest first:")
+      : filter === "active"
+      ? (ru ? "Активные ваучеры, новые сверху:" : "Active vouchers, newest first:")
+      : (ru ? "Ваши ваучеры, новые сверху:" : "Your vouchers, newest first:");
+
+  return {
+    source: "vouchers",
+    reply: `${ru ? `Кошелёк ${wallet}.` : `Wallet ${wallet}.`}\n${title}\n${lines.join("\n")}`,
+  };
 }
 
 function normalize(s: string): string {
