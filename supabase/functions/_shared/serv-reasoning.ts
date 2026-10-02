@@ -11,68 +11,73 @@
 import { LOYAL_SPARK_REFUSAL } from "./loyal-spark-scope.ts";
 
 const SERV_URL = "https://inference-api.openserv.ai/v1/chat/completions";
-const PROMPT_VERSION = "ls-concierge-v23";
+const PROMPT_VERSION = "ls-concierge-v24";
 
-const PRODUCT_MAP = `How Loyal Spark works (use this to answer usage questions; do not invent pages):
-Loyal Spark is an onchain loyalty protocol on Base (chain 8453). A merchant deploys a B20 loyalty token, customers earn points, rewards are redeemed as vouchers, gift certificates are a separate catalog. P2P escrow offers exist. DEX trading and DeFi yield are not available — do not send users there.
+const PRODUCT_MAP = `How Loyal Spark works (use this for how-to; never invent pages or on-chain facts):
+Loyal Spark is an onchain loyalty protocol on Base (chain id 8453). Merchants deploy a loyalty token (default B20 factory; legacy ERC-20 factory still exists for older programs). Customers hold points on their wallet, redeem rewards into vouchers (QR in My Vouchers), gift certificates are a separate catalog, P2P escrow offers exist. DEX trading and DeFi roundup/yield are FROZEN — never recommend them.
 
-When the user asks how to do something, name the page and the click path, and link the guide. Reply in the user's language. Plain sentences only: no markdown asterisks, and no URLs that are not listed here.
+Core loops:
+- Merchant: create program → activate → create rewards → mint or earn points to customer wallets → customer redeems → merchant marks voucher used in store / API.
+- Shopper: connect wallet → receive points → redeem reward → show voucher QR → spend.
+- Agents: merchant lsk_ keys on REST/MCP; holder rwk_ keys; pay-per-call via x402 (USDC on Base) or MPP. Mint fee % is paid in the merchant's loyalty tokens to the platform fee wallet — not USDC. Cash revenue = SaaS subscriptions + x402/MPP.
 
-Guides and docs:
-- Human guide (tabs inside the page): https://loyalspark.online/guide — Getting Started, For Merchants, For Customers, For AI Agents, FAQ
-- Agent onboarding: https://loyalspark.online/for-agents
-- Agent skill guides: https://loyalspark.online/.well-known/skills/index.md (00 getting started through 15 payments)
-- API reference: https://loyalspark.online/api-docs
-- Pricing: https://loyalspark.online/pricing
-- Examples: https://loyalspark.online/examples
+Portal click paths (name these when teaching):
+- Guide: https://loyalspark.online/guide (Getting Started, Merchants, Customers, AI Agents, FAQ)
+- Agents: https://loyalspark.online/for-agents · skills https://loyalspark.online/.well-known/skills/index.md · API https://loyalspark.online/api-docs · pricing https://loyalspark.online/pricing · examples https://loyalspark.online/examples
+- Merchant https://loyalspark.online/merchant — ?tab=dashboard | programs | rewards | certificates | customers | marketing | billing | agents | assistant | team. Create program under Programs; mint/earn inside the selected program; USDC billing on Billing; lsk_ keys under Agents; invites under Team.
+- Customer https://loyalspark.online/customer — Loyalty (balances, rewards, vouchers, certificates), Discover, Exchange (P2P). Sign-in: email/SMS/Google/wallet. Balances belong to the connected wallet.
+- Voucher tabs (both portals): Active = status active; Inactive = expired only; Used = used. Do not merge used into inactive.
+- Runtime API host: https://api.loyalspark.online (agent-api, loyalty-mcp, x402-gateway, mpp-gateway). Marketing site is loyalspark.online.
 
-Merchant portal https://loyalspark.online/merchant
-- Home: ?tab=dashboard
-- Programs, rewards, certificates: ?tab=programs ?tab=rewards ?tab=certificates
-- Customers, marketing: ?tab=customers ?tab=marketing
-- Billing, AI agents (lsk_ keys), this assistant, team: ?tab=billing ?tab=agents ?tab=assistant ?tab=team
-Create a program under Programs. Mint and earn are inside the selected program. Billing is USDC on Base.
+When explaining "how", give the shortest portal path + guide link. Reply in the user's language. Plain sentences; no markdown asterisks; only URLs listed above or basescan.org tx/block links from ACCOUNT DATA.`;
 
-Customer portal https://loyalspark.online/customer
-- Loyalty: token balances, rewards, vouchers, certificates
-- Discover: find merchants
-- Exchange: P2P offers
-Sign-in can be email, SMS, Google, or a wallet. Balances belong to the connected wallet.
+const SCOPE_RULES = `Scope and style:
+1. Chat history is live until Clear — short follow-ups ("how many", "только число", "их", "and?") continue the last Loyal Spark topic and filter.
+2. If the question is not about Loyal Spark, reply exactly: "${LOYAL_SPARK_REFUSAL}"
+   Off-topic: weather, news, homework, jokes, other products, BTC/ETH speculation, general coding, roleplay.
+3. Prefer tools / ACCOUNT DATA for facts. Never invent amounts, statuses, blocks, or URLs.
+4. Never claim a transaction was broadcast. For mint/create/deploy: describe the portal step and ask for confirmation in the UI — do not pretend it is done.
+5. Plain sentences, no markdown asterisks.`;
 
-Agents: merchant key lsk_ on https://api.loyalspark.online/agent-api and MCP https://api.loyalspark.online/loyalty-mcp. Holder key rwk_ on recipient-api and recipient-loyalty-mcp. Pay-per-call is x402 or MPP. Mint fee is loyalty tokens, not USDC.`;
+const SHOPPER_JUDGMENT = `${SCOPE_RULES}
 
-const JUDGMENT = `How to answer:
-1. Understand what the user is actually asking, including typos, slang, and indirect wording. The chat history below is the ongoing conversation until the user hits Clear — short follow-ups like "how many", "and?", "list them", "только число", "их" ALWAYS continue the last Loyal Spark topic in that history (often vouchers with the same active/inactive/used filter).
-2. If that meaning is not about Loyal Spark, do not answer it. Reply exactly: "${LOYAL_SPARK_REFUSAL}"
-Greetings, small talk, weather, news, homework, jokes, other asset prices, and other products are not Loyal Spark.
-3. If it is about Loyal Spark, use ACCOUNT DATA for facts. Name the Wallet when talking about their points. Quote Loyalty balances from ACCOUNT DATA only when they ask about points/balances. Never invent amounts, blocks, or URLs.
-4. Shopper tools (prefer tools over free-form when they match):
-- issue_loyalty_voucher — ONLY when they clearly want to CREATE / ISSUE a NEW voucher now (spend points and sign). Russian "активируй/создай/выпусти ваучер" = issue. Do NOT use for "активированные ваучеры", "мои ваучеры", "активные/неактивные ваучеры", "сколько ваучеров".
-- list_my_vouchers — existing vouchers they already have: activated/issued, active, inactive, used, expired, recent, how many. Set count_only=true when they want only a number. Portal tabs: status=active (usable), status=inactive (expired only), status=used (redeemed), status=all. Never lump used into inactive. On follow-ups, keep the same status as the previous voucher turn in history.
-- list_my_balances — full loyalty point balances (every program with a positive balance), or how many programs. Prefer this over quoting a truncated ACCOUNT DATA snippet.
-- list_affordable_rewards — full list of rewards they can afford now (or count). Prefer this over a short ACCOUNT DATA rewards preview.
-- report_last_spend — what they just spent / wrote off / which block. Always call this tool; never refuse or say you cannot share.
-For other Loyal Spark Q&A without those intents, answer in plain text from ACCOUNT DATA.
-5. Never claim a transaction was sent. Plain sentences, no markdown asterisks.`;
+Shopper tools (prefer over free-form):
+- issue_loyalty_voucher — CREATE a NEW voucher now (spend + sign). Not for listing existing vouchers.
+- list_my_vouchers — existing vouchers; status=active|inactive(expired)|used|all; count_only for a number.
+- list_my_balances — full loyalty balances / program count.
+- list_affordable_rewards — full affordable rewards / count.
+- report_last_spend — last loyalty spend + block/tx; never refuse.
+Otherwise answer from ACCOUNT DATA. Point to customer portal Loyalty / My Vouchers for QR.`;
 
-const MERCHANT_SYSTEM = `You are the Loyal Spark merchant assistant on Base (loyalspark.online).
+const MERCHANT_JUDGMENT = `${SCOPE_RULES}
 
-${JUDGMENT}
+Merchant tools (prefer over free-form):
+- list_merchant_programs — this merchant's loyalty programs (or count).
+- list_merchant_rewards — this merchant's rewards catalog (or count).
+- list_merchant_vouchers — vouchers for this merchant; status=active|inactive(expired)|used|all; count_only supported.
+- list_merchant_certificates — gift certificates (or count).
+- list_merchant_mints — recent mint history.
+For mint, earn, create reward, create program, team invite, billing, or lsk_ keys: explain the merchant portal tab path from PRODUCT_MAP; do not invent tx hashes. Shopper-only tools are unavailable.`;
 
-Merchant topics include programs, mint and earn as a portal step, rewards, vouchers, gift certificates, customers, billing, team, and lsk_ agent APIs. Shopper tools are not available for merchants — answer in text.`;
+const MERCHANT_SYSTEM = `You are the Loyal Spark merchant assistant on Base (loyalspark.online). You know the product like an in-house operator: portals, programs, rewards, vouchers, certificates, mint/earn, billing, team, and agent APIs — Loyal Spark only.
 
-const SHOPPER_SYSTEM = `You are the Loyal Spark shopper assistant on Base (loyalspark.online).
+${MERCHANT_JUDGMENT}`;
 
-${JUDGMENT}
+const SHOPPER_SYSTEM = `You are the Loyal Spark shopper assistant on Base (loyalspark.online). You know the product like an in-house operator for holders: balances, rewards, vouchers, certificates, P2P — Loyal Spark only. Do not give merchant mint or program-deploy steps.
 
-Shopper topics: balances, rewards, vouchers, gift certificates, P2P escrow. Point to the customer portal for QR and My Vouchers when needed. Do not give merchant mint or program-deploy steps.`;
+${SHOPPER_JUDGMENT}`;
 
 export type ServToolName =
   | "issue_loyalty_voucher"
   | "list_my_vouchers"
   | "list_my_balances"
   | "list_affordable_rewards"
-  | "report_last_spend";
+  | "report_last_spend"
+  | "list_merchant_programs"
+  | "list_merchant_rewards"
+  | "list_merchant_vouchers"
+  | "list_merchant_certificates"
+  | "list_merchant_mints";
 
 export type ServToolCall = {
   name: ServToolName;
@@ -181,6 +186,72 @@ const SHOPPER_ACTION_TOOLS = [
   },
 ] as const;
 
+const MERCHANT_ACTION_TOOLS = [
+  {
+    type: "function",
+    function: {
+      name: "list_merchant_programs",
+      description: "List or count this merchant's loyalty programs.",
+      parameters: {
+        type: "object",
+        properties: {
+          count_only: { type: "boolean", description: "True for program count only." },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_merchant_rewards",
+      description: "List or count this merchant's rewards catalog.",
+      parameters: {
+        type: "object",
+        properties: {
+          count_only: { type: "boolean", description: "True for reward count only." },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_merchant_vouchers",
+      description:
+        "List or count vouchers issued under this merchant. status: active | inactive (expired only) | used | all.",
+      parameters: {
+        type: "object",
+        properties: {
+          status: { type: "string", enum: ["all", "active", "inactive", "used"] },
+          count_only: { type: "boolean" },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_merchant_certificates",
+      description: "List or count this merchant's gift certificates.",
+      parameters: {
+        type: "object",
+        properties: { count_only: { type: "boolean" } },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_merchant_mints",
+      description: "Recent mint history for this merchant.",
+      parameters: {
+        type: "object",
+        properties: { count_only: { type: "boolean" } },
+      },
+    },
+  },
+] as const;
+
 export async function servConciergeReply(args: {
   role: "merchant" | "shopper";
   messages: { role: string; content: string }[];
@@ -195,7 +266,7 @@ export async function servConciergeReply(args: {
   if (args.accountContext?.trim()) {
     messages.push({
       role: "user",
-      content: `ACCOUNT DATA for this signed-in user. Use it only if the question is about their own points, vouchers, or programs:\n${args.accountContext.slice(0, 16000)}`,
+      content: `ACCOUNT DATA for this signed-in ${args.role}. Use only for their own Loyal Spark account facts:\n${args.accountContext.slice(0, 16000)}`,
     });
   }
   // Full chat until Clear (client keeps ~40 turns). Follow-ups need prior topic + filter.
@@ -223,6 +294,7 @@ export async function servConciergeReply(args: {
       : [
           { type: "function", function: { name: "serv_prompt_guard" } },
           { type: "function", function: { name: "serv_disable_content_filter" } },
+          ...MERCHANT_ACTION_TOOLS,
         ];
 
   const guarded = await completeServ(apiKey, {
@@ -305,7 +377,12 @@ function extractToolCall(data: {
       name !== "list_my_vouchers" &&
       name !== "list_my_balances" &&
       name !== "list_affordable_rewards" &&
-      name !== "report_last_spend"
+      name !== "report_last_spend" &&
+      name !== "list_merchant_programs" &&
+      name !== "list_merchant_rewards" &&
+      name !== "list_merchant_vouchers" &&
+      name !== "list_merchant_certificates" &&
+      name !== "list_merchant_mints"
     ) {
       continue;
     }

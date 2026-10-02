@@ -19,6 +19,20 @@ import {
   shopperVoucherHistoryReply,
   wantsVoucherCountOnly,
 } from "../_shared/concierge-redeem.ts";
+import {
+  conversationAboutMerchantPrograms,
+  conversationAboutMerchantRewards,
+  conversationAboutMerchantVouchers,
+  asksAboutMerchantCertificates,
+  asksAboutMerchantMints,
+  merchantCertificatesReply,
+  merchantMintsReply,
+  merchantProgramsReply,
+  merchantRewardsReply,
+  merchantVouchersReply,
+  resolveMerchantVoucherFilter,
+  wantsCountOnly as merchantWantsCountOnly,
+} from "../_shared/concierge-merchant.ts";
 import { isLoyalSparkScoped, LOYAL_SPARK_REFUSAL } from "../_shared/loyal-spark-scope.ts";
 import { servConciergeReply, servConfigured } from "../_shared/serv-reasoning.ts";
 
@@ -194,6 +208,32 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Merchant facts-first (same honesty as shopper — avoid truncated ACCOUNT DATA / invented lists).
+    if (role === "merchant" && wallet && conversationAboutMerchantVouchers(messages, lastUser)) {
+      const status = resolveMerchantVoucherFilter(messages, lastUser);
+      const vouchers = await merchantVouchersReply(service, wallet, lastUser, {
+        status,
+        countOnly: merchantWantsCountOnly(lastUser),
+      });
+      return json({ reply: vouchers.reply, role, wallet, source: vouchers.source });
+    }
+    if (role === "merchant" && wallet && conversationAboutMerchantRewards(messages, lastUser)) {
+      const rewards = await merchantRewardsReply(service, wallet, lastUser);
+      return json({ reply: rewards.reply, role, wallet, source: rewards.source });
+    }
+    if (role === "merchant" && wallet && conversationAboutMerchantPrograms(messages, lastUser)) {
+      const programs = await merchantProgramsReply(service, wallet, lastUser);
+      return json({ reply: programs.reply, role, wallet, source: programs.source });
+    }
+    if (role === "merchant" && wallet && asksAboutMerchantCertificates(lastUser)) {
+      const certs = await merchantCertificatesReply(service, wallet, lastUser);
+      return json({ reply: certs.reply, role, wallet, source: certs.source });
+    }
+    if (role === "merchant" && wallet && asksAboutMerchantMints(lastUser)) {
+      const mints = await merchantMintsReply(service, wallet, lastUser);
+      return json({ reply: mints.reply, role, wallet, source: mints.source });
+    }
+
     if (servConfigured()) {
       try {
         const serv = await servConciergeReply({ role, messages, accountContext });
@@ -207,6 +247,18 @@ Deno.serve(async (req) => {
             accountContext,
             serv.toolCall,
           );
+          if (routed) {
+            return json({
+              ...routed,
+              role,
+              wallet,
+              model: serv.model,
+              prompt_version: serv.promptVersion,
+            });
+          }
+        }
+        if (serv.toolCall && role === "merchant" && wallet) {
+          const routed = await runMerchantTool(service, wallet, lastUser, messages, serv.toolCall);
           if (routed) {
             return json({
               ...routed,
@@ -332,7 +384,7 @@ Deno.serve(async (req) => {
     }
 
     return json({
-      reply: modelFallback(lastUser, accountContext),
+      reply: modelFallback(lastUser, accountContext, role),
       role,
       wallet,
       source: "account",
@@ -345,6 +397,51 @@ Deno.serve(async (req) => {
     }, 503);
   }
 });
+
+async function runMerchantTool(
+  // deno-lint-ignore no-explicit-any
+  service: any,
+  wallet: string,
+  lastUser: string,
+  messages: ChatMessage[],
+  tool: { name: string; args: Record<string, unknown> },
+): Promise<{ reply: string; source: string } | null> {
+  const countOnly =
+    tool.args.count_only === true || merchantWantsCountOnly(lastUser);
+  const q = countOnly ? `${lastUser} сколько` : lastUser;
+
+  if (tool.name === "list_merchant_programs") {
+    const r = await merchantProgramsReply(service, wallet, q);
+    return { reply: r.reply, source: r.source };
+  }
+  if (tool.name === "list_merchant_rewards") {
+    const r = await merchantRewardsReply(service, wallet, q);
+    return { reply: r.reply, source: r.source };
+  }
+  if (tool.name === "list_merchant_vouchers") {
+    const statusRaw = typeof tool.args.status === "string" ? tool.args.status : "";
+    const status =
+      statusRaw === "inactive" ||
+      statusRaw === "active" ||
+      statusRaw === "used" ||
+      statusRaw === "all"
+        ? statusRaw === "all"
+          ? resolveMerchantVoucherFilter(messages, lastUser)
+          : statusRaw
+        : resolveMerchantVoucherFilter(messages, lastUser);
+    const r = await merchantVouchersReply(service, wallet, lastUser, { status, countOnly });
+    return { reply: r.reply, source: r.source };
+  }
+  if (tool.name === "list_merchant_certificates") {
+    const r = await merchantCertificatesReply(service, wallet, q);
+    return { reply: r.reply, source: r.source };
+  }
+  if (tool.name === "list_merchant_mints") {
+    const r = await merchantMintsReply(service, wallet, q);
+    return { reply: r.reply, source: r.source };
+  }
+  return null;
+}
 
 async function runShopperTool(
   // deno-lint-ignore no-explicit-any
@@ -537,10 +634,30 @@ function asksAboutOwnHoldings(text: string): boolean {
   return /у меня|мои |мой |моя |моих |my points|my balance|my tokens|сколько у меня|больше всего|the most|what do i have/i.test(text);
 }
 
-function modelFallback(lastUser: string, accountContext: string): string {
+function modelFallback(
+  lastUser: string,
+  accountContext: string,
+  role: ChatRole = "shopper",
+): string {
   if (!isLoyalSparkScoped(lastUser)) return LOYAL_SPARK_REFUSAL;
   const ru = /[а-яё]/i.test(lastUser);
   const guide = "https://loyalspark.online/guide";
+
+  if (role === "merchant") {
+    const wallet = accountContext.match(/Wallet (0x[a-fA-F0-9]{40})/)?.[1] ?? "";
+    const who = wallet ? (ru ? `Кошелёк ${wallet}.` : `Wallet ${wallet}.`) : "";
+    const programs = sectionLines(accountContext, "Programs");
+    if (programs.length > 0 && /программ|program|наград|reward|ваучер|voucher|минт|mint/i.test(lastUser)) {
+      const lines = programs.map((row) => `• ${row}`).join("\n");
+      return ru
+        ? `${who}\nПрограммы (снимок):\n${lines}\nПолные списки: спросите «мои программы» / «награды» / «ваучеры». Гайд: ${guide}`
+        : `${who}\nPrograms (snapshot):\n${lines}\nFor full lists ask “my programs” / “rewards” / “vouchers”. Guide: ${guide}`;
+    }
+    return ru
+      ? `${who}\nЯ помогаю только с Loyal Spark в merchant portal: программы, награды, ваучеры, сертификаты, mint/earn, billing, team, lsk_ ключи. Гайд: ${guide}`
+      : `${who}\nI only help with Loyal Spark in the merchant portal: programs, rewards, vouchers, certificates, mint/earn, billing, team, lsk_ keys. Guide: ${guide}`;
+  }
+
   if (asksAboutLastSpend(lastUser)) {
     const wallet = accountContext.match(/Wallet (0x[a-fA-F0-9]{40})/)?.[1] ?? "";
     const who = wallet ? (ru ? `Кошелёк ${wallet}.` : `Wallet ${wallet}.`) : "";

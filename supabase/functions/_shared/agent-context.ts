@@ -210,7 +210,7 @@ function shopperContextText(c: ShopperAgentContext, balancesOk: boolean, lastOk:
   return out.join("\n");
 }
 
-/** Merchant: minimal in this pass — same module/style, text from the existing merchant snapshot. */
+/** Merchant: structured snapshot text + capabilities for facts-first tools. */
 export async function buildMerchantAgentContext(
   service: Db,
   walletRaw: string,
@@ -222,7 +222,7 @@ export async function buildMerchantAgentContext(
   let contextText = "";
   try {
     contextText = await merchantContext(service, wallet);
-    notes.push("merchant: db snapshot");
+    notes.push("merchant: db snapshot + voucher totals");
   } catch (err) {
     console.error("[agent-context] merchant", err);
     notes.push("merchant: failed");
@@ -230,7 +230,14 @@ export async function buildMerchantAgentContext(
   return {
     context: {
       identity: { user_id: userId, wallet, role: "merchant" },
-      capabilities: ["answer_programs", "answer_rewards"],
+      capabilities: [
+        "answer_programs",
+        "answer_rewards",
+        "answer_vouchers",
+        "answer_certificates",
+        "answer_mints",
+        "guide_portal",
+      ],
       as_of: new Date().toISOString(),
       source_notes: notes,
     },
