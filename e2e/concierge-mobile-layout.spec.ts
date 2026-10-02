@@ -55,7 +55,7 @@ async function openChat(page: Page, role: "shopper" | "merchant") {
 }
 
 test.describe("Concierge chat fits phone screens", () => {
-  test.beforeEach(({}, info) => {
+  test.beforeEach((_fixtures, info) => {
     // Viewports are set per test; run once instead of in every configured project.
     test.skip(info.project.name !== "desktop", "device sizes are set inside the test");
   });
