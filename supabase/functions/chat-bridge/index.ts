@@ -105,7 +105,10 @@ Deno.serve(async (req) => {
     }
 
     let accountContext = "";
-    if (wallet) {
+    const redeemIntent = role === "shopper" && asksAboutRedeem(lastUser);
+
+    // Redeem needs balances + rewards only — skip the heavy account snapshot.
+    if (wallet && !redeemIntent) {
       try {
         accountContext = await loadAccountContext(service, role, wallet, lastUser);
       } catch (err) {
@@ -113,7 +116,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (role === "shopper" && wallet && asksAboutRedeem(lastUser)) {
+    if (role === "shopper" && wallet && redeemIntent) {
       const redeem = await shopperRedeemIntentReply(service, wallet, lastUser);
       return json({
         reply: redeem.reply,
@@ -121,6 +124,17 @@ Deno.serve(async (req) => {
         wallet,
         source: redeem.source,
         action: redeem.action,
+      });
+    }
+
+    if (role === "shopper" && !wallet && redeemIntent) {
+      return json({
+        reply: /[а-яё]/i.test(lastUser)
+          ? "Чтобы выпустить ваучер, нужен кошелёк покупателя. Подключите кошелёк в портале и повторите."
+          : "Connect your shopper wallet in the portal to issue a voucher.",
+        role,
+        wallet: null,
+        source: "redeem",
       });
     }
 

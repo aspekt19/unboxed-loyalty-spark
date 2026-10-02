@@ -37,6 +37,14 @@ export type ConciergeRedeemAction = PickRewardAction | ConfirmRedeemAction;
 
 type Db = { from: (table: string) => any };
 
+type HeldBalance = {
+  tokenAddress: string;
+  label: string;
+  programName: string;
+  symbol: string;
+  amount: number;
+};
+
 function amt(n: number): string {
   if (!Number.isFinite(n)) return "0";
   const rounded = Math.round(n * 100) / 100;
@@ -44,7 +52,7 @@ function amt(n: number): string {
 }
 
 export function asksAboutRedeem(text: string): boolean {
-  return /ваучер|voucher|redeem|обмен(ить)?\s+(балл|наград)|активир|получить\s+ваучер|потратить\s+(балл|очк|points)|spend\s+(points|my)|activate\s+voucher|наград[уыа]/i
+  return /ваучер|voucher|redeem|выпуст|обмен(ить)?\s+(балл|наград)|активир|получить\s+ваучер|потратить\s+(балл|очк|points)|spend\s+(points|my)|activate\s+voucher|наград[уыа]|созда(й|ть).{0,60}ваучер/i
     .test(text);
 }
 
@@ -59,16 +67,97 @@ function normalize(s: string): string {
   return s.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
 }
 
+/** Rank request: 1 = highest balance program, 2 = second, … */
+function requestedProgramRank(text: string): number | null {
+  const q = normalize(text);
+  if (/втор(ой|ым|ая|ую)|second\s+high|2\s*[-.]?\s*(place|highest|самым)/i.test(q)) return 2;
+  if (/треть|third\s+high|3\s*[-.]?\s*(place|highest)/i.test(q)) return 3;
+  if (/сам(ый|ом|ая|ую)\s+высок|наибольш|больше\s+всего|highest|most\s+points|max(imum)?\s+balanc/i.test(q)) {
+    return 1;
+  }
+  return null;
+}
+
+/**
+ * Balances the same way the customer portal does: on-chain balanceOf for loyalty programs.
+ * Falls back to Blockscout token-balances only if multicall fails — never pulls tokentx history.
+ */
+async function loadHeldLoyaltyBalances(service: Db, wallet: string): Promise<HeldBalance[]> {
+  try {
+    const { loadHolderBalancesFast } = await import("./recipient-onchain-balances.ts");
+    const rows = await Promise.race([
+      loadHolderBalancesFast(service, wallet),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("balance timeout")), 10_000)),
+    ]);
+    return rows
+      .filter((r) => r.current_balance > 0)
+      .map((r) => ({
+        tokenAddress: r.token_address,
+        label: `${r.program.name} (${r.program.symbol})`,
+        programName: r.program.name,
+        symbol: r.program.symbol,
+        amount: r.current_balance,
+      }))
+      .sort((a, b) => b.amount - a.amount);
+  } catch (err) {
+    console.error("[concierge-redeem] multicall balances", err);
+  }
+
+  // Explorer balances only (no transfer history — that path was timing out redeem).
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10_000);
+  try {
+    const resp = await fetch(
+      `https://base.blockscout.com/api/v2/addresses/${wallet.toLowerCase()}/token-balances`,
+      { signal: controller.signal, headers: { accept: "application/json" } },
+    );
+    const body = await resp.json();
+    if (!Array.isArray(body)) throw new Error("explorer token balances");
+    const { data, error } = await service
+      .from("loyalty_programs")
+      .select("token_address, name, symbol")
+      .limit(2000);
+    if (error) throw error;
+    const programBy = new Map(
+      ((data ?? []) as Array<{ token_address: string; name: string; symbol: string }>).map((p) => [
+        p.token_address.toLowerCase(),
+        p,
+      ]),
+    );
+    const out: HeldBalance[] = [];
+    for (const row of body as Array<{ value?: string; token?: { address_hash?: string; decimals?: string } }>) {
+      const tokenAddress = (row.token?.address_hash ?? "").toLowerCase();
+      const program = programBy.get(tokenAddress);
+      if (!program) continue;
+      const decimals = Number(row.token?.decimals ?? "18");
+      const safe = Number.isInteger(decimals) && decimals >= 0 && decimals <= 36 ? decimals : 18;
+      let raw = 0n;
+      try {
+        raw = BigInt(row.value ?? "0");
+      } catch {
+        continue;
+      }
+      if (raw <= 0n) continue;
+      const amount = Number(raw) / 10 ** safe;
+      out.push({
+        tokenAddress,
+        label: `${program.name} (${program.symbol})`,
+        programName: program.name,
+        symbol: program.symbol,
+        amount,
+      });
+    }
+    return out.sort((a, b) => b.amount - a.amount);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function listRedeemableRewards(
   service: Db,
   wallet: string,
 ): Promise<RedeemableReward[]> {
-  const { loadLoyaltyExplorerView } = await import("./recipient-onchain-balances.ts");
-  const view = await Promise.race([
-    loadLoyaltyExplorerView(service, wallet, []),
-    new Promise<never>((_, reject) => setTimeout(() => reject(new Error("balances timeout")), 14_000)),
-  ]);
-  const held = view.balances.filter((b) => b.amount > 0).slice(0, 40);
+  const held = (await loadHeldLoyaltyBalances(service, wallet)).slice(0, 40);
   if (held.length === 0) return [];
 
   const tokens = held.map((b) => b.tokenAddress);
@@ -96,41 +185,60 @@ export async function listRedeemableRewards(
     if (!bal) continue;
     const cost = Number(row.cost);
     if (!Number.isFinite(cost) || cost <= 0 || bal.amount + 1e-9 < cost) continue;
-    const programMatch = bal.label.match(/^(.+?)\s+\(([^)]+)\)\s*$/);
     out.push({
       id: row.id,
       name: row.name,
       description: (row.description ?? "").slice(0, 240),
       cost,
       token_address: row.token_address.toLowerCase(),
-      token_symbol: programMatch?.[2] ?? "",
-      program_name: programMatch?.[1] ?? bal.label,
+      token_symbol: bal.symbol,
+      program_name: bal.programName,
       merchant_address: row.merchant_address.toLowerCase(),
       balance: bal.amount,
     });
   }
+  // Prefer higher-balance programs first, then cheaper rewards.
+  out.sort((a, b) => b.balance - a.balance || a.cost - b.cost);
   return out.slice(0, 24);
 }
 
 export function matchRewardByText(
   rewards: RedeemableReward[],
   text: string,
-): RedeemableReward | null {
+): { reward: RedeemableReward | null; filtered: RedeemableReward[] } {
   const q = normalize(text);
-  if (!q || rewards.length === 0) return null;
+  if (!q || rewards.length === 0) return { reward: null, filtered: rewards };
+
+  const rank = requestedProgramRank(text);
+  if (rank != null) {
+    // rewards already sorted by balance desc; unique programs keep first-seen order
+    const orderedTokens: string[] = [];
+    for (const r of rewards) {
+      if (!orderedTokens.includes(r.token_address)) orderedTokens.push(r.token_address);
+    }
+    const token = orderedTokens[rank - 1];
+    if (!token) return { reward: null, filtered: [] };
+    const filtered = rewards.filter((r) => r.token_address === token);
+    if (filtered.length === 1) return { reward: filtered[0], filtered };
+    return { reward: null, filtered };
+  }
+
   const exact = rewards.find((r) => normalize(r.name) === q);
-  if (exact) return exact;
+  if (exact) return { reward: exact, filtered: [exact] };
   const named = rewards.filter((r) => {
     const n = normalize(r.name);
-    return n.length >= 3 && (q.includes(n) || n.includes(q));
+    return n.length >= 3 && q.includes(n);
   });
-  if (named.length === 1) return named[0];
+  if (named.length === 1) return { reward: named[0], filtered: named };
+  if (named.length > 1) return { reward: null, filtered: named };
   const byProgram = rewards.filter((r) => {
     const p = normalize(r.program_name);
-    return p.length >= 3 && q.includes(p);
+    const s = normalize(r.token_symbol);
+    return (p.length >= 3 && q.includes(p)) || (s.length >= 2 && q.includes(s));
   });
-  if (byProgram.length === 1) return byProgram[0];
-  return null;
+  if (byProgram.length === 1) return { reward: byProgram[0], filtered: byProgram };
+  if (byProgram.length > 1) return { reward: null, filtered: byProgram };
+  return { reward: null, filtered: rewards };
 }
 
 export async function prepareRedeemAction(
@@ -219,8 +327,8 @@ export async function shopperRedeemIntentReply(
       source: "redeem",
       action: null,
       reply: ru
-        ? "Не удалось загрузить награды с сети. Повторите вопрос через минуту."
-        : "Could not load rewards from the chain. Ask again in a moment.",
+        ? "Не удалось загрузить награды. Повторите вопрос через минуту."
+        : "Could not load rewards. Ask again in a moment.",
     };
   }
 
@@ -229,14 +337,16 @@ export async function shopperRedeemIntentReply(
       source: "redeem",
       action: null,
       reply: ru
-        ? "Сейчас нет наград, на которые хватает ваших баллов. На вкладке Loyalty проверьте баланс и Rewards в портале покупателя."
-        : "No rewards you can afford right now. Check Loyalty balances and Rewards in the customer portal.",
+        ? "Сейчас нет наград, на которые хватает ваших баллов. На вкладке Loyalty проверьте баланс и Rewards."
+        : "No rewards you can afford right now. Check Loyalty balances and Rewards.",
     };
   }
 
   const matched = matchRewardByText(rewards, question);
-  if (matched) {
-    const prepared = await prepareRedeemAction(service, wallet, matched.id);
+  const pool = matched.filtered.length > 0 ? matched.filtered : rewards;
+
+  if (matched.reward) {
+    const prepared = await prepareRedeemAction(service, wallet, matched.reward.id);
     if ("action" in prepared) {
       return {
         source: "redeem",
@@ -244,9 +354,9 @@ export async function shopperRedeemIntentReply(
         reply: ru
           ? prepared.reply
           : [
-              `Confirm voucher “${matched.name}”.`,
-              `Spend: ${amt(matched.cost)} ${matched.token_symbol || matched.program_name}.`,
-              `Balance now: ${amt(matched.balance)}.`,
+              `Confirm voucher “${matched.reward.name}”.`,
+              `Spend: ${amt(matched.reward.cost)} ${matched.reward.token_symbol || matched.reward.program_name}.`,
+              `Balance now: ${amt(matched.reward.balance)}.`,
               "Tap Sign and issue — your wallet will open. After Base confirms, the voucher code appears here.",
             ].join("\n"),
       };
@@ -254,15 +364,37 @@ export async function shopperRedeemIntentReply(
     return { source: "redeem", action: null, reply: prepared.reply };
   }
 
-  const lines = rewards.slice(0, 12).map(
-    (r) =>
-      `• ${r.name} — ${amt(r.cost)} ${r.token_symbol || r.program_name} (есть ${amt(r.balance)})`,
+  const rank = requestedProgramRank(question);
+  const headline = (() => {
+    if (rank === 1 && pool.length > 0) {
+      return ru
+        ? `Программа с наибольшим балансом: ${pool[0].program_name} (${amt(pool[0].balance)} ${pool[0].token_symbol}). Выберите награду:`
+        : `Highest balance program: ${pool[0].program_name} (${amt(pool[0].balance)} ${pool[0].token_symbol}). Pick a reward:`;
+    }
+    if (rank === 2 && pool.length > 0) {
+      return ru
+        ? `Вторая по балансу: ${pool[0].program_name} (${amt(pool[0].balance)} ${pool[0].token_symbol}). Выберите награду:`
+        : `Second-highest balance: ${pool[0].program_name} (${amt(pool[0].balance)} ${pool[0].token_symbol}). Pick a reward:`;
+    }
+    if (rank != null && pool.length === 0) {
+      return ru
+        ? "У вас нет столько программ с доступными наградами. Выберите из списка:"
+        : "You do not have that many programs with affordable rewards. Pick from the list:";
+    }
+    return ru
+      ? "Доступные награды для вашего кошелька:"
+      : "Rewards you can redeem now:";
+  })();
+
+  const show = (pool.length > 0 ? pool : rewards).slice(0, 12);
+  const lines = show.map(
+    (r) => `• ${r.name} — ${amt(r.cost)} ${r.token_symbol || r.program_name} (есть ${amt(r.balance)})`,
   );
   return {
     source: "redeem",
-    action: { type: "pick_reward", rewards: rewards.slice(0, 12) },
+    action: { type: "pick_reward", rewards: show },
     reply: ru
-      ? `Доступные награды для вашего кошелька:\n${lines.join("\n")}\nВыберите награду кнопкой ниже — затем подтвердите подписью.`
-      : `Rewards you can redeem now:\n${lines.join("\n")}\nPick one below, then confirm with your wallet.`,
+      ? `${headline}\n${lines.join("\n")}\nВыберите награду кнопкой ниже — затем подтвердите подписью.`
+      : `${headline}\n${lines.join("\n")}\nPick one below, then confirm with your wallet.`,
   };
 }
