@@ -13,7 +13,9 @@ Merchant / Customer UI (button only after sign-in)
     → SERV Reasoning understands the question, answers if it is Loyal Spark, otherwise refuses
 ```
 
-SERV is the same product AllowLatch used for drafting: `POST https://inference-api.openserv.ai/v1/chat/completions` with a required system prompt and `serv_prompt_guard`. The key stays in Supabase (`SERV_API_KEY`). The concierge does not match phrases first. SERV reads the question, answers Loyal Spark questions from that user's account data, and refuses anything else with the fixed sentence.
+SERV is the same product AllowLatch used for drafting: `POST https://inference-api.openserv.ai/v1/chat/completions` with a required system prompt and `serv_prompt_guard`. The key stays in Supabase (`SERV_API_KEY`).
+
+**Intent routing (shopper):** SERV understands the question first and may call tools (`issue_loyalty_voucher`, `list_my_vouchers`, `report_last_spend`). `chat-bridge` then runs the matching deterministic path on the agent-context snapshot (redeem UI, voucher list, last spend). Phrase-regex routing is only a fallback when SERV is down. Off-topic is refused by SERV after reading the question.
 
 | Piece | Location |
 |-------|----------|
@@ -109,7 +111,7 @@ curl -sS "$SUPABASE_URL/functions/v1/chat-bridge" \
 
 - **Who builds it:** `chat-bridge`, once per message after JWT + wallet resolution (`buildShopperAgentContext` / `buildMerchantAgentContext`). In-isolate TTL 15 s.
 - **Shopper contract:** `identity`, `balances` (portal multicall over `loyalty_programs`, Blockscout token-balances fallback, sorted desc), `rewards_affordable` (active rewards with cost ≤ balance), `vouchers_recent` (last 5 from DB), `last_outgoing` (Base RPC `eth_getLogs`, from = wallet), `capabilities`, `as_of`, `source_notes`.
-- **Who reads it:** redeem replies (`rewards_affordable` + rank by balance) only when the user clearly asks to **issue** a voucher; voucher history (`vouchers_recent` / DB) for “my vouchers / inactive”; last-spend replies (`last_outgoing`); balance fallback and SERV ACCOUNT DATA (`contextText`, rendered from the same object). Word “voucher” alone is not redeem.
+- **Who reads it:** SERV first (tool calls or text). Tools map to redeem (`rewards_affordable`), voucher history (`vouchers_recent` / DB), last spend (`last_outgoing`). Regex phrase routes are fallback only. SERV ACCOUNT DATA is `contextText` from the same object.
 - **Failure rule:** a failed source yields empty/null plus a note; replies say the lookup failed instead of "none".
 - **Not:** a replacement for MCP/REST (`lsk_`/`rwk_`), nor server-side signing. Writes stay action → UI confirm → user wallet.
 - **Merchant:** minimal in this pass (identity + text from the existing merchant DB snapshot).

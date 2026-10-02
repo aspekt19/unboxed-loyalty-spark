@@ -110,11 +110,9 @@ Deno.serve(async (req) => {
       }, 429);
     }
 
-    // One agent-facing snapshot per turn (agent-context.ts). Every path below reads it.
+    // One agent-facing snapshot per turn. SERV understands intent; tools run deterministic paths.
     let accountContext = "";
     let shopperCtx: ShopperAgentContext | null = null;
-    const redeemIntent = role === "shopper" && asksAboutRedeem(lastUser);
-    const voucherHistoryIntent = role === "shopper" && asksAboutMyVouchers(lastUser);
     if (wallet) {
       try {
         if (role === "shopper") {
@@ -129,7 +127,47 @@ Deno.serve(async (req) => {
       }
     }
 
-    // List/status of existing vouchers BEFORE redeem (word "ваучер" alone is not "issue").
+    if (servConfigured()) {
+      try {
+        const serv = await servConciergeReply({ role, messages, accountContext });
+        if (serv.toolCall && role === "shopper") {
+          const routed = await runShopperTool(
+            service,
+            wallet,
+            lastUser,
+            shopperCtx,
+            accountContext,
+            serv.toolCall,
+          );
+          if (routed) {
+            return json({
+              ...routed,
+              role,
+              wallet,
+              model: serv.model,
+              prompt_version: serv.promptVersion,
+            });
+          }
+        }
+        if (serv.text.trim()) {
+          return json({
+            reply: serv.text,
+            role,
+            wallet,
+            source: "serv",
+            model: serv.model,
+            prompt_version: serv.promptVersion,
+          });
+        }
+      } catch (err) {
+        console.error("[chat-bridge] serv", err);
+      }
+    }
+
+    // Fallback routing when SERV is down or returned neither tool nor text.
+    const redeemIntent = role === "shopper" && asksAboutRedeem(lastUser);
+    const voucherHistoryIntent = role === "shopper" && asksAboutMyVouchers(lastUser);
+
     if (role === "shopper" && wallet && voucherHistoryIntent) {
       const vouchers = await shopperVoucherHistoryReply(
         service,
@@ -179,22 +217,6 @@ Deno.serve(async (req) => {
         wallet,
         source: "explorer",
       });
-    }
-
-    if (servConfigured()) {
-      try {
-        const serv = await servConciergeReply({ role, messages, accountContext });
-        return json({
-          reply: serv.text,
-          role,
-          wallet,
-          source: "serv",
-          model: serv.model,
-          prompt_version: serv.promptVersion,
-        });
-      } catch (err) {
-        console.error("[chat-bridge] serv", err);
-      }
     }
 
     const openservUrl = Deno.env.get("OPENSERV_CONCIERGE_URL")?.replace(/\/$/, "");
@@ -251,6 +273,76 @@ Deno.serve(async (req) => {
     }, 503);
   }
 });
+
+async function runShopperTool(
+  // deno-lint-ignore no-explicit-any
+  service: any,
+  wallet: string | null,
+  lastUser: string,
+  shopperCtx: ShopperAgentContext | null,
+  accountContext: string,
+  tool: { name: string; args: Record<string, unknown> },
+): Promise<{ reply: string; source: string; action?: unknown } | null> {
+  if (tool.name === "report_last_spend") {
+    return {
+      reply: modelFallback("последнее списание", accountContext),
+      source: "explorer",
+    };
+  }
+
+  if (!wallet) {
+    if (tool.name === "issue_loyalty_voucher") {
+      return {
+        reply: /[а-яё]/i.test(lastUser)
+          ? "Чтобы выпустить ваучер, нужен кошелёк покупателя. Подключите кошелёк в портале и повторите."
+          : "Connect your shopper wallet in the portal to issue a voucher.",
+        source: "redeem",
+      };
+    }
+    return {
+      reply: /[а-яё]/i.test(lastUser)
+        ? "Подключите кошелёк покупателя, чтобы посмотреть ваучеры."
+        : "Connect your shopper wallet to view vouchers.",
+      source: "vouchers",
+    };
+  }
+
+  if (tool.name === "list_my_vouchers") {
+    const status = typeof tool.args.status === "string" ? tool.args.status : "all";
+    const synthetic =
+      status === "inactive"
+        ? "неактивные ваучеры"
+        : status === "active"
+        ? "активные ваучеры"
+        : lastUser || "мои ваучеры";
+    const vouchers = await shopperVoucherHistoryReply(
+      service,
+      wallet,
+      synthetic,
+      shopperCtx?.vouchers_recent ?? null,
+    );
+    return { reply: vouchers.reply, source: vouchers.source };
+  }
+
+  if (tool.name === "issue_loyalty_voucher") {
+    const rank = Number(tool.args.program_rank);
+    const hint = typeof tool.args.reward_hint === "string" ? tool.args.reward_hint.trim() : "";
+    let synthetic = lastUser;
+    if (rank === 1) synthetic = `создай ваучер по программе с самым высоким балансом ${hint}`.trim();
+    else if (rank === 2) synthetic = `создай ваучер по программе со вторым самым высоким балансом ${hint}`.trim();
+    else if (rank === 3) synthetic = `создай ваучер по программе с третьим самым высоким балансом ${hint}`.trim();
+    else if (hint) synthetic = `создай ваучер ${hint}`;
+    const redeem = await shopperRedeemIntentReply(
+      service,
+      wallet,
+      synthetic,
+      shopperCtx ? shopperCtx.rewards_affordable : null,
+    );
+    return { reply: redeem.reply, source: redeem.source, action: redeem.action };
+  }
+
+  return null;
+}
 
 function normalizeMessages(raw: unknown): ChatMessage[] {
   if (!Array.isArray(raw)) return [];

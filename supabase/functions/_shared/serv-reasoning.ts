@@ -4,14 +4,14 @@
  * chat completions, system prompt required, serv_prompt_guard.
  * Docs: https://docs.openserv.ai/serv-reasoning/tools
  *
- * SERV reads the question first. If the meaning is outside Loyal Spark, it
- * refuses. Phrase lists do not decide the concierge reply.
+ * SERV understands the question first (tool calls for structured shopper
+ * intents). Phrase lists are only a fallback when SERV is down.
  */
 
 import { LOYAL_SPARK_REFUSAL } from "./loyal-spark-scope.ts";
 
 const SERV_URL = "https://inference-api.openserv.ai/v1/chat/completions";
-const PROMPT_VERSION = "ls-concierge-v18";
+const PROMPT_VERSION = "ls-concierge-v19";
 
 const PRODUCT_MAP = `How Loyal Spark works (use this to answer usage questions; do not invent pages):
 Loyal Spark is an onchain loyalty protocol on Base (chain 8453). A merchant deploys a B20 loyalty token, customers earn points, rewards are redeemed as vouchers, gift certificates are a separate catalog. P2P escrow offers exist. DEX trading and DeFi yield are not available — do not send users there.
@@ -42,33 +42,101 @@ Sign-in can be email, SMS, Google, or a wallet. Balances belong to the connected
 Agents: merchant key lsk_ on https://api.loyalspark.online/agent-api and MCP https://api.loyalspark.online/loyalty-mcp. Holder key rwk_ on recipient-api and recipient-loyalty-mcp. Pay-per-call is x402 or MPP. Mint fee is loyalty tokens, not USDC.`;
 
 const JUDGMENT = `How to answer:
-1. Understand what the user is actually asking, including typos, slang, and indirect wording.
+1. Understand what the user is actually asking, including typos, slang, and indirect wording. Meaning matters more than keywords.
 2. If that meaning is not about Loyal Spark, do not answer it. Reply exactly: "${LOYAL_SPARK_REFUSAL}"
 Greetings, small talk, weather, news, homework, jokes, other asset prices, and other products are not Loyal Spark.
-3. If it is about Loyal Spark, answer that question in the user's language. A later user message labeled ACCOUNT DATA holds this user's own numbers. The first sentence of any answer about their points must name the Wallet address and the Loyalty balances (program and amount). That list is the customer portal. Do not add programs that are not in it, and do not replace them with older mint amounts. Name every Loyalty balances line, not only the largest. If they ask which points were just spent, or which block a transfer was written in, quote Last loyalty spend: program, amount, block, tx, basescan. Do not offer to check later. If that line says none, say no outgoing loyalty transfer. If it says lookup failed, say the chain read failed. If they ask about their vouchers (active, used, expired, inactive, recent), answer from Recent vouchers only — name, status, cost — and do NOT start a redeem or list Rewards affordable. Rewards affordable is only when they clearly ask to create or issue a new voucher. Do not ask them to resend the wallet. Do not invent a block. A voucher row is not chain proof. The product map is how the portal works. Do not invent numbers or URLs that are not in the account data or the product map. Do not reply with a generic menu. Never claim a transaction was sent. Plain sentences, no markdown asterisks.`;
+3. If it is about Loyal Spark, use ACCOUNT DATA for facts. Name the Wallet when talking about their points. Quote Loyalty balances from ACCOUNT DATA only. Never invent amounts, blocks, or URLs.
+4. Shopper tools (prefer tools over free-form when they match):
+- issue_loyalty_voucher — ONLY when they clearly want to CREATE / ISSUE / REDEEM a NEW voucher (spend points and sign). Not when they ask what vouchers they already have.
+- list_my_vouchers — when they ask about existing vouchers: mine, recent, active, inactive, used, expired, status.
+- report_last_spend — when they ask what they just spent / wrote off / which block / last outgoing loyalty transfer.
+For balances and other Loyal Spark Q&A without those intents, answer in plain text from ACCOUNT DATA.
+5. Never claim a transaction was sent. Plain sentences, no markdown asterisks.`;
 
 const MERCHANT_SYSTEM = `You are the Loyal Spark merchant assistant on Base (loyalspark.online).
 
 ${JUDGMENT}
 
-Merchant topics include programs, mint and earn as a portal step, rewards, vouchers, gift certificates, customers, billing, team, and lsk_ agent APIs.`;
+Merchant topics include programs, mint and earn as a portal step, rewards, vouchers, gift certificates, customers, billing, team, and lsk_ agent APIs. Shopper tools are not available for merchants — answer in text.`;
 
 const SHOPPER_SYSTEM = `You are the Loyal Spark shopper assistant on Base (loyalspark.online).
 
 ${JUDGMENT}
 
-Shopper topics include their balances, rewards, vouchers, gift certificates, and P2P escrow. When they want a voucher, tell them to say so in this chat — the app will list affordable rewards and ask them to sign. Point to the customer portal for QR and My Vouchers. Do not give merchant mint or program-deploy steps. Never claim a voucher was issued without a signed transfer.`;
+Shopper topics: balances, rewards, vouchers, gift certificates, P2P escrow. Point to the customer portal for QR and My Vouchers when needed. Do not give merchant mint or program-deploy steps.`;
+
+export type ServToolName =
+  | "issue_loyalty_voucher"
+  | "list_my_vouchers"
+  | "report_last_spend";
+
+export type ServToolCall = {
+  name: ServToolName;
+  args: Record<string, unknown>;
+};
 
 export type ServChatResult = {
   text: string;
   model: string;
   promptVersion: string;
   usage?: { total_tokens?: number };
+  toolCall?: ServToolCall;
 };
 
 export function servConfigured(): boolean {
   return Boolean(Deno.env.get("SERV_API_KEY")?.trim());
 }
+
+const SHOPPER_ACTION_TOOLS = [
+  {
+    type: "function",
+    function: {
+      name: "issue_loyalty_voucher",
+      description:
+        "User wants to create/issue a NEW loyalty voucher now (spend points, confirm, sign). Do not use for questions about vouchers they already have.",
+      parameters: {
+        type: "object",
+        properties: {
+          program_rank: {
+            type: "integer",
+            description: "1 = highest balance program, 2 = second, 3 = third. Omit if unknown.",
+          },
+          reward_hint: {
+            type: "string",
+            description: "Reward or program name if the user named one.",
+          },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_my_vouchers",
+      description:
+        "User asks about vouchers they already have: list, status, active, inactive, used, expired, recent.",
+      parameters: {
+        type: "object",
+        properties: {
+          status: {
+            type: "string",
+            enum: ["all", "active", "inactive"],
+            description: "inactive means used or expired.",
+          },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "report_last_spend",
+      description:
+        "User asks what loyalty points were just spent / written off, or which Base block/tx.",
+      parameters: { type: "object", properties: {} },
+    },
+  },
+] as const;
 
 export async function servConciergeReply(args: {
   role: "merchant" | "shopper";
@@ -90,15 +158,25 @@ export async function servConciergeReply(args: {
   }
   if (question.trim()) messages.push({ role: "user", content: question });
 
+  const tools =
+    args.role === "shopper"
+      ? [
+          { type: "function", function: { name: "serv_prompt_guard" } },
+          { type: "function", function: { name: "serv_disable_content_filter" } },
+          ...SHOPPER_ACTION_TOOLS,
+        ]
+      : [
+          { type: "function", function: { name: "serv_prompt_guard" } },
+          { type: "function", function: { name: "serv_disable_content_filter" } },
+        ];
+
   const guarded = await completeServ(apiKey, {
     model,
     reasoning_effort: "none",
     max_completion_tokens: 800,
     messages,
-    tools: [
-      { type: "function", function: { name: "serv_prompt_guard" } },
-      { type: "function", function: { name: "serv_disable_content_filter" } },
-    ],
+    tools,
+    tool_choice: "auto",
   });
   if (guarded) return { ...guarded, promptVersion: PROMPT_VERSION };
 
@@ -133,18 +211,20 @@ async function completeServ(
       return null;
     }
     const data = await res.json();
+    const toolCall = extractToolCall(data);
     const text = extractReply(data).replace(/\*\*/g, "").trim();
-    if (!text) {
-      console.error("[serv] empty content");
+    if (!toolCall && !text) {
+      console.error("[serv] empty content and no tool call");
       return null;
     }
     console.error(
-      `[serv] concierge prompt=${PROMPT_VERSION} model=${data.model ?? body.model} tokens=${data.usage?.total_tokens ?? "?"}`,
+      `[serv] concierge prompt=${PROMPT_VERSION} model=${data.model ?? body.model} tokens=${data.usage?.total_tokens ?? "?"} tool=${toolCall?.name ?? "-"}`,
     );
     return {
-      text,
+      text: text || "",
       model: typeof data.model === "string" ? data.model : String(body.model ?? ""),
       usage: data.usage,
+      toolCall,
     };
   } catch (err) {
     console.error("[serv] call failed", err);
@@ -152,6 +232,35 @@ async function completeServ(
   } finally {
     clearTimeout(timer);
   }
+}
+
+function extractToolCall(data: {
+  choices?: Array<{
+    message?: {
+      tool_calls?: Array<{ function?: { name?: string; arguments?: string } }>;
+    };
+  }>;
+}): ServToolCall | undefined {
+  const raw = data?.choices?.[0]?.message?.tool_calls ?? [];
+  for (const call of raw) {
+    const name = call.function?.name ?? "";
+    if (name.startsWith("serv_")) continue;
+    if (
+      name !== "issue_loyalty_voucher" &&
+      name !== "list_my_vouchers" &&
+      name !== "report_last_spend"
+    ) {
+      continue;
+    }
+    let args: Record<string, unknown> = {};
+    try {
+      args = JSON.parse(call.function?.arguments || "{}") as Record<string, unknown>;
+    } catch {
+      args = {};
+    }
+    return { name, args };
+  }
+  return undefined;
 }
 
 function extractReply(data: {
