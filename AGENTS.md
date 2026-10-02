@@ -48,22 +48,12 @@ Source files for the above: `public/.well-known/`, `public/openapi.json`, `publi
 
 Copy-paste MCP and curl: **[examples/agent-mcp/](./examples/agent-mcp/)** (merchant `lsk_`) · **[examples/recipient-agent-mcp/](./examples/recipient-agent-mcp/)** (holder `rwk_`) · Short repo quickstart: **[docs/agents/QUICKSTART.md](./docs/agents/QUICKSTART.md)**.
 
-Optional **local** scripts (not used by the web app build): **`scripts/x402-paid-mcp-test/`** (paid MCP smoke test), **`scripts/agent-register-siwe/`** (SIWE → `lsk_` helper) — documented in **[README.md](./README.md)** (section “Optional repo scripts”) and **docs/agents/**.
+Local-only scripts: `scripts/x402-paid-mcp-test/`, `scripts/agent-register-siwe/` (see README).
 
-## API & MCP (source of truth)
+## API & MCP source of truth
 
-- **REST (merchants):** `supabase/functions/agent-api/index.ts` — count routes here if docs disagree.
-- **MCP (merchants):** `supabase/functions/loyalty-mcp/index.ts` — each `mcpServer.tool("name", …)` is one tool.
-- **REST (recipients):** `supabase/functions/recipient-api/index.ts` — wallet-bound `rwk_` keys (balances, rewards, vouchers, redeem, **`POST /prepare-transfer`** for holder ERC-20 send calldata, P2P offers list/create/accept/cancel). **Paid corridor:** `mpp-gateway` / `x402-gateway` + paths in `_shared/recipient-paid-routes.ts`.
-- **MCP (recipients):** `supabase/functions/recipient-loyalty-mcp/index.ts` — holder tools including **`prepare_loyalty_token_transfer`** (same calldata path as merchant `transfer_loyalty_tokens`, but authenticated with `rwk_`) and P2P (`list_p2p_offers`, `create_p2p_offer`, `accept_p2p_offer`, `cancel_p2p_offer`). **Paid x402 MCP:** `x402-gateway/recipient-mcp-tools/<name>` — prices in `_shared/recipient-mcp-bazaar-tools.ts`.
-- **Base MCP custom plugin (calldata → `send_calls`):** `supabase/functions/agent-prepare/index.ts` — GET endpoints at `https://api.loyalspark.online/agent-prepare/<action>` returning `{ chainId, description, transactions:[{to,data,value}], builder_code }` for Base MCP `send_calls`. Actions: `create-program`, `activate-program`, `mint`, `transfer` (`lsk_`) · `recipient-transfer`, `recipient-approve` (`rwk_`). Plugin spec: `skills/loyal-spark/plugins/loyal-spark.md`.
-
+See [`supabase/functions/AGENTS.md`](./supabase/functions/AGENTS.md) (REST/MCP route files, Base MCP plugin, Concierge rules).
 
 ## Prompts & OpenServ
 
-- [`docs/integrations/PROMPT_GUIDE.md`](./docs/integrations/PROMPT_GUIDE.md) — copy-paste system prompts.
-- [`docs/integrations/OPENSERV_AGENTS_SETUP.md`](./docs/integrations/OPENSERV_AGENTS_SETUP.md) — OpenServ-oriented notes (see disclaimer there about files not shipped in this repo).
-- [`docs/integrations/OPENSERV_STAGE_A.md`](./docs/integrations/OPENSERV_STAGE_A.md) — **Stage A:** weekly Analyst + **Loyal Spark–only** scope (protocol-paid OpenServ).
-- [`docs/integrations/OPENSERV_STAGES_BCD.md`](./docs/integrations/OPENSERV_STAGES_BCD.md) — **Stages B–D:** `chat-bridge`, Merchant/Shopper Concierge UI, pricing packaging.
-- [`docs/integrations/OPENSERV_CONCIERGE_PROMPTS.md`](./docs/integrations/OPENSERV_CONCIERGE_PROMPTS.md) — Merchant + Shopper Concierge system prompts.
-- [`docs/integrations/OPENSERV_AGENT_PROMPTS.md`](./docs/integrations/OPENSERV_AGENT_PROMPTS.md) — CEO/SEO/Growth/Analyst prompts with HARD SCOPE guard.
+All in `docs/integrations/`: `PROMPT_GUIDE.md` (system prompts), `OPENSERV_AGENTS_SETUP.md`, `OPENSERV_STAGE_A.md` (weekly Analyst, Loyal Spark-only scope), `OPENSERV_STAGES_BCD.md` (chat-bridge, Concierge UI), `OPENSERV_CONCIERGE_PROMPTS.md`, `OPENSERV_AGENT_PROMPTS.md` (CEO/SEO/Growth/Analyst, HARD SCOPE).
