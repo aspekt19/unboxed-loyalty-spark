@@ -23,7 +23,10 @@ export async function loadAccountContext(
   question = "",
 ): Promise<string> {
   if (role === "merchant") return merchantContext(service, wallet);
-  return shopperContext(service, wallet, question);
+  // Single shopper read-model: see agent-context.ts.
+  void question;
+  const { buildShopperAgentContext } = await import("./agent-context.ts");
+  return (await buildShopperAgentContext(service, wallet)).contextText;
 }
 
 function asksAboutLastSpend(text: string): boolean {
@@ -134,7 +137,7 @@ async function askedTxLine(question: string): Promise<string> {
   }
 }
 
-async function merchantContext(service: Db, wallet: string): Promise<string> {
+export async function merchantContext(service: Db, wallet: string): Promise<string> {
   const [profileRes, programsRes, rewardsRes, vouchersRes, certsRes, mintsRes] = await Promise.all([
     service.from("merchant_profiles").select("business_name, category").eq("merchant_address", wallet).maybeSingle(),
     service.from("loyalty_programs").select("name, symbol, status, cashback_rate, points_per_dollar").eq("merchant_address", wallet).limit(20),

@@ -37,7 +37,7 @@ export type ConciergeRedeemAction = PickRewardAction | ConfirmRedeemAction;
 
 type Db = { from: (table: string) => any };
 
-type HeldBalance = {
+export type HeldBalance = {
   tokenAddress: string;
   label: string;
   programName: string;
@@ -68,7 +68,7 @@ function normalize(s: string): string {
 }
 
 /** Rank request: 1 = highest balance program, 2 = second, … */
-function requestedProgramRank(text: string): number | null {
+export function requestedProgramRank(text: string): number | null {
   const q = normalize(text);
   if (/втор(ой|ым|ая|ую)|second\s+high|2\s*[-.]?\s*(place|highest|самым)/i.test(q)) return 2;
   if (/треть|third\s+high|3\s*[-.]?\s*(place|highest)/i.test(q)) return 3;
@@ -82,7 +82,7 @@ function requestedProgramRank(text: string): number | null {
  * Balances the same way the customer portal does: on-chain balanceOf for loyalty programs.
  * Falls back to Blockscout token-balances only if multicall fails — never pulls tokentx history.
  */
-async function loadHeldLoyaltyBalances(service: Db, wallet: string): Promise<HeldBalance[]> {
+export async function loadHeldLoyaltyBalances(service: Db, wallet: string): Promise<HeldBalance[]> {
   try {
     const { loadHolderBalancesFast } = await import("./recipient-onchain-balances.ts");
     const rows = await Promise.race([
@@ -159,7 +159,15 @@ export async function listRedeemableRewards(
   service: Db,
   wallet: string,
 ): Promise<RedeemableReward[]> {
-  const held = (await loadHeldLoyaltyBalances(service, wallet)).slice(0, 40);
+  return rewardsForHeld(service, await loadHeldLoyaltyBalances(service, wallet));
+}
+
+/** Affordable active rewards for an already-loaded balance list (agent-context reuses this). */
+export async function rewardsForHeld(
+  service: Db,
+  heldAll: HeldBalance[],
+): Promise<RedeemableReward[]> {
+  const held = heldAll.slice(0, 40);
   if (held.length === 0) return [];
 
   const tokens = held.map((b) => b.tokenAddress);
@@ -318,11 +326,12 @@ export async function shopperRedeemIntentReply(
   service: Db,
   wallet: string,
   question: string,
+  preloaded?: RedeemableReward[] | null,
 ): Promise<{ reply: string; action: ConciergeRedeemAction | null; source: "redeem" }> {
   const ru = /[а-яё]/i.test(question);
   let rewards: RedeemableReward[];
   try {
-    rewards = await listRedeemableRewards(service, wallet);
+    rewards = preloaded ?? await listRedeemableRewards(service, wallet);
   } catch (err) {
     console.error("[concierge-redeem] list", err);
     return {
