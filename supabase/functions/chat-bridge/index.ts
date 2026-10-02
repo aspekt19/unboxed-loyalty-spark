@@ -35,6 +35,7 @@ import {
 } from "../_shared/concierge-merchant.ts";
 import { isLoyalSparkScoped, LOYAL_SPARK_REFUSAL } from "../_shared/loyal-spark-scope.ts";
 import { servConciergeReply, servConfigured } from "../_shared/serv-reasoning.ts";
+import { runConciergeAgent, servCreditsBlocked } from "../_shared/concierge-agent.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -129,6 +130,47 @@ Deno.serve(async (req) => {
         message: `Daily assistant limit (${DAILY_LIMIT}) reached. Try again tomorrow.`,
         disabled: false,
       }, 429);
+    }
+
+    // Primary path: tool-using agent on OpenServ SERV (docs search + own-account tools).
+    // Regex routers below run only when SERV is unavailable or the agent returns nothing.
+    if (servConfigured()) {
+      const agentTurns = messages
+        .filter((m) => m.role === "user" || m.role === "assistant")
+        .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
+      const agent = await runConciergeAgent({
+        role,
+        wallet,
+        messages: agentTurns,
+        execute: async (name, args) => {
+          if (role === "merchant") {
+            if (!wallet) return { content: "NO_WALLET: ask the merchant to connect their wallet." };
+            const r = await runMerchantTool(service, wallet, lastUser, messages, { name, args });
+            return { content: r ? r.reply : `Unknown tool ${name}` };
+          }
+          const r = await runShopperTool(service, wallet, lastUser, messages, null, "", { name, args });
+          if (!r) return { content: `Unknown tool ${name}` };
+          if (name === "issue_loyalty_voucher") {
+            return { content: r.reply, terminal: { reply: r.reply, source: r.source, action: r.action } };
+          }
+          return { content: r.reply };
+        },
+      }).catch((err) => {
+        console.error("[chat-bridge] agent", err);
+        return null;
+      });
+      if (agent) {
+        return json({
+          reply: agent.reply,
+          role,
+          wallet,
+          source: agent.source,
+          action: agent.action,
+          model: agent.model,
+          prompt_version: agent.promptVersion,
+          tools: agent.toolsUsed,
+        });
+      }
     }
 
     // One agent-facing snapshot per turn. SERV understands intent; tools run deterministic paths.
@@ -244,7 +286,7 @@ Deno.serve(async (req) => {
       return json({ reply: mints.reply, role, wallet, source: mints.source });
     }
 
-    if (servConfigured()) {
+    if (servConfigured() && !servCreditsBlocked()) {
       try {
         const serv = await servConciergeReply({ role, messages, accountContext });
         if (serv.toolCall && role === "shopper") {

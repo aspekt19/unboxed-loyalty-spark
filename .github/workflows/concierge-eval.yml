@@ -1,0 +1,9 @@
+name: Concierge eval
+# Manual only: each run spends OpenServ SERV credits.
+on: workflow_dispatch
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/concierge-eval/run.sh

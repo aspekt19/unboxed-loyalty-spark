@@ -417,6 +417,11 @@ export async function loadLastLoyaltySpend(
   const wallet = walletLower.replace(/^0x/, "");
   const fromTopic = `0x${"0".repeat(24)}${wallet}`;
 
+  // A newer P2P/transfer spend can beat the last voucher: keep the voucher as a floor
+  // and only search logs above its block.
+  let voucherHit: LastLoyaltySpend | null = null;
+  let floor = -1n;
+
   // 1) Redeem path writes vouchers.transaction_hash — fastest truth after Concierge redeem.
   try {
     const { data: voucher } = await serviceClient
@@ -438,13 +443,16 @@ export async function loadLastLoyaltySpend(
       }
       const token = typeof voucher.token_address === "string" ? voucher.token_address.toLowerCase() : "";
       const named = token ? await tokenLabel(serviceClient, token) : { label: voucher.reward_name || "loyalty", standard: "erc20" as const };
-      return {
+      voucherHit = {
         label: named.label || `${voucher.reward_name} (${voucher.token_symbol})`,
         amount: Number(voucher.cost) || 0,
         blockNumber: blockNumber || "pending",
         txHash,
         standard: named.standard,
       };
+      // Pending receipt: the voucher tx is the newest thing we know about.
+      if (!blockNumber) return voucherHit;
+      floor = BigInt(blockNumber);
     }
   } catch (err) {
     console.error("[last-spend] voucher lookup", err);
@@ -457,11 +465,14 @@ export async function loadLastLoyaltySpend(
     tip = BigInt(await baseRpcCall<string>("eth_blockNumber", []));
   } catch (err) {
     console.error("[last-spend] blockNumber", err);
-    return null;
+    return voucherHit;
   }
 
+  const newer = (hit: LastLoyaltySpend | null) =>
+    hit && (floor < 0n || BigInt(hit.blockNumber) > floor) ? hit : null;
+
   let heldTokens: string[] = [];
-  try {
+  if (!voucherHit) try {
     const held = await loadHolderBalancesFast(serviceClient, walletLower);
     heldTokens = held
       .filter((r) => r.program != null)
@@ -514,10 +525,11 @@ export async function loadLastLoyaltySpend(
       toBlock: `0x${cursor.toString(16)}`,
       topics: [TRANSFER_TOPIC, fromTopic],
     });
-    if (hit) return hit;
-    if (fromBlock === 0n) break;
+    if (newer(hit)) return hit;
+    if (hit || fromBlock === 0n || fromBlock <= floor) break;
     cursor = fromBlock - 1n;
   }
+  if (voucherHit) return voucherHit;
 
   cursor = tip;
   for (let i = 0; i < 6; i++) {
