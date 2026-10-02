@@ -90,7 +90,9 @@ async function loadHeldLoyaltyBalances(service: Db, wallet: string): Promise<Hel
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error("balance timeout")), 10_000)),
     ]);
     return rows
-      .filter((r) => r.current_balance > 0)
+      .filter((r): r is typeof r & { program: NonNullable<typeof r.program> } =>
+        r.current_balance > 0 && r.program != null
+      )
       .map((r) => ({
         tokenAddress: r.token_address,
         label: `${r.program.name} (${r.program.symbol})`,
