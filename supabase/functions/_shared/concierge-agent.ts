@@ -136,7 +136,7 @@ export async function runConciergeAgent(args: {
     const finalStep = step === MAX_STEPS - 1 || docCalls >= 2 || (toolsUsed.length > 0 && remaining < 9000);
     const data = await callServ(apiKey, {
       model,
-      reasoning_effort: model.includes("gemini") ? "low" : "none",
+      reasoning_effort: "low",
       max_completion_tokens: 1500,
       messages: convo,
       tools: step === 0 ? guarded : baseTools,
