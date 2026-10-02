@@ -55,7 +55,8 @@ async function openChat(page: Page, role: "shopper" | "merchant") {
 }
 
 test.describe("Concierge chat fits phone screens", () => {
-  test.beforeEach((_fixtures, info) => {
+  // eslint-disable-next-line no-empty-pattern -- Playwright requires a destructured fixtures argument
+  test.beforeEach(({}, info) => {
     // Viewports are set per test; run once instead of in every configured project.
     test.skip(info.project.name !== "desktop", "device sizes are set inside the test");
   });
