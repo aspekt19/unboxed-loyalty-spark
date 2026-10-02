@@ -1,5 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { loadAccountContext } from "../_shared/concierge-account.ts";
+import {
+  buildMerchantAgentContext,
+  buildShopperAgentContext,
+  type ShopperAgentContext,
+} from "../_shared/agent-context.ts";
 import {
   asksAboutLastSpend,
   asksAboutRedeem,
@@ -104,20 +108,31 @@ Deno.serve(async (req) => {
       }, 429);
     }
 
+    // One agent-facing snapshot per turn (agent-context.ts). Every path below reads it.
     let accountContext = "";
+    let shopperCtx: ShopperAgentContext | null = null;
     const redeemIntent = role === "shopper" && asksAboutRedeem(lastUser);
-
-    // Redeem needs balances + rewards only — skip the heavy account snapshot.
-    if (wallet && !redeemIntent) {
+    if (wallet) {
       try {
-        accountContext = await loadAccountContext(service, role, wallet, lastUser);
+        if (role === "shopper") {
+          const built = await buildShopperAgentContext(service, wallet, user.id);
+          shopperCtx = built.context;
+          accountContext = built.contextText;
+        } else {
+          accountContext = (await buildMerchantAgentContext(service, wallet, user.id)).contextText;
+        }
       } catch (err) {
-        console.error("[chat-bridge] account", err);
+        console.error("[chat-bridge] agent context", err);
       }
     }
 
     if (role === "shopper" && wallet && redeemIntent) {
-      const redeem = await shopperRedeemIntentReply(service, wallet, lastUser);
+      const redeem = await shopperRedeemIntentReply(
+        service,
+        wallet,
+        lastUser,
+        shopperCtx ? shopperCtx.rewards_affordable : null,
+      );
       return json({
         reply: redeem.reply,
         role,
