@@ -46,7 +46,7 @@ export function ConciergeDock({ role }: { role: Role }) {
       )}
       <SheetContent
         side="right"
-        className="flex w-full min-h-0 flex-col gap-3 overflow-hidden p-4 sm:max-w-md"
+        className="flex w-full max-w-[100vw] min-h-0 min-w-0 flex-col gap-3 overflow-hidden p-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:max-w-md"
         style={visibleViewport ? { height: `${visibleViewport.height}px`, top: `${visibleViewport.top}px`, bottom: "auto" } : undefined}
       >
         <SheetHeader className="space-y-0 text-left">

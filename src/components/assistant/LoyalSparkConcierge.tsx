@@ -296,7 +296,7 @@ export function LoyalSparkConcierge({ role, className, title }: Props) {
         )}
       </div>
 
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3">
+      <div className="min-h-0 min-w-0 flex-1 space-y-3 overflow-y-auto overflow-x-hidden px-4 py-3">
         {messages.length === 0 && (
           <p className="text-sm text-muted-foreground">
             {role === "shopper"
@@ -353,7 +353,7 @@ export function LoyalSparkConcierge({ role, className, title }: Props) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={role === "shopper" ? "Баланс, списание, ваучер…" : "Ask about Loyal Spark…"}
-          className="min-h-[44px] max-h-28 resize-none"
+          className="min-h-[44px] max-h-28 min-w-0 flex-1 resize-none"
           disabled={locked}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
