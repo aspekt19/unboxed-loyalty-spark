@@ -8,10 +8,14 @@ import {
   asksAboutLastSpend,
   asksAboutMyVouchers,
   asksAboutRedeem,
+  conversationAboutBalances,
+  conversationAboutRewards,
   conversationAboutVouchers,
   prepareRedeemAction,
   resolveVoucherStatusFromHistory,
+  shopperBalancesReply,
   shopperRedeemIntentReply,
+  shopperRewardsReply,
   shopperVoucherHistoryReply,
   wantsVoucherCountOnly,
 } from "../_shared/concierge-redeem.ts";
@@ -155,6 +159,38 @@ Deno.serve(async (req) => {
         role,
         wallet,
         source: "explorer",
+      });
+    }
+
+    if (role === "shopper" && wallet && conversationAboutRewards(messages, lastUser)) {
+      const rewards = await shopperRewardsReply(
+        service,
+        wallet,
+        lastUser,
+        shopperCtx?.rewards_affordable ?? null,
+      );
+      return json({
+        reply: rewards.reply,
+        role,
+        wallet,
+        source: rewards.source,
+      });
+    }
+
+    if (role === "shopper" && wallet && conversationAboutBalances(messages, lastUser)) {
+      const fromCtx = shopperCtx?.balances?.map((b) => ({
+        tokenAddress: b.token_address,
+        label: `${b.program_name} (${b.symbol})`,
+        programName: b.program_name,
+        symbol: b.symbol,
+        amount: b.amount,
+      })) ?? null;
+      const balances = await shopperBalancesReply(service, wallet, lastUser, fromCtx);
+      return json({
+        reply: balances.reply,
+        role,
+        wallet,
+        source: balances.source,
       });
     }
 
@@ -327,6 +363,51 @@ async function runShopperTool(
     };
   }
 
+  if (tool.name === "list_my_balances") {
+    if (!wallet) {
+      return {
+        reply: /[а-яё]/i.test(lastUser)
+          ? "Подключите кошелёк покупателя, чтобы посмотреть баллы."
+          : "Connect your shopper wallet to view balances.",
+        source: "balances",
+      };
+    }
+    const fromCtx = shopperCtx?.balances?.map((b) => ({
+      tokenAddress: b.token_address,
+      label: `${b.program_name} (${b.symbol})`,
+      programName: b.program_name,
+      symbol: b.symbol,
+      amount: b.amount,
+    })) ?? null;
+    const countOnly =
+      tool.args.count_only === true || wantsVoucherCountOnly(lastUser);
+    const balances = await shopperBalancesReply(service, wallet, lastUser, fromCtx, {
+      countOnly,
+    });
+    return { reply: balances.reply, source: balances.source };
+  }
+
+  if (tool.name === "list_affordable_rewards") {
+    if (!wallet) {
+      return {
+        reply: /[а-яё]/i.test(lastUser)
+          ? "Подключите кошелёк покупателя, чтобы посмотреть награды."
+          : "Connect your shopper wallet to view rewards.",
+        source: "rewards",
+      };
+    }
+    const countOnly =
+      tool.args.count_only === true || wantsVoucherCountOnly(lastUser);
+    const rewards = await shopperRewardsReply(
+      service,
+      wallet,
+      lastUser,
+      shopperCtx?.rewards_affordable ?? null,
+      { countOnly },
+    );
+    return { reply: rewards.reply, source: rewards.source };
+  }
+
   if (!wallet) {
     if (tool.name === "issue_loyalty_voucher") {
       return {
@@ -488,7 +569,7 @@ function modelFallback(lastUser: string, accountContext: string): string {
       ? `Баллы начисляет магазин. В https://loyalspark.online/customer откройте Loyalty и покажите QR-код или адрес кошелька на кассе. Токены появятся в Your Loyalty Tokens. Потратить их можно здесь в ассистенте («выпусти ваучер») или во вкладке Rewards. Гайд: ${guide}`
       : `A merchant issues the points. On https://loyalspark.online/customer open Loyalty and show your QR or wallet at checkout. Spend them here in the assistant (“issue a voucher”) or under Rewards. Guide: ${guide}`;
   }
-  const balances = sectionLines(accountContext, "Loyalty balances").slice(0, 8);
+  const balances = sectionLines(accountContext, "Loyalty balances");
   if (balances.length === 0) {
     return ru
       ? `На этом кошельке пока нет баллов. Их начисляет магазин, когда вы показываете QR на вкладке Loyalty. Гайд: ${guide}`
@@ -496,8 +577,8 @@ function modelFallback(lastUser: string, accountContext: string): string {
   }
   const lines = balances.map((row) => `• ${row}`).join("\n");
   return ru
-    ? `Ваши баллы, от большего к меньшему:\n${lines}\nБольше всего баллов в ${balances[0]}.`
-    : `Your points, highest first:\n${lines}\nYou have the most points in ${balances[0]}.`;
+    ? `Ваши баллы, от большего к меньшему (${balances.length}):\n${lines}`
+    : `Your points, highest first (${balances.length}):\n${lines}`;
 }
 
 function json(body: unknown, status = 200) {

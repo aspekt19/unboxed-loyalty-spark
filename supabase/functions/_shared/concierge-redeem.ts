@@ -174,6 +174,188 @@ export function resolveVoucherStatusFromHistory(
   return "all";
 }
 
+/** Points / loyalty token balances (portal Loyalty list). */
+export function asksAboutBalances(text: string): boolean {
+  if (
+    asksAboutMyVouchers(text) ||
+    asksAboutRedeem(text) ||
+    asksAboutLastSpend(text) ||
+    asksAboutRewardsList(text)
+  ) {
+    return false;
+  }
+  return /балл|баланс|\bpoints?\b|\bbalance\b|сколько у меня|мои токен|loyalty token|holdings|what do i have|что у меня|у меня на кошел|больше всего|the most|highest balance/i
+    .test(text);
+}
+
+/** List affordable rewards — not “create a voucher now”. */
+export function asksAboutRewardsList(text: string): boolean {
+  if (asksAboutMyVouchers(text) || asksAboutRedeem(text) || asksAboutLastSpend(text)) {
+    return false;
+  }
+  return /наград|\brewards?\b|что (могу|можно) (обмен|купить|получить|активир)|affordable|доступн.{0,30}наград|какие наград|список наград|show (me )?(my )?rewards|list (my )?rewards/i
+    .test(text);
+}
+
+export function conversationAboutBalances(messages: ChatTurn[], lastUser: string): boolean {
+  if (asksAboutBalances(lastUser)) return true;
+  if (!isVoucherTopicFollowUp(lastUser) && !wantsVoucherCountOnly(lastUser)) return false;
+  if (conversationAboutVouchers(messages, lastUser)) return false;
+  const prior = messages.slice(0, -1).reverse().slice(0, 24);
+  for (const m of prior) {
+    if (asksAboutRewardsList(m.content)) return false;
+    if (/доступн(ые|ых) наград|Rewards you can afford|Награды, на которые/i.test(m.content)) {
+      return false;
+    }
+  }
+  for (const m of prior) {
+    if (asksAboutBalances(m.content)) return true;
+    if (/Ваши баллы|Your points|Loyalty balances|Программ с балансом|Programs with a balance/i.test(m.content)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function conversationAboutRewards(messages: ChatTurn[], lastUser: string): boolean {
+  if (asksAboutRewardsList(lastUser)) return true;
+  if (!isVoucherTopicFollowUp(lastUser) && !wantsVoucherCountOnly(lastUser)) return false;
+  if (conversationAboutVouchers(messages, lastUser)) return false;
+  const prior = messages.slice(0, -1).reverse().slice(0, 24);
+  for (const m of prior) {
+    if (asksAboutRewardsList(m.content)) return true;
+    if (/доступн(ые|ых) наград|Rewards you can afford|Награды, на которые/i.test(m.content)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+const HOLDINGS_LIST_CAP = 80;
+
+/** Full loyalty balances (same source as portal), no top-8 truncation. */
+export async function shopperBalancesReply(
+  service: Db,
+  wallet: string,
+  question: string,
+  preloaded?: HeldBalance[] | null,
+  opts?: { countOnly?: boolean },
+): Promise<{ reply: string; source: "balances" }> {
+  const ru = /[а-яё]/i.test(question);
+  const countOnly = opts?.countOnly ?? wantsVoucherCountOnly(question);
+  let held: HeldBalance[] = [];
+  try {
+    held = preloaded?.length ? preloaded : await loadHeldLoyaltyBalances(service, wallet);
+  } catch (err) {
+    console.error("[concierge-redeem] balances reply", err);
+    return {
+      source: "balances",
+      reply: ru
+        ? "Не удалось загрузить баллы. Повторите вопрос через минуту."
+        : "Could not load balances. Ask again in a moment.",
+    };
+  }
+
+  const total = held.length;
+  if (total === 0) {
+    return {
+      source: "balances",
+      reply: ru
+        ? `Кошелёк ${wallet}.\nСейчас нет баллов лояльности. Их начисляет магазин на вкладке Loyalty (QR).`
+        : `Wallet ${wallet}.\nNo loyalty points yet. A merchant issues them on the Loyalty tab (QR).`,
+    };
+  }
+
+  if (countOnly) {
+    return {
+      source: "balances",
+      reply: ru
+        ? `Кошелёк ${wallet}.\nПрограмм с балансом: ${total}.`
+        : `Wallet ${wallet}.\nPrograms with a balance: ${total}.`,
+    };
+  }
+
+  const show = held.slice(0, HOLDINGS_LIST_CAP);
+  const lines = show.map((b) => `• ${b.programName} (${b.symbol}): ${amt(b.amount)}`);
+  const more =
+    total > show.length
+      ? (ru
+        ? `\nПоказаны ${show.length} из ${total} (по убыванию баланса).`
+        : `\nShowing ${show.length} of ${total} (highest balance first).`)
+      : "";
+  return {
+    source: "balances",
+    reply: ru
+      ? `Кошелёк ${wallet}.\nВаши баллы, от большего к меньшему. Всего программ: ${total}:\n${lines.join("\n")}${more}`
+      : `Wallet ${wallet}.\nYour points, highest first. Programs: ${total}:\n${lines.join("\n")}${more}`,
+  };
+}
+
+/** Full affordable rewards list (not capped at 12/24 for display). */
+export async function shopperRewardsReply(
+  service: Db,
+  wallet: string,
+  question: string,
+  preloaded?: RedeemableReward[] | null,
+  opts?: { countOnly?: boolean },
+): Promise<{ reply: string; source: "rewards" }> {
+  const ru = /[а-яё]/i.test(question);
+  const countOnly = opts?.countOnly ?? wantsVoucherCountOnly(question);
+  let rewards: RedeemableReward[] = [];
+  try {
+    rewards = preloaded?.length
+      ? preloaded
+      : await listRedeemableRewards(service, wallet);
+  } catch (err) {
+    console.error("[concierge-redeem] rewards reply", err);
+    return {
+      source: "rewards",
+      reply: ru
+        ? "Не удалось загрузить награды. Повторите вопрос через минуту."
+        : "Could not load rewards. Ask again in a moment.",
+    };
+  }
+
+  const total = rewards.length;
+  if (total === 0) {
+    return {
+      source: "rewards",
+      reply: ru
+        ? `Кошелёк ${wallet}.\nСейчас нет наград, на которые хватает баллов. Откройте Loyalty → Rewards.`
+        : `Wallet ${wallet}.\nNo rewards you can afford right now. Open Loyalty → Rewards.`,
+    };
+  }
+
+  if (countOnly) {
+    return {
+      source: "rewards",
+      reply: ru
+        ? `Кошелёк ${wallet}.\nДоступных наград (хватает баллов): ${total}.`
+        : `Wallet ${wallet}.\nAffordable rewards: ${total}.`,
+    };
+  }
+
+  const show = rewards.slice(0, HOLDINGS_LIST_CAP);
+  const lines = show.map(
+    (r) =>
+      `• ${r.name} — ${amt(r.cost)} ${r.token_symbol || r.program_name} (баланс ${amt(r.balance)})`,
+  );
+  const more =
+    total > show.length
+      ? (ru
+        ? `\nПоказаны ${show.length} из ${total}. Скажите «выпусти ваучер» чтобы выбрать.`
+        : `\nShowing ${show.length} of ${total}. Say “issue a voucher” to pick one.`)
+      : (ru
+        ? `\nСкажите «выпусти ваучер», чтобы выбрать и подписать.`
+        : `\nSay “issue a voucher” to pick one and sign.`);
+  return {
+    source: "rewards",
+    reply: ru
+      ? `Кошелёк ${wallet}.\nНаграды, на которые хватает баллов. Всего ${total}, сначала программы с большим балансом:\n${lines.join("\n")}${more}`
+      : `Wallet ${wallet}.\nRewards you can afford. Total ${total}, higher-balance programs first:\n${lines.join("\n")}${more}`,
+  };
+}
+
 export type SnapshotVoucher = {
   code?: string;
   reward_name: string;
@@ -388,26 +570,29 @@ export async function loadHeldLoyaltyBalances(service: Db, wallet: string): Prom
 export async function listRedeemableRewards(
   service: Db,
   wallet: string,
+  opts?: { limit?: number },
 ): Promise<RedeemableReward[]> {
-  return rewardsForHeld(service, await loadHeldLoyaltyBalances(service, wallet));
+  return rewardsForHeld(service, await loadHeldLoyaltyBalances(service, wallet), opts);
 }
 
 /** Affordable active rewards for an already-loaded balance list (agent-context reuses this). */
 export async function rewardsForHeld(
   service: Db,
   heldAll: HeldBalance[],
+  opts?: { limit?: number },
 ): Promise<RedeemableReward[]> {
-  const held = heldAll.slice(0, 40);
+  const held = heldAll.filter((b) => b.amount > 0);
   if (held.length === 0) return [];
 
   const tokens = held.map((b) => b.tokenAddress);
+  const dbLimit = Math.min(Math.max(opts?.limit ?? 400, 1), 500);
   const { data: rewards, error } = await service
     .from("rewards")
     .select("id, name, description, cost, token_address, merchant_address, is_active")
     .in("token_address", tokens)
     .eq("is_active", true)
     .order("cost", { ascending: true })
-    .limit(80);
+    .limit(dbLimit);
   if (error) throw error;
 
   const byToken = new Map(held.map((b) => [b.tokenAddress.toLowerCase(), b]));
@@ -439,7 +624,8 @@ export async function rewardsForHeld(
   }
   // Prefer higher-balance programs first, then cheaper rewards.
   out.sort((a, b) => b.balance - a.balance || a.cost - b.cost);
-  return out.slice(0, 24);
+  if (opts?.limit != null) return out.slice(0, opts.limit);
+  return out;
 }
 
 export function matchRewardByText(
@@ -561,7 +747,9 @@ export async function shopperRedeemIntentReply(
   const ru = /[а-яё]/i.test(question);
   let rewards: RedeemableReward[];
   try {
-    rewards = preloaded ?? await listRedeemableRewards(service, wallet);
+    rewards = preloaded?.length
+      ? preloaded
+      : await listRedeemableRewards(service, wallet, { limit: 24 });
   } catch (err) {
     console.error("[concierge-redeem] list", err);
     return {

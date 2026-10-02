@@ -182,7 +182,7 @@ function shopperContextText(c: ShopperAgentContext, balancesOk: boolean, lastOk:
   if (!balancesOk) out.push("Loyalty balances: lookup failed. Do not claim the wallet has no points.");
   else if (c.balances.length === 0) out.push("Loyalty balances: none");
   else {
-    out.push("Loyalty balances, same list as the customer portal, highest first:");
+    out.push(`Loyalty balances, same list as the customer portal, highest first (${c.balances.length} programs):`);
     for (const b of c.balances) out.push(`- ${b.program_name} (${b.symbol}): ${amt(b.amount)}`);
   }
   if (!lastOk) out.push("Last loyalty spend: lookup failed");
@@ -193,8 +193,10 @@ function shopperContextText(c: ShopperAgentContext, balancesOk: boolean, lastOk:
   }
   if (c.rewards_affordable.length === 0) out.push("Rewards affordable now: none");
   else {
-    out.push("Rewards affordable now (the assistant can issue these as vouchers):");
-    for (const r of c.rewards_affordable.slice(0, 12)) {
+    out.push(
+      `Rewards affordable now (${c.rewards_affordable.length} total — assistant can issue these as vouchers):`,
+    );
+    for (const r of c.rewards_affordable) {
       out.push(`- ${r.name}: ${amt(r.cost)} ${r.token_symbol || r.program_name}`);
     }
   }

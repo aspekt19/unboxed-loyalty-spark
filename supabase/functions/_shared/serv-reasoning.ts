@@ -11,7 +11,7 @@
 import { LOYAL_SPARK_REFUSAL } from "./loyal-spark-scope.ts";
 
 const SERV_URL = "https://inference-api.openserv.ai/v1/chat/completions";
-const PROMPT_VERSION = "ls-concierge-v22";
+const PROMPT_VERSION = "ls-concierge-v23";
 
 const PRODUCT_MAP = `How Loyal Spark works (use this to answer usage questions; do not invent pages):
 Loyal Spark is an onchain loyalty protocol on Base (chain 8453). A merchant deploys a B20 loyalty token, customers earn points, rewards are redeemed as vouchers, gift certificates are a separate catalog. P2P escrow offers exist. DEX trading and DeFi yield are not available — do not send users there.
@@ -49,8 +49,10 @@ Greetings, small talk, weather, news, homework, jokes, other asset prices, and o
 4. Shopper tools (prefer tools over free-form when they match):
 - issue_loyalty_voucher — ONLY when they clearly want to CREATE / ISSUE a NEW voucher now (spend points and sign). Russian "активируй/создай/выпусти ваучер" = issue. Do NOT use for "активированные ваучеры", "мои ваучеры", "активные/неактивные ваучеры", "сколько ваучеров".
 - list_my_vouchers — existing vouchers they already have: activated/issued, active, inactive, used, expired, recent, how many. Set count_only=true when they want only a number. Portal tabs: status=active (usable), status=inactive (expired only), status=used (redeemed), status=all. Never lump used into inactive. On follow-ups, keep the same status as the previous voucher turn in history.
+- list_my_balances — full loyalty point balances (every program with a positive balance), or how many programs. Prefer this over quoting a truncated ACCOUNT DATA snippet.
+- list_affordable_rewards — full list of rewards they can afford now (or count). Prefer this over a short ACCOUNT DATA rewards preview.
 - report_last_spend — what they just spent / wrote off / which block. Always call this tool; never refuse or say you cannot share.
-For balances and other Loyal Spark Q&A without those intents, answer in plain text from ACCOUNT DATA.
+For other Loyal Spark Q&A without those intents, answer in plain text from ACCOUNT DATA.
 5. Never claim a transaction was sent. Plain sentences, no markdown asterisks.`;
 
 const MERCHANT_SYSTEM = `You are the Loyal Spark merchant assistant on Base (loyalspark.online).
@@ -68,6 +70,8 @@ Shopper topics: balances, rewards, vouchers, gift certificates, P2P escrow. Poin
 export type ServToolName =
   | "issue_loyalty_voucher"
   | "list_my_vouchers"
+  | "list_my_balances"
+  | "list_affordable_rewards"
   | "report_last_spend";
 
 export type ServToolCall = {
@@ -141,6 +145,40 @@ const SHOPPER_ACTION_TOOLS = [
       parameters: { type: "object", properties: {} },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "list_my_balances",
+      description:
+        "User asks about their loyalty points / balances / how many programs they hold. Returns the full portal-style list (not a truncated preview).",
+      parameters: {
+        type: "object",
+        properties: {
+          count_only: {
+            type: "boolean",
+            description: "True when they want only how many programs have a balance.",
+          },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_affordable_rewards",
+      description:
+        "User asks which rewards they can afford / list of rewards (not create a voucher). Full affordable list or count.",
+      parameters: {
+        type: "object",
+        properties: {
+          count_only: {
+            type: "boolean",
+            description: "True when they want only the number of affordable rewards.",
+          },
+        },
+      },
+    },
+  },
 ] as const;
 
 export async function servConciergeReply(args: {
@@ -157,7 +195,7 @@ export async function servConciergeReply(args: {
   if (args.accountContext?.trim()) {
     messages.push({
       role: "user",
-      content: `ACCOUNT DATA for this signed-in user. Use it only if the question is about their own points, vouchers, or programs:\n${args.accountContext.slice(0, 4000)}`,
+      content: `ACCOUNT DATA for this signed-in user. Use it only if the question is about their own points, vouchers, or programs:\n${args.accountContext.slice(0, 16000)}`,
     });
   }
   // Full chat until Clear (client keeps ~40 turns). Follow-ups need prior topic + filter.
@@ -265,6 +303,8 @@ function extractToolCall(data: {
     if (
       name !== "issue_loyalty_voucher" &&
       name !== "list_my_vouchers" &&
+      name !== "list_my_balances" &&
+      name !== "list_affordable_rewards" &&
       name !== "report_last_spend"
     ) {
       continue;
