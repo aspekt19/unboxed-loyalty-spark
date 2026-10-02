@@ -428,10 +428,16 @@ async function liveLastSpendReply(
   const who = ru ? `Кошелёк ${wallet}.` : `Wallet ${wallet}.`;
   try {
     const { loadLastLoyaltySpend } = await import("../_shared/recipient-onchain-balances.ts");
+    const TIMEOUT = Symbol("timeout");
     const last = await Promise.race([
       loadLastLoyaltySpend(service, wallet),
-      new Promise<null>((resolve) => setTimeout(() => resolve(null), 14_000)),
+      new Promise<typeof TIMEOUT>((resolve) => setTimeout(() => resolve(TIMEOUT), 14_000)),
     ]);
+    if (last === TIMEOUT) {
+      return ru
+        ? `${who}\nНе успел проверить списание на Base (сеть отвечает медленно). Повторите через минуту.`
+        : `${who}\nBase lookup timed out before finishing. Try again in a minute.`;
+    }
     if (!last) {
       return ru
         ? `${who}\nНе нашёл исходящего перевода баллов лояльности (ни в ваучерах, ни в недавних логах Base). Если только что подписали redeem — подождите ~30 сек и спросите снова.`
