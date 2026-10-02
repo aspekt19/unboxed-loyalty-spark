@@ -11,6 +11,8 @@ import {
   prepareRedeemAction,
   shopperRedeemIntentReply,
   shopperVoucherHistoryReply,
+  voucherStatusFilter,
+  wantsVoucherCountOnly,
 } from "../_shared/concierge-redeem.ts";
 import { isLoyalSparkScoped, LOYAL_SPARK_REFUSAL } from "../_shared/loyal-spark-scope.ts";
 import { servConciergeReply, servConfigured } from "../_shared/serv-reasoning.ts";
@@ -308,18 +310,19 @@ async function runShopperTool(
   }
 
   if (tool.name === "list_my_vouchers") {
-    const status = typeof tool.args.status === "string" ? tool.args.status : "all";
-    const synthetic =
-      status === "inactive"
-        ? "неактивные ваучеры"
-        : status === "active"
-        ? "активные ваучеры"
-        : lastUser || "мои ваучеры";
+    const statusRaw = typeof tool.args.status === "string" ? tool.args.status : "";
+    const status =
+      statusRaw === "inactive" || statusRaw === "active" || statusRaw === "all"
+        ? statusRaw
+        : voucherStatusFilter(lastUser);
+    const countOnly =
+      tool.args.count_only === true || wantsVoucherCountOnly(lastUser);
     const vouchers = await shopperVoucherHistoryReply(
       service,
       wallet,
-      synthetic,
+      lastUser || "мои ваучеры",
       shopperCtx?.vouchers_recent ?? null,
+      { status, countOnly },
     );
     return { reply: vouchers.reply, source: vouchers.source };
   }
@@ -350,9 +353,11 @@ function normalizeMessages(raw: unknown): ChatMessage[] {
     .filter((m) => m && typeof m === "object")
     .map((m) => {
       const o = m as Record<string, unknown>;
-      const role = "user";
+      // Trust only user/assistant from the client — never system.
+      const role: ChatMessage["role"] =
+        o.role === "assistant" ? "assistant" : "user";
       const content = typeof o.content === "string" ? o.content.slice(0, 4000) : "";
-      return { role, content } as ChatMessage;
+      return { role, content };
     })
     .filter((m) => m.content.trim().length > 0)
     .slice(-20);

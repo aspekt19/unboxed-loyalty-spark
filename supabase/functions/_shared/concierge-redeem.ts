@@ -53,7 +53,7 @@ function amt(n: number): string {
 
 /**
  * Intent: user wants to ISSUE a voucher (spend points → sign).
- * Must NOT match questions about existing vouchers ("мои ваучеры", "неактивные").
+ * Must NOT match questions about existing vouchers ("мои ваучеры", "активированные", "неактивные").
  */
 export function asksAboutRedeem(text: string): boolean {
   if (asksAboutMyVouchers(text)) return false;
@@ -62,10 +62,11 @@ export function asksAboutRedeem(text: string): boolean {
 }
 
 /**
- * Intent: list / status of vouchers the shopper already has (active, used, expired).
+ * Intent: list / status / count of vouchers the shopper already has.
+ * "активированные" = already issued vouchers (list), NOT "activate a reward".
  */
 export function asksAboutMyVouchers(text: string): boolean {
-  return /мои?\s+ваучер|ваучер[аыов]*.{0,40}(не\s*)?актив|(не\s*)?активн.{0,40}ваучер|неактивн.{0,40}ваучер|использованн.{0,40}ваучер|истек.{0,40}ваучер|(какие|список|последн|узнать|покажи|show|list).{0,60}ваучер|my\s+vouchers?|inactive\s+vouchers?|used\s+vouchers?|expired\s+vouchers?|voucher\s+status|статус\s+ваучер|про\s+.{0,40}ваучер/i
+  return /мои?\s+ваучер|ваучер[аыов]*.{0,40}(не\s*)?актив|активирован|(не\s*)?активн.{0,40}ваучер|неактивн.{0,40}ваучер|неактивир|использованн.{0,40}ваучер|истек.{0,40}ваучер|(какие|список|последн|узнать|покажи|сколько|show|list|count).{0,60}ваучер|my\s+vouchers?|inactive\s+vouchers?|used\s+vouchers?|expired\s+vouchers?|active\s+vouchers?|voucher\s+status|статус\s+ваучер|про\s+.{0,40}ваучер/i
     .test(text);
 }
 
@@ -79,9 +80,21 @@ export function asksAboutLastSpend(text: string): boolean {
 export type VoucherStatusFilter = "all" | "active" | "inactive";
 
 export function voucherStatusFilter(text: string): VoucherStatusFilter {
-  if (/не\s*актив|неактивн|использован|истек|used|expired|inactive/i.test(text)) return "inactive";
-  if (/\bactive\b|активн(?!о)/i.test(text) && !/не\s*актив|неактивн/i.test(text)) return "active";
+  if (/не\s*актив|неактивн|неактивир|использован|истек|used|expired|inactive/i.test(text)) {
+    return "inactive";
+  }
+  // "активированные" / "активированы" / active = still usable (status active)
+  if (
+    /активирован|\bactive\b|активн(?!о)/i.test(text) &&
+    !/не\s*актив|неактивн|неактивир/i.test(text)
+  ) {
+    return "active";
+  }
   return "all";
+}
+
+export function wantsVoucherCountOnly(text: string): boolean {
+  return /сколько|how\s+many|число|количество|count\b|не\s+перечисл|без\s+списк|только\s+(число|цифр)/i.test(text);
 }
 
 export type SnapshotVoucher = {
@@ -93,50 +106,43 @@ export type SnapshotVoucher = {
   activated_at: string;
 };
 
-/** Prefer snapshot rows; if inactive/all need more, read DB. */
+/** Load vouchers from DB (full set for active/inactive). Snapshot alone is too short. */
 export async function shopperVoucherHistoryReply(
   service: Db,
   wallet: string,
   question: string,
-  snapshot: SnapshotVoucher[] | null,
+  _snapshot: SnapshotVoucher[] | null,
+  opts?: { status?: VoucherStatusFilter; countOnly?: boolean },
 ): Promise<{ reply: string; source: "vouchers" }> {
   const ru = /[а-яё]/i.test(question);
-  const filter = voucherStatusFilter(question);
-  let rows = [...(snapshot ?? [])];
+  const filter = opts?.status ?? voucherStatusFilter(question);
+  const countOnly = opts?.countOnly ?? wantsVoucherCountOnly(question);
+  let rows: SnapshotVoucher[] = [];
 
-  const needsDb =
-    filter === "inactive" ||
-    rows.length === 0 ||
-    (filter === "all" && rows.length < 5);
-
-  if (needsDb) {
-    try {
-      let q = service
-        .from("vouchers")
-        .select("code, reward_name, status, token_symbol, cost, activated_at")
-        .ilike("customer_address", wallet)
-        .order("activated_at", { ascending: false })
-        .limit(20);
-      if (filter === "inactive") q = q.in("status", ["used", "expired"]);
-      if (filter === "active") q = q.eq("status", "active");
-      const { data, error } = await q;
-      if (error) throw error;
-      rows = ((data ?? []) as SnapshotVoucher[]).map((v) => ({ ...v, cost: Number(v.cost) }));
-    } catch (err) {
-      console.error("[concierge-redeem] voucher history", err);
-      return {
-        source: "vouchers",
-        reply: ru
-          ? "Не удалось загрузить ваучеры. Повторите вопрос через минуту."
-          : "Could not load vouchers. Ask again in a moment.",
-      };
-    }
-  } else if (filter === "active") {
-    // inactive always takes needsDb above; here only snapshot filter for active.
-    rows = rows.filter((v) => v.status === "active");
+  try {
+    let q = service
+      .from("vouchers")
+      .select("code, reward_name, status, token_symbol, cost, activated_at")
+      .ilike("customer_address", wallet)
+      .order("activated_at", { ascending: false })
+      .limit(200);
+    if (filter === "inactive") q = q.in("status", ["used", "expired"]);
+    if (filter === "active") q = q.eq("status", "active");
+    const { data, error } = await q;
+    if (error) throw error;
+    rows = ((data ?? []) as SnapshotVoucher[]).map((v) => ({ ...v, cost: Number(v.cost) }));
+  } catch (err) {
+    console.error("[concierge-redeem] voucher history", err);
+    return {
+      source: "vouchers",
+      reply: ru
+        ? "Не удалось загрузить ваучеры. Повторите вопрос через минуту."
+        : "Could not load vouchers. Ask again in a moment.",
+    };
   }
 
-  if (rows.length === 0) {
+  const total = rows.length;
+  if (total === 0) {
     const label =
       filter === "inactive"
         ? (ru ? "неактивных ваучеров" : "inactive vouchers")
@@ -146,25 +152,45 @@ export async function shopperVoucherHistoryReply(
     return {
       source: "vouchers",
       reply: ru
-        ? `У кошелька ${wallet} сейчас нет ${label} в истории.`
-        : `Wallet ${wallet} has no ${label} in history.`,
+        ? `Кошелёк ${wallet}.\nСейчас нет ${label}.`
+        : `Wallet ${wallet}.\nNo ${label} right now.`,
     };
   }
 
-  const lines = rows.slice(0, 12).map((v) => {
+  if (countOnly) {
+    const label =
+      filter === "inactive"
+        ? (ru ? "неактивных (used/expired)" : "inactive (used/expired)")
+        : filter === "active"
+        ? (ru ? "активных" : "active")
+        : (ru ? "всего" : "in total");
+    return {
+      source: "vouchers",
+      reply: ru
+        ? `Кошелёк ${wallet}.\nВаучеров ${label}: ${total}.`
+        : `Wallet ${wallet}.\n${label} vouchers: ${total}.`,
+    };
+  }
+
+  const show = rows.slice(0, 40);
+  const lines = show.map((v) => {
     const code = v.code ? ` ${v.code}` : "";
     return `• ${v.reward_name}${code} [${v.status}] — ${amt(Number(v.cost))} ${v.token_symbol} (${v.activated_at})`;
   });
   const title =
     filter === "inactive"
-      ? (ru ? "Неактивные ваучеры (used / expired), новые сверху:" : "Inactive vouchers (used / expired), newest first:")
+      ? (ru ? `Неактивные ваучеры (used / expired). Всего ${total}, новые сверху:` : `Inactive vouchers (used / expired). Total ${total}, newest first:`)
       : filter === "active"
-      ? (ru ? "Активные ваучеры, новые сверху:" : "Active vouchers, newest first:")
-      : (ru ? "Ваши ваучеры, новые сверху:" : "Your vouchers, newest first:");
+      ? (ru ? `Активные ваучеры. Всего ${total}, новые сверху:` : `Active vouchers. Total ${total}, newest first:`)
+      : (ru ? `Ваши ваучеры. Всего ${total}, новые сверху:` : `Your vouchers. Total ${total}, newest first:`);
+  const more =
+    total > show.length
+      ? (ru ? `\nПоказаны ${show.length} из ${total}. Спросите «сколько активных ваучеров» для одного числа.` : `\nShowing ${show.length} of ${total}. Ask “how many active vouchers” for just the number.`)
+      : "";
 
   return {
     source: "vouchers",
-    reply: `${ru ? `Кошелёк ${wallet}.` : `Wallet ${wallet}.`}\n${title}\n${lines.join("\n")}`,
+    reply: `${ru ? `Кошелёк ${wallet}.` : `Wallet ${wallet}.`}\n${title}\n${lines.join("\n")}${more}`,
   };
 }
 
