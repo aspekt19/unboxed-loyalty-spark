@@ -73,7 +73,13 @@ export function asksAboutMyVouchers(text: string): boolean {
 /** Last on-chain spend — must not steal redeem or voucher-list intents. */
 export function asksAboutLastSpend(text: string): boolean {
   if (asksAboutRedeem(text) || asksAboutMyVouchers(text)) return false;
-  return /списан|списали|списани|just\s+used|just\s+spent|which\s+block|каком\s+блоке|последн(ее|яя|ий)\s+списа|last\s+spend|last\s+transfer|на\s+каком\s+блоке/i
+  return /списан|списали|списани|потратил|потрачен|just\s+used|just\s+spent|which\s+block|каком\s+блоке|последн(ее|яя|ий)\s+списа|last\s+spend|last\s+transfer|на\s+каком\s+блоке|what\s+did\s+i\s+spend|сколько\s+я\s+потрат/i
+    .test(text);
+}
+
+/** How points are earned / where they come from — PRODUCT_MAP / SERV, not a balance dump. */
+export function asksAboutPointsHowTo(text: string): boolean {
+  return /откуда.{0,60}балл|балл.{0,40}бер(у|ё|ут)|как (получить|заработать|набрать|начисл|зарабат).{0,40}балл|где (взять|получить).{0,30}балл|how (do|to|can).{0,40}(get|earn|receive).{0,40}points|where (do|does|did).{0,40}points|points come from|откуда берутся/i
     .test(text);
 }
 
@@ -180,7 +186,8 @@ export function asksAboutBalances(text: string): boolean {
     asksAboutMyVouchers(text) ||
     asksAboutRedeem(text) ||
     asksAboutLastSpend(text) ||
-    asksAboutRewardsList(text)
+    asksAboutRewardsList(text) ||
+    asksAboutPointsHowTo(text)
   ) {
     return false;
   }

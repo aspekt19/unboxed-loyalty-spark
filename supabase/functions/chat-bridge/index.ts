@@ -168,8 +168,18 @@ Deno.serve(async (req) => {
     }
 
     if (role === "shopper" && asksAboutLastSpend(lastUser)) {
+      if (!wallet) {
+        return json({
+          reply: /[а-яё]/i.test(lastUser)
+            ? "Подключите кошелёк покупателя, чтобы увидеть последнее списание."
+            : "Connect your shopper wallet to see the last spend.",
+          role,
+          wallet: null,
+          source: "explorer",
+        });
+      }
       return json({
-        reply: modelFallback(lastUser, accountContext),
+        reply: await liveLastSpendReply(service, wallet, lastUser),
         role,
         wallet,
         source: "explorer",
@@ -335,8 +345,18 @@ Deno.serve(async (req) => {
     }
 
     if (role === "shopper" && asksAboutLastSpend(lastUser)) {
+      if (!wallet) {
+        return json({
+          reply: /[а-яё]/i.test(lastUser)
+            ? "Подключите кошелёк покупателя, чтобы увидеть последнее списание."
+            : "Connect your shopper wallet to see the last spend.",
+          role,
+          wallet: null,
+          source: "explorer",
+        });
+      }
       return json({
-        reply: modelFallback(lastUser, accountContext),
+        reply: await liveLastSpendReply(service, wallet, lastUser),
         role,
         wallet,
         source: "explorer",
@@ -398,6 +418,37 @@ Deno.serve(async (req) => {
   }
 });
 
+async function liveLastSpendReply(
+  // deno-lint-ignore no-explicit-any
+  service: any,
+  wallet: string,
+  question: string,
+): Promise<string> {
+  const ru = /[а-яё]/i.test(question);
+  const who = ru ? `Кошелёк ${wallet}.` : `Wallet ${wallet}.`;
+  try {
+    const { loadLastLoyaltySpend } = await import("../_shared/recipient-onchain-balances.ts");
+    const last = await Promise.race([
+      loadLastLoyaltySpend(service, wallet),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 14_000)),
+    ]);
+    if (!last) {
+      return ru
+        ? `${who}\nНе нашёл исходящего перевода баллов лояльности (ни в ваучерах, ни в недавних логах Base). Если только что подписали redeem — подождите ~30 сек и спросите снова.`
+        : `${who}\nNo outgoing loyalty transfer found (vouchers or recent Base logs). If you just signed a redeem, wait ~30s and ask again.`;
+    }
+    const url = `https://basescan.org/tx/${last.txHash}`;
+    return ru
+      ? `${who}\nПоследнее списание: ${last.amount} ${last.label}.\nБлок ${last.blockNumber}.\nТранзакция ${last.txHash}.\n${url}`
+      : `${who}\nLast spend: ${last.amount} ${last.label}.\nBlock ${last.blockNumber}.\nTransaction ${last.txHash}.\n${url}`;
+  } catch (err) {
+    console.error("[chat-bridge] live last spend", err);
+    return ru
+      ? `${who}\nНе удалось проверить списание на Base. Повторите через минуту.`
+      : `${who}\nCould not check Base for the last spend. Try again in a minute.`;
+  }
+}
+
 async function runMerchantTool(
   // deno-lint-ignore no-explicit-any
   service: any,
@@ -454,8 +505,16 @@ async function runShopperTool(
   tool: { name: string; args: Record<string, unknown> },
 ): Promise<{ reply: string; source: string; action?: unknown } | null> {
   if (tool.name === "report_last_spend") {
+    if (!wallet) {
+      return {
+        reply: /[а-яё]/i.test(lastUser)
+          ? "Подключите кошелёк покупателя, чтобы увидеть последнее списание."
+          : "Connect your shopper wallet to see the last spend.",
+        source: "explorer",
+      };
+    }
     return {
-      reply: modelFallback("последнее списание", accountContext),
+      reply: await liveLastSpendReply(service, wallet, lastUser || "последнее списание"),
       source: "explorer",
     };
   }

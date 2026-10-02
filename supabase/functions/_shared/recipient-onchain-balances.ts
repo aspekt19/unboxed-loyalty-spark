@@ -405,28 +405,79 @@ async function tokenLabel(serviceClient: any, tokenAddress: string): Promise<{ l
 }
 
 /**
- * Newest outgoing ERC-20 transfer from this wallet, read from Base itself.
- * Blockscout lags Basescan, so an explorer index is not the source.
- * Public RPC getLogs is capped at 2000 blocks, so the search walks backward in those slices.
+ * Newest outgoing loyalty spend for this wallet.
+ * Order: (1) latest voucher redeem tx in DB, (2) eth_getLogs on held loyalty tokens,
+ * (3) open getLogs window. Blockscout index alone is too laggy after a just-signed redeem.
  */
 export async function loadLastLoyaltySpend(
   serviceClient: any,
   walletAddress: string,
 ): Promise<LastLoyaltySpend | null> {
-  const wallet = walletAddress.toLowerCase().replace(/^0x/, "");
+  const walletLower = walletAddress.toLowerCase();
+  const wallet = walletLower.replace(/^0x/, "");
   const fromTopic = `0x${"0".repeat(24)}${wallet}`;
-  const latestHex = await baseRpcCall<string>("eth_blockNumber", []);
-  let tip = BigInt(latestHex);
+
+  // 1) Redeem path writes vouchers.transaction_hash — fastest truth after Concierge redeem.
+  try {
+    const { data: voucher } = await serviceClient
+      .from("vouchers")
+      .select("reward_name, cost, token_symbol, token_address, transaction_hash, activated_at")
+      .ilike("customer_address", walletLower)
+      .not("transaction_hash", "is", null)
+      .order("activated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const txHash = typeof voucher?.transaction_hash === "string" ? voucher.transaction_hash : "";
+    if (txHash.startsWith("0x") && txHash.length >= 66) {
+      let blockNumber = "";
+      try {
+        const receipt = await baseRpcCall<{ blockNumber?: string } | null>("eth_getTransactionReceipt", [txHash]);
+        if (receipt?.blockNumber) blockNumber = BigInt(receipt.blockNumber).toString();
+      } catch (err) {
+        console.error("[last-spend] receipt", err);
+      }
+      const token = typeof voucher.token_address === "string" ? voucher.token_address.toLowerCase() : "";
+      const named = token ? await tokenLabel(serviceClient, token) : { label: voucher.reward_name || "loyalty", standard: "erc20" as const };
+      return {
+        label: named.label || `${voucher.reward_name} (${voucher.token_symbol})`,
+        amount: Number(voucher.cost) || 0,
+        blockNumber: blockNumber || "pending",
+        txHash,
+        standard: named.standard,
+      };
+    }
+  } catch (err) {
+    console.error("[last-spend] voucher lookup", err);
+  }
+
+  // 2) eth_getLogs — prefer unfiltered windows first; then scope to top held loyalty tokens
+  //    (wide unfiltered queries often fail on public RPC; per-token is slower but reliable).
+  let tip = 0n;
+  try {
+    tip = BigInt(await baseRpcCall<string>("eth_blockNumber", []));
+  } catch (err) {
+    console.error("[last-spend] blockNumber", err);
+    return null;
+  }
+
+  let heldTokens: string[] = [];
+  try {
+    const held = await loadHolderBalancesFast(serviceClient, walletLower);
+    heldTokens = held
+      .filter((r) => r.program != null)
+      .map((r) => r.token_address.toLowerCase())
+      .slice(0, 12);
+  } catch (err) {
+    console.error("[last-spend] held tokens", err);
+  }
+
   const span = 2000n;
-  for (let i = 0; i < 8; i++) {
-    const fromBlock = tip > span ? tip - span + 1n : 0n;
-    const logs = await baseRpcCall<RpcLog[]>("eth_getLogs", [{
-      fromBlock: `0x${fromBlock.toString(16)}`,
-      toBlock: `0x${tip.toString(16)}`,
-      topics: [TRANSFER_TOPIC, fromTopic],
-    }]);
-    const rows = logs ?? [];
-    if (rows.length > 0) {
+
+  async function newestFromFilter(filter: Record<string, unknown>): Promise<LastLoyaltySpend | null> {
+    try {
+      const logs = await baseRpcCall<RpcLog[]>("eth_getLogs", [filter]);
+      const rows = logs ?? [];
+      if (rows.length === 0) return null;
       rows.sort((a, b) => {
         const blockDelta = BigInt(b.blockNumber ?? "0x0") - BigInt(a.blockNumber ?? "0x0");
         if (blockDelta !== 0n) return blockDelta > 0n ? 1 : -1;
@@ -440,19 +491,48 @@ export async function loadLastLoyaltySpend(
       } catch {
         raw = 0n;
       }
-      if (raw > 0n && log.transactionHash && token) {
-        const named = await tokenLabel(serviceClient, token);
-        return {
-          label: named.label,
-          amount: Number(formatUnits(raw, 18)),
-          blockNumber: BigInt(log.blockNumber ?? "0x0").toString(),
-          txHash: log.transactionHash,
-          standard: named.standard,
-        };
-      }
+      if (!(raw > 0n && log.transactionHash && token)) return null;
+      const named = await tokenLabel(serviceClient, token);
+      return {
+        label: named.label,
+        amount: Number(formatUnits(raw, 18)),
+        blockNumber: BigInt(log.blockNumber ?? "0x0").toString(),
+        txHash: log.transactionHash,
+        standard: named.standard,
+      };
+    } catch (err) {
+      console.error("[last-spend] getLogs", err);
+      return null;
+    }
+  }
+
+  let cursor = tip;
+  for (let i = 0; i < 12; i++) {
+    const fromBlock = cursor > span ? cursor - span + 1n : 0n;
+    const hit = await newestFromFilter({
+      fromBlock: `0x${fromBlock.toString(16)}`,
+      toBlock: `0x${cursor.toString(16)}`,
+      topics: [TRANSFER_TOPIC, fromTopic],
+    });
+    if (hit) return hit;
+    if (fromBlock === 0n) break;
+    cursor = fromBlock - 1n;
+  }
+
+  cursor = tip;
+  for (let i = 0; i < 6; i++) {
+    const fromBlock = cursor > span ? cursor - span + 1n : 0n;
+    for (const address of heldTokens) {
+      const hit = await newestFromFilter({
+        address,
+        fromBlock: `0x${fromBlock.toString(16)}`,
+        toBlock: `0x${cursor.toString(16)}`,
+        topics: [TRANSFER_TOPIC, fromTopic],
+      });
+      if (hit) return hit;
     }
     if (fromBlock === 0n) break;
-    tip = fromBlock - 1n;
+    cursor = fromBlock - 1n;
   }
   return null;
 }

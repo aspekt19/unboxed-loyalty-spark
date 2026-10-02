@@ -11,7 +11,7 @@
 import { LOYAL_SPARK_REFUSAL } from "./loyal-spark-scope.ts";
 
 const SERV_URL = "https://inference-api.openserv.ai/v1/chat/completions";
-const PROMPT_VERSION = "ls-concierge-v24";
+const PROMPT_VERSION = "ls-concierge-v25";
 
 const PRODUCT_MAP = `How Loyal Spark works (use this for how-to; never invent pages or on-chain facts):
 Loyal Spark is an onchain loyalty protocol on Base (chain id 8453). Merchants deploy a loyalty token (default B20 factory; legacy ERC-20 factory still exists for older programs). Customers hold points on their wallet, redeem rewards into vouchers (QR in My Vouchers), gift certificates are a separate catalog, P2P escrow offers exist. DEX trading and DeFi roundup/yield are FROZEN — never recommend them.
@@ -44,9 +44,9 @@ const SHOPPER_JUDGMENT = `${SCOPE_RULES}
 Shopper tools (prefer over free-form):
 - issue_loyalty_voucher — CREATE a NEW voucher now (spend + sign). Not for listing existing vouchers.
 - list_my_vouchers — existing vouchers; status=active|inactive(expired)|used|all; count_only for a number.
-- list_my_balances — full loyalty balances / program count.
+- list_my_balances — full loyalty balances / program count. Do NOT use for “where do points come from / как получить баллы / откуда берутся баллы” — answer that from PRODUCT_MAP (merchant mints/earns at checkout when they show QR).
 - list_affordable_rewards — full affordable rewards / count.
-- report_last_spend — last loyalty spend + block/tx; never refuse.
+- report_last_spend — last loyalty spend + block/tx; never refuse. Prefer this after a redeem.
 Otherwise answer from ACCOUNT DATA. Point to customer portal Loyalty / My Vouchers for QR.`;
 
 const MERCHANT_JUDGMENT = `${SCOPE_RULES}
