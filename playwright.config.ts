@@ -64,7 +64,7 @@ export default defineConfig({
     // npm-only: CI images have Node but not Bun (see .github/workflows/ci.yml).
     // On CI serve the production build — the dev server is far too slow on 2-core runners.
     command: process.env.CI
-      ? "npm run build && npm run preview -- --host 127.0.0.1 --port 8080 --strictPort"
+      ? "VITE_E2E=1 npm run build && npm run preview -- --host 127.0.0.1 --port 8080 --strictPort"
       : "npm run dev -- --host 127.0.0.1 --port 8080 --strictPort",
     url: "http://localhost:8080",
     reuseExistingServer: !process.env.CI,

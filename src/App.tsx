@@ -12,6 +12,7 @@ import { PRIVY_APP_ID, privyConfig } from "./config/privy";
 import { hasPrivyOAuthParams } from "./components/auth/OAuthReturnHandler";
 import Index from "./pages/Index";
 import AppPage from "./pages/AppPage";
+import ConciergeLayoutHarness from "./pages/ConciergeLayoutHarness";
 import CustomerPage from "./pages/CustomerPage";
 import MerchantPage from "./pages/MerchantPage";
 import ProgramPage from "./pages/ProgramPage";
@@ -168,6 +169,9 @@ function AnimatedRoutes() {
       <RouteShell>
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<Index />} />
+          {(import.meta.env.DEV || import.meta.env.VITE_E2E === "1") && (
+            <Route path="/__test/concierge-layout" element={<ConciergeLayoutHarness />} />
+          )}
           <Route path="/app" element={<AppPage />} />
           <Route path="/customer" element={<CustomerPage />} />
           <Route path="/merchant" element={<MerchantPage />} />
