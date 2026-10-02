@@ -132,9 +132,8 @@ export async function shopperVoucherHistoryReply(
       };
     }
   } else if (filter === "active") {
+    // inactive always takes needsDb above; here only snapshot filter for active.
     rows = rows.filter((v) => v.status === "active");
-  } else if (filter === "inactive") {
-    rows = rows.filter((v) => v.status === "used" || v.status === "expired");
   }
 
   if (rows.length === 0) {
