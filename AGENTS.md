@@ -57,3 +57,4 @@ See [`supabase/functions/AGENTS.md`](./supabase/functions/AGENTS.md) (REST/MCP r
 ## Prompts & OpenServ
 
 All in `docs/integrations/`: `PROMPT_GUIDE.md` (system prompts), `OPENSERV_AGENTS_SETUP.md`, `OPENSERV_STAGE_A.md` (weekly Analyst, Loyal Spark-only scope), `OPENSERV_STAGES_BCD.md` (chat-bridge, Concierge UI), `OPENSERV_CONCIERGE_PROMPTS.md`, `OPENSERV_AGENT_PROMPTS.md` (CEO/SEO/Growth/Analyst, HARD SCOPE).
+- Concierge mobile layout is guarded by `e2e/concierge-mobile-layout.spec.ts` against the test-only `/__test/concierge-layout` route (dev or `VITE_E2E=1` builds) — catches cut-off chat UI on phone sizes before release.
