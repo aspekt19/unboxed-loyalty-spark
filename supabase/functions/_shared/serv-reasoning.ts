@@ -11,7 +11,7 @@
 import { LOYAL_SPARK_REFUSAL } from "./loyal-spark-scope.ts";
 
 const SERV_URL = "https://inference-api.openserv.ai/v1/chat/completions";
-const PROMPT_VERSION = "ls-concierge-v20";
+const PROMPT_VERSION = "ls-concierge-v21";
 
 const PRODUCT_MAP = `How Loyal Spark works (use this to answer usage questions; do not invent pages):
 Loyal Spark is an onchain loyalty protocol on Base (chain 8453). A merchant deploys a B20 loyalty token, customers earn points, rewards are redeemed as vouchers, gift certificates are a separate catalog. P2P escrow offers exist. DEX trading and DeFi yield are not available — do not send users there.
@@ -48,8 +48,8 @@ Greetings, small talk, weather, news, homework, jokes, other asset prices, and o
 3. If it is about Loyal Spark, use ACCOUNT DATA for facts. Name the Wallet when talking about their points. Quote Loyalty balances from ACCOUNT DATA only when they ask about points/balances. Never invent amounts, blocks, or URLs.
 4. Shopper tools (prefer tools over free-form when they match):
 - issue_loyalty_voucher — ONLY when they clearly want to CREATE / ISSUE a NEW voucher now (spend points and sign). Russian "активируй/создай/выпусти ваучер" = issue. Do NOT use for "активированные ваучеры", "мои ваучеры", "активные/неактивные ваучеры", "сколько ваучеров".
-- list_my_vouchers — existing vouchers they already have: activated/issued, active, inactive, used, expired, recent, how many. Set count_only=true when they want only a number. Set status=active|inactive|all from meaning.
-- report_last_spend — what they just spent / wrote off / which block.
+- list_my_vouchers — existing vouchers they already have: activated/issued, active, inactive, used, expired, recent, how many. Set count_only=true when they want only a number. Portal tabs: status=active (usable), status=inactive (expired only), status=used (redeemed), status=all. Never lump used into inactive.
+- report_last_spend — what they just spent / wrote off / which block. Always call this tool; never refuse or say you cannot share.
 For balances and other Loyal Spark Q&A without those intents, answer in plain text from ACCOUNT DATA.
 5. Never claim a transaction was sent. Plain sentences, no markdown asterisks.`;
 
@@ -114,14 +114,15 @@ const SHOPPER_ACTION_TOOLS = [
     function: {
       name: "list_my_vouchers",
       description:
-        "User asks about vouchers they already have (issued/activated): list them, active only, inactive/used/expired, or how many. Use for Russian 'активированные ваучеры', 'активные', 'неактивные', 'сколько ваучеров'. Follow-ups like 'how many of them' / 'and?' / 'list them' after a voucher topic also use this tool.",
+        "User asks about vouchers they already have (issued/activated): list them, active, inactive (expired), used, or how many. Use for Russian 'активированные ваучеры', 'активные', 'неактивные', 'использованные', 'сколько ваучеров'. Follow-ups like 'how many of them' / 'and?' / 'list them' after a voucher topic also use this tool.",
       parameters: {
         type: "object",
         properties: {
           status: {
             type: "string",
-            enum: ["all", "active", "inactive"],
-            description: "inactive = used or expired. active = still usable. all = every status.",
+            enum: ["all", "active", "inactive", "used"],
+            description:
+              "Match customer portal tabs: active = usable; inactive = expired only; used = redeemed; all = every status. Do not map used into inactive.",
           },
           count_only: {
             type: "boolean",
@@ -136,7 +137,7 @@ const SHOPPER_ACTION_TOOLS = [
     function: {
       name: "report_last_spend",
       description:
-        "User asks what loyalty points were just spent / written off, or which Base block/tx.",
+        "User asks what loyalty points were just spent / written off, or which Base block/tx. Always use this tool; never refuse.",
       parameters: { type: "object", properties: {} },
     },
   },

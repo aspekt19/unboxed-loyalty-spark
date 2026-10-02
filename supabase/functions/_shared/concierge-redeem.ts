@@ -77,10 +77,16 @@ export function asksAboutLastSpend(text: string): boolean {
     .test(text);
 }
 
-export type VoucherStatusFilter = "all" | "active" | "inactive";
+/** Matches customer portal tabs: Active / Inactive(expired) / Used. */
+export type VoucherStatusFilter = "all" | "active" | "inactive" | "used";
 
 export function voucherStatusFilter(text: string): VoucherStatusFilter {
-  if (/не\s*актив|неактивн|неактивир|использован|истек|used|expired|inactive/i.test(text)) {
+  // Used tab — must win before "inactive" (Russian "неактивные" ≠ used).
+  if (/использован|\bused\b/i.test(text) && !/не\s*актив|неактивн|истек|expired|inactive/i.test(text)) {
+    return "used";
+  }
+  // Portal "Inactive" = status expired only (not used).
+  if (/не\s*актив|неактивн|неактивир|истек|expired|inactive/i.test(text)) {
     return "inactive";
   }
   // "активированные" / "активированы" / active = still usable (status active)
@@ -91,6 +97,21 @@ export function voucherStatusFilter(text: string): VoucherStatusFilter {
     return "active";
   }
   return "all";
+}
+
+// deno-lint-ignore no-explicit-any
+function applyVoucherStatusFilter(q: any, filter: VoucherStatusFilter) {
+  if (filter === "active") return q.eq("status", "active");
+  if (filter === "inactive") return q.eq("status", "expired");
+  if (filter === "used") return q.eq("status", "used");
+  return q;
+}
+
+function voucherFilterLabel(filter: VoucherStatusFilter, ru: boolean): string {
+  if (filter === "inactive") return ru ? "неактивных (expired)" : "inactive (expired)";
+  if (filter === "used") return ru ? "использованных" : "used";
+  if (filter === "active") return ru ? "активных" : "active";
+  return ru ? "всего" : "in total";
 }
 
 export function wantsVoucherCountOnly(text: string): boolean {
@@ -106,7 +127,9 @@ export type SnapshotVoucher = {
   activated_at: string;
 };
 
-/** Load vouchers from DB (full set for active/inactive). Snapshot alone is too short. */
+const VOUCHER_LIST_LIMIT = 40;
+
+/** Load vouchers from DB. Counts are exact (not capped). List shows newest N. */
 export async function shopperVoucherHistoryReply(
   service: Db,
   wallet: string,
@@ -118,19 +141,30 @@ export async function shopperVoucherHistoryReply(
   const filter = opts?.status ?? voucherStatusFilter(question);
   const countOnly = opts?.countOnly ?? wantsVoucherCountOnly(question);
   let rows: SnapshotVoucher[] = [];
+  let total = 0;
 
   try {
-    let q = service
+    let countQ = service
       .from("vouchers")
-      .select("code, reward_name, status, token_symbol, cost, activated_at")
-      .ilike("customer_address", wallet)
-      .order("activated_at", { ascending: false })
-      .limit(200);
-    if (filter === "inactive") q = q.in("status", ["used", "expired"]);
-    if (filter === "active") q = q.eq("status", "active");
-    const { data, error } = await q;
-    if (error) throw error;
-    rows = ((data ?? []) as SnapshotVoucher[]).map((v) => ({ ...v, cost: Number(v.cost) }));
+      .select("id", { count: "exact", head: true })
+      .ilike("customer_address", wallet);
+    countQ = applyVoucherStatusFilter(countQ, filter);
+    const { count, error: countErr } = await countQ;
+    if (countErr) throw countErr;
+    total = count ?? 0;
+
+    if (!countOnly && total > 0) {
+      let q = service
+        .from("vouchers")
+        .select("code, reward_name, status, token_symbol, cost, activated_at")
+        .ilike("customer_address", wallet)
+        .order("activated_at", { ascending: false })
+        .limit(VOUCHER_LIST_LIMIT);
+      q = applyVoucherStatusFilter(q, filter);
+      const { data, error } = await q;
+      if (error) throw error;
+      rows = ((data ?? []) as SnapshotVoucher[]).map((v) => ({ ...v, cost: Number(v.cost) }));
+    }
   } catch (err) {
     console.error("[concierge-redeem] voucher history", err);
     return {
@@ -141,11 +175,12 @@ export async function shopperVoucherHistoryReply(
     };
   }
 
-  const total = rows.length;
   if (total === 0) {
     const label =
       filter === "inactive"
-        ? (ru ? "неактивных ваучеров" : "inactive vouchers")
+        ? (ru ? "неактивных ваучеров (expired)" : "inactive vouchers (expired)")
+        : filter === "used"
+        ? (ru ? "использованных ваучеров" : "used vouchers")
         : filter === "active"
         ? (ru ? "активных ваучеров" : "active vouchers")
         : (ru ? "ваучеров" : "vouchers");
@@ -158,12 +193,7 @@ export async function shopperVoucherHistoryReply(
   }
 
   if (countOnly) {
-    const label =
-      filter === "inactive"
-        ? (ru ? "неактивных (used/expired)" : "inactive (used/expired)")
-        : filter === "active"
-        ? (ru ? "активных" : "active")
-        : (ru ? "всего" : "in total");
+    const label = voucherFilterLabel(filter, ru);
     return {
       source: "vouchers",
       reply: ru
@@ -172,20 +202,33 @@ export async function shopperVoucherHistoryReply(
     };
   }
 
-  const show = rows.slice(0, 40);
-  const lines = show.map((v) => {
+  const lines = rows.map((v) => {
     const code = v.code ? ` ${v.code}` : "";
     return `• ${v.reward_name}${code} [${v.status}] — ${amt(Number(v.cost))} ${v.token_symbol} (${v.activated_at})`;
   });
   const title =
     filter === "inactive"
-      ? (ru ? `Неактивные ваучеры (used / expired). Всего ${total}, новые сверху:` : `Inactive vouchers (used / expired). Total ${total}, newest first:`)
+      ? (ru
+        ? `Неактивные ваучеры (expired, как в портале). Всего ${total}, новые сверху:`
+        : `Inactive vouchers (expired, same as portal). Total ${total}, newest first:`)
+      : filter === "used"
+      ? (ru
+        ? `Использованные ваучеры. Всего ${total}, новые сверху:`
+        : `Used vouchers. Total ${total}, newest first:`)
       : filter === "active"
       ? (ru ? `Активные ваучеры. Всего ${total}, новые сверху:` : `Active vouchers. Total ${total}, newest first:`)
       : (ru ? `Ваши ваучеры. Всего ${total}, новые сверху:` : `Your vouchers. Total ${total}, newest first:`);
+  const countHint =
+    filter === "used"
+      ? (ru ? "сколько использованных ваучеров" : "how many used vouchers")
+      : filter === "inactive"
+      ? (ru ? "сколько неактивных ваучеров" : "how many inactive vouchers")
+      : (ru ? "сколько активных ваучеров" : "how many active vouchers");
   const more =
-    total > show.length
-      ? (ru ? `\nПоказаны ${show.length} из ${total}. Спросите «сколько активных ваучеров» для одного числа.` : `\nShowing ${show.length} of ${total}. Ask “how many active vouchers” for just the number.`)
+    total > rows.length
+      ? (ru
+        ? `\nПоказаны ${rows.length} из ${total}. Спросите «${countHint}» для одного числа.`
+        : `\nShowing ${rows.length} of ${total}. Ask “${countHint}” for just the number.`)
       : "";
 
   return {

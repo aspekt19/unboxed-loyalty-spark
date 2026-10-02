@@ -129,6 +129,31 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Portal facts first — do not let SERV invent "no access" or refuse last spend.
+    if (role === "shopper" && wallet && asksAboutMyVouchers(lastUser)) {
+      const vouchers = await shopperVoucherHistoryReply(
+        service,
+        wallet,
+        lastUser,
+        shopperCtx?.vouchers_recent ?? null,
+      );
+      return json({
+        reply: vouchers.reply,
+        role,
+        wallet,
+        source: vouchers.source,
+      });
+    }
+
+    if (role === "shopper" && asksAboutLastSpend(lastUser)) {
+      return json({
+        reply: modelFallback(lastUser, accountContext),
+        role,
+        wallet,
+        source: "explorer",
+      });
+    }
+
     if (servConfigured()) {
       try {
         const serv = await servConciergeReply({ role, messages, accountContext });
@@ -309,10 +334,13 @@ async function runShopperTool(
     };
   }
 
-  if (tool.name === "list_my_vouchers") {
+    if (tool.name === "list_my_vouchers") {
     const statusRaw = typeof tool.args.status === "string" ? tool.args.status : "";
     const status =
-      statusRaw === "inactive" || statusRaw === "active" || statusRaw === "all"
+      statusRaw === "inactive" ||
+      statusRaw === "active" ||
+      statusRaw === "used" ||
+      statusRaw === "all"
         ? statusRaw
         : voucherStatusFilter(lastUser);
     const countOnly =
