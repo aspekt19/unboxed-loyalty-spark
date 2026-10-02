@@ -136,7 +136,7 @@ export async function runConciergeAgent(args: {
     const finalStep = step === MAX_STEPS - 1 || docCalls >= 2 || (toolsUsed.length > 0 && remaining < 9000);
     const data = await callServ(apiKey, {
       model,
-      reasoning_effort: "none",
+      reasoning_effort: model.includes("gemini") ? "low" : "none",
       max_completion_tokens: 1500,
       messages: convo,
       tools: step === 0 ? guarded : baseTools,
@@ -152,7 +152,10 @@ export async function runConciergeAgent(args: {
       return { reply: LOYAL_SPARK_REFUSAL, source: "scope", model: lastModel, promptVersion: AGENT_PROMPT_VERSION, toolsUsed: [...toolsUsed, "refuse_off_topic"] };
     }
     if (!calls.length) {
-      if (!text) return null;
+      if (!text) {
+        console.error(`[agent] empty reply model=${lastModel} raw=${JSON.stringify(msg).slice(0, 800)}`);
+        return null;
+      }
       console.error(`[agent] ${AGENT_PROMPT_VERSION} model=${lastModel} steps=${step + 1} tools=${toolsUsed.join(",") || "-"}`);
       return { reply: text, source: toolsUsed.length ? "agent" : "serv", model: lastModel, promptVersion: AGENT_PROMPT_VERSION, toolsUsed };
     }
