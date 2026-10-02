@@ -137,7 +137,7 @@ export async function runConciergeAgent(args: {
     const data = await callServ(apiKey, {
       model,
       reasoning_effort: model.includes("gemini") ? "low" : "none",
-      max_completion_tokens: 4000,
+      max_completion_tokens: 1500,
       messages: convo,
       tools: step === 0 ? guarded : baseTools,
       tool_choice: finalStep ? "none" : "auto",
