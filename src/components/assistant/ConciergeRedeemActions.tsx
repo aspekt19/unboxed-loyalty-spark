@@ -54,7 +54,7 @@ export function ConciergeRedeemActions({
 }: Props) {
   if (action.type === "pick_reward") {
     return (
-      <div className="space-y-2 rounded-lg border border-border bg-background p-3">
+      <div className="min-w-0 max-w-full space-y-2 rounded-lg border border-border bg-background p-3 break-words [overflow-wrap:anywhere]">
         <p className="text-xs font-medium text-muted-foreground">Выберите награду</p>
         <div className="flex flex-col gap-2">
           {action.rewards.map((r) => (
@@ -80,7 +80,7 @@ export function ConciergeRedeemActions({
   }
 
   return (
-    <div className="space-y-3 rounded-lg border border-primary/30 bg-background p-3">
+    <div className="min-w-0 max-w-full space-y-3 rounded-lg border border-primary/30 bg-background p-3 break-words [overflow-wrap:anywhere]">
       <div className="space-y-1 text-sm">
         <p className="font-medium">{action.reward.name}</p>
         {action.reward.description ? (
