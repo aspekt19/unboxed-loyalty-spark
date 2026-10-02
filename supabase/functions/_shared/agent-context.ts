@@ -153,7 +153,7 @@ export async function buildShopperAgentContext(
       }))
       .sort((a, b) => b.amount - a.amount),
     rewards_affordable: rewards,
-    vouchers_recent: vouchers.map((v) => ({ ...v, cost: Number(v.cost) })),
+    vouchers_recent: (vouchers as ShopperAgentContext["vouchers_recent"]).map((v) => ({ ...v, cost: Number(v.cost) })),
     last_outgoing: last
       ? {
         label: last.label,
