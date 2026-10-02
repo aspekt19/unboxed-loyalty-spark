@@ -8,7 +8,9 @@ import {
   asksAboutLastSpend,
   asksAboutMyVouchers,
   asksAboutRedeem,
+  conversationAboutVouchers,
   prepareRedeemAction,
+  resolveVoucherStatusFromHistory,
   shopperRedeemIntentReply,
   shopperVoucherHistoryReply,
   voucherStatusFilter,
@@ -129,13 +131,16 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Portal facts first — do not let SERV invent "no access" or refuse last spend.
-    if (role === "shopper" && wallet && asksAboutMyVouchers(lastUser)) {
+    // Portal facts first — keep chat-history filter until Clear; do not let SERV invent "no access".
+    if (role === "shopper" && wallet && conversationAboutVouchers(messages, lastUser)) {
+      const status = resolveVoucherStatusFromHistory(messages, lastUser);
+      const countOnly = wantsVoucherCountOnly(lastUser);
       const vouchers = await shopperVoucherHistoryReply(
         service,
         wallet,
         lastUser,
         shopperCtx?.vouchers_recent ?? null,
+        { status, countOnly },
       );
       return json({
         reply: vouchers.reply,
@@ -162,6 +167,7 @@ Deno.serve(async (req) => {
             service,
             wallet,
             lastUser,
+            messages,
             shopperCtx,
             accountContext,
             serv.toolCall,
@@ -193,14 +199,18 @@ Deno.serve(async (req) => {
 
     // Fallback routing when SERV is down or returned neither tool nor text.
     const redeemIntent = role === "shopper" && asksAboutRedeem(lastUser);
-    const voucherHistoryIntent = role === "shopper" && asksAboutMyVouchers(lastUser);
+    const voucherHistoryIntent =
+      role === "shopper" && conversationAboutVouchers(messages, lastUser);
 
     if (role === "shopper" && wallet && voucherHistoryIntent) {
+      const status = resolveVoucherStatusFromHistory(messages, lastUser);
+      const countOnly = wantsVoucherCountOnly(lastUser);
       const vouchers = await shopperVoucherHistoryReply(
         service,
         wallet,
         lastUser,
         shopperCtx?.vouchers_recent ?? null,
+        { status, countOnly },
       );
       return json({
         reply: vouchers.reply,
@@ -306,6 +316,7 @@ async function runShopperTool(
   service: any,
   wallet: string | null,
   lastUser: string,
+  messages: ChatMessage[],
   shopperCtx: ShopperAgentContext | null,
   accountContext: string,
   tool: { name: string; args: Record<string, unknown> },
@@ -334,15 +345,17 @@ async function runShopperTool(
     };
   }
 
-    if (tool.name === "list_my_vouchers") {
+  if (tool.name === "list_my_vouchers") {
     const statusRaw = typeof tool.args.status === "string" ? tool.args.status : "";
     const status =
       statusRaw === "inactive" ||
       statusRaw === "active" ||
       statusRaw === "used" ||
       statusRaw === "all"
-        ? statusRaw
-        : voucherStatusFilter(lastUser);
+        ? statusRaw === "all"
+          ? resolveVoucherStatusFromHistory(messages, lastUser)
+          : statusRaw
+        : resolveVoucherStatusFromHistory(messages, lastUser);
     const countOnly =
       tool.args.count_only === true || wantsVoucherCountOnly(lastUser);
     const vouchers = await shopperVoucherHistoryReply(
@@ -388,7 +401,7 @@ function normalizeMessages(raw: unknown): ChatMessage[] {
       return { role, content };
     })
     .filter((m) => m.content.trim().length > 0)
-    .slice(-20);
+    .slice(-40);
 }
 
 async function bumpDailyUsage(

@@ -118,6 +118,64 @@ export function wantsVoucherCountOnly(text: string): boolean {
   return /сколько|how\s+many|число|количество|count\b|не\s+перечисл|без\s+списк|только\s+(число|цифр)/i.test(text);
 }
 
+type ChatTurn = { role: string; content: string };
+
+/** Short follow-up that continues the previous voucher topic ("только число", "их", "list them"). */
+export function isVoucherTopicFollowUp(text: string): boolean {
+  const t = text.trim();
+  if (!t || t.length > 120) return false;
+  if (asksAboutRedeem(text) || asksAboutLastSpend(text)) return false;
+  if (asksAboutMyVouchers(text)) return false;
+  return (
+    wantsVoucherCountOnly(t) ||
+    /^(покажи|перечисл|выпиши|list(\s+them)?|show(\s+them)?|и\??|а\??|and\??|them|их|этих|эти|все|all(\s+of\s+them)?|ещё|еще|more)$/i.test(t) ||
+    /^(сколько|how\s+many)\s+(их|этих|these|them|всего)?\s*\??$/i.test(t)
+  );
+}
+
+/** True when this turn is about vouchers, including follow-ups while chat history still has that topic. */
+export function conversationAboutVouchers(messages: ChatTurn[], lastUser: string): boolean {
+  if (asksAboutMyVouchers(lastUser)) return true;
+  if (!isVoucherTopicFollowUp(lastUser)) return false;
+  const prior = messages.slice(0, -1).reverse().slice(0, 24);
+  for (const m of prior) {
+    if (asksAboutMyVouchers(m.content)) return true;
+    if (/ваучер|voucher/i.test(m.content)) return true;
+  }
+  return false;
+}
+
+/**
+ * Resolve active / inactive / used from the current line, else from recent chat
+ * (user questions or assistant voucher replies) until Clear wipes history.
+ */
+export function resolveVoucherStatusFromHistory(
+  messages: ChatTurn[],
+  lastUser: string,
+): VoucherStatusFilter {
+  const fromLast = voucherStatusFilter(lastUser);
+  if (fromLast !== "all") return fromLast;
+
+  for (const m of [...messages].reverse().slice(0, 24)) {
+    const fromLine = voucherStatusFilter(m.content);
+    if (fromLine !== "all") return fromLine;
+    // Assistant titles from shopperVoucherHistoryReply
+    if (/неактивн|inactive \(expired\)|inactive vouchers \(expired/i.test(m.content)) {
+      return "inactive";
+    }
+    if (/использованн|used vouchers\.|Использованные ваучеры/i.test(m.content)) {
+      return "used";
+    }
+    if (
+      /активные ваучер|active vouchers\.|Активные ваучеры/i.test(m.content) &&
+      !/неактив/i.test(m.content)
+    ) {
+      return "active";
+    }
+  }
+  return "all";
+}
+
 export type SnapshotVoucher = {
   code?: string;
   reward_name: string;

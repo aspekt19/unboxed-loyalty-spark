@@ -11,7 +11,7 @@
 import { LOYAL_SPARK_REFUSAL } from "./loyal-spark-scope.ts";
 
 const SERV_URL = "https://inference-api.openserv.ai/v1/chat/completions";
-const PROMPT_VERSION = "ls-concierge-v21";
+const PROMPT_VERSION = "ls-concierge-v22";
 
 const PRODUCT_MAP = `How Loyal Spark works (use this to answer usage questions; do not invent pages):
 Loyal Spark is an onchain loyalty protocol on Base (chain 8453). A merchant deploys a B20 loyalty token, customers earn points, rewards are redeemed as vouchers, gift certificates are a separate catalog. P2P escrow offers exist. DEX trading and DeFi yield are not available — do not send users there.
@@ -42,13 +42,13 @@ Sign-in can be email, SMS, Google, or a wallet. Balances belong to the connected
 Agents: merchant key lsk_ on https://api.loyalspark.online/agent-api and MCP https://api.loyalspark.online/loyalty-mcp. Holder key rwk_ on recipient-api and recipient-loyalty-mcp. Pay-per-call is x402 or MPP. Mint fee is loyalty tokens, not USDC.`;
 
 const JUDGMENT = `How to answer:
-1. Understand what the user is actually asking, including typos, slang, and indirect wording. Use the recent conversation turns: follow-ups like "how many", "and?", "list them", "write them out" refer to the previous Loyal Spark topic (often vouchers), not balances.
+1. Understand what the user is actually asking, including typos, slang, and indirect wording. The chat history below is the ongoing conversation until the user hits Clear — short follow-ups like "how many", "and?", "list them", "только число", "их" ALWAYS continue the last Loyal Spark topic in that history (often vouchers with the same active/inactive/used filter).
 2. If that meaning is not about Loyal Spark, do not answer it. Reply exactly: "${LOYAL_SPARK_REFUSAL}"
 Greetings, small talk, weather, news, homework, jokes, other asset prices, and other products are not Loyal Spark.
 3. If it is about Loyal Spark, use ACCOUNT DATA for facts. Name the Wallet when talking about their points. Quote Loyalty balances from ACCOUNT DATA only when they ask about points/balances. Never invent amounts, blocks, or URLs.
 4. Shopper tools (prefer tools over free-form when they match):
 - issue_loyalty_voucher — ONLY when they clearly want to CREATE / ISSUE a NEW voucher now (spend points and sign). Russian "активируй/создай/выпусти ваучер" = issue. Do NOT use for "активированные ваучеры", "мои ваучеры", "активные/неактивные ваучеры", "сколько ваучеров".
-- list_my_vouchers — existing vouchers they already have: activated/issued, active, inactive, used, expired, recent, how many. Set count_only=true when they want only a number. Portal tabs: status=active (usable), status=inactive (expired only), status=used (redeemed), status=all. Never lump used into inactive.
+- list_my_vouchers — existing vouchers they already have: activated/issued, active, inactive, used, expired, recent, how many. Set count_only=true when they want only a number. Portal tabs: status=active (usable), status=inactive (expired only), status=used (redeemed), status=all. Never lump used into inactive. On follow-ups, keep the same status as the previous voucher turn in history.
 - report_last_spend — what they just spent / wrote off / which block. Always call this tool; never refuse or say you cannot share.
 For balances and other Loyal Spark Q&A without those intents, answer in plain text from ACCOUNT DATA.
 5. Never claim a transaction was sent. Plain sentences, no markdown asterisks.`;
@@ -160,13 +160,13 @@ export async function servConciergeReply(args: {
       content: `ACCOUNT DATA for this signed-in user. Use it only if the question is about their own points, vouchers, or programs:\n${args.accountContext.slice(0, 4000)}`,
     });
   }
-  // Recent turns with real roles so follow-ups ("how many?", "list them") keep topic.
+  // Full chat until Clear (client keeps ~40 turns). Follow-ups need prior topic + filter.
   const history = args.messages
     .filter((m) => (m.role === "user" || m.role === "assistant") && m.content.trim())
-    .slice(-8)
+    .slice(-40)
     .map((m) => ({
       role: m.role === "assistant" ? "assistant" : "user",
-      content: m.content.slice(0, 1500),
+      content: m.content.slice(0, 2000),
     }));
   if (history.length > 0) {
     messages.push(...history);
