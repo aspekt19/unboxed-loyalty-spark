@@ -299,7 +299,7 @@ export async function servConciergeReply(args: {
 
   const guarded = await completeServ(apiKey, {
     model,
-    reasoning_effort: "none",
+    reasoning_effort: "low",
     max_completion_tokens: 800,
     messages,
     tools,
