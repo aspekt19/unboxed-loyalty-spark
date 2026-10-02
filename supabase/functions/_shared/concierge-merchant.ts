@@ -131,9 +131,9 @@ export async function merchantProgramsReply(
 ): Promise<{ reply: string; source: "merchant_programs" }> {
   const ru = /[а-яё]/i.test(question);
   const countOnly = wantsCountOnly(question);
-  const { data, error } = await service
+  const { data, error, count } = await service
     .from("loyalty_programs")
-    .select("name, symbol, status, cashback_rate, points_per_dollar, token_address")
+    .select("name, symbol, status, cashback_rate, points_per_dollar, token_address", { count: "exact" })
     .eq("merchant_address", wallet)
     .order("created_at", { ascending: false })
     .limit(200);
@@ -152,7 +152,7 @@ export async function merchantProgramsReply(
     points_per_dollar: number;
     token_address: string;
   }>;
-  const total = rows.length;
+  const total = count ?? rows.length;
   if (total === 0) {
     return {
       source: "merchant_programs",
@@ -195,12 +195,12 @@ export async function merchantRewardsReply(
   const activeOnly = /активн|active only|is_active/i.test(question) && !/не\s*актив|inactive/i.test(question);
   let q = service
     .from("rewards")
-    .select("name, cost, is_active, token_address")
+    .select("name, cost, is_active, token_address", { count: "exact" })
     .eq("merchant_address", wallet)
     .order("cost", { ascending: true })
     .limit(400);
   if (activeOnly) q = q.eq("is_active", true);
-  const { data, error } = await q;
+  const { data, error, count } = await q;
   if (error) {
     console.error("[concierge-merchant] rewards", error);
     return {
@@ -214,7 +214,7 @@ export async function merchantRewardsReply(
     is_active: boolean;
     token_address: string;
   }>;
-  const total = rows.length;
+  const total = count ?? rows.length;
   if (total === 0) {
     return {
       source: "merchant_rewards",
@@ -348,9 +348,9 @@ export async function merchantCertificatesReply(
 ): Promise<{ reply: string; source: "merchant_certificates" }> {
   const ru = /[а-яё]/i.test(question);
   const countOnly = wantsCountOnly(question);
-  const { data, error } = await service
+  const { data, error, count } = await service
     .from("gift_certificates")
-    .select("title, status, token_amount, code")
+    .select("title, status, token_amount, code", { count: "exact" })
     .eq("merchant_address", wallet)
     .order("created_at", { ascending: false })
     .limit(200);
@@ -367,7 +367,7 @@ export async function merchantCertificatesReply(
     token_amount: number;
     code?: string;
   }>;
-  const total = rows.length;
+  const total = count ?? rows.length;
   if (total === 0) {
     return {
       source: "merchant_certificates",
