@@ -259,16 +259,41 @@ export function LoyalSparkConcierge({ role, className, title }: Props) {
 
   const locked = busy || disabled || signing || confirming;
 
+  const clearHistory = () => {
+    if (locked || messages.length === 0) return;
+    setMessages([]);
+    setAction(null);
+    setError(null);
+    setEngine(null);
+    setInput("");
+    pendingRedeem.current = null;
+    try {
+      localStorage.removeItem(storageKey(role, wallet));
+    } catch {
+      /* ignore */
+    }
+  };
+
   return (
     <div className={cn("flex h-[min(70vh,560px)] min-h-0 flex-col rounded-xl border border-border bg-card", className)}>
       <div className="flex shrink-0 items-center gap-2 border-b border-border px-4 py-3">
-        <Bot className="h-4 w-4 text-primary" />
-        <div>
+        <Bot className="h-4 w-4 shrink-0 text-primary" />
+        <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold">{title ?? (role === "merchant" ? "Merchant assistant" : "Shopper assistant")}</p>
-          <p className="text-xs text-muted-foreground">
+          <p className="truncate text-xs text-muted-foreground">
             {engine ?? "Understands the question, then stays on Loyal Spark"}
           </p>
         </div>
+        {messages.length > 0 && (
+          <button
+            type="button"
+            onClick={clearHistory}
+            disabled={locked}
+            className="shrink-0 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-50"
+          >
+            Clear
+          </button>
+        )}
       </div>
 
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3">
