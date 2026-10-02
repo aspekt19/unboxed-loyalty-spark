@@ -43,6 +43,7 @@ export function merchantVoucherFilter(text: string): MerchantVoucherFilter {
 }
 
 export function asksAboutMerchantPrograms(text: string): boolean {
+  if (isMerchantHowTo(text)) return false;
   return /программ|мои?\s+токен|loyalty\s+program|list\s+program|какие\s+програм|статус\s+програм|cashback|points_per|B20/i.test(
     text,
   );
@@ -61,7 +62,13 @@ export function asksAboutMerchantCertificates(text: string): boolean {
   return /сертификат|gift\s+cert|certificate/i.test(text);
 }
 
+/** How-to questions ("как заминтить", "how do I create a program") go to SERV + PRODUCT_MAP, not history lists. */
+function isMerchantHowTo(text: string): boolean {
+  return /(^|\s)(как|каким образом)\s|\bhow\s+(do|to|can|should)\b|создать|create\s|заминтить|deploy/i.test(text);
+}
+
 export function asksAboutMerchantMints(text: string): boolean {
+  if (isMerchantHowTo(text)) return false;
   return /минт|mint|начисл|выдал.{0,20}балл|recent\s+mint|последн.{0,20}минт/i.test(text);
 }
 
