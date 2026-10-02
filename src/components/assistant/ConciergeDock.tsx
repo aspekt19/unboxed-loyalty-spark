@@ -7,10 +7,13 @@ import { useAuth } from "@/contexts/AuthContext";
 
 type Role = "merchant" | "shopper";
 
-/** Chat launcher. Visible only after sign-in; sending also requires that session. */
-export function ConciergeDock({ role }: { role: Role }) {
+/**
+ * Chat launcher. Visible only after sign-in; sending also requires that session.
+ * `testOpen` (layout test page only) opens it without a session.
+ */
+export function ConciergeDock({ role, testOpen = false }: { role: Role; testOpen?: boolean }) {
   const { session } = useAuth();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(testOpen);
   const [visibleViewport, setVisibleViewport] = useState<
     { height: number; top: number; width: number; left: number } | null
   >(null);
@@ -38,7 +41,7 @@ export function ConciergeDock({ role }: { role: Role }) {
     };
   }, [open]);
 
-  if (!session?.access_token) return null;
+  if (!session?.access_token && !testOpen) return null;
 
   // On phones pin the sheet to the *visible* area so it never extends past the screen,
   // even if the page underneath is wider or the browser zoomed in.
