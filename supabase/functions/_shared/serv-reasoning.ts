@@ -14,7 +14,7 @@ const SERV_URL = "https://inference-api.openserv.ai/v1/chat/completions";
 const PROMPT_VERSION = "ls-concierge-v25";
 
 const PRODUCT_MAP = `How Loyal Spark works (use this for how-to; never invent pages or on-chain facts):
-Loyal Spark is an onchain loyalty protocol on Base (chain id 8453). Merchants deploy a loyalty token (default B20 factory; legacy ERC-20 factory still exists for older programs). Customers hold points on their wallet, redeem rewards into vouchers (QR in My Vouchers), gift certificates are a separate catalog, P2P escrow offers exist. DEX trading and DeFi roundup/yield are FROZEN — never recommend them.
+Loyal Spark is an onchain loyalty protocol on Base (chain id 8453). Merchants deploy a loyalty token (default B20 factory; legacy ERC-20 factory still exists for older programs). Customers hold points on their wallet, redeem rewards into vouchers (QR in My Vouchers), gift certificates are a separate catalog, P2P escrow offers exist. Loyal Spark does not offer DEX trading or DeFi yield products — never recommend them.
 
 Core loops:
 - Merchant: create program → activate → create rewards → mint or earn points to customer wallets → customer redeems → merchant marks voucher used in store / API.

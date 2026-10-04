@@ -50,7 +50,7 @@ Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain
 - **Browse Rewards**: Explore available vouchers across all programs
 - **Redeem Vouchers**: Burn tokens to claim exclusive rewards with QR codes
 - **Tier System**: Bronze → Silver → Gold → Platinum with increasing perks
-- **Frozen modules (not product promises):** `marketplace/` (DEX) and `roundup/` (DeFi) remain in the tree but are explicitly frozen — no active development
+- **Frozen module (not a product promise):** `marketplace/` (DEX) remains in the tree but is explicitly frozen — no active development
 
 ### For AI Agents (REST API + MCP)
 - **Full CRUD via API**: Create programs, mint tokens, manage rewards, view analytics
@@ -345,7 +345,6 @@ unboxed-loyalty-spark/
 │   │   ├── automation/            # Marketing automation
 │   │   ├── tiers/                 # Customer tiers
 │   │   ├── referral/              # Referral programs
-│   │   ├── roundup/               # DeFi investment (frozen)
 │   │   ├── marketplace/           # Token trading (frozen)
 │   │   ├── reviews/               # Customer reviews
 │   │   ├── onboarding/            # Welcome flows & tours

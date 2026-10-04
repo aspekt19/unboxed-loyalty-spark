@@ -413,7 +413,7 @@ export default function GuidePage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <p className="text-sm text-muted-foreground">
-                    Holders exchange loyalty tokens through the escrow contract. Both sides move in one transaction, or neither does. The merchant panel has no Marketplace tab. Round-Up, Aave, and Compound are frozen and are not part of this flow.
+                    Holders exchange loyalty tokens through the escrow contract. Both sides move in one transaction, or neither does. The merchant panel has no Marketplace tab.
                   </p>
                   <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
                     <li>Customers use the <strong>Exchange</strong> tab in the customer portal</li>

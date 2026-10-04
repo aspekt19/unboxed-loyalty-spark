@@ -156,7 +156,7 @@ When the agent bill is described, the **paid** part is the subscription and per-
 
 ## 8. Product economics (loyalty model)
 
-Default obligation class for programs: **discount claim** (nominal discount, caps, redemption). Secondary markets and **$LOYAL** are strategic layers; `marketplace/` / `roundup/` modules may stay frozen until launch — **pricing above is independent** of those modules.
+Default obligation class for programs: **discount claim** (nominal discount, caps, redemption). Secondary markets and **$LOYAL** are strategic layers; `marketplace/` module may stay frozen until launch — **pricing above is independent** of those modules.
 
 ---
 

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Crown, Users, DollarSign, TrendingUp, CheckCircle2, Bot, Store } from 'lucide-react';
+import { Crown, Users, CheckCircle2, Bot, Store } from 'lucide-react';
 import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -233,9 +233,6 @@ export const PremiumManagement = () => {
           <TabsTrigger value="agent" className="gap-2">
             <Bot className="h-3.5 w-3.5" /> Agents
           </TabsTrigger>
-          <TabsTrigger value="legacy" className="gap-2">
-            <DollarSign className="h-3.5 w-3.5" /> Legacy Round-Up
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="merchant" className="mt-4">
@@ -243,16 +240,6 @@ export const PremiumManagement = () => {
         </TabsContent>
         <TabsContent value="agent" className="mt-4">
           <ProductTab product="agent" />
-        </TabsContent>
-
-        <TabsContent value="legacy" className="mt-4">
-          <Card>
-            <CardContent className="p-6 text-center text-sm text-muted-foreground">
-              <TrendingUp className="h-10 w-10 mx-auto mb-3 opacity-50" />
-              Round-Up Premium ($10) is paused. Existing subscriptions remain
-              active in the database; no new payments are accepted via the UI.
-            </CardContent>
-          </Card>
         </TabsContent>
       </Tabs>
     </div>
