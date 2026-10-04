@@ -7,12 +7,6 @@
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://loyalspark.online/__test/concierge-layout</loc>
-    <lastmod>2026-10-04</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://loyalspark.online/api-docs</loc>
     <lastmod>2026-10-04</lastmod>
     <changefreq>weekly</changefreq>

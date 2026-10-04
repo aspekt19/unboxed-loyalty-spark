@@ -22,6 +22,7 @@ const BASE_URL = "https://loyalspark.online";
 // - "*" is the catch-all NotFound
 const EXCLUDE = new Set<string>([
   "*",
+  "/__test/concierge-layout", // test-only harness (DEV / VITE_E2E builds)
   "/admin",
   "/premium",
   "/preview-3d",
