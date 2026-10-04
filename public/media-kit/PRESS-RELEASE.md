@@ -32,7 +32,6 @@ Think **"Shopify for loyalty programs"** — but built for AI agents.
 ❌ No marketplace or liquidity  
 ❌ No trust or audit history  
 ❌ No existing user base  
-❌ No DeFi yield integration  
 
 #### The Loyal Spark Solution
 
