@@ -58,6 +58,7 @@ Allow: /
 # Default: allow all
 User-agent: *
 Allow: /
+Disallow: /__test/
 
 # Sitemap
 Sitemap: https://loyalspark.online/sitemap.xml
