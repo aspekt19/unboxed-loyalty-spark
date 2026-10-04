@@ -25,7 +25,6 @@ Start at the repo root **[AGENTS.md](../AGENTS.md)** (links to rules, APIs, and 
 - [AI agents — repo quickstart](./agents/QUICKSTART.md) · [SIWE `lsk_` (no web login)](./agents/AUTONOMOUS_AGENT_REGISTRATION.md) · live **[/for-agents](https://loyalspark.online/for-agents)** · paid MCP/x402: `mcp-bazaar-tools.ts`, `recipient-mcp-bazaar-tools.ts`, `x402-bazaar-accept.ts`
 - [Native / Capacitor build](./development/NATIVE_BUILD_GUIDE.md)
 - [Merchant & customer portals — header, Profile, team invites](./development/PORTALS_AND_TEAM.md)
-- [Round-Up contracts (legacy filename)](./development/DEPLOYMENT_INSTRUCTIONS.md) — Solidity deploy steps, not the web app
 - [Farcaster](./integrations/FARCASTER_APP_README.md)
 - [OpenServ agents setup](./integrations/OPENSERV_AGENTS_SETUP.md)
 - [OpenServ Stage A — Analyst (Loyal Spark only)](./integrations/OPENSERV_STAGE_A.md)
