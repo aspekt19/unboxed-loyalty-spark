@@ -109,10 +109,10 @@ export function LoyalSparkConcierge({ role, className, title }: Props) {
           {
             role: "assistant",
             content: [
-              `Ваучер готов: ${result.voucher!.code}`,
-              `Награда: ${result.voucher!.rewardName}`,
-              `Транзакция: https://basescan.org/tx/${result.voucher!.transactionHash}`,
-              "Код также появился во вкладке Loyalty → My Vouchers.",
+              `Voucher ready: ${result.voucher!.code}`,
+              `Reward: ${result.voucher!.rewardName}`,
+              `Transaction: https://basescan.org/tx/${result.voucher!.transactionHash}`,
+              "The code also appeared under Loyalty → My Vouchers.",
             ].join("\n"),
           },
         ]);
@@ -125,8 +125,8 @@ export function LoyalSparkConcierge({ role, className, title }: Props) {
         {
           role: "assistant",
           content: result.error
-            ? `Перевод, похоже, прошёл, но ваучер не создался: ${result.error}. Проверьте My Vouchers или повторите позже.`
-            : "Перевод отправлен, но ваучер ещё не подтвердился. Откройте My Vouchers через минуту.",
+            ? `The transfer seems to have gone through, but the voucher was not created: ${result.error}. Check My Vouchers or try again later.`
+            : "The transfer was sent, but the voucher is not confirmed yet. Open My Vouchers in a minute.",
         },
       ]);
     })();
@@ -204,7 +204,7 @@ export function LoyalSparkConcierge({ role, className, title }: Props) {
     if (!session?.access_token || busy || signing) return;
     setBusy(true);
     setError(null);
-    setMessages((m) => [...m, { role: "user", content: `Выбрать: ${reward.name}` }]);
+    setMessages((m) => [...m, { role: "user", content: `Redeem: ${reward.name}` }]);
     try {
       const { data, error: fnErr } = await supabase.functions.invoke("chat-bridge", {
         body: {
@@ -300,7 +300,7 @@ export function LoyalSparkConcierge({ role, className, title }: Props) {
         {messages.length === 0 && (
           <p className="text-sm text-muted-foreground">
             {role === "shopper"
-              ? "Ask about balances, last spend, or say “выпусти ваучер” to redeem a reward."
+              ? "Ask about balances, last spend, or say “issue a voucher” to redeem a reward."
               : "Ask about programs, minting, rewards, vouchers, certificates, or balances on Base."}
           </p>
         )}
@@ -352,7 +352,7 @@ export function LoyalSparkConcierge({ role, className, title }: Props) {
         <Textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={role === "shopper" ? "Баланс, списание, ваучер…" : "Ask about Loyal Spark…"}
+          placeholder={role === "shopper" ? "Balance, spend, voucher…" : "Ask about Loyal Spark…"}
           className="min-h-[44px] max-h-28 min-w-0 flex-1 resize-none text-base md:text-sm"
           disabled={locked}
           onKeyDown={(e) => {

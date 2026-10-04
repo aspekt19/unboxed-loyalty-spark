@@ -55,7 +55,7 @@ export function ConciergeRedeemActions({
   if (action.type === "pick_reward") {
     return (
       <div className="min-w-0 max-w-full space-y-2 rounded-lg border border-border bg-background p-3 break-words [overflow-wrap:anywhere]">
-        <p className="text-xs font-medium text-muted-foreground">Выберите награду</p>
+        <p className="text-xs font-medium text-muted-foreground">Choose a reward</p>
         <div className="flex flex-col gap-2">
           {action.rewards.map((r) => (
             <Button
@@ -69,7 +69,7 @@ export function ConciergeRedeemActions({
               <span className="flex flex-col gap-0.5">
                 <span className="text-sm font-medium">{r.name}</span>
                 <span className="text-xs text-muted-foreground">
-                  {fmt(r.cost)} {r.token_symbol || r.program_name} · баланс {fmt(r.balance)}
+                  {fmt(r.cost)} {r.token_symbol || r.program_name} · balance {fmt(r.balance)}
                 </span>
               </span>
             </Button>
@@ -87,28 +87,28 @@ export function ConciergeRedeemActions({
           <p className="text-xs text-muted-foreground">{action.reward.description}</p>
         ) : null}
         <p>
-          Списание: <strong>{fmt(action.reward.cost)}</strong>{" "}
+          Cost: <strong>{fmt(action.reward.cost)}</strong>{" "}
           {action.reward.token_symbol || action.reward.program_name}
         </p>
         <p className="text-xs text-muted-foreground">
-          Программа: {action.reward.program_name} · баланс {fmt(action.reward.balance)}
+          Program: {action.reward.program_name} · balance {fmt(action.reward.balance)}
         </p>
       </div>
       <div className="flex flex-wrap gap-2">
         <Button type="button" disabled={locked || !isConnected} onClick={onSign}>
           {(signing || confirming) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Подписать и выпустить
+          Sign and issue
         </Button>
         <Button type="button" variant="ghost" disabled={locked} onClick={onCancel}>
-          Отмена
+          Cancel
         </Button>
       </div>
       {!isConnected && (
-        <p className="text-xs text-destructive">Подключите кошелёк с баллами, чтобы подписать перевод.</p>
+        <p className="text-xs text-destructive">Connect the wallet that holds the points to sign the transfer.</p>
       )}
       {isConnected && isMismatch && activeAddress && (
         <p className="text-xs text-amber-600 dark:text-amber-400">
-          Баллы привязаны к {activeAddress.slice(0, 6)}…{activeAddress.slice(-4)}. Подпишите именно этим кошельком.
+          Points belong to {activeAddress.slice(0, 6)}…{activeAddress.slice(-4)}. Sign with that wallet.
         </p>
       )}
     </div>
