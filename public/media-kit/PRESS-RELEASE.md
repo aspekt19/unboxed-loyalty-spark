@@ -56,8 +56,6 @@ Think **"Shopify for loyalty programs"** — but built for AI agents.
 | LoyalSparkERC20 (impl) | `0xe6BA426C9c51281B929a17444De02c65815E27C3` |
 | LoyaltyTokenEscrow (P2P) | `0xA569C95AfC1BCF381c48BcF336ED9D2c014bcdDF` |
 
-Round-Up vault / Aave / Compound contracts exist on-chain but are **frozen** (not a current product promise).
-
 #### For Human Users
 
 Loyal Spark continues to serve merchants and customers through its Progressive Web App:

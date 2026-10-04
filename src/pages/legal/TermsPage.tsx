@@ -128,7 +128,7 @@ const TermsPage = () => (
           <section>
             <h2 className="text-xl font-semibold">8. Beta features</h2>
             <p>
-              Features explicitly marked as "Beta" or "Not live" (e.g. Round-Up, Token
+              Features explicitly marked as "Beta" or "Not live" (e.g. Token
               Exchange) are experimental and may change or be removed without notice. Do
               not rely on them for production.
             </p>
