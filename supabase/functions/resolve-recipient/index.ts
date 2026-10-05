@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
         ? adminClient.from("loyalty_programs").select("id").ilike("merchant_address", callerWallet).limit(1)
         : none,
       callerWallet
-        ? adminClient.from("merchant_employees").select("id").ilike("employee_address", callerWallet).limit(1)
+        ? adminClient.from("merchant_employees").select("id").ilike("employee_wallet_address", callerWallet).eq("is_active", true).limit(1)
         : none,
       adminClient.rpc("has_role", { _user_id: user.id, _role: "admin" }),
     ]);
