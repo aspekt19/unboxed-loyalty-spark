@@ -47,6 +47,7 @@ export function CreateCertificate({ onCreated }: { onCreated?: () => void }) {
   const [lifetimeDays, setLifetimeDays] = useState<number | null>(90);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [quantity, setQuantity] = useState<number>(1);
+  const [quantityInput, setQuantityInput] = useState<string>('1');
   const [submitting, setSubmitting] = useState(false);
   const [lastBatch, setLastBatch] = useState<GiftCertificate[] | null>(null);
 
@@ -211,12 +212,15 @@ export function CreateCertificate({ onCreated }: { onCreated?: () => void }) {
               </Button>
             ))}
             <Input
-              type="number"
-              min={1}
-              step="0.01"
+              type="text"
+              inputMode="decimal"
+              autoComplete="off"
               placeholder="Custom $"
               value={customAmount}
-              onChange={(e) => setCustomAmount(e.target.value)}
+              onChange={(e) => {
+                const v = e.target.value.replace(/[^0-9.]/g, '');
+                setCustomAmount(v);
+              }}
               className="w-32"
             />
           </div>
@@ -245,12 +249,12 @@ export function CreateCertificate({ onCreated }: { onCreated?: () => void }) {
           </div>
           {rateMode === 'custom' && (
             <Input
-              type="number"
-              min={0.01}
-              step="0.01"
+              type="text"
+              inputMode="decimal"
+              autoComplete="off"
               placeholder={`Points per $1 (e.g. ${programRate})`}
               value={customRate}
-              onChange={(e) => setCustomRate(e.target.value)}
+              onChange={(e) => setCustomRate(e.target.value.replace(/[^0-9.]/g, ''))}
             />
           )}
         </div>
@@ -335,17 +339,23 @@ export function CreateCertificate({ onCreated }: { onCreated?: () => void }) {
                 type="button"
                 size="sm"
                 variant={quantity === q ? 'default' : 'outline'}
-                onClick={() => setQuantity(q)}
+                onClick={() => { setQuantity(q); setQuantityInput(String(q)); }}
               >
                 {q}
               </Button>
             ))}
             <Input
-              type="number"
-              min={1}
-              max={100}
-              value={quantity}
-              onChange={(e) => setQuantity(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              value={quantityInput}
+              onChange={(e) => {
+                const v = e.target.value.replace(/[^0-9]/g, '');
+                setQuantityInput(v);
+                const n = parseInt(v, 10);
+                if (!Number.isNaN(n)) setQuantity(Math.max(1, Math.min(100, n)));
+              }}
+              onBlur={() => setQuantityInput(String(quantity))}
               className="w-24"
             />
           </div>
