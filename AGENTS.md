@@ -42,13 +42,9 @@ This file is the **entry point** for coding agents (Cursor, OpenServ, Claude Cod
 | **x402 discovery (origin for x402scan)** | `https://api.loyalspark.online/.well-known/x402` |
 | x402 static mirror | `https://loyalspark.online/.well-known/x402.json` |
 
-`openapi.json` is served from the marketing host but `servers[]` lists **only** `api.loyalspark.online` (no `supabase.co` second entry).
+`openapi.json` `servers[]` lists **only** `api.loyalspark.online`. Sources: `public/.well-known/`, `public/openapi.json`, `public/llms*.txt`.
 
-Source files for the above: `public/.well-known/`, `public/openapi.json`, `public/llms.txt`, `public/llms-full.txt`.
-
-Copy-paste MCP and curl: **[examples/agent-mcp/](./examples/agent-mcp/)** (merchant `lsk_`) · **[examples/recipient-agent-mcp/](./examples/recipient-agent-mcp/)** (holder `rwk_`) · Short repo quickstart: **[docs/agents/QUICKSTART.md](./docs/agents/QUICKSTART.md)**.
-
-Local-only scripts: `scripts/x402-paid-mcp-test/`, `scripts/agent-register-siwe/` (see README).
+Copy-paste MCP/curl: [examples/agent-mcp/](./examples/agent-mcp/) (`lsk_`) · [examples/recipient-agent-mcp/](./examples/recipient-agent-mcp/) (`rwk_`). Local-only scripts: `scripts/x402-paid-mcp-test/`, `scripts/agent-register-siwe/`.
 
 ## API & MCP source of truth
 
@@ -61,5 +57,4 @@ All in `docs/integrations/`: `PROMPT_GUIDE.md` (system prompts), `OPENSERV_AGENT
 
 ## CI
 
-- CI installs with `npm ci` and falls back to `npm install` when `package-lock.json` drifts from `package.json` — why: Lovable updates `bun.lock`, not the npm lock, and a stale npm lock was failing every CI job.
-- Edge Function code must pass `deno check` (CI job "Deno _shared unit tests") — why: type errors there fail CI even when the function deploys fine.
+- CI runs `npm ci`, falling back to `npm install` if `package-lock.json` drifts — why: Lovable updates only `bun.lock`.

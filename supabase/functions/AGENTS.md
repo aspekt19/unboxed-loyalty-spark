@@ -21,3 +21,7 @@
 - Free gas is smart-wallet only: plain wallets (MetaMask etc.) always pay their own gas. Direct ETH top-ups to user wallets were removed (the `gas-drip` function is gone) — why: bots could mass-create accounts and drain the gas wallet; never re-add wallet top-ups.
 - `paymaster-proxy` enforces the single admin-editable monthly budget in `gas_settings` via `_shared/gas-budget.ts`; `gas-status` (admin-only) reports month spend and paymaster configuration for the admin Gas tab — why: one capped budget with admin visibility, without open-ended spend.
 - Humans sign in with Coinbase CDP Embedded Wallets; `cdp-auth` validates the CDP access token server-side and issues the app session (`<cdp user id>@cdp.auth`) — why: Privy removed, CDP Paymaster sponsorship is free.
+
+## CI
+
+- All Edge Function code must pass `deno check` (CI job "Deno _shared unit tests") — why: type errors fail CI even when the function deploys fine.
