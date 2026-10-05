@@ -185,15 +185,27 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
                 <span className="truncate">{walletLabel(c.name, c.id)}</span>
               </Button>
             ))}
-            {!hasInjected &&
-              walletAppLinks.map((w) => (
-                <Button key={w.name} asChild variant="outline" className="h-11 justify-start gap-3">
-                  <a href={w.href} onClick={() => { clearManualSignOut(); rememberPostLoginPath(); }}>
+            {!hasInjected && walletAppLinks.length > 0 && (
+              <>
+                <Button asChild variant="outline" className="h-11 justify-start gap-3">
+                  <a href={walletAppLinks[0].href} onClick={() => { clearManualSignOut(); rememberPostLoginPath(); }}>
                     <Wallet className="h-4 w-4" />
-                    <span className="truncate">Open in {w.name} app</span>
+                    <span className="truncate">Open in wallet app</span>
                   </a>
                 </Button>
-              ))}
+                <p className="text-center text-xs text-muted-foreground">
+                  Another wallet?{' '}
+                  {walletAppLinks.slice(1).map((w, i) => (
+                    <span key={w.name}>
+                      {i > 0 && ' · '}
+                      <a href={w.href} className="underline" onClick={() => { clearManualSignOut(); rememberPostLoginPath(); }}>
+                        {w.name}
+                      </a>
+                    </span>
+                  ))}
+                </p>
+              </>
+            )}
             {isCdpEnabled && mode !== 'wallet' && (
               <Button variant="ghost" className="gap-2" onClick={() => setStep('choose')}>
                 <ArrowLeft className="h-4 w-4" /> Back
