@@ -1,5 +1,5 @@
 import { createConfig as createWagmiConfig } from 'wagmi';
-import { coinbaseWallet, injected } from 'wagmi/connectors';
+import { coinbaseWallet, injected, walletConnect } from 'wagmi/connectors';
 import { base } from 'wagmi/chains';
 import { http, fallback } from 'viem';
 import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
@@ -125,6 +125,17 @@ export const browserWagmiConfig = createWagmiConfig({
       : []),
     injected(),
     coinbaseWallet({ appName: 'Loyal Spark', appLogoUrl: 'https://loyalspark.online/new-favicon.png', preference: 'all' }),
+    // Public WalletConnect (Reown) project ID — QR on desktop, opens wallet app on mobile.
+    walletConnect({
+      projectId: '2bf3fb72e7f66e63215bb32b7127f1bc',
+      showQrModal: true,
+      metadata: {
+        name: 'Loyal Spark',
+        description: 'Onchain loyalty on Base',
+        url: 'https://loyalspark.online',
+        icons: ['https://loyalspark.online/new-favicon.png'],
+      },
+    }),
   ],
   ssr: false,
 });

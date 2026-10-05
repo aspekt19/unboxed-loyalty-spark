@@ -39,20 +39,9 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
   }, [open, mode]);
 
   // Mobile browsers (Safari/Chrome) have no injected wallet: hide that option and
-  // offer deep links into popular wallet apps instead of failing with "Provider not found".
+  // use WalletConnect (opens the wallet app) instead of failing with "Provider not found".
   const hasInjected = typeof window !== 'undefined' && !!(window as unknown as { ethereum?: unknown }).ethereum;
   const walletConnectors = connectors.filter((c) => c.id !== CDP_CONNECTOR_ID && (c.id !== 'injected' || hasInjected));
-  const dappUrl =
-    typeof window !== 'undefined'
-      ? `${window.location.host}${window.location.pathname}${window.location.search}`
-      : '';
-  const walletAppLinks: { name: string; href: string }[] = dappUrl
-    ? [
-        { name: 'MetaMask', href: `https://metamask.app.link/dapp/${dappUrl}` },
-        { name: 'Trust Wallet', href: `https://link.trustwallet.com/open_url?url=https://${dappUrl}` },
-        { name: 'Rainbow', href: `https://rainbow.me/dapp?url=https://${dappUrl}` },
-      ]
-    : [];
 
   const google = async () => {
     setBusy('google');
@@ -117,6 +106,7 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
   const walletLabel = (name: string, id: string) => {
     if (id === 'injected') return 'Browser wallet (MetaMask, Rabby…)';
     if (/coinbase/i.test(name) || /coinbase/i.test(id)) return 'Coinbase Wallet / Base App';
+    if (id === 'walletConnect') return 'Other wallets (MetaMask, Trust, Rainbow…)';
     return name;
   };
 
@@ -185,27 +175,6 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
                 <span className="truncate">{walletLabel(c.name, c.id)}</span>
               </Button>
             ))}
-            {!hasInjected && walletAppLinks.length > 0 && (
-              <>
-                <Button asChild variant="outline" className="h-11 justify-start gap-3">
-                  <a href={walletAppLinks[0].href} onClick={() => { clearManualSignOut(); rememberPostLoginPath(); }}>
-                    <Wallet className="h-4 w-4" />
-                    <span className="truncate">Open in wallet app</span>
-                  </a>
-                </Button>
-                <p className="text-center text-xs text-muted-foreground">
-                  Another wallet?{' '}
-                  {walletAppLinks.slice(1).map((w, i) => (
-                    <span key={w.name}>
-                      {i > 0 && ' · '}
-                      <a href={w.href} className="underline" onClick={() => { clearManualSignOut(); rememberPostLoginPath(); }}>
-                        {w.name}
-                      </a>
-                    </span>
-                  ))}
-                </p>
-              </>
-            )}
             {isCdpEnabled && mode !== 'wallet' && (
               <Button variant="ghost" className="gap-2" onClick={() => setStep('choose')}>
                 <ArrowLeft className="h-4 w-4" /> Back
