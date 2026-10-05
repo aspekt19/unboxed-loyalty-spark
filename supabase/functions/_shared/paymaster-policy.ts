@@ -23,7 +23,7 @@ export type DecodedCall = { target: string; value: bigint };
 export function decodeUserOpCalls(callData: string): DecodedCall[] | null {
   try {
     const d = decodeFunctionData({ abi: ACCOUNT_ABI, data: callData as Hex });
-    const a = d.args as unknown[];
+    const a = d.args as unknown as readonly unknown[];
     if (d.functionName === "execute") {
       return [{ target: String(a[0]).toLowerCase(), value: a[1] as bigint }];
     }

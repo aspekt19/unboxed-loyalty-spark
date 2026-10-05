@@ -12,10 +12,11 @@ const BASE_CHAIN_HEX = "0x2105";
 
 let tokenCache: { at: number; set: Set<string> } | null = null;
 
-async function registeredTokens(sb: ReturnType<typeof createClient>): Promise<Set<string>> {
+// deno-lint-ignore no-explicit-any
+async function registeredTokens(sb: { from: (t: string) => any }): Promise<Set<string>> {
   if (tokenCache && Date.now() - tokenCache.at < 60_000) return tokenCache.set;
   const { data } = await sb.from("loyalty_programs").select("token_address").neq("status", "expired");
-  const set = new Set((data ?? []).map((r: { token_address: string }) => r.token_address.toLowerCase()));
+  const set = new Set<string>((data ?? []).map((r: { token_address: string }) => r.token_address.toLowerCase()));
   tokenCache = { at: Date.now(), set };
   return set;
 }

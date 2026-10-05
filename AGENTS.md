@@ -42,13 +42,9 @@ This file is the **entry point** for coding agents (Cursor, OpenServ, Claude Cod
 | **x402 discovery (origin for x402scan)** | `https://api.loyalspark.online/.well-known/x402` |
 | x402 static mirror | `https://loyalspark.online/.well-known/x402.json` |
 
-`openapi.json` is served from the marketing host but `servers[]` lists **only** `api.loyalspark.online` (no `supabase.co` second entry).
+`openapi.json` `servers[]` lists **only** `api.loyalspark.online`. Sources: `public/.well-known/`, `public/openapi.json`, `public/llms*.txt`.
 
-Source files for the above: `public/.well-known/`, `public/openapi.json`, `public/llms.txt`, `public/llms-full.txt`.
-
-Copy-paste MCP and curl: **[examples/agent-mcp/](./examples/agent-mcp/)** (merchant `lsk_`) · **[examples/recipient-agent-mcp/](./examples/recipient-agent-mcp/)** (holder `rwk_`) · Short repo quickstart: **[docs/agents/QUICKSTART.md](./docs/agents/QUICKSTART.md)**.
-
-Local-only scripts: `scripts/x402-paid-mcp-test/`, `scripts/agent-register-siwe/` (see README).
+Copy-paste MCP/curl: [examples/agent-mcp/](./examples/agent-mcp/) (`lsk_`) · [examples/recipient-agent-mcp/](./examples/recipient-agent-mcp/) (`rwk_`). Local-only scripts: `scripts/x402-paid-mcp-test/`, `scripts/agent-register-siwe/`.
 
 ## API & MCP source of truth
 
@@ -58,3 +54,7 @@ See [`supabase/functions/AGENTS.md`](./supabase/functions/AGENTS.md) (REST/MCP r
 
 All in `docs/integrations/`: `PROMPT_GUIDE.md` (system prompts), `OPENSERV_AGENTS_SETUP.md`, `OPENSERV_STAGE_A.md` (weekly Analyst, Loyal Spark-only scope), `OPENSERV_STAGES_BCD.md` (chat-bridge, Concierge UI), `OPENSERV_CONCIERGE_PROMPTS.md`, `OPENSERV_AGENT_PROMPTS.md` (CEO/SEO/Growth/Analyst, HARD SCOPE).
 - Concierge mobile layout is guarded by `e2e/concierge-mobile-layout.spec.ts` against the test-only `/__test/concierge-layout` route (dev or `VITE_E2E=1` builds) — catches cut-off chat UI on phone sizes before release.
+
+## CI
+
+- CI runs `npm ci`, falling back to `npm install` if `package-lock.json` drifts — why: Lovable updates only `bun.lock`.
