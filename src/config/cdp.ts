@@ -6,7 +6,9 @@ import type { Config } from '@coinbase/cdp-core';
  * gas-sponsored Coinbase smart account. Empty → Google/email sign-in disabled,
  * external wallets still work.
  */
-export const CDP_PROJECT_ID: string = (import.meta.env.VITE_CDP_PROJECT_ID as string | undefined)?.trim() || '';
+export const CDP_PROJECT_ID: string =
+  (import.meta.env.VITE_CDP_PROJECT_ID as string | undefined)?.trim() ||
+  '31ce8d5d-50af-49cf-a387-04bb7752952d';
 
 export const isCdpEnabled = CDP_PROJECT_ID.length > 0;
 
