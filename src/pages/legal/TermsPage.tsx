@@ -120,7 +120,7 @@ const TermsPage = () => (
               To the maximum extent permitted by law, Loyal Spark is not liable for any
               indirect, incidental or consequential damages, lost profits, or losses
               caused by smart contract bugs, blockchain congestion, third-party
-              facilitators (Coinbase, Privy, Supabase) or your own private key
+              facilitators (Coinbase, Supabase) or your own private key
               management.
             </p>
           </section>

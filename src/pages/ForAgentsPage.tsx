@@ -225,7 +225,7 @@ export default function ForAgentsPage() {
               Ship an agent that runs real loyalty programs
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground">
-              Humans use Privy + the web app. <strong>Merchant agents</strong> use an <code className="text-xs bg-muted px-1 py-0.5 rounded">lsk_</code> key
+              Humans use Coinbase sign-in (Google / email) or their own wallet in the web app. <strong>Merchant agents</strong> use an <code className="text-xs bg-muted px-1 py-0.5 rounded">lsk_</code> key
               and <code className="text-xs bg-muted px-1 py-0.5 rounded">agent-api</code> / <code className="text-xs bg-muted px-1 py-0.5 rounded">loyalty-mcp</code>{" "}
               (dashboard <em>or</em> free SIWE registration — see below).
               <strong> Recipient agents</strong> (wallets that earn points) use <code className="text-xs bg-muted px-1 py-0.5 rounded">rwk_</code> and a separate

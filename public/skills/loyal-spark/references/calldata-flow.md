@@ -4,7 +4,7 @@ Loyal Spark write tools **prepare** transactions — they return `{ to, data, va
 
 ## Why
 
-- Same path works for Base Account (via Base MCP), Privy embedded wallets, Coinbase CDP MPC agent wallets, or a user's own EOA.
+- Same path works for Base Account (via Base MCP), Coinbase embedded smart wallets, Coinbase CDP MPC agent wallets, or a user's own EOA.
 - Builder Code `bc_wdmnog7m` (ERC-8021) is appended as the last 29 bytes of `data` so onchain analytics attribute the transaction to Loyal Spark. **Do not strip it.**
 
 ## Standard flow

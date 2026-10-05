@@ -16,11 +16,11 @@ export function AuthPrompt() {
   const { isConnected } = useAccount();
   const { connect, connectors } = useConnect();
   const {
-    login: privyLogin,
-    connectWallet: privyConnectWallet,
-    user: privyUser,
-    authenticated: privyAuthenticated,
-    ready: privyReady,
+    login: identityLogin,
+    connectWallet: identityConnectWallet,
+    user: identityUser,
+    authenticated: identityAuthenticated,
+    ready: identityReady,
   } = useIdentity();
 
   const isFarcaster = isFarcasterContext();
@@ -30,25 +30,25 @@ export function AuthPrompt() {
     void signInWithWallet();
   };
 
-  const handlePrivySignIn = () => {
+  const handleIdentitySignIn = () => {
     resetManualSignOut();
     void signInWithCoinbase();
   };
 
-  const handlePrivyLogin = () => {
+  const handleIdentityLogin = () => {
     resetManualSignOut();
     rememberPostLoginPath();
-    privyLogin();
+    identityLogin();
   };
 
-  /** Already Privy-authenticated: login() is a no-op, must open the wallet picker. */
+  /** Already Identity-authenticated: login() is a no-op, must open the wallet picker. */
   const handleConnectWallet = () => {
     resetManualSignOut();
-    if (privyAuthenticated) {
-      privyConnectWallet();
+    if (identityAuthenticated) {
+      identityConnectWallet();
     } else {
       rememberPostLoginPath();
-      privyLogin();
+      identityLogin();
     }
   };
 
@@ -109,9 +109,9 @@ export function AuthPrompt() {
     );
   }
 
-  if (!privyReady) return null;
+  if (!identityReady) return null;
 
-  if (!privyAuthenticated || !privyUser) {
+  if (!identityAuthenticated || !identityUser) {
     return (
       <Alert className="mb-6 border-2 border-primary/20 bg-primary/5">
         <Shield className="h-5 w-5 text-primary" />
@@ -121,7 +121,7 @@ export function AuthPrompt() {
             Sign in with Google, email, or a wallet you already use. Google and email sign-in create a
             free wallet with no network fees.
           </p>
-          <Button variant="uds" onClick={handlePrivyLogin} className={cn(INLINE_AUTH_CTA_CLASSNAME)} type="button">
+          <Button variant="uds" onClick={handleIdentityLogin} className={cn(INLINE_AUTH_CTA_CLASSNAME)} type="button">
             <LogIn className="h-3.5 w-3.5 shrink-0" />
             Sign In
           </Button>
@@ -130,15 +130,15 @@ export function AuthPrompt() {
     );
   }
 
-  if (shouldUseTokenAuth(privyUser)) {
+  if (shouldUseTokenAuth(identityUser)) {
     return (
       <Alert className="mb-6 border-2 border-primary/20 bg-primary/5">
         <Shield className="h-5 w-5 text-primary" />
         <AlertTitle className="text-lg font-semibold mb-2">Signing in…</AlertTitle>
         <AlertDescription className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            {getPrimaryEmail(privyUser)
-              ? `You are signing in as ${getPrimaryEmail(privyUser)}.`
+            {getPrimaryEmail(identityUser)
+              ? `You are signing in as ${getPrimaryEmail(identityUser)}.`
               : 'Completing sign-in with your email or social account.'}
           </p>
           <p className="text-sm text-muted-foreground">No extra confirmation is required.</p>

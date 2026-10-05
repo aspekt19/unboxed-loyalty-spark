@@ -46,11 +46,11 @@ export function useSponsoredSendTransaction() {
   const cdpSender = useMemo<SmartWalletSender | null>(() => smartAccount
     ? { address: smartAccount, sendTransaction: (a) => sendSponsoredFromSmartAccount(smartAccount, [a]) }
     : null, [smartAccount]);
-  const privySmart = pickSmartSender(address, cdpSender);
+  const identitySmart = pickSmartSender(address, cdpSender);
   const { data: caps } = useCapabilities({ account: address, query: { enabled: !!address } });
   const [smartState, setSmartState] = useState<{ pending: boolean; hash?: `0x${string}`; error: Error | null }>({ pending: false, error: null });
 
-  const usePrivySmart = !!privySmart;
+  const useIdentitySmart = !!identitySmart;
 
   const supportsPaymaster = useMemo(() => {
     const c = (caps as Record<number, { paymasterService?: { supported?: boolean } }> | undefined)?.[base.id];
@@ -62,23 +62,23 @@ export function useSponsoredSendTransaction() {
   const sponsoredHash = status.data?.receipts?.[0]?.transactionHash as `0x${string}` | undefined;
   const sponsoredFailed = status.data?.status === "failure";
 
-  const sendViaPrivySmart = useCallback(async (args: SendArgs) => {
+  const sendViaIdentitySmart = useCallback(async (args: SendArgs) => {
     setSmartState({ pending: true, error: null });
     try {
-      const h = await privySmart!.sendTransaction(args);
+      const h = await identitySmart!.sendTransaction(args);
       setSmartState({ pending: false, hash: h, error: null });
       return h;
     } catch (e) {
       setSmartState({ pending: false, error: e as Error });
       throw e;
     }
-  }, [privySmart]);
+  }, [identitySmart]);
 
   const sendTransaction = useCallback(
     (args: SendArgs, opts?: SendOpts) => {
-      if (usePrivySmart && (args.value === undefined || args.value === 0n)) {
+      if (useIdentitySmart && (args.value === undefined || args.value === 0n)) {
         plain.reset(); calls.reset();
-        sendViaPrivySmart(args).then((h) => opts?.onSuccess?.(h), (e) => opts?.onError?.(e as Error));
+        sendViaIdentitySmart(args).then((h) => opts?.onSuccess?.(h), (e) => opts?.onError?.(e as Error));
         return;
       }
       if (shouldSponsor(supportsPaymaster, args.value)) {
@@ -99,12 +99,12 @@ export function useSponsoredSendTransaction() {
         onError: (e) => opts?.onError?.(e as Error),
       });
     },
-    [usePrivySmart, sendViaPrivySmart, supportsPaymaster, plain, calls],
+    [useIdentitySmart, sendViaIdentitySmart, supportsPaymaster, plain, calls],
   );
 
   const sendTransactionAsync = useCallback(
     async (args: SendArgs): Promise<`0x${string}`> => {
-      if (usePrivySmart && (args.value === undefined || args.value === 0n)) return sendViaPrivySmart(args);
+      if (useIdentitySmart && (args.value === undefined || args.value === 0n)) return sendViaIdentitySmart(args);
       if (shouldSponsor(supportsPaymaster, args.value)) {
         const { id } = await calls.sendCallsAsync({
           chainId: base.id,
@@ -120,7 +120,7 @@ export function useSponsoredSendTransaction() {
       }
       return plain.sendTransactionAsync(args);
     },
-    [usePrivySmart, sendViaPrivySmart, supportsPaymaster, plain, calls],
+    [useIdentitySmart, sendViaIdentitySmart, supportsPaymaster, plain, calls],
   );
 
   const reset = useCallback(() => {
@@ -142,6 +142,6 @@ export function useSponsoredSendTransaction() {
       : usingCalls
         ? (calls.error as Error | null) ?? (sponsoredFailed ? new Error("Sponsored transaction failed") : null)
         : plain.error,
-    isSponsored: usePrivySmart || supportsPaymaster,
+    isSponsored: useIdentitySmart || supportsPaymaster,
   };
 }

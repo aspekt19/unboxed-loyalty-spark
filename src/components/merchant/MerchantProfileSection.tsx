@@ -26,7 +26,7 @@ interface MerchantProfileSectionProps {
 export function MerchantProfileSection(_props: MerchantProfileSectionProps) {
   const { address } = useAccount();
   const { user, session, isLoading: authLoading } = useAuth();
-  const { user: privyUser } = useIdentity();
+  const { user: identityUser } = useIdentity();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
@@ -34,7 +34,7 @@ export function MerchantProfileSection(_props: MerchantProfileSectionProps) {
   const [, setLoaded] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const identityEmail = getPrimaryEmail(privyUser);
+  const identityEmail = getPrimaryEmail(identityUser);
 
   useEffect(() => {
     if (!address) return;

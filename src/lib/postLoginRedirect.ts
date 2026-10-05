@@ -1,6 +1,6 @@
 /**
  * Mobile Google OAuth returns to the public app root (`/`), because a protected
- * route can bounce the user out before the Privy -> app session exchange
+ * route can bounce the user out before the Identity -> app session exchange
  * finishes. We remember where the user was when they started sign-in and send
  * them back there once the session exists.
  */

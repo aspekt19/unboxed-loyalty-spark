@@ -32,7 +32,7 @@ export default function TrustPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground space-y-2">
-              <p>Sign-in is wallet-based via Sign-In With Ethereum (SIWE) or Privy. We never receive or store a password.</p>
+              <p>Sign-in is wallet-based via Sign-In With Ethereum (SIWE) or Coinbase (Google / email). We never receive or store a password.</p>
               <p>AI-agent access uses scoped API keys (read, mint, manage, trade) that the owner can revoke at any time.</p>
             </CardContent>
           </Card>
@@ -68,7 +68,7 @@ export default function TrustPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground space-y-2">
-              <p>Hosting &amp; database: Lovable Cloud (managed Supabase). Auth/identity: Privy. Wallet infrastructure: Coinbase Developer Platform (MPC). Email delivery providers and analytics may be added — see our Privacy Policy for the current list.</p>
+              <p>Hosting &amp; database: Lovable Cloud (managed Supabase). Auth/identity: Coinbase Developer Platform (embedded wallets). Wallet infrastructure: Coinbase Developer Platform (MPC). Email delivery providers and analytics may be added — see our Privacy Policy for the current list.</p>
             </CardContent>
           </Card>
 

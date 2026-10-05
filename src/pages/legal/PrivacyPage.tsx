@@ -22,7 +22,7 @@ const PrivacyPage = () => (
                 onchain activity.
               </li>
               <li>
-                <strong>Email or phone (optional).</strong> Only if you sign in via Privy
+                <strong>Email or phone (optional).</strong> Only if you sign in with Google or email (Coinbase)
                 with email/phone, or if a merchant asks for it for receipts.
               </li>
               <li>
@@ -67,7 +67,7 @@ const PrivacyPage = () => (
           <section>
             <h2 className="text-xl font-semibold">4. Third-party processors</h2>
             <ul className="list-disc pl-6">
-              <li><strong>Privy</strong> — authentication & embedded wallets.</li>
+              <li><strong>Coinbase Developer Platform</strong> — authentication & embedded smart wallets.</li>
               <li><strong>Supabase</strong> — database, edge functions, storage.</li>
               <li><strong>Coinbase CDP</strong> — agent MPC wallets, x402 facilitator.</li>
               <li><strong>Base / Ethereum</strong> — public blockchain.</li>

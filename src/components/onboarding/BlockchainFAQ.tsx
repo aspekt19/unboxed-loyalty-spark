@@ -35,7 +35,7 @@ export const BlockchainFAQ = () => {
             <AccordionTrigger>Do I need a crypto wallet?</AccordionTrigger>
             <AccordionContent className="text-muted-foreground">
               No! You can sign in with just your email, phone, or Google. A secure embedded wallet
-              is created for you automatically behind the scenes via Privy (MPC-secured). If you
+              is created for you automatically behind the scenes by Coinbase (secured smart wallet). If you
               already have a Web3 wallet (like MetaMask or Coinbase Wallet), you can use that too.
               Either way, you control your rewards directly.
             </AccordionContent>
@@ -94,7 +94,7 @@ export const BlockchainFAQ = () => {
               <ul className="list-disc list-inside mt-2 space-y-1">
                 <li>If using a traditional wallet, keep your password/seed phrase safe</li>
                 <li>Never share your private keys with anyone</li>
-                <li>Email, phone and Google sign-in accounts are secured by Privy embedded wallets (MPC)</li>
+                <li>Email and Google sign-in accounts are secured by Coinbase embedded smart wallets</li>
               </ul>
             </AccordionContent>
           </AccordionItem>

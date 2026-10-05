@@ -43,31 +43,31 @@ export function WalletConnectButton() {
   } | null>(null);
 
   const isFarcaster = isFarcasterContext();
-  const { login: privyLogin, logout: privyLogout, connectWallet: privyConnectWallet, user: privyUser, ready: privyReady, authenticated: privyAuthenticated } = useIdentity();
-  const prevPrivyUserRef = useRef(privyUser);
+  const { login: identityLogin, logout: identityLogout, connectWallet: identityConnectWallet, user: identityUser, ready: identityReady, authenticated: identityAuthenticated } = useIdentity();
+  const prevIdentityUserRef = useRef(identityUser);
 
-  /** Stable when Privy re-renders with a new `user` object reference. */
-  const privyAuthRouteKey = useMemo(() => {
-    if (!privyUser) return '';
-    const types = getLinkedAccounts(privyUser)
+  /** Stable when Identity re-renders with a new `user` object reference. */
+  const identityAuthRouteKey = useMemo(() => {
+    if (!identityUser) return '';
+    const types = getLinkedAccounts(identityUser)
       .map((a) => a.type ?? '')
       .sort()
       .join('|');
-    return `${privyUser.id ?? ''}:${types}`;
-  }, [privyUser]);
+    return `${identityUser.id ?? ''}:${types}`;
+  }, [identityUser]);
 
   const useTokenAuth = useMemo(() => {
-    if (!privyUser) return false;
-    return shouldUseTokenAuth(privyUser);
-  }, [privyUser, privyAuthRouteKey]);
+    if (!identityUser) return false;
+    return shouldUseTokenAuth(identityUser);
+  }, [identityUser, identityAuthRouteKey]);
 
   useEffect(() => {
-    if (!isFarcaster && privyReady && prevPrivyUserRef.current && !privyUser && user) {
+    if (!isFarcaster && identityReady && prevIdentityUserRef.current && !identityUser && user) {
       setIsManuallyDisconnected(true);
       signOut();
     }
-    prevPrivyUserRef.current = privyUser;
-  }, [privyUser, privyReady, isFarcaster, user, signOut]);
+    prevIdentityUserRef.current = identityUser;
+  }, [identityUser, identityReady, isFarcaster, user, signOut]);
 
   useEffect(() => {
     const loadFarcasterUser = async () => {
@@ -101,38 +101,38 @@ export function WalletConnectButton() {
     }
   }, [isFarcaster, isConnected, address, isManuallyDisconnected, user, signInWithWallet]);
 
-  // Privy keeps its own session in cookies. If anything (signOut from the
+  // Identity keeps its own session in cookies. If anything (signOut from the
   // banned screen, a 409 conflict, or the user pressing Sign out) clears the
-  // app session, also tear down Privy so it cannot silently auto-relink an
+  // app session, also tear down Identity so it cannot silently auto-relink an
   // external wallet and trigger an unexpected SIWE popup.
   useEffect(() => {
     if (isFarcaster) return;
-    const handleRequestPrivyLogout = () => {
+    const handleRequestIdentityLogout = () => {
       void (async () => {
         try {
-          await privyLogout();
+          await identityLogout();
         } catch {}
         try {
           await disconnectAsync?.();
         } catch {}
       })();
     };
-    window.addEventListener('loyalspark:request-identity-logout', handleRequestPrivyLogout);
+    window.addEventListener('loyalspark:request-identity-logout', handleRequestIdentityLogout);
     return () => {
-      window.removeEventListener('loyalspark:request-identity-logout', handleRequestPrivyLogout);
+      window.removeEventListener('loyalspark:request-identity-logout', handleRequestIdentityLogout);
     };
-  }, [isFarcaster, privyLogout, disconnectAsync]);
+  }, [isFarcaster, identityLogout, disconnectAsync]);
 
-  // Wallet-only Privy login (external wallet, no email/social):
-  // Privy already required an explicit user gesture (clicking "Sign In" → wallet
+  // Wallet-only Identity login (external wallet, no email/social):
+  // Identity already required an explicit user gesture (clicking "Sign In" → wallet
   // picker → wagmi connect). Treat that gesture as continuous with SIWE so the
   // user does not have to press a second "Sign in with wallet" button. We only
-  // auto-trigger when the user has just opted into Privy AND a wallet is now
+  // auto-trigger when the user has just opted into Identity AND a wallet is now
   // connected — never on a passive page revisit (manualSignOut guard handles
   // that case via signingInRef + lastSignInAttemptAtRef in AuthContext).
   useEffect(() => {
     if (isFarcaster) return;
-    if (!privyReady || !privyAuthenticated || !privyUser) return;
+    if (!identityReady || !identityAuthenticated || !identityUser) return;
     if (user || isManuallyDisconnected) return;
     if (useTokenAuth) return; // social/email path handled by the effect above
     if (!isConnected || !address) return;
@@ -143,9 +143,9 @@ export function WalletConnectButton() {
     return () => window.clearTimeout(t);
   }, [
     isFarcaster,
-    privyReady,
-    privyAuthenticated,
-    privyUser,
+    identityReady,
+    identityAuthenticated,
+    identityUser,
     user,
     isManuallyDisconnected,
     useTokenAuth,
@@ -163,7 +163,7 @@ export function WalletConnectButton() {
       } catch {}
       if (!isFarcaster) {
         try {
-          await privyLogout();
+          await identityLogout();
         } catch {}
       }
     } catch (error) {
@@ -199,18 +199,18 @@ export function WalletConnectButton() {
       return;
     }
 
-    if (privyUser && !user) {
+    if (identityUser && !user) {
       try {
         await signOut();
       } catch {}
 
       try {
-        await privyLogout();
+        await identityLogout();
       } catch {}
     }
 
     rememberPostLoginPath();
-    privyLogin();
+    identityLogin();
 
   };
 
@@ -262,7 +262,7 @@ export function WalletConnectButton() {
     );
   }
 
-  if (!privyUser || isManuallyDisconnected) {
+  if (!identityUser || isManuallyDisconnected) {
     return (
       <button
         onClick={() => void handleConnect()}
@@ -279,10 +279,10 @@ export function WalletConnectButton() {
 
   if (!user) {
     const handleRetry = async () => {
-      // Privy session exists but no wallet is connected: SIWE can never start,
+      // Identity session exists but no wallet is connected: SIWE can never start,
       // so open the wallet picker instead of retrying a no-op sign-in.
-      if (!isFarcaster && privyAuthenticated && !useTokenAuth && !isConnected) {
-        privyConnectWallet();
+      if (!isFarcaster && identityAuthenticated && !useTokenAuth && !isConnected) {
+        identityConnectWallet();
         return;
       }
       await retrySignIn();
@@ -294,7 +294,7 @@ export function WalletConnectButton() {
   }
 
   const displayAddress = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : '';
-  const displayName = getPrimaryEmail(privyUser) || privyUser?.phone?.number || displayAddress;
+  const displayName = getPrimaryEmail(identityUser) || identityUser?.phone?.number || displayAddress;
 
   return (
     <button

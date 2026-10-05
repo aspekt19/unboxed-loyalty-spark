@@ -493,7 +493,7 @@ export default function GuidePage() {
                     Choose the sign-in method that works best for you:
                   </p>
                   <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-                    <li><strong>Email, Phone, or Google (recommended):</strong> Click "Sign In" via Privy. A secure wallet is created automatically — no crypto knowledge needed.</li>
+                    <li><strong>Email or Google (recommended):</strong> Click "Sign In" and choose Google or email. A secure wallet is created automatically — no crypto knowledge needed.</li>
                     <li><strong>Existing Wallet:</strong> Connect MetaMask, Coinbase Wallet, or WalletConnect if you already have one.</li>
                     <li><strong>Farcaster:</strong> If you're in Warpcast, your wallet connects automatically.</li>
                   </ol>
@@ -530,7 +530,7 @@ export default function GuidePage() {
                       <div>
                         <h4 className="font-medium text-sm mb-0.5">How is it created?</h4>
                         <p className="text-sm text-muted-foreground">
-                          When you sign in with email, phone, or Google, a secure embedded wallet is created for you automatically by Privy.
+                          When you sign in with email or Google, a secure Coinbase smart wallet is created for you automatically.
                           You don't need to install any apps or know anything about crypto — it just works.
                         </p>
                       </div>
@@ -579,8 +579,8 @@ export default function GuidePage() {
                   <Alert className="mt-2">
                     <Shield className="h-4 w-4" />
                     <AlertDescription>
-                      <strong>Your wallet is secured by Privy.</strong> Your private keys are protected with multi-party computation (MPC) and
-                      trusted execution environments — no single party (including Privy or Loyal Spark) can access your funds without your authorization.
+                      <strong>Your wallet is secured by Coinbase.</strong> Your private keys are protected with multi-party computation (MPC) and
+                      trusted execution environments — no single party (including Coinbase or Loyal Spark) can access your funds without your authorization.
                     </AlertDescription>
                   </Alert>
                 </CardContent>

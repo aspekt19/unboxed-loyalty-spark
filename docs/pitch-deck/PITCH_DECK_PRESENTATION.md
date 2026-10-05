@@ -68,7 +68,7 @@ Total Slides: 12
 3. **Invite Team & Agents** — Branches, employees, AI agents with scoped API keys
 
 ### Customer flow
-1. **Receive Tokens** — Get loyalty tokens to a smart wallet (Privy / SIWE)
+1. **Receive Tokens** — Get loyalty tokens to a smart wallet (Coinbase / SIWE)
 2. **Redeem & Trade** — Spend on rewards or swap P2P via onchain escrow
 3. **Truly Own** — Tokens live in the customer's wallet, fully transferable
 
@@ -121,7 +121,7 @@ Cash revenue is subscriptions + pay-per-call — both prepaid in USDC before the
 | Square Loyalty: $45–$105/mo per location | Predictable USDC SaaS from $39/mo |
 | LoyaltyLion / Yotpo: $200–$700+/mo, mid-market focus | Onchain B20 tokens — customers truly own them |
 | Smile.io: revenue-share & per-order fees | Agent-ready: REST + MCP, x402 / MPP micropayments |
-| Closed APIs, no native AI-agent access | SIWE & Privy auth — no passwords, no email leaks |
+| Closed APIs, no native AI-agent access | SIWE & Coinbase auth — no passwords, no email leaks |
 | Points are a database row — no true ownership | P2P escrow marketplace between programs |
 
 ---
@@ -146,7 +146,7 @@ Cash revenue is subscriptions + pay-per-call — both prepaid in USDC before the
 | **Platform** | Live MVP on Base |
 | **Surfaces** | Web · PWA · Capacitor |
 | **Agent API** | 28 authenticated + 1 public merchant REST + 39 MCP tools (+ 20 recipient MCP) |
-| **Auth** | Privy + SIWE + scoped keys |
+| **Auth** | Coinbase + SIWE + scoped keys |
 
 ---
 
