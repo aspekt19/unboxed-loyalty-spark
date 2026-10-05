@@ -38,12 +38,12 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
     setBusy(null);
   }, [open, mode]);
 
-  // Mobile browsers (Safari/Chrome) have no injected wallet: hide that option and
-  // use WalletConnect (opens the wallet app) instead of failing with "Provider not found".
-  const hasInjected = typeof window !== 'undefined' && !!(window as unknown as { ethereum?: unknown }).ethereum;
+  // Keep the wallet step to two clean options: Coinbase Wallet / Base App and
+  // "Other wallets" via WalletConnect. Injected/EIP-6963 connectors are skipped —
+  // WalletConnect covers them without duplicating or overflowing the dialog.
   const walletConnectors = connectors.filter((connector) => {
     if (connector.id === CDP_CONNECTOR_ID) return false;
-    if (connector.id === 'injected') return hasInjected;
+    if (connector.id === 'injected') return false;
     return /coinbase/i.test(connector.id) || connector.id === 'walletConnect';
   });
 
@@ -107,11 +107,14 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
     }
   };
 
-  const walletLabel = (name: string, id: string) => {
-    if (id === 'injected') return 'Browser wallet (MetaMask, Rabby…)';
-    if (/coinbase/i.test(name) || /coinbase/i.test(id)) return 'Coinbase Wallet / Base App';
-    if (id === 'walletConnect') return 'Other wallets (MetaMask, Trust, Rainbow…)';
-    return name;
+  const walletMeta = (name: string, id: string) => {
+    if (/coinbase/i.test(name) || /coinbase/i.test(id)) {
+      return { label: 'Coinbase Wallet / Base App', sub: 'Connects in one tap' };
+    }
+    if (id === 'walletConnect') {
+      return { label: 'Other wallets', sub: 'MetaMask, Trust, Rainbow and 400+ more' };
+    }
+    return { label: name, sub: undefined as string | undefined };
   };
 
   return (
