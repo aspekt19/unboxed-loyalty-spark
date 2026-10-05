@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { isCdpEnabled } from '@/config/cdp';
 import { CDP_CONNECTOR_ID } from '@/config/wagmi';
 import { rememberPostLoginPath } from '@/lib/postLoginRedirect';
+import { clearManualSignOut } from '@/contexts/AuthContext';
 
 export type SignInDialogMode = 'all' | 'wallet';
 
@@ -42,6 +43,7 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
   const google = async () => {
     setBusy('google');
     try {
+      clearManualSignOut();
       rememberPostLoginPath();
       await signInWithOAuth('google');
     } catch (e) {
@@ -72,6 +74,7 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
     if (!flowId || otp.trim().length < 6) return;
     setBusy('otp');
     try {
+      clearManualSignOut();
       await verifyEmailOTP({ flowId, otp: otp.trim() });
       onOpenChange(false);
     } catch (e) {
@@ -86,6 +89,7 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
     if (!connector) return;
     setBusy(id);
     try {
+      clearManualSignOut();
       await connectAsync({ connector });
       onOpenChange(false);
     } catch (e) {
