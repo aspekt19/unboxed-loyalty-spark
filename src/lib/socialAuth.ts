@@ -13,7 +13,6 @@ export interface IdentityUser {
   id?: string;
   linkedAccounts?: LinkedAccount[];
   email?: { address?: string };
-  phone?: { number?: string };
 }
 
 const SOCIAL_TYPES = new Set(['email', 'google', 'oauth']);

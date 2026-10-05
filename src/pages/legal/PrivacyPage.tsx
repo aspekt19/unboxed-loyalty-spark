@@ -22,7 +22,7 @@ const PrivacyPage = () => (
                 onchain activity.
               </li>
               <li>
-                <strong>Email or phone (optional).</strong> Only if you sign in with Google or email (Coinbase)
+                <strong>Email (optional).</strong> Only if you sign in with Google or email (Coinbase)
                 with email/phone, or if a merchant asks for it for receipts.
               </li>
               <li>
