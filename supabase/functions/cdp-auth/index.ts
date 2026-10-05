@@ -176,10 +176,12 @@ serve(async (req) => {
     if (primaryWallet && walletConflict !== primaryWallet) {
       const { data: owner } = await admin.from("profiles").select("user_id").eq("wallet_address", primaryWallet).maybeSingle();
       if (!owner || owner.user_id === userId) {
-        const { error } = await admin.from("profiles").upsert(
-          { user_id: userId, wallet_address: primaryWallet, email, updated_at: new Date().toISOString() },
-          { onConflict: "user_id" },
-        );
+        const row = { user_id: userId, wallet_address: primaryWallet, email, updated_at: new Date().toISOString() };
+        let { error } = await admin.from("profiles").upsert(row, { onConflict: "user_id" });
+        // Email already stored on another (e.g. external-wallet) profile: still create this profile, without email.
+        if (error?.code === "23505" && email) {
+          ({ error } = await admin.from("profiles").upsert({ ...row, email: null }, { onConflict: "user_id" }));
+        }
         if (error) console.error("Profile upsert error:", error);
       }
     }
