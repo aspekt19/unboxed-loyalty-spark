@@ -301,22 +301,31 @@ export function EarnPointsDialog({
               )}
             </div>
 
-            {/* Step 2: Purchase amount */}
+            {/* Step 2: Purchase amount — always editable; tier is applied once the customer is found */}
             <div className="space-y-2">
               <Label htmlFor="earn-purchase">Purchase Amount ($)</Label>
               <Input
                 id="earn-purchase"
-                type="number"
-                min="0"
-                step="0.01"
+                type="text"
+                inputMode="decimal"
+                autoComplete="off"
                 placeholder="e.g. 50.00"
                 value={purchaseAmount}
-                onChange={e => setPurchaseAmount(e.target.value)}
-                disabled={isPending || isResolving || !resolvedAddress}
+                onChange={e => {
+                  const v = e.target.value.replace(',', '.').replace(/[^0-9.]/g, '');
+                  const parts = v.split('.');
+                  setPurchaseAmount(parts.length > 2 ? `${parts[0]}.${parts.slice(1).join('')}` : v);
+                }}
+                disabled={isPending}
               />
-              {!resolvedAddress && recipientInput && (
+              {!resolvedAddress && recipientInput && inputType === 'email' && (
                 <p className="text-xs text-muted-foreground">
-                  Look up the customer first to determine their tier and cashback rate
+                  Press Enter or tap “Look up” to find the customer by email
+                </p>
+              )}
+              {!resolvedAddress && recipientInput && inputType === 'wallet' && !isFullAddress(recipientInput) && (
+                <p className="text-xs text-muted-foreground">
+                  Enter the full wallet address (0x + 40 characters)
                 </p>
               )}
             </div>
