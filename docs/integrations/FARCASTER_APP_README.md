@@ -4,7 +4,7 @@ A decentralized loyalty program integrated with Farcaster, built on Base Mainnet
 
 ## Overview
 
-Loyal Spark Farcaster App enables merchants and customers to participate in a tokenized loyalty ecosystem through the Farcaster social network. The platform supports **flexible sign-in**: email/phone/Google via Privy (embedded wallet created automatically), traditional wallets (MetaMask, WalletConnect), or automatic Farcaster connection inside Warpcast. AI agents integrate via REST API, MCP Server, or pay-per-request gateways (MPP / x402).
+Loyal Spark Farcaster App enables merchants and customers to participate in a tokenized loyalty ecosystem through the Farcaster social network. The platform supports **flexible sign-in**: email/phone/Google via Coinbase (embedded wallet created automatically), traditional wallets (MetaMask, WalletConnect), or automatic Farcaster connection inside Warpcast. AI agents integrate via REST API, MCP Server, or pay-per-request gateways (MPP / x402).
 
 ## Features
 
@@ -40,8 +40,8 @@ Loyal Spark Farcaster App enables merchants and customers to participate in a to
 
 - **Frontend**: React 18 + TypeScript + Vite
 - **Styling**: Tailwind CSS with custom design system
-- **Blockchain**: Wagmi + Viem + Privy
-- **Authentication**: Email/Phone/Google (Privy embedded wallets) + SIWE + Farcaster Auth Kit
+- **Blockchain**: Wagmi + Viem + Coinbase
+- **Authentication**: Email/Phone/Google (Coinbase embedded smart wallets) + SIWE + Farcaster Auth Kit
 - **Backend**: Supabase (Postgres + Edge Functions)
 - **Agent Wallets**: Coinbase CDP MPC
 - **State**: React Query (TanStack Query)

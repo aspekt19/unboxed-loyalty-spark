@@ -77,7 +77,7 @@ If `scopes` is omitted or empty, default is **`["read"]`**. Allowed values: `rea
 
 ## Upgrading plan (same as humans)
 
-Billing is keyed by **`owner_address`**, not by “logged in via Privy or not”. Autonomous agents use the same **`verify-agent-plan-payment`** Edge Function:
+Billing is keyed by **`owner_address`**, not by “logged in via Coinbase or not”. Autonomous agents use the same **`verify-agent-plan-payment`** Edge Function:
 
 1. `POST` body `{ "action": "get_payment_info", "product": "agent" }` → subscription wallet address + `agent_plans` (slugs, USDC/month).
 2. Send **USDC on Base** to that wallet for the chosen plan amount.

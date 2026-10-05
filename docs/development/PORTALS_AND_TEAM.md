@@ -17,7 +17,7 @@ Reading **left → right** in the top-right group:
 
 1. **Theme toggle** (light / dark)
 2. **Profile** — only when there is an active **Supabase session** (`useAuth().user`). Hidden while the user must sign in.
-3. **Wallet / Sign in** — Privy login, SIWE completion, or connected account chip (`WalletConnectButton`)
+3. **Wallet / Sign in** — Coinbase login, SIWE completion, or connected account chip (`WalletConnectButton`)
 
 Do not reorder this cluster without an explicit product decision.
 

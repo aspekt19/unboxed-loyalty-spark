@@ -195,7 +195,7 @@ The MCP server exposes the loyalty API as **39** standard MCP tools (core flows 
 ## Getting an API Key
 
 1. Visit [loyalspark.online/merchant](https://loyalspark.online/merchant)
-2. Sign in via **Privy** (email, phone, Google, Apple, etc.) or connect a Web3 wallet (Base)
+2. Sign in via **Coinbase** (email, phone, Google, Apple, etc.) or connect a Web3 wallet (Base)
 3. Navigate to **AI Agents** tab
 4. Click **Register New Agent**
 5. Copy your `lsk_...` API key (shown only once)

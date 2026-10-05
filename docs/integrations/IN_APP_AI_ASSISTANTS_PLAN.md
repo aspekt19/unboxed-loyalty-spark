@@ -14,13 +14,13 @@
 - **MCP servers** (39 merchant tools, 20 recipient tools) — `supabase/functions/loyalty-mcp` and `recipient-loyalty-mcp`. Ready-made function-calling toolset for any LLM/agent. Already integrated with OpenServ via `mcp-http-api-key.ts`.
 - **REST agent-api / recipient-api** — same actions over HTTP with `lsk_` / `rwk_` keys.
 - **OpenServ team** (CEO / SEO / Growth / Analyst) — already calls our MCP. Today they run as **batch jobs** (reports), but the same runtime supports interactive request/response, so we can add two new realtime agents to the same stack.
-- **Privy auth** (humans) + **CDP MPC wallets** (agents) — identity ready.
+- **Coinbase auth** (humans) + **CDP MPC wallets** (agents) — identity ready.
 - **`mcp-http-api-key.ts`** — already supports both `x-api-key` and `Authorization: Bearer` (needed because OpenServ doesn't always forward custom headers).
 
 ## Target architecture (Option B only)
 
 ```
-[Chat UI in Lovable] ──Privy JWT──▶ [edge function chat-bridge]
+[Chat UI in Lovable] ──Coinbase JWT──▶ [edge function chat-bridge]
                                             │
                                             │ HTTP (SSE if available, else chunked polling)
                                             ▼
@@ -69,7 +69,7 @@
 - **OpenServ agent**: new `shopper-concierge` agent, scoped to one `wallet`.
 - **Scenarios**: "how many points do I have at Starbucks", "what rewards can I redeem right now", "find merchants with > 10% discount nearby", "redeem my 500 points for a voucher".
 - **Tools**: recipient MCP (`get_my_loyalty_balance`, `list_rewards_for_program`, `redeem_my_reward`, `list_p2p_offers`, `accept_p2p_offer`, `prepare_loyalty_token_transfer`).
-- **Permissions**: redeem / accept / transfer require confirmation + signature (Privy embedded wallet → **sync gesture**, per Core memory rule).
+- **Permissions**: redeem / accept / transfer require confirmation + signature (Coinbase embedded smart wallets → **sync gesture**, per Core memory rule).
 
 ---
 
@@ -85,7 +85,7 @@ Outside this repo (OpenServ stack):
 
 ### Phase 1 — Merchant Concierge MVP (≈ 2–3 days)
 1. **Edge function `supabase/functions/chat-bridge/index.ts`** (thin bridge, no LLM call locally):
-   - Verifies Privy JWT (PATCH workaround like `agent-reports`).
+   - Verifies Coinbase JWT (PATCH workaround like `agent-reports`).
    - Resolves caller → `wallet_address` → `merchant_id` (if any) → role.
    - Forwards `messages[]` + `context` to OpenServ `merchant-concierge` `/chat` with `Authorization: Bearer ${OPENSERV_CONCIERGE_API_KEY}`.
    - **Streaming**: passes through SSE when OpenServ supports it; otherwise polls and emits AI SDK UI message stream chunks via `toUIMessageStreamResponse`.
@@ -101,7 +101,7 @@ Outside this repo (OpenServ stack):
 4. **Sync wallet gestures**: `mint_loyalty_tokens` / `redeem_reward` tools return **prepared calldata**. UI shows a "Sign" button → user clicks → `sendTransaction` in the same React event handler.
 
 ### Phase 2 — Shopper Assistant (≈ 1–2 days)
-- Same `chat-bridge` endpoint; routes to `shopper-concierge` agent based on `role` (from Privy claim or query param `?role=shopper`).
+- Same `chat-bridge` endpoint; routes to `shopper-concierge` agent based on `role` (from Coinbase claim or query param `?role=shopper`).
 - Embed on `/customer` page: bottom dock-chat on mobile, sidebar on desktop.
 - Same tool-approval pattern; recipient MCP whitelist.
 
@@ -136,8 +136,8 @@ Outside this repo (OpenServ stack):
 
 - **OpenServ availability/latency**: single point of failure for chat. Mitigated by kill-switch + clear "temporarily unavailable" UI. No silent broken state.
 - **First-token latency higher than direct Gateway streaming**: mitigated by aggressive optimistic UI (loader from `submitted`, not from first token).
-- **Argument hallucination by the agent**: MCP tools validate with Zod + check DB ownership before executing. Wallet is **never** taken from LLM args — only from verified Privy JWT.
-- **Privy session inside edge function**: must verify JWT the same way `agent-reports` does (PATCH workaround). Reuse that code path.
+- **Argument hallucination by the agent**: MCP tools validate with Zod + check DB ownership before executing. Wallet is **never** taken from LLM args — only from verified Coinbase JWT.
+- **Coinbase session inside edge function**: must verify JWT the same way `agent-reports` does (PATCH workaround). Reuse that code path.
 - **Voice on iOS Safari**: `webkitSpeechRecognition` doesn't work there. On native Capacitor builds, use `@capacitor-community/speech-recognition`.
 - **Phase 0 is blocking**: no OpenServ Concierge agent → no Phase 1. Coordinate timeline with OpenServ stack work.
 
