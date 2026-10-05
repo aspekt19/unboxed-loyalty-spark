@@ -7,7 +7,7 @@ import {
   useWaitForCallsStatus,
 } from "wagmi";
 import { base } from "wagmi/chains";
-import { usePrivySmartWallet } from "@/hooks/usePrivySmartWallet";
+import { usePrivyEmbeddedSponsor, usePrivySmartWallet, type SmartWalletSender } from "@/hooks/usePrivySmartWallet";
 
 /** ERC-7677 paymaster endpoint; server only sponsors calls to Loyal Spark contracts with zero ETH value. */
 export const PAYMASTER_PROXY_URL = `https://api.loyalspark.online/paymaster-proxy`;
@@ -20,22 +20,37 @@ export function shouldSponsor(supportsPaymaster: boolean, value?: bigint): boole
   return supportsPaymaster && (value === undefined || value === 0n);
 }
 
+/** Pure helper (tested): pick the Privy sender whose address is the active wallet, so tokens are spent from where they sit. */
+export function pickPrivySender(
+  active: string | undefined,
+  smart: SmartWalletSender | null,
+  embedded: SmartWalletSender | null,
+): SmartWalletSender | null {
+  if (!active) return null;
+  const a = active.toLowerCase();
+  if (smart && smart.address.toLowerCase() === a) return smart;
+  if (embedded && embedded.address.toLowerCase() === a) return embedded;
+  return null;
+}
+
 /**
  * Drop-in replacement for wagmi `useSendTransaction`:
- * 1) Privy smart wallet (active) → sponsored via Privy paymaster;
+ * 1) active wallet is a Privy smart wallet or Privy embedded wallet (Google/email) → gas sponsored by Privy;
  * 2) wallet with `paymasterService` → sponsored via our proxy;
  * 3) plain wallet (MetaMask etc.) → normal transaction, user pays their own gas.
- * We never send ETH to user wallets — free gas is smart-wallet only.
+ * We never send ETH to user wallets.
  */
 export function useSponsoredSendTransaction() {
   const { address } = useAccount();
   const plain = useSendTransaction();
   const calls = useSendCalls();
-  const privySmart = usePrivySmartWallet();
+  const privySmartWallet = usePrivySmartWallet();
+  const privyEmbedded = usePrivyEmbeddedSponsor();
+  const privySmart = pickPrivySender(address, privySmartWallet, privyEmbedded);
   const { data: caps } = useCapabilities({ account: address, query: { enabled: !!address } });
   const [smartState, setSmartState] = useState<{ pending: boolean; hash?: `0x${string}`; error: Error | null }>({ pending: false, error: null });
 
-  const usePrivySmart = !!privySmart && !!address && privySmart.address.toLowerCase() === address.toLowerCase();
+  const usePrivySmart = !!privySmart;
 
   const supportsPaymaster = useMemo(() => {
     const c = (caps as Record<number, { paymasterService?: { supported?: boolean } }> | undefined)?.[base.id];
