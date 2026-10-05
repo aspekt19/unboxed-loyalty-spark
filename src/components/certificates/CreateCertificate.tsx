@@ -339,7 +339,7 @@ export function CreateCertificate({ onCreated }: { onCreated?: () => void }) {
                 type="button"
                 size="sm"
                 variant={quantity === q ? 'default' : 'outline'}
-                onClick={() => setQuantity(q)}
+                onClick={() => { setQuantity(q); setQuantityInput(String(q)); }}
               >
                 {q}
               </Button>
