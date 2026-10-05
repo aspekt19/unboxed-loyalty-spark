@@ -38,13 +38,16 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
     setBusy(null);
   }, [open, mode]);
 
-  // Keep the wallet step to two clean options: Coinbase Wallet / Base App and
-  // "Other wallets" via WalletConnect. Injected/EIP-6963 connectors are skipped —
-  // WalletConnect covers them without duplicating or overflowing the dialog.
+  // Three options only, so nothing overflows the dialog: a wallet already installed
+  // in this browser (hidden when there is none, e.g. mobile Chrome), Coinbase Wallet /
+  // Base App, and "Other wallets" via WalletConnect. Anything else the page discovers
+  // is dropped — the injected connector already represents those browser wallets.
+  const hasInjected = typeof window !== 'undefined' && Boolean((window as unknown as { ethereum?: unknown }).ethereum);
   const walletConnectors = connectors.filter((connector) => {
     if (connector.id === CDP_CONNECTOR_ID) return false;
-    if (connector.id === 'injected') return false;
-    return /coinbase/i.test(connector.id) || connector.id === 'walletConnect';
+    if (connector.id === 'injected') return hasInjected;
+    if (connector.id === 'walletConnect') return true;
+    return /coinbase/i.test(connector.id);
   });
 
   const google = async () => {
@@ -108,6 +111,9 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
   };
 
   const walletMeta = (name: string, id: string) => {
+    if (id === 'injected') {
+      return { label: 'Browser wallet', sub: 'MetaMask or Rabby in this browser' };
+    }
     if (/coinbase/i.test(name) || /coinbase/i.test(id)) {
       return { label: 'Coinbase Wallet / Base App', sub: 'Connects in one tap' };
     }
@@ -157,7 +163,7 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-medium">I have a wallet</span>
-                <span className="block truncate text-xs text-muted-foreground">Coinbase Wallet, Base App and more</span>
+                <span className="block truncate text-xs text-muted-foreground">Coinbase Wallet, browser wallet and more</span>
               </span>
             </Button>
           </div>
