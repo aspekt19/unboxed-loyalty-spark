@@ -47,6 +47,7 @@ export function CreateCertificate({ onCreated }: { onCreated?: () => void }) {
   const [lifetimeDays, setLifetimeDays] = useState<number | null>(90);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [quantity, setQuantity] = useState<number>(1);
+  const [quantityInput, setQuantityInput] = useState<string>('1');
   const [submitting, setSubmitting] = useState(false);
   const [lastBatch, setLastBatch] = useState<GiftCertificate[] | null>(null);
 
