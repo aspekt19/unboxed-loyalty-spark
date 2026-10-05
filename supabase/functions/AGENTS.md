@@ -17,7 +17,7 @@
 ## Gas sponsorship (Paymaster)
 
 - Wallets use `paymaster-proxy` as their ERC-7677 `paymasterService`; it forwards to `CDP_PAYMASTER_URL` only when `_shared/paymaster-policy.ts` confirms every inner call targets Loyal Spark contracts (registered tokens, factories, escrow) with zero ETH value — why: an open paymaster URL would let anyone spend our gas budget.
-- Frontend onchain buttons send via `useSponsoredSendTransaction` (paymaster when the wallet supports it, plain tx otherwise); paid flows that move USDC/ETH to treasury stay on plain `useSendTransaction` — why: the proxy refuses non-Loyal-Spark targets.
+- Frontend onchain buttons send via `useSponsoredSendTransaction` (Coinbase smart account → paymaster, plain tx otherwise); paid flows that move USDC/ETH to treasury stay on plain `useSendTransaction` — why: the proxy refuses non-Loyal-Spark targets.
 - Free gas is smart-wallet only: plain wallets (MetaMask etc.) always pay their own gas. Direct ETH top-ups to user wallets were removed (the `gas-drip` function is gone) — why: bots could mass-create accounts and drain the gas wallet; never re-add wallet top-ups.
 - `paymaster-proxy` enforces the single admin-editable monthly budget in `gas_settings` via `_shared/gas-budget.ts`; `gas-status` (admin-only) reports month spend and paymaster configuration for the admin Gas tab — why: one capped budget with admin visibility, without open-ended spend.
-- Privy users act through Privy smart wallets (`SmartWalletsProvider`, paymaster set in the Privy dashboard to our `paymaster-proxy`) when that smart wallet is the active wallet — why: no address migration is forced on existing users.
+- Humans sign in with Coinbase CDP Embedded Wallets; `cdp-auth` validates the CDP access token server-side and issues the app session (`<cdp user id>@cdp.auth`) — why: Privy removed, CDP Paymaster sponsorship is free.
