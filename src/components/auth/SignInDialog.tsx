@@ -38,12 +38,12 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
     setBusy(null);
   }, [open, mode]);
 
-  // Mobile browsers (Safari/Chrome) have no injected wallet: hide that option and
-  // use WalletConnect (opens the wallet app) instead of failing with "Provider not found".
-  const hasInjected = typeof window !== 'undefined' && !!(window as unknown as { ethereum?: unknown }).ethereum;
+  // Only two wallet paths: Coinbase Wallet / Base App and WalletConnect
+  // (mobile: opens the wallet app, desktop: QR code). Browser-injected wallets
+  // are dropped — duplicate MetaMask/Bitget entries and "Provider not found"
+  // on mobile made this list unreliable.
   const walletConnectors = connectors.filter((connector) => {
     if (connector.id === CDP_CONNECTOR_ID) return false;
-    if (connector.id === 'injected') return hasInjected;
     return /coinbase/i.test(connector.id) || connector.id === 'walletConnect';
   });
 
@@ -108,10 +108,14 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
   };
 
   const walletLabel = (name: string, id: string) => {
-    if (id === 'injected') return 'Browser wallet (MetaMask, Rabby…)';
     if (/coinbase/i.test(name) || /coinbase/i.test(id)) return 'Coinbase Wallet / Base App';
     if (id === 'walletConnect') return 'Other wallets (MetaMask, Trust, Rainbow…)';
     return name;
+  };
+
+  const walletHint = (name: string, id: string) => {
+    if (/coinbase/i.test(name) || /coinbase/i.test(id)) return 'Connects through the Coinbase app or browser extension';
+    return 'Scan a QR code on desktop · opens your wallet app on mobile';
   };
 
   return (
