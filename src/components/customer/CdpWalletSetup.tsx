@@ -117,7 +117,7 @@ export function CdpWalletSetup() {
             <Alert>
               <AlertDescription className="text-xs">
                 Fund this address with USDC on Base to enable autonomous payments. Your holder agent
-                will sign EIP-3009 authorizations via Coinbase CDP — your Identity wallet keys never
+                will sign EIP-3009 authorizations via Coinbase CDP — your Coinbase wallet keys never
                 leave your device.
               </AlertDescription>
             </Alert>
