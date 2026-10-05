@@ -3,7 +3,7 @@
 // (Google / email login + smart account) to a backend auth user and profile.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { CdpClient } from "npm:@coinbase/cdp-sdk@1.55.0";
+import { SignJWT, importPKCS8 } from "https://deno.land/x/jose@v5.2.4/index.ts";
 import { isAdminWallet } from "../_shared/admin-wallets.ts";
 
 const corsHeaders = {
@@ -29,16 +29,36 @@ async function hmacPassword(identifier: string, secret: string): Promise<string>
   return btoa(String.fromCharCode(...new Uint8Array(sig)));
 }
 
-let cdp: CdpClient | null = null;
-function getCdp(): CdpClient {
-  if (!cdp) {
-    cdp = new CdpClient({
-      apiKeyId: Deno.env.get("CDP_API_KEY_ID")!,
-      apiKeySecret: Deno.env.get("CDP_API_KEY_SECRET")!,
-      walletSecret: Deno.env.get("CDP_WALLET_SECRET") ?? undefined,
-    });
-  }
-  return cdp;
+const VALIDATE_PATH = "/end-users/auth/validate-token";
+
+/** CDP API key JWT (Ed25519) for one REST call. */
+async function cdpApiJwt(method: string, path: string): Promise<string> {
+  const keyId = Deno.env.get("CDP_API_KEY_ID")!;
+  const secret = Deno.env.get("CDP_API_KEY_SECRET")!;
+  const decoded = Uint8Array.from(atob(secret.trim()), (c) => c.charCodeAt(0));
+  const prefix = new Uint8Array([0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x04, 0x22, 0x04, 0x20]);
+  const der = new Uint8Array(prefix.length + 32);
+  der.set(prefix);
+  der.set(decoded.slice(0, 32), prefix.length);
+  const pem = `-----BEGIN PRIVATE KEY-----\n${btoa(String.fromCharCode(...der))}\n-----END PRIVATE KEY-----`;
+  const key = await importPKCS8(pem, "EdDSA");
+  return await new SignJWT({ sub: keyId, iss: "cdp", aud: ["cdp_service"], uri: `${method} api.cdp.coinbase.com/platform/v2${path}` })
+    .setProtectedHeader({ alg: "EdDSA", kid: keyId, typ: "JWT", nonce: crypto.randomUUID() })
+    .setIssuedAt()
+    .setNotBefore(Math.floor(Date.now() / 1000))
+    .setExpirationTime("2m")
+    .sign(key);
+}
+
+async function validateAccessToken(accessToken: string): Promise<EndUserLike> {
+  const jwt = await cdpApiJwt("POST", VALIDATE_PATH);
+  const res = await fetch(`https://api.cdp.coinbase.com/platform/v2${VALIDATE_PATH}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${jwt}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ accessToken }),
+  });
+  if (!res.ok) throw new Error(`validate-token ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  return (await res.json()) as EndUserLike;
 }
 
 type EndUserLike = {
@@ -117,7 +137,7 @@ serve(async (req) => {
 
     let endUser: EndUserLike;
     try {
-      endUser = (await getCdp().endUser.validateAccessToken({ accessToken })) as unknown as EndUserLike;
+      endUser = await validateAccessToken(accessToken);
     } catch (e) {
       console.warn("CDP token validation failed:", (e as Error)?.message);
       return json({ error: "Invalid Coinbase access token" }, 401);
