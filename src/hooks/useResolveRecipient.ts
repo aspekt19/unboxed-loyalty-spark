@@ -26,7 +26,12 @@ export function useResolveRecipient() {
       });
 
       if (error) {
-        toast.error('Failed to resolve recipient');
+        let message = 'Failed to resolve recipient';
+        try {
+          const body = await (error as { context?: Response }).context?.json();
+          if (body?.error) message = body.error;
+        } catch { /* keep generic message */ }
+        toast.error(message);
         return null;
       }
 

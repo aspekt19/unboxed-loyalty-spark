@@ -46,17 +46,25 @@ Deno.serve(async (req) => {
       .maybeSingle();
     const callerWallet = callerProfile?.wallet_address?.toLowerCase() || null;
 
-    const [merchantRes, adminRes] = await Promise.all([
+    // A merchant is anyone with a merchant profile OR a loyalty program
+    // (many merchants never fill in the shop profile) OR a staff seat.
+    const none = Promise.resolve({ data: [] as unknown[] });
+    const [profileRes, programRes, staffRes, adminRes] = await Promise.all([
       callerWallet
-        ? adminClient
-            .from("merchant_profiles")
-            .select("id")
-            .ilike("merchant_address", callerWallet)
-            .maybeSingle()
-        : Promise.resolve({ data: null }),
+        ? adminClient.from("merchant_profiles").select("id").ilike("merchant_address", callerWallet).limit(1)
+        : none,
+      callerWallet
+        ? adminClient.from("loyalty_programs").select("id").ilike("merchant_address", callerWallet).limit(1)
+        : none,
+      callerWallet
+        ? adminClient.from("merchant_employees").select("id").ilike("employee_wallet_address", callerWallet).eq("is_active", true).limit(1)
+        : none,
       adminClient.rpc("has_role", { _user_id: user.id, _role: "admin" }),
     ]);
-    const isMerchant = !!merchantRes.data;
+    const isMerchant =
+      (profileRes.data?.length ?? 0) > 0 ||
+      (programRes.data?.length ?? 0) > 0 ||
+      (staffRes.data?.length ?? 0) > 0;
     const isAdminRow = !!adminRes.data;
 
     const { identifier } = await req.json();
