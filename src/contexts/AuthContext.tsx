@@ -59,6 +59,15 @@ function setStoredManualSignOut(value: boolean) {
   window.dispatchEvent(new CustomEvent(MANUAL_SIGN_OUT_EVENT, { detail: false }));
 }
 
+/**
+ * Called when the user actively starts a new sign-in (sign-in dialog lives
+ * outside AuthProvider). Clears the "signed out on purpose" flag so the
+ * Coinbase session exchange is allowed to run again.
+ */
+export function clearManualSignOut(): void {
+  setStoredManualSignOut(false);
+}
+
 function constructSiweMessage(address: string, nonce: string): string {
   const domain = window.location.host;
   const origin = window.location.origin;
@@ -526,6 +535,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('[AuthProvider] Sign out error:', error);
       toast.error('Failed to sign out');
     }
+  }, []);
+
+  // Keep the in-memory flag in sync when the sign-in dialog clears it.
+  useEffect(() => {
+    const onChange = (e: Event) => {
+      const value = Boolean((e as CustomEvent<boolean>).detail);
+      manualSignOutRef.current = value;
+      if (!value) {
+        lastSignInAttemptAtRef.current = 0;
+        lastFailureAtRef.current = 0;
+        retryBlockedUntilRef.current = 0;
+      }
+    };
+    window.addEventListener(MANUAL_SIGN_OUT_EVENT, onChange);
+    return () => window.removeEventListener(MANUAL_SIGN_OUT_EVENT, onChange);
   }, []);
 
   const resetManualSignOut = useCallback(() => {
