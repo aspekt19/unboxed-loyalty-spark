@@ -4,29 +4,26 @@ import {
   computeGasAlerts,
   type GasAlert,
   type GasAlertSettings,
-  type GasWalletStatus,
+  type GasSponsorStatus,
 } from "@/lib/gasAlerts";
 
 export type GasSettings = GasAlertSettings & {
-  drip_amount_usd: number;
-  drip_cooldown_days: number;
-  drip_max_per_month: number;
   est_sponsored_op_usd: number;
 };
 
 export function useGasAlerts() {
   const [settings, setSettings] = useState<GasSettings | null>(null);
-  const [status, setStatus] = useState<GasWalletStatus | null>(null);
+  const [status, setStatus] = useState<GasSponsorStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     const [{ data: s }, st] = await Promise.all([
       supabase.from("gas_settings").select("*").eq("id", 1).maybeSingle(),
-      supabase.functions.invoke("gas-drip", { body: { action: "status" } }),
+      supabase.functions.invoke("gas-status"),
     ]);
     if (s) setSettings(s as unknown as GasSettings);
-    setStatus((st.data as GasWalletStatus) ?? null);
+    setStatus((st.data as GasSponsorStatus) ?? null);
     setLoading(false);
   }, []);
 

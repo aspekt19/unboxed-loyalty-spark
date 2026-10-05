@@ -50,6 +50,13 @@
       "when": 1791183659143,
       "tag": "0006_gas_alert_thresholds",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791188893245,
+      "tag": "0007_deprecate_gas_drip",
+      "breakpoints": true
     }
   ]
 }

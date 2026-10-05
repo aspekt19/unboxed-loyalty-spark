@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { useGasAlerts, type GasSettings } from "@/hooks/useGasAlerts";
@@ -13,22 +12,20 @@ type Top = { wallet: string; usd: number };
 
 export function GasBudgetManagement() {
   const { settings: s, status, reload, setSettings } = useGasAlerts();
-  const [counts, setCounts] = useState({ ops: 0, drips: 0 });
+  const [opCount, setOpCount] = useState(0);
   const [top, setTop] = useState<Top[]>([]);
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
     const monthStart = new Date(); monthStart.setUTCDate(1); monthStart.setUTCHours(0, 0, 0, 0);
     const since = monthStart.toISOString();
-    const [, ops, drips] = await Promise.all([
+    const [, ops] = await Promise.all([
       reload(),
       supabase.from("gas_sponsorships").select("wallet_address, est_cost_usd").gte("created_at", since).limit(5000),
-      supabase.from("gas_drips").select("wallet_address, amount_usd").eq("status", "sent").gte("created_at", since).limit(5000),
     ]);
     const per = new Map<string, number>();
     for (const r of ops.data ?? []) per.set(r.wallet_address, (per.get(r.wallet_address) ?? 0) + Number(r.est_cost_usd ?? 0));
-    for (const r of drips.data ?? []) per.set(r.wallet_address, (per.get(r.wallet_address) ?? 0) + Number(r.amount_usd ?? 0));
-    setCounts({ ops: ops.data?.length ?? 0, drips: drips.data?.length ?? 0 });
+    setOpCount(ops.data?.length ?? 0);
     setTop([...per.entries()].map(([wallet, usd]) => ({ wallet, usd })).sort((a, b) => b.usd - a.usd).slice(0, 5));
   };
 
@@ -47,7 +44,6 @@ export function GasBudgetManagement() {
   if (!s) return <p className="text-muted-foreground text-sm">Loading…</p>;
   const spent = status?.spent_usd ?? 0;
   const pct = s.monthly_budget_usd > 0 ? Math.min(100, (spent / s.monthly_budget_usd) * 100) : 100;
-  const walletUsd = status?.balance_eth ? Number(status.balance_eth) * (status.eth_usd || 0) : null;
 
   const num = (key: keyof GasSettings, label: string, step = "0.01") => (
     <div className="space-y-1">
@@ -62,12 +58,12 @@ export function GasBudgetManagement() {
       <Card>
         <CardHeader>
           <CardTitle>Gas budget this month</CardTitle>
-          <CardDescription>Shared by smart-wallet sponsorship and gas top-ups. Resets on the 1st (UTC).</CardDescription>
+          <CardDescription>Covers free gas for smart-wallet users. Resets on the 1st (UTC).</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex justify-between text-sm"><span>Spent ${spent.toFixed(2)}</span><span>Remaining ${Math.max(0, s.monthly_budget_usd - spent).toFixed(2)}</span></div>
           <Progress value={pct} />
-          <div className="text-sm text-muted-foreground">{counts.ops} sponsored actions · {counts.drips} top-ups</div>
+          <div className="text-sm text-muted-foreground">{opCount} sponsored actions</div>
           <div className="grid sm:grid-cols-2 gap-4">{num("monthly_budget_usd", "Monthly budget (USD)", "1")}</div>
           {saving && <p className="text-xs text-muted-foreground">Saving…</p>}
         </CardContent>
@@ -80,37 +76,17 @@ export function GasBudgetManagement() {
             <Label htmlFor="sw">Free gas for smart wallets</Label>
             <Switch id="sw" checked={s.sponsor_smart_wallets} onCheckedChange={(v) => save({ sponsor_smart_wallets: v })} />
           </div>
-          <div className="flex items-center justify-between gap-4">
-            <Label htmlFor="dr">Gas top-ups for other wallets</Label>
-            <Switch id="dr" checked={s.drip_enabled} onCheckedChange={(v) => save({ drip_enabled: v })} />
-          </div>
           <div className="grid sm:grid-cols-2 gap-4">
-            {num("drip_amount_usd", "Top-up size (USD)")}
-            {num("drip_cooldown_days", "Days between top-ups per wallet", "1")}
-            {num("drip_max_per_month", "Max top-ups per wallet per month", "1")}
             {num("est_sponsored_op_usd", "Estimated cost per sponsored action (USD)", "0.001")}
             {num("budget_warn_percent", "Warn when budget used (%)", "1")}
-            {num("low_balance_warn_usd", "Warn when gas wallet below (USD)")}
           </div>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Gas wallet</CardTitle>
-          <CardDescription>Send ETH on Base to this address to fund top-ups.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          {status?.gas_wallet ? (
-            <>
-              <div className="flex flex-wrap items-center gap-2">
-                <code className="break-all">{status.gas_wallet}</code>
-                <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(status.gas_wallet!); toast.success("Copied"); }}>Copy</Button>
-              </div>
-              <div>Balance: {status.balance_eth ?? "—"} ETH{walletUsd !== null ? ` (~$${walletUsd.toFixed(2)})` : ""}</div>
-            </>
-          ) : <p className="text-muted-foreground">Gas wallet not connected yet — top-ups are off until it is.</p>}
-          <div className="text-muted-foreground">Smart-wallet sponsorship: {status?.paymaster_configured ? "connected" : "not connected"}</div>
+        <CardHeader><CardTitle>Sponsorship connection</CardTitle></CardHeader>
+        <CardContent className="text-sm text-muted-foreground">
+          Smart-wallet sponsorship: {status?.paymaster_configured ? "connected" : "not connected"}
         </CardContent>
       </Card>
 
