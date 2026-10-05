@@ -14,7 +14,8 @@ function Bridge({ children }: { children: ReactNode }) {
     ? {
         address: client.account.address as `0x${string}`,
         sendTransaction: (args) =>
-          client.sendTransaction({ to: args.to, data: args.data, value: args.value ?? 0n }) as Promise<`0x${string}`>,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (client.sendTransaction as any)({ calls: [{ to: args.to, data: args.data ?? "0x", value: args.value ?? 0n }] }) as Promise<`0x${string}`>,
       }
     : null;
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
