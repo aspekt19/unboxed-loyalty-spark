@@ -1,9 +1,10 @@
 import { createConfig as createWagmiConfig } from 'wagmi';
-import { createConfig as createPrivyWagmiConfig } from '@privy-io/wagmi';
-import { injected } from 'wagmi/connectors';
+import { coinbaseWallet, injected } from 'wagmi/connectors';
 import { base } from 'wagmi/chains';
 import { http, fallback } from 'viem';
 import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
+import { createCDPEmbeddedWalletConnector } from '@coinbase/cdp-wagmi';
+import { cdpConfig, isCdpEnabled } from '@/config/cdp';
 
 declare global {
   interface Window {
@@ -91,9 +92,9 @@ const transport = fallback(
   BASE_RPC_URLS.map((url) => http(url, { batch: false, retryCount: 2, retryDelay: 1000 })),
 );
 
-// wagmi, @privy-io/wagmi and this project resolve different viem copies whose
+// wagmi and the CDP connector may resolve different viem copies whose
 // Transport types are nominally incompatible (identical at runtime). Cast once
-// so all three wagmi configs can share the same fallback transport.
+// so all wagmi configs can share the same fallback transport.
 const transports = { [base.id]: transport } as unknown as Record<number, never>;
 
 // Farcaster config: standard wagmi with farcasterMiniApp connector
@@ -104,21 +105,28 @@ export const farcasterWagmiConfig = createWagmiConfig({
   ssr: false,
 });
 
-// Privy wagmi config: used for regular browser (Privy manages connectors)
-export const privyWagmiConfig = createPrivyWagmiConfig({
-  chains: [base],
-  transports,
-});
+export const CDP_CONNECTOR_ID = 'cdp-embedded-wallet';
 
-// Preview fallback: render the app even if Privy iframe init fails inside Lovable preview.
-export const browserPreviewWagmiConfig = createWagmiConfig({
+/**
+ * Regular browser: Coinbase embedded wallet (Google / email → gas-sponsored smart
+ * account) + external wallets (MetaMask / browser wallet, Coinbase Wallet / Base App).
+ */
+export const browserWagmiConfig = createWagmiConfig({
   chains: [base],
   transports,
-  connectors: [injected()],
+  connectors: [
+    ...(isCdpEnabled
+      ? [
+          createCDPEmbeddedWalletConnector({
+            cdpConfig,
+            providerConfig: { chains: [base], transports: { [base.id]: http() } },
+          }) as unknown as ReturnType<typeof injected>,
+        ]
+      : []),
+    injected(),
+    coinbaseWallet({ appName: 'Loyal Spark', appLogoUrl: 'https://loyalspark.online/new-favicon.png', preference: 'all' }),
+  ],
   ssr: false,
 });
 
-// Legacy export for backward compatibility
-export const config = isFarcasterContext() ? farcasterWagmiConfig : privyWagmiConfig;
-
-export const rainbowKitLocale = 'en'; // Legacy export, kept for backward compatibility
+export const config = isFarcasterContext() ? farcasterWagmiConfig : browserWagmiConfig;

@@ -1,12 +1,12 @@
 import { useCallback, useContext, useEffect, useRef } from 'react';
 import { useConfig, useDisconnect } from 'wagmi';
 import { AuthContext } from '@/contexts/AuthContext';
-import { usePrivySafe } from '@/hooks/usePrivySafe';
+import { useIdentity } from '@/hooks/useIdentity';
 import { isFarcasterContext } from '@/config/wagmi';
 import { WALLET_CONNECTOR_ERROR_EVENT } from '@/constants/walletConnectorRecovery';
 
 /**
- * Clears wagmi reconnect state and Privy session after connector/RPC failures
+ * Clears wagmi reconnect state and Coinbase session after connector/RPC failures
  * (e.g. MetaMask unavailable in Comet / mobile WebView) so the user sees Sign in again.
  */
 export function ConnectorRecoveryListener() {
@@ -15,7 +15,7 @@ export function ConnectorRecoveryListener() {
   const signOut = auth?.signOut;
   const { disconnectAsync } = useDisconnect();
   const config = useConfig();
-  const { logout: privyLogout } = usePrivySafe();
+  const { logout: identityLogout } = useIdentity();
   const busyRef = useRef(false);
   const debounceRef = useRef<number | null>(null);
 
@@ -57,7 +57,7 @@ export function ConnectorRecoveryListener() {
       await signOut?.({ variant: 'connector_recovery' });
 
       try {
-        await privyLogout();
+        await identityLogout();
       } catch {
         // ignore
       }
@@ -66,7 +66,7 @@ export function ConnectorRecoveryListener() {
     } finally {
       busyRef.current = false;
     }
-  }, [isFarcaster, disconnectAsync, config, signOut, privyLogout]);
+  }, [isFarcaster, disconnectAsync, config, signOut, identityLogout]);
 
   useEffect(() => {
     if (isFarcaster) return;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
-import { usePrivySafe } from '@/hooks/usePrivySafe';
+import { useIdentity } from '@/hooks/useIdentity';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,30 +12,19 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-const OAUTH_PARAM_KEYS = [
-  'privy_oauth_code',
-  'privy_oauth_state',
-  'privy_oauth_provider',
-  'privy_oauth_error',
-];
+const OAUTH_PARAM_KEYS = ['flow_id', 'code', 'provider_type', 'error', 'error_description'];
 
 const initialOAuthCallback = (() => {
   if (typeof window === 'undefined') return null;
   const params = new URLSearchParams(window.location.search);
-  if (!OAUTH_PARAM_KEYS.some((key) => params.has(key))) return null;
+  if (!(params.has('flow_id') && params.has('provider_type'))) return null;
 
   return {
-    provider: params.get('privy_oauth_provider'),
-    error: params.get('privy_oauth_error'),
-    hasCode: params.has('privy_oauth_code'),
+    provider: params.get('provider_type'),
+    error: params.get('error_description') || params.get('error'),
+    hasCode: params.has('code'),
   };
 })();
-
-export function hasPrivyOAuthParams(search: string = typeof window !== 'undefined' ? window.location.search : ''): boolean {
-  if (!search) return false;
-  const params = new URLSearchParams(search);
-  return OAUTH_PARAM_KEYS.some((key) => params.has(key));
-}
 
 function friendlyOAuthError(rawError: string | null): string {
   if (!rawError) return 'Google could not complete the sign-in. Your account was not connected.';
@@ -51,7 +40,7 @@ function friendlyOAuthError(rawError: string | null): string {
 
 /** Global feedback for full-page mobile OAuth callbacks and session exchange failures. */
 export function OAuthReturnHandler() {
-  const { login } = usePrivySafe();
+  const { login } = useIdentity();
   const [message, setMessage] = useState<string | null>(() =>
     initialOAuthCallback?.error ? friendlyOAuthError(initialOAuthCallback.error) : null,
   );

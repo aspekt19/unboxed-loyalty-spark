@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { getPrivyLinkedAccounts, getPrivyPrimaryEmail, type PrivyUserLike } from '@/lib/privyAuth';
+import { getLinkedAccounts, type IdentityUser } from '@/lib/socialAuth';
 
 export interface IdentityWalletLink {
   id: string;
@@ -13,10 +13,10 @@ export interface VisibleIdentityWallet extends IdentityWalletLink {
   is_synced: boolean;
 }
 
-export function getPrivyWalletAddresses(privyUser: PrivyUserLike | null | undefined): string[] {
+export function getIdentityWalletAddresses(privyUser: IdentityUser | null | undefined): string[] {
   return Array.from(
     new Set(
-      getPrivyLinkedAccounts(privyUser)
+      getLinkedAccounts(privyUser)
         .filter((account) => account.type === 'wallet' || account.type === 'smart_wallet')
         .map((account) => account.address?.trim().toLowerCase())
         .filter((value): value is string => Boolean(value)),
@@ -26,7 +26,7 @@ export function getPrivyWalletAddresses(privyUser: PrivyUserLike | null | undefi
 
 export function mergeIdentityWallets(
   linkedWallets: IdentityWalletLink[],
-  privyUser: PrivyUserLike | null | undefined,
+  privyUser: IdentityUser | null | undefined,
   primaryWallet: string | null,
 ): VisibleIdentityWallet[] {
   const merged = new Map<string, VisibleIdentityWallet>();
@@ -41,13 +41,13 @@ export function mergeIdentityWallets(
     });
   });
 
-  getPrivyWalletAddresses(privyUser).forEach((wallet) => {
+  getIdentityWalletAddresses(privyUser).forEach((wallet) => {
     if (merged.has(wallet)) return;
 
     merged.set(wallet, {
-      id: `privy-${wallet}`,
+      id: `cdp-${wallet}`,
       value: wallet,
-      verified_via: 'privy',
+      verified_via: 'cdp',
       is_primary: wallet === primaryWallet,
       verified_at: null,
       is_synced: false,
@@ -63,39 +63,33 @@ export function mergeIdentityWallets(
   });
 }
 
-export async function syncPrivyIdentityLinks({
+export async function syncIdentityLinks({
   privyUser,
   getAccessToken,
   fallbackWallet: _fallbackWallet,
 }: {
-  privyUser: PrivyUserLike | null | undefined;
+  privyUser: IdentityUser | null | undefined;
   getAccessToken?: (() => Promise<string | null>) | null;
   fallbackWallet?: string | null;
 }): Promise<{ ok: boolean; error?: string }> {
   void _fallbackWallet;
 
   if (!privyUser?.id || !getAccessToken) {
-    return { ok: false, error: 'Privy session unavailable' };
+    return { ok: false, error: 'Coinbase session unavailable' };
   }
 
   const privyToken = await getAccessToken();
   if (!privyToken) {
-    return { ok: false, error: 'Privy access token not available' };
+    return { ok: false, error: 'Access token not available' };
   }
 
-  const walletAddress = getPrivyWalletAddresses(privyUser)[0] ?? null;
-  const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/privy-auth`, {
+  const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/cdp-auth`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
     },
-    body: JSON.stringify({
-      privyToken,
-      privyDid: privyUser.id,
-      email: getPrivyPrimaryEmail(privyUser),
-      walletAddress,
-    }),
+    body: JSON.stringify({ accessToken: privyToken }),
   });
 
   if (!response.ok) {

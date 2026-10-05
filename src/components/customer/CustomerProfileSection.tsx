@@ -28,9 +28,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { getPrivyPrimaryEmail } from '@/lib/privyAuth';
-import { usePrivySafe } from '@/hooks/usePrivySafe';
-import { mergeIdentityWallets, syncPrivyIdentityLinks, type IdentityWalletLink } from '@/lib/identitySync';
+import { getPrimaryEmail } from '@/lib/socialAuth';
+import { useIdentity } from '@/hooks/useIdentity';
+import { mergeIdentityWallets, syncIdentityLinks, type IdentityWalletLink } from '@/lib/identitySync';
 
 interface IdentitySummaryResponse {
   primary_wallet: string | null;
@@ -41,7 +41,7 @@ export function CustomerProfileSection() {
   const { address } = useAccount();
   const { signMessageAsync } = useSignMessage();
   const { user, session, isLoading: authLoading } = useAuth();
-  const { user: privyUser, getAccessToken } = usePrivySafe();
+  const { user: privyUser, getAccessToken } = useIdentity();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
@@ -53,7 +53,7 @@ export function CustomerProfileSection() {
   const [switchingPrimary, setSwitchingPrimary] = useState<string | null>(null);
   const [pendingPrimary, setPendingPrimary] = useState<string | null>(null);
 
-  const identityEmail = getPrivyPrimaryEmail(privyUser);
+  const identityEmail = getPrimaryEmail(privyUser);
   const connectedLower = address?.toLowerCase() ?? null;
   // Show the user's chosen primary wallet from identity_links so the original
   // (embedded) address remains visible after they connect an external wallet.
@@ -96,7 +96,7 @@ export function CustomerProfileSection() {
     let cancelled = false;
 
     const syncWallets = async () => {
-      const result = await syncPrivyIdentityLinks({
+      const result = await syncIdentityLinks({
         privyUser,
         getAccessToken,
         fallbackWallet: connectedLower,

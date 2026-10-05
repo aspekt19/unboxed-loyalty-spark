@@ -5,8 +5,8 @@ import { sdk } from '@farcaster/miniapp-sdk';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { isFarcasterContext } from '@/config/wagmi';
-import { usePrivySafe } from '@/hooks/usePrivySafe';
-import { getPrivyLinkedAccounts, getPrivyPrimaryEmail, shouldUsePrivyTokenAuth } from '@/lib/privyAuth';
+import { useIdentity } from '@/hooks/useIdentity';
+import { getLinkedAccounts, getPrimaryEmail, shouldUseTokenAuth } from '@/lib/socialAuth';
 import { cn } from '@/lib/utils';
 import { SigningInButton } from '@/components/auth/SigningInButton';
 import { rememberPostLoginPath } from '@/lib/postLoginRedirect';
@@ -43,31 +43,22 @@ export function WalletConnectButton() {
   } | null>(null);
 
   const isFarcaster = isFarcasterContext();
-  const { login: privyLogin, logout: privyLogout, connectWallet: privyConnectWallet, user: privyUser, ready: privyReady, authenticated: privyAuthenticated } = usePrivySafe();
+  const { login: privyLogin, logout: privyLogout, connectWallet: privyConnectWallet, user: privyUser, ready: privyReady, authenticated: privyAuthenticated } = useIdentity();
   const prevPrivyUserRef = useRef(privyUser);
 
   /** Stable when Privy re-renders with a new `user` object reference. */
   const privyAuthRouteKey = useMemo(() => {
     if (!privyUser) return '';
-    const types = getPrivyLinkedAccounts(privyUser)
+    const types = getLinkedAccounts(privyUser)
       .map((a) => a.type ?? '')
       .sort()
       .join('|');
-    const hint = [
-      Boolean(privyUser.email?.address),
-      Boolean(privyUser.phone?.number),
-      Boolean(privyUser.google),
-      Boolean(privyUser.apple),
-      Boolean(privyUser.twitter),
-    ]
-      .map(Number)
-      .join('');
-    return `${privyUser.id ?? ''}:${types}:${hint}`;
+    return `${privyUser.id ?? ''}:${types}`;
   }, [privyUser]);
 
   const useTokenAuth = useMemo(() => {
     if (!privyUser) return false;
-    return shouldUsePrivyTokenAuth(privyUser);
+    return shouldUseTokenAuth(privyUser);
   }, [privyUser, privyAuthRouteKey]);
 
   useEffect(() => {
@@ -126,9 +117,9 @@ export function WalletConnectButton() {
         } catch {}
       })();
     };
-    window.addEventListener('loyalspark:request-privy-logout', handleRequestPrivyLogout);
+    window.addEventListener('loyalspark:request-identity-logout', handleRequestPrivyLogout);
     return () => {
-      window.removeEventListener('loyalspark:request-privy-logout', handleRequestPrivyLogout);
+      window.removeEventListener('loyalspark:request-identity-logout', handleRequestPrivyLogout);
     };
   }, [isFarcaster, privyLogout, disconnectAsync]);
 
@@ -303,7 +294,7 @@ export function WalletConnectButton() {
   }
 
   const displayAddress = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : '';
-  const displayName = getPrivyPrimaryEmail(privyUser) || privyUser?.phone?.number || displayAddress;
+  const displayName = getPrimaryEmail(privyUser) || privyUser?.phone?.number || displayAddress;
 
   return (
     <button
