@@ -42,17 +42,6 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
   // offer deep links into popular wallet apps instead of failing with "Provider not found".
   const hasInjected = typeof window !== 'undefined' && !!(window as unknown as { ethereum?: unknown }).ethereum;
   const walletConnectors = connectors.filter((c) => c.id !== CDP_CONNECTOR_ID && (c.id !== 'injected' || hasInjected));
-  const dappUrl =
-    typeof window !== 'undefined'
-      ? `${window.location.host}${window.location.pathname}${window.location.search}`
-      : '';
-  const walletAppLinks: { name: string; href: string }[] = dappUrl
-    ? [
-        { name: 'MetaMask', href: `https://metamask.app.link/dapp/${dappUrl}` },
-        { name: 'Trust Wallet', href: `https://link.trustwallet.com/open_url?url=https://${dappUrl}` },
-        { name: 'Rainbow', href: `https://rainbow.me/dapp?url=https://${dappUrl}` },
-      ]
-    : [];
 
   const google = async () => {
     setBusy('google');
