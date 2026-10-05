@@ -1,6 +1,6 @@
 /**
  * Shopper Concierge redeem: list affordable rewards, prepare transfer calldata.
- * Signing stays in the browser (Privy / wagmi). Voucher creation uses verify-voucher.
+ * Signing stays in the browser (Coinbase / wagmi). Voucher creation uses verify-voucher.
  */
 
 import { prepareHolderLoyaltyTransfer } from "./recipient-prepare-transfer.ts";

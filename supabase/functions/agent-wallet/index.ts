@@ -870,7 +870,7 @@ async function handleUiCreateWallet(d: any, userId: string, body: any) {
 
 
 // ==================== RECIPIENT (rwk_) CDP WALLET FLOW ====================
-// Opt-in delegated CDP MPC wallet for holders (Privy-custodied users who want
+// Opt-in delegated CDP MPC wallet for holders (Coinbase embedded-wallet users who want
 // their agent to autonomously pay x402 resources with USDC on Base).
 
 async function handleRecipientCreateCdpWallet(d: any, userId: string) {

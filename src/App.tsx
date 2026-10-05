@@ -259,7 +259,7 @@ const App = () => {
   // Runs exactly once. Detection needs a dynamic import of the miniapp SDK
   // chunk plus a postMessage handshake with the host client. Inside an embedded
   // webview (Base App / Farcaster) we give the handshake more room, because
-  // falling back to the Privy browser tree there and swapping providers later
+  // falling back to the Identity browser tree there and swapping providers later
   // remounts the whole app — which is exactly what showed up as a white screen.
   useEffect(() => {
     if (isLovablePreviewHost) return;
@@ -279,7 +279,7 @@ const App = () => {
       .then((result) => {
         window.clearTimeout(graceTimer);
         // Never swap providers after we already committed to a tree: remounting
-        // Privy/wagmi mid-session is what produced the Base App white screen.
+        // Identity/wagmi mid-session is what produced the Base App white screen.
         // Late results only decide the very first commit.
         if (!settled) setIsFarcaster(result);
       });

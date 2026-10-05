@@ -15,7 +15,7 @@ Follow these third-party URLs and analyze live activity (do not rely on self-rep
 
 ## Overview
 
-Loyal Spark is a dual-mode protocol: humans interact via web UI with flexible authentication (email/phone/Google via Privy with embedded wallets, or SIWE for Farcaster and crypto-native users), while AI agents integrate via REST API, MCP Server, or HTTP 402 payment gateways. The protocol runs on Base mainnet (chain ID 8453). New loyalty programs deploy as **B20** by default (Base native ERC-20–compatible superset); legacy ERC-20 factory remains optional via `token_standard: "erc20"`.
+Loyal Spark is a dual-mode protocol: humans interact via web UI with flexible authentication (email/Google via Coinbase embedded smart wallets with free gas, or SIWE for Farcaster and crypto-native users), while AI agents integrate via REST API, MCP Server, or HTTP 402 payment gateways. The protocol runs on Base mainnet (chain ID 8453). New loyalty programs deploy as **B20** by default (Base native ERC-20–compatible superset); legacy ERC-20 factory remains optional via `token_standard: "erc20"`.
 
 ## Discovery Endpoints
 
@@ -41,7 +41,7 @@ Two key prefixes for two roles:
 - **`rwk_…`** — recipient agent: a wallet that *holds* loyalty tokens. All `recipient-api/*` and `recipient-loyalty-mcp` paths require `x-api-key: rwk_…`.
 
 How to get a key:
-1. **Dashboard (humans):** sign in at https://loyalspark.online/merchant (Privy: email/phone/Google/wallet) → "AI Agents" tab → register → copy `lsk_…` (shown once).
+1. **Dashboard (humans):** sign in at https://loyalspark.online/merchant (Google, email or wallet) → "AI Agents" tab → register → copy `lsk_…` (shown once).
 2. **Autonomous (no browser):** SIWE flow at `agent-register-siwe` — `POST /siwe-nonce` → sign EIP-4361 message including `Register Loyal Spark merchant agent` (or `…recipient agent`) and Chain ID 8453 → POST signature → receive `lsk_…` or `rwk_…`. Same limits as dashboard.
 
 ## REST API — 29 Endpoints (28 authenticated + 1 public)

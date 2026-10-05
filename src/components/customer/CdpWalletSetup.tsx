@@ -14,7 +14,7 @@ import { toast } from 'sonner';
  * Uses the canonical wallet from `profiles.wallet_address` (resolved via
  * the authenticated user_id) so the identity always matches what the
  * `agent-wallet` Edge Function writes on the backend, regardless of the
- * currently active wagmi/Privy connector.
+ * currently active wagmi/Identity connector.
  */
 export function CdpWalletSetup() {
   const { user } = useAuth();
@@ -117,7 +117,7 @@ export function CdpWalletSetup() {
             <Alert>
               <AlertDescription className="text-xs">
                 Fund this address with USDC on Base to enable autonomous payments. Your holder agent
-                will sign EIP-3009 authorizations via Coinbase CDP — your Privy wallet keys never
+                will sign EIP-3009 authorizations via Coinbase CDP — your Identity wallet keys never
                 leave your device.
               </AlertDescription>
             </Alert>

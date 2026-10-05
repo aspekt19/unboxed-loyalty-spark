@@ -13,10 +13,10 @@ export interface VisibleIdentityWallet extends IdentityWalletLink {
   is_synced: boolean;
 }
 
-export function getIdentityWalletAddresses(privyUser: IdentityUser | null | undefined): string[] {
+export function getIdentityWalletAddresses(identityUser: IdentityUser | null | undefined): string[] {
   return Array.from(
     new Set(
-      getLinkedAccounts(privyUser)
+      getLinkedAccounts(identityUser)
         .filter((account) => account.type === 'wallet' || account.type === 'smart_wallet')
         .map((account) => account.address?.trim().toLowerCase())
         .filter((value): value is string => Boolean(value)),
@@ -26,7 +26,7 @@ export function getIdentityWalletAddresses(privyUser: IdentityUser | null | unde
 
 export function mergeIdentityWallets(
   linkedWallets: IdentityWalletLink[],
-  privyUser: IdentityUser | null | undefined,
+  identityUser: IdentityUser | null | undefined,
   primaryWallet: string | null,
 ): VisibleIdentityWallet[] {
   const merged = new Map<string, VisibleIdentityWallet>();
@@ -41,7 +41,7 @@ export function mergeIdentityWallets(
     });
   });
 
-  getIdentityWalletAddresses(privyUser).forEach((wallet) => {
+  getIdentityWalletAddresses(identityUser).forEach((wallet) => {
     if (merged.has(wallet)) return;
 
     merged.set(wallet, {
@@ -64,22 +64,22 @@ export function mergeIdentityWallets(
 }
 
 export async function syncIdentityLinks({
-  privyUser,
+  identityUser,
   getAccessToken,
   fallbackWallet: _fallbackWallet,
 }: {
-  privyUser: IdentityUser | null | undefined;
+  identityUser: IdentityUser | null | undefined;
   getAccessToken?: (() => Promise<string | null>) | null;
   fallbackWallet?: string | null;
 }): Promise<{ ok: boolean; error?: string }> {
   void _fallbackWallet;
 
-  if (!privyUser?.id || !getAccessToken) {
+  if (!identityUser?.id || !getAccessToken) {
     return { ok: false, error: 'Coinbase session unavailable' };
   }
 
-  const privyToken = await getAccessToken();
-  if (!privyToken) {
+  const identityToken = await getAccessToken();
+  if (!identityToken) {
     return { ok: false, error: 'Access token not available' };
   }
 
@@ -89,7 +89,7 @@ export async function syncIdentityLinks({
       'Content-Type': 'application/json',
       apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
     },
-    body: JSON.stringify({ accessToken: privyToken }),
+    body: JSON.stringify({ accessToken: identityToken }),
   });
 
   if (!response.ok) {

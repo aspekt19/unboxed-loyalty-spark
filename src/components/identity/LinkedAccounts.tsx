@@ -56,7 +56,7 @@ export function LinkedAccounts() {
   const { session, user } = useAuth();
   const { address: connectedAddress } = useAccount();
   const { signMessageAsync } = useSignMessage();
-  const { user: privyUser, connectWallet, getAccessToken } = useIdentity();
+  const { user: identityUser, connectWallet, getAccessToken } = useIdentity();
 
   const [summary, setSummary] = useState<IdentitySummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -83,13 +83,13 @@ export function LinkedAccounts() {
   >(null);
 
   const normalizedConnectedAddress = connectedAddress?.toLowerCase() ?? null;
-  const privyPrimaryEmail = useMemo(() => getPrimaryEmail(privyUser), [privyUser]);
-  const privyWallets = useMemo(
-    () => getLinkedAccounts(privyUser)
+  const identityPrimaryEmail = useMemo(() => getPrimaryEmail(identityUser), [identityUser]);
+  const identityWallets = useMemo(
+    () => getLinkedAccounts(identityUser)
       .filter((account) => account.type === 'wallet' || account.type === 'smart_wallet')
       .map((account) => account.address?.toLowerCase())
       .filter((value): value is string => Boolean(value)),
-    [privyUser],
+    [identityUser],
   );
   const loadSummary = useCallback(async () => {
     if (!user) return;
@@ -111,9 +111,9 @@ export function LinkedAccounts() {
   }, [loadSummary]);
 
   useEffect(() => {
-    if (!user || !session || !privyUser || !summary) return;
+    if (!user || !session || !identityUser || !summary) return;
 
-    const mergedWallets = mergeIdentityWallets(summary.wallets, privyUser, summary.primary_wallet);
+    const mergedWallets = mergeIdentityWallets(summary.wallets, identityUser, summary.primary_wallet);
     const hasUnsyncedWallet = mergedWallets.some((wallet) => !wallet.is_synced);
     if (!hasUnsyncedWallet) return;
 
@@ -121,7 +121,7 @@ export function LinkedAccounts() {
 
     const syncWallets = async () => {
       const result = await syncIdentityLinks({
-        privyUser,
+        identityUser,
         getAccessToken,
         fallbackWallet: normalizedConnectedAddress,
       });
@@ -135,7 +135,7 @@ export function LinkedAccounts() {
     return () => {
       cancelled = true;
     };
-  }, [user, session, privyUser, summary, getAccessToken, normalizedConnectedAddress, loadSummary]);
+  }, [user, session, identityUser, summary, getAccessToken, normalizedConnectedAddress, loadSummary]);
 
   // Reset link status when the connected wallet changes
   useEffect(() => {
@@ -320,13 +320,13 @@ export function LinkedAccounts() {
 
   if (!user || !session) return null;
 
-  const linkedWallets = mergeIdentityWallets(summary?.wallets ?? [], privyUser, summary?.primary_wallet ?? null);
+  const linkedWallets = mergeIdentityWallets(summary?.wallets ?? [], identityUser, summary?.primary_wallet ?? null);
   const linkedEmails = summary?.emails ?? [];
   const isConnectedWalletLinked = normalizedConnectedAddress
     ? linkedWallets.some((wallet) => wallet.value === normalizedConnectedAddress)
     : false;
-  const isPrivyWalletAlreadyKnown = normalizedConnectedAddress
-    ? privyWallets.includes(normalizedConnectedAddress)
+  const isIdentityWalletAlreadyKnown = normalizedConnectedAddress
+    ? identityWallets.includes(normalizedConnectedAddress)
     : false;
 
   return (
@@ -379,7 +379,7 @@ export function LinkedAccounts() {
                         via {w.verified_via}
                       </p>
                        {'is_synced' in w && !w.is_synced ? (
-                         <p className="text-[11px] text-muted-foreground mt-1">Syncing from Privy…</p>
+                         <p className="text-[11px] text-muted-foreground mt-1">Syncing from Identity…</p>
                        ) : null}
                     </div>
                     <div className="flex items-center gap-1">
@@ -427,7 +427,7 @@ export function LinkedAccounts() {
                 ))}
               </div>
 
-              {normalizedConnectedAddress && !isConnectedWalletLinked && !isPrivyWalletAlreadyKnown && (
+              {normalizedConnectedAddress && !isConnectedWalletLinked && !isIdentityWalletAlreadyKnown && (
                   <Alert>
                     <Wallet className="h-4 w-4" />
                     <AlertDescription className="space-y-2">
@@ -621,11 +621,11 @@ export function LinkedAccounts() {
                 ))}
               </div>
 
-              {!linkedEmails.length && privyPrimaryEmail && (
+              {!linkedEmails.length && identityPrimaryEmail && (
                 <Alert>
                   <Mail className="h-4 w-4" />
                   <AlertDescription className="text-sm">
-                    Signed in as <span className="font-medium">{privyPrimaryEmail}</span>. This email will appear here after identity sync completes.
+                    Signed in as <span className="font-medium">{identityPrimaryEmail}</span>. This email will appear here after identity sync completes.
                   </AlertDescription>
                 </Alert>
               )}

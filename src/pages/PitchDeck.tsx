@@ -86,7 +86,7 @@ const PitchDeck = () => {
           { step: 'Invite Team & Agents', description: 'Branches, employees, AI agents with scoped API keys', icon: UserPlus },
         ],
         customer: [
-          { step: 'Receive Tokens', description: 'Get loyalty tokens to a smart wallet (Privy / SIWE)', icon: ShoppingBag },
+          { step: 'Receive Tokens', description: 'Get loyalty tokens to a smart wallet (Identity / SIWE)', icon: ShoppingBag },
           { step: 'Redeem & Trade', description: 'Spend on rewards or swap P2P via onchain escrow', icon: LineChart },
           { step: 'Truly Own', description: 'Tokens live in the customer\'s wallet, fully transferable', icon: Wallet },
         ],
@@ -146,7 +146,7 @@ const PitchDeck = () => {
           'Predictable USDC SaaS from $39/mo',
           'Onchain B20 tokens — customers truly own them',
           'Agent-ready: REST + MCP, x402 / MPP micropayments',
-          'SIWE & Privy auth — no passwords, no email leaks',
+          'SIWE & Identity auth — no passwords, no email leaks',
           'P2P escrow marketplace between programs',
         ],
       },
@@ -171,7 +171,7 @@ const PitchDeck = () => {
         { label: 'Platform', value: 'Live MVP on Base', icon: Zap },
         { label: 'Surfaces', value: 'Web · PWA · Capacitor', icon: Globe },
         { label: 'Agent API', value: '43 REST + 59 MCP tools', icon: Bot },
-        { label: 'Auth', value: 'Privy + SIWE + scoped keys', icon: KeyRound },
+        { label: 'Auth', value: 'Identity + SIWE + scoped keys', icon: KeyRound },
       ],
     },
   ];

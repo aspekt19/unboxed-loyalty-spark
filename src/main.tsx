@@ -9,7 +9,7 @@ import {
 } from "./lib/walletConnectorErrors.ts";
 
 // Wagmi/viem reconnect failures (e.g. MetaMask missing in in-app browsers): notify the app
-// so it can clear persisted wagmi/Privy state and show Sign in again — then suppress noise.
+// so it can clear persisted wagmi/Identity state and show Sign in again — then suppress noise.
 window.addEventListener('unhandledrejection', (event) => {
   const msg = walletConnectorFailureText(event.reason);
   if (!isWalletConnectorFailureMessage(msg)) return;
@@ -31,7 +31,7 @@ createRoot(document.getElementById("root")!).render(
 );
 
 // Notify Farcaster / Base App webview that the UI is ready as early as possible.
-// If we wait for Privy/wagmi to initialize, slow iframe loads keep the host
+// If we wait for Identity/wagmi to initialize, slow iframe loads keep the host
 // splash screen up and the user sees a white screen. This is safe outside of
 // Farcaster clients — the SDK no-ops when not embedded.
 // The first call can land before the host bridge is listening (cold start),

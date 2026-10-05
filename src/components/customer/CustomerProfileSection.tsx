@@ -41,7 +41,7 @@ export function CustomerProfileSection() {
   const { address } = useAccount();
   const { signMessageAsync } = useSignMessage();
   const { user, session, isLoading: authLoading } = useAuth();
-  const { user: privyUser, getAccessToken } = useIdentity();
+  const { user: identityUser, getAccessToken } = useIdentity();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
@@ -53,7 +53,7 @@ export function CustomerProfileSection() {
   const [switchingPrimary, setSwitchingPrimary] = useState<string | null>(null);
   const [pendingPrimary, setPendingPrimary] = useState<string | null>(null);
 
-  const identityEmail = getPrimaryEmail(privyUser);
+  const identityEmail = getPrimaryEmail(identityUser);
   const connectedLower = address?.toLowerCase() ?? null;
   // Show the user's chosen primary wallet from identity_links so the original
   // (embedded) address remains visible after they connect an external wallet.
@@ -87,9 +87,9 @@ export function CustomerProfileSection() {
   }, [user, session]);
 
   useEffect(() => {
-    if (!user || !session || !privyUser) return;
+    if (!user || !session || !identityUser) return;
 
-    const visibleWallets = mergeIdentityWallets(linkedWallets, privyUser, primaryWallet);
+    const visibleWallets = mergeIdentityWallets(linkedWallets, identityUser, primaryWallet);
     const hasUnsyncedWallet = visibleWallets.some((wallet) => !wallet.is_synced);
     if (!hasUnsyncedWallet) return;
 
@@ -97,7 +97,7 @@ export function CustomerProfileSection() {
 
     const syncWallets = async () => {
       const result = await syncIdentityLinks({
-        privyUser,
+        identityUser,
         getAccessToken,
         fallbackWallet: connectedLower,
       });
@@ -118,7 +118,7 @@ export function CustomerProfileSection() {
     return () => {
       cancelled = true;
     };
-  }, [user, session, privyUser, linkedWallets, primaryWallet, getAccessToken, connectedLower]);
+  }, [user, session, identityUser, linkedWallets, primaryWallet, getAccessToken, connectedLower]);
 
   useEffect(() => {
     if (!displayAddress) return;
@@ -139,8 +139,8 @@ export function CustomerProfileSection() {
   }, [displayAddress]);
 
   const visibleWallets = useMemo(
-    () => mergeIdentityWallets(linkedWallets, privyUser, primaryWallet),
-    [linkedWallets, privyUser, primaryWallet],
+    () => mergeIdentityWallets(linkedWallets, identityUser, primaryWallet),
+    [linkedWallets, identityUser, primaryWallet],
   );
 
   if (authLoading) return null;

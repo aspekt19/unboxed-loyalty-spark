@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 
 /**
  * "Signing in..." button with a safety watchdog.
- * If sign-in does not complete within `timeoutMs` (mobile networks, slow Privy
+ * If sign-in does not complete within `timeoutMs` (mobile networks, slow Identity
  * token refresh, edge function cold start, brand-new Google users whose
  * embedded wallet is still being provisioned), we surface a "Try again"
  * affordance. Clicking it calls `onTimeout` (typically a retry that resets
