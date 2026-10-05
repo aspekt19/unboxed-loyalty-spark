@@ -49,11 +49,11 @@ export function GasBudgetManagement() {
   const pct = s.monthly_budget_usd > 0 ? Math.min(100, (spent / s.monthly_budget_usd) * 100) : 100;
   const walletUsd = status?.balance_eth ? Number(status.balance_eth) * (status.eth_usd || 0) : null;
 
-  const num = (key: keyof Settings, label: string, step = "0.01") => (
+  const num = (key: keyof GasSettings, label: string, step = "0.01") => (
     <div className="space-y-1">
       <Label htmlFor={key}>{label}</Label>
       <Input id={key} type="number" step={step} min="0" defaultValue={String(s[key])}
-        onBlur={(e) => { const v = Number(e.target.value); if (!Number.isNaN(v) && v !== s[key]) save({ [key]: v } as Partial<Settings>); }} />
+        onBlur={(e) => { const v = Number(e.target.value); if (!Number.isNaN(v) && v !== s[key]) save({ [key]: v } as Partial<GasSettings>); }} />
     </div>
   );
 
