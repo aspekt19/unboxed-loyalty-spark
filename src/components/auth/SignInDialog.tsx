@@ -175,13 +175,27 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
         )}
 
         {step === 'wallet' && (
-          <div className="flex flex-col gap-2">
-            {walletConnectors.map((c) => (
-              <Button key={c.uid} variant="outline" className="h-11 justify-start gap-3" onClick={() => void connectWallet(c.uid)} disabled={!!busy}>
-                {busy === c.uid ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
-                <span className="truncate">{walletLabel(c.name, c.id)}</span>
-              </Button>
-            ))}
+          <div className="flex flex-col gap-2.5">
+            {walletConnectors.map((c) => {
+              const meta = walletMeta(c.name, c.id);
+              return (
+                <Button
+                  key={c.uid}
+                  variant="outline"
+                  className="h-auto min-h-[3.5rem] justify-start gap-3 rounded-xl px-3.5 py-2.5 text-left"
+                  onClick={() => void connectWallet(c.uid)}
+                  disabled={!!busy}
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                    {busy === c.uid ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium">{meta.label}</span>
+                    {meta.sub && <span className="block truncate text-xs text-muted-foreground">{meta.sub}</span>}
+                  </span>
+                </Button>
+              );
+            })}
             {isCdpEnabled && mode !== 'wallet' && (
               <Button variant="ghost" className="gap-2" onClick={() => setStep('choose')}>
                 <ArrowLeft className="h-4 w-4" /> Back
