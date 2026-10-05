@@ -65,7 +65,7 @@ export default function GuidePage() {
       {
         "@type": "Question",
         "name": "Do customers need a crypto wallet?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Customers can sign in with email, passkey, or any Web3 wallet. No prior crypto experience is needed — Loyal Spark abstracts the blockchain complexity." }
+        "acceptedAnswer": { "@type": "Answer", "text": "Customers can sign in with Google, a code sent by email, or an external wallet such as MetaMask, Coinbase Wallet, or Base App. No prior crypto experience is needed — Loyal Spark abstracts the blockchain complexity." }
       },
       {
         "@type": "Question",
@@ -248,7 +248,7 @@ export default function GuidePage() {
               <Alert>
                 <Wallet className="h-4 w-4" />
                 <AlertDescription>
-                  Click "Sign In" to get started. You can use email, passkey, or connect a Web3 wallet like MetaMask or Coinbase Wallet.
+                  Click "Sign In" to get started. You can use Google, a code sent by email, or connect an external wallet like MetaMask, Coinbase Wallet, or Base App.
                 </AlertDescription>
               </Alert>
 
@@ -283,7 +283,7 @@ export default function GuidePage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-                    <li>Sign in with email, passkey, or connect your wallet</li>
+                    <li>Sign in with Google, an email code, or connect your wallet</li>
                     <li>Navigate to the Merchant section</li>
                     <li>Enter your token details:
                       <ul className="list-disc list-inside ml-6 mt-1">
@@ -477,7 +477,7 @@ export default function GuidePage() {
               <Alert>
                 <Wallet className="h-4 w-4" />
                 <AlertDescription>
-                  Click "Sign In" to get started. You can use email or passkey (no crypto knowledge needed), or connect an existing wallet like MetaMask or Coinbase Wallet.
+                  Click "Sign In" to get started. You can use Google or a code sent by email (no crypto knowledge needed), or connect an existing wallet like MetaMask, Coinbase Wallet, or Base App.
                 </AlertDescription>
               </Alert>
 
@@ -501,7 +501,7 @@ export default function GuidePage() {
                   <Alert className="mt-4">
                     <Shield className="h-4 w-4" />
                     <AlertDescription>
-                      <strong>No crypto experience needed!</strong> With email/passkey sign-in, a secure wallet is created for you behind the scenes.
+                      <strong>No crypto experience needed!</strong> With Google or email-code sign-in, a secure wallet is created for you behind the scenes.
                     </AlertDescription>
                   </Alert>
                 </CardContent>

@@ -83,7 +83,7 @@ function strip(s) {
 // Hand-written portal map — highest priority for "how do I" questions.
 push("portal-map", "Portal map and click paths", `Merchant portal https://loyalspark.online/merchant tabs: dashboard, programs (create/activate/extend program, mint or earn points to a customer inside the selected program), rewards (create rewards customers redeem), certificates (gift certificates LOYAL-XXXXXX), customers (CRM, segments, export), marketing (campaigns, automations), billing (USDC subscription on Base, plans), agents (lsk_ API keys, CDP agent wallets), assistant (this chat), team (branches, employees cashier/branch_manager/admin, invites).
 
-Customer portal https://loyalspark.online/customer: Loyalty (balances per program, rewards, My Vouchers with QR, certificates), Discover (merchant gallery), Exchange (P2P escrow offers, 0.5% fee). Sign in with email, SMS, Google or wallet; an embedded wallet is created automatically. Balances belong to the connected (primary) wallet.
+Customer portal https://loyalspark.online/customer: Loyalty (balances per program, rewards, My Vouchers with QR, certificates), Discover (merchant gallery), Exchange (P2P escrow offers, 0.5% fee). Sign in with Google, a code sent by email, or an external wallet such as MetaMask, Coinbase Wallet, or Base App. Google and email sign-in create a secure embedded smart wallet automatically. Balances belong to the connected (primary) wallet.
 
 Voucher tabs: Active = status active (usable, show QR in store). Inactive = expired only. Used = already redeemed by the merchant.`);
 

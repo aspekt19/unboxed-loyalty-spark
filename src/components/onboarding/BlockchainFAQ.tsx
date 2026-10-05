@@ -70,14 +70,14 @@ export const BlockchainFAQ = () => {
             <AccordionContent className="text-muted-foreground">
               <strong>For Customers:</strong>
               <ol className="list-decimal list-inside mt-2 space-y-1">
-                <li>Click "Sign In" (use email, passkey, or an existing wallet)</li>
+                <li>Click "Sign In" (use Google, an email code, or an existing wallet)</li>
                 <li>Choose "I'm a Shopper"</li>
                 <li>Show your QR code to merchants to earn tokens</li>
                 <li>Browse rewards and redeem with your tokens</li>
               </ol>
               <strong className="block mt-4">For Merchants:</strong>
               <ol className="list-decimal list-inside mt-2 space-y-1">
-                <li>Sign in with email, passkey, or wallet</li>
+                <li>Sign in with Google, an email code, or a wallet</li>
                 <li>Choose "I'm a Business"</li>
                 <li>Create your loyalty program and deploy your token</li>
                 <li>Scan customer QR codes to issue tokens</li>

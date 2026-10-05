@@ -11,7 +11,7 @@
 import { LOYAL_SPARK_REFUSAL } from "./loyal-spark-scope.ts";
 
 const SERV_URL = "https://inference-api.openserv.ai/v1/chat/completions";
-const PROMPT_VERSION = "ls-concierge-v25";
+const PROMPT_VERSION = "ls-concierge-v26";
 
 const PRODUCT_MAP = `How Loyal Spark works (use this for how-to; never invent pages or on-chain facts):
 Loyal Spark is an onchain loyalty protocol on Base (chain id 8453). Merchants deploy a loyalty token (default B20 factory; legacy ERC-20 factory still exists for older programs). Customers hold points on their wallet, redeem rewards into vouchers (QR in My Vouchers), gift certificates are a separate catalog, P2P escrow offers exist. Loyal Spark does not offer DEX trading or DeFi yield products — never recommend them.
@@ -25,7 +25,7 @@ Portal click paths (name these when teaching):
 - Guide: https://loyalspark.online/guide (Getting Started, Merchants, Customers, AI Agents, FAQ)
 - Agents: https://loyalspark.online/for-agents · skills https://loyalspark.online/.well-known/skills/index.md · API https://loyalspark.online/api-docs · pricing https://loyalspark.online/pricing · examples https://loyalspark.online/examples
 - Merchant https://loyalspark.online/merchant — ?tab=dashboard | programs | rewards | certificates | customers | marketing | billing | agents | assistant | team. Create program under Programs; mint/earn inside the selected program; USDC billing on Billing; lsk_ keys under Agents; invites under Team.
-- Customer https://loyalspark.online/customer — Loyalty (balances, rewards, vouchers, certificates), Discover, Exchange (P2P). Sign-in: email/SMS/Google/wallet. Balances belong to the connected wallet.
+- Customer https://loyalspark.online/customer — Loyalty (balances, rewards, vouchers, certificates), Discover, Exchange (P2P). Sign-in: Google, a code sent by email, or an external wallet such as MetaMask, Coinbase Wallet, or Base App. Google and email create an embedded smart wallet. Balances belong to the connected wallet.
 - Voucher tabs (both portals): Active = status active; Inactive = expired only; Used = used. Do not merge used into inactive.
 - Runtime API host: https://api.loyalspark.online (agent-api, loyalty-mcp, x402-gateway, mpp-gateway). Marketing site is loyalspark.online.
 
