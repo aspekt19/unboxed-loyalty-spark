@@ -106,6 +106,7 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
   const walletLabel = (name: string, id: string) => {
     if (id === 'injected') return 'Browser wallet (MetaMask, Rabby…)';
     if (/coinbase/i.test(name) || /coinbase/i.test(id)) return 'Coinbase Wallet / Base App';
+    if (id === 'walletConnect') return 'Other wallets (MetaMask, Trust, Rainbow…)';
     return name;
   };
 
