@@ -23,7 +23,7 @@ const PrivacyPage = () => (
               </li>
               <li>
                 <strong>Email (optional).</strong> Only if you sign in with Google or email (Coinbase)
-                with email/phone, or if a merchant asks for it for receipts.
+                , or if a merchant asks for it for receipts.
               </li>
               <li>
                 <strong>Profile data you enter.</strong> Business name, logo, location,
