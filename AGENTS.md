@@ -58,3 +58,4 @@ All in `docs/integrations/`: `PROMPT_GUIDE.md` (system prompts), `OPENSERV_AGENT
 ## CI
 
 - CI runs `npm ci`, falling back to `npm install` if `package-lock.json` drifts — why: Lovable updates only `bun.lock`.
+- CI fails if `supabase/functions/_shared/concierge-knowledge-data.ts` differs from a fresh `node scripts/build-concierge-knowledge.mjs` run — why: the Concierge must never answer from stale docs.
