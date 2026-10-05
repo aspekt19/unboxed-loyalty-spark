@@ -89,6 +89,8 @@ export function GasBudgetManagement() {
             {num("drip_cooldown_days", "Days between top-ups per wallet", "1")}
             {num("drip_max_per_month", "Max top-ups per wallet per month", "1")}
             {num("est_sponsored_op_usd", "Estimated cost per sponsored action (USD)", "0.001")}
+            {num("budget_warn_percent", "Warn when budget used (%)", "1")}
+            {num("low_balance_warn_usd", "Warn when gas wallet below (USD)")}
           </div>
         </CardContent>
       </Card>

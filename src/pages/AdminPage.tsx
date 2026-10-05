@@ -64,6 +64,8 @@ const AdminPage = () => {
           </div>
         </div>
 
+        <GasAlertBanner />
+
         <Tabs defaultValue="premium" className="space-y-4 sm:space-y-6">
           <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-2">
             <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-5 gap-1">
