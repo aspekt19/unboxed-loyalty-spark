@@ -1,13 +1,10 @@
-# Roadmap — gasless + Shopify
+# Roadmap
 
-- [x] Paymaster allowlist + proxy + sponsorship log + tests
-- [x] CDP Paymaster URL secret
-- [x] Wallet sends use paymasterService when wallet supports it (mint, vouchers, transfers, escrow, program create)
-- [x] Admin gas budget tab + alerts
-- [x] Remove gas-drip (direct ETH top-ups) — bot-drain risk; smart wallets only for free gas
-- [ ] User: enable Privy Smart Wallets + paymaster URL in Privy dashboard
-- [ ] Verify a real sponsored tx from a smart wallet ("fee: sponsored")
-- [ ] Shopify app credentials (waiting on user)
-- [ ] Shopify install, order webhooks → points, refunds, voucher → discount code
-- [ ] Shopify card in merchant Settings + theme widget
-- [ ] Docs + Concierge knowledge: Gasless, Shopify
+## Switch human sign-in to Coinbase
+- [x] Coinbase Google/email sign-in + external wallets dialog, Privy removed
+- [x] Free gas for Coinbase smart accounts via paymaster-proxy
+- [x] Backend sign-in check (cdp-auth), old Privy function and secret removed
+- [ ] Add CDP Project ID — blocked: waiting for user
+- [ ] Real login + sponsored voucher test — blocked: needs Project ID
+- [ ] Wipe test human data — after first successful Coinbase login
+- [ ] Replace "Privy" wording on legal / guide / FAQ pages and assistant knowledge
