@@ -7,6 +7,7 @@ import { PaymentSettingsManagement } from '@/components/admin/PaymentSettingsMan
 import { PremiumManagement } from '@/components/admin/PremiumManagement';
 import { AdminManagement } from '@/components/admin/AdminManagement';
 import { UserManagement } from '@/components/admin/UserManagement';
+import { GasBudgetManagement } from '@/components/admin/GasBudgetManagement';
 import { Shield, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -70,6 +71,7 @@ const AdminPage = () => {
               <TabsTrigger value="admins" className="text-xs sm:text-sm whitespace-nowrap flex-shrink-0">Admins</TabsTrigger>
               <TabsTrigger value="requests" className="text-xs sm:text-sm whitespace-nowrap flex-shrink-0">Requests</TabsTrigger>
               <TabsTrigger value="settings" className="text-xs sm:text-sm whitespace-nowrap flex-shrink-0">Settings</TabsTrigger>
+              <TabsTrigger value="gas" className="text-xs sm:text-sm whitespace-nowrap flex-shrink-0">Gas</TabsTrigger>
             </TabsList>
           </div>
 
@@ -91,6 +93,9 @@ const AdminPage = () => {
 
           <TabsContent value="settings">
             <PaymentSettingsManagement />
+          </TabsContent>
+          <TabsContent value="gas">
+            <GasBudgetManagement />
           </TabsContent>
         </Tabs>
       </div>

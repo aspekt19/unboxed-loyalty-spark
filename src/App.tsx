@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-route
 import { WagmiProvider } from "wagmi";
 import { WagmiProvider as PrivyWagmiProvider } from "@privy-io/wagmi";
 import { PrivyProvider } from "@privy-io/react-auth";
+import { PrivySmartWalletProvider } from "./hooks/usePrivySmartWallet";
 import { browserPreviewWagmiConfig, detectFarcasterMiniApp, isEmbeddedWebview, isFarcasterContext, farcasterWagmiConfig, privyWagmiConfig } from "./config/wagmi";
 import { PRIVY_APP_ID, privyConfig } from "./config/privy";
 import { hasPrivyOAuthParams } from "./components/auth/OAuthReturnHandler";
@@ -230,6 +231,7 @@ function BrowserProviders({ children }: { children: React.ReactNode }) {
   return (
     <PrivyAvailableContext.Provider value={true}>
       <PrivyProvider appId={PRIVY_APP_ID} config={privyConfig}>
+        <PrivySmartWalletProvider>
         <QueryClientProvider client={queryClient}>
           <PrivyWagmiProvider config={privyWagmiConfig}>
             <AuthProvider>
@@ -243,6 +245,7 @@ function BrowserProviders({ children }: { children: React.ReactNode }) {
             </AuthProvider>
           </PrivyWagmiProvider>
         </QueryClientProvider>
+        </PrivySmartWalletProvider>
       </PrivyProvider>
     </PrivyAvailableContext.Provider>
   );

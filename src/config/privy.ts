@@ -24,7 +24,8 @@ export const privyConfig: PrivyClientConfig = {
   // Embedded wallets configuration
   embeddedWallets: {
     ethereum: {
-      createOnLogin: 'users-without-wallets',
+      // Every user gets an embedded signer so Privy can derive a gas-sponsored smart wallet.
+      createOnLogin: 'all-users',
     },
   },
   // Default chain

@@ -18,3 +18,5 @@
 
 - Wallets use `paymaster-proxy` as their ERC-7677 `paymasterService`; it forwards to `CDP_PAYMASTER_URL` only when `_shared/paymaster-policy.ts` confirms every inner call targets Loyal Spark contracts (registered tokens, factories, escrow) with zero ETH value — why: an open paymaster URL would let anyone spend our gas budget.
 - Frontend onchain buttons send via `useSponsoredSendTransaction` (paymaster when the wallet supports it, plain tx otherwise); paid flows that move USDC/ETH to treasury stay on plain `useSendTransaction` — why: the proxy refuses non-Loyal-Spark targets.
+- Plain (non-smart) wallets get a small ETH top-up from `gas-drip` (dedicated `GAS_WALLET_PRIVATE_KEY` wallet) only for Loyal Spark targets; both drip and paymaster-proxy enforce the single admin-editable monthly budget in `gas_settings` via `_shared/gas-budget.ts` — why: one capped budget covers every wallet type without open-ended spend.
+- Privy users act through Privy smart wallets (`SmartWalletsProvider`, paymaster set in the Privy dashboard to our `paymaster-proxy`) when that smart wallet is the active wallet — why: no address migration is forced on existing users.
