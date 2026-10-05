@@ -5,6 +5,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { checkSponsorship } from "../_shared/paymaster-policy.ts";
+import { budgetAllows, loadGasSettings } from "../_shared/gas-budget.ts";
 
 const ALLOWED_METHODS = new Set(["pm_getPaymasterStubData", "pm_getPaymasterData", "pm_sponsorUserOperation"]);
 const BASE_CHAIN_HEX = "0x2105";
@@ -48,6 +49,13 @@ Deno.serve(async (req) => {
   const policy = checkSponsorship(userOp.callData, await registeredTokens(sb));
   if (!policy.ok) return rpcError(id, `Not sponsored: ${policy.reason}`);
 
+  const settings = await loadGasSettings(sb);
+  if (!settings.sponsor_smart_wallets) return rpcError(id, "Not sponsored: sponsorship_disabled");
+  const { data: spent } = await sb.rpc("gas_month_spent_usd");
+  if (!budgetAllows(Number(spent ?? 0), settings.est_sponsored_op_usd, settings.monthly_budget_usd)) {
+    return rpcError(id, "Not sponsored: budget_exhausted");
+  }
+
   const res = await fetch(upstream, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -60,6 +68,7 @@ Deno.serve(async (req) => {
       wallet_address: userOp.sender.toLowerCase(),
       targets: policy.targets,
       method,
+      est_cost_usd: settings.est_sponsored_op_usd,
     });
   }
   return new Response(text, { status: res.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
