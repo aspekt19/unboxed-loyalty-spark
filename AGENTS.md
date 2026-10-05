@@ -58,3 +58,5 @@ All in `docs/integrations/`: `PROMPT_GUIDE.md` (system prompts), `OPENSERV_AGENT
 ## CI
 
 - CI runs `npm ci`, falling back to `npm install` if `package-lock.json` drifts — why: Lovable updates only `bun.lock`.
+- Coinbase (Google/email) users act as their smart account: `useIdentity` re-syncs the wagmi address to it, and merchant RLS/UI checks use `is_current_user_linked_wallet` — why: the CDP connector can report the inner signer address first, causing "Profile not found".
+- Do not call `verifyOAuth` on the Google return; the Coinbase SDK verifies the single-use code itself — why: a second verify always fails and showed a false "sign-in didn't finish".
