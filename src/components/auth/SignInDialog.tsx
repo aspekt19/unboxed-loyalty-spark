@@ -38,12 +38,12 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
     setBusy(null);
   }, [open, mode]);
 
-  // Mobile browsers (Safari/Chrome) have no injected wallet: hide that option and
-  // use WalletConnect (opens the wallet app) instead of failing with "Provider not found".
-  const hasInjected = typeof window !== 'undefined' && !!(window as unknown as { ethereum?: unknown }).ethereum;
+  // Keep the wallet step to two clean options: Coinbase Wallet / Base App and
+  // "Other wallets" via WalletConnect. Injected/EIP-6963 connectors are skipped —
+  // WalletConnect covers them without duplicating or overflowing the dialog.
   const walletConnectors = connectors.filter((connector) => {
     if (connector.id === CDP_CONNECTOR_ID) return false;
-    if (connector.id === 'injected') return hasInjected;
+    if (connector.id === 'injected') return false;
     return /coinbase/i.test(connector.id) || connector.id === 'walletConnect';
   });
 
@@ -107,11 +107,14 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
     }
   };
 
-  const walletLabel = (name: string, id: string) => {
-    if (id === 'injected') return 'Browser wallet (MetaMask, Rabby…)';
-    if (/coinbase/i.test(name) || /coinbase/i.test(id)) return 'Coinbase Wallet / Base App';
-    if (id === 'walletConnect') return 'Other wallets (MetaMask, Trust, Rainbow…)';
-    return name;
+  const walletMeta = (name: string, id: string) => {
+    if (/coinbase/i.test(name) || /coinbase/i.test(id)) {
+      return { label: 'Coinbase Wallet / Base App', sub: 'Connects in one tap' };
+    }
+    if (id === 'walletConnect') {
+      return { label: 'Other wallets', sub: 'MetaMask, Trust, Rainbow and 400+ more' };
+    }
+    return { label: name, sub: undefined as string | undefined };
   };
 
   return (
@@ -129,18 +132,33 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
         </DialogHeader>
 
         {step === 'choose' && (
-          <div className="flex flex-col gap-2">
-            <Button variant="outline" className="h-11 justify-start gap-3" onClick={() => void google()} disabled={!!busy}>
-              {busy === 'google' ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
-              Continue with Google
+          <div className="flex flex-col gap-2.5">
+            <Button variant="outline" className="h-auto min-h-[3.5rem] justify-start gap-3 rounded-xl px-3.5 py-2.5 text-left" onClick={() => void google()} disabled={!!busy}>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                {busy === 'google' ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-medium">Continue with Google</span>
+                <span className="block truncate text-xs text-muted-foreground">Free wallet, no network fees</span>
+              </span>
             </Button>
-            <Button variant="outline" className="h-11 justify-start gap-3" onClick={() => setStep('email')} disabled={!!busy}>
-              <Mail className="h-4 w-4" />
-              Continue with email
+            <Button variant="outline" className="h-auto min-h-[3.5rem] justify-start gap-3 rounded-xl px-3.5 py-2.5 text-left" onClick={() => setStep('email')} disabled={!!busy}>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                <Mail className="h-4 w-4" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-medium">Continue with email</span>
+                <span className="block truncate text-xs text-muted-foreground">We send you a 6-digit code</span>
+              </span>
             </Button>
-            <Button variant="ghost" className="h-11 justify-start gap-3" onClick={() => setStep('wallet')} disabled={!!busy}>
-              <Wallet className="h-4 w-4" />
-              I have a wallet
+            <Button variant="ghost" className="h-auto min-h-[3.5rem] justify-start gap-3 rounded-xl px-3.5 py-2.5 text-left" onClick={() => setStep('wallet')} disabled={!!busy}>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted">
+                <Wallet className="h-4 w-4" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-medium">I have a wallet</span>
+                <span className="block truncate text-xs text-muted-foreground">Coinbase Wallet, Base App and more</span>
+              </span>
             </Button>
           </div>
         )}
@@ -172,13 +190,27 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
         )}
 
         {step === 'wallet' && (
-          <div className="flex flex-col gap-2">
-            {walletConnectors.map((c) => (
-              <Button key={c.uid} variant="outline" className="h-11 justify-start gap-3" onClick={() => void connectWallet(c.uid)} disabled={!!busy}>
-                {busy === c.uid ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
-                <span className="truncate">{walletLabel(c.name, c.id)}</span>
-              </Button>
-            ))}
+          <div className="flex flex-col gap-2.5">
+            {walletConnectors.map((c) => {
+              const meta = walletMeta(c.name, c.id);
+              return (
+                <Button
+                  key={c.uid}
+                  variant="outline"
+                  className="h-auto min-h-[3.5rem] justify-start gap-3 rounded-xl px-3.5 py-2.5 text-left"
+                  onClick={() => void connectWallet(c.uid)}
+                  disabled={!!busy}
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                    {busy === c.uid ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium">{meta.label}</span>
+                    {meta.sub && <span className="block truncate text-xs text-muted-foreground">{meta.sub}</span>}
+                  </span>
+                </Button>
+              );
+            })}
             {isCdpEnabled && mode !== 'wallet' && (
               <Button variant="ghost" className="gap-2" onClick={() => setStep('choose')}>
                 <ArrowLeft className="h-4 w-4" /> Back
