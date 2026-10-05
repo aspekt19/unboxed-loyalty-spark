@@ -62,9 +62,9 @@ const customerSteps = [
   },
   {
     title: "Sign In Easily",
-    description: "Use email, passkey, or an existing wallet to get started.",
+    description: "Use Google, an email code, or an existing wallet to get started.",
     icon: Shield,
-    content: "Sign in with your email or passkey and a secure account is created automatically. You can also use MetaMask or Coinbase Wallet if you prefer.",
+    content: "Sign in with Google or a code sent to your email and a secure account is created automatically. You can also use MetaMask, Coinbase Wallet, or Base App.",
   },
   {
     title: "Earn Loyalty Tokens",

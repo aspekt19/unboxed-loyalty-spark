@@ -89,7 +89,8 @@ export const EVAL_CASES: EvalCase[] = [
   { id: "s-rewards", role: "shopper", messages: [u("что я могу купить за свои баллы")], tool: "list_affordable_rewards", includes: [/Water bottle|Socks|coffee/i] },
   { id: "s-p2p", role: "shopper", messages: [u("как обменять баллы одного магазина на баллы другого")], notTools: ["list_my_balances"], includes: [/P2P|Exchange|обмен/i] },
   { id: "s-cert", role: "shopper", messages: [u("как активировать подарочный сертификат")], includes: [/LOYAL|сертифик|certificate/i] },
-  { id: "s-wallet", role: "shopper", messages: [u("мне нужен криптокошелёк чтобы пользоваться?")], includes: [/email|почт|Google|SMS|телефон/i] },
+  { id: "s-wallet", role: "shopper", messages: [u("мне нужен криптокошелёк чтобы пользоваться?")], includes: [/email|почт/i, /Google/i], excludes: [/SMS|телефон|phone|passkey/i] },
+  { id: "s-sign-in", role: "shopper", messages: [u("How do I sign in?")], tool: "search_docs", includes: [/Google/i, /email/i, /wallet/i], excludes: [/SMS|phone|passkey/i] },
   // --- Scope
   { id: "s-weather", role: "shopper", messages: [u("какая завтра погода в Стамбуле")], notTools: ["list_my_balances", "issue_loyalty_voucher"], includes: [REFUSAL] },
   { id: "s-poem", role: "shopper", messages: [u("напиши стих про котов")], includes: [REFUSAL] },

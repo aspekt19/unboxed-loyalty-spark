@@ -8,7 +8,7 @@
 import { LOYAL_SPARK_REFUSAL } from "./loyal-spark-scope.ts";
 import { formatDocs, searchDocs } from "./concierge-knowledge.ts";
 
-export const AGENT_PROMPT_VERSION = "ls-concierge-v30";
+export const AGENT_PROMPT_VERSION = "ls-concierge-v31";
 const SERV_URL = "https://inference-api.openserv.ai/v1/chat/completions";
 const MAX_STEPS = 5;
 const BUDGET_MS = 26_000;
