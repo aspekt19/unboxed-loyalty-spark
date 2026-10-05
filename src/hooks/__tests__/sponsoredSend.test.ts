@@ -1,9 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 vi.mock("wagmi", () => ({}));
 vi.mock("wagmi/chains", () => ({ base: { id: 8453 } }));
-vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
 vi.mock("@/hooks/usePrivySmartWallet", () => ({ usePrivySmartWallet: () => null }));
-import { shouldSponsor, needsGasDrip, DRIP_THRESHOLD_WEI } from "../useSponsoredSendTransaction";
+import { shouldSponsor } from "../useSponsoredSendTransaction";
 
 describe("gas sponsorship decision", () => {
   it("sponsors zero-value calls when the wallet supports a paymaster", () => {
@@ -15,17 +14,5 @@ describe("gas sponsorship decision", () => {
   });
   it("falls back to a normal transaction when the wallet lacks paymaster support", () => {
     expect(shouldSponsor(false, 0n)).toBe(false);
-  });
-});
-
-describe("gas top-up decision", () => {
-  it("tops up a plain wallet with no ETH", () => {
-    expect(needsGasDrip(0n, 0n)).toBe(true);
-  });
-  it("does not top up a wallet that already has gas", () => {
-    expect(needsGasDrip(DRIP_THRESHOLD_WEI, 0n)).toBe(false);
-  });
-  it("never tops up for calls that move ETH", () => {
-    expect(needsGasDrip(0n, 1n)).toBe(false);
   });
 });

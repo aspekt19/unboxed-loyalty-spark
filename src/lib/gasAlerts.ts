@@ -1,27 +1,17 @@
 export type GasAlertSettings = {
   monthly_budget_usd: number;
   budget_warn_percent: number;
-  low_balance_warn_usd: number;
   sponsor_smart_wallets: boolean;
-  drip_enabled: boolean;
 };
 
-export type GasWalletStatus = {
-  gas_wallet: string | null;
-  balance_eth: string | null;
-  eth_usd: number;
+export type GasSponsorStatus = {
   spent_usd: number;
   paymaster_configured: boolean;
 };
 
 export type GasAlert = {
   level: "critical" | "warning";
-  code:
-    | "budget_exhausted"
-    | "budget_warning"
-    | "gas_wallet_missing"
-    | "gas_wallet_low"
-    | "paymaster_missing";
+  code: "budget_exhausted" | "budget_warning" | "paymaster_missing";
   message: string;
 };
 
@@ -31,7 +21,7 @@ export type GasAlert = {
  */
 export function computeGasAlerts(
   s: GasAlertSettings,
-  status: GasWalletStatus | null,
+  status: GasSponsorStatus | null,
 ): GasAlert[] {
   const alerts: GasAlert[] = [];
   const spent = status?.spent_usd ?? 0;
@@ -51,26 +41,6 @@ export function computeGasAlerts(
         code: "budget_warning",
         message: `Monthly gas budget is ${Math.floor(pct)}% used ($${spent.toFixed(2)} of $${budget.toFixed(2)}). Consider raising the budget.`,
       });
-    }
-  }
-
-  if (s.drip_enabled) {
-    if (!status?.gas_wallet) {
-      alerts.push({
-        level: "warning",
-        code: "gas_wallet_missing",
-        message: "Gas wallet is not connected — gas top-ups for regular wallets are off.",
-      });
-    } else {
-      const balanceUsd =
-        status.balance_eth !== null ? Number(status.balance_eth) * (status.eth_usd || 0) : null;
-      if (balanceUsd !== null && balanceUsd < s.low_balance_warn_usd) {
-        alerts.push({
-          level: "critical",
-          code: "gas_wallet_low",
-          message: `Gas wallet balance is low (~$${balanceUsd.toFixed(2)}, below the $${s.low_balance_warn_usd} threshold). Send ETH on Base to the gas wallet to keep top-ups working.`,
-        });
-      }
     }
   }
 

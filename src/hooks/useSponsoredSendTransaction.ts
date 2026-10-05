@@ -1,21 +1,16 @@
 import { useCallback, useMemo, useState } from "react";
 import {
   useAccount,
-  useBalance,
   useCapabilities,
   useSendCalls,
   useSendTransaction,
   useWaitForCallsStatus,
 } from "wagmi";
 import { base } from "wagmi/chains";
-import { supabase } from "@/integrations/supabase/client";
 import { usePrivySmartWallet } from "@/hooks/usePrivySmartWallet";
 
 /** ERC-7677 paymaster endpoint; server only sponsors calls to Loyal Spark contracts with zero ETH value. */
 export const PAYMASTER_PROXY_URL = `https://api.loyalspark.online/paymaster-proxy`;
-
-/** Below this ETH balance a plain wallet asks for a gas top-up (~$0.005). */
-export const DRIP_THRESHOLD_WEI = 2_000_000_000_000n;
 
 type SendArgs = { to: `0x${string}`; data?: `0x${string}`; value?: bigint };
 type SendOpts = { onSuccess?: (hash: `0x${string}`) => void; onError?: (err: Error) => void };
@@ -25,25 +20,12 @@ export function shouldSponsor(supportsPaymaster: boolean, value?: bigint): boole
   return supportsPaymaster && (value === undefined || value === 0n);
 }
 
-/** Pure decision helper (tested): plain wallet with almost no ETH doing a zero-value call needs a top-up. */
-export function needsGasDrip(balanceWei: bigint | undefined, value?: bigint): boolean {
-  return balanceWei !== undefined && balanceWei < DRIP_THRESHOLD_WEI && (value === undefined || value === 0n);
-}
-
-async function requestDrip(wallet: string, target: string): Promise<void> {
-  const { data } = await supabase.functions.invoke("gas-drip", { body: { action: "drip", wallet, target } });
-  const hash = (data as { ok?: boolean; tx_hash?: `0x${string}` } | null)?.tx_hash;
-  if (!hash) return; // budget exhausted / limit hit → wallet will ask the user to pay gas as before
-  const { waitForTransactionReceipt } = await import("wagmi/actions");
-  const { config } = await import("@/config/wagmi");
-  await waitForTransactionReceipt(config, { hash, chainId: base.id, timeout: 30_000 }).catch(() => undefined);
-}
-
 /**
  * Drop-in replacement for wagmi `useSendTransaction`:
  * 1) Privy smart wallet (active) → sponsored via Privy paymaster;
  * 2) wallet with `paymasterService` → sponsored via our proxy;
- * 3) plain wallet with no ETH → free gas top-up, then normal tx.
+ * 3) plain wallet (MetaMask etc.) → normal transaction, user pays their own gas.
+ * We never send ETH to user wallets — free gas is smart-wallet only.
  */
 export function useSponsoredSendTransaction() {
   const { address } = useAccount();
@@ -51,9 +33,7 @@ export function useSponsoredSendTransaction() {
   const calls = useSendCalls();
   const privySmart = usePrivySmartWallet();
   const { data: caps } = useCapabilities({ account: address, query: { enabled: !!address } });
-  const { data: bal, refetch: refetchBal } = useBalance({ address, chainId: base.id, query: { enabled: !!address } });
   const [smartState, setSmartState] = useState<{ pending: boolean; hash?: `0x${string}`; error: Error | null }>({ pending: false, error: null });
-  const [preparingGas, setPreparingGas] = useState(false);
 
   const usePrivySmart = !!privySmart && !!address && privySmart.address.toLowerCase() === address.toLowerCase();
 
@@ -99,18 +79,12 @@ export function useSponsoredSendTransaction() {
         return;
       }
       calls.reset();
-      const send = () => plain.sendTransaction(args, {
+      plain.sendTransaction(args, {
         onSuccess: (h) => opts?.onSuccess?.(h),
         onError: (e) => opts?.onError?.(e as Error),
       });
-      if (address && needsGasDrip(bal?.value, args.value)) {
-        setPreparingGas(true);
-        requestDrip(address, args.to).finally(() => { setPreparingGas(false); refetchBal(); send(); });
-        return;
-      }
-      send();
     },
-    [usePrivySmart, sendViaPrivySmart, supportsPaymaster, plain, calls, address, bal?.value, refetchBal],
+    [usePrivySmart, sendViaPrivySmart, supportsPaymaster, plain, calls],
   );
 
   const sendTransactionAsync = useCallback(
@@ -129,13 +103,9 @@ export function useSponsoredSendTransaction() {
         if (!h || res.status === "failure") throw new Error("Sponsored transaction failed");
         return h as `0x${string}`;
       }
-      if (address && needsGasDrip(bal?.value, args.value)) {
-        setPreparingGas(true);
-        try { await requestDrip(address, args.to); } finally { setPreparingGas(false); refetchBal(); }
-      }
       return plain.sendTransactionAsync(args);
     },
-    [usePrivySmart, sendViaPrivySmart, supportsPaymaster, plain, calls, address, bal?.value, refetchBal],
+    [usePrivySmart, sendViaPrivySmart, supportsPaymaster, plain, calls],
   );
 
   const reset = useCallback(() => {
@@ -151,13 +121,12 @@ export function useSponsoredSendTransaction() {
     sendTransactionAsync,
     reset,
     data: usingSmart ? smartState.hash : usingCalls ? sponsoredHash : plain.data,
-    isPending: preparingGas || (usingSmart ? smartState.pending
-      : usingCalls ? calls.isPending || (!!callsId && !sponsoredHash && !sponsoredFailed) : plain.isPending),
+    isPending: usingSmart ? smartState.pending
+      : usingCalls ? calls.isPending || (!!callsId && !sponsoredHash && !sponsoredFailed) : plain.isPending,
     error: usingSmart ? smartState.error
       : usingCalls
         ? (calls.error as Error | null) ?? (sponsoredFailed ? new Error("Sponsored transaction failed") : null)
         : plain.error,
     isSponsored: usePrivySmart || supportsPaymaster,
-    isPreparingGas: preparingGas,
   };
 }
