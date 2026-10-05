@@ -344,11 +344,17 @@ export function CreateCertificate({ onCreated }: { onCreated?: () => void }) {
               </Button>
             ))}
             <Input
-              type="number"
-              min={1}
-              max={100}
-              value={quantity}
-              onChange={(e) => setQuantity(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              value={quantityInput}
+              onChange={(e) => {
+                const v = e.target.value.replace(/[^0-9]/g, '');
+                setQuantityInput(v);
+                const n = parseInt(v, 10);
+                if (!Number.isNaN(n)) setQuantity(Math.max(1, Math.min(100, n)));
+              }}
+              onBlur={() => setQuantityInput(String(quantity))}
               className="w-24"
             />
           </div>
