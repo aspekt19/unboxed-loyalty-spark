@@ -64,6 +64,13 @@
       "when": 1791192720374,
       "tag": "0008_identity_links_cdp_user",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791208161693,
+      "tag": "0009_programs_rewards_accept_linked_wallets",
+      "breakpoints": true
     }
   ]
 }
