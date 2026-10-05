@@ -287,7 +287,7 @@ flow_card(Inches(0.9), "🏪 Сценарий бизнеса", [
     ("Команда и агенты", "Филиалы, сотрудники, AI-агенты со scoped API-ключами"),
 ])
 flow_card(Inches(6.85), "👤 Сценарий клиента", [
-    ("Получение", "Токены в смарт-кошелёк (Privy / SIWE) — без знаний о крипте"),
+    ("Получение", "Токены в смарт-кошелёк (Coinbase / SIWE) — без знаний о крипте"),
     ("Погашение", "Тратит на награды или обменивает P2P через onchain-эскроу"),
     ("Владение", "Токены в кошельке клиента, полностью переносимы"),
 ])
@@ -299,7 +299,7 @@ kicker(s, "06 · Технологии и безопасность")
 title(s, "Корпоративный уровень с первого дня")
 subtitle(s, "Архитектура, которую не стыдно показать службе безопасности крупного партнёра.")
 tech = [
-    ("🔐", "Гибкая аутентификация", "Email / телефон / Google через Privy + встроенные кошельки; SIWE для крипто-native."),
+    ("🔐", "Гибкая аутентификация", "Google / email через Coinbase + встроенные кошельки; SIWE для крипто-native."),
     ("🛡️", "Защита данных", "Row Level Security на каждой таблице, scoped API-ключи lsk_/rwk_ с SHA-256."),
     ("🔑", "MPC-кошельки", "Coinbase CDP: приватные ключи не покидают защищённый анклав."),
     ("📜", "Открытые стандарты", "OpenAPI 3.1, agent.json, MCP-каталоги (Glama, Smithery, OpenServ)."),
@@ -364,7 +364,7 @@ for t in old:
 nc = card(s, Inches(6.85), Inches(2.4), Inches(5.6), Inches(4.1), fill=PANEL2, line=ACCENT)
 textbox(s, Inches(7.1), Inches(2.6), Inches(5.0), Inches(0.5), [[("Loyal Spark", 16, ACCENT, True)]])
 new = ["Предсказуемый USDC-SaaS от $39/мес", "ERC-20 токены — клиент реально ими владеет",
-       "Готово для агентов: REST + MCP, x402 / MPP", "SIWE и Privy — без паролей и утечек email",
+       "Готово для агентов: REST + MCP, x402 / MPP", "SIWE и Coinbase — без паролей и утечек email",
        "P2P-маркетплейс с эскроу между программами"]
 yy = Inches(3.2)
 for t in new:
@@ -398,7 +398,7 @@ status = [
     ("Live MVP", "Развёрнут на Base Mainnet (Chain ID 8453)"),
     ("Web · PWA · iOS/Android", "Capacitor 8 — мультиплатформа"),
     ("28 REST + 39 MCP", "инструментов для агентов (+20 recipient MCP)"),
-    ("Privy + SIWE", "+ scoped API-ключи и полный аудит"),
+    ("Coinbase + SIWE", "+ scoped API-ключи и полный аудит"),
 ]
 for i, (num, lab) in enumerate(status):
     x = Inches(0.9) + i * (Inches(2.78) + Inches(0.16))

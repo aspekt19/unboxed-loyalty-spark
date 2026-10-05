@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
-    // Authorization: only merchants or admins can resolve email/phone → wallet.
+    // Authorization: only merchants or admins can resolve email → wallet.
     // This prevents account enumeration by arbitrary authenticated users.
     const { data: callerProfile } = await adminClient
       .from("profiles")
