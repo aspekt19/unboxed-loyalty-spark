@@ -7,22 +7,12 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import { useGasAlerts, type GasSettings } from "@/hooks/useGasAlerts";
 
-type Settings = {
-  monthly_budget_usd: number;
-  sponsor_smart_wallets: boolean;
-  drip_enabled: boolean;
-  drip_amount_usd: number;
-  drip_cooldown_days: number;
-  drip_max_per_month: number;
-  est_sponsored_op_usd: number;
-};
-type Status = { gas_wallet: string | null; balance_eth: string | null; eth_usd: number; spent_usd: number; paymaster_configured: boolean };
 type Top = { wallet: string; usd: number };
 
 export function GasBudgetManagement() {
-  const [s, setS] = useState<Settings | null>(null);
-  const [status, setStatus] = useState<Status | null>(null);
+  const { settings: s, status, reload, setSettings } = useGasAlerts();
   const [counts, setCounts] = useState({ ops: 0, drips: 0 });
   const [top, setTop] = useState<Top[]>([]);
   const [saving, setSaving] = useState(false);
@@ -30,14 +20,11 @@ export function GasBudgetManagement() {
   const load = async () => {
     const monthStart = new Date(); monthStart.setUTCDate(1); monthStart.setUTCHours(0, 0, 0, 0);
     const since = monthStart.toISOString();
-    const [{ data: settings }, st, ops, drips] = await Promise.all([
-      supabase.from("gas_settings").select("*").eq("id", 1).maybeSingle(),
-      supabase.functions.invoke("gas-drip", { body: { action: "status" } }),
+    const [, ops, drips] = await Promise.all([
+      reload(),
       supabase.from("gas_sponsorships").select("wallet_address, est_cost_usd").gte("created_at", since).limit(5000),
       supabase.from("gas_drips").select("wallet_address, amount_usd").eq("status", "sent").gte("created_at", since).limit(5000),
     ]);
-    if (settings) setS(settings as unknown as Settings);
-    setStatus((st.data as Status) ?? null);
     const per = new Map<string, number>();
     for (const r of ops.data ?? []) per.set(r.wallet_address, (per.get(r.wallet_address) ?? 0) + Number(r.est_cost_usd ?? 0));
     for (const r of drips.data ?? []) per.set(r.wallet_address, (per.get(r.wallet_address) ?? 0) + Number(r.amount_usd ?? 0));
@@ -47,10 +34,10 @@ export function GasBudgetManagement() {
 
   useEffect(() => { load(); }, []);
 
-  const save = async (patch: Partial<Settings>) => {
+  const save = async (patch: Partial<GasSettings>) => {
     if (!s) return;
     const next = { ...s, ...patch };
-    setS(next);
+    setSettings(next);
     setSaving(true);
     const { error } = await supabase.from("gas_settings").update({ ...patch, updated_at: new Date().toISOString() }).eq("id", 1);
     setSaving(false);
@@ -62,11 +49,11 @@ export function GasBudgetManagement() {
   const pct = s.monthly_budget_usd > 0 ? Math.min(100, (spent / s.monthly_budget_usd) * 100) : 100;
   const walletUsd = status?.balance_eth ? Number(status.balance_eth) * (status.eth_usd || 0) : null;
 
-  const num = (key: keyof Settings, label: string, step = "0.01") => (
+  const num = (key: keyof GasSettings, label: string, step = "0.01") => (
     <div className="space-y-1">
       <Label htmlFor={key}>{label}</Label>
       <Input id={key} type="number" step={step} min="0" defaultValue={String(s[key])}
-        onBlur={(e) => { const v = Number(e.target.value); if (!Number.isNaN(v) && v !== s[key]) save({ [key]: v } as Partial<Settings>); }} />
+        onBlur={(e) => { const v = Number(e.target.value); if (!Number.isNaN(v) && v !== s[key]) save({ [key]: v } as Partial<GasSettings>); }} />
     </div>
   );
 
@@ -102,6 +89,8 @@ export function GasBudgetManagement() {
             {num("drip_cooldown_days", "Days between top-ups per wallet", "1")}
             {num("drip_max_per_month", "Max top-ups per wallet per month", "1")}
             {num("est_sponsored_op_usd", "Estimated cost per sponsored action (USD)", "0.001")}
+            {num("budget_warn_percent", "Warn when budget used (%)", "1")}
+            {num("low_balance_warn_usd", "Warn when gas wallet below (USD)")}
           </div>
         </CardContent>
       </Card>

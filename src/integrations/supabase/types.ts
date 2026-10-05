@@ -930,6 +930,7 @@ export type Database = {
       }
       gas_settings: {
         Row: {
+          budget_warn_percent: number
           drip_amount_usd: number
           drip_cooldown_days: number
           drip_enabled: boolean
@@ -937,12 +938,14 @@ export type Database = {
           drip_min_balance_usd: number
           est_sponsored_op_usd: number
           id: number
+          low_balance_warn_usd: number
           monthly_budget_usd: number
           sponsor_smart_wallets: boolean
           updated_at: string
           updated_by: string | null
         }
         Insert: {
+          budget_warn_percent?: number
           drip_amount_usd?: number
           drip_cooldown_days?: number
           drip_enabled?: boolean
@@ -950,12 +953,14 @@ export type Database = {
           drip_min_balance_usd?: number
           est_sponsored_op_usd?: number
           id?: number
+          low_balance_warn_usd?: number
           monthly_budget_usd?: number
           sponsor_smart_wallets?: boolean
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
+          budget_warn_percent?: number
           drip_amount_usd?: number
           drip_cooldown_days?: number
           drip_enabled?: boolean
@@ -963,6 +968,7 @@ export type Database = {
           drip_min_balance_usd?: number
           est_sponsored_op_usd?: number
           id?: number
+          low_balance_warn_usd?: number
           monthly_budget_usd?: number
           sponsor_smart_wallets?: boolean
           updated_at?: string

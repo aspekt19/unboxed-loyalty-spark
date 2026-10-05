@@ -8,6 +8,7 @@ import { PremiumManagement } from '@/components/admin/PremiumManagement';
 import { AdminManagement } from '@/components/admin/AdminManagement';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { GasBudgetManagement } from '@/components/admin/GasBudgetManagement';
+import { GasAlertBanner } from '@/components/admin/GasAlertBanner';
 import { Shield, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -62,6 +63,8 @@ const AdminPage = () => {
             </div>
           </div>
         </div>
+
+        <GasAlertBanner />
 
         <Tabs defaultValue="premium" className="space-y-4 sm:space-y-6">
           <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-2">
