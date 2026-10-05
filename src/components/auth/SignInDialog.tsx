@@ -39,7 +39,7 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
   }, [open, mode]);
 
   // Mobile browsers (Safari/Chrome) have no injected wallet: hide that option and
-  // offer deep links into popular wallet apps instead of failing with "Provider not found".
+  // use WalletConnect (opens the wallet app) instead of failing with "Provider not found".
   const hasInjected = typeof window !== 'undefined' && !!(window as unknown as { ethereum?: unknown }).ethereum;
   const walletConnectors = connectors.filter((c) => c.id !== CDP_CONNECTOR_ID && (c.id !== 'injected' || hasInjected));
 
