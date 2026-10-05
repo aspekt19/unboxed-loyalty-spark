@@ -77,16 +77,12 @@ export function CreateLoyaltyProgram() {
         return;
       }
 
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('user_id, wallet_address')
-        .eq('wallet_address', address.toLowerCase())
-        .eq('user_id', session.session.user.id)
-        .maybeSingle();
+      // Any wallet verified for this account counts (Coinbase smart account or a linked wallet).
+      const { data: profile, error: profileError } = await supabase.rpc('is_current_user_linked_wallet', { p_wallet: address.toLowerCase() });
 
       if (profileError || !profile) {
         console.error('[CreateLoyaltyProgram] Profile verification failed:', profileError?.message);
-        toast.error('Profile not found. Please reconnect your wallet.');
+        toast.error('This wallet is not linked to your account. Please sign in again.');
         return;
       }
     } catch (error) {
@@ -110,16 +106,12 @@ export function CreateLoyaltyProgram() {
             return;
           }
 
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('user_id, wallet_address')
-            .eq('wallet_address', address!.toLowerCase())
-            .eq('user_id', session.session.user.id)
-            .maybeSingle();
+          // Any wallet verified for this account counts (Coinbase smart account or a linked wallet).
+          const { data: profile, error: profileError } = await supabase.rpc('is_current_user_linked_wallet', { p_wallet: address!.toLowerCase() });
 
           if (profileError || !profile) {
             console.error('[CreateLoyaltyProgram] Profile not found for save');
-            toast.error('Profile not found. Please reconnect your wallet.');
+            toast.error('This wallet is not linked to your account. Please sign in again.');
             return;
           }
 

@@ -94,22 +94,14 @@ export function CreateReward() {
     }
 
     try {
-      // Verify profile exists before creating reward
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('wallet_address')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      // The wallet must be verified for this account (profile wallet or any linked wallet).
+      const { data: linked, error: linkError } = await supabase.rpc('is_current_user_linked_wallet', {
+        p_wallet: address.toLowerCase(),
+      });
 
-      if (profileError || !profile) {
-        console.error('[CreateReward] Profile not found:', profileError);
-        toast.error('Profile not found. Please reconnect your wallet and try again.');
-        return;
-      }
-
-      if (profile.wallet_address.toLowerCase() !== address.toLowerCase()) {
-        console.error('[CreateReward] Profile wallet mismatch');
-        toast.error('Wallet address mismatch. Please reconnect your wallet.');
+      if (linkError || !linked) {
+        console.error('[CreateReward] Wallet not linked to account:', linkError);
+        toast.error('This wallet is not linked to your account. Please sign in again and try again.');
         return;
       }
 

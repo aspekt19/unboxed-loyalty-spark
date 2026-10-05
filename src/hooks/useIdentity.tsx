@@ -1,5 +1,6 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useAccount, useDisconnect } from 'wagmi';
+import { getAddress } from 'viem';
 import {
   CDPHooksProvider,
   useCurrentUser,
@@ -67,6 +68,16 @@ function Core({ cdp, children }: { cdp: CdpState; children: ReactNode }) {
   const { address, isConnected, connector } = useAccount();
   const { disconnectAsync } = useDisconnect();
   const [dialog, setDialog] = useState<{ open: boolean; mode: SignInDialogMode }>({ open: false, mode: 'all' });
+
+  // The Coinbase connector can report the inner signer address if it connected before the
+  // smart account loaded. The app identity (profile, programs, sponsored gas) is the smart
+  // account, so re-sync wagmi to it whenever they differ.
+  const smartForSync = cdp.signedIn ? cdp.smartAccount : null;
+  useEffect(() => {
+    if (!smartForSync || !address || connector?.id !== CDP_CONNECTOR_ID) return;
+    if (address.toLowerCase() === smartForSync.toLowerCase()) return;
+    connector.emitter.emit('change', { accounts: [getAddress(smartForSync)] });
+  }, [smartForSync, address, connector]);
 
   const externalWallet = isConnected && address && connector?.id !== CDP_CONNECTOR_ID ? address.toLowerCase() : null;
 
