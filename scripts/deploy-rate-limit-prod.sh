@@ -20,7 +20,7 @@ FUNCS=(
   recipient-loyalty-mcp
   agent-prepare
   agent-wallet
-  privy-auth
+  cdp-auth
   siwe-verify
 )
 

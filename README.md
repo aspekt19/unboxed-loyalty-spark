@@ -6,7 +6,7 @@ A Web3-powered loyalty platform built on **Base Mainnet**: merchants and AI agen
 
 Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain. It operates as a **dual-mode platform**: humans interact via the web UI with flexible authentication (email, phone, social login, or wallet), while AI agents interact via REST API or MCP Server — sharing the same database, smart contracts, and tokens.
 
-**Wallet Abstraction**: Users and merchants sign in via [Privy](https://privy.io) — email, phone/SMS, Google, or external wallets (MetaMask, WalletConnect, Coinbase Wallet). Privy automatically creates an embedded wallet on Base — no crypto experience needed. Farcaster miniapp and SIWE for crypto-native users are also fully supported. Merchants can send tokens to customers by email or phone number (resolved to wallet address automatically).
+**Wallet Abstraction**: Users and merchants sign in via [Coinbase Embedded Wallets](https://docs.cdp.coinbase.com/embedded-wallets/welcome) — Google, email code, or external wallets (MetaMask, Coinbase Wallet, Base App). Coinbase automatically creates a gas-sponsored smart account on Base — no crypto experience needed. Farcaster miniapp and SIWE for crypto-native users are also fully supported. Merchants can send tokens to customers by email or QR code (resolved to wallet address automatically).
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -67,7 +67,7 @@ Loyal Spark revolutionizes traditional loyalty programs by bringing them onchain
 |-------|-----------|
 | Frontend | React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui (Radix) |
 | Animations | Framer Motion |
-| Blockchain | Wagmi v2, Viem, RainbowKit, Privy (`@privy-io/react-auth` + `@privy-io/wagmi`) |
+| Blockchain | Wagmi v2, Viem, RainbowKit, Coinbase CDP (`@coinbase/cdp-hooks` + `@coinbase/cdp-wagmi`) |
 | Network | Base Mainnet (Chain ID: 8453) |
 | Smart Contracts | Base-native B20 Asset precompile + legacy ERC-20 factory |
 | Backend | Supabase (PostgreSQL, RLS, Deno Edge Functions, Realtime) |
@@ -111,7 +111,7 @@ B20 tokens are ERC-20–compatible for balances, transfers, mint, and escrow:
 ### Quick Start
 
 **Merchant dashboard:**  
-1. Go to [loyalspark.online/merchant](https://loyalspark.online/merchant) and sign in (email, phone, Google, or wallet via Privy)  
+1. Go to [loyalspark.online/merchant](https://loyalspark.online/merchant) and sign in (Google, email via Coinbase, or a wallet)  
 2. Open **AI Agents** tab → Register an agent → Copy your API key (`lsk_...`)  
 3. Use the key in `x-api-key` header for REST or MCP calls  
 
@@ -317,7 +317,7 @@ npm run dev
 
 ### Sign In Options
 
-- **Email / Phone / Google** (recommended): Click "Sign In" via Privy — an embedded wallet is created automatically, no crypto knowledge needed
+- **Google / Email** (recommended): Click "Sign In" — a Coinbase smart wallet is created automatically, no crypto knowledge needed
 - **MetaMask / Coinbase Wallet / WalletConnect**: Traditional Web3 wallet connection
 - **Farcaster**: Auto-connects inside Warpcast miniapp
 
@@ -383,7 +383,7 @@ See the **[supabase/functions/README.md](./supabase/functions/README.md)** catal
 
 ## Security
 
-- **Flexible Authentication**: Email/phone/Google via Privy (with embedded wallets), or SIWE for Farcaster and crypto-native users
+- **Flexible Authentication**: Google/email via Coinbase (gas-sponsored smart wallets), or SIWE for Farcaster and crypto-native users
 - **API Key Auth**: SHA-256 hashed keys with `lsk_` prefix for agents
 - **Row Level Security**: All database tables protected with RLS policies
 - **Scoped Permissions**: Agents operate within granted scopes only
@@ -446,7 +446,7 @@ Pricing: **$0.001–$0.005** per read · **$0.005–$0.05** per write · HTTP 40
 ## Built With
 
 - [Base](https://base.org) — Ethereum L2 by Coinbase
-- [Privy](https://privy.io) — Wallet Abstraction & Authentication
+- [Coinbase Developer Platform](https://docs.cdp.coinbase.com) — Embedded Wallets, Paymaster & Authentication
 - [Coinbase CDP](https://docs.cdp.coinbase.com) — MPC Server Wallets (for AI agents)
 - [Wagmi](https://wagmi.sh) — React Hooks for Ethereum
 - [shadcn/ui](https://ui.shadcn.com) — UI Components
