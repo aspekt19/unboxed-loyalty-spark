@@ -134,6 +134,9 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
 
         {step === 'choose' && (
           <div className="flex flex-col gap-2">
+            <p className="px-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              Free account · no network fees
+            </p>
             <Button variant="outline" className="h-11 justify-start gap-3" onClick={() => void google()} disabled={!!busy}>
               {busy === 'google' ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
               Continue with Google
@@ -142,6 +145,9 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
               <Mail className="h-4 w-4" />
               Continue with email
             </Button>
+            <p className="px-1 pt-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              Crypto wallet
+            </p>
             <Button variant="ghost" className="h-11 justify-start gap-3" onClick={() => setStep('wallet')} disabled={!!busy}>
               <Wallet className="h-4 w-4" />
               I have a wallet
