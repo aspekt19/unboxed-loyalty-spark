@@ -132,18 +132,33 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
         </DialogHeader>
 
         {step === 'choose' && (
-          <div className="flex flex-col gap-2">
-            <Button variant="outline" className="h-11 justify-start gap-3" onClick={() => void google()} disabled={!!busy}>
-              {busy === 'google' ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
-              Continue with Google
+          <div className="flex flex-col gap-2.5">
+            <Button variant="outline" className="h-auto min-h-[3.5rem] justify-start gap-3 rounded-xl px-3.5 py-2.5 text-left" onClick={() => void google()} disabled={!!busy}>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                {busy === 'google' ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-medium">Continue with Google</span>
+                <span className="block truncate text-xs text-muted-foreground">Free wallet, no network fees</span>
+              </span>
             </Button>
-            <Button variant="outline" className="h-11 justify-start gap-3" onClick={() => setStep('email')} disabled={!!busy}>
-              <Mail className="h-4 w-4" />
-              Continue with email
+            <Button variant="outline" className="h-auto min-h-[3.5rem] justify-start gap-3 rounded-xl px-3.5 py-2.5 text-left" onClick={() => setStep('email')} disabled={!!busy}>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                <Mail className="h-4 w-4" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-medium">Continue with email</span>
+                <span className="block truncate text-xs text-muted-foreground">We send you a 6-digit code</span>
+              </span>
             </Button>
-            <Button variant="ghost" className="h-11 justify-start gap-3" onClick={() => setStep('wallet')} disabled={!!busy}>
-              <Wallet className="h-4 w-4" />
-              I have a wallet
+            <Button variant="ghost" className="h-auto min-h-[3.5rem] justify-start gap-3 rounded-xl px-3.5 py-2.5 text-left" onClick={() => setStep('wallet')} disabled={!!busy}>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted">
+                <Wallet className="h-4 w-4" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-medium">I have a wallet</span>
+                <span className="block truncate text-xs text-muted-foreground">Coinbase Wallet, Base App and more</span>
+              </span>
             </Button>
           </div>
         )}
