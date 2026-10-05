@@ -211,12 +211,15 @@ export function CreateCertificate({ onCreated }: { onCreated?: () => void }) {
               </Button>
             ))}
             <Input
-              type="number"
-              min={1}
-              step="0.01"
+              type="text"
+              inputMode="decimal"
+              autoComplete="off"
               placeholder="Custom $"
               value={customAmount}
-              onChange={(e) => setCustomAmount(e.target.value)}
+              onChange={(e) => {
+                const v = e.target.value.replace(/[^0-9.]/g, '');
+                setCustomAmount(v);
+              }}
               className="w-32"
             />
           </div>
