@@ -3,7 +3,7 @@
 ## In-app Concierge (chat-bridge) rules
 
 - Concierge answers via a tool-using agent loop on OpenServ SERV (`_shared/concierge-agent.ts`); keyword routers in `concierge-redeem.ts` / `concierge-merchant.ts` are fallback only — why: keyword routing caused endless regressions; fix behaviour via tool descriptions/system prompt, not new regexes.
-- Concierge product knowledge is generated from site docs by `node scripts/build-concierge-knowledge.mjs` into `_shared/concierge-knowledge-data.ts` — why: one source of truth; rerun after editing guide/skills/pricing docs.
+- Concierge product knowledge is generated from site docs by `node scripts/build-concierge-knowledge.mjs` into `_shared/concierge-knowledge-data.ts` — why: one source of truth; rerun after editing guide/skills/pricing docs; CI fails if the committed data is stale.
 - Every Concierge behaviour change must pass `scripts/concierge-eval/run.sh` (cases in `_shared/concierge-eval-cases.ts`, mock data, live SERV) before deploying chat-bridge; add a case for every reported bug — why: prevents re-fixing the same bugs. Each run costs SERV credits.
 
 ## API & MCP (source of truth)
