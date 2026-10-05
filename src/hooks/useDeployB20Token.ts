@@ -50,6 +50,16 @@ export function useDeployB20Token() {
     }
   }, [isSuccess, receipt, address, deployedTokenAddress]);
 
+  // Surface send failures (previously swallowed: user saw nothing and thought it deployed).
+  useEffect(() => {
+    if (!error) return;
+    txLog(HOOK_NAME, 'error', 'Deploy transaction failed', error);
+    const msg = String((error as Error).message || '');
+    if (/reject|denied|cancel/i.test(msg)) toast.error('Deployment cancelled');
+    else if (/timed out/i.test(msg)) toast.error('Network is slow — the deployment was not confirmed. Check your programs in a minute before retrying.');
+    else toast.error(`Deployment failed: ${msg.slice(0, 140) || 'unknown error'}`);
+  }, [error]);
+
   const deployToken = useCallback(
     (name: string, symbol: string, extraMinters: readonly `0x${string}`[] = []) => {
       if (!address) {
