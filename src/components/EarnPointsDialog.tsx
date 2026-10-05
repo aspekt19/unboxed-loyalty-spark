@@ -323,7 +323,7 @@ export function EarnPointsDialog({
                   Press Enter or tap “Look up” to find the customer by email
                 </p>
               )}
-              {!resolvedAddress && recipientInput && inputType === 'wallet' && !isFullAddress(recipientInput) && (
+              {!resolvedAddress && recipientInput && inputType === 'wallet' && !/^0x[0-9a-fA-F]{40}$/.test(recipientInput.trim()) && (
                 <p className="text-xs text-muted-foreground">
                   Enter the full wallet address (0x + 40 characters)
                 </p>
