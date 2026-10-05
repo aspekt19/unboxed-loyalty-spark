@@ -254,6 +254,7 @@ export type Database = {
           max_agents: number | null
           max_api_calls_monthly: number | null
           max_mint_amount_monthly: number | null
+          monthly_gas_sponsor_cap_usd: number | null
           name: string
           price_eth_monthly: number
           price_usdc_monthly: number
@@ -270,6 +271,7 @@ export type Database = {
           max_agents?: number | null
           max_api_calls_monthly?: number | null
           max_mint_amount_monthly?: number | null
+          monthly_gas_sponsor_cap_usd?: number | null
           name: string
           price_eth_monthly?: number
           price_usdc_monthly?: number
@@ -286,6 +288,7 @@ export type Database = {
           max_agents?: number | null
           max_api_calls_monthly?: number | null
           max_mint_amount_monthly?: number | null
+          monthly_gas_sponsor_cap_usd?: number | null
           name?: string
           price_eth_monthly?: number
           price_usdc_monthly?: number
@@ -889,6 +892,39 @@ export type Database = {
           id?: string
           token?: string
           used_at?: string | null
+        }
+        Relationships: []
+      }
+      gas_sponsorships: {
+        Row: {
+          created_at: string
+          gas_cost_wei: number | null
+          id: string
+          merchant_address: string | null
+          method: string
+          targets: string[]
+          tx_hash: string | null
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string
+          gas_cost_wei?: number | null
+          id?: string
+          merchant_address?: string | null
+          method: string
+          targets?: string[]
+          tx_hash?: string | null
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string
+          gas_cost_wei?: number | null
+          id?: string
+          merchant_address?: string | null
+          method?: string
+          targets?: string[]
+          tx_hash?: string | null
+          wallet_address?: string
         }
         Relationships: []
       }

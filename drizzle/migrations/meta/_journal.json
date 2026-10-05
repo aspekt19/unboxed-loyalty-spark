@@ -29,6 +29,13 @@
       "when": 1790835931288,
       "tag": "0003_secure_certificate_codes",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791181290994,
+      "tag": "0004_gas_sponsorships",
+      "breakpoints": true
     }
   ]
 }
