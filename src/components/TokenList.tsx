@@ -353,7 +353,7 @@ export function TokenList({ selectedProgram, onProgramSelect, filterByMerchant, 
             <DialogHeader>
               <DialogTitle>Transfer {selectedToken?.symbol}</DialogTitle>
               <DialogDescription>
-                Send {selectedToken?.name} tokens by wallet address, email, or phone number
+                Send {selectedToken?.name} tokens by wallet address or email
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleTransfer} className="space-y-3 sm:space-y-4 mt-3 sm:mt-4">

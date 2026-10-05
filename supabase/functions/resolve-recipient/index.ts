@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
-    // Authorization: only merchants or admins can resolve email/phone → wallet.
+    // Authorization: only merchants or admins can resolve email → wallet.
     // This prevents account enumeration by arbitrary authenticated users.
     const { data: callerProfile } = await adminClient
       .from("profiles")
@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Email / phone lookup requires merchant or admin role
+    // Email lookup requires merchant or admin role
     if (!isMerchant && !isAdminRow) {
       return new Response(
         JSON.stringify({ error: "Recipient not found" }),
@@ -94,7 +94,6 @@ Deno.serve(async (req) => {
     }
 
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
-    const isPhone = !isEmail && /^\+?[\d\s\-()]{7,}$/.test(trimmed);
 
     // Helper: given a user_id, return their primary wallet from identity_links,
     // falling back to profiles.wallet_address if no primary link exists.
@@ -177,53 +176,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (isPhone) {
-      const normalized = trimmed.replace(/[\s\-()]/g, "");
-
-      // profiles.phone
-      const { data: profile } = await adminClient
-        .from("profiles")
-        .select("wallet_address")
-        .eq("phone", normalized)
-        .limit(1)
-        .maybeSingle();
-      if (profile?.wallet_address) {
-        return new Response(
-          JSON.stringify({
-            wallet_address: profile.wallet_address.toLowerCase(),
-            resolved_by: "phone",
-            source: "profiles",
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      // customer_profiles.phone
-      const { data: cp } = await adminClient
-        .from("customer_profiles")
-        .select("wallet_address")
-        .eq("phone", normalized)
-        .limit(1)
-        .maybeSingle();
-      if (cp?.wallet_address) {
-        return new Response(
-          JSON.stringify({
-            wallet_address: cp.wallet_address.toLowerCase(),
-            resolved_by: "phone",
-            source: "customer_profiles",
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      return new Response(
-        JSON.stringify({ error: "No user found with this phone number" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     return new Response(
-      JSON.stringify({ error: "Invalid identifier. Use wallet address, email, or phone number." }),
+      JSON.stringify({ error: "Invalid identifier. Use a wallet address or an email." }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {

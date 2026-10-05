@@ -294,7 +294,7 @@ export function WalletConnectButton() {
   }
 
   const displayAddress = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : '';
-  const displayName = getPrimaryEmail(identityUser) || identityUser?.phone?.number || displayAddress;
+  const displayName = getPrimaryEmail(identityUser) || displayAddress;
 
   return (
     <button

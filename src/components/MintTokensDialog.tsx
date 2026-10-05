@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { QrReader } from '@blackbox-vision/react-qr-reader';
-import { QrCode, X, Mail, Phone, Wallet, Loader2 } from 'lucide-react';
+import { parseScannedRecipient } from '@/lib/qrScan';
+import { QrCode, X, Mail, Wallet, Loader2 } from 'lucide-react';
 import { useResolveRecipient } from '@/hooks/useResolveRecipient';
 import {
   Dialog,
@@ -35,7 +36,7 @@ export function MintTokensDialog({
   const [recipientInput, setRecipientInput] = useState('');
   const [mintAmount, setMintAmount] = useState('');
   const [showScanner, setShowScanner] = useState(false);
-  const [inputType, setInputType] = useState<'wallet' | 'email' | 'phone'>('wallet');
+  const [inputType, setInputType] = useState<'wallet' | 'email'>('wallet');
   const { resolveRecipient, isResolving } = useResolveRecipient();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,8 +56,9 @@ export function MintTokensDialog({
       (result as { text?: string } | null | undefined)?.text ??
       (result as { getText?: () => string } | null | undefined)?.getText?.();
     if (text) {
-      setRecipientInput(text);
-      setInputType('wallet');
+      const parsed = parseScannedRecipient(text);
+      setRecipientInput(parsed);
+      setInputType(parsed.includes('@') ? 'email' : 'wallet');
       setShowScanner(false);
     }
   };
@@ -65,21 +67,8 @@ export function MintTokensDialog({
     console.error('QR scan error:', error);
   };
 
-  const getPlaceholder = () => {
-    switch (inputType) {
-      case 'email': return 'customer@example.com';
-      case 'phone': return '+1234567890';
-      default: return '0x...';
-    }
-  };
-
-  const getLabel = () => {
-    switch (inputType) {
-      case 'email': return 'Customer Email';
-      case 'phone': return 'Customer Phone';
-      default: return 'Customer Wallet Address';
-    }
-  };
+  const getPlaceholder = () => (inputType === 'email' ? 'customer@example.com' : '0x...');
+  const getLabel = () => (inputType === 'email' ? 'Customer Email' : 'Customer Wallet Address');
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -87,7 +76,7 @@ export function MintTokensDialog({
         <DialogHeader>
           <DialogTitle>Issue Loyalty Tokens</DialogTitle>
           <DialogDescription>
-            Send tokens by wallet address, email, or phone number
+            Send tokens by wallet address, email, or by scanning the customer's QR code
           </DialogDescription>
         </DialogHeader>
         
@@ -108,16 +97,13 @@ export function MintTokensDialog({
                 </Button>
               </div>
               
-              <Tabs value={inputType} onValueChange={(v) => { setInputType(v as any); setRecipientInput(''); }}>
-                <TabsList className="grid w-full grid-cols-3">
+              <Tabs value={inputType} onValueChange={(v) => { setInputType(v as 'wallet' | 'email'); setRecipientInput(''); }}>
+                <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="wallet" className="text-xs gap-1">
                     <Wallet className="h-3 w-3" /> Wallet
                   </TabsTrigger>
                   <TabsTrigger value="email" className="text-xs gap-1">
                     <Mail className="h-3 w-3" /> Email
-                  </TabsTrigger>
-                  <TabsTrigger value="phone" className="text-xs gap-1">
-                    <Phone className="h-3 w-3" /> Phone
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -127,7 +113,7 @@ export function MintTokensDialog({
                 value={recipientInput}
                 onChange={(e) => setRecipientInput(e.target.value)}
                 disabled={isPending || isResolving}
-                type={inputType === 'email' ? 'email' : inputType === 'phone' ? 'tel' : 'text'}
+                type={inputType === 'email' ? 'email' : 'text'}
               />
             </div>
             

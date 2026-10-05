@@ -34,7 +34,7 @@ export const BlockchainFAQ = () => {
           <AccordionItem value="what-is-wallet">
             <AccordionTrigger>Do I need a crypto wallet?</AccordionTrigger>
             <AccordionContent className="text-muted-foreground">
-              No! You can sign in with just your email, phone, or Google. A secure embedded wallet
+              No! You can sign in with just your email or Google. A secure embedded wallet
               is created for you automatically behind the scenes by Coinbase (secured smart wallet). If you
               already have a Web3 wallet (like MetaMask or Coinbase Wallet), you can use that too.
               Either way, you control your rewards directly.

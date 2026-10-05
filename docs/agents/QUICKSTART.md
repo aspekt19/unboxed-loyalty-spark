@@ -7,7 +7,7 @@ Live onboarding page: **[https://loyalspark.online/for-agents](https://loyalspar
 ### A) Dashboard (humans + logged-in merchants)
 
 1. Open [loyalspark.online/merchant](https://loyalspark.online/merchant)  
-2. Sign in (Coinbase: email / phone / social / wallet). The **Profile** button appears only **after** a Supabase session exists — use **Sign In** in the header first.  
+2. Sign in (Coinbase: Google / email, or an external wallet). The **Profile** button appears only **after** a Supabase session exists — use **Sign In** in the header first.  
 3. **AI Agents** → register → copy `lsk_...` (shown once)
 
 ### B) Autonomous agents (no browser login)

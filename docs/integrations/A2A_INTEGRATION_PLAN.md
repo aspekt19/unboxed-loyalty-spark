@@ -2,7 +2,7 @@
 
 ## Status: Implemented ✅
 
-The Loyal Spark platform operates as a dual-mode protocol where **humans** interact via the web UI (Coinbase for email/phone/Google + SIWE for Farcaster/crypto-native), and **AI agents** interact via REST API or MCP Server — sharing the same database, smart contracts, and tokens.
+The Loyal Spark platform operates as a dual-mode protocol where **humans** interact via the web UI (Coinbase for Google/email + SIWE for Farcaster/crypto-native), and **AI agents** interact via REST API or MCP Server — sharing the same database, smart contracts, and tokens.
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -85,7 +85,7 @@ The Loyal Spark platform operates as a dual-mode protocol where **humans** inter
 
 | Feature | Humans (UI) | Agents (API/MCP) |
 |---------|-------------|------------------|
-| Authentication | Coinbase (email/phone/Google) + SIWE (Farcaster) | API key (`x-api-key`) |
+| Authentication | Coinbase (Google/email) + SIWE (Farcaster) | API key (`x-api-key`) |
 | Wallet | Coinbase embedded smart wallets / MetaMask / WalletConnect | CDP Server Wallet (MPC) |
 | Create program | UI form → browser wallet | POST `/programs` → CDP |
 | Mint tokens | Form → browser wallet signs | POST `/mint` → CDP signs |

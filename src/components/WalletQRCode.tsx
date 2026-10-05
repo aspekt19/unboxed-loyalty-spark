@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { QRCodeSVG } from 'qrcode.react';
-import { useAccount } from 'wagmi';
+import { useActiveCustomerWallet } from '@/hooks/useActiveCustomerWallet';
 import { QrCode, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog';
 
 export function WalletQRCode() {
-  const { address } = useAccount();
+  const { activeAddress: address } = useActiveCustomerWallet();
   const [copied, setCopied] = useState(false);
 
   if (!address) return null;
