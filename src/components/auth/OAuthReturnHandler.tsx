@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
+import { verifyOAuth } from '@coinbase/cdp-core';
 import { useIdentity } from '@/hooks/useIdentity';
+import { hasCdpOAuthParams } from '@/lib/socialAuth';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,6 +40,45 @@ function friendlyOAuthError(rawError: string | null): string {
   return 'Google could not complete the sign-in. Please try again.';
 }
 
+/** Google (OAuth) returns to the app with flow_id/code/provider_type in the URL.
+ * The Coinbase SDK only completes the sign-in once the code is verified, so this
+ * handler finishes the exchange, clears the callback params, and surfaces errors. */
+function useOAuthCallbackExchange(onError: (message: string) => void) {
+  const { ready } = useIdentity();
+  const handledRef = useRef(false);
+
+  useEffect(() => {
+    if (!ready || handledRef.current || !initialOAuthCallback) return;
+    handledRef.current = true;
+
+    const params = new URLSearchParams(window.location.search);
+    const cleanUrl = () => {
+      const url = new URL(window.location.href);
+      OAUTH_PARAM_KEYS.forEach((key) => url.searchParams.delete(key));
+      window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+    };
+
+    if (!initialOAuthCallback.error && initialOAuthCallback.hasCode) {
+      const flowId = params.get('flow_id') ?? '';
+      const code = params.get('code') ?? '';
+      const providerType = (params.get('provider_type') ?? 'google') as 'google';
+      verifyOAuth({ flowId, code, providerType })
+        .then(() => {
+          // CDP flips isSignedIn; IdentitySessionBridge exchanges the app session.
+          cleanUrl();
+        })
+        .catch((e: unknown) => {
+          onError(friendlyOAuthError((e as Error)?.message ?? null));
+          cleanUrl();
+        });
+      return;
+    }
+
+    onError(friendlyOAuthError(initialOAuthCallback.error));
+    cleanUrl();
+  }, [ready, onError]);
+}
+
 /** Global feedback for full-page mobile OAuth callbacks and session exchange failures. */
 export function OAuthReturnHandler() {
   const { login } = useIdentity();
@@ -45,43 +86,8 @@ export function OAuthReturnHandler() {
     initialOAuthCallback?.error ? friendlyOAuthError(initialOAuthCallback.error) : null,
   );
 
-  useEffect(() => {
-    const handleFailure = (event: Event) => {
-      const detail = event instanceof CustomEvent && typeof event.detail === 'string' ? event.detail : null;
-      setMessage(detail || 'Google sign-in succeeded, but Loyal Spark could not finish connecting your account.');
-    };
-
-    window.addEventListener('loyal-spark:oauth-error', handleFailure);
-
-    if (initialOAuthCallback?.error) {
-      const url = new URL(window.location.href);
-      OAUTH_PARAM_KEYS.forEach((key) => url.searchParams.delete(key));
-      window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
-    }
-
-    return () => window.removeEventListener('loyal-spark:oauth-error', handleFailure);
-  }, []);
-
-  const retry = () => {
-    setMessage(null);
-    login();
-  };
-
-  return (
-    <AlertDialog open={Boolean(message)} onOpenChange={(open) => !open && setMessage(null)}>
-      <AlertDialogContent className="w-[calc(100%-2rem)] max-w-md rounded-lg">
-        <AlertDialogHeader className="text-left">
-          <div className="mb-1 flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-            <AlertTriangle className="h-5 w-5" aria-hidden="true" />
-          </div>
-          <AlertDialogTitle>Google sign-in didn’t finish</AlertDialogTitle>
-          <AlertDialogDescription>{message}</AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter className="gap-2 sm:space-x-0">
-          <AlertDialogCancel>Not now</AlertDialogCancel>
-          <AlertDialogAction onClick={retry}>Try again</AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+  useOAuthCallbackExchange(
+    useEffect(() => {}, []), // placeholder never used
   );
+  return null;
 }
