@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { QrReader } from '@blackbox-vision/react-qr-reader';
+import { parseScannedRecipient } from '@/lib/qrScan';
 import { QrCode, X, Calculator, Coins, Mail, Phone, Wallet, Loader2, Shield, Star } from 'lucide-react';
 import { useResolveRecipient } from '@/hooks/useResolveRecipient';
 import { supabase } from '@/integrations/supabase/client';
@@ -162,12 +163,13 @@ export function EarnPointsDialog({
       (result as { text?: string } | null | undefined)?.text ??
       (result as { getText?: () => string } | null | undefined)?.getText?.();
     if (text) {
-      setRecipientInput(text);
-      setInputType('wallet');
+      const parsed = parseScannedRecipient(text);
+      setRecipientInput(parsed);
+      setInputType(parsed.includes('@') ? 'email' : 'wallet');
       setShowScanner(false);
       // Auto-resolve scanned address
       (async () => {
-        const wallet = await resolveRecipient(text);
+        const wallet = await resolveRecipient(parsed);
         if (wallet) setResolvedAddress(wallet);
       })();
     }
