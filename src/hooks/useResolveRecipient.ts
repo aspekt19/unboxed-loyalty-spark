@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 
 interface ResolveResult {
   wallet_address: string;
-  resolved_by: 'address' | 'email' | 'phone';
+  resolved_by: 'address' | 'email';
 }
 
 export function useResolveRecipient() {
@@ -41,7 +41,7 @@ export function useResolveRecipient() {
       }
 
       const result = data as ResolveResult;
-      const resolvedLabel = result.resolved_by === 'email' ? 'email' : 'phone number';
+      const resolvedLabel = 'email';
       toast.success(`Found wallet by ${resolvedLabel}`);
       return result.wallet_address;
     } catch (err) {

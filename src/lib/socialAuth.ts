@@ -16,7 +16,7 @@ export interface IdentityUser {
   phone?: { number?: string };
 }
 
-const SOCIAL_TYPES = new Set(['email', 'google', 'sms', 'apple', 'oauth']);
+const SOCIAL_TYPES = new Set(['email', 'google', 'oauth']);
 
 export function getLinkedAccounts(user: IdentityUser | null | undefined): LinkedAccount[] {
   return user?.linkedAccounts ?? [];

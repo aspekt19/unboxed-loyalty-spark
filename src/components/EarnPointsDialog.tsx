@@ -53,7 +53,7 @@ export function EarnPointsDialog({
   const [resolvedAddress, setResolvedAddress] = useState<string | null>(null);
   const [purchaseAmount, setPurchaseAmount] = useState('');
   const [showScanner, setShowScanner] = useState(false);
-  const [inputType, setInputType] = useState<'wallet' | 'email' | 'phone'>('wallet');
+  const [inputType, setInputType] = useState<'wallet' | 'email'>('wallet');
   const { resolveRecipient, isResolving } = useResolveRecipient();
   const [tierInfo, setTierInfo] = useState<CustomerTierInfo | null>(null);
   const [isFetchingTier, setIsFetchingTier] = useState(false);
@@ -184,13 +184,7 @@ export function EarnPointsDialog({
     }
   }, [isOpen]);
 
-  const getPlaceholder = () => {
-    switch (inputType) {
-      case 'email': return 'customer@example.com';
-      case 'phone': return '+1234567890';
-      default: return '0x...';
-    }
-  };
+  const getPlaceholder = () => (inputType === 'email' ? 'customer@example.com' : '0x...');
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -201,7 +195,7 @@ export function EarnPointsDialog({
             Earn Points
           </DialogTitle>
           <DialogDescription>
-            Scan QR, enter email/phone, or wallet — rate is set by customer's tier.
+            Scan QR, enter email, or wallet — rate is set by customer's tier.
           </DialogDescription>
         </DialogHeader>
 
@@ -257,16 +251,13 @@ export function EarnPointsDialog({
                 </div>
               </div>
               
-              <Tabs value={inputType} onValueChange={(v) => { setInputType(v as any); setRecipientInput(''); setResolvedAddress(null); setTierInfo(null); }}>
-                <TabsList className="grid w-full grid-cols-3">
+              <Tabs value={inputType} onValueChange={(v) => { setInputType(v as 'wallet' | 'email'); setRecipientInput(''); setResolvedAddress(null); setTierInfo(null); }}>
+                <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="wallet" className="text-xs gap-1">
                     <Wallet className="h-3 w-3" /> Wallet
                   </TabsTrigger>
                   <TabsTrigger value="email" className="text-xs gap-1">
                     <Mail className="h-3 w-3" /> Email
-                  </TabsTrigger>
-                  <TabsTrigger value="phone" className="text-xs gap-1">
-                    <Phone className="h-3 w-3" /> Phone
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -276,7 +267,7 @@ export function EarnPointsDialog({
                 value={recipientInput}
                 onChange={e => { setRecipientInput(e.target.value); setResolvedAddress(null); setTierInfo(null); }}
                 disabled={isPending || isResolving}
-                type={inputType === 'email' ? 'email' : inputType === 'phone' ? 'tel' : 'text'}
+                type={inputType === 'email' ? 'email' : 'text'}
               />
 
               {/* Customer tier badge */}

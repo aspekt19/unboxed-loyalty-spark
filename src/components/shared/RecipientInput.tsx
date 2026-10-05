@@ -2,9 +2,9 @@ import type * as React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Mail, Phone, Wallet } from 'lucide-react';
+import { Mail, Wallet } from 'lucide-react';
 
-export type RecipientInputType = 'wallet' | 'email' | 'phone';
+export type RecipientInputType = 'wallet' | 'email';
 
 interface RecipientInputProps {
   value: string;
@@ -19,9 +19,9 @@ interface RecipientInputProps {
 }
 
 /**
- * Shared recipient input with Wallet / Email / Phone tabs.
+ * Shared recipient input with Wallet / Email tabs (no phone sign-in exists).
  * Resolution to a wallet address is handled by the caller via
- * `useResolveRecipient`. Used by mint, transfer, send-with-round-up flows.
+ * `useResolveRecipient`.
  */
 export function RecipientInput({
   value,
@@ -32,29 +32,19 @@ export function RecipientInput({
   walletLabel = 'Recipient Wallet Address',
   id = 'recipient-input',
 }: RecipientInputProps) {
-  const placeholder =
-    inputType === 'email' ? 'recipient@example.com'
-    : inputType === 'phone' ? '+1234567890'
-    : '0x...';
-
-  const label =
-    inputType === 'email' ? 'Recipient Email'
-    : inputType === 'phone' ? 'Recipient Phone'
-    : walletLabel;
+  const placeholder = inputType === 'email' ? 'recipient@example.com' : '0x...';
+  const label = inputType === 'email' ? 'Recipient Email' : walletLabel;
 
   return (
     <div className="space-y-2">
       <Label htmlFor={id}>{label}</Label>
       <Tabs value={inputType} onValueChange={(v) => { onInputTypeChange(v as RecipientInputType); onChange(''); }}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="wallet" className="text-xs gap-1">
             <Wallet className="h-3 w-3" /> Wallet
           </TabsTrigger>
           <TabsTrigger value="email" className="text-xs gap-1">
             <Mail className="h-3 w-3" /> Email
-          </TabsTrigger>
-          <TabsTrigger value="phone" className="text-xs gap-1">
-            <Phone className="h-3 w-3" /> Phone
           </TabsTrigger>
         </TabsList>
       </Tabs>
@@ -64,7 +54,7 @@ export function RecipientInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        type={inputType === 'email' ? 'email' : inputType === 'phone' ? 'tel' : 'text'}
+        type={inputType === 'email' ? 'email' : 'text'}
       />
     </div>
   );

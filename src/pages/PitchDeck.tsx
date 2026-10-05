@@ -82,7 +82,7 @@ const PitchDeck = () => {
       productFlow: {
         merchant: [
           { step: 'Deploy Program', description: 'Create B20 loyalty token on Base in minutes', icon: Coins },
-          { step: 'Run Loyalty', description: 'Mint by email/phone/wallet, vouchers, tiers, RFM, automation', icon: BarChart3 },
+          { step: 'Run Loyalty', description: 'Mint by email/wallet/QR, vouchers, tiers, RFM, automation', icon: BarChart3 },
           { step: 'Invite Team & Agents', description: 'Branches, employees, AI agents with scoped API keys', icon: UserPlus },
         ],
         customer: [
