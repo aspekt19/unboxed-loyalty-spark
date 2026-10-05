@@ -249,12 +249,12 @@ export function CreateCertificate({ onCreated }: { onCreated?: () => void }) {
           </div>
           {rateMode === 'custom' && (
             <Input
-              type="number"
-              min={0.01}
-              step="0.01"
+              type="text"
+              inputMode="decimal"
+              autoComplete="off"
               placeholder={`Points per $1 (e.g. ${programRate})`}
               value={customRate}
-              onChange={(e) => setCustomRate(e.target.value)}
+              onChange={(e) => setCustomRate(e.target.value.replace(/[^0-9.]/g, ''))}
             />
           )}
         </div>
