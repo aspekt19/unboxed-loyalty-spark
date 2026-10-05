@@ -78,11 +78,11 @@ export function CreateLoyaltyProgram() {
       }
 
       // Any wallet verified for this account counts (Coinbase smart account or a linked wallet).
-          const { data: profile, error: profileError } = await supabase.rpc('is_current_user_linked_wallet', { p_wallet: address.toLowerCase() });
+      const { data: profile, error: profileError } = await supabase.rpc('is_current_user_linked_wallet', { p_wallet: address.toLowerCase() });
 
       if (profileError || !profile) {
         console.error('[CreateLoyaltyProgram] Profile verification failed:', profileError?.message);
-        toast.error('Profile not found. Please reconnect your wallet.');
+        toast.error('This wallet is not linked to your account. Please sign in again.');
         return;
       }
     } catch (error) {
@@ -111,7 +111,7 @@ export function CreateLoyaltyProgram() {
 
           if (profileError || !profile) {
             console.error('[CreateLoyaltyProgram] Profile not found for save');
-            toast.error('Profile not found. Please reconnect your wallet.');
+            toast.error('This wallet is not linked to your account. Please sign in again.');
             return;
           }
 
