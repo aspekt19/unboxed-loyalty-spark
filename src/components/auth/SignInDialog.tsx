@@ -38,12 +38,12 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
     setBusy(null);
   }, [open, mode]);
 
-  // Only two wallet paths: Coinbase Wallet / Base App and WalletConnect
-  // (mobile: opens the wallet app, desktop: QR code). Browser-injected wallets
-  // are dropped — duplicate MetaMask/Bitget entries and "Provider not found"
-  // on mobile made this list unreliable.
+  // Mobile browsers (Safari/Chrome) have no injected wallet: hide that option and
+  // use WalletConnect (opens the wallet app) instead of failing with "Provider not found".
+  const hasInjected = typeof window !== 'undefined' && !!(window as unknown as { ethereum?: unknown }).ethereum;
   const walletConnectors = connectors.filter((connector) => {
     if (connector.id === CDP_CONNECTOR_ID) return false;
+    if (connector.id === 'injected') return hasInjected;
     return /coinbase/i.test(connector.id) || connector.id === 'walletConnect';
   });
 
@@ -108,14 +108,10 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
   };
 
   const walletLabel = (name: string, id: string) => {
+    if (id === 'injected') return 'Browser wallet (MetaMask, Rabby…)';
     if (/coinbase/i.test(name) || /coinbase/i.test(id)) return 'Coinbase Wallet / Base App';
     if (id === 'walletConnect') return 'Other wallets (MetaMask, Trust, Rainbow…)';
     return name;
-  };
-
-  const walletHint = (name: string, id: string) => {
-    if (/coinbase/i.test(name) || /coinbase/i.test(id)) return 'Connects through the Coinbase app or browser extension';
-    return 'Scan a QR code on desktop · opens your wallet app on mobile';
   };
 
   return (
@@ -134,9 +130,6 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
 
         {step === 'choose' && (
           <div className="flex flex-col gap-2">
-            <p className="px-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-              Free account · no network fees
-            </p>
             <Button variant="outline" className="h-11 justify-start gap-3" onClick={() => void google()} disabled={!!busy}>
               {busy === 'google' ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
               Continue with Google
@@ -145,9 +138,6 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
               <Mail className="h-4 w-4" />
               Continue with email
             </Button>
-            <p className="px-1 pt-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-              Crypto wallet
-            </p>
             <Button variant="ghost" className="h-11 justify-start gap-3" onClick={() => setStep('wallet')} disabled={!!busy}>
               <Wallet className="h-4 w-4" />
               I have a wallet
@@ -184,18 +174,9 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
         {step === 'wallet' && (
           <div className="flex flex-col gap-2">
             {walletConnectors.map((c) => (
-              <Button
-                key={c.uid}
-                variant="outline"
-                className="h-auto min-h-14 justify-start gap-3 px-4 py-3 text-left"
-                onClick={() => void connectWallet(c.uid)}
-                disabled={!!busy}
-              >
-                {busy === c.uid ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> : <Wallet className="h-4 w-4 shrink-0" />}
-                <span className="flex min-w-0 flex-col items-start gap-0.5">
-                  <span className="text-sm font-medium leading-tight">{walletLabel(c.name, c.id)}</span>
-                  <span className="text-xs font-normal leading-snug text-muted-foreground">{walletHint(c.name, c.id)}</span>
-                </span>
+              <Button key={c.uid} variant="outline" className="h-11 justify-start gap-3" onClick={() => void connectWallet(c.uid)} disabled={!!busy}>
+                {busy === c.uid ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
+                <span className="truncate">{walletLabel(c.name, c.id)}</span>
               </Button>
             ))}
             {isCdpEnabled && mode !== 'wallet' && (
