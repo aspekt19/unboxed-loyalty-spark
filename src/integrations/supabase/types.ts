@@ -895,9 +895,85 @@ export type Database = {
         }
         Relationships: []
       }
+      gas_drips: {
+        Row: {
+          amount_usd: number
+          amount_wei: number
+          created_at: string
+          id: string
+          status: string
+          tx_hash: string | null
+          user_id: string | null
+          wallet_address: string
+        }
+        Insert: {
+          amount_usd: number
+          amount_wei: number
+          created_at?: string
+          id?: string
+          status?: string
+          tx_hash?: string | null
+          user_id?: string | null
+          wallet_address: string
+        }
+        Update: {
+          amount_usd?: number
+          amount_wei?: number
+          created_at?: string
+          id?: string
+          status?: string
+          tx_hash?: string | null
+          user_id?: string | null
+          wallet_address?: string
+        }
+        Relationships: []
+      }
+      gas_settings: {
+        Row: {
+          drip_amount_usd: number
+          drip_cooldown_days: number
+          drip_enabled: boolean
+          drip_max_per_month: number
+          drip_min_balance_usd: number
+          est_sponsored_op_usd: number
+          id: number
+          monthly_budget_usd: number
+          sponsor_smart_wallets: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          drip_amount_usd?: number
+          drip_cooldown_days?: number
+          drip_enabled?: boolean
+          drip_max_per_month?: number
+          drip_min_balance_usd?: number
+          est_sponsored_op_usd?: number
+          id?: number
+          monthly_budget_usd?: number
+          sponsor_smart_wallets?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          drip_amount_usd?: number
+          drip_cooldown_days?: number
+          drip_enabled?: boolean
+          drip_max_per_month?: number
+          drip_min_balance_usd?: number
+          est_sponsored_op_usd?: number
+          id?: number
+          monthly_budget_usd?: number
+          sponsor_smart_wallets?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       gas_sponsorships: {
         Row: {
           created_at: string
+          est_cost_usd: number | null
           gas_cost_wei: number | null
           id: string
           merchant_address: string | null
@@ -908,6 +984,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          est_cost_usd?: number | null
           gas_cost_wei?: number | null
           id?: string
           merchant_address?: string | null
@@ -918,6 +995,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          est_cost_usd?: number | null
           gas_cost_wei?: number | null
           id?: string
           merchant_address?: string | null
@@ -2604,6 +2682,7 @@ export type Database = {
         Returns: number
       }
       expire_plan_subscriptions: { Args: never; Returns: undefined }
+      gas_month_spent_usd: { Args: never; Returns: number }
       generate_certificate_code: { Args: never; Returns: string }
       generate_referral_code: {
         Args: { p_referrer_address: string; p_token_address: string }

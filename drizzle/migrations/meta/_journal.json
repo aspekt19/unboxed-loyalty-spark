@@ -36,6 +36,13 @@
       "when": 1791181290994,
       "tag": "0004_gas_sponsorships",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791182990387,
+      "tag": "0005_migration",
+      "breakpoints": true
     }
   ]
 }
