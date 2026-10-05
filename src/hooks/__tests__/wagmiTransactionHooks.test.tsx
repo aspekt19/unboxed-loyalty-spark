@@ -47,6 +47,16 @@ vi.mock("wagmi", () => ({
   },
 }));
 
+vi.mock("@/hooks/useSponsoredSendTransaction", () => ({
+  useSponsoredSendTransaction: () => ({
+    sendTransaction,
+    data: sendState.data,
+    isPending: sendState.isPending,
+    error: sendState.error,
+    reset,
+  }),
+}));
+
 vi.mock("sonner", () => ({ toast: { error: toastError, success: toastSuccess } }));
 
 import { useMintTokens } from "../useMintTokens";

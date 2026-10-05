@@ -1,5 +1,6 @@
+import { useSponsoredSendTransaction } from "@/hooks/useSponsoredSendTransaction";
 import { useCallback, useEffect } from 'react';
-import { useSendTransaction, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
+import { useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { maxUint256 } from 'viem';
 import { toast } from 'sonner';
 import { encodeWithBuilderCode } from '@/config/builder-code';
@@ -13,7 +14,7 @@ export interface ApproveTokensResult extends TransactionResult {
 }
 
 export function useApproveTokens(): ApproveTokensResult {
-  const { sendTransaction, data: hash, isPending, error } = useSendTransaction();
+  const { sendTransaction, data: hash, isPending, error } = useSponsoredSendTransaction();
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,

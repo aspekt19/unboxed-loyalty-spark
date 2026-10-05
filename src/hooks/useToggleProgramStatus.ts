@@ -1,4 +1,5 @@
-import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
+import { useSponsoredSendTransaction } from "@/hooks/useSponsoredSendTransaction";
+import { useWaitForTransactionReceipt } from 'wagmi';
 import { toast } from 'sonner';
 import { encodeWithBuilderCode } from '@/config/builder-code';
 import { assertOnchainAvailable, OnchainMaintenanceError } from '@/lib/cobalt';
@@ -23,7 +24,7 @@ function handleTransactionError(err: unknown, action: string): void {
 
 export function useToggleProgramStatus() {
   // sendTransaction + encodeWithBuilderCode — writeContract cannot carry the ERC-8021 suffix.
-  const { data: hash, sendTransaction, isPending, error } = useSendTransaction();
+  const { data: hash, sendTransaction, isPending, error } = useSponsoredSendTransaction();
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,

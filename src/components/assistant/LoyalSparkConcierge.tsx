@@ -1,7 +1,8 @@
+import { useSponsoredSendTransaction } from "@/hooks/useSponsoredSendTransaction";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Bot, Loader2, Send } from "lucide-react";
 import { parseUnits, type Hex } from "viem";
-import { useAccount, useSendTransaction, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount, useWaitForTransactionReceipt } from "wagmi";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -49,7 +50,7 @@ export function LoyalSparkConcierge({ role, className, title }: Props) {
   const pendingRedeem = useRef<ConfirmRedeemAction | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const { sendTransaction, data: txHash, reset: resetTx, error: txError } = useSendTransaction();
+  const { sendTransaction, data: txHash, reset: resetTx, error: txError } = useSponsoredSendTransaction();
   const { isLoading: confirming, isSuccess: confirmed } = useWaitForTransactionReceipt({ hash: txHash });
 
   useEffect(() => {

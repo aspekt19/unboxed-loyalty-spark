@@ -1,6 +1,7 @@
+import { useSponsoredSendTransaction } from "@/hooks/useSponsoredSendTransaction";
 import { assertOnchainAvailable, OnchainMaintenanceError } from "@/lib/cobalt";
 import {
-  useSendTransaction,
+  
   useWaitForTransactionReceipt,
   useAccount,
 } from 'wagmi';
@@ -22,7 +23,7 @@ const HOOK_NAME = 'DeployB20';
  */
 export function useDeployB20Token() {
   const { address } = useAccount();
-  const { sendTransaction, data: hash, isPending, error } = useSendTransaction();
+  const { sendTransaction, data: hash, isPending, error } = useSponsoredSendTransaction();
   const [deployedTokenAddress, setDeployedTokenAddress] = useState<string | null>(
     null,
   );

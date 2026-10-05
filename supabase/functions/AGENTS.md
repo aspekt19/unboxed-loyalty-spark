@@ -17,3 +17,4 @@
 ## Gas sponsorship (Paymaster)
 
 - Wallets use `paymaster-proxy` as their ERC-7677 `paymasterService`; it forwards to `CDP_PAYMASTER_URL` only when `_shared/paymaster-policy.ts` confirms every inner call targets Loyal Spark contracts (registered tokens, factories, escrow) with zero ETH value — why: an open paymaster URL would let anyone spend our gas budget.
+- Frontend onchain buttons send via `useSponsoredSendTransaction` (paymaster when the wallet supports it, plain tx otherwise); paid flows that move USDC/ETH to treasury stay on plain `useSendTransaction` — why: the proxy refuses non-Loyal-Spark targets.

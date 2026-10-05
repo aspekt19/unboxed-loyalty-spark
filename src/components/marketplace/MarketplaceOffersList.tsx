@@ -1,5 +1,6 @@
+import { useSponsoredSendTransaction } from "@/hooks/useSponsoredSendTransaction";
 import { useState, useEffect } from 'react';
-import { useAccount, useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
+import { useAccount, useWaitForTransactionReceipt } from 'wagmi';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -45,13 +46,13 @@ export function MarketplaceOffersList() {
 
   const escrowAddress = CONTRACTS.LOYALTY_TOKEN_ESCROW.address;
 
-  const { sendTransaction: sendApprove, data: approveHash, isPending: approvePending } = useSendTransaction();
+  const { sendTransaction: sendApprove, data: approveHash, isPending: approvePending } = useSponsoredSendTransaction();
   const { isSuccess: approveConfirmed } = useWaitForTransactionReceipt({ hash: approveHash });
 
-  const { sendTransaction: sendFill, data: fillHash, isPending: fillPending } = useSendTransaction();
+  const { sendTransaction: sendFill, data: fillHash, isPending: fillPending } = useSponsoredSendTransaction();
   const { isSuccess: fillConfirmed } = useWaitForTransactionReceipt({ hash: fillHash });
 
-  const { sendTransaction: sendCancel, data: cancelHash, isPending: cancelPending } = useSendTransaction();
+  const { sendTransaction: sendCancel, data: cancelHash, isPending: cancelPending } = useSponsoredSendTransaction();
   const { isSuccess: cancelConfirmed } = useWaitForTransactionReceipt({ hash: cancelHash });
 
   // Stored offer for async flow
