@@ -71,7 +71,7 @@ export function useSponsoredSendTransaction() {
           calls: [{ to: args.to, data: args.data, value: 0n }],
           capabilities: { paymasterService: { url: PAYMASTER_PROXY_URL } },
         });
-        const { waitForCallsStatus } = await import("@wagmi/core");
+        const { waitForCallsStatus } = await import("wagmi/actions");
         const { config } = await import("@/config/wagmi");
         const res = await waitForCallsStatus(config, { id });
         const h = res.receipts?.[0]?.transactionHash;

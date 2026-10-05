@@ -1,5 +1,6 @@
+import { useSponsoredSendTransaction } from "@/hooks/useSponsoredSendTransaction";
 import { assertOnchainAvailable, OnchainMaintenanceError } from "@/lib/cobalt";
-import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
+import { useWaitForTransactionReceipt } from 'wagmi';
 import { CONTRACTS } from '@/config/contracts';
 import { parseUnits } from 'viem';
 import { toast } from 'sonner';
@@ -13,7 +14,7 @@ export interface MintTokensResult extends ResettableTransactionResult {
 }
 
 export function useMintTokens(): MintTokensResult {
-  const { sendTransaction, data: hash, isPending, error, reset } = useSendTransaction();
+  const { sendTransaction, data: hash, isPending, error, reset } = useSponsoredSendTransaction();
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,

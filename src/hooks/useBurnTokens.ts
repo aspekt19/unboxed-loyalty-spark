@@ -1,4 +1,5 @@
-import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
+import { useSponsoredSendTransaction } from "@/hooks/useSponsoredSendTransaction";
+import { useWaitForTransactionReceipt } from 'wagmi';
 import { parseUnits } from 'viem';
 import { toast } from 'sonner';
 import { encodeWithBuilderCode } from '@/config/builder-code';
@@ -11,7 +12,7 @@ export interface BurnTokensResult extends TransactionResult {
 }
 
 export function useBurnTokens(): BurnTokensResult {
-  const { sendTransaction, data: hash, isPending, error } = useSendTransaction();
+  const { sendTransaction, data: hash, isPending, error } = useSponsoredSendTransaction();
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,

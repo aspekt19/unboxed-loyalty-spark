@@ -1,4 +1,5 @@
-import { useSendTransaction, useWaitForTransactionReceipt, useAccount, usePublicClient } from 'wagmi';
+import { useSponsoredSendTransaction } from "@/hooks/useSponsoredSendTransaction";
+import { useWaitForTransactionReceipt, useAccount, usePublicClient } from 'wagmi';
 import { CONTRACTS } from '@/config/contracts';
 import { toast } from 'sonner';
 import { useEffect, useState, useCallback } from 'react';
@@ -11,7 +12,7 @@ const HOOK_NAME = 'DeployToken';
 export function useDeployLoyaltyToken() {
   const { address } = useAccount();
   const publicClient = usePublicClient();
-  const { sendTransaction, data: hash, isPending, error } = useSendTransaction();
+  const { sendTransaction, data: hash, isPending, error } = useSponsoredSendTransaction();
   const [deployedTokenAddress, setDeployedTokenAddress] = useState<string | null>(null);
 
   const { isLoading: isConfirming, isSuccess, data: receipt } = useWaitForTransactionReceipt({

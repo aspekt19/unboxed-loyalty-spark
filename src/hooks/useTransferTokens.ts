@@ -1,5 +1,6 @@
+import { useSponsoredSendTransaction } from "@/hooks/useSponsoredSendTransaction";
 import { assertOnchainAvailable, OnchainMaintenanceError } from "@/lib/cobalt";
-import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
+import { useWaitForTransactionReceipt } from 'wagmi';
 import { parseUnits } from 'viem';
 import { toast } from 'sonner';
 import { encodeWithBuilderCode } from '@/config/builder-code';
@@ -12,7 +13,7 @@ export interface TransferTokensResult extends TransactionResult {
 }
 
 export function useTransferTokens(): TransferTokensResult {
-  const { sendTransaction, data: hash, isPending, error } = useSendTransaction();
+  const { sendTransaction, data: hash, isPending, error } = useSponsoredSendTransaction();
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,

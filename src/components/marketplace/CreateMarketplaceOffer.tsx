@@ -1,3 +1,4 @@
+import { useSponsoredSendTransaction } from "@/hooks/useSponsoredSendTransaction";
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useMultiTokenBalance, applyOptimisticBalanceSpend, reconcileCustomerBalances } from '@/hooks/useMultiTokenBalance';
-import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
+import { useWaitForTransactionReceipt } from 'wagmi';
 import { parseUnits } from 'viem';
 import { encodeWithBuilderCode } from '@/config/builder-code';
 import { CONTRACTS } from '@/config/contracts';
@@ -45,10 +46,10 @@ export function CreateMarketplaceOffer() {
 
   const { balances, isLoading: balancesLoading } = useMultiTokenBalance(tokens);
 
-  const { sendTransaction: sendApprove, data: approveHash, isPending: approvePending } = useSendTransaction();
+  const { sendTransaction: sendApprove, data: approveHash, isPending: approvePending } = useSponsoredSendTransaction();
   const { isSuccess: approveConfirmed } = useWaitForTransactionReceipt({ hash: approveHash });
 
-  const { sendTransaction: sendCreate, data: createHash, isPending: createPending } = useSendTransaction();
+  const { sendTransaction: sendCreate, data: createHash, isPending: createPending } = useSponsoredSendTransaction();
   const { isSuccess: createConfirmed } = useWaitForTransactionReceipt({ hash: createHash });
 
   const escrowAddress = CONTRACTS.LOYALTY_TOKEN_ESCROW.address;
