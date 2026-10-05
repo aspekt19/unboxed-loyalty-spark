@@ -56,7 +56,9 @@ Deno.serve(async (req) => {
       callerWallet
         ? adminClient.from("loyalty_programs").select("id").ilike("merchant_address", callerWallet).limit(1)
         : none,
-      adminClient.from("merchant_employees").select("id").eq("user_id", user.id).limit(1),
+      callerWallet
+        ? adminClient.from("merchant_employees").select("id").ilike("employee_address", callerWallet).limit(1)
+        : none,
       adminClient.rpc("has_role", { _user_id: user.id, _role: "admin" }),
     ]);
     const isMerchant =
