@@ -178,9 +178,18 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
         {step === 'wallet' && (
           <div className="flex flex-col gap-2">
             {walletConnectors.map((c) => (
-              <Button key={c.uid} variant="outline" className="h-11 justify-start gap-3" onClick={() => void connectWallet(c.uid)} disabled={!!busy}>
-                {busy === c.uid ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
-                <span className="truncate">{walletLabel(c.name, c.id)}</span>
+              <Button
+                key={c.uid}
+                variant="outline"
+                className="h-auto min-h-14 justify-start gap-3 px-4 py-3 text-left"
+                onClick={() => void connectWallet(c.uid)}
+                disabled={!!busy}
+              >
+                {busy === c.uid ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> : <Wallet className="h-4 w-4 shrink-0" />}
+                <span className="flex min-w-0 flex-col items-start gap-0.5">
+                  <span className="text-sm font-medium leading-tight">{walletLabel(c.name, c.id)}</span>
+                  <span className="text-xs font-normal leading-snug text-muted-foreground">{walletHint(c.name, c.id)}</span>
+                </span>
               </Button>
             ))}
             {isCdpEnabled && mode !== 'wallet' && (
