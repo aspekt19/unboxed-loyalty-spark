@@ -8,6 +8,7 @@ import { PremiumManagement } from '@/components/admin/PremiumManagement';
 import { AdminManagement } from '@/components/admin/AdminManagement';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { GasBudgetManagement } from '@/components/admin/GasBudgetManagement';
+import { GasAlertBanner } from '@/components/admin/GasAlertBanner';
 import { Shield, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

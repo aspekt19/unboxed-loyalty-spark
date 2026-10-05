@@ -34,10 +34,10 @@ export function GasBudgetManagement() {
 
   useEffect(() => { load(); }, []);
 
-  const save = async (patch: Partial<Settings>) => {
+  const save = async (patch: Partial<GasSettings>) => {
     if (!s) return;
     const next = { ...s, ...patch };
-    setS(next);
+    setSettings(next);
     setSaving(true);
     const { error } = await supabase.from("gas_settings").update({ ...patch, updated_at: new Date().toISOString() }).eq("id", 1);
     setSaving(false);
