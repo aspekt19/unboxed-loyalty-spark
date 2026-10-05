@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
-import { verifyOAuth } from '@coinbase/cdp-core';
+import { isSignedIn as cdpIsSignedIn } from '@coinbase/cdp-core';
 import { useIdentity } from '@/hooks/useIdentity';
 import {
   AlertDialog,
@@ -12,6 +12,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+
+/** How long the SDK may take to finish verifying a Google return before we call it failed. */
+const OAUTH_SETTLE_TIMEOUT_MS = 20_000;
 
 const OAUTH_PARAM_KEYS = ['flow_id', 'code', 'provider_type', 'error', 'error_description'];
 
@@ -50,7 +53,6 @@ function useOAuthCallbackExchange(onError: (message: string) => void) {
     if (!ready || handledRef.current || !initialOAuthCallback) return;
     handledRef.current = true;
 
-    const params = new URLSearchParams(window.location.search);
     const cleanUrl = () => {
       const url = new URL(window.location.href);
       OAUTH_PARAM_KEYS.forEach((key) => url.searchParams.delete(key));
@@ -58,18 +60,22 @@ function useOAuthCallbackExchange(onError: (message: string) => void) {
     };
 
     if (!initialOAuthCallback.error && initialOAuthCallback.hasCode) {
-      const flowId = params.get('flow_id') ?? '';
-      const code = params.get('code') ?? '';
-      const providerType = (params.get('provider_type') ?? 'google') as 'google';
-      verifyOAuth({ flowId, code, providerType })
-        .then(() => {
-          // CDP flips isSignedIn; IdentitySessionBridge exchanges the app session.
-          cleanUrl();
-        })
-        .catch((e: unknown) => {
-          onError(friendlyOAuthError((e as Error)?.message ?? null));
-          cleanUrl();
-        });
+      // The Coinbase SDK verifies the returned code itself during initialization.
+      // Verifying it a second time always fails (codes are single-use), so we only
+      // wait for the SDK to finish and report an error if the user is still signed out.
+      const started = Date.now();
+      const check = async () => {
+        let signedIn = false;
+        try { signedIn = await cdpIsSignedIn(); } catch { /* SDK not ready */ }
+        if (signedIn) { cleanUrl(); return; }
+        if (Date.now() - started < OAUTH_SETTLE_TIMEOUT_MS) {
+          window.setTimeout(check, 500);
+          return;
+        }
+        onError(friendlyOAuthError(null));
+        cleanUrl();
+      };
+      void check();
       return;
     }
 
