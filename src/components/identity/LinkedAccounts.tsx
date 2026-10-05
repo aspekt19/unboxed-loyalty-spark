@@ -379,7 +379,7 @@ export function LinkedAccounts() {
                         via {w.verified_via}
                       </p>
                        {'is_synced' in w && !w.is_synced ? (
-                         <p className="text-[11px] text-muted-foreground mt-1">Syncing from Identity…</p>
+                         <p className="text-[11px] text-muted-foreground mt-1">Syncing linked accounts…</p>
                        ) : null}
                     </div>
                     <div className="flex items-center gap-1">
