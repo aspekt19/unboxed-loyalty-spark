@@ -12,7 +12,7 @@ export type SmartCall = { to: `0x${string}`; data?: `0x${string}`; value?: bigin
 export async function sendSponsoredFromSmartAccount(
   smartAccount: `0x${string}`,
   calls: SmartCall[],
-  timeoutMs = 90_000,
+  timeoutMs = 180_000,
 ): Promise<`0x${string}`> {
   const { userOperationHash } = await sendUserOperation({
     evmSmartAccount: smartAccount,
