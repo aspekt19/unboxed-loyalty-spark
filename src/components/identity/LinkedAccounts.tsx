@@ -10,9 +10,9 @@ import { Loader2, Wallet, Mail, Star, Trash2, Plus, Shield, Link2, Copy, Check, 
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { getPrivyLinkedAccounts, getPrivyPrimaryEmail } from '@/lib/privyAuth';
-import { usePrivySafe } from '@/hooks/usePrivySafe';
-import { mergeIdentityWallets, syncPrivyIdentityLinks } from '@/lib/identitySync';
+import { getLinkedAccounts, getPrimaryEmail } from '@/lib/socialAuth';
+import { useIdentity } from '@/hooks/useIdentity';
+import { mergeIdentityWallets, syncIdentityLinks } from '@/lib/identitySync';
 
 interface IdentityLink {
   id: string;
@@ -56,7 +56,7 @@ export function LinkedAccounts() {
   const { session, user } = useAuth();
   const { address: connectedAddress } = useAccount();
   const { signMessageAsync } = useSignMessage();
-  const { user: privyUser, connectWallet, getAccessToken } = usePrivySafe();
+  const { user: privyUser, connectWallet, getAccessToken } = useIdentity();
 
   const [summary, setSummary] = useState<IdentitySummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -83,9 +83,9 @@ export function LinkedAccounts() {
   >(null);
 
   const normalizedConnectedAddress = connectedAddress?.toLowerCase() ?? null;
-  const privyPrimaryEmail = useMemo(() => getPrivyPrimaryEmail(privyUser), [privyUser]);
+  const privyPrimaryEmail = useMemo(() => getPrimaryEmail(privyUser), [privyUser]);
   const privyWallets = useMemo(
-    () => getPrivyLinkedAccounts(privyUser)
+    () => getLinkedAccounts(privyUser)
       .filter((account) => account.type === 'wallet' || account.type === 'smart_wallet')
       .map((account) => account.address?.toLowerCase())
       .filter((value): value is string => Boolean(value)),
@@ -120,7 +120,7 @@ export function LinkedAccounts() {
     let cancelled = false;
 
     const syncWallets = async () => {
-      const result = await syncPrivyIdentityLinks({
+      const result = await syncIdentityLinks({
         privyUser,
         getAccessToken,
         fallbackWallet: normalizedConnectedAddress,

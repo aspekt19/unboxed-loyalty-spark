@@ -57,6 +57,13 @@
       "when": 1791188893245,
       "tag": "0007_deprecate_gas_drip",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791192720374,
+      "tag": "0008_identity_links_cdp_user",
+      "breakpoints": true
     }
   ]
 }

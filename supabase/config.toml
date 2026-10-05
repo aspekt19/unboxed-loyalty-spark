@@ -51,3 +51,6 @@ verify_jwt = false
 [functions.chat-bridge]
 verify_jwt = true
 
+
+[functions.cdp-auth]
+verify_jwt = false

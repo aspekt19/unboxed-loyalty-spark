@@ -1,56 +1,39 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { usePrivySafe } from '@/hooks/usePrivySafe';
-import { shouldUsePrivyTokenAuth } from '@/lib/privyAuth';
+import { useIdentity } from '@/hooks/useIdentity';
+import { shouldUseTokenAuth, type IdentityUser } from '@/lib/socialAuth';
 import { OAuthReturnHandler } from '@/components/auth/OAuthReturnHandler';
 import { consumePostLoginPath } from '@/lib/postLoginRedirect';
 
-
-/** Backoff schedule for recovering an unfinished Privy -> app session exchange. */
+/** Backoff schedule for recovering an unfinished Coinbase -> app session exchange. */
 const SESSION_RECOVERY_DELAYS_MS = [250, 2_000, 5_000, 10_000, 20_000];
 const LIFECYCLE_DEBOUNCE_MS = 750;
 
 /**
- * Keeps the Privy identity bridge mounted on every browser route. Mobile OAuth
- * performs a full-page redirect, so session exchange must not depend on a
- * page-specific sign-in button being present after the callback.
+ * Keeps the Coinbase identity bridge mounted on every browser route. Google
+ * sign-in performs a full-page redirect, so the session exchange must not
+ * depend on a page-specific sign-in button being present after the callback.
  */
-export function PrivySessionBridge() {
-  const { user, signInWithPrivy } = useAuth();
-  const {
-    user: privyUser,
-    ready: privyReady,
-    authenticated: privyAuthenticated,
-    getAccessToken,
-  } = usePrivySafe();
+export function IdentitySessionBridge() {
+  const { user, signInWithCoinbase } = useAuth();
+  const { user: idUser, ready, authenticated, getAccessToken } = useIdentity();
 
-  const useTokenAuth = useMemo(
-    () => shouldUsePrivyTokenAuth(privyUser),
-    [privyUser],
-  );
+  const useTokenAuth = useMemo(() => shouldUseTokenAuth(idUser), [idUser]);
 
   const attemptRef = useRef(0);
   const timerRef = useRef<number | null>(null);
   const lifecycleTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (privyUser) {
-      window.__privyUser = privyUser;
-      window.__privyGetAccessToken = getAccessToken;
-      return;
-    }
+    window.__identityUser = idUser;
+    window.__identityGetAccessToken = idUser ? getAccessToken : null;
+  }, [idUser, getAccessToken]);
 
-    window.__privyUser = null;
-    window.__privyGetAccessToken = null;
-  }, [privyUser, getAccessToken]);
-
-  // Reset the recovery schedule whenever the identity state changes.
   useEffect(() => {
     attemptRef.current = 0;
-  }, [privyUser, user]);
+  }, [idUser, user]);
 
-  // Mobile OAuth returns to the public root. Once the app session exists, send
-  // the user back to the page they started sign-in from.
+  // Google returns to the page that started sign-in; restore any saved path once the app session exists.
   useEffect(() => {
     if (!user) return;
     const target = consumePostLoginPath();
@@ -61,9 +44,8 @@ export function PrivySessionBridge() {
     window.dispatchEvent(new PopStateEvent('popstate'));
   }, [user]);
 
-
   useEffect(() => {
-    const pending = privyReady && privyAuthenticated && Boolean(privyUser) && !user && useTokenAuth;
+    const pending = ready && authenticated && Boolean(idUser) && !user && useTokenAuth;
 
     const clearTimer = () => {
       if (timerRef.current !== null) {
@@ -82,33 +64,23 @@ export function PrivySessionBridge() {
     const schedule = () => {
       clearTimer();
       const index = Math.min(attemptRef.current, SESSION_RECOVERY_DELAYS_MS.length - 1);
-      const delay = SESSION_RECOVERY_DELAYS_MS[index];
       timerRef.current = window.setTimeout(async () => {
         timerRef.current = null;
         if (!active || attemptRef.current >= SESSION_RECOVERY_DELAYS_MS.length) return;
         attemptRef.current += 1;
-        await signInWithPrivy();
-        // Keep retrying until the auth state flips this effect off. Awaiting the
-        // shared auth promise prevents lifecycle events from racing the exchange.
+        await signInWithCoinbase();
         if (active && attemptRef.current < SESSION_RECOVERY_DELAYS_MS.length) schedule();
-      }, delay);
+      }, SESSION_RECOVERY_DELAYS_MS[index]);
     };
 
     schedule();
 
-    // Mobile browsers freeze timers in background tabs after an OAuth redirect —
-    // retry immediately once the app becomes interactive or the network returns.
     const retryNow = () => {
       if (document.visibilityState === 'hidden') return;
-      if (lifecycleTimerRef.current !== null) {
-        window.clearTimeout(lifecycleTimerRef.current);
-      }
+      if (lifecycleTimerRef.current !== null) window.clearTimeout(lifecycleTimerRef.current);
       lifecycleTimerRef.current = window.setTimeout(() => {
         lifecycleTimerRef.current = null;
         if (!active) return;
-        // A genuine lifecycle event (returning to foreground, network back)
-        // restarts recovery from the fastest backoff step; the debounce and
-        // the shared in-flight auth promise still prevent duplicate exchanges.
         attemptRef.current = 0;
         schedule();
       }, LIFECYCLE_DEBOUNCE_MS);
@@ -131,15 +103,14 @@ export function PrivySessionBridge() {
       document.removeEventListener('visibilitychange', retryNow);
       window.removeEventListener('pageshow', retryNow);
     };
-  }, [privyReady, privyAuthenticated, privyUser, user, useTokenAuth, signInWithPrivy]);
-
+  }, [ready, authenticated, idUser, user, useTokenAuth, signInWithCoinbase]);
 
   return <OAuthReturnHandler />;
 }
 
 declare global {
   interface Window {
-    __privyUser?: unknown;
-    __privyGetAccessToken?: (() => Promise<string | null>) | null;
+    __identityUser?: IdentityUser | null;
+    __identityGetAccessToken?: (() => Promise<string | null>) | null;
   }
 }

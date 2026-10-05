@@ -5,12 +5,7 @@ import { Session, User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { isFarcasterContext as detectFarcasterContext } from '@/config/wagmi';
-import {
-  getPrivyPrimaryEmail,
-  getPrivyLinkedAccounts,
-  shouldUsePrivyTokenAuth,
-  type PrivyLinkedAccount,
-} from '@/lib/privyAuth';
+import { cdpAuthEmail, isCdpAuthEmail, shouldUseTokenAuth } from '@/lib/socialAuth';
 import {
   dispatchWalletConnectorRecovery,
   isWalletConnectorFailureMessage,
@@ -27,8 +22,8 @@ interface AuthContextType {
   session: Session | null;
   isLoading: boolean;
   signInWithWallet: () => Promise<void>;
-  signInWithPrivy: () => Promise<void>;
-  /** Clears rate-limit/back-off refs and re-triggers Privy sign-in. Used by "Try again". */
+  signInWithCoinbase: () => Promise<void>;
+  /** Clears rate-limit/back-off refs and re-triggers Coinbase sign-in. Used by "Try again". */
   retrySignIn: () => Promise<void>;
   signOut: (options?: SignOutOptions) => Promise<void>;
   resetManualSignOut: () => void;
@@ -80,14 +75,14 @@ Nonce: ${nonce}
 Issued At: ${issuedAt}`;
 }
 
-const PRIVY_AUTH_RETRY_DELAYS_MS = [0, 1200, 2500, 4500] as const;
+const CDP_AUTH_RETRY_DELAYS_MS = [0, 1200, 2500, 4500] as const;
 const FARCASTER_CONTEXT_TIMEOUT_MS = 1200;
 
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
-function isTransientPrivyAuthIssue(message: string, status?: number): boolean {
+function isTransientCdpAuthIssue(message: string, status?: number): boolean {
   const normalized = message.toLowerCase();
 
   if (normalized.includes('identity mismatch')) return false;
@@ -97,8 +92,8 @@ function isTransientPrivyAuthIssue(message: string, status?: number): boolean {
     status === 408 ||
     status === 429 ||
     (status !== undefined && status >= 500) ||
-    normalized.includes('privy access token not available') ||
-    normalized.includes('invalid privy token') ||
+    normalized.includes('access token not available') ||
+    normalized.includes('invalid coinbase access token') ||
     normalized.includes('network') ||
     normalized.includes('fetch failed')
   );
@@ -177,24 +172,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signInWithPrivy = useCallback(async () => {
+  const signInWithCoinbase = useCallback(async () => {
     if (manualSignOutRef.current) return;
     if (signingInRef.current) {
       await signInPromiseRef.current;
       return;
     }
 
-    const privyUser = (window as any).__privyUser;
-    const getAccessToken = (window as any).__privyGetAccessToken as (() => Promise<string | null>) | undefined;
-    if (!privyUser || !getAccessToken) return;
+    const idUser = window.__identityUser;
+    const getAccessToken = window.__identityGetAccessToken;
+    if (!idUser || !getAccessToken || !shouldUseTokenAuth(idUser)) return;
 
-    const expectedPrivyAuthEmail = `${String(privyUser.id ?? '').replace(/^did:privy:/, '')}@privy.auth`;
-    const privyLinkedWalletAddress =
-      privyUser?.wallet?.address?.toLowerCase()
-      ?? getPrivyLinkedAccounts(privyUser)
-        .find((a: PrivyLinkedAccount) => a.type === 'wallet' || a.type === 'smart_wallet')
-        ?.address?.toLowerCase()
-      ?? null;
+    const expectedAuthEmail = cdpAuthEmail(idUser.id);
 
     const now = Date.now();
     if (now < retryBlockedUntilRef.current) return;
@@ -214,9 +203,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const isExpired = existingSession.expires_at
           ? new Date(existingSession.expires_at * 1000) < new Date()
           : false;
-        const belongsToCurrentPrivyIdentity = existingSession.user.email === expectedPrivyAuthEmail;
+        const belongsToCurrentIdentity = existingSession.user.email === expectedAuthEmail;
 
-        if (!isExpired && belongsToCurrentPrivyIdentity) {
+        if (!isExpired && belongsToCurrentIdentity) {
           setSession(existingSession);
           setUser(existingSession.user);
           setIsLoading(false);
@@ -236,33 +225,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       let refresh_token: string | null = null;
       let lastTransientError: Error | null = null;
 
-      for (let attempt = 0; attempt < PRIVY_AUTH_RETRY_DELAYS_MS.length; attempt += 1) {
+      for (let attempt = 0; attempt < CDP_AUTH_RETRY_DELAYS_MS.length; attempt += 1) {
         if (attempt > 0) {
-          await wait(PRIVY_AUTH_RETRY_DELAYS_MS[attempt]);
+          await wait(CDP_AUTH_RETRY_DELAYS_MS[attempt]);
         }
 
-        const privyAccessToken = await getAccessToken();
-        if (!privyAccessToken) {
-          lastTransientError = new Error('Privy access token not available');
+        const cdpAccessToken = await getAccessToken();
+        if (!cdpAccessToken) {
+          lastTransientError = new Error('Access token not available');
           continue;
         }
 
-        const response = await fetch(`${supabaseUrl}/functions/v1/privy-auth`, {
+        const response = await fetch(`${supabaseUrl}/functions/v1/cdp-auth`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           },
-          body: JSON.stringify({
-            privyToken: privyAccessToken,
-            privyDid: privyUser.id,
-            email: getPrivyPrimaryEmail(privyUser),
-            walletAddress: privyLinkedWalletAddress,
-          }),
+          body: JSON.stringify({ accessToken: cdpAccessToken }),
         });
 
         if (!response.ok) {
-          let errorMessage = 'Privy authentication failed';
+          let errorMessage = 'Sign-in failed';
           let errorCode: string | null = null;
           try {
             const err = await response.json();
@@ -287,7 +271,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return;
           }
 
-          if (attempt < PRIVY_AUTH_RETRY_DELAYS_MS.length - 1 && isTransientPrivyAuthIssue(errorMessage, response.status)) {
+          if (attempt < CDP_AUTH_RETRY_DELAYS_MS.length - 1 && isTransientCdpAuthIssue(errorMessage, response.status)) {
             lastTransientError = new Error(errorMessage);
             continue;
           }
@@ -303,7 +287,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (!access_token || !refresh_token) {
-        throw lastTransientError ?? new Error('Privy authentication failed');
+        throw lastTransientError ?? new Error('Sign-in failed');
       }
 
       const { error: setSessionError } = await supabase.auth.setSession({ access_token, refresh_token });
@@ -316,7 +300,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.dispatchEvent(new Event('sessionReady'));
       toast.success('Successfully signed in');
     } catch (error: unknown) {
-      console.error('[AuthProvider] Privy sign in error:', error);
+      console.error('[AuthProvider] Coinbase sign in error:', error);
       lastFailureAtRef.current = Date.now();
       const msg = walletConnectorFailureText(error);
       if (isWalletConnectorFailureMessage(msg)) {
@@ -348,10 +332,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const privyUser = (window as any).__privyUser;
+    const idUser = window.__identityUser;
 
-    if (!isFarcasterContext.current && privyUser && shouldUsePrivyTokenAuth(privyUser)) {
-      await signInWithPrivy();
+    if (!isFarcasterContext.current && idUser && shouldUseTokenAuth(idUser)) {
+      await signInWithCoinbase();
       return;
     }
 
@@ -384,14 +368,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (isExpired) {
           await supabase.auth.signOut();
-          } else if (!isFarcasterContext.current && existingSession.user.email?.endsWith('@privy.auth')) {
-            // Reuse existing Privy-based Supabase session ONLY when it matches
-            // the currently logged-in Privy identity. Otherwise drop it so we
-            // don't accept a stale session from a previous Privy user.
-            const currentPrivyUser = (window as any).__privyUser;
-            const expectedEmail = currentPrivyUser?.id
-              ? `${String(currentPrivyUser.id).replace(/^did:privy:/, '')}@privy.auth`
-              : null;
+          } else if (!isFarcasterContext.current && isCdpAuthEmail(existingSession.user.email)) {
+            // Reuse an existing Coinbase-based session ONLY when it matches the
+            // currently signed-in Coinbase identity.
+            const expectedEmail = cdpAuthEmail(window.__identityUser?.id);
             if (expectedEmail && existingSession.user.email === expectedEmail) {
               setSession(existingSession);
               setUser(existingSession.user);
@@ -466,20 +446,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { error: setSessionError } = await supabase.auth.setSession({ access_token, refresh_token });
       if (setSessionError) throw setSessionError;
 
-      try {
-        const privyUser = (window as any).__privyUser;
-        if (privyUser && address) {
-          const updates: Record<string, string> = {};
-          if (privyUser.email?.address) updates.email = privyUser.email.address;
-          if (privyUser.phone?.number) updates.phone = privyUser.phone.number;
-
-          if (Object.keys(updates).length > 0) {
-            await supabase.from('profiles').update(updates as never).eq('wallet_address', address.toLowerCase());
-          }
-        }
-      } catch (profileErr) {
-        console.error('[AuthProvider] Failed to save Privy contact info:', profileErr);
-      }
 
       retryBlockedUntilRef.current = 0;
       manualSignOutRef.current = false;
@@ -521,7 +487,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setIsLoading(false);
     }
-  }, [address, isConnected, signInWithPrivy, signMessageAsync]);
+  }, [address, isConnected, signInWithCoinbase, signMessageAsync]);
 
   const signOut = useCallback(async (options?: SignOutOptions) => {
     try {
@@ -541,12 +507,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (typeof window !== 'undefined') {
         window.localStorage.removeItem('customerTokens');
         clearLegacyPortalCaches();
-        (window as any).__privyUser = null;
-        (window as any).__privyGetAccessToken = null;
-        // Ask the Privy-aware UI layer (WalletConnectButton) to also call
-        // privyLogout(), regardless of whether signOut was triggered from
-        // the disconnect button or programmatically (banned screen, 409, etc).
-        window.dispatchEvent(new CustomEvent('loyalspark:request-privy-logout'));
+        window.__identityUser = null;
+        window.__identityGetAccessToken = null;
+        // Ask the identity-aware UI layer (WalletConnectButton) to also sign out
+        // of Coinbase / disconnect the wallet, regardless of what triggered signOut.
+        window.dispatchEvent(new CustomEvent('loyalspark:request-identity-logout'));
       }
 
       const { error } = await supabase.auth.signOut({ scope: 'global' });
@@ -569,7 +534,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   /**
-   * Reset rate-limit / failure back-off refs and re-trigger Privy sign-in.
+   * Reset rate-limit / failure back-off refs and re-trigger Coinbase sign-in.
    * Used by the "Try again" affordance when the first sign-in stalls
    * (common for brand-new Google users while the embedded wallet is still
    * being provisioned).
@@ -584,21 +549,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     manualSignOutRef.current = false;
     setStoredManualSignOut(false);
 
-    const privyUser = (window as any).__privyUser;
-    if (privyUser && shouldUsePrivyTokenAuth(privyUser)) {
-      await signInWithPrivy();
+    const idUser = window.__identityUser;
+    if (idUser && shouldUseTokenAuth(idUser)) {
+      await signInWithCoinbase();
       return;
     }
     if (isConnected && address) {
       await signInWithWallet();
     }
-  }, [address, isConnected, signInWithPrivy, signInWithWallet]);
+  }, [address, isConnected, signInWithCoinbase, signInWithWallet]);
 
   useEffect(() => {
     if (!isConnected || !address || manualSignOutRef.current) return;
 
-    const privyUserNow = (window as any).__privyUser;
-    const isPrivySocial = privyUserNow && shouldUsePrivyTokenAuth(privyUserNow);
+    const idUserNow = window.__identityUser;
+    const isSocial = Boolean(idUserNow && shouldUseTokenAuth(idUserNow));
 
     const clearSessionState = async () => {
       setSession(null);
@@ -617,8 +582,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error || !currentSession) {
           if (isFarcasterContext.current) {
             await signInWithWallet();
-          } else if (isPrivySocial) {
-            await signInWithPrivy();
+          } else if (isSocial) {
+            await signInWithCoinbase();
           } else {
             // Wallet-only (non-Farcaster): do NOT auto-trigger SIWE.
             // Signature must come from an explicit user click on Sign In.
@@ -635,26 +600,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await clearSessionState();
             if (isFarcasterContext.current) {
               await signInWithWallet();
-            } else if (isPrivySocial && !manualSignOutRef.current) {
-              await signInWithPrivy();
+            } else if (isSocial && !manualSignOutRef.current) {
+              await signInWithCoinbase();
             }
           }
           return;
         }
 
-        // Privy social session: do NOT validate against wagmi wallet_address.
+        // Coinbase social session: do NOT validate against wagmi wallet_address.
         // The user may have a different wallet connected in MetaMask than the one
         // bound to their Supabase profile — that's fine, the JWT is still valid.
-        // BUT: the session MUST belong to the currently logged-in Privy identity.
-        if (!isFarcasterContext.current && currentSession.user.email?.endsWith('@privy.auth')) {
-          const expectedEmail = privyUserNow?.id
-            ? `${String(privyUserNow.id).replace(/^did:privy:/, '')}@privy.auth`
-            : null;
+        // BUT: the session MUST belong to the currently logged-in Coinbase identity.
+        if (!isFarcasterContext.current && isCdpAuthEmail(currentSession.user.email)) {
+          const expectedEmail = cdpAuthEmail(idUserNow?.id);
           if (!expectedEmail || currentSession.user.email !== expectedEmail) {
-            // Stale session from a previous Privy user → drop it.
+            // Stale session from a previous Coinbase user → drop it.
             await clearSessionState();
-            if (isPrivySocial && !manualSignOutRef.current) {
-              await signInWithPrivy();
+            if (isSocial && !manualSignOutRef.current) {
+              await signInWithCoinbase();
             }
             return;
           }
@@ -702,11 +665,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearInterval(interval);
       window.removeEventListener('sessionExpired', handleSessionExpired);
     };
-  }, [isConnected, address, signInWithWallet, signInWithPrivy]);
+  }, [isConnected, address, signInWithWallet, signInWithCoinbase]);
 
   useEffect(() => {
     // Hydrate existing Supabase session as soon as it's available, even when
-    // wagmi has no `address` (Privy social users may have no external wallet
+    // wagmi has no `address` (Coinbase social users may have no external wallet
     // connected). Previously this effect required `isConnected && address`
     // which caused a hydration race for email/Google sign-ins.
     if (user || manualSignOutRef.current) return;
@@ -715,13 +678,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
       if (!isActive || !existingSession) return;
 
-      // Identity validation: if the session is a Privy @privy.auth one, it must
-      // match the currently signed-in Privy user. Otherwise drop it.
-      if (existingSession.user.email?.endsWith('@privy.auth')) {
-        const privyUserNow = (window as any).__privyUser;
-        const expectedEmail = privyUserNow?.id
-          ? `${String(privyUserNow.id).replace(/^did:privy:/, '')}@privy.auth`
-          : null;
+      // Identity validation: if the session is a Coinbase @cdp.auth one, it must
+      // match the currently signed-in Coinbase user. Otherwise drop it.
+      if (isCdpAuthEmail(existingSession.user.email)) {
+        const expectedEmail = cdpAuthEmail(window.__identityUser?.id);
         if (!expectedEmail || existingSession.user.email !== expectedEmail) {
           // Stale — let the regular re-auth path handle it.
           return;
@@ -738,14 +698,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [isConnected, address, user]);
 
-  // Privy social users with no wagmi wallet: trigger token-based sign-in once
-  // the Privy SDK is ready, without waiting on an `address`.
+  // Coinbase social users with no wagmi wallet: trigger token-based sign-in once
+  // the Coinbase SDK is ready, without waiting on an `address`.
   useEffect(() => {
     if (user || manualSignOutRef.current || isFarcasterContext.current) return;
-    const privyUserNow = (window as any).__privyUser;
-    if (!privyUserNow || !shouldUsePrivyTokenAuth(privyUserNow)) return;
-    void signInWithPrivy();
-  }, [user, signInWithPrivy]);
+    const idUserNow = window.__identityUser;
+    if (!idUserNow || !shouldUseTokenAuth(idUserNow)) return;
+    void signInWithCoinbase();
+  }, [user, signInWithCoinbase]);
 
   useEffect(() => {
     if (!isFarcasterContext.current) return;
@@ -784,7 +744,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [isConnected, address, session, signInWithWallet]);
 
   return (
-    <AuthContext.Provider value={{ user, session, isLoading, signInWithWallet, signInWithPrivy, retrySignIn, signOut, resetManualSignOut }}>
+    <AuthContext.Provider value={{ user, session, isLoading, signInWithWallet, signInWithCoinbase, retrySignIn, signOut, resetManualSignOut }}>
       {children}
     </AuthContext.Provider>
   );

@@ -7,10 +7,15 @@ import {
   useWaitForCallsStatus,
 } from "wagmi";
 import { base } from "wagmi/chains";
-import { usePrivyEmbeddedSponsor, usePrivySmartWallet, type SmartWalletSender } from "@/hooks/usePrivySmartWallet";
+import { useIdentity } from "@/hooks/useIdentity";
+import { PAYMASTER_PROXY_URL, sendSponsoredFromSmartAccount } from "@/lib/cdpSmartSend";
 
-/** ERC-7677 paymaster endpoint; server only sponsors calls to Loyal Spark contracts with zero ETH value. */
-export const PAYMASTER_PROXY_URL = `https://api.loyalspark.online/paymaster-proxy`;
+export { PAYMASTER_PROXY_URL };
+
+export type SmartWalletSender = {
+  address: `0x${string}`;
+  sendTransaction: (args: { to: `0x${string}`; data?: `0x${string}`; value?: bigint }) => Promise<`0x${string}`>;
+};
 
 type SendArgs = { to: `0x${string}`; data?: `0x${string}`; value?: bigint };
 type SendOpts = { onSuccess?: (hash: `0x${string}`) => void; onError?: (err: Error) => void };
@@ -20,22 +25,15 @@ export function shouldSponsor(supportsPaymaster: boolean, value?: bigint): boole
   return supportsPaymaster && (value === undefined || value === 0n);
 }
 
-/** Pure helper (tested): pick the Privy sender whose address is the active wallet, so tokens are spent from where they sit. */
-export function pickPrivySender(
-  active: string | undefined,
-  smart: SmartWalletSender | null,
-  embedded: SmartWalletSender | null,
-): SmartWalletSender | null {
-  if (!active) return null;
-  const a = active.toLowerCase();
-  if (smart && smart.address.toLowerCase() === a) return smart;
-  if (embedded && embedded.address.toLowerCase() === a) return embedded;
-  return null;
+/** Pure helper (tested): use the Coinbase smart account only when it is the active wallet, so tokens are spent from where they sit. */
+export function pickSmartSender(active: string | undefined, smart: SmartWalletSender | null): SmartWalletSender | null {
+  if (!active || !smart) return null;
+  return smart.address.toLowerCase() === active.toLowerCase() ? smart : null;
 }
 
 /**
  * Drop-in replacement for wagmi `useSendTransaction`:
- * 1) active wallet is a Privy smart wallet or Privy embedded wallet (Google/email) → gas sponsored by Privy;
+ * 1) active wallet is the Coinbase smart account (Google/email sign-in) → gas paid via our paymaster proxy;
  * 2) wallet with `paymasterService` → sponsored via our proxy;
  * 3) plain wallet (MetaMask etc.) → normal transaction, user pays their own gas.
  * We never send ETH to user wallets.
@@ -44,9 +42,11 @@ export function useSponsoredSendTransaction() {
   const { address } = useAccount();
   const plain = useSendTransaction();
   const calls = useSendCalls();
-  const privySmartWallet = usePrivySmartWallet();
-  const privyEmbedded = usePrivyEmbeddedSponsor();
-  const privySmart = pickPrivySender(address, privySmartWallet, privyEmbedded);
+  const { smartAccount } = useIdentity();
+  const cdpSender = useMemo<SmartWalletSender | null>(() => smartAccount
+    ? { address: smartAccount, sendTransaction: (a) => sendSponsoredFromSmartAccount(smartAccount, [a]) }
+    : null, [smartAccount]);
+  const privySmart = pickSmartSender(address, cdpSender);
   const { data: caps } = useCapabilities({ account: address, query: { enabled: !!address } });
   const [smartState, setSmartState] = useState<{ pending: boolean; hash?: `0x${string}`; error: Error | null }>({ pending: false, error: null });
 

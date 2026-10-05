@@ -15,8 +15,8 @@ import { AuthPrompt } from '@/components/AuthPrompt';
 import { Mail, Phone, Wallet, Save, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { getPrivyPrimaryEmail } from '@/lib/privyAuth';
-import { usePrivySafe } from '@/hooks/usePrivySafe';
+import { getPrimaryEmail } from '@/lib/socialAuth';
+import { useIdentity } from '@/hooks/useIdentity';
 
 interface MerchantProfileSectionProps {
   /** Optional: kept for backward compatibility (no longer used). */
@@ -26,7 +26,7 @@ interface MerchantProfileSectionProps {
 export function MerchantProfileSection(_props: MerchantProfileSectionProps) {
   const { address } = useAccount();
   const { user, session, isLoading: authLoading } = useAuth();
-  const { user: privyUser } = usePrivySafe();
+  const { user: privyUser } = useIdentity();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
@@ -34,7 +34,7 @@ export function MerchantProfileSection(_props: MerchantProfileSectionProps) {
   const [, setLoaded] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const identityEmail = getPrivyPrimaryEmail(privyUser);
+  const identityEmail = getPrimaryEmail(privyUser);
 
   useEffect(() => {
     if (!address) return;

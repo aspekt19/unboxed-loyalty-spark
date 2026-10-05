@@ -5,12 +5,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { WagmiProvider } from "wagmi";
-import { WagmiProvider as PrivyWagmiProvider } from "@privy-io/wagmi";
-import { PrivyProvider } from "@privy-io/react-auth";
-import { PrivySmartWalletProvider } from "./hooks/usePrivySmartWallet";
-import { browserPreviewWagmiConfig, detectFarcasterMiniApp, isEmbeddedWebview, isFarcasterContext, farcasterWagmiConfig, privyWagmiConfig } from "./config/wagmi";
-import { PRIVY_APP_ID, privyConfig } from "./config/privy";
-import { hasPrivyOAuthParams } from "./components/auth/OAuthReturnHandler";
+import { browserWagmiConfig, detectFarcasterMiniApp, isEmbeddedWebview, isFarcasterContext, farcasterWagmiConfig } from "./config/wagmi";
+import { hasCdpOAuthParams } from "./lib/socialAuth";
+import { IdentityProvider } from "./hooks/useIdentity";
 import Index from "./pages/Index";
 import AppPage from "./pages/AppPage";
 import ConciergeLayoutHarness from "./pages/ConciergeLayoutHarness";
@@ -45,9 +42,8 @@ import { FarcasterAutoConnect } from "./components/FarcasterAutoConnect";
 import { ThemeProvider } from "next-themes";
 import { useBanStatus } from "./hooks/useBanStatus";
 import { BannedScreen } from "./components/BannedScreen";
-import { PrivyAvailableContext } from "./hooks/usePrivySafe";
 import { AppErrorBoundary } from "./components/AppErrorBoundary";
-import { PrivySessionBridge } from "./components/auth/PrivySessionBridge";
+import { IdentitySessionBridge } from "./components/auth/IdentitySessionBridge";
 
 
 /**
@@ -206,57 +202,32 @@ function AnimatedRoutes() {
   );
 }
 
-/** Farcaster context: standard WagmiProvider (SIWE only) — no Privy in tree. */
+/** Farcaster context: standard WagmiProvider (SIWE only). */
 function FarcasterProviders({ children }: { children: React.ReactNode }) {
   return (
-    <PrivyAvailableContext.Provider value={false}>
-      <WagmiProvider config={farcasterWagmiConfig}>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <TooltipProvider>
-              <FarcasterAutoConnect />
-              <Toaster />
-              <Sonner />
-              {children}
-            </TooltipProvider>
-          </AuthProvider>
-        </QueryClientProvider>
-      </WagmiProvider>
-    </PrivyAvailableContext.Provider>
+    <WagmiProvider config={farcasterWagmiConfig}>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <TooltipProvider>
+            <FarcasterAutoConnect />
+            <Toaster />
+            <Sonner />
+            {children}
+          </TooltipProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 }
 
-/** Regular browser: Privy + wagmi (email/phone/Google + embedded wallets, then SIWE) */
+/** Regular browser: Coinbase embedded wallet (Google / email) + external wallets, then SIWE for wallets. */
 function BrowserProviders({ children }: { children: React.ReactNode }) {
   return (
-    <PrivyAvailableContext.Provider value={true}>
-      <PrivyProvider appId={PRIVY_APP_ID} config={privyConfig}>
-        <PrivySmartWalletProvider>
-        <QueryClientProvider client={queryClient}>
-          <PrivyWagmiProvider config={privyWagmiConfig}>
-            <AuthProvider>
-              <PrivySessionBridge />
-              <TooltipProvider>
-                <ConnectorRecoveryListener />
-                <Toaster />
-                <Sonner />
-                {children}
-              </TooltipProvider>
-            </AuthProvider>
-          </PrivyWagmiProvider>
-        </QueryClientProvider>
-        </PrivySmartWalletProvider>
-      </PrivyProvider>
-    </PrivyAvailableContext.Provider>
-  );
-}
-
-function PreviewBrowserProviders({ children }: { children: React.ReactNode }) {
-  return (
-    <PrivyAvailableContext.Provider value={false}>
-      <WagmiProvider config={browserPreviewWagmiConfig}>
-        <QueryClientProvider client={queryClient}>
+    <WagmiProvider config={browserWagmiConfig}>
+      <QueryClientProvider client={queryClient}>
+        <IdentityProvider>
           <AuthProvider>
+            <IdentitySessionBridge />
             <TooltipProvider>
               <ConnectorRecoveryListener />
               <Toaster />
@@ -264,9 +235,9 @@ function PreviewBrowserProviders({ children }: { children: React.ReactNode }) {
               {children}
             </TooltipProvider>
           </AuthProvider>
-        </QueryClientProvider>
-      </WagmiProvider>
-    </PrivyAvailableContext.Provider>
+        </IdentityProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 }
 
@@ -279,9 +250,9 @@ const App = () => {
   const [isFarcaster, setIsFarcaster] = useState<boolean | null>(() => {
     if (isLovablePreviewHost) return false;
     if (isFarcasterContext()) return true;
-    // Returning from a Privy OAuth redirect (Google on mobile): mount the Privy
+    // Returning from a Coinbase OAuth redirect (Google on mobile): mount the browser
     // tree immediately so the callback code is exchanged before it goes stale.
-    if (hasPrivyOAuthParams()) return false;
+    if (hasCdpOAuthParams()) return false;
     return null;
   });
 
@@ -292,7 +263,7 @@ const App = () => {
   // remounts the whole app — which is exactly what showed up as a white screen.
   useEffect(() => {
     if (isLovablePreviewHost) return;
-    if (hasPrivyOAuthParams()) return;
+    if (hasCdpOAuthParams()) return;
 
     const embedded = isEmbeddedWebview();
     const detectionTimeout = embedded ? 3500 : 1200;
@@ -336,9 +307,7 @@ const App = () => {
 
   const Providers = isFarcaster
     ? FarcasterProviders
-    : isLovablePreviewHost
-      ? PreviewBrowserProviders
-      : BrowserProviders;
+    : BrowserProviders;
 
   return (
     <AppErrorBoundary scope="root">
