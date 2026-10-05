@@ -64,12 +64,12 @@ export function EarnPointsDialog({
     ? cashbackRate * tierInfo.cashbackMultiplier
     : cashbackRate;
 
-  const cashbackDollars = purchaseAmount
-    ? (parseFloat(purchaseAmount) * (effectiveCashbackRate / 100))
-    : 0;
-  const tokensToEarn = purchaseAmount
-    ? (cashbackDollars * pointsPerDollar).toFixed(2)
-    : '0';
+  // Points = amount × pts/$1, plus a bonus of (tier-adjusted cashback %) on top.
+  // e.g. $50 × 1 = 50 + 5% = 52.50
+  const amountNum = parseFloat(purchaseAmount) || 0;
+  const basePoints = amountNum * pointsPerDollar;
+  const bonusPoints = basePoints * (effectiveCashbackRate / 100);
+  const tokensToEarn = (basePoints + bonusPoints).toFixed(2);
 
   // Fetch customer tier when address is resolved
   useEffect(() => {
@@ -130,12 +130,21 @@ export function EarnPointsDialog({
     return () => { cancelled = true; };
   }, [resolvedAddress, tokenAddress]);
 
-  // Resolve address when input looks complete
-  const handleLookupCustomer = useCallback(async () => {
-    if (!recipientInput) return;
-    const wallet = await resolveRecipient(recipientInput);
-    if (wallet) setResolvedAddress(wallet);
-  }, [recipientInput, resolveRecipient]);
+  // Auto-resolve the customer as soon as the input looks complete (no "Look up" button)
+  useEffect(() => {
+    const v = recipientInput.trim();
+    if (resolvedAddress || !v) return;
+    const complete = inputType === 'email'
+      ? /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)
+      : /^0x[0-9a-fA-F]{40}$/.test(v);
+    if (!complete) return;
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      const wallet = await resolveRecipient(v);
+      if (!cancelled && wallet) setResolvedAddress(wallet);
+    }, 500);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [recipientInput, inputType, resolvedAddress, resolveRecipient]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -228,18 +237,7 @@ export function EarnPointsDialog({
               <div className="flex items-center justify-between">
                 <Label>Customer</Label>
                 <div className="flex gap-1.5">
-                  {!resolvedAddress && recipientInput && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleLookupCustomer}
-                      disabled={isResolving || !recipientInput}
-                      className="h-9 px-3"
-                    >
-                      {isResolving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Look up'}
-                    </Button>
-                  )}
+                  {isResolving && <Loader2 className="h-4 w-4 animate-spin self-center text-muted-foreground" />}
                   <Button
                     type="button"
                     variant="outline"
@@ -318,11 +316,6 @@ export function EarnPointsDialog({
                 }}
                 disabled={isPending}
               />
-              {!resolvedAddress && recipientInput && inputType === 'email' && (
-                <p className="text-xs text-muted-foreground">
-                  Press Enter or tap “Look up” to find the customer by email
-                </p>
-              )}
               {!resolvedAddress && recipientInput && inputType === 'wallet' && !/^0x[0-9a-fA-F]{40}$/.test(recipientInput.trim()) && (
                 <p className="text-xs text-muted-foreground">
                   Enter the full wallet address (0x + 40 characters)
@@ -338,15 +331,14 @@ export function EarnPointsDialog({
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calculator className="h-4 w-4" />
-                Base: {cashbackRate}%
+                {pointsPerDollar} pts/$1 · bonus {cashbackRate}%
                 {tierInfo && tierInfo.cashbackMultiplier > 1 && (
                   <> × {tierInfo.cashbackMultiplier} ({tierInfo.tierName}) = {effectiveCashbackRate.toFixed(1)}%</>
                 )}
-                {' · '}{pointsPerDollar} pts/$1
               </div>
-              {purchaseAmount && parseFloat(purchaseAmount) > 0 && resolvedAddress && (
+              {purchaseAmount && parseFloat(purchaseAmount) > 0 && (
                 <p className="text-xs text-muted-foreground">
-                  ${purchaseAmount} × {effectiveCashbackRate.toFixed(1)}% = ${cashbackDollars.toFixed(2)} × {pointsPerDollar} = {tokensToEarn}
+                  ${purchaseAmount} × {pointsPerDollar} = {basePoints.toFixed(2)} + {effectiveCashbackRate.toFixed(1)}% bonus ({bonusPoints.toFixed(2)}) = {tokensToEarn}
                 </p>
               )}
               <div className="text-lg font-bold text-primary">
