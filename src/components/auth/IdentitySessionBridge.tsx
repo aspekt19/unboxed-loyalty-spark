@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIdentity } from '@/hooks/useIdentity';
 import { shouldUseTokenAuth, type IdentityUser } from '@/lib/socialAuth';
-import { OAuthReturnHandler } from '@/components/auth/OAuthReturnHandler';
+import { OAuthReturnHandler, isOAuthReturnPending } from '@/components/auth/OAuthReturnHandler';
 import { consumePostLoginPath } from '@/lib/postLoginRedirect';
 
 /** Backoff schedule for recovering an unfinished Coinbase -> app session exchange. */
@@ -34,14 +34,29 @@ export function IdentitySessionBridge() {
   }, [idUser, user]);
 
   // Google returns to the page that started sign-in; restore any saved path once the app session exists.
+  // Never change the URL while the Google return params are still there — the Coinbase SDK reads
+  // them asynchronously, and removing them early silently aborts the sign-in.
   useEffect(() => {
     if (!user) return;
-    const target = consumePostLoginPath();
-    if (!target) return;
-    const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-    if (target === current) return;
-    window.history.pushState({}, '', target);
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    let timer: number | null = null;
+    let tries = 0;
+    const restore = () => {
+      if (isOAuthReturnPending() && tries < 120) {
+        tries += 1;
+        timer = window.setTimeout(restore, 500);
+        return;
+      }
+      const target = consumePostLoginPath();
+      if (!target) return;
+      const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+      if (target === current) return;
+      window.history.pushState({}, '', target);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    };
+    restore();
+    return () => {
+      if (timer !== null) window.clearTimeout(timer);
+    };
   }, [user]);
 
   useEffect(() => {
