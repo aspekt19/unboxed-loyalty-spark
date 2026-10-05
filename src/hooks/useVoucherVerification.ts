@@ -242,8 +242,13 @@ export function useVoucherVerification({
         .select('wallet_address, user_id')
         .eq('wallet_address', address.toLowerCase())
         .maybeSingle();
+      let linkedOk = !!profile;
+      if (!linkedOk && !profileError) {
+        const { data: linked } = await supabase.rpc('is_current_user_linked_wallet', { p_wallet: address.toLowerCase() });
+        linkedOk = !!linked;
+      }
 
-      if (profileError || !profile) {
+      if (profileError || !linkedOk) {
         toast.error('Profile not found. Please disconnect and reconnect your wallet, then try again.');
         setIsRecovering(false);
         return;

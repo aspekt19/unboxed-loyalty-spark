@@ -29,6 +29,8 @@ jobs:
 
       - name: Docs / MCP tool-count drift
         run: npm run check:docs
+      - name: Concierge knowledge is up to date
+        run: node scripts/build-concierge-knowledge.mjs && git diff --exit-code supabase/functions/_shared/concierge-knowledge-data.ts
 
       - name: REST list output OpenAPI contract
         run: npm run test:rest-list-contract

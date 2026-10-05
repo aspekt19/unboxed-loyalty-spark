@@ -228,13 +228,19 @@ export async function createVoucher(voucher: Omit<Voucher, 'id' | 'activatedAt'>
     .select('wallet_address, user_id')
     .eq('wallet_address', voucher.customerAddress.toLowerCase())
     .maybeSingle();
+  // Coinbase (Google/email) users: profile may sit on a linked wallet (smart account vs signer).
+  let linkedOk = !!profileCheck;
+  if (!linkedOk && !profileError) {
+    const { data: linked } = await supabase.rpc('is_current_user_linked_wallet', { p_wallet: voucher.customerAddress.toLowerCase() });
+    linkedOk = !!linked;
+  }
 
   if (profileError) {
     console.error('[createVoucher] Profile check error:', profileError.message);
     return null;
   }
 
-  if (!profileCheck) {
+  if (!linkedOk) {
     console.error('[createVoucher] Profile not found for:', voucher.customerAddress);
     return null;
   }
