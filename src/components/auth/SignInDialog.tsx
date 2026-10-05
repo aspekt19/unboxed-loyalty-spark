@@ -41,7 +41,11 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
   // Mobile browsers (Safari/Chrome) have no injected wallet: hide that option and
   // use WalletConnect (opens the wallet app) instead of failing with "Provider not found".
   const hasInjected = typeof window !== 'undefined' && !!(window as unknown as { ethereum?: unknown }).ethereum;
-  const walletConnectors = connectors.filter((c) => c.id !== CDP_CONNECTOR_ID && (c.id !== 'injected' || hasInjected));
+  const walletConnectors = connectors.filter((connector) => {
+    if (connector.id === CDP_CONNECTOR_ID) return false;
+    if (connector.id === 'injected') return hasInjected;
+    return /coinbase/i.test(connector.id) || connector.id === 'walletConnect';
+  });
 
   const google = async () => {
     setBusy('google');
@@ -87,10 +91,10 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
     }
   };
 
-  const connectWallet = async (id: string) => {
-    const connector = connectors.find((c) => c.id === id);
+  const connectWallet = async (uid: string) => {
+    const connector = connectors.find((candidate) => candidate.uid === uid);
     if (!connector) return;
-    setBusy(id);
+    setBusy(uid);
     try {
       clearManualSignOut();
       await connectAsync({ connector });
@@ -170,8 +174,8 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
         {step === 'wallet' && (
           <div className="flex flex-col gap-2">
             {walletConnectors.map((c) => (
-              <Button key={c.uid} variant="outline" className="h-11 justify-start gap-3" onClick={() => void connectWallet(c.id)} disabled={!!busy}>
-                {busy === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
+              <Button key={c.uid} variant="outline" className="h-11 justify-start gap-3" onClick={() => void connectWallet(c.uid)} disabled={!!busy}>
+                {busy === c.uid ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
                 <span className="truncate">{walletLabel(c.name, c.id)}</span>
               </Button>
             ))}
