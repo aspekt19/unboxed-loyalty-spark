@@ -333,14 +333,15 @@ export function EarnPointsDialog({
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calculator className="h-4 w-4" />
-                {pointsPerDollar} pts/$1 · bonus {cashbackRate}%
+                Base: {cashbackRate}%
                 {tierInfo && tierInfo.cashbackMultiplier > 1 && (
                   <> × {tierInfo.cashbackMultiplier} ({tierInfo.tierName}) = {effectiveCashbackRate.toFixed(1)}%</>
                 )}
+                {' · '}{pointsPerDollar} pts/$1
               </div>
               {purchaseAmount && parseFloat(purchaseAmount) > 0 && (
                 <p className="text-xs text-muted-foreground">
-                  ${purchaseAmount} × {pointsPerDollar} = {basePoints.toFixed(2)} + {effectiveCashbackRate.toFixed(1)}% bonus ({bonusPoints.toFixed(2)}) = {tokensToEarn}
+                  ${purchaseAmount} × {effectiveCashbackRate.toFixed(1)}% = ${cashbackDollars.toFixed(2)} × {pointsPerDollar} = {tokensToEarn}
                 </p>
               )}
               <div className="text-lg font-bold text-primary">
