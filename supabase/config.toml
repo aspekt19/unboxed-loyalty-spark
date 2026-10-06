@@ -54,3 +54,6 @@ verify_jwt = true
 
 [functions.cdp-auth]
 verify_jwt = false
+
+[functions.discover-ai-match]
+verify_jwt = false

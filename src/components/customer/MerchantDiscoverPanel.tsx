@@ -29,6 +29,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { MERCHANT_TYPES, type MerchantType } from '@/lib/merchant-visibility';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { AiShopFinder } from './AiShopFinder';
 
 const PAGE_SIZE = 12;
 const SCROLL_THRESHOLD_PX = 400;
@@ -330,6 +331,7 @@ export function MerchantDiscoverPanel() {
 
         {/* Main column */}
         <div className="space-y-4 min-w-0">
+          {merchants.length > 0 && <AiShopFinder merchants={merchants} />}
           {/* Filters bar */}
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
