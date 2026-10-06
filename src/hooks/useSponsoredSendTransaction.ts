@@ -52,10 +52,14 @@ export function useSponsoredSendTransaction() {
 
   const useIdentitySmart = !!identitySmart;
 
-  const supportsPaymaster = useMemo(() => {
+  // External wallets (Base App, Coinbase Wallet) pay their own gas: routing them through our
+  // paymaster made the wallet fail with "transaction generation error" when sponsorship was refused.
+  const walletPaymaster = useMemo(() => {
     const c = (caps as Record<number, { paymasterService?: { supported?: boolean } }> | undefined)?.[base.id];
     return !!c?.paymasterService?.supported;
   }, [caps]);
+  void walletPaymaster;
+  const supportsPaymaster = false;
 
   const callsId = calls.data?.id;
   const status = useWaitForCallsStatus({ id: callsId, query: { enabled: !!callsId } });
