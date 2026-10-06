@@ -6,10 +6,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Store, Loader2, Check, Pencil } from 'lucide-react';
+import { Store, Loader2, Check, Pencil, CircleAlert, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAccount } from 'wagmi';
 import { toast } from 'sonner';
+import { getMissingDiscoverProfileFields } from '@/lib/merchant-visibility';
 
 const CATEGORIES = [
   { value: 'cafe', label: '☕ Café & Coffee' },
@@ -128,6 +129,54 @@ export function MerchantProfileForm() {
   if (!address || isLoading) return null;
 
   const categoryLabel = CATEGORIES.find(c => c.value === category)?.label || category;
+  const missingDiscoverFields = getMissingDiscoverProfileFields({
+    business_name: businessName,
+    description,
+    logo_url: logoUrl,
+    location,
+  });
+  const isVisibleInDiscover = missingDiscoverFields.length === 0;
+
+  const discoverStatus = (
+    <div
+      className={isVisibleInDiscover
+        ? 'border border-primary/30 bg-primary/5 p-3'
+        : 'border border-border bg-muted/40 p-3'}
+      aria-live="polite"
+    >
+      <div className="flex items-start gap-2.5">
+        {isVisibleInDiscover ? (
+          <Eye className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+        ) : (
+          <EyeOff className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground" />
+        )}
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-foreground">
+            {isVisibleInDiscover ? 'Visible in Discover' : 'Not visible in Discover'}
+          </p>
+          {isVisibleInDiscover ? (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Customers can find your business in the Discover catalogue.
+            </p>
+          ) : (
+            <>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Complete these profile fields to appear in Discover:
+              </p>
+              <ul className="mt-2 grid gap-1 sm:grid-cols-2">
+                {missingDiscoverFields.map(field => (
+                  <li key={field} className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+                    <CircleAlert className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+                    {field}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 
   // View mode
   if (hasProfile && !isEditing) {
@@ -151,22 +200,21 @@ export function MerchantProfileForm() {
             <Pencil className="h-4 w-4" />
           </Button>
         </CardHeader>
-        {(description || website || location) && (
-          <CardContent className="pt-0 space-y-1 text-sm text-muted-foreground">
-            {description && <p>{description}</p>}
-            {location && <p>📍 {location}</p>}
-            {website && (
-              <a
-                href={websiteHref(website)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline block"
-              >
-                🌐 {website}
-              </a>
-            )}
-          </CardContent>
-        )}
+        <CardContent className="pt-0 space-y-3 text-sm text-muted-foreground">
+          {discoverStatus}
+          {description && <p>{description}</p>}
+          {location && <p>📍 {location}</p>}
+          {website && (
+            <a
+              href={websiteHref(website)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline block"
+            >
+              🌐 {website}
+            </a>
+          )}
+        </CardContent>
       </Card>
     );
   }
@@ -184,6 +232,7 @@ export function MerchantProfileForm() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {discoverStatus}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="businessName">Business Name *</Label>
