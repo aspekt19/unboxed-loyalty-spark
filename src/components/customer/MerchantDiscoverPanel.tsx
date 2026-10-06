@@ -27,7 +27,7 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
-import { isMerchantProfileComplete } from '@/lib/merchant-visibility';
+import { MERCHANT_TYPES, type MerchantType } from '@/lib/merchant-visibility';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const PAGE_SIZE = 12;
@@ -65,6 +65,7 @@ interface MerchantCard {
   description: string | null;
   website: string | null;
   location: string | null;
+  merchant_type: MerchantType;
   created_at: string;
   programs: { name: string; symbol: string; token_address: string }[];
   rewards_count: number;
@@ -80,6 +81,7 @@ export function MerchantDiscoverPanel() {
   const [locationFilter, setLocationFilter] = useState('all');
   const [sortMode, setSortMode] = useState<SortMode>('newest');
   const [onlyNew, setOnlyNew] = useState(false);
+  const [typeFilter, setTypeFilter] = useState<'all' | MerchantType>('all');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -88,9 +90,16 @@ export function MerchantDiscoverPanel() {
   const loadMerchants = useCallback(async () => {
     setIsLoading(true);
     try {
+      const { data: listed } = await supabase.rpc('get_discover_merchant_addresses');
+      const listedSet = new Set(((listed as string[] | null) || []).map((a) => a.toLowerCase()));
+      if (listedSet.size === 0) {
+        setMerchants([]);
+        return;
+      }
       const { data: profiles, error: profilesError } = await supabase
         .from('merchant_profiles')
-        .select('*');
+        .select('*')
+        .in('merchant_address', Array.from(listedSet));
 
       if (profilesError || !profiles || profiles.length === 0) {
         setMerchants([]);
@@ -139,6 +148,7 @@ export function MerchantDiscoverPanel() {
           description: profile.description,
           website: profile.website,
           location: profile.location,
+          merchant_type: (profile.merchant_type as MerchantType) || 'in_store',
           created_at: profile.created_at,
           programs,
           rewards_count: rewards.length,
@@ -147,10 +157,8 @@ export function MerchantDiscoverPanel() {
         };
       });
 
-      // Only merchants with a filled-in profile and at least one active program
-      setMerchants(
-        cards.filter((c) => c.programs.length > 0 && isMerchantProfileComplete(c)),
-      );
+      // Listing rule is enforced server-side (get_discover_merchant_addresses)
+      setMerchants(cards.filter((c) => c.programs.length > 0));
     } catch (err) {
       console.error('[MerchantDiscoverPanel] error:', err);
       setMerchants([]);
@@ -166,7 +174,7 @@ export function MerchantDiscoverPanel() {
   // Reset visible count on filter changes
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [category, searchQuery, locationFilter, sortMode, onlyNew]);
+  }, [category, searchQuery, locationFilter, sortMode, onlyNew, typeFilter]);
 
   // Per-category counts (full dataset, ignoring category filter)
   const categoryCounts = useMemo(() => {
@@ -191,6 +199,9 @@ export function MerchantDiscoverPanel() {
 
     if (category !== 'all') {
       result = result.filter((m) => m.category === category);
+    }
+    if (typeFilter !== 'all') {
+      result = result.filter((m) => m.merchant_type === typeFilter);
     }
     if (locationFilter !== 'all') {
       result = result.filter((m) => m.location === locationFilter);
@@ -230,7 +241,7 @@ export function MerchantDiscoverPanel() {
       }
     });
     return sorted;
-  }, [merchants, category, locationFilter, onlyNew, searchQuery, sortMode]);
+  }, [merchants, category, locationFilter, onlyNew, searchQuery, sortMode, typeFilter]);
 
   const pageItems = filtered.slice(0, visibleCount);
   const hasMore = visibleCount < filtered.length;
@@ -379,6 +390,17 @@ export function MerchantDiscoverPanel() {
 
           {/* Secondary filters */}
           <div className="flex flex-wrap items-center gap-2">
+            {(['all', ...MERCHANT_TYPES.filter((t) => t.value !== 'agent').map((t) => t.value)] as const).map((t) => (
+              <Button
+                key={t}
+                variant={typeFilter === t ? 'default' : 'outline'}
+                size="sm"
+                className="h-8 text-xs"
+                onClick={() => setTypeFilter(t as 'all' | MerchantType)}
+              >
+                {t === 'all' ? 'All types' : MERCHANT_TYPES.find((m) => m.value === t)?.label}
+              </Button>
+            ))}
             {locationOptions.length > 0 && (
               <Select value={locationFilter} onValueChange={setLocationFilter}>
                 <SelectTrigger className="h-8 w-auto min-w-[140px] text-xs">
@@ -405,6 +427,7 @@ export function MerchantDiscoverPanel() {
               New (30 days)
             </Button>
             {(category !== 'all' ||
+              typeFilter !== 'all' ||
               locationFilter !== 'all' ||
               onlyNew ||
               searchQuery) && (
@@ -416,6 +439,7 @@ export function MerchantDiscoverPanel() {
                   setCategory('all');
                   setLocationFilter('all');
                   setOnlyNew(false);
+                  setTypeFilter('all');
                   setSearchQuery('');
                 }}
               >
