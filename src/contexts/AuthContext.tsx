@@ -586,8 +586,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isConnected || !address || manualSignOutRef.current) return;
 
-    const idUserNow = window.__identityUser;
-    const isSocial = Boolean(idUserNow && shouldUseTokenAuth(idUserNow));
 
     const clearSessionState = async () => {
       setSession(null);
@@ -600,6 +598,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const checkSession = async () => {
       if (manualSignOutRef.current) return;
+      // Read identity fresh on every check: it may load after this effect started.
+      const idUserNow = window.__identityUser;
+      const isSocial = Boolean(idUserNow && shouldUseTokenAuth(idUserNow));
       try {
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
 
@@ -637,7 +638,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // BUT: the session MUST belong to the currently logged-in Coinbase identity.
         if (!isFarcasterContext.current && isCdpAuthEmail(currentSession.user.email)) {
           const expectedEmail = cdpAuthEmail(idUserNow?.id);
-          if (!expectedEmail || currentSession.user.email !== expectedEmail) {
+          // Coinbase identity not loaded yet: keep the valid session, never drop it.
+          if (!expectedEmail) {
+            setSession(currentSession);
+            setUser(currentSession.user);
+            return;
+          }
+          if (currentSession.user.email !== expectedEmail) {
             // Stale session from a previous Coinbase user → drop it.
             await clearSessionState();
             if (isSocial && !manualSignOutRef.current) {
