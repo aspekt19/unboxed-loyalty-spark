@@ -12,12 +12,24 @@ export interface MerchantProfileLike {
   location?: string | null;
 }
 
+export const DISCOVER_PROFILE_FIELDS = [
+  { key: 'business_name', label: 'Business name' },
+  { key: 'description', label: 'Description' },
+  { key: 'logo_url', label: 'Logo' },
+  { key: 'location', label: 'Location' },
+] as const satisfies ReadonlyArray<{
+  key: keyof MerchantProfileLike;
+  label: string;
+}>;
+
+export function getMissingDiscoverProfileFields(
+  profile: MerchantProfileLike | null | undefined,
+): string[] {
+  return DISCOVER_PROFILE_FIELDS
+    .filter(({ key }) => !profile?.[key]?.trim())
+    .map(({ label }) => label);
+}
+
 export function isMerchantProfileComplete(profile: MerchantProfileLike | null | undefined): boolean {
-  if (!profile) return false;
-  return Boolean(
-    profile.business_name?.trim() &&
-      profile.description?.trim() &&
-      profile.logo_url?.trim() &&
-      profile.location?.trim(),
-  );
+  return getMissingDiscoverProfileFields(profile).length === 0;
 }
