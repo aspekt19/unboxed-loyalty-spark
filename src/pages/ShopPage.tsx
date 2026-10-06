@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
+import { isMerchantProfileComplete } from '@/lib/merchant-visibility';
 import {
   Store,
   Gift,
@@ -122,7 +123,7 @@ export default function ShopPage() {
     );
   }
 
-  if (!merchant) {
+  if (!merchant || !isMerchantProfileComplete(merchant)) {
     return (
       <div className="container max-w-4xl py-16 text-center space-y-4">
         <Store className="h-10 w-10 mx-auto text-muted-foreground" />

@@ -27,6 +27,7 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { isMerchantProfileComplete } from '@/lib/merchant-visibility';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const PAGE_SIZE = 12;
@@ -146,8 +147,10 @@ export function MerchantDiscoverPanel() {
         };
       });
 
-      // Only merchants with at least one active program
-      setMerchants(cards.filter((c) => c.programs.length > 0));
+      // Only merchants with a filled-in profile and at least one active program
+      setMerchants(
+        cards.filter((c) => c.programs.length > 0 && isMerchantProfileComplete(c)),
+      );
     } catch (err) {
       console.error('[MerchantDiscoverPanel] error:', err);
       setMerchants([]);
