@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Store, Search, Star, Gift, Users, MapPin, Loader2, ChevronDown, ChevronUp, LayoutGrid, List } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
-import { isMerchantProfileComplete } from '@/lib/merchant-visibility';
 
 const CATEGORIES = [
   { value: 'all', label: 'All Categories' },
@@ -123,9 +122,9 @@ export function MerchantCardGrid({ onMerchantSelect, selectedMerchant, restrictT
         };
       });
 
-      setMerchants(
-        cards.filter((c) => c.programs.length > 0 && isMerchantProfileComplete(c)),
-      );
+      // No profile-completeness filter here: "Your Merchants" must show every
+      // merchant the user interacted with, even test/agent ones.
+      setMerchants(cards.filter((c) => c.programs.length > 0));
     } catch (err) {
       console.error('[MerchantCardGrid] error:', err);
     } finally {
