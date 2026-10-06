@@ -64,12 +64,14 @@ export function EarnPointsDialog({
     ? cashbackRate * tierInfo.cashbackMultiplier
     : cashbackRate;
 
-  // Points = amount × pts/$1, plus a bonus of (tier-adjusted cashback %) on top.
-  // e.g. $50 × 1 = 50 + 5% = 52.50
-  const amountNum = parseFloat(purchaseAmount) || 0;
-  const basePoints = amountNum * pointsPerDollar;
-  const bonusPoints = basePoints * (effectiveCashbackRate / 100);
-  const tokensToEarn = (basePoints + bonusPoints).toFixed(2);
+  // Cashback in dollars = amount × (tier-adjusted cashback %), then × pts/$1.
+  // e.g. $50 × 5% = $2.50 × 1 = 2.50 points
+  const cashbackDollars = purchaseAmount
+    ? (parseFloat(purchaseAmount) * (effectiveCashbackRate / 100))
+    : 0;
+  const tokensToEarn = purchaseAmount
+    ? (cashbackDollars * pointsPerDollar).toFixed(2)
+    : '0';
 
   // Fetch customer tier when address is resolved
   useEffect(() => {
@@ -331,14 +333,15 @@ export function EarnPointsDialog({
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calculator className="h-4 w-4" />
-                {pointsPerDollar} pts/$1 · bonus {cashbackRate}%
+                Base: {cashbackRate}%
                 {tierInfo && tierInfo.cashbackMultiplier > 1 && (
                   <> × {tierInfo.cashbackMultiplier} ({tierInfo.tierName}) = {effectiveCashbackRate.toFixed(1)}%</>
                 )}
+                {' · '}{pointsPerDollar} pts/$1
               </div>
               {purchaseAmount && parseFloat(purchaseAmount) > 0 && (
                 <p className="text-xs text-muted-foreground">
-                  ${purchaseAmount} × {pointsPerDollar} = {basePoints.toFixed(2)} + {effectiveCashbackRate.toFixed(1)}% bonus ({bonusPoints.toFixed(2)}) = {tokensToEarn}
+                  ${purchaseAmount} × {effectiveCashbackRate.toFixed(1)}% = ${cashbackDollars.toFixed(2)} × {pointsPerDollar} = {tokensToEarn}
                 </p>
               )}
               <div className="text-lg font-bold text-primary">
