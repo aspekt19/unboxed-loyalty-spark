@@ -64,12 +64,14 @@ export function EarnPointsDialog({
     ? cashbackRate * tierInfo.cashbackMultiplier
     : cashbackRate;
 
-  // Points = amount × pts/$1, plus a bonus of (tier-adjusted cashback %) on top.
-  // e.g. $50 × 1 = 50 + 5% = 52.50
-  const amountNum = parseFloat(purchaseAmount) || 0;
-  const basePoints = amountNum * pointsPerDollar;
-  const bonusPoints = basePoints * (effectiveCashbackRate / 100);
-  const tokensToEarn = (basePoints + bonusPoints).toFixed(2);
+  // Cashback in dollars = amount × (tier-adjusted cashback %), then × pts/$1.
+  // e.g. $50 × 5% = $2.50 × 1 = 2.50 points
+  const cashbackDollars = purchaseAmount
+    ? (parseFloat(purchaseAmount) * (effectiveCashbackRate / 100))
+    : 0;
+  const tokensToEarn = purchaseAmount
+    ? (cashbackDollars * pointsPerDollar).toFixed(2)
+    : '0';
 
   // Fetch customer tier when address is resolved
   useEffect(() => {
