@@ -2,7 +2,8 @@ import { getMcpBazaarTool, isMcpToolResource } from "../_shared/mcp-bazaar-tools
 import { getRecipientMcpBazaarTool } from "../_shared/recipient-mcp-bazaar-tools.ts";
 import { RECIPIENT_REST_ROUTE_USD } from "../_shared/recipient-paid-routes.ts";
 import { resolveMcpApiKey } from "../_shared/mcp-http-api-key.ts";
-import { buildAcceptEntry, ensureBuilderCodeOnPaymentPayload, paymentRequirementsForFacilitator, validateClientAcceptedMatches } from "../_shared/x402-bazaar-accept.ts";
+import { buildAcceptEntry, ensureBuilderCodeOnPaymentPayload, isMcpResource, paymentRequirementsForFacilitator, publicResourceUrl, validateClientAcceptedMatches } from "../_shared/x402-bazaar-accept.ts";
+import { reviewBlock, reviewsExtension } from "../_shared/agorean-reviews.ts";
 import { paidGatewayUpstreamHeaders, type PaidGatewayKind } from "../_shared/paid-gateway-auth.ts";
 
 const corsHeaders = {
@@ -216,6 +217,11 @@ function buildPaymentRequired(price: string, resource: string, requestUrl: URL):
   if (accept.extensions && typeof accept.extensions === "object" && !Array.isArray(accept.extensions)) {
     paymentRequirements.extensions = { ...(accept.extensions as Record<string, unknown>) };
   }
+  /** Agorean reviews (https://agorean.com/docs/show-your-reviews): a fixed block, so the client's echo always matches. */
+  paymentRequirements.extensions = {
+    ...(paymentRequirements.extensions as Record<string, unknown> | undefined),
+    reviews: reviewsExtension(publicResourceUrl(resource, requestUrl, supabaseUrl)),
+  };
 
   const jsonStr = JSON.stringify(paymentRequirements);
   const encoded = btoa(Array.from(new TextEncoder().encode(jsonStr), (b) => String.fromCharCode(b)).join(""));
@@ -479,7 +485,23 @@ Deno.serve(async (req) => {
       respHeaders.set("EXTENSION-RESPONSES", settleResult.extensionResponsesHeader);
     }
 
-    return new Response(await apiResponse.text(), {
+    let body = await apiResponse.text();
+    // Agorean reviews: let the buyer review this paid call in one call. REST routes only (MCP
+    // replies are JSON-RPC envelopes and get no extra top-level key), and only on a JSON-object reply.
+    if (!isMcpResource(resource) && apiResponse.ok && (apiResponse.headers.get("content-type") ?? "").includes("json")) {
+      try {
+        const parsed = JSON.parse(body);
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed) && !("review" in parsed)) {
+          const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+          body = JSON.stringify({ ...parsed, review: reviewBlock(publicResourceUrl(resource, url, supabaseUrl)) });
+          respHeaders.delete("content-length");
+        }
+      } catch {
+        /* not JSON — leave the upstream body untouched */
+      }
+    }
+
+    return new Response(body, {
       status: apiResponse.status,
       headers: respHeaders,
     });

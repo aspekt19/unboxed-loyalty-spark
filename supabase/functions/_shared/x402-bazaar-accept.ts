@@ -207,6 +207,16 @@ function gatewayPath(resource: string): string {
   return `/functions/v1/x402-gateway/${resource}`;
 }
 
+/** MCP (JSON-RPC) resource on either MCP mount, as opposed to a REST route. */
+export function isMcpResource(resource: string): boolean {
+  return resource.startsWith("mcp-tools/") || resource.startsWith("recipient-mcp-tools/");
+}
+
+/** Public URL of a gateway resource exactly as buyers call it: origin + path, no query string. */
+export function publicResourceUrl(resource: string, requestUrl: URL, supabaseUrl: string): string {
+  return `${resourcePublicOrigin(requestUrl, supabaseUrl)}${gatewayPath(resource)}`;
+}
+
 /** Public URL to a Supabase Edge Function, canonicalised to the branded proxy host when available. */
 function publicFunctionUrl(requestUrl: URL, supabaseUrl: string, fnName: string): string {
   const origin = resourcePublicOrigin(requestUrl, supabaseUrl);
@@ -769,14 +779,12 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
   resourceMethod: string;
   resourceUrlForDiscovery: string;
 } {
-  const pathOnGateway = gatewayPath(p.resource);
   // Compute method first so we can disambiguate REST GET vs POST that share the same path
   // (e.g. `/programs`, `/rewards`, `/offers`, `/vouchers`). x402scan dedupes by URL only,
   // so without a method-qualifier it silently drops one of each pair.
-  const isMcp = p.resource.startsWith("mcp-tools/") ||
-    p.resource.startsWith("recipient-mcp-tools/");
+  const isMcp = isMcpResource(p.resource);
   const restMethod = isMcp ? "POST" : getRestMethod(p.resource);
-  const baseUrl = `${resourcePublicOrigin(p.requestUrl, p.supabaseUrl)}${pathOnGateway}`;
+  const baseUrl = publicResourceUrl(p.resource, p.requestUrl, p.supabaseUrl);
   const resourceUrlForDiscovery = isMcp
     ? baseUrl
     : `${baseUrl}?method=${restMethod}`;
