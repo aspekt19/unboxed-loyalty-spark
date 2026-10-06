@@ -1,8 +1,9 @@
 /**
- * Temporary visibility rule: a merchant is shown to human visitors only
- * once their profile is properly filled in. This hides test/bot merchants
- * from Discover and shop pages. AI agents (REST/MCP APIs) still see all
- * merchants — this filter is UI-only by design.
+ * Temporary visibility rule: a merchant appears in the human-facing Discover
+ * catalogue only once their profile is properly filled in. This hides
+ * test/bot merchants from the catalogue. Direct merchant links and the
+ * "Your Merchants" list stay open on purpose, and AI agents (REST/MCP APIs)
+ * still see all merchants — this filter is UI-only by design.
  */
 export interface MerchantProfileLike {
   business_name?: string | null;
