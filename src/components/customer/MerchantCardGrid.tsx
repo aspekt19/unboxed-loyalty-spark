@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Store, Search, Star, Gift, Users, MapPin, Loader2, ChevronDown, ChevronUp, LayoutGrid, List } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
-import { isMerchantProfileComplete } from '@/lib/merchant-visibility';
 
 const CATEGORIES = [
   { value: 'all', label: 'All Categories' },
