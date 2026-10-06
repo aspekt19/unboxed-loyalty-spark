@@ -71,6 +71,13 @@
       "when": 1791208161693,
       "tag": "0009_programs_rewards_accept_linked_wallets",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791281226690,
+      "tag": "0010_migration",
+      "breakpoints": true
     }
   ]
 }
