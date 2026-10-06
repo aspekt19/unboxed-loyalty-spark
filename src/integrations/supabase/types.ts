@@ -1512,6 +1512,7 @@ export type Database = {
           logo_url: string | null
           merchant_address: string
           merchant_plan_id: string | null
+          merchant_type: string
           updated_at: string
           website: string | null
         }
@@ -1525,6 +1526,7 @@ export type Database = {
           logo_url?: string | null
           merchant_address: string
           merchant_plan_id?: string | null
+          merchant_type?: string
           updated_at?: string
           website?: string | null
         }
@@ -1538,6 +1540,7 @@ export type Database = {
           logo_url?: string | null
           merchant_address?: string
           merchant_plan_id?: string | null
+          merchant_type?: string
           updated_at?: string
           website?: string | null
         }
@@ -2711,10 +2714,12 @@ export type Database = {
           rfm_score: string
         }[]
       }
+      get_discover_merchant_addresses: { Args: never; Returns: string[] }
       get_merchant_role: {
         Args: { p_merchant_address: string; p_wallet_address: string }
         Returns: Database["public"]["Enums"]["merchant_employee_role"]
       }
+      get_my_discover_status: { Args: { p_merchant: string }; Returns: Json }
       get_my_identity_summary: { Args: never; Returns: Json }
       get_public_payment_info: {
         Args: never
@@ -2785,6 +2790,10 @@ export type Database = {
       }
       mask_email: { Args: { email: string }; Returns: string }
       mask_phone: { Args: { phone: string }; Returns: string }
+      merchant_discover_criteria: {
+        Args: { p_merchant: string }
+        Returns: Json
+      }
       merchant_plan_change_allowed: {
         Args: { p_merchant_address: string; p_plan_id: string }
         Returns: boolean

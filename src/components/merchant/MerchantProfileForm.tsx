@@ -10,7 +10,12 @@ import { Store, Loader2, Check, Pencil, CircleAlert, Eye, EyeOff } from 'lucide-
 import { supabase } from '@/integrations/supabase/client';
 import { useAccount } from 'wagmi';
 import { toast } from 'sonner';
-import { getMissingDiscoverProfileFields } from '@/lib/merchant-visibility';
+import {
+  getDiscoverBlockers,
+  MERCHANT_TYPES,
+  type DiscoverCriteria,
+  type MerchantType,
+} from '@/lib/merchant-visibility';
 
 const CATEGORIES = [
   { value: 'cafe', label: '☕ Café & Coffee' },
@@ -47,6 +52,16 @@ export function MerchantProfileForm() {
   const [logoUrl, setLogoUrl] = useState('');
   const [website, setWebsite] = useState('');
   const [location, setLocation] = useState('');
+  const [merchantType, setMerchantType] = useState<MerchantType>('in_store');
+  const [criteria, setCriteria] = useState<DiscoverCriteria | null>(null);
+
+  const loadCriteria = useCallback(async () => {
+    if (!address) return;
+    const { data, error } = await supabase.rpc('get_my_discover_status', {
+      p_merchant: address.toLowerCase(),
+    });
+    if (!error && data) setCriteria(data as unknown as DiscoverCriteria);
+  }, [address]);
 
   const loadProfile = useCallback(async () => {
     if (!address) return;
@@ -71,6 +86,7 @@ export function MerchantProfileForm() {
         setLogoUrl(data.logo_url || '');
         setWebsite(data.website || '');
         setLocation(data.location || '');
+        setMerchantType((data.merchant_type as MerchantType) || 'in_store');
       } else {
         setIsEditing(true);
       }
@@ -82,7 +98,8 @@ export function MerchantProfileForm() {
   useEffect(() => {
     if (!address) return;
     void loadProfile();
-  }, [address, loadProfile]);
+    void loadCriteria();
+  }, [address, loadProfile, loadCriteria]);
 
   const handleSave = async () => {
     if (!address) return;
@@ -97,6 +114,7 @@ export function MerchantProfileForm() {
         merchant_address: address.toLowerCase(),
         business_name: businessName.trim(),
         category,
+        merchant_type: merchantType,
         description: description.trim() || null,
         logo_url: logoUrl.trim() || null,
         website: website.trim() || null,
@@ -121,6 +139,7 @@ export function MerchantProfileForm() {
       toast.success(hasProfile ? 'Profile updated!' : 'Profile created!');
       setHasProfile(true);
       setIsEditing(false);
+      void loadCriteria();
     } finally {
       setIsSaving(false);
     }
@@ -129,12 +148,12 @@ export function MerchantProfileForm() {
   if (!address || isLoading) return null;
 
   const categoryLabel = CATEGORIES.find(c => c.value === category)?.label || category;
-  const missingDiscoverFields = getMissingDiscoverProfileFields({
-    business_name: businessName,
-    description,
-    logo_url: logoUrl,
-    location,
-  });
+  const missingDiscoverFields = getDiscoverBlockers(
+    { business_name: businessName, description, logo_url: logoUrl, location },
+    merchantType,
+    criteria,
+  );
+  const typeLabel = MERCHANT_TYPES.find(t => t.value === merchantType)?.label;
   const isVisibleInDiscover = missingDiscoverFields.length === 0;
 
   const discoverStatus = (
@@ -161,7 +180,7 @@ export function MerchantProfileForm() {
           ) : (
             <>
               <p className="mt-1 text-xs text-muted-foreground">
-                Complete these profile fields to appear in Discover:
+                To appear in Discover you still need:
               </p>
               <ul className="mt-2 grid gap-1 sm:grid-cols-2">
                 {missingDiscoverFields.map(field => (
@@ -193,7 +212,10 @@ export function MerchantProfileForm() {
             )}
             <div>
               <CardTitle className="text-base">{businessName}</CardTitle>
-              <Badge variant="secondary" className="text-xs mt-1">{categoryLabel}</Badge>
+              <div className="mt-1 flex flex-wrap gap-1">
+                <Badge variant="secondary" className="text-xs">{categoryLabel}</Badge>
+                {typeLabel && <Badge variant="outline" className="text-xs">{typeLabel}</Badge>}
+              </div>
             </div>
           </div>
           <Button variant="ghost" size="icon" onClick={() => setIsEditing(true)}>
@@ -257,6 +279,22 @@ export function MerchantProfileForm() {
               </SelectContent>
             </Select>
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="merchantType">Business type *</Label>
+          <Select value={merchantType} onValueChange={v => setMerchantType(v as MerchantType)}>
+            <SelectTrigger id="merchantType">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {MERCHANT_TYPES.map(t => (
+                <SelectItem key={t.value} value={t.value}>
+                  {t.label} — <span className="text-muted-foreground">{t.hint}</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-2">
