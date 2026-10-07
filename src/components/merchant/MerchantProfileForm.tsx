@@ -99,6 +99,11 @@ export function MerchantProfileForm() {
     if (!address) return;
     void loadProfile();
     void loadCriteria();
+    // Session may restore after the wallet reconnects — re-check then.
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      if (session) void loadCriteria();
+    });
+    return () => sub.subscription.unsubscribe();
   }, [address, loadProfile, loadCriteria]);
 
   const handleSave = async () => {
@@ -154,7 +159,8 @@ export function MerchantProfileForm() {
     criteria,
   );
   const typeLabel = MERCHANT_TYPES.find(t => t.value === merchantType)?.label;
-  const isVisibleInDiscover = missingDiscoverFields.length === 0;
+  const statusUnknown = criteria === null && missingDiscoverFields.length === 0;
+  const isVisibleInDiscover = criteria !== null && missingDiscoverFields.length === 0;
 
   const discoverStatus = (
     <div
@@ -171,12 +177,25 @@ export function MerchantProfileForm() {
         )}
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-foreground">
-            {isVisibleInDiscover ? 'Visible in Discover' : 'Not visible in Discover'}
+            {isVisibleInDiscover
+              ? 'Visible in Discover'
+              : statusUnknown
+                ? 'Discover status unavailable'
+                : 'Not visible in Discover'}
           </p>
           {isVisibleInDiscover ? (
             <p className="mt-1 text-xs text-muted-foreground">
               Customers can find your business in the Discover catalogue.
             </p>
+          ) : statusUnknown ? (
+            <div className="mt-1 flex items-center gap-2">
+              <p className="text-xs text-muted-foreground">
+                We couldn't check your plan and program status yet.
+              </p>
+              <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => void loadCriteria()}>
+                Check again
+              </Button>
+            </div>
           ) : (
             <>
               <p className="mt-1 text-xs text-muted-foreground">
