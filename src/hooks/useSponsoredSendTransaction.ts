@@ -1,12 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import {
-  useAccount,
-  useCapabilities,
-  useSendCalls,
-  useSendTransaction,
-  useWaitForCallsStatus,
-} from "wagmi";
-import { base } from "wagmi/chains";
+import { useAccount, useSendTransaction } from "wagmi";
 import { useIdentity } from "@/hooks/useIdentity";
 import { PAYMASTER_PROXY_URL, sendSponsoredFromSmartAccount } from "@/lib/cdpSmartSend";
 
@@ -33,38 +26,22 @@ export function pickSmartSender(active: string | undefined, smart: SmartWalletSe
 
 /**
  * Drop-in replacement for wagmi `useSendTransaction`:
- * 1) active wallet is the Coinbase smart account (Google/email sign-in) → gas paid via our paymaster proxy;
- * 2) wallet with `paymasterService` → sponsored via our proxy;
- * 3) plain wallet (MetaMask etc.) → normal transaction, user pays their own gas.
+ * Google/email (the active address is the Coinbase smart account) → gas paid via our paymaster proxy.
+ * Any other wallet pays its own gas. Routing those wallets through the paymaster made
+ * Base App and Coinbase Wallet fail with "transaction generation error".
  * We never send ETH to user wallets.
  */
 export function useSponsoredSendTransaction() {
   const { address } = useAccount();
   const plain = useSendTransaction();
-  const calls = useSendCalls();
   const { smartAccount } = useIdentity();
   const cdpSender = useMemo<SmartWalletSender | null>(() => smartAccount
     ? { address: smartAccount, sendTransaction: (a) => sendSponsoredFromSmartAccount(smartAccount, [a]) }
     : null, [smartAccount]);
   const identitySmart = pickSmartSender(address, cdpSender);
-  const { data: caps } = useCapabilities({ account: address, query: { enabled: !!address } });
   const [smartState, setSmartState] = useState<{ pending: boolean; hash?: `0x${string}`; error: Error | null }>({ pending: false, error: null });
 
   const useIdentitySmart = !!identitySmart;
-
-  // External wallets (Base App, Coinbase Wallet) pay their own gas: routing them through our
-  // paymaster made the wallet fail with "transaction generation error" when sponsorship was refused.
-  const walletPaymaster = useMemo(() => {
-    const c = (caps as Record<number, { paymasterService?: { supported?: boolean } }> | undefined)?.[base.id];
-    return !!c?.paymasterService?.supported;
-  }, [caps]);
-  void walletPaymaster;
-  const supportsPaymaster = false;
-
-  const callsId = calls.data?.id;
-  const status = useWaitForCallsStatus({ id: callsId, query: { enabled: !!callsId } });
-  const sponsoredHash = status.data?.receipts?.[0]?.transactionHash as `0x${string}` | undefined;
-  const sponsoredFailed = status.data?.status === "failure";
 
   const sendViaIdentitySmart = useCallback(async (args: SendArgs) => {
     setSmartState({ pending: true, error: null });
@@ -80,72 +57,40 @@ export function useSponsoredSendTransaction() {
 
   const sendTransaction = useCallback(
     (args: SendArgs, opts?: SendOpts) => {
-      if (useIdentitySmart && (args.value === undefined || args.value === 0n)) {
-        plain.reset(); calls.reset();
+      if (useIdentitySmart && shouldSponsor(true, args.value)) {
+        plain.reset();
         sendViaIdentitySmart(args).then((h) => opts?.onSuccess?.(h), (e) => opts?.onError?.(e as Error));
         return;
       }
-      if (shouldSponsor(supportsPaymaster, args.value)) {
-        plain.reset();
-        calls.sendCalls(
-          {
-            chainId: base.id,
-            calls: [{ to: args.to, data: args.data, value: 0n }],
-            capabilities: { paymasterService: { url: PAYMASTER_PROXY_URL } },
-          },
-          { onError: (e) => opts?.onError?.(e as Error) },
-        );
-        return;
-      }
-      calls.reset();
       plain.sendTransaction(args, {
         onSuccess: (h) => opts?.onSuccess?.(h),
         onError: (e) => opts?.onError?.(e as Error),
       });
     },
-    [useIdentitySmart, sendViaIdentitySmart, supportsPaymaster, plain, calls],
+    [useIdentitySmart, sendViaIdentitySmart, plain],
   );
 
   const sendTransactionAsync = useCallback(
     async (args: SendArgs): Promise<`0x${string}`> => {
-      if (useIdentitySmart && (args.value === undefined || args.value === 0n)) return sendViaIdentitySmart(args);
-      if (shouldSponsor(supportsPaymaster, args.value)) {
-        const { id } = await calls.sendCallsAsync({
-          chainId: base.id,
-          calls: [{ to: args.to, data: args.data, value: 0n }],
-          capabilities: { paymasterService: { url: PAYMASTER_PROXY_URL } },
-        });
-        const { waitForCallsStatus } = await import("wagmi/actions");
-        const { config } = await import("@/config/wagmi");
-        const res = await waitForCallsStatus(config, { id });
-        const h = res.receipts?.[0]?.transactionHash;
-        if (!h || res.status === "failure") throw new Error("Sponsored transaction failed");
-        return h as `0x${string}`;
-      }
+      if (useIdentitySmart && shouldSponsor(true, args.value)) return sendViaIdentitySmart(args);
       return plain.sendTransactionAsync(args);
     },
-    [useIdentitySmart, sendViaIdentitySmart, supportsPaymaster, plain, calls],
+    [useIdentitySmart, sendViaIdentitySmart, plain],
   );
 
   const reset = useCallback(() => {
     plain.reset();
-    calls.reset();
     setSmartState({ pending: false, error: null });
-  }, [plain, calls]);
+  }, [plain]);
 
   const usingSmart = smartState.pending || !!smartState.hash || !!smartState.error;
-  const usingCalls = !!callsId || calls.isPending;
   return {
     sendTransaction,
     sendTransactionAsync,
     reset,
-    data: usingSmart ? smartState.hash : usingCalls ? sponsoredHash : plain.data,
-    isPending: usingSmart ? smartState.pending
-      : usingCalls ? calls.isPending || (!!callsId && !sponsoredHash && !sponsoredFailed) : plain.isPending,
-    error: usingSmart ? smartState.error
-      : usingCalls
-        ? (calls.error as Error | null) ?? (sponsoredFailed ? new Error("Sponsored transaction failed") : null)
-        : plain.error,
-    isSponsored: useIdentitySmart || supportsPaymaster,
+    data: usingSmart ? smartState.hash : plain.data,
+    isPending: usingSmart ? smartState.pending : plain.isPending,
+    error: usingSmart ? smartState.error : plain.error,
+    isSponsored: useIdentitySmart,
   };
 }

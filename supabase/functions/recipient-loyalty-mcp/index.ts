@@ -638,7 +638,7 @@ function createRecipientMcpServer(
   });
 
   mcpServer.tool("bazaar_pay_and_call", {
-    description: "Pay and call any x402-paid HTTPS endpoint using the holder's delegated CDP MPC wallet (EIP-3009 exact scheme on Base USDC). Requires opt-in delegated CDP wallet — enable it in /customer settings. Spend cap enforced per call (default 0.25 USDC, hard limit 10 USDC).",
+    description: "Pay a Loyal Spark x402 URL on api.loyalspark.online with the holder's delegated CDP MPC wallet (EIP-3009 exact scheme, Base USDC). Other hosts are refused before any signature. Requires an opt-in delegated CDP wallet in /customer settings. Spend cap default 0.25 USDC, hard limit 10.",
     inputSchema: {
       type: "object" as const,
       required: ["url"],

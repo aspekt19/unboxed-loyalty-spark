@@ -422,9 +422,9 @@ async function handleSignTransaction(d: any, agent: any, body: any) {
 }
 
 // ---- x402 pay-and-call (Bazaar side-car with signing) --------------------
-// Uses the agent's CDP MPC wallet as an EIP-3009 signer to pay any x402
-// resource on Base. Requires scope `mint` (spending funds) and an existing
-// active CDP wallet. Enforces a max USDC cap per call.
+// Uses the agent's CDP MPC wallet as an EIP-3009 signer. payAndCall only
+// allows Loyal Spark hosts. Requires scope `mint` and an active CDP wallet.
+// Enforces a max USDC cap per call.
 
 async function cdpSignTypedData(address: string, typedData: any): Promise<{ ok: boolean; signature?: string; error?: string }> {
   const path = `/evm/accounts/${address}/sign/typed-data`;

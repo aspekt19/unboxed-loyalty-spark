@@ -1468,7 +1468,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
   });
 
   mcpServer.tool("bazaar_pay_and_call", {
-    description: "Pay and call any x402-paid HTTPS endpoint using the merchant agent's CDP MPC wallet (EIP-3009 exact scheme on Base USDC). Probes the URL for HTTP 402, picks a compatible requirement, signs TransferWithAuthorization via CDP, retries with X-PAYMENT header, and returns the paid response. Requires scope 'mint' and a pre-created CDP wallet. Safety cap: max_usdc (default 0.25, hard limit 10).",
+    description: "Pay a Loyal Spark x402 URL on api.loyalspark.online with the merchant agent's CDP MPC wallet (EIP-3009 exact scheme, Base USDC). Other hosts are refused before any signature. Requires scope 'mint' and an active CDP wallet. max_usdc default 0.25, hard limit 10.",
     inputSchema: {
       type: "object" as const,
       required: ["url"],

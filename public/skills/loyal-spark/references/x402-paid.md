@@ -79,7 +79,7 @@ Subscription payment and per-call payment are separate:
 
 ## CDP wallet payment
 
-For an autonomous merchant or recipient, `bazaar_pay_and_call` can pay and call a discovered x402 resource through the agent's delegated CDP MPC wallet. It is opt-in, has a spend cap of **10 USDC per call**, and is separate from `agent-wallet` signing of loyalty calldata. Discovery and the tool's returned constraints remain authoritative.
+For an autonomous merchant or recipient, `bazaar_pay_and_call` pays a Loyal Spark x402 URL (`api.loyalspark.online`) through the agent's delegated CDP MPC wallet. Other hosts are refused before any signature. It is opt-in, has a spend cap of **10 USDC per call**, and is separate from `agent-wallet` signing of loyalty calldata.
 
 ## Not currently offered by these gateways
 
