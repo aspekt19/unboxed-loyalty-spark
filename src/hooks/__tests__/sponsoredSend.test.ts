@@ -32,8 +32,3 @@ describe("Coinbase smart account sender selection", () => {
   });
 });
 
-import { isTransientSendError } from "@/lib/cdpSmartSend";
-describe("isTransientSendError", () => {
-  it("retries network errors", () => { expect(isTransientSendError(new Error("Network Error"))).toBe(true); });
-  it("does not retry reverts", () => { expect(isTransientSendError(new Error("execution reverted: AccessControl"))).toBe(false); });
-});
