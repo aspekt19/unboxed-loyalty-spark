@@ -1,7 +1,6 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useAccount, useSendTransaction } from "wagmi";
 import { useIdentity } from "@/hooks/useIdentity";
-import { toast } from "sonner";
 import { PAYMASTER_PROXY_URL, sendSponsoredFromSmartAccount } from "@/lib/cdpSmartSend";
 
 export { PAYMASTER_PROXY_URL };
@@ -41,11 +40,13 @@ export function useSponsoredSendTransaction() {
     : null, [smartAccount]);
   const identitySmart = pickSmartSender(address, cdpSender);
   const [smartState, setSmartState] = useState<{ pending: boolean; hash?: `0x${string}`; error: Error | null }>({ pending: false, error: null });
+  const pendingRef = useRef(false);
 
   const useIdentitySmart = !!identitySmart;
 
   const sendViaIdentitySmart = useCallback(async (args: SendArgs) => {
-    if (smartState.pending) throw new Error('A transaction is already in progress');
+    if (pendingRef.current) throw new Error('A transaction is already in progress');
+    pendingRef.current = true;
     setSmartState({ pending: true, error: null });
     try {
       const h = await identitySmart!.sendTransaction(args);
@@ -54,25 +55,21 @@ export function useSponsoredSendTransaction() {
     } catch (e) {
       setSmartState({ pending: false, error: e as Error });
       throw e;
+    } finally {
+      pendingRef.current = false;
     }
-  }, [identitySmart, smartState.pending]);
+  }, [identitySmart]);
 
   const sendTransaction = useCallback(
     (args: SendArgs, opts?: SendOpts) => {
       if (useIdentitySmart && shouldSponsor(true, args.value)) {
         plain.reset();
-        sendViaIdentitySmart(args).then((h) => opts?.onSuccess?.(h), (e) => {
-          if (opts?.onError) opts.onError(e as Error);
-          else toast.error(`Transaction failed: ${(e as Error)?.message?.slice(0, 140) || 'unknown error'}. Please try again.`);
-        });
+        sendViaIdentitySmart(args).then((h) => opts?.onSuccess?.(h), (e) => opts?.onError?.(e as Error));
         return;
       }
       plain.sendTransaction(args, {
         onSuccess: (h) => opts?.onSuccess?.(h),
-        onError: (e) => {
-          if (opts?.onError) opts.onError(e as Error);
-          else if (!/rejected|denied/i.test(e.message)) toast.error(`Transaction failed: ${e.message.slice(0, 140)}`);
-        },
+        onError: (e) => opts?.onError?.(e as Error),
       });
     },
     [useIdentitySmart, sendViaIdentitySmart, plain],

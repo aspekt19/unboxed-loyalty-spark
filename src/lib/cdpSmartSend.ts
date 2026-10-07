@@ -5,10 +5,17 @@ export const PAYMASTER_PROXY_URL = 'https://api.loyalspark.online/paymaster-prox
 
 export type SmartCall = { to: `0x${string}`; data?: `0x${string}`; value?: bigint };
 
-/** Pure helper (tested): transient network/RPC hiccups worth retrying automatically. */
+/** Pure helper (tested): a dropped request, safe to send again. Timeouts and nonce errors are excluded: the user operation may already be in the bundler. */
 export function isTransientSendError(err: unknown): boolean {
   const m = String((err as Error)?.message ?? err ?? '').toLowerCase();
-  return /network error|failed to fetch|fetch failed|timeout|timed out|econnreset|503|502|504|429|rate limit|load failed|aa25|nonce/.test(m);
+  return /network error|failed to fetch|fetch failed|econnreset|503|502|504|429|rate limit|load failed/.test(m);
+}
+
+/** A status poll can be repeated: the user operation hash is already known. */
+function isTransientPollError(err: unknown): boolean {
+  if (isTransientSendError(err)) return true;
+  const m = String((err as Error)?.message ?? err ?? '').toLowerCase();
+  return /timeout|timed out/.test(m);
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -52,7 +59,7 @@ export async function sendSponsoredFromSmartAccount(
       if (status === 'complete' && op.transactionHash) return op.transactionHash as `0x${string}`;
       if (status === 'failed') throw new Error('Sponsored transaction failed onchain');
     } catch (e) {
-      if (!isTransientSendError(e)) throw e;
+      if (!isTransientPollError(e)) throw e;
       // keep polling — a status check hiccup is not a failed transaction
     }
   }
