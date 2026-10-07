@@ -31,3 +31,4 @@ describe("Coinbase smart account sender selection", () => {
     expect(pickSmartSender("0xaaaa000000000000000000000000000000000001", null)).toBeNull();
   });
 });
+

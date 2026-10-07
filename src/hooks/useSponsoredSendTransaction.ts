@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useAccount, useSendTransaction } from "wagmi";
 import { useIdentity } from "@/hooks/useIdentity";
+import { toast } from "sonner";
 import { PAYMASTER_PROXY_URL, sendSponsoredFromSmartAccount } from "@/lib/cdpSmartSend";
 
 export { PAYMASTER_PROXY_URL };
@@ -44,6 +45,7 @@ export function useSponsoredSendTransaction() {
   const useIdentitySmart = !!identitySmart;
 
   const sendViaIdentitySmart = useCallback(async (args: SendArgs) => {
+    if (smartState.pending) throw new Error('A transaction is already in progress');
     setSmartState({ pending: true, error: null });
     try {
       const h = await identitySmart!.sendTransaction(args);
@@ -53,18 +55,24 @@ export function useSponsoredSendTransaction() {
       setSmartState({ pending: false, error: e as Error });
       throw e;
     }
-  }, [identitySmart]);
+  }, [identitySmart, smartState.pending]);
 
   const sendTransaction = useCallback(
     (args: SendArgs, opts?: SendOpts) => {
       if (useIdentitySmart && shouldSponsor(true, args.value)) {
         plain.reset();
-        sendViaIdentitySmart(args).then((h) => opts?.onSuccess?.(h), (e) => opts?.onError?.(e as Error));
+        sendViaIdentitySmart(args).then((h) => opts?.onSuccess?.(h), (e) => {
+          if (opts?.onError) opts.onError(e as Error);
+          else toast.error(`Transaction failed: ${(e as Error)?.message?.slice(0, 140) || 'unknown error'}. Please try again.`);
+        });
         return;
       }
       plain.sendTransaction(args, {
         onSuccess: (h) => opts?.onSuccess?.(h),
-        onError: (e) => opts?.onError?.(e as Error),
+        onError: (e) => {
+          if (opts?.onError) opts.onError(e as Error);
+          else if (!/rejected|denied/i.test(e.message)) toast.error(`Transaction failed: ${e.message.slice(0, 140)}`);
+        },
       });
     },
     [useIdentitySmart, sendViaIdentitySmart, plain],
