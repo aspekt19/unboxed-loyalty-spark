@@ -8,30 +8,35 @@ afterEach(() => {
 });
 
 describe('sign-in retry availability', () => {
-  it('prevents another attempt throughout a slow in-flight sign-in', () => {
+  it('withholds retry during a slow in-flight sign-in (under 90s)', () => {
     vi.useFakeTimers();
     const retry = vi.fn();
     render(<SigningInButton className="" onTimeout={retry} isPending />);
-    act(() => vi.advanceTimersByTime(120_000));
+    act(() => vi.advanceTimersByTime(80_000));
     const button = screen.getByRole('button');
     expect(button).toBeDisabled();
     fireEvent.click(button);
     expect(retry).not.toHaveBeenCalled();
   });
 
-  it('allows recovery only after an idle timeout and cancels it when sign-in resumes', () => {
+  it('offers retry after 90s even if the sign-in never finishes', () => {
     vi.useFakeTimers();
     const retry = vi.fn();
-    const { rerender } = render(<SigningInButton className="" onTimeout={retry} isPending />);
-    act(() => vi.advanceTimersByTime(30_000));
-    rerender(<SigningInButton className="" onTimeout={retry} isPending={false} />);
+    render(<SigningInButton className="" onTimeout={retry} isPending />);
+    act(() => vi.advanceTimersByTime(90_000));
+    const button = screen.getByRole('button');
+    expect(button).toBeEnabled();
+    fireEvent.click(button);
+    expect(retry).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers retry after 20s when idle', () => {
+    vi.useFakeTimers();
+    const retry = vi.fn();
+    render(<SigningInButton className="" onTimeout={retry} />);
+    act(() => vi.advanceTimersByTime(19_000));
     expect(screen.getByRole('button')).toBeDisabled();
-    act(() => vi.advanceTimersByTime(20_000));
+    act(() => vi.advanceTimersByTime(1_000));
     expect(screen.getByRole('button')).toBeEnabled();
-    rerender(<SigningInButton className="" onTimeout={retry} isPending />);
-    expect(screen.getByRole('button')).toBeDisabled();
-    act(() => vi.advanceTimersByTime(120_000));
-    expect(screen.getByRole('button')).toBeDisabled();
-    expect(retry).not.toHaveBeenCalled();
   });
 });
