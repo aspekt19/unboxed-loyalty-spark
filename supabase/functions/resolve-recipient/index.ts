@@ -116,6 +116,22 @@ Deno.serve(async (req) => {
     }
 
     if (isEmail) {
+      // 0) Google/email (Coinbase) sign-in wallet — the address the shopper sees in the app.
+      const { data: cdpRow } = await adminClient
+        .from("customer_profiles")
+        .select("cdp_wallet_address")
+        .ilike("email", trimmed)
+        .not("cdp_wallet_address", "is", null)
+        .order("cdp_wallet_created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cdpRow?.cdp_wallet_address) {
+        return new Response(
+          JSON.stringify({ wallet_address: cdpRow.cdp_wallet_address.toLowerCase(), resolved_by: "email", source: "cdp_wallet" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       // 1) identity_links → primary wallet of the same user_id
       const { data: emailLink } = await adminClient
         .from("identity_links")
