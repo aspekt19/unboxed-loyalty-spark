@@ -81,14 +81,28 @@ function Core({ cdp, children }: { cdp: CdpState; children: ReactNode }) {
   }, [cdp.signedIn]);
 
   // Observe callback completion only; the existing OAuth handler owns SDK verification and URL cleanup.
+  // The URL is cleaned as soon as the SDK core reports success, a moment before the React hooks
+  // expose the signed-in user — so keep "Signing in…" until cdp.signedIn flips (effect above),
+  // a reported failure, or a short safety timeout. Clearing early flashed "Sign In" in between.
   useEffect(() => {
+    if (!signInPending) return;
+    const onFailed = () => setSignInPending(false);
+    window.addEventListener('loyalspark:oauth-return-failed', onFailed);
     const params = new URLSearchParams(window.location.search);
-    if (!signInPending || !params.has('flow_id') || !params.has('provider_type')) return;
-    const timer = window.setInterval(() => {
-      const current = new URLSearchParams(window.location.search);
-      if (!current.has('flow_id') || !current.has('provider_type')) setSignInPending(false);
-    }, 250);
-    return () => window.clearInterval(timer);
+    let fallback: number | undefined;
+    const timer = params.has('flow_id') && params.has('provider_type')
+      ? window.setInterval(() => {
+          const current = new URLSearchParams(window.location.search);
+          if (current.has('flow_id') && current.has('provider_type')) return;
+          window.clearInterval(timer);
+          fallback = window.setTimeout(() => setSignInPending(false), 15_000);
+        }, 250)
+      : undefined;
+    return () => {
+      window.removeEventListener('loyalspark:oauth-return-failed', onFailed);
+      if (timer) window.clearInterval(timer);
+      if (fallback) window.clearTimeout(fallback);
+    };
   }, [signInPending]);
 
   // The Coinbase connector can report the inner signer address if it connected before the

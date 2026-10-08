@@ -122,7 +122,10 @@ export function OAuthReturnHandler() {
     initialOAuthCallback?.error ? friendlyOAuthError(initialOAuthCallback.error) : null,
   );
 
-  const handleError = useCallback((next: string) => setMessage(next), []);
+  const handleError = useCallback((next: string) => {
+    window.dispatchEvent(new Event('loyalspark:oauth-return-failed'));
+    setMessage(next);
+  }, []);
   useOAuthCallbackExchange(handleError);
 
   const retry = () => {
