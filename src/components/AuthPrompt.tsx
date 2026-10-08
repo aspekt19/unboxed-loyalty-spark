@@ -21,6 +21,7 @@ export function AuthPrompt() {
     user: identityUser,
     authenticated: identityAuthenticated,
     ready: identityReady,
+    signInPending,
   } = useIdentity();
 
   const isFarcaster = isFarcasterContext();
@@ -59,6 +60,21 @@ export function AuthPrompt() {
   };
 
   if (isLoading || user) return null;
+
+  if (!isFarcaster && signInPending) {
+    return (
+      <Alert className="mb-6 border-2 border-primary/20 bg-primary/5">
+        <Shield className="h-5 w-5 text-primary" />
+        <AlertTitle className="text-lg font-semibold mb-2">Signing in…</AlertTitle>
+        <AlertDescription>
+          <Button variant="uds" disabled aria-busy="true" className={cn(INLINE_AUTH_CTA_CLASSNAME)} type="button">
+            <LogIn className="h-3.5 w-3.5 shrink-0 animate-pulse" />
+            Signing in…
+          </Button>
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   if (isFarcaster) {
     // In Farcaster: connector auto-connects and AuthContext auto-runs SIWE.

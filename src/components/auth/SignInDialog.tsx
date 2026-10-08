@@ -16,7 +16,7 @@ export type SignInDialogMode = 'all' | 'wallet';
 
 type Step = 'choose' | 'email' | 'otp' | 'wallet';
 
-export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode: SignInDialogMode; onOpenChange: (open: boolean) => void }) {
+export function SignInDialog({ open, mode, onOpenChange, onSignInPendingChange }: { open: boolean; mode: SignInDialogMode; onOpenChange: (open: boolean) => void; onSignInPendingChange: (pending: boolean) => void }) {
   const { connectors, connectAsync } = useConnect();
   const [step, setStep] = useState<Step>('choose');
   const [email, setEmail] = useState('');
@@ -41,11 +41,13 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
 
   const google = async () => {
     setBusy('google');
+    onSignInPendingChange(true);
     try {
       clearManualSignOut();
       rememberPostLoginPath();
       await signInWithOAuth('google');
     } catch (e) {
+      onSignInPendingChange(false);
       toast.error((e as Error)?.message || 'Google sign-in failed');
       setBusy(null);
     }
@@ -72,11 +74,13 @@ export function SignInDialog({ open, mode, onOpenChange }: { open: boolean; mode
   const verify = async () => {
     if (!flowId || otp.trim().length < 6) return;
     setBusy('otp');
+    onSignInPendingChange(true);
     try {
       clearManualSignOut();
       await verifyEmailOTP({ flowId, otp: otp.trim() });
       onOpenChange(false);
     } catch (e) {
+      onSignInPendingChange(false);
       toast.error((e as Error)?.message || 'Invalid code');
     } finally {
       setBusy(null);

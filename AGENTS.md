@@ -57,4 +57,6 @@ All in `docs/integrations/`: `PROMPT_GUIDE.md` (system prompts), `OPENSERV_AGENT
 
 ## CI
 
+- `useIdentity` owns pre-session Google/OTP pending UI without verifying OAuth or editing callback URLs; this prevents duplicate sign-in during SDK hydration.
+
 - CI runs `npm ci`, falling back to `npm install` if `package-lock.json` drifts — why: Lovable updates only `bun.lock`.
