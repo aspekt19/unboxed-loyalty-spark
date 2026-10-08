@@ -188,6 +188,29 @@ serve(async (req) => {
 
     if (email) await upsertLink(admin, userId, "email", email, "cdp_auth", true);
 
+    // Remember the Coinbase smart account for this verified email so merchants who
+    // send points "by email" reach the wallet the shopper actually signs in with,
+    // even when the email is still attached to an older external-wallet profile.
+    if (email && primaryWallet && !walletConflict) {
+      try {
+        const { data: updated } = await admin
+          .from("customer_profiles")
+          .update({ cdp_wallet_address: primaryWallet, cdp_wallet_created_at: new Date().toISOString() })
+          .ilike("email", email)
+          .select("id");
+        if (!updated?.length) {
+          await admin.from("customer_profiles").insert({
+            wallet_address: primaryWallet,
+            email,
+            cdp_wallet_address: primaryWallet,
+            cdp_wallet_created_at: new Date().toISOString(),
+          });
+        }
+      } catch (e) {
+        console.warn("cdp wallet email mapping failed:", (e as Error)?.message);
+      }
+    }
+
     if (primaryWallet && !walletConflict && (await isAdminWallet(primaryWallet))) {
       await admin.from("user_roles").upsert({ user_id: userId, role: "admin" }, { onConflict: "user_id,role" });
     }
