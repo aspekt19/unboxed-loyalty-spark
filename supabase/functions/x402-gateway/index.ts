@@ -1,9 +1,9 @@
 import { getMcpBazaarTool, isMcpToolResource } from "../_shared/mcp-bazaar-tools.ts";
 import { getRecipientMcpBazaarTool } from "../_shared/recipient-mcp-bazaar-tools.ts";
 import { RECIPIENT_REST_ROUTE_USD } from "../_shared/recipient-paid-routes.ts";
-import { resolveMcpApiKey } from "../_shared/mcp-http-api-key.ts";
 import { buildAcceptEntry, ensureBuilderCodeOnPaymentPayload, paymentRequirementsForFacilitator, validateClientAcceptedMatches } from "../_shared/x402-bazaar-accept.ts";
 import { paidGatewayUpstreamHeaders, type PaidGatewayKind } from "../_shared/paid-gateway-auth.ts";
+import { lookupActiveCallerKey, paidCallerProblem, paidCallerRejectionResponse, readPaidCallerKey } from "../_shared/paid-caller-key.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -440,6 +440,15 @@ Deno.serve(async (req) => {
       return buildPaymentRequired(price, resource, url);
     }
 
+    // Refuse before verify/settle. A valid payment with a missing or dead key used to
+    // take USDC and then return 401 from agent-api.
+    const callerProblem = await paidCallerProblem(
+      (name) => req.headers.get(name) ?? undefined,
+      resource,
+      lookupActiveCallerKey,
+    );
+    if (callerProblem) return paidCallerRejectionResponse(callerProblem, corsHeaders);
+
     const verification = await verifyPayment(paymentSignature, price, resource, url);
     if (!verification.valid) {
       const errorResp = buildPaymentRequired(price, resource, url);
@@ -527,14 +536,14 @@ async function proxyToLoyaltyMcp(originalReq: Request, paidVia?: PaidGatewayKind
   const loyaltyMcpUrl = `${supabaseUrl}/functions/v1/loyalty-mcp${originalUrl.search}`;
 
   const get = (name: string) => originalReq.headers.get(name) ?? undefined;
-  const lsk = resolveMcpApiKey(get, "lsk_");
+  const callerKey = readPaidCallerKey(get, getResourceFromUrl(originalUrl));
 
   const headers = withPaidGatewayHeaders({
     "Content-Type": originalReq.headers.get("content-type") || "application/json",
     Authorization: `Bearer ${serviceKey}`,
   }, paidVia);
-  if (lsk) {
-    headers["x-api-key"] = lsk;
+  if (callerKey) {
+    headers["x-api-key"] = callerKey;
   }
 
   const ip = originalReq.headers.get("x-forwarded-for") || originalReq.headers.get("cf-connecting-ip");
@@ -572,14 +581,14 @@ async function proxyToRecipientLoyaltyMcp(originalReq: Request, paidVia?: PaidGa
   const recipientMcpUrl = `${supabaseUrl}/functions/v1/recipient-loyalty-mcp${originalUrl.search}`;
 
   const get = (name: string) => originalReq.headers.get(name) ?? undefined;
-  const rwk = resolveMcpApiKey(get, "rwk_");
+  const callerKey = readPaidCallerKey(get, getResourceFromUrl(originalUrl));
 
   const headers = withPaidGatewayHeaders({
     "Content-Type": originalReq.headers.get("content-type") || "application/json",
     Authorization: `Bearer ${serviceKey}`,
   }, paidVia);
-  if (rwk) {
-    headers["x-api-key"] = rwk;
+  if (callerKey) {
+    headers["x-api-key"] = callerKey;
   }
   // Some clients (OpenServ/curl variants) also send the Supabase `apikey` header.
   // Forward it as a defensive passthrough so recipient-loyalty-mcp sees the same
@@ -631,9 +640,12 @@ async function proxyToRecipientApi(originalReq: Request, paidVia?: PaidGatewayKi
     Authorization: `Bearer ${serviceKey}`,
   }, paidVia);
 
-  const apiKey = originalReq.headers.get("x-api-key");
-  if (apiKey) {
-    headers["x-api-key"] = apiKey;
+  const callerKey = readPaidCallerKey(
+    (name) => originalReq.headers.get(name) ?? undefined,
+    resource,
+  );
+  if (callerKey) {
+    headers["x-api-key"] = callerKey;
   }
   const apikey = originalReq.headers.get("apikey");
   if (apikey) {
@@ -680,9 +692,12 @@ async function proxyToAgentApi(originalReq: Request, paidVia?: PaidGatewayKind):
     Authorization: `Bearer ${serviceKey}`,
   }, paidVia);
 
-  const apiKey = originalReq.headers.get("x-api-key");
-  if (apiKey) {
-    headers["x-api-key"] = apiKey;
+  const callerKey = readPaidCallerKey(
+    (name) => originalReq.headers.get(name) ?? undefined,
+    resource,
+  );
+  if (callerKey) {
+    headers["x-api-key"] = callerKey;
   }
 
   const ip = originalReq.headers.get("x-forwarded-for") || originalReq.headers.get("cf-connecting-ip");

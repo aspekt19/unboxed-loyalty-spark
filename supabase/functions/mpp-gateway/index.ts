@@ -1,6 +1,7 @@
 import { Mppx, tempo } from "npm:mppx@0.4.7/server";
 import { RECIPIENT_REST_ROUTE_USD } from "../_shared/recipient-paid-routes.ts";
 import { paidGatewayUpstreamHeaders, type PaidGatewayKind } from "../_shared/paid-gateway-auth.ts";
+import { lookupActiveCallerKey, paidCallerProblem, paidCallerRejectionResponse, readPaidCallerKey, requestCarriesPaymentCredential } from "../_shared/paid-caller-key.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -359,6 +360,12 @@ Deno.serve(async (req) => {
       );
     }
 
+    const getHeader = (name: string) => req.headers.get(name) ?? undefined;
+    if (requestCarriesPaymentCredential(getHeader)) {
+      const callerProblem = await paidCallerProblem(getHeader, resource, lookupActiveCallerKey);
+      if (callerProblem) return paidCallerRejectionResponse(callerProblem, corsHeaders);
+    }
+
     const response = await chargeFn.call(mppx, { amount: price })(req);
 
     if (response.status === 402) {
@@ -421,8 +428,8 @@ async function proxyToRecipientApi(originalReq: Request, paidVia?: PaidGatewayKi
     "Content-Type": originalReq.headers.get("content-type") || "application/json",
     Authorization: `Bearer ${serviceKey}`,
   }, paidVia);
-  const apiKey = originalReq.headers.get("x-api-key");
-  if (apiKey) headers["x-api-key"] = apiKey;
+  const callerKey = readPaidCallerKey((name) => originalReq.headers.get(name) ?? undefined, resource);
+  if (callerKey) headers["x-api-key"] = callerKey;
   const apikey = originalReq.headers.get("apikey");
   if (apikey) headers["apikey"] = apikey;
   const ip = originalReq.headers.get("x-forwarded-for") || originalReq.headers.get("cf-connecting-ip");
@@ -461,9 +468,9 @@ async function proxyToAgentApi(originalReq: Request, paidVia?: PaidGatewayKind):
     Authorization: `Bearer ${serviceKey}`,
   }, paidVia);
 
-  const apiKey = originalReq.headers.get("x-api-key");
-  if (apiKey) {
-    headers["x-api-key"] = apiKey;
+  const callerKey = readPaidCallerKey((name) => originalReq.headers.get(name) ?? undefined, resource);
+  if (callerKey) {
+    headers["x-api-key"] = callerKey;
   }
 
   // Forward IP for logging
