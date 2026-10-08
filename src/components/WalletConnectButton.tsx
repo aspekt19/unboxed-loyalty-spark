@@ -43,7 +43,7 @@ export function WalletConnectButton() {
   } | null>(null);
 
   const isFarcaster = isFarcasterContext();
-  const { login: identityLogin, logout: identityLogout, connectWallet: identityConnectWallet, user: identityUser, ready: identityReady, authenticated: identityAuthenticated } = useIdentity();
+  const { login: identityLogin, logout: identityLogout, connectWallet: identityConnectWallet, user: identityUser, ready: identityReady, authenticated: identityAuthenticated, signInPending } = useIdentity();
   const prevIdentityUserRef = useRef(identityUser);
 
   /** Stable when Identity re-renders with a new `user` object reference. */
@@ -260,6 +260,12 @@ export function WalletConnectButton() {
         </span>
       </button>
     );
+  }
+
+  if (!isFarcaster && !user && signInPending) {
+    return <SigningInButton isPending onTimeout={handleConnect} className={headerAuthButtonClass(
+      'bg-primary text-primary-foreground shadow-clay-primary opacity-90 disabled:pointer-events-none disabled:opacity-50',
+    )} />;
   }
 
   if (!identityUser || isManuallyDisconnected) {

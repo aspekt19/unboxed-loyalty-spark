@@ -21,6 +21,8 @@ export interface IdentityValue {
   authenticated: boolean;
   user: IdentityUser | null;
   ready: boolean;
+  /** Google/OTP confirmation is underway, even before the SDK exposes a user. */
+  signInPending: boolean;
   getAccessToken: () => Promise<string | null>;
   /** Opens the sign-in dialog on the wallet list. */
   connectWallet: () => void;
@@ -34,6 +36,7 @@ const noop: IdentityValue = {
   authenticated: false,
   user: null,
   ready: false,
+  signInPending: false,
   getAccessToken: async () => null,
   connectWallet: () => {},
   smartAccount: null,
@@ -68,6 +71,25 @@ function Core({ cdp, children }: { cdp: CdpState; children: ReactNode }) {
   const { address, isConnected, connector } = useAccount();
   const { disconnectAsync } = useDisconnect();
   const [dialog, setDialog] = useState<{ open: boolean; mode: SignInDialogMode }>({ open: false, mode: 'all' });
+  const [signInPending, setSignInPending] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.has('flow_id') && params.has('provider_type') && params.has('code') && !params.has('error');
+  });
+
+  useEffect(() => {
+    if (cdp.signedIn) setSignInPending(false);
+  }, [cdp.signedIn]);
+
+  // Observe callback completion only; the existing OAuth handler owns SDK verification and URL cleanup.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (!signInPending || !params.has('flow_id') || !params.has('provider_type')) return;
+    const timer = window.setInterval(() => {
+      const current = new URLSearchParams(window.location.search);
+      if (!current.has('flow_id') || !current.has('provider_type')) setSignInPending(false);
+    }, 250);
+    return () => window.clearInterval(timer);
+  }, [signInPending]);
 
   // The Coinbase connector can report the inner signer address if it connected before the
   // smart account loaded. The app identity (profile, programs, sponsored gas) is the smart
@@ -88,20 +110,22 @@ function Core({ cdp, children }: { cdp: CdpState; children: ReactNode }) {
   }, [cdp.signedIn, cdp.user, externalWallet]);
 
   const logout = useCallback(async () => {
+    setSignInPending(false);
     try { await cdp.signOut(); } catch { /* not signed in */ }
     try { await disconnectAsync(); } catch { /* no connector */ }
   }, [cdp, disconnectAsync]);
 
   const value = useMemo<IdentityValue>(() => ({
-    login: () => setDialog({ open: true, mode: 'all' }),
+    login: () => { setSignInPending(false); setDialog({ open: true, mode: 'all' }); },
     connectWallet: () => setDialog({ open: true, mode: 'wallet' }),
     logout,
     authenticated: Boolean(user),
     user,
     ready: cdp.ready,
+    signInPending: signInPending || (cdp.signedIn && !cdp.user),
     getAccessToken: cdp.getAccessToken,
     smartAccount: cdp.signedIn ? cdp.smartAccount : null,
-  }), [logout, user, cdp.ready, cdp.getAccessToken, cdp.signedIn, cdp.smartAccount]);
+  }), [logout, user, cdp.ready, cdp.getAccessToken, cdp.signedIn, cdp.smartAccount, signInPending]);
 
   return (
     <IdentityContext.Provider value={value}>
@@ -109,6 +133,7 @@ function Core({ cdp, children }: { cdp: CdpState; children: ReactNode }) {
       <SignInDialog
         open={dialog.open}
         mode={dialog.mode}
+        onSignInPendingChange={setSignInPending}
         onOpenChange={(open) => setDialog((d) => ({ ...d, open }))}
       />
     </IdentityContext.Provider>
