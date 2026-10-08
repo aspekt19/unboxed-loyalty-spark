@@ -2,7 +2,8 @@ import { getMcpBazaarTool, isMcpToolResource } from "../_shared/mcp-bazaar-tools
 import { getRecipientMcpBazaarTool } from "../_shared/recipient-mcp-bazaar-tools.ts";
 import { RECIPIENT_REST_ROUTE_USD } from "../_shared/recipient-paid-routes.ts";
 import { resolveMcpApiKey } from "../_shared/mcp-http-api-key.ts";
-import { buildAcceptEntry, ensureBuilderCodeOnPaymentPayload, paymentRequirementsForFacilitator, validateClientAcceptedMatches } from "../_shared/x402-bazaar-accept.ts";
+import { buildAcceptEntry, ensureBuilderCodeOnPaymentPayload, isMcpResource, paymentRequirementsForFacilitator, publicResourceUrl, validateClientAcceptedMatches } from "../_shared/x402-bazaar-accept.ts";
+import { reviewsExtension, reviewsSettlement, withReviewsSettlement } from "../_shared/agorean-reviews.ts";
 import { paidGatewayUpstreamHeaders, type PaidGatewayKind } from "../_shared/paid-gateway-auth.ts";
 
 const corsHeaders = {
@@ -216,6 +217,11 @@ function buildPaymentRequired(price: string, resource: string, requestUrl: URL):
   if (accept.extensions && typeof accept.extensions === "object" && !Array.isArray(accept.extensions)) {
     paymentRequirements.extensions = { ...(accept.extensions as Record<string, unknown>) };
   }
+  /** Agorean reviews (x402 `reviews` extension, x402-foundation/x402#3656): a fixed block, so the client's echo always matches. */
+  paymentRequirements.extensions = {
+    ...(paymentRequirements.extensions as Record<string, unknown> | undefined),
+    reviews: reviewsExtension(publicResourceUrl(resource, requestUrl, supabaseUrl)),
+  };
 
   const jsonStr = JSON.stringify(paymentRequirements);
   const encoded = btoa(Array.from(new TextEncoder().encode(jsonStr), (b) => String.fromCharCode(b)).join(""));
@@ -479,7 +485,25 @@ Deno.serve(async (req) => {
       respHeaders.set("EXTENSION-RESPONSES", settleResult.extensionResponsesHeader);
     }
 
-    return new Response(await apiResponse.text(), {
+    let body = await apiResponse.text();
+    // Agorean reviews: `extensions.reviews` with a one-call review link for this payment. REST
+    // routes only (MCP replies are JSON-RPC envelopes and get no extra top-level key), and only on
+    // a JSON-object reply that has no `extensions.reviews` yet.
+    if (!isMcpResource(resource) && apiResponse.ok && (apiResponse.headers.get("content-type") ?? "").includes("json")) {
+      try {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+        const block = reviewsSettlement(publicResourceUrl(resource, url, supabaseUrl), settleResult.txHash);
+        const withReviews = withReviewsSettlement(JSON.parse(body), block);
+        if (withReviews) {
+          body = JSON.stringify(withReviews);
+          respHeaders.delete("content-length");
+        }
+      } catch {
+        /* not JSON — leave the upstream body untouched */
+      }
+    }
+
+    return new Response(body, {
       status: apiResponse.status,
       headers: respHeaders,
     });
