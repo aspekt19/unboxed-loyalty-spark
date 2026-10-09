@@ -339,18 +339,24 @@ Deno.serve(async (req) => {
     };
     type ChargeFn = (opts: { amount: string }) => (req: Request) => Promise<MppChargeResult>;
     const chargeFn = (mppxAny.charge ?? Object.getPrototypeOf(mppx)?.charge) as ChargeFn | undefined;
+    const keyHint = callerKeyPrefix(resource) === "rwk_"
+      ? "Send x-api-key: rwk_... on the same retry as the payment. A payment without a live key is not charged."
+      : "Send x-api-key: lsk_... on the same retry as the payment. A payment without a live key is not charged.";
+
     if (!chargeFn) {
-      // Fallback: manual 402 challenge without mppx SDK
+      // The live unpaid reply. mppx charge is not on this runtime, so the SDK branch below does not run.
       const headers = new Headers(corsHeaders);
       headers.set("Content-Type", "application/json");
       headers.set("X-MPP-Resource", resource);
       headers.set("X-MPP-Price-USD", price);
+      headers.set("X-LoyalSpark-Api-Key", keyHint);
       return new Response(
         JSON.stringify({
           status: 402,
           message: "Payment required",
           resource: `/${resource}`,
           price_usd: price,
+          api_key: keyHint,
           payment_methods: [
             { method: "tempo:pathusd", currency: PATHUSD_CURRENCY, recipient: RECIPIENT },
             { method: "tempo:usdc", currency: USDC_TEMPO, recipient: RECIPIENT },
@@ -378,12 +384,7 @@ Deno.serve(async (req) => {
       }
       headers.set("X-MPP-Resource", resource);
       headers.set("X-MPP-Price-USD", price);
-      headers.set(
-        "X-LoyalSpark-Api-Key",
-        callerKeyPrefix(resource) === "rwk_"
-          ? "Send x-api-key: rwk_... on the same retry as the payment. A payment without a live key is not charged."
-          : "Send x-api-key: lsk_... on the same retry as the payment. A payment without a live key is not charged.",
-      );
+      headers.set("X-LoyalSpark-Api-Key", keyHint);
       return new Response(challengeResponse.body, {
         status: 402,
         headers,
