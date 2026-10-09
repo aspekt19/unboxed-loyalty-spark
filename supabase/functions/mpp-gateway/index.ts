@@ -1,14 +1,14 @@
 import { Mppx, tempo } from "npm:mppx@0.4.7/server";
 import { RECIPIENT_REST_ROUTE_USD } from "../_shared/recipient-paid-routes.ts";
 import { paidGatewayUpstreamHeaders, type PaidGatewayKind } from "../_shared/paid-gateway-auth.ts";
-import { lookupActiveCallerKey, paidCallerProblem, paidCallerRejectionResponse, readPaidCallerKey, requestCarriesPaymentCredential } from "../_shared/paid-caller-key.ts";
+import { callerKeyPrefix, lookupActiveCallerKey, paidCallerProblem, paidCallerRejectionResponse, readPaidCallerKey, requestCarriesPaymentCredential } from "../_shared/paid-caller-key.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-api-key, x-mpp-payment",
   "Access-Control-Expose-Headers":
-    "X-MPP-Resource, X-MPP-Price-USD, X-MPP-Paid, X-MPP-Protocol, X-Payment-Required",
+    "X-MPP-Resource, X-MPP-Price-USD, X-MPP-Paid, X-MPP-Protocol, X-Payment-Required, X-LoyalSpark-Api-Key",
 };
 
 // --- Per-request pricing (USD) ---
@@ -378,6 +378,12 @@ Deno.serve(async (req) => {
       }
       headers.set("X-MPP-Resource", resource);
       headers.set("X-MPP-Price-USD", price);
+      headers.set(
+        "X-LoyalSpark-Api-Key",
+        callerKeyPrefix(resource) === "rwk_"
+          ? "Send x-api-key: rwk_... on the same retry as the payment. A payment without a live key is not charged."
+          : "Send x-api-key: lsk_... on the same retry as the payment. A payment without a live key is not charged.",
+      );
       return new Response(challengeResponse.body, {
         status: 402,
         headers,

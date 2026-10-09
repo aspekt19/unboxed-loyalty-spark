@@ -28,6 +28,7 @@ import {
   encodeCreateB20Asset,
 } from "../_shared/b20-encoding.ts";
 import { resolveMcpApiKey } from "../_shared/mcp-http-api-key.ts";
+import { mcpToolText } from "../_shared/mcp-tool-result.ts";
 import { agentMerchantAddresses, rewardOwnedByAgent } from "../_shared/agent-merchant-wallet.ts";
 import { parseOptionalCashbackRate, parseOptionalPointsPerDollar } from "../_shared/program-economics.ts";
 import { discoverResources, discoverMcpServers, probeX402Endpoint } from "../_shared/bazaar-discovery.ts";
@@ -43,15 +44,23 @@ const app = new Hono();
 
 type AuthFailure = null | "missing_key" | "invalid_key" | "rate_limited";
 
-function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | null = null) {
+function createMcpServer(
+  agent: any,
+  authFailure: AuthFailure,
+  apiKey: string | null = null,
+  rateDetail?: "per_minute" | "monthly_quota",
+) {
   const mcpServer = new McpServer({ name: "loyal-spark-mcp", version: "1.0.0" });
 
   function authGuard(scopes?: string[]) {
     if (authFailure === "rate_limited") {
+      const perMinute = rateDetail === "per_minute";
       return JSON.stringify({
-        error: "Monthly API call quota exceeded for your plan.",
+        error: perMinute
+          ? "Too many requests this minute for this agent."
+          : "Monthly API call quota exceeded for your plan.",
         code: "rate_limited",
-        detail: "monthly_quota",
+        detail: perMinute ? "per_minute" : "monthly_quota",
       });
     }
     if (authFailure === "invalid_key") {
@@ -67,7 +76,7 @@ function createMcpServer(agent: any, authFailure: AuthFailure, apiKey: string | 
     return null;
   }
 
-  const T = (text: string) => ({ content: [{ type: "text" as const, text }] });
+  const T = mcpToolText;
 
   mcpServer.tool("get_platform_info", {
     description: "Get info about Loyal Spark protocol on Base L2",
@@ -1523,6 +1532,7 @@ app.all("/*", async (c: any) => {
             jsonrpc: "2.0",
             id: peek.id ?? null,
             result: {
+              isError: true,
               content: [{
                 type: "text",
                 text: JSON.stringify({
@@ -1544,17 +1554,19 @@ app.all("/*", async (c: any) => {
   const apiKey = resolveMcpApiKey((name) => c.req.header(name), "lsk_");
   let agent: any = null;
   let authFailure: AuthFailure = apiKey ? null : "missing_key";
+  let rateDetail: "per_minute" | "monthly_quota" | undefined;
   if (apiKey) {
     const r = await authenticateAgent(apiKey, {
       skipMonthlyQuota: isPaidGatewayRequest(c.req.raw),
     });
     if (!r.ok) {
       authFailure = r.reason;
+      if (r.reason === "rate_limited") rateDetail = r.detail;
     } else {
       agent = r.agent;
     }
   }
-  const server = createMcpServer(agent, authFailure, apiKey);
+  const server = createMcpServer(agent, authFailure, apiKey, rateDetail);
   const transport = new StreamableHttpTransport();
   const handler = transport.bind(server);
   return handler(c.req.raw);

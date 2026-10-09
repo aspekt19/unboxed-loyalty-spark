@@ -374,7 +374,7 @@ function buildPaymentRequired(req: Request): Response {
 
   const body = JSON.stringify({
     x402Version: 1,
-    error: "X-PAYMENT header is required",
+    error: "X-PAYMENT header is required. On the paid retry also send x-api-key: lsk_... for merchant routes or rwk_... for holder routes. A payment without a live key is not charged.",
     accepts,
     metadata: {
       description,

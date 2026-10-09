@@ -4,6 +4,7 @@ import { resolveMcpApiKey } from "../_shared/mcp-http-api-key.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { authenticateRecipientAgent, insertRecipientActivity } from "../_shared/recipient-agent-auth.ts";
 import { isPaidGatewayRequest } from "../_shared/paid-gateway-auth.ts";
+import { mcpToolText } from "../_shared/mcp-tool-result.ts";
 import { walletHasEngagement } from "../_shared/recipient-queries.ts";
 import { recipientRedeemReward } from "../_shared/recipient-redeem.ts";
 import { prepareHolderLoyaltyTransfer } from "../_shared/recipient-prepare-transfer.ts";
@@ -91,7 +92,7 @@ function createDeniedRecipientMcpServer(
   rateDetail?: "per_minute" | "monthly_quota",
 ) {
   const server = new McpServer({ name: "loyal-spark-recipient-mcp", version: "1.0.0" });
-  const T = (text: string) => ({ content: [{ type: "text" as const, text }] });
+  const T = mcpToolText;
 
   const payload = (() => {
     if (reason === "rate_limited") {
@@ -131,9 +132,7 @@ function createDeniedRecipientMcpServer(
 
 const app = new Hono();
 
-function T(text: string) {
-  return { content: [{ type: "text" as const, text }] };
-}
+const T = mcpToolText;
 
 function createRecipientMcpServer(
   wallet: string,

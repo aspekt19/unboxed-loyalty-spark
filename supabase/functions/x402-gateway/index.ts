@@ -3,7 +3,7 @@ import { getRecipientMcpBazaarTool } from "../_shared/recipient-mcp-bazaar-tools
 import { RECIPIENT_REST_ROUTE_USD } from "../_shared/recipient-paid-routes.ts";
 import { buildAcceptEntry, ensureBuilderCodeOnPaymentPayload, paymentRequirementsForFacilitator, validateClientAcceptedMatches } from "../_shared/x402-bazaar-accept.ts";
 import { paidGatewayUpstreamHeaders, type PaidGatewayKind } from "../_shared/paid-gateway-auth.ts";
-import { lookupActiveCallerKey, paidCallerProblem, paidCallerRejectionResponse, readPaidCallerKey } from "../_shared/paid-caller-key.ts";
+import { callerKeyPrefix, lookupActiveCallerKey, paidCallerProblem, paidCallerRejectionResponse, readPaidCallerKey } from "../_shared/paid-caller-key.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -205,7 +205,9 @@ function buildPaymentRequired(price: string, resource: string, requestUrl: URL):
   const paymentRequirements: Record<string, unknown> = {
     x402Version: 2,
     accepts: [accept],
-    error: "X-PAYMENT header is required",
+    error: callerKeyPrefix(resource) === "rwk_"
+      ? "X-PAYMENT header is required. On the paid retry also send x-api-key: rwk_.... A payment without a live key is not charged."
+      : "X-PAYMENT header is required. On the paid retry also send x-api-key: lsk_.... A payment without a live key is not charged.",
     resource: {
       url: resourceUrlForDiscovery,
       method: resourceMethod,

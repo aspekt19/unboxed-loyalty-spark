@@ -72,7 +72,8 @@ export type McpAgentContext = {
 
 export type AuthenticateMcpAgentResult =
   | { ok: true; agent: McpAgentContext }
-  | { ok: false; reason: "invalid_key" | "rate_limited" };
+  | { ok: false; reason: "invalid_key" }
+  | { ok: false; reason: "rate_limited"; detail: "per_minute" | "monthly_quota" };
 
 export async function authenticateAgent(
   apiKey: string,
@@ -95,7 +96,7 @@ export async function authenticateAgent(
     rate_limit_per_minute: agent.rate_limit_per_minute,
     plan_id: agent.plan_id ?? null,
   }, options);
-  if (!limits.ok) return { ok: false, reason: "rate_limited" };
+  if (!limits.ok) return { ok: false, reason: "rate_limited", detail: limits.reason };
 
   await d
     .from("agent_registry")
