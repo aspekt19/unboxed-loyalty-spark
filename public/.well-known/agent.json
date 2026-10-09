@@ -556,7 +556,7 @@
     "how_to_use": [
       "1. npm install @x402/fetch @x402/evm",
       "2. POST {gateway_url}/mcp-tools/{tool} or other x402 routes — receive 402 with accepts (v2)",
-      "3. Sign USDC payment on Base with x402 client; retry with payment header",
+      "3. Sign USDC payment on Base with an x402 client. Retry with the payment header AND x-api-key (lsk_ for merchant routes, rwk_ for recipient routes). A payment without a live key returns 401 and is not charged.",
       "4. Gateway verify/settle via CDP x402 on mainnet; for MCP, body is forwarded to loyalty-mcp with x-api-key"
     ],
     "prices_usd": {

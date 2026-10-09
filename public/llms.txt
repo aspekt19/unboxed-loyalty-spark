@@ -171,6 +171,5 @@ HTTP is redirected to HTTPS (308) before any 402 body is returned. `/tx-receipt`
 - Docs: https://loyalspark.online/api-docs
 - GitHub: https://github.com/aspekt19/unboxed-loyalty-spark
 ## Base Cobalt upgrade (2026-09-30)
-- Maintenance window 17:30–19:00 UTC on 2026-09-30: onchain write endpoints (agent-prepare, mint, deploy) return HTTP 503 `network_upgrade` with `Retry-After`. Retry after the window.
-- Existing B20 and legacy ERC-20 programs need no migration.
+- That maintenance window has passed. Onchain writes are not held for it. Existing B20 and legacy ERC-20 programs need no migration.
 - `GET /agent-prepare/<action>?gas_token=<b20>` (pay gas in the program's B20 token) is reserved; returns 400 `gas_token_unavailable` until enabled.
