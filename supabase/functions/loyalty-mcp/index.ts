@@ -746,8 +746,10 @@ function createMcpServer(
       if (v.status === "used") return T(JSON.stringify({ error: "Already used", used_at: v.used_at }));
       if (v.status !== "active") return T(JSON.stringify({ error: `Not active (status: ${v.status})` }));
 
-      const { error: ue } = await d.from("vouchers").update({ status: "used", used_at: new Date().toISOString() }).eq("id", v.id);
+      const usedAt = new Date().toISOString();
+      const { data: marked, error: ue } = await d.from("vouchers").update({ status: "used", used_at: usedAt }).eq("id", v.id).eq("status", "active").select("id").maybeSingle();
       if (ue) return T(JSON.stringify({ error: ue.message }));
+      if (!marked) return T(JSON.stringify({ error: "Already used" }));
 
       return T(JSON.stringify({ success: true, voucher: { id: v.id, code: v.code, reward_name: v.reward_name, customer_address: v.customer_address, status: "used" } }));
     },

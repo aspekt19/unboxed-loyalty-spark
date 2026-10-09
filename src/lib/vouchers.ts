@@ -326,12 +326,14 @@ export async function updateVoucherStatus(
     updates.used_at = new Date().toISOString();
   }
 
-  const { error } = await supabase
-    .from('vouchers')
-    .update(updates)
-    .eq('id', voucherId);
+  let query = supabase.from('vouchers').update(updates).eq('id', voucherId);
+  if (status === 'used') {
+    query = query.eq('status', 'active');
+  }
 
-  return !error;
+  const { data, error } = await query.select('id');
+
+  return !error && (status !== 'used' || (data?.length ?? 0) > 0);
 }
 
 // Получение награды по ID

@@ -1614,15 +1614,24 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: `Voucher is not active (status: ${voucher.status})` }, 400);
       }
 
-      // Mark as used
-      const { error: updateError } = await serviceClient
+      // Only one concurrent caller can win: the row must still be active.
+      const usedAt = new Date().toISOString();
+      const { data: marked, error: updateError } = await serviceClient
         .from("vouchers")
-        .update({ status: "used", used_at: new Date().toISOString() })
-        .eq("id", voucher.id);
+        .update({ status: "used", used_at: usedAt })
+        .eq("id", voucher.id)
+        .eq("status", "active")
+        .select("id")
+        .maybeSingle();
 
       if (updateError) {
         await logActivity(serviceClient, agent.agentId, "use_voucher", body, 500, { error: updateError.message }, ip);
         return jsonResponse({ error: "Failed to update voucher" }, 500);
+      }
+
+      if (!marked) {
+        await logActivity(serviceClient, agent.agentId, "use_voucher", body, 400, { error: "Already used" }, ip);
+        return jsonResponse({ error: "Voucher already used" }, 400);
       }
 
       await logActivity(serviceClient, agent.agentId, "use_voucher", body, 200, { voucher_id: voucher.id }, ip);
@@ -1635,7 +1644,7 @@ Deno.serve(async (req) => {
           customer_address: voucher.customer_address,
           cost: voucher.cost,
           status: "used",
-          used_at: new Date().toISOString(),
+          used_at: usedAt,
         },
       });
     }
