@@ -26,4 +26,6 @@
 - [x] Verify in browser (light + dark); dark-mode icon and logo contrast fixed
 - [x] Site-wide page surface: warm glow + faint mesh on html (fixed), opaque page wrappers made transparent
 - [x] Loyalty-themed hero animation: stamp card filling with stamps + reward coin + floating gift cards
-- [ ] Confirm with the user that the new surface reads well; tune glow strength if it still looks white
+- [x] Confirm with the user that the new surface reads well; glow kept and strengthened
+- [x] Anchor the hero gift card to the panel's upper-right corner on desktop and phone
+
