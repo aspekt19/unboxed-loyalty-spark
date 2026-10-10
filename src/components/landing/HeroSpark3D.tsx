@@ -111,7 +111,8 @@ function GiftCard({ reduced, palette }: { reduced: boolean; palette: { face: str
     time.current += Math.min(rawDelta, 0.05);
     const t = time.current;
     group.current.rotation.set(0.08 + Math.sin(t * 0.32) * 0.035, -0.18 + Math.sin(t * 0.28) * 0.13, -0.08 + Math.sin(t * 0.25) * 0.025);
-    group.current.position.set(anchor.x, anchor.y + Math.sin(t * 0.4) * 0.1, CARD_Z);
+    group.current.position.set(anchor.x, anchor.y + Math.sin(t * 0.4) * 0.07, CARD_Z);
+
   });
 
   return (
