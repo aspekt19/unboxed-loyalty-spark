@@ -116,7 +116,7 @@ export function DiscountReward() {
           Discount
         </CardTitle>
         <CardDescription>
-          One percentage discount for this program. Set the percent and the point cost, then confirm.
+          One discount per percent for this program. Set the percent and the point cost, then confirm.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
