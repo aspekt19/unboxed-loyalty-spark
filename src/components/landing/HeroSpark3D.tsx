@@ -10,15 +10,15 @@ const CARD_Z = -0.5;
 const CAMERA_Z = 9;
 const CAMERA_FOV = 50;
 /**
- * Where the hero copy begins inside the panel, in px from its top edge: the
- * eyebrow line on phones, the headline on wider screens. The card is sized to
- * the clear strip above that line so it never ends up behind a word.
+ * The card lives in the clear strip above the hero copy. Measured from the
+ * panel's top edge, the copy begins at the eyebrow line on phones and at the
+ * headline on wider screens; card height plus gap plus room for its tilt stays
+ * under that line, so the card never ends up behind a word.
  */
-const COPY_TOP_PX = (width: number) => (width < 640 ? 95 : 125);
+const CARD_H_PX = (width: number) => (width < 640 ? 42 : 92);
 /** Breathing room kept between the card and the panel's top edge. */
-const CORNER_GAP_PX = 14;
-/** Extra room for the card's tilt and drift, which push its corners lower. */
-const TILT_PX = 16;
+const TOP_GAP_PX = (width: number) => (width < 640 ? 6 : 14);
+
 
 
 
