@@ -9,8 +9,13 @@ const CARD_H = 3.75;
 const CARD_Z = -0.5;
 const CAMERA_Z = 9;
 const CAMERA_FOV = 50;
-/** Space the hero copy needs at the top of the panel on phones, in px. */
-const COPY_TOP_PX = 60;
+/**
+ * How much room the hero copy needs at the top of the panel, in px.
+ * The card is sized to the strip above it so it never sits behind a word.
+ */
+const COPY_TOP_PX = (width: number) => (width < 640 ? 84 : 130);
+const CORNER_GAP_PX = 8;
+
 
 
 /** Reads the OS setting so the card can hold completely still. */
