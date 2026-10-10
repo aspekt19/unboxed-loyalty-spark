@@ -10,6 +10,8 @@ All colors MUST be HSL.
   :root {
     --background: 36 40% 95%;
     --header: 36 36% 91%;
+    --hero-card-face: 222 17% 19%;
+    --hero-card-detail: 220 18% 86%;
     --foreground: 222 15% 10%;
     --card: 0 0% 100%;
     --card-foreground: 222 15% 10%;
