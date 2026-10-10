@@ -154,8 +154,8 @@ All colors MUST be HSL.
     --surface-glow-a: radial-gradient(1500px 1050px at 50% -10%, hsl(24 100% 62% / 0.42), transparent 70%);
     --surface-glow-b: radial-gradient(1200px 700px at 4% 100%, hsl(222 25% 3% / 0.55), transparent 66%);
     --surface-glow-c: radial-gradient(1100px 760px at 98% 46%, hsl(28 100% 64% / 0.3), transparent 68%);
-    --surface-glow-d: radial-gradient(135% 100% at 50% 55%, hsl(24 100% 62% / 0.16), transparent 80%);
-    --surface-glow-e: radial-gradient(1400px 760px at 50% 108%, hsl(24 100% 62% / 0.26), transparent 72%);
+    --surface-glow-d: radial-gradient(140% 105% at 50% 52%, hsl(24 100% 62% / 0.22), transparent 82%);
+    --surface-glow-e: radial-gradient(1500px 950px at 50% 102%, hsl(24 100% 62% / 0.28), transparent 74%);
     --surface-grid: radial-gradient(hsl(24 60% 72% / 0.09) 1px, transparent 1px);
   }
 
