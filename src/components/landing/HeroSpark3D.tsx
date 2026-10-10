@@ -10,11 +10,16 @@ const CARD_Z = -0.5;
 const CAMERA_Z = 9;
 const CAMERA_FOV = 50;
 /**
- * How much room the hero copy needs at the top of the panel, in px.
- * The card is sized to the strip above it so it never sits behind a word.
+ * Where the hero copy begins inside the panel, measured in px from its top edge
+ * (eyebrow line plus its margin). The card is sized to the clear strip above it,
+ * so it never ends up behind a word.
  */
-const COPY_TOP_PX = (width: number) => (width < 640 ? 84 : 130);
-const CORNER_GAP_PX = 8;
+const COPY_TOP_PX = (width: number) => (width < 640 ? 99 : 127);
+/** Breathing room kept between the card and the panel's top edge. */
+const CORNER_GAP_PX = 14;
+/** Extra room for the card's tilt and drift, which push its corners lower. */
+const TILT_PX = 14;
+
 
 
 
@@ -48,8 +53,9 @@ function GiftCard({ reduced, palette }: { reduced: boolean; palette: { face: str
     // The hero copy is centred and nearly full width, so the card lives in the
     // clear strip above it: scaled to fit that strip, then nudged into the corner.
     const pxToWorld = viewH / Math.max(size.height, 1);
-    const band = (COPY_TOP_PX(size.width) - CORNER_GAP_PX) * pxToWorld;
+    const band = (COPY_TOP_PX(size.width) - CORNER_GAP_PX - TILT_PX) * pxToWorld;
     const gap = CORNER_GAP_PX * pxToWorld;
+
     const scale = Math.min(0.85, (viewW * 0.42) / CARD_W, band / CARD_H);
     const cardW = CARD_W * scale;
     const cardH = CARD_H * scale;
