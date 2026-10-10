@@ -9,6 +9,7 @@
 import { getMcpBazaarTool, type McpBazaarTool } from "./mcp-bazaar-tools.ts";
 import { getRecipientMcpBazaarTool, type RecipientMcpBazaarTool } from "./recipient-mcp-bazaar-tools.ts";
 import { RECIPIENT_REST_ROUTE_USD } from "./recipient-paid-routes.ts";
+import { paidRouteNeedsCallerKey } from "./keyless-paid-routes.ts";
 
 const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 
@@ -879,6 +880,8 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
   // REST — agent-api and recipient-api (same gateway path patterns)
   const method = getRestMethod(p.resource);
   const keyHint = restApiKeyHint(p.resource);
+  const needsKey = paidRouteNeedsCallerKey(method, p.resource);
+  const keyHeaders: Record<string, string> = needsKey ? { "x-api-key": keyHint } : {};
   // Canonical per-route JSON Schema — reused for both `outputSchema.input.inputSchema`
   // (x402 v2 outputSchema) and `extensions.bazaar.info.inputSchema` (CDP Bazaar discovery).
   const inputSchema = getRestInfoInputSchema(method, p.resource);
@@ -906,7 +909,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
         method,
         bodyType: method === "POST" ? "json" : "query",
         description:
-          `HTTP ${method} ${resourceUrlForDiscovery} — x402-gateway /${p.resource}. Authenticate with header x-api-key: ${keyHint}.`,
+          `HTTP ${method} ${resourceUrlForDiscovery} — x402-gateway /${p.resource}.${needsKey ? ` Authenticate with header x-api-key: ${keyHint}.` : " Payment alone gives access; no API key needed."}`,
         inputSchema,
       },
       output: {
@@ -923,14 +926,14 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
             type: "http" as const,
             method,
             queryParams: restBazaarQueryParams(p.resource),
-            headers: { "x-api-key": keyHint },
+            headers: keyHeaders,
           }
           : {
             type: "http" as const,
             method,
             bodyType: "json" as const,
             body: {},
-            headers: { "x-api-key": keyHint },
+            headers: keyHeaders,
           };
         return {
           info: {
