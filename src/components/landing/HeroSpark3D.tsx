@@ -2,6 +2,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, Lightformer, RoundedBox } from "@react-three/drei";
 import { Component, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import * as THREE from "three";
+import { LoyaltyCardFace } from "./LoyaltyCardFace";
 
 /** Original card geometry and scale, independent of its resting position. */
 const CARD_W = 6;
@@ -32,7 +33,6 @@ function usePrefersReducedMotion() {
 function GiftCard({ reduced, palette }: { reduced: boolean; palette: { face: string; spark: string; detail: string } }) {
   const group = useRef<THREE.Group>(null);
   const time = useRef(0);
-  const [texture, setTexture] = useState<THREE.CanvasTexture>();
   const size = useThree((state) => state.size);
   const camera = useThree((state) => state.camera);
 
@@ -52,43 +52,6 @@ function GiftCard({ reduced, palette }: { reduced: boolean; palette: { face: str
 
 
 
-  useEffect(() => {
-    const canvas = document.createElement("canvas");
-    canvas.width = 1024;
-    canvas.height = 640;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.fillStyle = palette.face;
-    ctx.fillRect(0, 0, 1024, 640);
-    // Fine diagonal engraving gives the card a tactile, satin finish.
-    ctx.strokeStyle = palette.detail;
-    ctx.globalAlpha = 0.12;
-    ctx.lineWidth = 1;
-    for (let x = -640; x < 1024; x += 14) {
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + 640, 640); ctx.stroke();
-    }
-    ctx.globalAlpha = 0.65;
-    ctx.strokeStyle = palette.spark;
-    ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.roundRect(28, 28, 968, 584, 34); ctx.stroke();
-    // One small gift emblem, printed on the card rather than floating nearby.
-    ctx.globalAlpha = 0.8;
-    ctx.lineWidth = 7;
-    ctx.lineJoin = "round";
-    ctx.strokeRect(126, 132, 114, 83);
-    ctx.strokeRect(118, 115, 130, 23);
-    ctx.beginPath(); ctx.moveTo(183, 115); ctx.lineTo(183, 215);
-    ctx.moveTo(183, 114);
-    ctx.bezierCurveTo(115, 115, 133, 56, 164, 86);
-    ctx.lineTo(183, 114);
-    ctx.bezierCurveTo(251, 115, 233, 56, 202, 86);
-    ctx.closePath(); ctx.stroke();
-    const map = new THREE.CanvasTexture(canvas);
-    map.colorSpace = THREE.SRGBColorSpace;
-    setTexture(map);
-    return () => map.dispose();
-  }, [palette]);
-
   useFrame((_, rawDelta) => {
     if (!group.current || reduced) return;
     time.current += Math.min(rawDelta, 0.05);
@@ -106,10 +69,7 @@ function GiftCard({ reduced, palette }: { reduced: boolean; palette: { face: str
       <RoundedBox args={[5.96, 3.71, 0.12]} radius={0.2} smoothness={4} position={[0, 0, 0.015]}>
         <meshStandardMaterial color={palette.face} metalness={0.35} roughness={0.58} />
       </RoundedBox>
-      {texture && <mesh position={[0, 0, 0.08]}>
-        <planeGeometry args={[5.65, 3.5]} />
-        <meshStandardMaterial map={texture} metalness={0.28} roughness={0.62} />
-      </mesh>}
+      <LoyaltyCardFace palette={palette} reduced={reduced} />
     </group>
   );
 }

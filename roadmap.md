@@ -19,6 +19,7 @@
 - [ ] Sponsored (gas-free) voucher activation from a Google/email account — waiting for the user to try it live
 
 ## Landing color and hero 3D background
+- [x] Animate a single loyalty card with points accrual and a soft sheen; retain desktop size/position and hide on phones; verified moving balance, reduced-motion state, mobile absence and clean runtime
 - [x] Replace the crowded hero animation with one gently rocking gift card and verify rendering
 - [x] Replace violet palette with Base Blue across tokens (later superseded by user request)
 - [x] Recolor to the agent-chosen palette: graphite black + orange spark, hero ink panel
