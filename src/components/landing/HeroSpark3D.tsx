@@ -54,10 +54,10 @@ function GiftCard({ reduced, palette }: { reduced: boolean; palette: { face: str
     // The hero copy is centred and nearly full width, so the card lives in the
     // clear strip above it: scaled to fit that strip, then nudged into the corner.
     const pxToWorld = viewH / Math.max(size.height, 1);
-    const band = (COPY_TOP_PX(size.width) - CORNER_GAP_PX - TILT_PX) * pxToWorld;
-    const gap = CORNER_GAP_PX * pxToWorld;
+    const maxH = CARD_H_PX(size.width) * pxToWorld;
+    const gap = TOP_GAP_PX(size.width) * pxToWorld;
+    const scale = Math.min(0.85, (viewW * 0.42) / CARD_W, maxH / CARD_H);
 
-    const scale = Math.min(0.85, (viewW * 0.42) / CARD_W, band / CARD_H);
     const cardW = CARD_W * scale;
     const cardH = CARD_H * scale;
     return {
