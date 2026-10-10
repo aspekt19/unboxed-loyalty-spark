@@ -17,3 +17,12 @@
 - [x] Phone removed from sign-in and recipient lookup; QR reads 0x addresses, ethereum: URIs and mailto:
 - [x] Fresh sign-in clears the "signed out on purpose" flag (email login no longer bounces back to Sign in)
 - [ ] Sponsored (gas-free) voucher activation from a Google/email account — waiting for the user to try it live
+
+## Landing color and hero 3D background
+- [x] Replace violet palette with Base Blue across tokens (later superseded by user request)
+- [x] Recolor to the agent-chosen palette: graphite black + orange spark, hero ink panel
+- [x] Add a massive 3D animation behind the hero headline (React Three Fiber, background only)
+- [x] Verify in browser (light + dark); dark-mode icon and logo contrast fixed
+- [x] Site-wide page surface: warm glow + faint mesh on html (fixed), opaque page wrappers made transparent
+- [x] Loyalty-themed hero animation: stamp card filling with stamps + reward coin + floating gift cards
+- [ ] Confirm with the user that the new surface reads well; tune glow strength if it still looks white

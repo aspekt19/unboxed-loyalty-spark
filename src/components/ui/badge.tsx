@@ -12,9 +12,9 @@ const badgeVariants = cva(
         secondary: "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-sm",
         destructive: "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80 shadow-sm",
         outline: "text-foreground border-2",
-        purple: "border-transparent bg-uds-purple text-white hover:bg-uds-purple-light shadow-sm",
-        orange: "border-transparent bg-uds-orange text-white hover:opacity-90 shadow-sm",
-        lavender: "border-transparent bg-uds-lavender text-uds-purple-dark hover:bg-uds-lavender/80",
+        brand: "border-transparent bg-uds-brand text-primary-foreground hover:bg-uds-brand-light shadow-sm",
+        orange: "border-transparent bg-uds-orange text-secondary-foreground hover:opacity-90 shadow-sm",
+        mist: "border-transparent bg-uds-mist text-uds-brand-dark hover:bg-uds-mist/80",
       },
     },
     defaultVariants: {

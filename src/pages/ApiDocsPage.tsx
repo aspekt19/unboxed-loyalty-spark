@@ -718,7 +718,7 @@ const reward = await fetch(\`\${BASE}/rewards\`, {
   return (
     <PageTransition>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <SiteHeader />
         <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
           {/* Header */}

@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import SiteHeader from "@/components/SiteHeader";
 
 const PrivacyPage = () => (
-  <div className="min-h-screen bg-background">
+  <div className="min-h-screen">
     <SiteHeader />
     <div className="container mx-auto px-4 py-12 max-w-3xl">
       <Link to="/" className="text-sm text-muted-foreground hover:text-primary">

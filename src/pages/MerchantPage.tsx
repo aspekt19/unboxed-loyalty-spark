@@ -186,7 +186,7 @@ const MerchantPage = () => {
   return (
     <PageTransition>
       <WelcomeFlow userRole="merchant" />
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
           <div className="container mx-auto px-2 sm:px-3 py-2 flex justify-between items-center gap-1.5 sm:gap-2">
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-shrink">

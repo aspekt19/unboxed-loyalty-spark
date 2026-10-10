@@ -12,7 +12,7 @@ interface BannedScreenProps {
 export function BannedScreen({ reason, bannedAt }: BannedScreenProps) {
   const { signOut } = useAuth();
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="max-w-md w-full border-destructive/50">
         <CardHeader className="text-center">
           <div className="mx-auto mb-3 p-3 rounded-full bg-destructive/10 w-fit">

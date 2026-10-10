@@ -79,7 +79,7 @@ export default function GuidePage() {
     <PageTransition>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <SiteHeader />
 
         <main className="container max-w-6xl mx-auto p-4 md:p-8 space-y-8">

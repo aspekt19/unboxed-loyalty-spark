@@ -7,7 +7,7 @@ import { ConciergeDock } from "@/components/assistant/ConciergeDock";
 export default function ConciergeLayoutHarness() {
   const role = new URLSearchParams(window.location.search).get("role") === "merchant" ? "merchant" : "shopper";
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <ConciergeDock role={role} testOpen />
     </div>
   );

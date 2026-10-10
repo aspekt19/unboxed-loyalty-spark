@@ -65,7 +65,7 @@ const InstallPage = () => {
           <div className="space-y-6 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
             <div className="text-center space-y-4">
               <div className="inline-flex p-4 rounded-2xl bg-gradient-primary shadow-glow">
-                <Smartphone className="h-12 w-12 text-white" />
+                <Smartphone className="h-12 w-12 text-primary-foreground" />
               </div>
               <h1 className="text-2xl sm:text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent pb-1">
                 Install Loyal Spark

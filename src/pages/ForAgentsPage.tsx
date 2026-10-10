@@ -193,7 +193,7 @@ export default function ForAgentsPage() {
   return (
     <PageTransition>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <SiteHeader />
 
         <div className="border-b border-border bg-muted/30">
