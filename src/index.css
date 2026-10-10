@@ -127,7 +127,7 @@ All colors MUST be HSL.
     --gradient-primary: linear-gradient(135deg, hsl(220 20% 96%) 0%, hsl(220 15% 84%) 100%);
     --gradient-secondary: linear-gradient(135deg, hsl(24 100% 62%) 0%, hsl(38 100% 70%) 100%);
     --gradient-uds: linear-gradient(135deg, hsl(220 20% 96%) 0%, hsl(220 15% 84%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(222 20% 6%) 0%, hsl(222 18% 9%) 50%, hsl(222 20% 6%) 100%);
+    --gradient-hero: transparent;
     --gradient-card: linear-gradient(145deg, hsl(222 18% 9%) 0%, hsl(222 16% 12%) 100%);
     --gradient-brand: linear-gradient(135deg, hsl(220 20% 96%) 0%, hsl(220 15% 84%) 100%);
     --gradient-orange: linear-gradient(135deg, hsl(24 100% 62%) 0%, hsl(38 100% 70%) 100%);
