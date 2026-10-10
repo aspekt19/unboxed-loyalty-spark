@@ -44,21 +44,22 @@ function GiftCard({ reduced, palette }: { reduced: boolean; palette: { face: str
   const anchor = useMemo(() => {
     const fov = (camera as THREE.PerspectiveCamera).fov || CAMERA_FOV;
     const viewH = 2 * (CAMERA_Z - CARD_Z) * Math.tan((fov * Math.PI) / 360);
-    const aspect = size.width / Math.max(size.height, 1);
-    const viewW = viewH * aspect;
-    // On phones the hero copy fills the panel width, so the card has to fit the
-    // narrow strip above it: it shrinks and lets its top edge bleed past the panel.
-    const narrow = size.width < 640;
-    const band = narrow ? (COPY_TOP_PX / Math.max(size.height, 1)) * viewH : 0;
-    const scale = Math.min(0.85, (viewW * 0.42) / CARD_W, narrow ? (band * 1.35) / CARD_H : 0.85);
+    const viewW = viewH * (size.width / Math.max(size.height, 1));
+    // The hero copy is centred and nearly full width, so the card lives in the
+    // clear strip above it: scaled to fit that strip, then nudged into the corner.
+    const pxToWorld = viewH / Math.max(size.height, 1);
+    const band = (COPY_TOP_PX(size.width) - CORNER_GAP_PX) * pxToWorld;
+    const gap = CORNER_GAP_PX * pxToWorld;
+    const scale = Math.min(0.85, (viewW * 0.42) / CARD_W, band / CARD_H);
     const cardW = CARD_W * scale;
     const cardH = CARD_H * scale;
     return {
       scale,
       x: viewW / 2 - cardW / 2 - viewW * 0.04,
-      y: narrow ? viewH / 2 - band + cardH / 2 : viewH / 2 - cardH / 2 - viewH * 0.06,
+      y: viewH / 2 - cardH / 2 - gap,
     };
   }, [camera, size]);
+
 
 
   useEffect(() => {
