@@ -1,23 +1,33 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
-import { toast } from "sonner";
 import { Percent } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { AuthPrompt } from "@/components/AuthPrompt";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMerchantPrograms } from "@/hooks/useMerchantPrograms";
-import { createReward, getMerchantRewards, updateReward } from "@/lib/vouchers";
-import { supabase } from "@/integrations/supabase/client";
-
-const DISCOUNT_DESCRIPTION = "Percentage off the order";
+import { useSaveDiscountReward } from "@/hooks/useSaveDiscountReward";
+import { getMerchantRewards } from "@/lib/vouchers";
+import { breakEvenOrderUsd, formatUsd, isPresetDiscount, parseDiscountCap } from "@/lib/discountReward";
 
 export function DiscountReward() {
   const { address } = useAccount();
   const { user } = useAuth();
+  const { save, saving } = useSaveDiscountReward(address);
   const { data: programRows = [] } = useMerchantPrograms(address, { activeOnly: true });
   const programs = useMemo(
     () =>
@@ -27,13 +37,15 @@ export function DiscountReward() {
           address: program.token_address as string,
           name: program.name,
           symbol: program.symbol,
+          pointsPerDollar: Number(program.points_per_dollar ?? 1),
         })),
     [programRows],
   );
   const [tokenAddress, setTokenAddress] = useState("");
   const [percent, setPercent] = useState(5);
-  const [cost, setCost] = useState(25);
-  const [saving, setSaving] = useState(false);
+  const [costInput, setCostInput] = useState("25");
+  const [capInput, setCapInput] = useState("50");
+  const [warnOpen, setWarnOpen] = useState(false);
 
   useEffect(() => {
     if (!tokenAddress && programs.length > 0) setTokenAddress(programs[0].address);
@@ -47,11 +59,13 @@ export function DiscountReward() {
       const existing = rewards.find(
         (reward) =>
           reward.tokenAddress.toLowerCase() === tokenAddress.toLowerCase() &&
-          reward.description === DISCOUNT_DESCRIPTION &&
-          reward.name === `${percent}% off`,
+          reward.name === `${percent}% off` &&
+          isPresetDiscount(reward),
       );
       if (!existing) return;
-      setCost(existing.cost);
+      setCostInput(String(existing.cost));
+      const cap = parseDiscountCap(existing.description);
+      if (cap !== null) setCapInput(String(cap));
     });
     return () => {
       cancelled = true;
@@ -60,52 +74,19 @@ export function DiscountReward() {
 
   if (!address) return null;
 
-  const symbol = programs.find((program) => program.address === tokenAddress)?.symbol ?? "tokens";
+  const program = programs.find((item) => item.address === tokenAddress);
+  const symbol = program?.symbol ?? "tokens";
+  const pointsPerDollar = program?.pointsPerDollar ?? 1;
+  const cost = Number(costInput);
+  const cap = Number(capInput);
+  const fairUntil = breakEvenOrderUsd(percent, cost, pointsPerDollar);
 
-  const confirm = async () => {
-    if (!user) {
-      toast.error("Please sign in with your wallet first");
+  const confirm = () => {
+    if (fairUntil !== null && cap > fairUntil) {
+      setWarnOpen(true);
       return;
     }
-    if (!tokenAddress) {
-      toast.error("Select a loyalty program first");
-      return;
-    }
-    setSaving(true);
-    try {
-      const { data: linked, error: linkError } = await supabase.rpc("is_current_user_linked_wallet", {
-        p_wallet: address.toLowerCase(),
-      });
-      if (linkError || !linked) {
-        toast.error("This wallet is not linked to your account. Please sign in again and try again.");
-        return;
-      }
-      const name = `${percent}% off`;
-      const existing = (await getMerchantRewards(address)).find(
-        (reward) =>
-          reward.tokenAddress.toLowerCase() === tokenAddress.toLowerCase() &&
-          reward.description === DISCOUNT_DESCRIPTION &&
-          reward.name === name,
-      );
-      const saved = existing
-        ? await updateReward(existing.id, { name, description: DISCOUNT_DESCRIPTION, cost }, tokenAddress)
-        : await createReward({
-            tokenAddress,
-            merchantAddress: address,
-            name,
-            description: DISCOUNT_DESCRIPTION,
-            cost,
-            isActive: true,
-          });
-      if (!saved) {
-        toast.error("Could not save the discount.");
-        return;
-      }
-      toast.success(`${name} is live for ${cost} ${symbol}.`);
-      window.dispatchEvent(new Event("rewardsUpdated"));
-    } finally {
-      setSaving(false);
-    }
+    void save({ tokenAddress, percent, cost, cap, symbol }).then(() => setWarnOpen(false));
   };
 
   return (
@@ -116,7 +97,7 @@ export function DiscountReward() {
           Discount
         </CardTitle>
         <CardDescription>
-          One discount per percent for this program. Set the percent and the point cost, then confirm.
+          One discount per percent. Set the point cost and the largest order it can cover.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -128,9 +109,9 @@ export function DiscountReward() {
               <SelectValue placeholder="Select a program" />
             </SelectTrigger>
             <SelectContent>
-              {programs.map((program) => (
-                <SelectItem key={program.address} value={program.address}>
-                  {program.name} ({program.symbol})
+              {programs.map((item) => (
+                <SelectItem key={item.address} value={item.address}>
+                  {item.name} ({item.symbol})
                 </SelectItem>
               ))}
             </SelectContent>
@@ -148,20 +129,58 @@ export function DiscountReward() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="discount-cost">{cost} {symbol}</Label>
-          <Slider
+          <Label htmlFor="discount-cost">Point cost</Label>
+          <Input
             id="discount-cost"
-            min={5}
-            max={100}
-            step={5}
-            value={[cost]}
-            onValueChange={([value]) => setCost(value)}
+            type="number"
+            min="0.01"
+            step="any"
+            value={costInput}
+            onChange={(event) => setCostInput(event.target.value)}
           />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="discount-cap">Largest order, $</Label>
+          <Input
+            id="discount-cap"
+            type="number"
+            min="0.01"
+            step="any"
+            value={capInput}
+            onChange={(event) => setCapInput(event.target.value)}
+          />
+          {fairUntil !== null && (
+            <p className="text-xs text-muted-foreground">
+              At {pointsPerDollar} {symbol} per $1, {percent}% for {costInput || "0"} {symbol} stays fair up to ${formatUsd(fairUntil)}.
+            </p>
+          )}
         </div>
         <Button type="button" className="w-full" disabled={!user || saving} onClick={confirm}>
           Confirm
         </Button>
       </CardContent>
+      <AlertDialog open={warnOpen} onOpenChange={setWarnOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>This limit gives the discount away</AlertDialogTitle>
+            <AlertDialogDescription>
+              {percent}% off costs {costInput || "0"} {symbol}. At {pointsPerDollar} {symbol} per $1, that stays fair up to ${fairUntil !== null ? formatUsd(fairUntil) : "0"}. A ${formatUsd(Number.isFinite(cap) ? cap : 0)} limit lets a larger order take more off than those points are worth.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={saving}>Go back</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={saving}
+              onClick={(event) => {
+                event.preventDefault();
+                void save({ tokenAddress, percent, cost, cap, symbol }).then(() => setWarnOpen(false));
+              }}
+            >
+              Save anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

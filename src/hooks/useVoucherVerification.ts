@@ -5,7 +5,7 @@
  * Extracted from RewardsSelection to keep component logic focused on UI.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, type MutableRefObject } from 'react';
 import { toast } from 'sonner';
 import { useAccount } from 'wagmi';
 import { useQueryClient } from '@tanstack/react-query';
@@ -27,6 +27,7 @@ export interface FailedVoucherAttempt {
   rewardName: string;
   tokenAddress: string;
   cost: number;
+  orderUsd?: number;
 }
 
 /** Current verification progress state */
@@ -63,6 +64,8 @@ interface UseVoucherVerificationProps {
   hash: `0x${string}` | undefined;
   /** Callback to clear reward selection */
   clearSelection: () => void;
+  /** Set just before a points payment burn. Null for a normal reward activation. */
+  spendRef?: MutableRefObject<{ cost: number; orderUsd: number } | null>;
 }
 
 export function useVoucherVerification({
@@ -73,6 +76,7 @@ export function useVoucherVerification({
   isSuccess,
   hash,
   clearSelection,
+  spendRef,
 }: UseVoucherVerificationProps) {
   const { address } = useAccount();
   const { signInWithWallet } = useAuth();
@@ -117,6 +121,7 @@ export function useVoucherVerification({
       customerAddress: string;
       merchantAddress: string;
       cost: number;
+      orderUsd?: number;
     }) => {
       const maxAttempts = 5;
 
@@ -148,6 +153,7 @@ export function useVoucherVerification({
           customerAddress: params.customerAddress,
           merchantAddress: params.merchantAddress,
           cost: params.cost,
+          orderUsd: params.orderUsd,
         });
 
         if (!result?.success && result?.retryable === false) break;
@@ -172,8 +178,11 @@ export function useVoucherVerification({
       }
 
       setProcessedHash(hash);
+      const spent = spendRef?.current;
+      if (spendRef) spendRef.current = null;
+      const cost = spent?.cost ?? reward.cost;
       // Burn confirmed — update UI immediately; do not wait for staleTime / idle refresh.
-      applySpendToUi(selectedTokenAddress, reward.cost);
+      applySpendToUi(selectedTokenAddress, cost);
 
       const { result, attempts } = await runVerificationLoop({
         txHash: hash,
@@ -183,7 +192,8 @@ export function useVoucherVerification({
         tokenSymbol: token.name,
         customerAddress: address,
         merchantAddress: reward.merchantAddress,
-        cost: reward.cost,
+        cost,
+        orderUsd: spent?.orderUsd,
       });
 
       // Tokens are already spent on-chain regardless of voucher DB success.
@@ -203,7 +213,8 @@ export function useVoucherVerification({
           rewardId: reward.id,
           rewardName: reward.name,
           tokenAddress: selectedTokenAddress,
-          cost: reward.cost,
+          cost,
+          orderUsd: spent?.orderUsd,
         });
       }
     };
@@ -279,6 +290,7 @@ export function useVoucherVerification({
         customerAddress: address,
         merchantAddress: reward.merchantAddress,
         cost: failedAttempt.cost,
+        orderUsd: failedAttempt.orderUsd,
       });
 
       if (result?.success && result.voucher) {

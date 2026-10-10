@@ -35,6 +35,7 @@ interface VoucherRequest {
   customerAddress: string;
   merchantAddress?: string;
   cost: number;
+  orderUsd?: number;
 }
 
 const ERC20_TRANSFER_TOPIC =
@@ -87,7 +88,7 @@ Deno.serve(async (req) => {
     console.log('Authenticated user:', user.id);
 
     const body: VoucherRequest = await req.json();
-    const { transactionHash, rewardId, tokenAddress, tokenSymbol, customerAddress, cost } = body;
+    const { transactionHash, rewardId, tokenAddress, tokenSymbol, customerAddress, cost, orderUsd } = body;
     const normalizedTxHash = transactionHash?.startsWith('0x') ? transactionHash : `0x${transactionHash}`;
 
     // Validate required fields
@@ -185,7 +186,8 @@ Deno.serve(async (req) => {
       throw new Error('Token address mismatch');
     }
 
-    if (Number(reward.cost) !== cost) {
+    const payingWithPoints = orderUsd !== undefined && orderUsd !== null;
+    if (!payingWithPoints && Number(reward.cost) !== cost) {
       throw new Error('Cost mismatch');
     }
 
@@ -198,12 +200,28 @@ Deno.serve(async (req) => {
     // once the receipt is confirmed (the customer already paid on-chain here).
     const { data: program } = await supabaseClient
       .from('loyalty_programs')
-      .select('status, expiration_date')
+      .select('status, expiration_date, points_per_dollar')
       .eq('token_address', tokenAddress.toLowerCase())
       .maybeSingle();
 
     if (!program) {
       throw new Error('Loyalty program not found for this token');
+    }
+
+    let chargedCost = Number(reward.cost);
+    let pointsPaymentNote: string | null = null;
+    if (payingWithPoints) {
+      const capMatch = String(reward.description ?? '').match(/Applies to orders up to \$(\d+(?:\.\d+)?)/);
+      const cap = capMatch ? Number(capMatch[1]) : null;
+      if (cap === null) throw new Error('This reward has no order limit');
+      if (!(Number(orderUsd) > cap)) throw new Error('This order is within the discount limit');
+      const rate = Number(program.points_per_dollar ?? 1);
+      const expected = Math.round(Number(orderUsd) * rate * 10000) / 10000;
+      if (!Number.isFinite(expected) || Math.abs(expected - Number(cost)) > 0.0001) {
+        throw new Error('Cost mismatch');
+      }
+      chargedCost = Number(cost);
+      pointsPaymentNote = `Paid $${orderUsd} at ${rate} points per $1. The percent discount did not apply.`;
     }
 
 
@@ -304,7 +322,7 @@ Deno.serve(async (req) => {
     const receiptLogs = Array.isArray(receipt?.logs) ? receipt.logs : [];
     const tokenAddr = tokenAddress.toLowerCase();
     const merchantAddr = merchantAddress.toLowerCase();
-    const requiredWei = costToWei(Number(reward.cost));
+    const requiredWei = costToWei(chargedCost);
 
     const transferLogs = receiptLogs.filter((log: any) => {
       const logAddr = (log?.address || '').toLowerCase();
@@ -396,8 +414,8 @@ Deno.serve(async (req) => {
       .insert({
         code,
         reward_id: rewardId,
-        reward_name: reward.name,
-        reward_description: reward.description,
+        reward_name: pointsPaymentNote ? 'Points payment' : reward.name,
+        reward_description: pointsPaymentNote ?? reward.description,
         token_address: tokenAddress.toLowerCase(),
         token_symbol: tokenSymbol,
         customer_address: customerAddress.toLowerCase(),

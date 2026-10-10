@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTierSummaries } from '@/hooks/useTierSummaries';
 import { CompactTierInline } from '@/components/tiers/CompactTierInline';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +18,8 @@ import { useVoucherVerification } from '@/hooks/useVoucherVerification';
 import { VerificationStatusAlerts } from '@/components/rewards/VerificationStatusAlerts';
 import { CONTRACTS } from '@/config/contracts';
 import { Reward } from '@/types/rewards';
+import { DiscountOrder } from '@/components/rewards/DiscountOrder';
+import { parseDiscountCap } from '@/lib/discountReward';
 import { getRewardsByToken } from '@/lib/vouchers';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -75,6 +77,8 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [programSearch, setProgramSearch] = useState('');
   const [showFullBalance, setShowFullBalance] = useState(false);
+  const [discountBlocked, setDiscountBlocked] = useState(false);
+  const spendRef = useRef<{ cost: number; orderUsd: number } | null>(null);
 
   const { activeAddress, isMismatch, primaryAddress } = useActiveCustomerWallet();
   // Share the same query cache as TokenList / Filters (paused rows are filtered below)
@@ -121,6 +125,7 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
     isSuccess,
     hash,
     clearSelection,
+    spendRef,
   });
 
   // ── Pre-verify profile status (no async in activate handler) ──
@@ -298,15 +303,51 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
       toast.error(`Insufficient balance. Need ${reward.cost} tokens`);
       return;
     }
+    if (parseDiscountCap(reward.description) !== null && discountBlocked) {
+      toast.error('Enter an order within the discount limit, or pay with points.');
+      return;
+    }
 
     // Direct synchronous call — no async before sendTransaction
+    spendRef.current = null;
     burnTokens(
       selectedTokenAddress,
       reward.cost.toString(),
       CONTRACTS.LOYAL_SPARK_ERC20.abi,
       reward.merchantAddress,
     );
-  }, [address, session, profileVerified, isMismatch, isProgramPaused, tokens, selectedTokenAddress, selectedRewardId, availableRewards, balances, burnTokens]);
+  }, [address, session, profileVerified, isMismatch, isProgramPaused, tokens, selectedTokenAddress, selectedRewardId, availableRewards, balances, burnTokens, discountBlocked]);
+
+  const handlePayWithPoints = useCallback((points: number, orderUsd: number) => {
+    if (!address) { toast.error('Please connect your wallet'); return; }
+    if (!session || !profileVerified) { toast.error('Please sign in first'); return; }
+    if (isMismatch) { toast.error('Connect your primary wallet before activating a voucher'); return; }
+    if (isProgramPaused) { toast.error('This loyalty program is currently inactive.'); return; }
+    if (!selectedTokenAddress || !selectedRewardId) return;
+    const reward = availableRewards.find(r => r.id === selectedRewardId);
+    const balance = balances.find(b => b.address === selectedTokenAddress);
+    if (!reward || !balance) { toast.error('Reward or balance not found'); return; }
+    if (parseFloat(balance.balance) < points) {
+      toast.error(`Insufficient balance. Need ${points} tokens`);
+      return;
+    }
+    spendRef.current = { cost: points, orderUsd };
+    burnTokens(
+      selectedTokenAddress,
+      String(points),
+      CONTRACTS.LOYAL_SPARK_ERC20.abi,
+      reward.merchantAddress,
+    );
+  }, [address, session, profileVerified, isMismatch, isProgramPaused, selectedTokenAddress, selectedRewardId, availableRewards, balances, burnTokens]);
+
+  const onDiscountGate = useCallback((blocked: boolean) => {
+    setDiscountBlocked(blocked);
+  }, []);
+
+  useEffect(() => {
+    const reward = availableRewards.find(item => item.id === selectedRewardId);
+    setDiscountBlocked(parseDiscountCap(reward?.description ?? null) !== null);
+  }, [selectedRewardId, availableRewards]);
 
   const needsApproval = () => false;
 
@@ -521,11 +562,14 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
                       <SelectValue placeholder="Select a reward" />
                     </SelectTrigger>
                     <SelectContent>
-                      {availableRewards.map(reward => (
-                        <SelectItem key={reward.id} value={reward.id}>
-                          {reward.name} - {reward.cost} tokens
-                        </SelectItem>
-                      ))}
+                      {availableRewards.map(reward => {
+                        const cap = parseDiscountCap(reward.description);
+                        return (
+                          <SelectItem key={reward.id} value={reward.id}>
+                            {reward.name} - {reward.cost} tokens{cap !== null ? ` · up to $${cap}` : ''}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 )}
@@ -537,6 +581,15 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
                 <h4 className="font-semibold">{selectedReward.name}</h4>
                 <p className="text-sm text-muted-foreground">{selectedReward.description}</p>
                 <p className="text-sm font-medium text-primary">Cost: {selectedReward.cost} tokens</p>
+                <DiscountOrder
+                  key={selectedReward.id}
+                  reward={selectedReward}
+                  symbol={tokens.find(token => token.address === selectedTokenAddress)?.symbol ?? 'tokens'}
+                  pointsPerDollar={Number(programsCatalog.find(program => program.token_address.toLowerCase() === selectedTokenAddress.toLowerCase())?.points_per_dollar ?? 1)}
+                  canPay={!isPending && !isProgramPaused && !isSelectedProgramExpired && !isMismatch}
+                  onGate={onDiscountGate}
+                  onPay={handlePayWithPoints}
+                />
               </div>
             )}
 
@@ -558,7 +611,7 @@ export function RewardsSelection({ filterByMerchant }: RewardsSelectionProps) {
                   <Button
                     type="button"
                     onClick={handleActivate}
-                    disabled={!selectedRewardId || isPending || balancesLoading || isProgramPaused || isSelectedProgramExpired || isLoadingRewards || isMismatch}
+                    disabled={!selectedRewardId || isPending || balancesLoading || isProgramPaused || isSelectedProgramExpired || isLoadingRewards || isMismatch || discountBlocked}
                     className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90"
                   >
                     {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

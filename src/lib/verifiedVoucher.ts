@@ -8,6 +8,7 @@ interface VerifiedVoucherRequest {
   customerAddress: string;
   merchantAddress: string;
   cost: number;
+  orderUsd?: number;
 }
 
 interface VerifiedVoucherResponse {

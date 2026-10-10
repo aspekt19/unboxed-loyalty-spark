@@ -13,11 +13,12 @@ export type ActiveLoyaltyProgram = {
   status: string;
   expiration_date: string | null;
   token_standard: string | null;
+  points_per_dollar: number | null;
   created_at: string | null;
 };
 
 const PROGRAM_SELECT =
-  'id, token_address, name, symbol, merchant_address, status, expiration_date, token_standard, created_at';
+  'id, token_address, name, symbol, merchant_address, status, expiration_date, token_standard, points_per_dollar, created_at';
 
 let programsChannelRefCount = 0;
 let programsChannel: ReturnType<typeof supabase.channel> | null = null;
