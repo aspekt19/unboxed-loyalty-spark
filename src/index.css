@@ -51,8 +51,8 @@ All colors MUST be HSL.
     --gradient-primary: linear-gradient(135deg, hsl(222 15% 12%) 0%, hsl(222 12% 26%) 100%);
     --gradient-secondary: linear-gradient(135deg, hsl(24 100% 62%) 0%, hsl(30 100% 70%) 100%);
     --gradient-uds: linear-gradient(135deg, hsl(222 15% 12%) 0%, hsl(222 12% 26%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(40 40% 99%) 0%, hsl(30 45% 97%) 50%, hsl(40 33% 98%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(40 30% 98%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(36 45% 96%) 0%, hsl(28 55% 94%) 45%, hsl(222 12% 93%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(36 35% 96%) 100%);
     --gradient-brand: linear-gradient(135deg, hsl(222 15% 12%) 0%, hsl(222 12% 26%) 100%);
     --gradient-orange: linear-gradient(135deg, hsl(24 100% 62%) 0%, hsl(30 100% 70%) 100%);
     --gradient-mist: linear-gradient(135deg, hsl(40 25% 95%) 0%, hsl(40 33% 98%) 100%);
