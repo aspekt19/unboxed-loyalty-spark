@@ -149,9 +149,9 @@ All colors MUST be HSL.
     --uds-mist-light: 222 13% 17%;
 
     /* Page surface layers (see body) */
-    --surface-glow-a: radial-gradient(1400px 820px at 50% -8%, hsl(24 100% 62% / 0.38), transparent 68%);
+    --surface-glow-a: radial-gradient(1500px 1050px at 50% -10%, hsl(24 100% 62% / 0.42), transparent 70%);
     --surface-glow-b: radial-gradient(1200px 700px at 4% 100%, hsl(222 25% 3% / 0.8), transparent 66%);
-    --surface-glow-c: radial-gradient(1000px 620px at 98% 42%, hsl(30 100% 66% / 0.24), transparent 66%);
+    --surface-glow-c: radial-gradient(1100px 760px at 98% 46%, hsl(28 100% 64% / 0.3), transparent 68%);
     --surface-grid: radial-gradient(hsl(24 60% 72% / 0.09) 1px, transparent 1px);
   }
 
