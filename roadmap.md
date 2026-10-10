@@ -28,4 +28,6 @@
 - [x] Loyalty-themed hero animation: stamp card filling with stamps + reward coin + floating gift cards
 - [x] Confirm with the user that the new surface reads well; glow kept and strengthened
 - [x] Keep the original gift-card size, move it slightly up and right behind the headline, and keep phone movement minimal
+- [x] Shift the card further right on desktop so its right edge sits close to the panel edge, still fully inside and never clipped
+
 
