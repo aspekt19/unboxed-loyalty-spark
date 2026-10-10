@@ -79,10 +79,10 @@ All colors MUST be HSL.
     --uds-mist-light: 40 33% 98%;
 
     /* Page surface layers (see body) */
-    --surface-glow-a: radial-gradient(1300px 760px at 50% -6%, hsl(24 100% 62% / 0.2), transparent 66%);
-    --surface-glow-b: radial-gradient(1100px 640px at 4% 100%, hsl(222 15% 12% / 0.12), transparent 64%);
-    --surface-glow-c: radial-gradient(950px 600px at 98% 40%, hsl(30 100% 70% / 0.15), transparent 64%);
-    --surface-grid: radial-gradient(hsl(222 15% 12% / 0.09) 1px, transparent 1px);
+    --surface-glow-a: radial-gradient(1300px 760px at 50% -6%, hsl(24 100% 62% / 0.35), transparent 66%);
+    --surface-glow-b: radial-gradient(1100px 640px at 4% 100%, hsl(222 15% 12% / 0.18), transparent 64%);
+    --surface-glow-c: radial-gradient(950px 600px at 98% 40%, hsl(30 100% 70% / 0.28), transparent 64%);
+    --surface-grid: radial-gradient(hsl(222 15% 12% / 0.12) 1px, transparent 1px);
   }
 
   .dark {
