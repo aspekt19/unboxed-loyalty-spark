@@ -63,13 +63,11 @@ function GiftCard({ reduced, palette }: { reduced: boolean; palette: { face: str
 
   return (
     <group ref={group} position={[anchor.x, anchor.y, CARD_Z]} rotation={[0.08, -0.18, -0.08]} scale={anchor.scale}>
-      <RoundedBox args={[CARD_W, CARD_H, 0.12]} radius={0.22} smoothness={4}>
+      <RoundedBox args={[CARD_W, CARD_H, 0.1]} radius={0.12} smoothness={4}>
         <meshStandardMaterial color={palette.face} metalness={0.2} roughness={0.65} />
       </RoundedBox>
-      <RoundedBox args={[5.96, 3.71, 0.12]} radius={0.2} smoothness={4} position={[0, 0, 0.015]}>
-        <meshStandardMaterial color={palette.face} metalness={0.35} roughness={0.58} />
-      </RoundedBox>
       <LoyaltyCardFace palette={palette} reduced={reduced} />
+
     </group>
   );
 }
