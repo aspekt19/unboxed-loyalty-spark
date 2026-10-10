@@ -19,6 +19,7 @@
 - [ ] Sponsored (gas-free) voucher activation from a Google/email account — waiting for the user to try it live
 
 ## Landing color and hero 3D background
+- [ ] Replace the crowded hero animation with one gently rocking gift card and verify rendering
 - [x] Replace violet palette with Base Blue across tokens (later superseded by user request)
 - [x] Recolor to the agent-chosen palette: graphite black + orange spark, hero ink panel
 - [x] Add a massive 3D animation behind the hero headline (React Three Fiber, background only)
