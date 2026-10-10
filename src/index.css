@@ -83,6 +83,7 @@ All colors MUST be HSL.
     --surface-glow-b: radial-gradient(1100px 640px at 4% 100%, hsl(222 15% 12% / 0.18), transparent 64%);
     --surface-glow-c: radial-gradient(950px 600px at 98% 40%, hsl(30 100% 70% / 0.28), transparent 64%);
     --surface-glow-d: radial-gradient(130% 95% at 50% 55%, hsl(24 100% 62% / 0.05), transparent 78%);
+    --surface-glow-e: radial-gradient(1400px 760px at 50% 108%, hsl(24 100% 62% / 0.16), transparent 72%);
     --surface-grid: radial-gradient(hsl(222 15% 12% / 0.12) 1px, transparent 1px);
   }
 
@@ -151,9 +152,10 @@ All colors MUST be HSL.
 
     /* Page surface layers (see body) */
     --surface-glow-a: radial-gradient(1500px 1050px at 50% -10%, hsl(24 100% 62% / 0.42), transparent 70%);
-    --surface-glow-b: radial-gradient(1200px 700px at 4% 100%, hsl(222 25% 3% / 0.8), transparent 66%);
+    --surface-glow-b: radial-gradient(1200px 700px at 4% 100%, hsl(222 25% 3% / 0.55), transparent 66%);
     --surface-glow-c: radial-gradient(1100px 760px at 98% 46%, hsl(28 100% 64% / 0.3), transparent 68%);
-    --surface-glow-d: radial-gradient(135% 100% at 50% 55%, hsl(24 100% 62% / 0.12), transparent 80%);
+    --surface-glow-d: radial-gradient(135% 100% at 50% 55%, hsl(24 100% 62% / 0.16), transparent 80%);
+    --surface-glow-e: radial-gradient(1400px 760px at 50% 108%, hsl(24 100% 62% / 0.26), transparent 72%);
     --surface-grid: radial-gradient(hsl(24 60% 72% / 0.09) 1px, transparent 1px);
   }
 
@@ -207,11 +209,11 @@ All colors MUST be HSL.
     scroll-behavior: smooth;
     /* Page surface for every page: warm spark glow, graphite haze, faint dot mesh */
     background-color: hsl(var(--background));
-    background-image: var(--surface-glow-a), var(--surface-glow-b), var(--surface-glow-c), var(--surface-glow-d), var(--surface-grid);
-    background-size: auto, auto, auto, auto, 26px 26px;
-    background-position: center top, center bottom, center right, center center, center top;
-    background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, repeat;
-    background-attachment: fixed, fixed, fixed, fixed, scroll;
+    background-image: var(--surface-glow-a), var(--surface-glow-b), var(--surface-glow-c), var(--surface-glow-d), var(--surface-glow-e), var(--surface-grid);
+    background-size: auto, auto, auto, auto, auto, 26px 26px;
+    background-position: center top, center bottom, center right, center center, center bottom, center top;
+    background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, repeat;
+    background-attachment: fixed, fixed, fixed, fixed, fixed, scroll;
   }
   
   /* Better touch targets for mobile */
