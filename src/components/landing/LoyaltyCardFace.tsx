@@ -24,10 +24,11 @@ export function LoyaltyCardFace({ palette, reduced }: { palette: Palette; reduce
     for (let x = -640; x < 1024; x += 12) {
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + 640, 640); ctx.stroke();
     }
-    ctx.globalAlpha = 0.45;
+    ctx.globalAlpha = 0.3;
     ctx.strokeStyle = palette.spark;
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.roundRect(24, 24, 976, 592, 32); ctx.stroke();
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(26, 26, 972, 588, 26); ctx.stroke();
+
     ctx.globalAlpha = 0.8;
     ctx.fillStyle = palette.detail;
     ctx.font = '500 24px system-ui, sans-serif';
@@ -36,8 +37,9 @@ export function LoyaltyCardFace({ palette, reduced }: { palette: Palette; reduce
     ctx.font = '500 19px system-ui, sans-serif';
     ctx.fillText("POINTS BALANCE", 74, 132);
     ctx.fillText("MEMBER REWARDS", 74, 561);
-    ctx.globalAlpha = 0.25;
-    ctx.beginPath(); ctx.moveTo(74, 505); ctx.lineTo(950, 505); ctx.stroke();
+    ctx.globalAlpha = 0.14;
+    ctx.beginPath(); ctx.moveTo(74, 505); ctx.lineTo(400, 505); ctx.stroke();
+
     // Embossed contactless mark, printed on the same card.
     ctx.globalAlpha = 0.6;
     ctx.strokeStyle = palette.detail;
@@ -90,7 +92,7 @@ export function LoyaltyCardFace({ palette, reduced }: { palette: Palette; reduce
     if (!reduced && phase > 1 && phase < 5) {
       const x = -400 + (phase - 1) * 430;
       ctx.save();
-      ctx.beginPath(); ctx.roundRect(28, 28, 968, 584, 30); ctx.clip();
+      ctx.beginPath(); ctx.roundRect(30, 30, 964, 580, 24); ctx.clip();
       ctx.translate(x, 0); ctx.transform(1, 0, -0.45, 1, 0, 0);
       const sheen = ctx.createLinearGradient(0, 0, 240, 0);
       sheen.addColorStop(0, palette.detail); sheen.addColorStop(0.5, palette.detail); sheen.addColorStop(1, palette.detail);
@@ -108,7 +110,7 @@ export function LoyaltyCardFace({ palette, reduced }: { palette: Palette; reduce
 
   return map ? (
     <mesh position={[0, 0, 0.081]}>
-      <planeGeometry args={[5.65, 3.5]} />
+      <planeGeometry args={[5.9, 3.65]} />
       <meshStandardMaterial map={map} metalness={0.28} roughness={0.62} />
     </mesh>
   ) : null;
