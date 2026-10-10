@@ -23,6 +23,6 @@
 - [x] Recolor to the agent-chosen palette: graphite black + orange spark, hero ink panel
 - [x] Add a massive 3D animation behind the hero headline (React Three Fiber, background only)
 - [x] Verify in browser (light + dark); dark-mode icon and logo contrast fixed
-- [ ] Site-wide page background: layered warm/graphite surface instead of flat white (all pages, light + dark)
-- [ ] Loyalty-themed hero animation: stamp card filling with stamps + reward coin + floating gift cards
-- [ ] Re-verify in browser (light + dark) and confirm no build or console errors
+- [x] Site-wide page surface: warm glow + faint mesh on html (fixed), opaque page wrappers made transparent
+- [x] Loyalty-themed hero animation: stamp card filling with stamps + reward coin + floating gift cards
+- [ ] Confirm with the user that the new surface reads well; tune glow strength if it still looks white
