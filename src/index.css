@@ -153,7 +153,7 @@ All colors MUST be HSL.
     --surface-glow-a: radial-gradient(1500px 1050px at 50% -10%, hsl(24 100% 62% / 0.42), transparent 70%);
     --surface-glow-b: radial-gradient(1200px 700px at 4% 100%, hsl(222 25% 3% / 0.8), transparent 66%);
     --surface-glow-c: radial-gradient(1100px 760px at 98% 46%, hsl(28 100% 64% / 0.3), transparent 68%);
-    --surface-glow-d: radial-gradient(130% 95% at 50% 55%, hsl(24 100% 62% / 0.07), transparent 78%);
+    --surface-glow-d: radial-gradient(135% 100% at 50% 55%, hsl(24 100% 62% / 0.12), transparent 80%);
     --surface-grid: radial-gradient(hsl(24 60% 72% / 0.09) 1px, transparent 1px);
   }
 
