@@ -1,9 +1,10 @@
 # Roadmap
 
 ## Payment text review and targeted publication
-- [ ] Review commit 13ebddf0 against the unchanged five public keyless reads and pricing
-- [ ] Publish only requested payment-text functions (including chat-bridge knowledge) and site static files after explicit agreement
-- [ ] Verify live payment instructions and static documents
+- [x] Review commit 13ebddf0 against the unchanged five public keyless reads and pricing
+- [x] Deploy x402-gateway, mpp-gateway, well-known-x402 and chat-bridge after explicit agreement; request site publication
+- [x] Verify live payment instructions; 7 payment-key tests and 42 Concierge cases passed
+- [ ] Confirm published static documents match reviewed source — waiting for scheduled site publication; first live check still served previous versions
 
 ## Switch human sign-in to Coinbase
 - [x] Coinbase Google/email sign-in + external wallets dialog, Privy removed
