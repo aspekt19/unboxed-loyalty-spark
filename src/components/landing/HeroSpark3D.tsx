@@ -45,7 +45,7 @@ function GiftCard({ reduced, palette }: { reduced: boolean; palette: { face: str
     const mobile = size.width < 640;
     return {
       scale: CARD_SCALE,
-      x: mobile ? 0.15 : Math.min(viewW * 0.25, viewW / 2 - CARD_W * CARD_SCALE / 2 - 0.3),
+      x: mobile ? 0.15 : Math.min(viewW * 0.3, viewW / 2 - CARD_W * CARD_SCALE / 2 - 0.15),
       y: mobile ? 0.75 : 1.95,
     };
   }, [camera, size]);
