@@ -4,7 +4,7 @@ import { Component, useEffect, useMemo, useRef, useState, type ReactNode } from 
 import * as THREE from "three";
 
 const SPARK = "#ff7a2f";
-const GRAPHITE = "#171b22";
+const GRAPHITE = "#2b333f";
 const FOG_COLOR = "#070a0f";
 
 /** Reads the OS "reduce motion" setting so the scene can hold still. */
@@ -79,7 +79,7 @@ function RewardCoin({ reduced }: { reduced: boolean }) {
             metalness={0.85}
             roughness={0.3}
             emissive={SPARK}
-            emissiveIntensity={0.55}
+            emissiveIntensity={0.8}
           />
         </mesh>
         <mesh rotation-x={Math.PI / 2} position={[0, 0, -0.22]}>
@@ -140,7 +140,7 @@ function StampCard({ reduced }: { reduced: boolean }) {
           >
             <cylinderGeometry args={[0.22, 0.22, 0.06, 40]} />
             <meshStandardMaterial
-              color="#2a313b"
+              color="#3a4452"
               metalness={0.7}
               roughness={0.35}
               emissive={SPARK}
@@ -190,7 +190,7 @@ function FloatingCards({ count, reduced }: { count: number; reduced: boolean }) 
         <mesh key={i} position={card.pos} rotation={[card.tilt, 0, card.tilt * 0.5]}>
           <boxGeometry args={[1.15, 0.72, 0.06]} />
           <meshStandardMaterial
-            color={card.hot ? SPARK : "#242a33"}
+            color={card.hot ? SPARK : "#39424f"}
             metalness={0.88}
             roughness={0.3}
             emissive={SPARK}
@@ -231,7 +231,7 @@ export default function HeroSpark3D() {
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       >
         <fog attach="fog" args={[FOG_COLOR, 8, 22]} />
-        <ambientLight intensity={0.6} color="#cdd6e4" />
+        <ambientLight intensity={1.0} color="#cdd6e4" />
         <directionalLight position={[6, 8, 6]} intensity={2.3} color="#ffffff" />
         <pointLight position={[-6, -3, 4]} intensity={45} decay={2} color={SPARK} />
         <pointLight position={[0, 4, -6]} intensity={35} decay={2} color="#8fb6ff" />
