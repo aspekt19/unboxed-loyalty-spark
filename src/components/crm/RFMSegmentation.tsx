@@ -92,7 +92,7 @@ export function RFMSegmentation() {
       key: 'new' as keyof RFMStats,
       label: 'New',
       description: 'New customers to engage',
-      color: 'bg-purple-500',
+      color: 'bg-primary',
     },
   ];
 
