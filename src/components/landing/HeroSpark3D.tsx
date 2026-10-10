@@ -1,16 +1,11 @@
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Environment, Float, Lightformer } from "@react-three/drei";
-import { Component, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Environment, Lightformer, RoundedBox } from "@react-three/drei";
+import { Component, useEffect, useRef, useState, type ReactNode } from "react";
 import * as THREE from "three";
 
-const SPARK = "#ff7a2f";
-const GRAPHITE = "#2b333f";
-const FOG_COLOR = "#070a0f";
-
-/** Reads the OS "reduce motion" setting so the scene can hold still. */
+/** Reads the OS setting so the card can hold completely still. */
 function usePrefersReducedMotion() {
   const [reduced, setReduced] = useState(false);
-
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     setReduced(mq.matches);
@@ -18,162 +13,71 @@ function usePrefersReducedMotion() {
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
   }, []);
-
   return reduced;
 }
 
-/** A reward coin: a thick graphite disc with a spark rim and an inner ring. */
-function RewardCoin({ reduced }: { reduced: boolean }) {
+function GiftCard({ reduced, palette }: { reduced: boolean; palette: { face: string; spark: string; detail: string } }) {
   const group = useRef<THREE.Group>(null);
+  const time = useRef(0);
+  const [texture, setTexture] = useState<THREE.CanvasTexture>();
 
-  useFrame((state, delta) => {
-    if (!group.current) return;
-    const dt = Math.min(delta, 0.05);
-    if (reduced) return;
-    // Rock the coin instead of a full spin so the face keeps facing the reader.
-    group.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.55) * 0.5;
-    group.current.rotation.z += dt * 0.05;
-  });
+  useEffect(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1024;
+    canvas.height = 640;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.fillStyle = palette.face;
+    ctx.fillRect(0, 0, 1024, 640);
+    // Fine diagonal engraving gives the card a tactile, satin finish.
+    ctx.strokeStyle = palette.detail;
+    ctx.globalAlpha = 0.12;
+    ctx.lineWidth = 1;
+    for (let x = -640; x < 1024; x += 14) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + 640, 640); ctx.stroke();
+    }
+    ctx.globalAlpha = 0.65;
+    ctx.strokeStyle = palette.spark;
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.roundRect(28, 28, 968, 584, 34); ctx.stroke();
+    // One small gift emblem, printed on the card rather than floating nearby.
+    ctx.globalAlpha = 0.8;
+    ctx.lineWidth = 7;
+    ctx.lineJoin = "round";
+    ctx.strokeRect(126, 132, 114, 83);
+    ctx.strokeRect(118, 115, 130, 23);
+    ctx.beginPath(); ctx.moveTo(183, 115); ctx.lineTo(183, 215);
+    ctx.moveTo(183, 114);
+    ctx.bezierCurveTo(115, 115, 133, 56, 164, 86);
+    ctx.lineTo(183, 114);
+    ctx.bezierCurveTo(251, 115, 233, 56, 202, 86);
+    ctx.closePath(); ctx.stroke();
+    const map = new THREE.CanvasTexture(canvas);
+    map.colorSpace = THREE.SRGBColorSpace;
+    setTexture(map);
+    return () => map.dispose();
+  }, [palette]);
 
-  return (
-    <Float speed={1.2} rotationIntensity={0.1} floatIntensity={0.6}>
-      <group ref={group} position={[0, 1.2, -0.3]} scale={1.02}>
-        <mesh rotation-x={Math.PI / 2}>
-          <cylinderGeometry args={[1.55, 1.55, 0.42, 96]} />
-          <meshStandardMaterial
-            color={GRAPHITE}
-            metalness={0.95}
-            roughness={0.22}
-            emissive={SPARK}
-            emissiveIntensity={0.1}
-          />
-        </mesh>
-        <mesh position={[0, 0, 0.21]}>
-          <torusGeometry args={[0.95, 0.07, 16, 64]} />
-          <meshStandardMaterial
-            color="#3a4452"
-            metalness={0.8}
-            roughness={0.3}
-            emissive={SPARK}
-            emissiveIntensity={0.08}
-          />
-        </mesh>
-        <mesh rotation-x={Math.PI / 2} position={[0, 0, -0.22]}>
-          <cylinderGeometry args={[1.55, 1.55, 0.04, 96]} />
-          <meshStandardMaterial color={SPARK} metalness={0.8} roughness={0.35} />
-        </mesh>
-      </group>
-    </Float>
-  );
-}
-
-/** A punch card whose stamps fill in one by one — the core loyalty loop. */
-function StampCard({ reduced }: { reduced: boolean }) {
-  const stamps = useRef<THREE.Mesh[]>([]);
-
-  const layout = useMemo(
-    () =>
-      Array.from({ length: 8 }, (_, i) => ({
-        pos: [
-          -1.05 + (i % 4) * 0.7,
-          i < 4 ? 0.42 : -0.42,
-          0.1,
-        ] as [number, number, number],
-      })),
-    [],
-  );
-
-  useFrame((state, delta) => {
-    const dt = Math.min(delta, 0.05);
-    const fill = reduced ? 8 : Math.floor(((state.clock.elapsedTime % 9) / 9) * 9);
-    stamps.current.forEach((mesh, i) => {
-      if (!mesh) return;
-      const earned = i < fill;
-      const target = earned ? 1 : 0.62;
-      const next = mesh.scale.x + (target - mesh.scale.x) * Math.min(1, dt * 7);
-      mesh.scale.setScalar(next);
-      const material = mesh.material as THREE.MeshStandardMaterial;
-      const glow = earned ? 0.55 : 0.05;
-      material.emissiveIntensity += (glow - material.emissiveIntensity) * Math.min(1, dt * 7);
-    });
-  });
-
-  return (
-    <Float speed={0.9} rotationIntensity={0.12} floatIntensity={0.35}>
-      <group position={[-4.1, -2.4, 0.1]} rotation={[0.12, 0.45, 0.08]}>
-        <mesh>
-          <boxGeometry args={[3.1, 1.5, 0.14]} />
-          <meshStandardMaterial color={GRAPHITE} metalness={0.55} roughness={0.45} />
-        </mesh>
-        {layout.map((stamp, i) => (
-          <mesh
-            key={i}
-            position={stamp.pos}
-            rotation-x={Math.PI / 2}
-            ref={(mesh) => {
-              if (mesh) stamps.current[i] = mesh;
-            }}
-          >
-            <cylinderGeometry args={[0.22, 0.22, 0.06, 40]} />
-            <meshStandardMaterial
-              color="#3a4452"
-              metalness={0.7}
-              roughness={0.35}
-              emissive={SPARK}
-              emissiveIntensity={0.05}
-            />
-          </mesh>
-        ))}
-      </group>
-    </Float>
-  );
-}
-
-/** Gift-card slabs drifting around the coin. */
-function FloatingCards({ count, reduced }: { count: number; reduced: boolean }) {
-  const group = useRef<THREE.Group>(null);
-
-  const cards = useMemo(
-    () =>
-      Array.from({ length: count }, (_, i) => {
-        const angle = (i / count) * Math.PI * 2;
-        const radius = 4.4 + (i % 2) * 0.8;
-        return {
-          pos: [
-            Math.cos(angle) * radius,
-            ((i % 3) - 1) * 0.9,
-            Math.sin(angle) * radius - 1,
-          ] as [number, number, number],
-          tilt: (i % 4) * 0.3 - 0.4,
-          hot: i % 2 === 0,
-        };
-      }),
-    [count],
-  );
-
-  useFrame((_, delta) => {
+  useFrame((_, rawDelta) => {
     if (!group.current || reduced) return;
-    const dt = Math.min(delta, 0.05);
-    group.current.rotation.y += dt * 0.09;
-    group.current.children.forEach((child, i) => {
-      child.rotation.y += dt * (0.15 + i * 0.04);
-    });
+    time.current += Math.min(rawDelta, 0.05);
+    const t = time.current;
+    group.current.rotation.set(0.08 + Math.sin(t * 0.32) * 0.035, -0.18 + Math.sin(t * 0.28) * 0.13, -0.08 + Math.sin(t * 0.25) * 0.025);
+    group.current.position.y = 0.6 + Math.sin(t * 0.4) * 0.12;
   });
 
   return (
-    <group ref={group} rotation={[0.3, 0, 0.06]}>
-      {cards.map((card, i) => (
-        <mesh key={i} position={card.pos} rotation={[card.tilt, 0, card.tilt * 0.5]}>
-          <boxGeometry args={[1.15, 0.72, 0.06]} />
-          <meshStandardMaterial
-            color={card.hot ? SPARK : "#39424f"}
-            metalness={0.88}
-            roughness={0.32}
-            emissive={SPARK}
-            emissiveIntensity={card.hot ? 0.25 : 0.05}
-          />
-        </mesh>
-      ))}
+    <group ref={group} position={[0, 0.6, -0.5]} rotation={[0.08, -0.18, -0.08]} scale={0.85}>
+      <RoundedBox args={[6, 3.75, 0.12]} radius={0.22} smoothness={4}>
+        <meshStandardMaterial color={palette.face} metalness={0.2} roughness={0.65} />
+      </RoundedBox>
+      <RoundedBox args={[5.96, 3.71, 0.12]} radius={0.2} smoothness={4} position={[0, 0, 0.015]}>
+        <meshStandardMaterial color={palette.face} metalness={0.35} roughness={0.58} />
+      </RoundedBox>
+      {texture && <mesh position={[0, 0, 0.08]}>
+        <planeGeometry args={[5.65, 3.5]} />
+        <meshStandardMaterial map={texture} metalness={0.28} roughness={0.62} />
+      </mesh>}
     </group>
   );
 }
@@ -193,11 +97,13 @@ class SceneBoundary extends Component<{ children: ReactNode }, { failed: boolean
 
 export default function HeroSpark3D() {
   const reduced = usePrefersReducedMotion();
-  const [cardCount, setCardCount] = useState(6);
-
+  const [palette, setPalette] = useState<{ face: string; spark: string; detail: string }>();
   useEffect(() => {
-    setCardCount(window.innerWidth < 640 ? 4 : 6);
+    const style = getComputedStyle(document.documentElement);
+    const token = (name: string) => `hsl(${style.getPropertyValue(name).trim()})`;
+    setPalette({ face: token("--hero-card-face"), spark: token("--secondary"), detail: token("--hero-card-detail") });
   }, []);
+  if (!palette) return null;
 
   return (
     <SceneBoundary>
@@ -206,32 +112,13 @@ export default function HeroSpark3D() {
         dpr={[1, 1.6]}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       >
-        <fog attach="fog" args={[FOG_COLOR, 8, 22]} />
-        <ambientLight intensity={0.85} color="#cdd6e4" />
-        <directionalLight position={[6, 8, 6]} intensity={2.0} color="#ffffff" />
-        <pointLight position={[-6, -3, 4]} intensity={35} decay={2} color={SPARK} />
-        <pointLight position={[0, 4, -6]} intensity={35} decay={2} color="#8fb6ff" />
-
-        <RewardCoin reduced={reduced} />
-        <StampCard reduced={reduced} />
-        <FloatingCards count={cardCount} reduced={reduced} />
-
+        <ambientLight intensity={0.85} color={palette.detail} />
+        <directionalLight position={[6, 8, 6]} intensity={1.6} color={palette.detail} />
+        <pointLight position={[-6, 2, 4]} intensity={18} decay={2} color={palette.spark} />
+        <GiftCard reduced={reduced} palette={palette} />
         <Environment resolution={128}>
-          <Lightformer intensity={2} position={[0, 5, 0]} scale={[10, 10, 1]} />
-          <Lightformer
-            intensity={1.4}
-            color={SPARK}
-            position={[-6, 1, -2]}
-            rotation-y={Math.PI / 2}
-            scale={[12, 3, 1]}
-          />
-          <Lightformer
-            intensity={1}
-            color="#8fb6ff"
-            position={[6, -1, 2]}
-            rotation-y={-Math.PI / 2}
-            scale={[12, 3, 1]}
-          />
+          <Lightformer intensity={1.5} color={palette.detail} position={[0, 5, 0]} scale={[10, 10, 1]} />
+          <Lightformer intensity={0.8} color={palette.spark} position={[-6, 1, -2]} rotation-y={Math.PI / 2} scale={[12, 3, 1]} />
         </Environment>
       </Canvas>
     </SceneBoundary>
