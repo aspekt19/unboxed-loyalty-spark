@@ -26,10 +26,10 @@ const LandingNav = () => {
               key={link.href}
               to={link.href}
               className={cn(
-                "px-4 py-2 rounded-lg text-sm font-semibold transition-smooth hover:-translate-y-0.5",
+                "px-4 py-2 rounded-full text-sm font-semibold transition-smooth hover:-translate-y-0.5",
                 active
                   ? "bg-primary text-primary-foreground shadow-clay-primary"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  : "bg-card text-foreground/80 shadow-clay-sm hover:shadow-clay hover:text-primary"
               )}
             >
               {link.label}

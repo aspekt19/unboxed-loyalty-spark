@@ -28,7 +28,7 @@ const RFM_LABELS = {
   loyal: { label: 'Loyal', variant: 'secondary' as const, color: 'bg-blue-500' },
   at_risk: { label: 'At Risk', variant: 'destructive' as const, color: 'bg-yellow-500' },
   lost: { label: 'Lost', variant: 'outline' as const, color: 'bg-gray-500' },
-  new: { label: 'New', variant: 'outline' as const, color: 'bg-primary' },
+  new: { label: 'New', variant: 'outline' as const, color: 'bg-purple-500' },
 };
 
 export function CustomerList() {

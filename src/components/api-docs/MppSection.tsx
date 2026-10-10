@@ -305,7 +305,7 @@ const mintRes = await x402Fetch('${X402_URL}/mint', {
                         variant="outline" 
                         className={`text-[10px] ${
                           row.category === 'write' ? 'border-blue-500/30 text-blue-600' :
-                          row.category === 'trade' ? 'border-primary/30 text-primary' :
+                          row.category === 'trade' ? 'border-purple-500/30 text-purple-600' :
                           'border-green-500/30 text-green-600'
                         }`}
                       >

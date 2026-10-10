@@ -1,10 +1,5 @@
 # Roadmap
 
-## Design-only visual refresh
-- [ ] Replace purple theme with a neutral, teal and amber palette across existing pages
-- [ ] Refresh shared controls and add a lightweight animated 3D loyalty scene
-- [ ] Verify rendering, page navigation and reduced-motion behavior without changing business logic
-
 ## Payment text review and targeted publication
 - [x] Review commit 13ebddf0 against the unchanged five public keyless reads and pricing
 - [x] Deploy x402-gateway, mpp-gateway, well-known-x402 and chat-bridge after explicit agreement; request site publication
