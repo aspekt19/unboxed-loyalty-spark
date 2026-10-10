@@ -30,5 +30,7 @@
 - [x] Confirm with the user that the new surface reads well; glow kept and strengthened
 - [x] Keep the original gift-card size, move it slightly up and right behind the headline, and keep phone movement minimal
 - [x] Shift the card further right on desktop so its right edge sits close to the panel edge, still fully inside and never clipped
+- [x] Thin the card's frames: one body with a credit-card edge, printed area reaching the edge, no nested inner frame, no full-width divider (the domino look was rejected)
+
 
 
