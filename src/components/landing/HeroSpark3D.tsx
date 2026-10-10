@@ -3,21 +3,13 @@ import { Environment, Lightformer, RoundedBox } from "@react-three/drei";
 import { Component, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import * as THREE from "three";
 
-/** Card geometry, in world units, before the responsive scale is applied. */
+/** Original card geometry and scale, independent of its resting position. */
 const CARD_W = 6;
 const CARD_H = 3.75;
 const CARD_Z = -0.5;
 const CAMERA_Z = 9;
 const CAMERA_FOV = 50;
-/**
- * The card lives in the clear strip above the hero copy. Measured from the
- * panel's top edge, the copy begins at the eyebrow line on phones and at the
- * headline on wider screens; card height plus gap plus room for its tilt stays
- * under that line, so the card never ends up behind a word.
- */
-const CARD_H_PX = (width: number) => (width < 640 ? 42 : 92);
-/** Breathing room kept between the card and the panel's top edge. */
-const TOP_GAP_PX = (width: number) => (width < 640 ? 6 : 14);
+const CARD_SCALE = 0.85;
 
 
 
@@ -44,26 +36,17 @@ function GiftCard({ reduced, palette }: { reduced: boolean; palette: { face: str
   const size = useThree((state) => state.size);
   const camera = useThree((state) => state.camera);
 
-  // Resting spot: tucked into the upper-right corner of the hero panel.
-  // The visible frame is recomputed from the live canvas size so the card
-  // stays inside the panel on phones as well as on wide desktop screens.
+  // Keep the full-size card behind the copy, with its emblem above the words.
+  // Phones retain the original composition with only a small off-centre nudge.
   const anchor = useMemo(() => {
     const fov = (camera as THREE.PerspectiveCamera).fov || CAMERA_FOV;
     const viewH = 2 * (CAMERA_Z - CARD_Z) * Math.tan((fov * Math.PI) / 360);
     const viewW = viewH * (size.width / Math.max(size.height, 1));
-    // The hero copy is centred and nearly full width, so the card lives in the
-    // clear strip above it: scaled to fit that strip, then nudged into the corner.
-    const pxToWorld = viewH / Math.max(size.height, 1);
-    const maxH = CARD_H_PX(size.width) * pxToWorld;
-    const gap = TOP_GAP_PX(size.width) * pxToWorld;
-    const scale = Math.min(0.85, (viewW * 0.42) / CARD_W, maxH / CARD_H);
-
-    const cardW = CARD_W * scale;
-    const cardH = CARD_H * scale;
+    const mobile = size.width < 640;
     return {
-      scale,
-      x: viewW / 2 - cardW / 2 - viewW * 0.04,
-      y: viewH / 2 - cardH / 2 - gap,
+      scale: CARD_SCALE,
+      x: mobile ? 0.15 : Math.min(viewW * 0.25, viewW / 2 - CARD_W * CARD_SCALE / 2 - 0.3),
+      y: mobile ? 0.75 : 1.95,
     };
   }, [camera, size]);
 

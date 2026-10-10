@@ -27,5 +27,5 @@
 - [x] Site-wide page surface: warm glow + faint mesh on html (fixed), opaque page wrappers made transparent
 - [x] Loyalty-themed hero animation: stamp card filling with stamps + reward coin + floating gift cards
 - [x] Confirm with the user that the new surface reads well; glow kept and strengthened
-- [x] Anchor the hero gift card to the panel's upper-right corner on desktop and phone
+- [x] Keep the original gift-card size, move it slightly up and right behind the headline, and keep phone movement minimal
 
