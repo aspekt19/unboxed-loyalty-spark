@@ -432,7 +432,7 @@ All colors MUST be HSL.
   /* Ink hero surface: deep graphite with a spark-lit core */
   .bg-ink-hero {
     background:
-      radial-gradient(72% 58% at 50% 40%, hsl(24 100% 62% / 0.22) 0%, transparent 72%),
+      radial-gradient(86% 68% at 50% 34%, hsl(24 100% 62% / 0.3) 0%, transparent 74%),
       radial-gradient(120% 100% at 50% 0%, hsl(222 16% 16%) 0%, hsl(222 20% 9%) 55%, hsl(222 24% 5%) 100%);
     color: hsl(var(--foreground));
     box-shadow: inset 0 0 0 1px hsl(24 100% 62% / 0.16), var(--shadow-large);
