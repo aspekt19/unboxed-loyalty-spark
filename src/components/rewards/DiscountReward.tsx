@@ -47,17 +47,16 @@ export function DiscountReward() {
       const existing = rewards.find(
         (reward) =>
           reward.tokenAddress.toLowerCase() === tokenAddress.toLowerCase() &&
-          reward.description === DISCOUNT_DESCRIPTION,
+          reward.description === DISCOUNT_DESCRIPTION &&
+          reward.name === `${percent}% off`,
       );
       if (!existing) return;
-      const match = existing.name.match(/^(\d+)% off$/);
-      if (match) setPercent(Number(match[1]));
       setCost(existing.cost);
     });
     return () => {
       cancelled = true;
     };
-  }, [address, tokenAddress]);
+  }, [address, tokenAddress, percent]);
 
   if (!address) return null;
 
@@ -85,7 +84,8 @@ export function DiscountReward() {
       const existing = (await getMerchantRewards(address)).find(
         (reward) =>
           reward.tokenAddress.toLowerCase() === tokenAddress.toLowerCase() &&
-          reward.description === DISCOUNT_DESCRIPTION,
+          reward.description === DISCOUNT_DESCRIPTION &&
+          reward.name === name,
       );
       const saved = existing
         ? await updateReward(existing.id, { name, description: DISCOUNT_DESCRIPTION, cost }, tokenAddress)
@@ -116,7 +116,7 @@ export function DiscountReward() {
           Discount
         </CardTitle>
         <CardDescription>
-          One percentage discount for this program. Set the percent and the point cost, then confirm.
+          One discount per percent for this program. Set the percent and the point cost, then confirm.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
