@@ -18,7 +18,7 @@ export default function AppPage() {
     <PageTransition>
       <div className="min-h-screen">
         {/* Header with wallet connection */}
-        <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
+        <header className="sticky top-0 z-50 border-b border-border bg-header/80 backdrop-blur-xl">
           <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
             <div className="flex justify-between items-center">
               {/* Logo - clickable to home */}
