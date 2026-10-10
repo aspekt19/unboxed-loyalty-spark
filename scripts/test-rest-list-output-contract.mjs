@@ -9,8 +9,8 @@ const openapi = JSON.parse(readFileSync(resolve(ROOT, "public/openapi.json"), "u
 
 /** Keep in sync with REST_LIST_SUCCESS_OUTPUTS in x402-bazaar-accept.ts */
 const LIST_ROUTES = [
-  ["/x402-gateway/offers", "get", "offers", "lsk_"],
-  ["/x402-gateway/recipient-api/offers", "get", "offers", "rwk_"],
+  ["/x402-gateway/offers", "get", "offers", null],
+  ["/x402-gateway/recipient-api/offers", "get", "offers", null],
   ["/x402-gateway/recipient-api/balances", "get", "balances", "rwk_"],
   ["/x402-gateway/recipient-api/vouchers", "get", "vouchers", "rwk_"],
   ["/x402-gateway/recipient-api/rewards", "get", "rewards", "rwk_"],
@@ -28,7 +28,15 @@ for (const [path, method, arrayField, authPrefix] of LIST_ROUTES) {
     assert.equal(schema.properties[arrayField].items.type, "object");
     assert.equal(schema.properties[arrayField].items.required, undefined);
     assert.equal(schema.additionalProperties, true);
-    assert.equal(openapi.paths[path][method]["x-auth"].prefix, authPrefix);
+    const auth = openapi.paths[path][method]["x-auth"];
+    if (authPrefix) {
+      assert.equal(auth.type, "apiKey");
+      assert.equal(auth.prefix, authPrefix);
+    } else {
+      assert.equal(auth.type, "none");
+      assert.equal(auth.prefix, undefined);
+      assert.match(openapi.paths[path][method].description, /do not send an API key/);
+    }
     assert.equal(openapi.paths[path][method]["x-payment-info"].price.amount, "0.001");
   });
 }

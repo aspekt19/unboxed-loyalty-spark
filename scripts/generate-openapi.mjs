@@ -75,9 +75,9 @@ const MERCHANT_REST = {
     "/analytics": { price: "0.005", auth: "lsk", summary: "Program analytics", desc: "Returns aggregated metrics for a loyalty token: minted, holders, redemptions, top customers, RFM distribution." },
     "/offers": {
       price: "0.001",
-      auth: "lsk",
+      auth: "none",
       summary: "List P2P marketplace offers",
-      desc: "Returns active P2P swap offers across loyalty tokens (filterable by token_address).",
+      desc: "Returns active P2P swap offers across loyalty tokens (filterable by token_address). Payment alone gives access; do not send an API key.",
       successSchema: restArraySuccessSchema("offers"),
     },
     "/tx-receipt": { price: "0", auth: "lsk", summary: "Fetch transaction receipt", desc: "Fetches a Base L2 transaction receipt by hash. Free helper for agents tracking on-chain confirmations." },
@@ -132,7 +132,8 @@ const RECIPIENT_REST = {
     "/recipient-api/offers": {
       price: "0.001",
       summary: "List P2P marketplace offers visible to the holder",
-      desc: "Lists P2P swap offers the holder can accept (filterable by token_address).",
+      desc: "Lists P2P swap offers the holder can accept (filterable by token_address). Payment alone gives access; do not send an API key.",
+      auth: "none",
       successSchema: restArraySuccessSchema("offers"),
     },
     "/recipient-api/workflow/reward-status": { price: "0.001", summary: "Autonomous reward redemption status", desc: "Returns the current reward redemption step and machine-readable next_actions[] for the holder." },
@@ -251,10 +252,13 @@ function buildRestOp(method, path, meta, kind) {
   if (meta.price && meta.price !== "0") {
     op["x-payment-info"] = paymentInfo(meta.price);
   }
-  if (kind === "recipient") {
-    op["x-auth"] = { type: "apiKey", header: "x-api-key", prefix: "rwk_" };
-  } else if (meta.auth === "none") {
+  if (meta.auth === "none") {
     op.security = [];
+    if (meta.price && meta.price !== "0") {
+      op["x-auth"] = { type: "none", note: "Payment alone gives access; do not send an API key." };
+    }
+  } else if (kind === "recipient") {
+    op["x-auth"] = { type: "apiKey", header: "x-api-key", prefix: "rwk_" };
   } else {
     op["x-auth"] = { type: "apiKey", header: "x-api-key", prefix: "lsk_" };
   }
@@ -279,7 +283,10 @@ function buildRestOp(method, path, meta, kind) {
   return op;
 }
 
+const KEYLESS_MCP = new Set(["get_platform_info", "list_marketplace_offers", "list_p2p_offers"]);
+
 function buildMcpOp(toolName, price, description, props, required, kind) {
+  const keyless = KEYLESS_MCP.has(toolName);
   const inputSchema = {
     type: "object",
     properties: props,
@@ -288,9 +295,13 @@ function buildMcpOp(toolName, price, description, props, required, kind) {
   return {
     operationId: `mcp_${kind === "merchant" ? "" : "recipient_"}${toolName}`,
     summary: `MCP tool: ${toolName}`,
-    description: `${description}. JSON-RPC 2.0 over Streamable HTTP. Body: { "jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": { "name": "${toolName}", "arguments": { ... } } }. Auth: x-api-key (${kind === "merchant" ? "lsk_" : "rwk_"}...) or Authorization: Bearer.`,
+    description: keyless
+      ? `${description}. JSON-RPC 2.0 tools/call named ${toolName}. Payment alone gives access; do not send an API key.`
+      : `${description}. JSON-RPC 2.0 over Streamable HTTP. Body: { "jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": { "name": "${toolName}", "arguments": { ... } } }. Auth: x-api-key (${kind === "merchant" ? "lsk_" : "rwk_"}...) or Authorization: Bearer.`,
     tags: [kind === "merchant" ? "Merchant MCP" : "Recipient MCP"],
-    "x-auth": { type: "apiKey", header: "x-api-key", prefix: kind === "merchant" ? "lsk_" : "rwk_" },
+    "x-auth": keyless
+      ? { type: "none", note: "Payment alone gives access; do not send an API key." }
+      : { type: "apiKey", header: "x-api-key", prefix: kind === "merchant" ? "lsk_" : "rwk_" },
     "x-mcp": {
       tool: toolName,
       transport: "streamable-http",
