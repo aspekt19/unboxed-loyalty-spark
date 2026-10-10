@@ -55,7 +55,7 @@ Copy [examples/agent-mcp/cursor-mcp.json](../../examples/agent-mcp/cursor-mcp.js
 
 `POST …/x402-gateway/recipient-mcp-tools/<tool_name>`
 
-Body: JSON-RPC `tools/call` with `name` and `arguments`. Headers: `x-api-key: lsk_...` or `rwk_...` (after payment).  
+Body: JSON-RPC `tools/call` with `name` and `arguments`. Headers: `x-api-key: lsk_...` or `rwk_...` on the same request as the payment, except `get_platform_info`, `list_marketplace_offers`, and `list_p2p_offers` (payment alone; do not send an API key). A payment without the live key is not charged on every other tool.  
 Client: `@x402/fetch` + `@x402/evm` (wallet with USDC on Base pays the 402).  
 Tool schemas + USD: `mcp-bazaar-tools.ts` · `recipient-mcp-bazaar-tools.ts`.  
 HTTP **402** response `accepts[0]` includes **`extensions.bazaar`** and MCP **`outputSchema`** for both URL families — built in **`x402-bazaar-accept.ts`** (Coinbase x402 Bazaar discovery).  

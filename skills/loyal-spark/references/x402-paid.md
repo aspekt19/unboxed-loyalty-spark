@@ -41,7 +41,7 @@ POST https://api.loyalspark.online/x402-gateway/mcp-tools/<tool_name>
 POST https://api.loyalspark.online/x402-gateway/recipient-mcp-tools/<tool_name>
 ```
 
-MCP requests use the normal JSON-RPC `tools/call` body. The merchant corridor uses `lsk_`; the holder corridor uses `rwk_` on the paid retry. Paid MCP is a priced subset of the direct MCP catalog; discovery is authoritative.
+MCP requests use the normal JSON-RPC `tools/call` body. On the paid retry, the merchant corridor sends `lsk_` and the holder corridor sends `rwk_`, except three public tools that take the payment alone and must not send `x-api-key`: `get_platform_info`, `list_marketplace_offers`, and `list_p2p_offers`. The same exception covers `GET /offers` and `GET /recipient-api/offers` on both `x402-gateway` and `mpp-gateway`. Every other paid route is not charged when the live key is missing. Paid MCP is a priced subset of the direct MCP catalog; discovery is authoritative. MPP prices REST only. MCP tools are on `x402-gateway`.
 
 ### Safe retry rules
 

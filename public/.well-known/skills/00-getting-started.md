@@ -87,6 +87,7 @@ If the agent should **pay USDC per MCP call** instead of using subscription-only
 
 - **Merchant tools:** **`POST`** `…/x402-gateway/mcp-tools/<tool_name>` — header **`x-api-key: lsk_...`** on the paid retry. Schemas: **`mcp-bazaar-tools.ts`**.
 - **Recipient / holder tools:** **`POST`** `…/x402-gateway/recipient-mcp-tools/<tool_name>` — **`x-api-key: rwk_...`**. Schemas: **`recipient-mcp-bazaar-tools.ts`**.
+- **Payment alone, do not send `x-api-key`:** `get_platform_info`, `list_marketplace_offers`, and `list_p2p_offers`, plus `GET /x402-gateway/offers`, `GET /mpp-gateway/offers`, `GET /x402-gateway/recipient-api/offers`, and `GET /mpp-gateway/recipient-api/offers`. Every other paid route is not charged when the live key is missing. MPP prices REST only.
 - JSON-RPC **`tools/call`** with same **`name`** / **`arguments`** as direct MCP.
 - Use an x402 client (**`@x402/fetch`**, **`@x402/evm`**) and a wallet with **USDC on Base** to satisfy **HTTP 402**. The gateway adds **Bazaar**-oriented fields on **402** via **`x402-bazaar-accept.ts`** (MCP routes use `outputSchema.input.type: "mcp"` for both URL families).
 

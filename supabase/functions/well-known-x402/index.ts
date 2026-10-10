@@ -16,6 +16,7 @@ import { MCP_BAZAAR_TOOLS } from "../_shared/mcp-bazaar-tools.ts";
 import { RECIPIENT_MCP_BAZAAR_TOOLS } from "../_shared/recipient-mcp-bazaar-tools.ts";
 import { RECIPIENT_REST_ROUTE_USD } from "../_shared/recipient-paid-routes.ts";
 import { buildAcceptEntry } from "../_shared/x402-bazaar-accept.ts";
+import { PAID_AUTH_RULE } from "../_shared/keyless-paid-routes.ts";
 
 const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 const NETWORK_CAIP2 = "eip155:8453"; // Bazaar v2 / CDP facilitator
@@ -209,7 +210,7 @@ function buildDiscoveryDocument(req: Request): Record<string, unknown> {
   const items = buildAllItems(req);
   const name = "Loyal Spark — Onchain Loyalty Protocol on Base";
   const description =
-    "Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create B20 loyalty programs, mint tokens to customer wallets, manage rewards catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics — all via paid x402 endpoints (USDC on Base). Includes 88 paid resources: merchant REST (agent-api), recipient REST (recipient-api), 34 merchant MCP tools and 16 recipient MCP tools via paid x402 corridor (direct MCP exposes 39 merchant + 20 recipient tools with x-api-key). Free plan mints up to 1,000 loyalty tokens per month per owner wallet (1 API key, 1.25% protocol fee); paid plans raise the cap. Every REST and MCP call is scoped by row-level security to the wallet behind the lsk_/rwk_ key. 16 agent skill guides (00-15): https://loyalspark.online/.well-known/skills/index.md. Builder Code bc_wdmnog7m.";
+    `Loyal Spark is an onchain loyalty-as-a-service protocol on Base L2. AI agents and merchants can create B20 loyalty programs, mint tokens to customer wallets, manage rewards catalogs, trade tokens on a P2P escrow marketplace, redeem rewards for vouchers, and run analytics — all via paid x402 endpoints (USDC on Base). Includes 88 paid resources: merchant REST (agent-api), recipient REST (recipient-api), 34 merchant MCP tools and 16 recipient MCP tools via paid x402 corridor (direct MCP exposes 39 merchant + 20 recipient tools; get_platform_info answers without a key or a payment). Free plan mints up to 1,000 loyalty tokens per month per owner wallet (1 API key, 1.25% protocol fee); paid plans raise the cap. Keyed calls are scoped to the wallet behind the lsk_/rwk_ key. ${PAID_AUTH_RULE} 16 agent skill guides (00-15): https://loyalspark.online/.well-known/skills/index.md. Builder Code bc_wdmnog7m.`;
   return {
     x402Version: 1,
     name,
@@ -251,7 +252,7 @@ function buildDiscoveryDocument(req: Request): Record<string, unknown> {
     accessControl: {
       model: "row-level-security",
       description:
-        "Every REST and MCP call is scoped by Postgres row-level security to the owner wallet behind the lsk_/rwk_ key — agents only read and write their own programs, rewards, vouchers, and offers.",
+        `Keyed REST and MCP calls are scoped by Postgres row-level security to the owner wallet behind the lsk_/rwk_ key. ${PAID_AUTH_RULE}`,
     },
     network: NETWORK_CAIP2,
     asset: USDC_BASE,
@@ -374,7 +375,7 @@ function buildPaymentRequired(req: Request): Response {
 
   const body = JSON.stringify({
     x402Version: 1,
-    error: "X-PAYMENT header is required. On the paid retry also send x-api-key: lsk_... for merchant routes or rwk_... for holder routes. A payment without a live key is not charged.",
+    error: `X-PAYMENT header is required. ${PAID_AUTH_RULE}`,
     accepts,
     metadata: {
       description,

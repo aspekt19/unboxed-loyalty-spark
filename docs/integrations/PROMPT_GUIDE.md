@@ -156,7 +156,7 @@ Headers to check on 402:
 - x402: `PAYMENT-REQUIRED` (single header, base64 payment challenge JSON; body mirrors it). `X-Payment-Required` is NOT set — the challenge is sent once so total 402 headers stay under Node.js default `maxHeaderSize=16384`, and default `fetch` handles all paid tools (including `earn_points`, `mint_loyalty_tokens`) without `--max-http-header-size` overrides.
 - MPP: X-MPP-Resource, X-MPP-Price-USD
 
-Paid MCP URLs: merchant `…/x402-gateway/mcp-tools/<tool>` (`lsk_` after payment); recipient `…/x402-gateway/recipient-mcp-tools/<tool>` (`rwk_`). Bazaar discovery metadata on the 402 body is built server-side (`x402-bazaar-accept.ts` in repo). After settle, optional `EXTENSION-RESPONSES` / `bazaar.status`.
+Paid MCP URLs: merchant `…/x402-gateway/mcp-tools/<tool>` (`lsk_` after payment); recipient `…/x402-gateway/recipient-mcp-tools/<tool>` (`rwk_`). Do not send `x-api-key` on `get_platform_info`, `list_marketplace_offers`, or `list_p2p_offers`: payment alone gives access. Every other paid tool is not charged without a live key. Bazaar discovery metadata on the 402 body is built server-side (`x402-bazaar-accept.ts` in repo). After settle, optional `EXTENSION-RESPONSES` / `bazaar.status`.
 ```
 
 ---

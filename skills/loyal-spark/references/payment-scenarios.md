@@ -12,7 +12,7 @@ Pick and execute the right payment corridor when an agent pays Loyal Spark — p
 | Recurring monthly quota and lower mint fee | **Agent plan subscription in USDC** |
 | Variable amount, partial capture, refund, payout, or split | **Not exposed** — do not emulate |
 
-Write actions on x402/MPP still need a free **`lsk_`** or **`rwk_`** key for identity and scopes; the gateway covers the per-call USDC/pathUSD fee only.
+On x402 and MPP, send a live `lsk_` (merchant) or `rwk_` (holder) key on the same request as the payment. A payment without that live key is not charged. Five public reads accept the payment alone; do not send an API key on them: `GET /offers` and `GET /recipient-api/offers` on both gateways, `POST /x402-gateway/mcp-tools/get_platform_info`, `POST /x402-gateway/mcp-tools/list_marketplace_offers`, and `POST /x402-gateway/recipient-mcp-tools/list_p2p_offers`. MPP prices REST only.
 
 ## 1. Loyal Spark fixed-price lifecycle
 

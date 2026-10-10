@@ -37,8 +37,10 @@ Loyal Spark is a dual-mode protocol: humans interact via web UI with flexible au
 
 Two key prefixes for two roles:
 
-- **`lsk_…`** — merchant agent: issues programs, mints tokens, manages rewards. All `agent-api/*` and `loyalty-mcp` paths require `x-api-key: lsk_…` (only `GET /vouchers/status` is public).
-- **`rwk_…`** — recipient agent: a wallet that *holds* loyalty tokens. All `recipient-api/*` and `recipient-loyalty-mcp` paths require `x-api-key: rwk_…`.
+- **`lsk_…`** — merchant agent: issues programs, mints tokens, manages rewards. Direct `agent-api/*` and `loyalty-mcp` paths require `x-api-key: lsk_…`. Exceptions: `GET /vouchers/status` is public, and direct `loyalty-mcp` `get_platform_info` answers without a key or a payment.
+- **`rwk_…`** — recipient agent: a wallet that *holds* loyalty tokens. Direct `recipient-api/*` and `recipient-loyalty-mcp` paths require `x-api-key: rwk_…`.
+
+On x402 and MPP, send the live key on the same request as the payment. A payment without that live key is not charged. Five public reads accept the payment alone; do not send an API key: `GET /offers` and `GET /recipient-api/offers` on both gateways, `POST /x402-gateway/mcp-tools/get_platform_info`, `POST /x402-gateway/mcp-tools/list_marketplace_offers`, and `POST /x402-gateway/recipient-mcp-tools/list_p2p_offers`. MPP prices REST only.
 
 How to get a key:
 1. **Dashboard (humans):** sign in at https://loyalspark.online/merchant (Google, email or wallet) → "AI Agents" tab → register → copy `lsk_…` (shown once).
@@ -178,7 +180,7 @@ Rules:
 - Send at least one of `cashback_rate` / `points_per_dollar` — sending neither returns HTTP 400.
 - Both fields are optional individually, so you can raise cashback without touching the points rate.
 - New values apply to subsequent `POST /earn` calls only; already minted balances are untouched.
-- Over x402 (no API key needed for payment, key still identifies the merchant):
+- Over x402, send the live `lsk_` on the same retry as the payment. A payment without that key is not charged:
   `curl -X POST https://api.loyalspark.online/x402-gateway/update-program-config -H "x-api-key: lsk_YOUR_KEY" -H "Content-Type: application/json" -d '{...}'` → HTTP 402 with the USDC challenge, then repeat with the `X-PAYMENT` header.
 
 ## MCP Server — 39 Tools (Merchant)
@@ -305,7 +307,7 @@ Base URL: https://api.loyalspark.online/recipient-api · Auth: `x-api-key: rwk_�
 - Gateway: https://api.loyalspark.online/x402-gateway
 - Currency: exact USDC on Base (0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913) · network CAIP-2 `eip155:8453`
 - The current gateway does not expose `upto`, partial capture, void, refund, payout, or split operations.
-- **Paid MCP:** `POST …/x402-gateway/mcp-tools/<tool_name>` — JSON-RPC `tools/call`, header `x-api-key: lsk_…` after payment. Tool ids + argument schemas: `supabase/functions/_shared/mcp-bazaar-tools.ts` (repo). Bazaar: 402 body includes `extensions.bazaar` for MCP routes.
+- **Paid MCP:** `POST …/x402-gateway/mcp-tools/<tool_name>` — JSON-RPC `tools/call`, header `x-api-key: lsk_…` after payment, except `get_platform_info` and `list_marketplace_offers` (payment alone; do not send an API key). Holder tool `list_p2p_offers` is the same exception. Tool ids + argument schemas: `supabase/functions/_shared/mcp-bazaar-tools.ts` (repo). Bazaar: 402 body includes `extensions.bazaar` for MCP routes.
 - Facilitator (Base mainnet production): Coinbase CDP `https://api.cdp.coinbase.com/platform/v2/x402` (gateway uses CDP JWT when configured). Public facilitator reference: https://x402.org/facilitator (Sepolia-focused v2 listings differ from Base mainnet CDP)
 - SDK: `@x402/fetch`, `@x402/evm`
 - Spec: https://github.com/coinbase/x402
@@ -346,7 +348,7 @@ Agents can create Coinbase CDP MPC wallets for autonomous onchain operations:
 
 Merchant SaaS (portal): Starter $39 / Growth $79 / Scale $149 per month — separate product line.
 
-Access control: every REST and MCP call is scoped by Postgres **row-level security (RLS)** to the owner wallet behind the `lsk_` / `rwk_` key.
+Access control: keyed REST and MCP calls are scoped by Postgres **row-level security (RLS)** to the owner wallet behind the `lsk_` / `rwk_` key. Five public reads accept a gateway payment alone and must not send `x-api-key`: `GET /offers` and `GET /recipient-api/offers` on both x402 and MPP, plus `POST /x402-gateway/mcp-tools/get_platform_info`, `POST /x402-gateway/mcp-tools/list_marketplace_offers`, and `POST /x402-gateway/recipient-mcp-tools/list_p2p_offers`.
 
 Payment: On-chain USDC transfer on Base, verified automatically. This covers **subscriptions only**.
 

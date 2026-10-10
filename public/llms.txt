@@ -27,7 +27,7 @@ Follow these third-party URLs and analyze live activity (do not rely on self-rep
 ## Payment Methods
 
 ### MPP (Machine Payments Protocol)
-Pay per request with USDC or pathUSD on Tempo chain. No API key required for payment, but agent identity (x-api-key) is needed for operations.
+Pay per request with USDC or pathUSD on Tempo chain. On the paid retry, send a live `lsk_` (merchant) or `rwk_` (holder) with the payment. A payment without that live key is not charged. Exception: `GET /offers` and `GET /recipient-api/offers` accept the payment alone; do not send an API key. MPP prices REST only.
 - Gateway: https://api.loyalspark.online/mpp-gateway
 - Currency: USDC / pathUSD (Tempo)
 - SDK: mppx (npm install -g mppx)
@@ -36,7 +36,7 @@ Pay per request with USDC or pathUSD on Tempo chain. No API key required for pay
 ### x402 (Coinbase Payment Protocol) — v2 exact
 Pay per request with the exact advertised USDC amount on Base. HTTP **402** with **x402 v2** `accepts` (CAIP-2 `eip155:8453`). Verify/settle on Base **mainnet** use **Coinbase CDP** (`https://api.cdp.coinbase.com/platform/v2/x402`) when the gateway is configured with CDP API keys (see repo `supabase/functions/x402-gateway`).
 - Gateway: https://api.loyalspark.online/x402-gateway
-- **Paid MCP (Bazaar-oriented metadata in 402 body):** `POST …/x402-gateway/mcp-tools/<tool_name>` — JSON-RPC `tools/call`, header `x-api-key: lsk_…` after payment. Tool ids + argument schemas: repo `supabase/functions/_shared/mcp-bazaar-tools.ts`
+- **Paid MCP (Bazaar-oriented metadata in 402 body):** `POST …/x402-gateway/mcp-tools/<tool_name>` — JSON-RPC `tools/call`, header `x-api-key: lsk_…` after payment, except `get_platform_info` and `list_marketplace_offers` (payment alone; do not send an API key). Holder tool `list_p2p_offers` is the same exception on `recipient-mcp-tools`. Tool ids + argument schemas: repo `supabase/functions/_shared/mcp-bazaar-tools.ts`
 - Currency: USDC on Base (0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
 - Public facilitator reference: https://x402.org/facilitator (Sepolia-focused v2 listings differ from Base mainnet CDP)
 - SDK: @x402/fetch, @x402/evm
@@ -48,7 +48,7 @@ Traditional API key authentication with monthly plans. Subscriptions are paid in
 - Pro ($49/mo): 10K calls, 5 agents, unlimited mint, 0.5% mint fee
 - Enterprise ($129/mo): unlimited calls & agents, unlimited mint, 0.25% mint fee
 
-Access control: every REST/MCP call is scoped by Postgres **row-level security (RLS)** to the wallet behind the `lsk_` / `rwk_` key.
+Access control: keyed REST/MCP calls are scoped by Postgres **row-level security (RLS)** to the wallet behind the `lsk_` / `rwk_` key. Five public reads accept a gateway payment alone and must not send `x-api-key`: `GET /offers` and `GET /recipient-api/offers` on both x402 and MPP, plus `POST /x402-gateway/mcp-tools/get_platform_info`, `POST /x402-gateway/mcp-tools/list_marketplace_offers`, and `POST /x402-gateway/recipient-mcp-tools/list_p2p_offers`.
 
 **Mint fee is not USDC.** It is a separate `mint(address,uint256)` on your own loyalty token that sends the fee % to the platform fee wallet — paid in loyalty points, not USDC/ETH/fiat, and separate from the per-call prices below. The token contract does not enforce it; the API tracks a fee obligation per mint and returns HTTP 402 once 5+ obligations are unpaid for over 60 minutes. Settle each one with `POST /mint/confirm`.
 

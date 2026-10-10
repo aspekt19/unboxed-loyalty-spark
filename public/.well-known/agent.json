@@ -52,7 +52,7 @@
   },
   "api": {
     "base_url": "https://api.loyalspark.online/agent-api",
-    "authentication_summary": "All routes except GET /vouchers/status require header x-api-key: lsk_...",
+    "authentication_summary": "Direct agent-api: all routes except GET /vouchers/status require header x-api-key: lsk_.... Paid x402 and MPP retries also send a live lsk_ or rwk_ with the payment, except five public reads that accept the payment alone and must not send x-api-key: GET /offers and GET /recipient-api/offers on both gateways, POST /x402-gateway/mcp-tools/get_platform_info, POST /x402-gateway/mcp-tools/list_marketplace_offers, and POST /x402-gateway/recipient-mcp-tools/list_p2p_offers.",
     "endpoints": [
       {
         "method": "GET",
@@ -340,7 +340,7 @@
     "payment": "Subscriptions: on-chain USDC transfer to the platform wallet, verified automatically. Mint protocol fees are separate and paid in loyalty tokens (see transaction_fee_note).",
     "access_control": {
       "model": "row-level-security",
-      "description": "Every REST and MCP call is scoped by Postgres row-level security to the owner wallet behind the lsk_/rwk_ key — agents only read and write their own programs, rewards, vouchers, and offers."
+      "description": "Keyed REST and MCP calls are scoped by Postgres row-level security to the owner wallet behind the lsk_/rwk_ key. On x402 and MPP, send a live lsk_ (merchant) or rwk_ (holder) key on the same request as the payment. A payment without that live key is not charged. Five public reads accept the payment alone; do not send an API key on them: GET /offers and GET /recipient-api/offers on both x402-gateway and mpp-gateway, POST /x402-gateway/mcp-tools/get_platform_info, POST /x402-gateway/mcp-tools/list_marketplace_offers, and POST /x402-gateway/recipient-mcp-tools/list_p2p_offers."
     },
     "pay_per_request": {
       "protocols": ["x402 v2 exact", "MPP"],
@@ -549,6 +549,8 @@
       "method": "POST",
       "body": "JSON-RPC 2.0: method tools/call, params.name = tool_name, params.arguments = object per tool schema",
       "headers_after_payment": ["x-api-key: lsk_...", "Content-Type: application/json"],
+      "keyless_tools": ["get_platform_info", "list_marketplace_offers"],
+      "keyless_note": "Payment alone gives access; do not send an API key. list_p2p_offers on recipient-mcp-tools is the same exception. Every other paid MCP tool still sends a live key, and a payment without that key is not charged.",
       "tool_schemas_source": "https://github.com/aspekt19/unboxed-loyalty-spark/blob/a2a-agents/supabase/functions/_shared/mcp-bazaar-tools.ts",
       "bazaar": "HTTP 402 response includes extensions.bazaar (discoverable, inputSchema for headers/body) for MCP resources"
     },
@@ -556,7 +558,7 @@
     "how_to_use": [
       "1. npm install @x402/fetch @x402/evm",
       "2. POST {gateway_url}/mcp-tools/{tool} or other x402 routes — receive 402 with accepts (v2)",
-      "3. Sign USDC payment on Base with an x402 client. Retry with the payment header AND x-api-key (lsk_ for merchant routes, rwk_ for recipient routes). A payment without a live key returns 401 and is not charged.",
+      "3. Sign USDC payment on Base with an x402 client. Retry with the payment header AND x-api-key (lsk_ for merchant routes, rwk_ for recipient routes). A payment without a live key returns 401 and is not charged. Do not send x-api-key on GET /offers, GET /recipient-api/offers, mcp-tools/get_platform_info, mcp-tools/list_marketplace_offers, or recipient-mcp-tools/list_p2p_offers: payment alone gives access.",
       "4. Gateway verify/settle via CDP x402 on mainnet; for MCP, body is forwarded to loyalty-mcp with x-api-key"
     ],
     "prices_usd": {

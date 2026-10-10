@@ -1,15 +1,15 @@
 /**
  * Builds x402 `accepts[0]` and matching facilitator `requirements` for verify/settle.
  * MCP routes:
- * - `mcp-tools/<tool>` (merchant, lsk_) — Bazaar `extensions.bazaar` + `outputSchema.input` type `mcp`
- * - `recipient-mcp-tools/<tool>` (holder, rwk_) — same MCP shape; schemas from `recipient-mcp-bazaar-tools.ts`
+ * - `mcp-tools/<tool>` — merchant tools; live lsk_ on the paid retry, except get_platform_info and list_marketplace_offers
+ * - `recipient-mcp-tools/<tool>` — holder tools; live rwk_ on the paid retry, except list_p2p_offers
  * REST (`agent-api/*`, `recipient-api/*`) — HTTP-style Bazaar metadata.
  */
 
 import { getMcpBazaarTool, type McpBazaarTool } from "./mcp-bazaar-tools.ts";
 import { getRecipientMcpBazaarTool, type RecipientMcpBazaarTool } from "./recipient-mcp-bazaar-tools.ts";
 import { RECIPIENT_REST_ROUTE_USD } from "./recipient-paid-routes.ts";
-import { paidRouteNeedsCallerKey } from "./keyless-paid-routes.ts";
+import { paidRetryInstruction, paidRouteNeedsCallerKey } from "./keyless-paid-routes.ts";
 
 const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 
@@ -398,8 +398,13 @@ function restApiKeyHint(resource: string): string {
  * overview", so every line must read as a Loyal Spark summary on its own —
  * not just an endpoint label.
  */
-function getRestRouteDescription(_resource: string, _method: string): string {
-  return "Onchain loyalty platform on Base Network. Businesses launch branded rewards in minutes, customers earn real value with every purchase, and AI agents automate the rest via REST and MCP. Free plan mints up to 1,000 tokens per month; every call is scoped by row-level security to the wallet behind the API key. 16 skill guides at loyalspark.online/.well-known/skills/index.md.";
+function getRestRouteDescription(resource: string, method: string): string {
+  const overview =
+    "Onchain loyalty platform on Base Network. Businesses launch branded rewards in minutes, customers earn real value with every purchase, and AI agents automate the rest via REST and MCP. Free plan mints up to 1,000 tokens per month.";
+  const auth = paidRouteNeedsCallerKey(method, resource)
+    ? `${paidRetryInstruction(method, resource)} The call is scoped to the wallet behind that key.`
+    : paidRetryInstruction(method, resource);
+  return `${overview} ${auth} 16 skill guides at loyalspark.online/.well-known/skills/index.md.`;
 }
 
 // `getRestInputSchema` (generic, method-only) was removed in 2.2.2 — both
@@ -810,7 +815,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
       extra: {
         ...USDC_EIP712,
         ...BAZAAR_META,
-        description: `Loyal Spark MCP. After payment, POST the same JSON-RPC body to this x402 URL with PAYMENT-SIGNATURE / X-PAYMENT; gateway forwards to ${loyaltyMcpUrl}.`,
+        description: `Loyal Spark MCP. After payment, POST the same JSON-RPC body to this x402 URL with PAYMENT-SIGNATURE / X-PAYMENT; gateway forwards to ${loyaltyMcpUrl}. ${paidRetryInstruction("POST", p.resource)}`,
         mcpServer: loyaltyMcpUrl,
         mcpTool: mcp.name,
       },
@@ -819,7 +824,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
           type: "mcp",
           toolName: mcp.name,
           transport: "streamable-http",
-          description: mcp.description,
+          description: `${mcp.description} ${paidRetryInstruction("POST", p.resource)}`,
           inputSchema: mcp.inputSchema,
         },
       },
@@ -855,7 +860,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
         ...USDC_EIP712,
         ...BAZAAR_META,
         description:
-          `Loyal Spark Recipient MCP. After payment, POST the same JSON-RPC body to this x402 URL with PAYMENT-SIGNATURE / X-PAYMENT; gateway forwards to ${recipientMcpUrl}.`,
+          `Loyal Spark Recipient MCP. After payment, POST the same JSON-RPC body to this x402 URL with PAYMENT-SIGNATURE / X-PAYMENT; gateway forwards to ${recipientMcpUrl}. ${paidRetryInstruction("POST", p.resource)}`,
         mcpServer: recipientMcpUrl,
         mcpTool: mcp.name,
       },
@@ -864,7 +869,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
           type: "mcp",
           toolName: mcp.name,
           transport: "streamable-http",
-          description: mcp.description,
+          description: `${mcp.description} ${paidRetryInstruction("POST", p.resource)}`,
           inputSchema: mcp.inputSchema,
         },
       },
@@ -909,7 +914,7 @@ export function buildAcceptEntry(p: BuildAcceptParams): {
         method,
         bodyType: method === "POST" ? "json" : "query",
         description:
-          `HTTP ${method} ${resourceUrlForDiscovery} — x402-gateway /${p.resource}.${needsKey ? ` Authenticate with header x-api-key: ${keyHint}.` : " Payment alone gives access; no API key needed."}`,
+          `HTTP ${method} ${resourceUrlForDiscovery} — x402-gateway /${p.resource}. ${paidRetryInstruction(method, p.resource)}`,
         inputSchema,
       },
       output: {

@@ -6,7 +6,8 @@ Loyal Spark uses two distinct API key prefixes for two different roles. Pick the
 
 - Issues loyalty programs, mints tokens, manages rewards, runs analytics, issues gift certificates.
 - Required for `agent-api/*` and `loyalty-mcp` (merchant MCP, 39 tools).
-- Only public exception: `GET /vouchers/status` works without a key.
+- Direct `agent-api` exception: `GET /vouchers/status` works without a key.
+- Paid-gateway exceptions are listed under Header. Direct `loyalty-mcp` tool `get_platform_info` also answers without a key and without a payment. Direct `list_marketplace_offers` still requires `lsk_` unless the call comes through the paid gateway with no key.
 
 How to get one:
 
@@ -16,7 +17,7 @@ How to get one:
 ## `rwk_…` — Recipient agent (token holder)
 
 - Wallet that **holds** loyalty tokens. Reads its own balances/vouchers, redeems rewards, trades on P2P, claims gift certificates.
-- Required for `recipient-api/*` and `recipient-loyalty-mcp` (recipient MCP, 20 tools).
+- Required for `recipient-api/*` and `recipient-loyalty-mcp` (recipient MCP, 20 tools), except the paid-gateway reads listed under Header.
 
 How to get one: `POST https://api.loyalspark.online/siwe-nonce`, sign a SIWE message for the holder wallet, then `POST https://api.loyalspark.online/recipient-api/register` with `{ message, signature, name }`. The response includes `rwk_…` once. The server does not require a special phrase. This is not `siwe-verify` and not `agent-register-siwe`.
 
@@ -28,7 +29,15 @@ Both keys are sent the same way:
 x-api-key: lsk_…   # or rwk_…
 ```
 
-On a paid x402 or MPP retry, send this header on the **same** request as the payment. A payment without a live `lsk_` or `rwk_` key returns 401 and is not charged. The first unpaid request stays 402 so the agent can read the price.
+On a paid x402 or MPP retry, send this header on the **same** request as the payment for every route except the five public reads below. Merchant routes use `lsk_`. Holder routes use `rwk_`. A payment without that live key returns 401 and is not charged. The first unpaid request stays 402 so the agent can read the price.
+
+These five public reads accept the payment alone. Do not send `x-api-key` on them. If a key is present, it is checked, so a dead key is charged and then rejected.
+
+- `GET /x402-gateway/offers` and `GET /mpp-gateway/offers`
+- `GET /x402-gateway/recipient-api/offers` and `GET /mpp-gateway/recipient-api/offers`
+- `POST /x402-gateway/mcp-tools/get_platform_info`
+- `POST /x402-gateway/mcp-tools/list_marketplace_offers`
+- `POST /x402-gateway/recipient-mcp-tools/list_p2p_offers`
 
 ## Scopes (merchant `lsk_`)
 

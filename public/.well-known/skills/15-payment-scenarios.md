@@ -4,7 +4,7 @@
 Pick and execute the right payment corridor when an agent has to pay Loyal Spark — per call, per usage, or per month — following the Base "accept payments" lifecycle.
 
 ## Required Scope
-None for paying; the underlying tool still needs its own scope after settlement.
+None for paying. After settlement, every route except the five public reads below still needs its own `lsk_` or `rwk_` scope. Those five accept the payment alone; do not send an API key: `GET /offers` and `GET /recipient-api/offers` on both gateways, `POST /x402-gateway/mcp-tools/get_platform_info`, `POST /x402-gateway/mcp-tools/list_marketplace_offers`, and `POST /x402-gateway/recipient-mcp-tools/list_p2p_offers`.
 
 ## 0. Decide the corridor
 
@@ -48,8 +48,8 @@ curl https://api.loyalspark.online/.well-known/x402
 
 # 2. call (client SDK auto-pays on 402)
 POST https://api.loyalspark.online/x402-gateway/mint
-POST https://api.loyalspark.online/x402-gateway/mcp-tools/<tool_name>     # merchant, lsk_
-POST https://api.loyalspark.online/x402-gateway/recipient-mcp-tools/<n>   # holder, rwk_
+POST https://api.loyalspark.online/x402-gateway/mcp-tools/<tool_name>     # merchant, lsk_, except get_platform_info and list_marketplace_offers
+POST https://api.loyalspark.online/x402-gateway/recipient-mcp-tools/<n>   # holder, rwk_, except list_p2p_offers
 ```
 
 - Currency: **USDC on Base** `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`, CAIP-2 `eip155:8453`.

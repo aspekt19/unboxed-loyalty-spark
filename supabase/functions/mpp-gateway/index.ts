@@ -1,8 +1,8 @@
 import { Mppx, tempo } from "npm:mppx@0.4.7/server";
 import { RECIPIENT_REST_ROUTE_USD } from "../_shared/recipient-paid-routes.ts";
 import { paidGatewayUpstreamHeaders, type PaidGatewayKind } from "../_shared/paid-gateway-auth.ts";
-import { paidRouteNeedsCallerKey } from "../_shared/keyless-paid-routes.ts";
-import { callerKeyPrefix, lookupActiveCallerKey, paidCallerProblem, paidCallerRejectionResponse, readPaidCallerKey, requestCarriesPaymentCredential } from "../_shared/paid-caller-key.ts";
+import { paidRetryInstruction, paidRouteNeedsCallerKey } from "../_shared/keyless-paid-routes.ts";
+import { lookupActiveCallerKey, paidCallerProblem, paidCallerRejectionResponse, readPaidCallerKey, requestCarriesPaymentCredential } from "../_shared/paid-caller-key.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -205,6 +205,11 @@ function buildOpenApiSpec(baseUrl: string): object {
       },
     };
 
+    if (ep.path === "/offers" && ep.method === "get") {
+      operation.security = [];
+      operation.description = "Payment alone gives access; do not send an API key.";
+    }
+
     if (ep.price !== "0") {
       operation["x-payment-info"] = {
         pricingMode: "fixed",
@@ -235,7 +240,7 @@ function buildOpenApiSpec(baseUrl: string): object {
       description: "AI-agent-native loyalty protocol on Base L2. Create B20 loyalty programs by default (legacy ERC-20 optional), mint tokens, manage rewards, trade on P2P marketplace, and get autonomous MPC wallets.",
       "x-guidance": `Loyal Spark is an onchain loyalty protocol for AI agents on Base L2.
 
-Authentication: Include your API key in the x-api-key header (format: lsk_...). Get one from the Merchant Panel at https://loyalspark.online.
+Authentication: On the paid retry, send x-api-key: lsk_... (merchant) or rwk_... (holder) with the payment. A payment without that live key is not charged. Exception: GET /offers accepts the payment alone; do not send an API key on that route. Get a key from the Merchant Panel at https://loyalspark.online.
 
 Common workflow:
 1. GET /me — check your agent profile and permissions
@@ -341,9 +346,7 @@ Deno.serve(async (req) => {
     type ChargeFn = (opts: { amount: string }) => (req: Request) => Promise<MppChargeResult>;
     const chargeFn = (mppxAny.charge ?? Object.getPrototypeOf(mppx)?.charge) as ChargeFn | undefined;
     const needsKey = paidRouteNeedsCallerKey(req.method, resource);
-    const keyHint = callerKeyPrefix(resource) === "rwk_"
-      ? "Send x-api-key: rwk_... on the same retry as the payment. A payment without a live key is not charged."
-      : "Send x-api-key: lsk_... on the same retry as the payment. A payment without a live key is not charged.";
+    const keyHint = paidRetryInstruction(req.method, resource);
 
     if (!chargeFn) {
       // The live unpaid reply. mppx charge is not on this runtime, so the SDK branch below does not run.
@@ -351,14 +354,14 @@ Deno.serve(async (req) => {
       headers.set("Content-Type", "application/json");
       headers.set("X-MPP-Resource", resource);
       headers.set("X-MPP-Price-USD", price);
-      if (needsKey) headers.set("X-LoyalSpark-Api-Key", keyHint);
+      headers.set("X-LoyalSpark-Api-Key", keyHint);
       return new Response(
         JSON.stringify({
           status: 402,
           message: "Payment required",
           resource: `/${resource}`,
           price_usd: price,
-          ...(needsKey ? { api_key: keyHint } : {}),
+          api_key: keyHint,
           payment_methods: [
             { method: "tempo:pathusd", currency: PATHUSD_CURRENCY, recipient: RECIPIENT },
             { method: "tempo:usdc", currency: USDC_TEMPO, recipient: RECIPIENT },
@@ -386,7 +389,7 @@ Deno.serve(async (req) => {
       }
       headers.set("X-MPP-Resource", resource);
       headers.set("X-MPP-Price-USD", price);
-      if (needsKey) headers.set("X-LoyalSpark-Api-Key", keyHint);
+      headers.set("X-LoyalSpark-Api-Key", keyHint);
       return new Response(challengeResponse.body, {
         status: 402,
         headers,

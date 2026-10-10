@@ -1,9 +1,11 @@
 /**
- * Paid x402/MPP calls still need the merchant or holder key. The key says whose
- * programs the call may touch. Payment is the fee, not a substitute for that key.
+ * Paid x402/MPP calls need the merchant or holder key, except the public reads
+ * listed in keyless-paid-routes.ts. The key says whose programs the call may
+ * touch. Payment is the fee, not a substitute for that key.
  *
- * Check the key before settlement. A missing or dead key must return 401 with
- * no charge. Discovery requests that carry no payment credential stay on 402.
+ * Check the key before settlement on every route that needs one. A missing or
+ * dead key must return 401 with no charge. Discovery requests that carry no
+ * payment credential stay on 402.
  */
 import { hashApiKey } from "./agent-auth.ts";
 import { resolveMcpApiKey } from "./mcp-http-api-key.ts";

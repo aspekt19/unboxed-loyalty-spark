@@ -33,7 +33,9 @@ curl -H "x-api-key: lsk_..." \
 
 Server returns active offers only (status filter and limit are fixed server-side).
 
-**MCP equivalent:** `list_marketplace_offers`
+Direct `agent-api` requires `lsk_`. The paid copies `GET /x402-gateway/offers` and `GET /mpp-gateway/offers` accept the payment alone; do not send `x-api-key` on those two.
+
+**MCP equivalent:** `list_marketplace_offers` requires `lsk_` on direct `loyalty-mcp`. `POST /x402-gateway/mcp-tools/list_marketplace_offers` accepts the payment alone; do not send `x-api-key`.
 
 ### Step 2: Create an Offer
 
