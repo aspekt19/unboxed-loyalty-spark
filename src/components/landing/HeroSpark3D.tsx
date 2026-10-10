@@ -192,9 +192,9 @@ function FloatingCards({ count, reduced }: { count: number; reduced: boolean }) 
           <meshStandardMaterial
             color={card.hot ? SPARK : "#39424f"}
             metalness={0.88}
-            roughness={0.3}
+            roughness={0.32}
             emissive={SPARK}
-            emissiveIntensity={card.hot ? 0.4 : 0.05}
+            emissiveIntensity={card.hot ? 0.25 : 0.05}
           />
         </mesh>
       ))}
@@ -231,9 +231,9 @@ export default function HeroSpark3D() {
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       >
         <fog attach="fog" args={[FOG_COLOR, 8, 22]} />
-        <ambientLight intensity={1.0} color="#cdd6e4" />
-        <directionalLight position={[6, 8, 6]} intensity={2.3} color="#ffffff" />
-        <pointLight position={[-6, -3, 4]} intensity={45} decay={2} color={SPARK} />
+        <ambientLight intensity={0.85} color="#cdd6e4" />
+        <directionalLight position={[6, 8, 6]} intensity={2.0} color="#ffffff" />
+        <pointLight position={[-6, -3, 4]} intensity={35} decay={2} color={SPARK} />
         <pointLight position={[0, 4, -6]} intensity={35} decay={2} color="#8fb6ff" />
 
         <RewardCoin reduced={reduced} />
