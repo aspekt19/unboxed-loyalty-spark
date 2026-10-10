@@ -79,10 +79,10 @@ All colors MUST be HSL.
     --uds-mist-light: 40 33% 98%;
 
     /* Page surface layers (see body) */
-    --surface-glow-a: radial-gradient(1200px 700px at 50% -6%, hsl(24 100% 62% / 0.14), transparent 65%);
-    --surface-glow-b: radial-gradient(1000px 600px at 6% 100%, hsl(222 15% 12% / 0.09), transparent 62%);
-    --surface-glow-c: radial-gradient(900px 560px at 98% 42%, hsl(30 100% 70% / 0.1), transparent 62%);
-    --surface-grid: radial-gradient(hsl(222 15% 12% / 0.07) 1px, transparent 1px);
+    --surface-glow-a: radial-gradient(1300px 760px at 50% -6%, hsl(24 100% 62% / 0.2), transparent 66%);
+    --surface-glow-b: radial-gradient(1100px 640px at 4% 100%, hsl(222 15% 12% / 0.12), transparent 64%);
+    --surface-glow-c: radial-gradient(950px 600px at 98% 40%, hsl(30 100% 70% / 0.15), transparent 64%);
+    --surface-grid: radial-gradient(hsl(222 15% 12% / 0.09) 1px, transparent 1px);
   }
 
   .dark {
@@ -149,10 +149,10 @@ All colors MUST be HSL.
     --uds-mist-light: 222 13% 17%;
 
     /* Page surface layers (see body) */
-    --surface-glow-a: radial-gradient(1200px 700px at 50% -6%, hsl(24 100% 62% / 0.18), transparent 65%);
-    --surface-glow-b: radial-gradient(1000px 600px at 6% 100%, hsl(220 20% 94% / 0.08), transparent 62%);
-    --surface-glow-c: radial-gradient(900px 560px at 98% 42%, hsl(24 100% 62% / 0.12), transparent 62%);
-    --surface-grid: radial-gradient(hsl(220 20% 94% / 0.09) 1px, transparent 1px);
+    --surface-glow-a: radial-gradient(1300px 760px at 50% -6%, hsl(24 100% 62% / 0.2), transparent 66%);
+    --surface-glow-b: radial-gradient(1100px 640px at 4% 100%, hsl(220 20% 94% / 0.1), transparent 64%);
+    --surface-glow-c: radial-gradient(950px 600px at 98% 40%, hsl(24 100% 62% / 0.15), transparent 64%);
+    --surface-grid: radial-gradient(hsl(220 20% 94% / 0.11) 1px, transparent 1px);
   }
 
   /* Ink panel — a dark marketing surface used inside light pages (hero).
@@ -169,7 +169,7 @@ All colors MUST be HSL.
     --secondary: 24 100% 62%;
     --secondary-foreground: 222 25% 6%;
     --muted: 222 16% 13%;
-    --muted-foreground: 220 14% 68%;
+    --muted-foreground: 220 16% 78%;
     --accent: 38 100% 70%;
     --accent-foreground: 222 25% 6%;
     --border: 222 14% 20%;
@@ -195,7 +195,6 @@ All colors MUST be HSL.
 
   body {
     @apply text-foreground antialiased;
-    background-color: hsl(var(--background));
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
   }
@@ -216,6 +215,8 @@ All colors MUST be HSL.
   /* Smooth scroll behavior */
   html {
     scroll-behavior: smooth;
+    /* Root surface color: body stays transparent so the fixed glow layer shows */
+    background-color: hsl(var(--background));
   }
   
   /* Better touch targets for mobile */

@@ -84,7 +84,7 @@ const LandingHero = () => {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6, delay: 0.8 }}
       >
-        <p className="text-[10px] sm:text-xs text-muted-foreground mb-4 sm:mb-6 uppercase tracking-wider font-medium">Powered by</p>
+        <p className="text-[10px] sm:text-xs text-foreground/70 mb-4 sm:mb-6 uppercase tracking-wider font-medium">Powered by</p>
         <motion.div
           className="flex flex-wrap items-center justify-center gap-4 sm:gap-8"
           animate={{ y: [0, -5, 0] }}
