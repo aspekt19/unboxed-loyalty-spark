@@ -8,7 +8,7 @@ import AgentPlanCheckout from "@/components/agents/AgentPlanCheckout";
 export default function AgentSubscribePage() {
   return (
     <PageTransition>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <SiteHeader />
         <main className="container max-w-4xl mx-auto px-4 py-8 space-y-6">
           <div className="space-y-2">

@@ -67,13 +67,13 @@ export default {
           ring: 'hsl(var(--sidebar-ring))'
         },
         uds: {
-          purple: 'hsl(var(--uds-purple))',
-          'purple-light': 'hsl(var(--uds-purple-light))',
-          'purple-dark': 'hsl(var(--uds-purple-dark))',
+          brand: 'hsl(var(--uds-brand))',
+          'brand-light': 'hsl(var(--uds-brand-light))',
+          'brand-dark': 'hsl(var(--uds-brand-dark))',
           orange: 'hsl(var(--uds-orange))',
           'orange-light': 'hsl(var(--uds-orange-light))',
-          lavender: 'hsl(var(--uds-lavender))',
-          'lavender-light': 'hsl(var(--uds-lavender-light))'
+          mist: 'hsl(var(--uds-mist))',
+          'mist-light': 'hsl(var(--uds-mist-light))'
         },
         success: {
           DEFAULT: 'hsl(var(--success))',
@@ -126,8 +126,8 @@ export default {
           '100%': { backgroundPosition: '200% 0' }
         },
         'pulse-glow': {
-          '0%, 100%': { boxShadow: '0 0 0 0 hsl(262 83% 58% / 0.4)' },
-          '50%': { boxShadow: '0 0 20px 10px hsl(262 83% 58% / 0)' }
+          '0%, 100%': { boxShadow: '0 0 0 0 hsl(221 100% 50% / 0.4)' },
+          '50%': { boxShadow: '0 0 20px 10px hsl(221 100% 50% / 0)' }
         },
         'blob': {
           '0%, 100%': { transform: 'translate(0px, 0px) scale(1)' },
@@ -152,7 +152,7 @@ export default {
         'soft': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
         'medium': '0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05)',
         'large': '0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05)',
-        'glow': '0 0 20px rgb(262 83% 58% / 0.15)',
+        'glow': '0 0 20px hsl(221 100% 50% / 0.15)',
         'glow-orange': '0 0 20px rgb(24 100% 62% / 0.15)'
       },
       spacing: {

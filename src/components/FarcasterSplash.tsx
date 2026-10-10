@@ -16,7 +16,7 @@ const FarcasterSplash = ({ onLaunch }: FarcasterSplashProps) => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
+    <div className="min-h-screen flex flex-col items-center justify-center px-6">
       {/* Logo */}
       <div className="mb-16">
         <h1 className="text-[120px] font-bold text-foreground tracking-tight leading-none">

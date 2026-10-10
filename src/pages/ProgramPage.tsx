@@ -159,9 +159,9 @@ export default function ProgramPage() {
   const tokensToNext = nextTier ? Math.max(0, Number(nextTier.min_tokens) - balanceNum) : 0;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
 
-      <div className="border-b bg-gradient-to-br from-primary/10 via-card to-uds-lavender-light/40">
+      <div className="border-b bg-gradient-to-br from-primary/10 via-card to-uds-mist-light/40">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
           <Button
             variant="ghost"
@@ -181,7 +181,7 @@ export default function ProgramPage() {
               />
             ) : (
               <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-primary to-uds-orange flex items-center justify-center flex-shrink-0">
-                <Store className="h-8 w-8 text-white" />
+                <Store className="h-8 w-8 text-primary-foreground" />
               </div>
             )}
             <div className="flex-1 min-w-0">
@@ -225,7 +225,7 @@ export default function ProgramPage() {
         ) : (
           <>
             {/* Balance & tier */}
-            <Card className="border-2 border-primary/30 bg-gradient-to-br from-uds-lavender-light to-card">
+            <Card className="border-2 border-primary/30 bg-gradient-to-br from-uds-mist-light to-card">
               <CardContent className="p-5 flex items-center justify-between gap-4 flex-wrap">
                 <div>
                   <p className="text-xs text-muted-foreground uppercase tracking-wide">

@@ -15,9 +15,9 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground shadow-clay-secondary hover:-translate-y-0.5 hover:shadow-clay-lg",
         ghost: "hover:bg-accent/40 hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline rounded-md",
-        uds: "bg-gradient-uds text-white shadow-clay-primary hover:-translate-y-0.5 hover:shadow-clay-lg",
-        purple: "bg-uds-purple text-white shadow-clay-primary hover:-translate-y-0.5 hover:shadow-clay-lg",
-        orange: "bg-uds-orange text-white shadow-clay-secondary hover:-translate-y-0.5 hover:shadow-clay-lg",
+        uds: "bg-gradient-uds text-primary-foreground shadow-clay-primary hover:-translate-y-0.5 hover:shadow-clay-lg",
+        brand: "bg-uds-brand text-primary-foreground shadow-clay-primary hover:-translate-y-0.5 hover:shadow-clay-lg",
+        orange: "bg-uds-orange text-secondary-foreground shadow-clay-secondary hover:-translate-y-0.5 hover:shadow-clay-lg",
         success: "bg-success text-success-foreground shadow-clay-primary hover:-translate-y-0.5 hover:shadow-clay-lg",
       },
       size: {

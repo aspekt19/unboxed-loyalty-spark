@@ -8,27 +8,27 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 250 100% 99%;
-    --foreground: 260 50% 15%;
+    --background: 40 33% 98%;
+    --foreground: 222 15% 10%;
     --card: 0 0% 100%;
-    --card-foreground: 260 50% 15%;
+    --card-foreground: 222 15% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 260 50% 15%;
-    --primary: 262 83% 58%;
+    --popover-foreground: 222 15% 10%;
+    --primary: 222 15% 12%;
     --primary-foreground: 0 0% 100%;
     --secondary: 24 100% 62%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 250 50% 96%;
-    --muted-foreground: 260 25% 50%;
-    --accent: 262 70% 68%;
+    --muted: 40 25% 95%;
+    --muted-foreground: 222 8% 45%;
+    --accent: 24 100% 62%;
     --accent-foreground: 0 0% 100%;
     --warning: 24 100% 62%;
     --warning-foreground: 0 0% 100%;
     --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
-    --border: 250 35% 92%;
-    --input: 250 35% 92%;
-    --ring: 262 83% 58%;
+    --border: 40 18% 89%;
+    --input: 40 18% 89%;
+    --ring: 222 15% 12%;
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
 
@@ -37,7 +37,7 @@ All colors MUST be HSL.
     --shadow-soft: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     --shadow-medium: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
     --shadow-large: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
-    --shadow-glow: 0 0 20px rgb(262 83% 58% / 0.15);
+    --shadow-glow: 0 0 20px hsl(24 100% 62% / 0.18);
     --shadow-glow-orange: 0 0 20px rgb(24 100% 62% / 0.15);
 
     /* Clay (3D claymorphism) shadow stacks — used by Button/Card/Nav */
@@ -48,93 +48,143 @@ All colors MUST be HSL.
     --clay-shadow-secondary: 8px 8px 20px hsl(var(--secondary) / 0.4), -4px -4px 12px hsl(0 0% 100% / 0.45), inset 2px 2px 3px hsl(0 0% 100% / 0.4), inset -2px -2px 3px hsl(var(--secondary) / 0.4);
     --clay-shadow-inset: inset 4px 4px 10px hsl(var(--primary) / 0.15), inset -4px -4px 10px hsl(0 0% 100% / 0.7);
     
-    --gradient-primary: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(262 70% 68%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(222 15% 12%) 0%, hsl(222 12% 26%) 100%);
     --gradient-secondary: linear-gradient(135deg, hsl(24 100% 62%) 0%, hsl(30 100% 70%) 100%);
-    --gradient-uds: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(24 100% 62%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(250 100% 99%) 0%, hsl(250 50% 97%) 50%, hsl(250 100% 99%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(250 50% 99%) 100%);
+    --gradient-uds: linear-gradient(135deg, hsl(222 15% 12%) 0%, hsl(222 12% 26%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(40 40% 99%) 0%, hsl(30 45% 97%) 50%, hsl(40 33% 98%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(40 30% 98%) 100%);
+    --gradient-brand: linear-gradient(135deg, hsl(222 15% 12%) 0%, hsl(222 12% 26%) 100%);
+    --gradient-orange: linear-gradient(135deg, hsl(24 100% 62%) 0%, hsl(30 100% 70%) 100%);
+    --gradient-mist: linear-gradient(135deg, hsl(40 25% 95%) 0%, hsl(40 33% 98%) 100%);
     
     --transition-base: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 260 50% 15%;
-    --sidebar-primary: 262 83% 58%;
+    --sidebar-foreground: 222 15% 10%;
+    --sidebar-primary: 222 15% 12%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 250 50% 96%;
-    --sidebar-accent-foreground: 260 50% 15%;
-    --sidebar-border: 250 35% 92%;
-    --sidebar-ring: 262 83% 58%;
+    --sidebar-accent: 40 25% 95%;
+    --sidebar-accent-foreground: 222 15% 10%;
+    --sidebar-border: 40 18% 89%;
+    --sidebar-ring: 222 15% 12%;
     
-    --uds-purple: 262 83% 58%;
-    --uds-purple-light: 262 70% 68%;
-    --uds-purple-dark: 260 45% 35%;
+    --uds-brand: 222 15% 12%;
+    --uds-brand-light: 222 12% 26%;
+    --uds-brand-dark: 222 18% 8%;
     --uds-orange: 24 100% 62%;
     --uds-orange-light: 30 100% 70%;
-    --uds-lavender: 250 50% 96%;
-    --uds-lavender-light: 250 100% 99%;
+    --uds-mist: 40 25% 95%;
+    --uds-mist-light: 40 33% 98%;
+
+    /* Page surface layers (see body) */
+    --surface-glow-a: radial-gradient(1200px 700px at 50% -6%, hsl(24 100% 62% / 0.14), transparent 65%);
+    --surface-glow-b: radial-gradient(1000px 600px at 6% 100%, hsl(222 15% 12% / 0.09), transparent 62%);
+    --surface-glow-c: radial-gradient(900px 560px at 98% 42%, hsl(30 100% 70% / 0.1), transparent 62%);
+    --surface-grid: radial-gradient(hsl(222 15% 12% / 0.07) 1px, transparent 1px);
   }
 
   .dark {
-    --background: 260 45% 10%;
-    --foreground: 250 55% 95%;
-    --card: 260 40% 13%;
-    --card-foreground: 250 55% 95%;
-    --popover: 260 40% 13%;
-    --popover-foreground: 250 55% 95%;
-    --primary: 262 70% 68%;
-    --primary-foreground: 260 50% 10%;
-    --secondary: 24 95% 65%;
-    --secondary-foreground: 260 50% 10%;
-    --muted: 260 35% 18%;
-    --muted-foreground: 250 30% 60%;
-    --accent: 262 60% 55%;
-    --accent-foreground: 250 55% 95%;
+    --background: 222 20% 6%;
+    --foreground: 220 25% 96%;
+    --card: 222 18% 9%;
+    --card-foreground: 220 25% 96%;
+    --popover: 222 18% 9%;
+    --popover-foreground: 220 25% 96%;
+    --primary: 220 20% 94%;
+    --primary-foreground: 222 20% 8%;
+    --secondary: 24 100% 62%;
+    --secondary-foreground: 222 25% 6%;
+    --muted: 222 15% 13%;
+    --muted-foreground: 220 12% 66%;
+    --accent: 30 100% 70%;
+    --accent-foreground: 222 25% 6%;
     --destructive: 0 65% 52%;
-    --destructive-foreground: 250 55% 95%;
-    --border: 260 30% 22%;
-    --input: 260 30% 22%;
-    --ring: 262 70% 68%;
+    --destructive-foreground: 220 25% 96%;
+    --border: 222 13% 18%;
+    --input: 222 13% 18%;
+    --ring: 24 100% 62%;
     --success: 142 60% 50%;
-    --success-foreground: 260 50% 10%;
+    --success-foreground: 222 25% 6%;
     
     --shadow-soft: 0 1px 2px 0 rgb(0 0 0 / 0.3);
     --shadow-medium: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
     --shadow-large: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
-    --shadow-glow: 0 0 30px rgb(262 70% 68% / 0.3);
+    --shadow-glow: 0 0 30px hsl(24 100% 62% / 0.35);
     --shadow-glow-orange: 0 0 30px rgb(24 95% 65% / 0.3);
 
     /* Clay shadows (dark) — softer, deeper */
-    --clay-shadow: 8px 8px 20px hsl(260 50% 4% / 0.6), -4px -4px 14px hsl(var(--primary) / 0.08), inset 1px 1px 2px hsl(var(--primary) / 0.15), inset -1px -1px 2px hsl(260 50% 4% / 0.5);
-    --clay-shadow-sm: 4px 4px 10px hsl(260 50% 4% / 0.55), -2px -2px 8px hsl(var(--primary) / 0.06), inset 1px 1px 2px hsl(var(--primary) / 0.12);
-    --clay-shadow-lg: 16px 16px 36px hsl(260 50% 4% / 0.7), -8px -8px 24px hsl(var(--primary) / 0.10), inset 2px 2px 4px hsl(var(--primary) / 0.18), inset -2px -2px 4px hsl(260 50% 4% / 0.55);
-    --clay-shadow-primary: 8px 8px 20px hsl(var(--primary) / 0.5), -4px -4px 12px hsl(var(--primary) / 0.15), inset 2px 2px 3px hsl(0 0% 100% / 0.18), inset -2px -2px 3px hsl(260 50% 4% / 0.4);
-    --clay-shadow-secondary: 8px 8px 20px hsl(var(--secondary) / 0.5), -4px -4px 12px hsl(var(--secondary) / 0.15), inset 2px 2px 3px hsl(0 0% 100% / 0.18), inset -2px -2px 3px hsl(260 50% 4% / 0.4);
-    --clay-shadow-inset: inset 4px 4px 10px hsl(260 50% 4% / 0.55), inset -4px -4px 10px hsl(var(--primary) / 0.10);
+    --clay-shadow: 8px 8px 20px hsl(222 50% 4% / 0.6), -4px -4px 14px hsl(var(--primary) / 0.08), inset 1px 1px 2px hsl(var(--primary) / 0.15), inset -1px -1px 2px hsl(222 50% 4% / 0.5);
+    --clay-shadow-sm: 4px 4px 10px hsl(222 50% 4% / 0.55), -2px -2px 8px hsl(var(--primary) / 0.06), inset 1px 1px 2px hsl(var(--primary) / 0.12);
+    --clay-shadow-lg: 16px 16px 36px hsl(222 50% 4% / 0.7), -8px -8px 24px hsl(var(--primary) / 0.10), inset 2px 2px 4px hsl(var(--primary) / 0.18), inset -2px -2px 4px hsl(222 50% 4% / 0.55);
+    --clay-shadow-primary: 8px 8px 20px hsl(var(--primary) / 0.5), -4px -4px 12px hsl(var(--primary) / 0.15), inset 2px 2px 3px hsl(0 0% 100% / 0.18), inset -2px -2px 3px hsl(222 50% 4% / 0.4);
+    --clay-shadow-secondary: 8px 8px 20px hsl(var(--secondary) / 0.5), -4px -4px 12px hsl(var(--secondary) / 0.15), inset 2px 2px 3px hsl(0 0% 100% / 0.18), inset -2px -2px 3px hsl(222 50% 4% / 0.4);
+    --clay-shadow-inset: inset 4px 4px 10px hsl(222 50% 4% / 0.55), inset -4px -4px 10px hsl(var(--primary) / 0.10);
     
-    --gradient-primary: linear-gradient(135deg, hsl(262 70% 68%) 0%, hsl(262 60% 55%) 100%);
-    --gradient-secondary: linear-gradient(135deg, hsl(24 95% 65%) 0%, hsl(30 95% 72%) 100%);
-    --gradient-uds: linear-gradient(135deg, hsl(262 70% 68%) 0%, hsl(24 95% 65%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(260 45% 10%) 0%, hsl(260 40% 13%) 50%, hsl(260 45% 10%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(260 40% 13%) 0%, hsl(260 35% 15%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(220 20% 96%) 0%, hsl(220 15% 84%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(24 100% 62%) 0%, hsl(38 100% 70%) 100%);
+    --gradient-uds: linear-gradient(135deg, hsl(220 20% 96%) 0%, hsl(220 15% 84%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(222 20% 6%) 0%, hsl(222 18% 9%) 50%, hsl(222 20% 6%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(222 18% 9%) 0%, hsl(222 16% 12%) 100%);
+    --gradient-brand: linear-gradient(135deg, hsl(220 20% 96%) 0%, hsl(220 15% 84%) 100%);
+    --gradient-orange: linear-gradient(135deg, hsl(24 100% 62%) 0%, hsl(38 100% 70%) 100%);
+    --gradient-mist: linear-gradient(135deg, hsl(222 15% 13%) 0%, hsl(222 13% 17%) 100%);
     
-    --sidebar-background: 260 45% 10%;
-    --sidebar-foreground: 250 55% 95%;
-    --sidebar-primary: 262 70% 68%;
-    --sidebar-primary-foreground: 260 50% 10%;
-    --sidebar-accent: 260 35% 18%;
-    --sidebar-accent-foreground: 250 55% 95%;
-    --sidebar-border: 260 30% 22%;
-    --sidebar-ring: 262 70% 68%;
+    --sidebar-background: 222 20% 7%;
+    --sidebar-foreground: 220 25% 96%;
+    --sidebar-primary: 220 20% 94%;
+    --sidebar-primary-foreground: 222 20% 8%;
+    --sidebar-accent: 222 15% 13%;
+    --sidebar-accent-foreground: 220 25% 96%;
+    --sidebar-border: 222 13% 18%;
+    --sidebar-ring: 24 100% 62%;
     
-    --uds-purple: 262 70% 68%;
-    --uds-purple-light: 262 65% 75%;
-    --uds-purple-dark: 260 40% 35%;
-    --uds-orange: 24 95% 65%;
-    --uds-orange-light: 30 95% 72%;
-    --uds-lavender: 260 35% 18%;
-    --uds-lavender-light: 260 30% 22%;
+    --uds-brand: 220 20% 94%;
+    --uds-brand-light: 220 15% 84%;
+    --uds-brand-dark: 220 30% 98%;
+    --uds-orange: 24 100% 62%;
+    --uds-orange-light: 38 100% 70%;
+    --uds-mist: 222 15% 13%;
+    --uds-mist-light: 222 13% 17%;
+
+    /* Page surface layers (see body) */
+    --surface-glow-a: radial-gradient(1200px 700px at 50% -6%, hsl(24 100% 62% / 0.18), transparent 65%);
+    --surface-glow-b: radial-gradient(1000px 600px at 6% 100%, hsl(220 20% 94% / 0.08), transparent 62%);
+    --surface-glow-c: radial-gradient(900px 560px at 98% 42%, hsl(24 100% 62% / 0.12), transparent 62%);
+    --surface-grid: radial-gradient(hsl(220 20% 94% / 0.09) 1px, transparent 1px);
+  }
+
+  /* Ink panel — a dark marketing surface used inside light pages (hero).
+     Graphite is the surface, spark orange is the action color. */
+  .ink {
+    --background: 222 22% 6%;
+    --foreground: 220 30% 97%;
+    --card: 222 18% 9%;
+    --card-foreground: 220 30% 97%;
+    --popover: 222 18% 9%;
+    --popover-foreground: 220 30% 97%;
+    --primary: 24 100% 62%;
+    --primary-foreground: 222 25% 6%;
+    --secondary: 24 100% 62%;
+    --secondary-foreground: 222 25% 6%;
+    --muted: 222 16% 13%;
+    --muted-foreground: 220 14% 68%;
+    --accent: 38 100% 70%;
+    --accent-foreground: 222 25% 6%;
+    --border: 222 14% 20%;
+    --input: 222 14% 20%;
+    --ring: 24 100% 62%;
+    --shadow-glow: 0 0 30px hsl(24 100% 62% / 0.35);
+    --gradient-primary: linear-gradient(135deg, hsl(24 100% 62%) 0%, hsl(38 100% 70%) 100%);
+    --gradient-uds: linear-gradient(135deg, hsl(24 100% 62%) 0%, hsl(38 100% 70%) 100%);
+    --gradient-brand: linear-gradient(135deg, hsl(24 100% 62%) 0%, hsl(38 100% 70%) 100%);
+    --clay-shadow-primary: 8px 8px 20px hsl(24 100% 62% / 0.45), -4px -4px 12px hsl(222 25% 3% / 0.6), inset 2px 2px 3px hsl(0 0% 100% / 0.22), inset -2px -2px 3px hsl(222 25% 3% / 0.4);
+    --uds-brand: 24 100% 62%;
+    --uds-brand-light: 38 100% 70%;
+    --uds-brand-dark: 220 30% 98%;
+    --uds-mist: 222 16% 13%;
+    --uds-mist-light: 222 14% 17%;
   }
 }
 
@@ -144,9 +194,23 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply text-foreground antialiased;
+    background-color: hsl(var(--background));
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
+  }
+
+  /* Fixed viewport surface so every page reads as ink-warm, not flat white */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: var(--surface-glow-a), var(--surface-glow-b), var(--surface-glow-c), var(--surface-grid);
+    background-size: auto, auto, auto, 26px 26px;
+    background-position: center top, center bottom, center right, center top;
+    background-repeat: no-repeat, no-repeat, no-repeat, repeat;
   }
   
   /* Smooth scroll behavior */
@@ -283,8 +347,8 @@ All colors MUST be HSL.
   }
   
   @keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 20px hsl(270 80% 60% / 0.4); }
-    50% { box-shadow: 0 0 40px hsl(270 80% 60% / 0.8), 0 0 60px hsl(30 100% 60% / 0.6); }
+    0%, 100% { box-shadow: 0 0 20px hsl(221 100% 55% / 0.4); }
+    50% { box-shadow: 0 0 40px hsl(221 100% 55% / 0.8), 0 0 60px hsl(30 100% 60% / 0.6); }
   }
   
   .animate-blob {
@@ -355,8 +419,8 @@ All colors MUST be HSL.
     animation-delay: 4s;
   }
   
-  .bg-gradient-uds-purple {
-    background: var(--gradient-purple);
+  .bg-gradient-uds-brand {
+    background: var(--gradient-brand);
   }
   
   .bg-gradient-uds-orange {
@@ -367,7 +431,18 @@ All colors MUST be HSL.
     background: var(--gradient-uds);
   }
   
-  .bg-gradient-uds-lavender {
-    background: var(--gradient-lavender);
+  .bg-gradient-uds-mist {
+    background: var(--gradient-mist);
+  }
+
+  /* Ink hero surface: deep graphite with a spark-lit core */
+  .bg-ink-hero {
+    background: radial-gradient(120% 100% at 50% 0%, hsl(222 18% 13%) 0%, hsl(222 22% 7%) 55%, hsl(222 26% 4%) 100%);
+    color: hsl(var(--foreground));
+  }
+
+  /* Keeps the headline legible over the 3D scene */
+  .bg-hero-veil {
+    background: radial-gradient(74% 66% at 50% 46%, hsl(222 26% 4% / 0.9) 0%, hsl(222 26% 4% / 0.62) 55%, transparent 82%);
   }
 }

@@ -19,7 +19,7 @@ const FeatureContent = ({ feature }: { feature: typeof features[number] }) => (
       whileHover={{ scale: 1.1, rotate: 5 }}
       transition={{ type: "spring", stiffness: 300 }}
     >
-      <feature.icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+      <feature.icon className="h-5 w-5 sm:h-6 sm:w-6 text-primary-foreground" />
     </motion.div>
     <h3 className="text-sm sm:text-base font-bold text-foreground mb-2">{feature.title}</h3>
     <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{feature.description}</p>

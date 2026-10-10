@@ -122,9 +122,9 @@ export function CustomerTiersSection({ selectedProgram }: CustomerTiersSectionPr
 
   if (!selectedProgram) {
     return (
-      <Card className="border-2 border-primary/20 bg-gradient-to-br from-card to-uds-lavender-light animate-fade-in shadow-lg hover:shadow-xl transition-all duration-200">
+      <Card className="border-2 border-primary/20 bg-gradient-to-br from-card to-uds-mist-light animate-fade-in shadow-lg hover:shadow-xl transition-all duration-200">
         <CardContent className="pt-6">
-          <Alert className="border-2 border-primary/30 bg-uds-lavender">
+          <Alert className="border-2 border-primary/30 bg-uds-mist">
             <Award className="h-5 w-5 text-primary" />
             <AlertDescription className="text-foreground">
               Select a loyalty token below to view your tier status
@@ -146,11 +146,11 @@ export function CustomerTiersSection({ selectedProgram }: CustomerTiersSectionPr
 
   return (
     <div className="space-y-6">
-      <div className="animate-fade-in bg-gradient-to-r from-uds-purple to-uds-orange rounded-2xl p-4 sm:p-5 md:p-6 shadow-xl">
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-white mb-1.5 sm:mb-2">
+      <div className="animate-fade-in bg-gradient-to-r from-uds-brand to-uds-orange rounded-2xl p-4 sm:p-5 md:p-6 shadow-xl">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-primary-foreground mb-1.5 sm:mb-2">
           Your Tier Status: <span className="animate-scale-in">{tierName}</span>
         </h2>
-        <p className="text-sm sm:text-base text-white/90 font-medium">
+        <p className="text-sm sm:text-base text-primary-foreground/90 font-medium">
           Track your loyalty level across programs
         </p>
       </div>

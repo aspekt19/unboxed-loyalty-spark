@@ -5,8 +5,8 @@ import { Gift, ShoppingCart, TrendingUp, Wand2, Zap, Coins, Wallet } from 'lucid
 /**
  * Preview-only page exploring a 3D "claymorphism" aesthetic
  * inspired by the user's mood-board screenshot.
- * Uses ONLY existing design tokens (primary=purple, secondary=orange,
- * accent=lavender) — no new colors introduced.
+ * Uses ONLY existing design tokens (primary=graphite ink, secondary=spark orange,
+ * accent=mist) — no new colors introduced.
  */
 const Preview3D = () => {
   return (
@@ -119,7 +119,7 @@ const Preview3D = () => {
                         '8px 8px 20px hsl(var(--primary) / 0.4), -4px -4px 12px hsl(0 0% 100% / 0.3), inset 2px 2px 4px hsl(0 0% 100% / 0.4)',
                     }}
                   >
-                    <Zap className="h-16 w-16 text-white drop-shadow-lg" fill="currentColor" />
+                    <Zap className="h-16 w-16 text-primary-foreground drop-shadow-lg" fill="currentColor" />
                   </div>
                 </motion.div>
               </div>

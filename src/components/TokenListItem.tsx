@@ -39,7 +39,7 @@ export function TokenListItem({
 
   return (
     <div
-      className={`p-3 sm:p-4 rounded-xl border-2 bg-gradient-to-br from-card to-uds-lavender-light space-y-2 transition-all duration-300 shadow-md hover:shadow-2xl ${
+      className={`p-3 sm:p-4 rounded-xl border-2 bg-gradient-to-br from-card to-uds-mist-light space-y-2 transition-all duration-300 shadow-md hover:shadow-2xl ${
         onClick ? 'cursor-pointer hover:border-primary hover:scale-[1.02]' : ''
       } ${selected ? 'border-primary border-2 shadow-2xl scale-[1.02] animate-scale-in ring-2 ring-primary/20' : 'border-border'}`}
       onClick={onClick}
@@ -53,7 +53,7 @@ export function TokenListItem({
                 Inactive
               </Badge>
             ) : (
-              <Badge variant="purple" className="text-[10px] sm:text-xs font-semibold">
+              <Badge variant="brand" className="text-[10px] sm:text-xs font-semibold">
                 Active
               </Badge>
             )}

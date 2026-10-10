@@ -98,7 +98,7 @@ export default function ExamplesPage() {
     <PageTransition>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }} />
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <SiteHeader />
 
         <main className="container max-w-6xl mx-auto p-4 md:p-8 space-y-10">

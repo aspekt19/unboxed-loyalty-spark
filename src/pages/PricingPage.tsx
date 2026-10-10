@@ -215,7 +215,7 @@ const PricingPage = () => {
   const [cycle, setCycle] = useState<BillingCycle>("monthly");
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <SiteHeader />
       <div className="container mx-auto px-4 py-12 md:py-20">
         <motion.div

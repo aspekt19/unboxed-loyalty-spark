@@ -90,7 +90,7 @@ export function EnhancedAnalytics({ tokenAddress }: Props) {
             const distribution = tiersData.map(tier => ({
               tier_name: tier.tier_name,
               customer_count: tierCounts[tier.id] || 0,
-              badge_color: tier.badge_color || '#6366f1'
+              badge_color: tier.badge_color || '#004dff'
             }));
 
             setTierDistribution(distribution);
@@ -145,7 +145,7 @@ export function EnhancedAnalytics({ tokenAddress }: Props) {
     loadData();
   }, [address, tokenAddress]);
 
-  const COLORS = ['#6366f1', '#8b5cf6', '#a855f7', '#c084fc', '#d8b4fe'];
+  const COLORS = ['#004dff', '#3d78ff', '#6ba0ff', '#9cc3ff', '#c9ddff'];
 
   if (loading || indexLoading) {
     return <div className="text-sm text-muted-foreground">Loading analytics...</div>;
@@ -261,7 +261,7 @@ export function EnhancedAnalytics({ tokenAddress }: Props) {
                   <Line 
                     type="monotone" 
                     dataKey="vouchers_issued" 
-                    stroke="#8b5cf6" 
+                    stroke="#004dff" 
                     name="Vouchers Issued" 
                     strokeWidth={2} 
                   />

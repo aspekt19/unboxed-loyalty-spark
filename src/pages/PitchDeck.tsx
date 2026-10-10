@@ -179,7 +179,7 @@ const PitchDeck = () => {
   return (
       <PageTransition>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(pitchJsonLd) }} />
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         {/* Header */}
         <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
           <div className="container mx-auto px-3 xxs:px-4 py-3 flex flex-wrap justify-between items-center gap-2">
