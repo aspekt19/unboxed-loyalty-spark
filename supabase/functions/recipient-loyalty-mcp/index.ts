@@ -90,6 +90,7 @@ const RECIPIENT_MCP_SIDECAR_TOOLS = [
 function createDeniedRecipientMcpServer(
   reason: RecipientAuthFailure,
   rateDetail?: "per_minute" | "monthly_quota",
+  paidKeylessDb: any = null,
 ) {
   const server = new McpServer({ name: "loyal-spark-recipient-mcp", version: "1.0.0" });
   const T = mcpToolText;
@@ -124,7 +125,15 @@ function createDeniedRecipientMcpServer(
     server.tool(tool.name, {
       description: tool.description,
       inputSchema: tool.inputSchema as any,
-      handler: async () => T(body),
+      handler: async (args: any) => {
+        // A gateway-paid call without a key may read the public P2P list only.
+        if (paidKeylessDb && tool.name === "list_p2p_offers") {
+          const tokenAddress = typeof args?.token_address === "string" ? args.token_address : null;
+          const listRes = await marketplaceListOffers(paidKeylessDb, tokenAddress);
+          return T(JSON.stringify(listRes.body));
+        }
+        return T(body);
+      },
     });
   }
   return server;
@@ -725,7 +734,10 @@ app.all("/*", async (c: any) => {
     // Never return raw HTTP 401 on the MCP transport: MCP/x402 clients expect
     // JSON-RPC responses. Route through StreamableHttpTransport with a denial
     // server so `tools/call` returns a structured `{error, code}` payload.
-    const handler = transport.bind(createDeniedRecipientMcpServer("missing_key"));
+    const paidDb = isPaidGatewayRequest(c.req.raw)
+      ? createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!)
+      : null;
+    const handler = transport.bind(createDeniedRecipientMcpServer("missing_key", undefined, paidDb));
     return handler(c.req.raw);
   }
 

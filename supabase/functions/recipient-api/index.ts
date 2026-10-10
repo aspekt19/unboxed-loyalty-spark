@@ -175,6 +175,17 @@ Deno.serve(async (req) => {
     );
   }
 
+  // Paid through x402/MPP without a key: only handlers that read public data answer.
+  if (!req.headers.get("x-api-key") && isPaidGatewayRequest(req) && req.method === "GET") {
+    const kUrl = new URL(req.url);
+    const kPath = kUrl.pathname.split("/").filter(Boolean);
+    const kIdx = kPath.indexOf("recipient-api");
+    if (kIdx >= 0 && kPath[kIdx + 1] === "offers" && !kPath[kIdx + 2]) {
+      const listRes = await marketplaceListOffers(serviceClient, kUrl.searchParams.get("token_address"));
+      return jsonResponse(listRes.body, listRes.status);
+    }
+  }
+
   // ==================== Authenticated routes (rwk_ only) ====================
   const apiKey = req.headers.get("x-api-key");
   if (!apiKey || !apiKey.startsWith("rwk_")) {

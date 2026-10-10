@@ -3,6 +3,7 @@ import { getRecipientMcpBazaarTool } from "../_shared/recipient-mcp-bazaar-tools
 import { RECIPIENT_REST_ROUTE_USD } from "../_shared/recipient-paid-routes.ts";
 import { buildAcceptEntry, ensureBuilderCodeOnPaymentPayload, paymentRequirementsForFacilitator, validateClientAcceptedMatches } from "../_shared/x402-bazaar-accept.ts";
 import { paidGatewayUpstreamHeaders, type PaidGatewayKind } from "../_shared/paid-gateway-auth.ts";
+import { paidRouteNeedsCallerKey } from "../_shared/keyless-paid-routes.ts";
 import { callerKeyPrefix, lookupActiveCallerKey, paidCallerProblem, paidCallerRejectionResponse, readPaidCallerKey } from "../_shared/paid-caller-key.ts";
 
 const corsHeaders = {
@@ -205,7 +206,9 @@ function buildPaymentRequired(price: string, resource: string, requestUrl: URL):
   const paymentRequirements: Record<string, unknown> = {
     x402Version: 2,
     accepts: [accept],
-    error: callerKeyPrefix(resource) === "rwk_"
+    error: !paidRouteNeedsCallerKey(resourceMethod, resource)
+      ? "X-PAYMENT header is required."
+      : callerKeyPrefix(resource) === "rwk_"
       ? "X-PAYMENT header is required. On the paid retry also send x-api-key: rwk_.... A payment without a live key is not charged."
       : "X-PAYMENT header is required. On the paid retry also send x-api-key: lsk_.... A payment without a live key is not charged.",
     resource: {
@@ -444,11 +447,14 @@ Deno.serve(async (req) => {
 
     // Refuse before verify/settle. A valid payment with a missing or dead key used to
     // take USDC and then return 401 from agent-api.
-    const callerProblem = await paidCallerProblem(
-      (name) => req.headers.get(name) ?? undefined,
-      resource,
-      lookupActiveCallerKey,
-    );
+    // Routes whose handler answers without a key: payment alone gives access.
+    const callerProblem = paidRouteNeedsCallerKey(req.method, resource)
+      ? await paidCallerProblem(
+        (name) => req.headers.get(name) ?? undefined,
+        resource,
+        lookupActiveCallerKey,
+      )
+      : null;
     if (callerProblem) return paidCallerRejectionResponse(callerProblem, corsHeaders);
 
     const verification = await verifyPayment(paymentSignature, price, resource, url);

@@ -49,6 +49,7 @@ function createMcpServer(
   authFailure: AuthFailure,
   apiKey: string | null = null,
   rateDetail?: "per_minute" | "monthly_quota",
+  paidKeyless = false,
 ) {
   const mcpServer = new McpServer({ name: "loyal-spark-mcp", version: "1.0.0" });
 
@@ -627,7 +628,8 @@ function createMcpServer(
     inputSchema: { type: "object" as const, properties: { status: { type: "string", description: "Filter: active/completed/cancelled" }, limit: { type: "number", description: "Max results (1-100)" } } },
     handler: async ({ status, limit }: any) => {
       // Parity with REST GET /offers: 'read' or 'trade' scope is sufficient.
-      const err = authGuard(["read", "trade"]);
+      // A gateway-paid call without a key may read this public list.
+      const err = paidKeyless ? null : authGuard(["read", "trade"]);
       if (err) return T(err);
       const { data, error } = await db().from("marketplace_offers").select("*").eq("status", status || "active").order("created_at", { ascending: false }).limit(Math.min(limit || 50, 100));
       if (error) return T(JSON.stringify({ error: error.message }));
@@ -1568,7 +1570,8 @@ app.all("/*", async (c: any) => {
       agent = r.agent;
     }
   }
-  const server = createMcpServer(agent, authFailure, apiKey, rateDetail);
+  const paidKeyless = !apiKey && isPaidGatewayRequest(c.req.raw);
+  const server = createMcpServer(agent, authFailure, apiKey, rateDetail, paidKeyless);
   const transport = new StreamableHttpTransport();
   const handler = transport.bind(server);
   return handler(c.req.raw);

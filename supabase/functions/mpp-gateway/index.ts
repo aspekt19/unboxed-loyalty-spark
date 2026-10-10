@@ -1,6 +1,7 @@
 import { Mppx, tempo } from "npm:mppx@0.4.7/server";
 import { RECIPIENT_REST_ROUTE_USD } from "../_shared/recipient-paid-routes.ts";
 import { paidGatewayUpstreamHeaders, type PaidGatewayKind } from "../_shared/paid-gateway-auth.ts";
+import { paidRouteNeedsCallerKey } from "../_shared/keyless-paid-routes.ts";
 import { callerKeyPrefix, lookupActiveCallerKey, paidCallerProblem, paidCallerRejectionResponse, readPaidCallerKey, requestCarriesPaymentCredential } from "../_shared/paid-caller-key.ts";
 
 const corsHeaders = {
@@ -339,6 +340,7 @@ Deno.serve(async (req) => {
     };
     type ChargeFn = (opts: { amount: string }) => (req: Request) => Promise<MppChargeResult>;
     const chargeFn = (mppxAny.charge ?? Object.getPrototypeOf(mppx)?.charge) as ChargeFn | undefined;
+    const needsKey = paidRouteNeedsCallerKey(req.method, resource);
     const keyHint = callerKeyPrefix(resource) === "rwk_"
       ? "Send x-api-key: rwk_... on the same retry as the payment. A payment without a live key is not charged."
       : "Send x-api-key: lsk_... on the same retry as the payment. A payment without a live key is not charged.";
@@ -349,14 +351,14 @@ Deno.serve(async (req) => {
       headers.set("Content-Type", "application/json");
       headers.set("X-MPP-Resource", resource);
       headers.set("X-MPP-Price-USD", price);
-      headers.set("X-LoyalSpark-Api-Key", keyHint);
+      if (needsKey) headers.set("X-LoyalSpark-Api-Key", keyHint);
       return new Response(
         JSON.stringify({
           status: 402,
           message: "Payment required",
           resource: `/${resource}`,
           price_usd: price,
-          api_key: keyHint,
+          ...(needsKey ? { api_key: keyHint } : {}),
           payment_methods: [
             { method: "tempo:pathusd", currency: PATHUSD_CURRENCY, recipient: RECIPIENT },
             { method: "tempo:usdc", currency: USDC_TEMPO, recipient: RECIPIENT },
@@ -367,7 +369,7 @@ Deno.serve(async (req) => {
     }
 
     const getHeader = (name: string) => req.headers.get(name) ?? undefined;
-    if (requestCarriesPaymentCredential(getHeader)) {
+    if (needsKey && requestCarriesPaymentCredential(getHeader)) {
       const callerProblem = await paidCallerProblem(getHeader, resource, lookupActiveCallerKey);
       if (callerProblem) return paidCallerRejectionResponse(callerProblem, corsHeaders);
     }
@@ -384,7 +386,7 @@ Deno.serve(async (req) => {
       }
       headers.set("X-MPP-Resource", resource);
       headers.set("X-MPP-Price-USD", price);
-      headers.set("X-LoyalSpark-Api-Key", keyHint);
+      if (needsKey) headers.set("X-LoyalSpark-Api-Key", keyHint);
       return new Response(challengeResponse.body, {
         status: 402,
         headers,
