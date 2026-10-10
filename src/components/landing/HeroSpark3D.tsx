@@ -9,6 +9,9 @@ const CARD_H = 3.75;
 const CARD_Z = -0.5;
 const CAMERA_Z = 9;
 const CAMERA_FOV = 50;
+/** Space the hero copy needs at the top of the panel on phones, in px. */
+const COPY_TOP_PX = 60;
+
 
 /** Reads the OS setting so the card can hold completely still. */
 function usePrefersReducedMotion() {
