@@ -8,133 +8,135 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 250 100% 99%;
-    --foreground: 260 50% 15%;
+    --background: 160 20% 98%;
+    --foreground: 170 16% 12%;
     --card: 0 0% 100%;
-    --card-foreground: 260 50% 15%;
+    --card-foreground: 170 16% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 260 50% 15%;
-    --primary: 262 83% 58%;
+    --popover-foreground: 170 16% 12%;
+    --primary: 168 80% 24%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 24 100% 62%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 250 50% 96%;
-    --muted-foreground: 260 25% 50%;
-    --accent: 262 70% 68%;
-    --accent-foreground: 0 0% 100%;
-    --warning: 24 100% 62%;
-    --warning-foreground: 0 0% 100%;
+    --secondary: 40 94% 55%;
+    --secondary-foreground: 170 16% 12%;
+    --muted: 160 12% 95%;
+    --muted-foreground: 170 7% 42%;
+    --accent: 168 38% 92%;
+    --accent-foreground: 168 80% 20%;
+    --warning: 40 94% 55%;
+    --warning-foreground: 170 16% 12%;
     --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
-    --border: 250 35% 92%;
-    --input: 250 35% 92%;
-    --ring: 262 83% 58%;
+    --border: 160 10% 88%;
+    --input: 160 10% 88%;
+    --ring: 168 80% 24%;
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
+    --scene-silver: 160 10% 90%;
     
     --shadow-soft: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     --shadow-medium: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
     --shadow-large: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
-    --shadow-glow: 0 0 20px rgb(262 83% 58% / 0.15);
-    --shadow-glow-orange: 0 0 20px rgb(24 100% 62% / 0.15);
+    --shadow-glow: 0 0 20px rgb(168 80% 24% / 0.15);
+    --shadow-glow-orange: 0 0 20px rgb(40 94% 55% / 0.15);
 
     /* Clay (3D claymorphism) shadow stacks — used by Button/Card/Nav */
-    --clay-shadow: 8px 8px 20px hsl(var(--primary) / 0.12), -6px -6px 16px hsl(0 0% 100% / 0.75), inset 1px 1px 2px hsl(0 0% 100% / 0.55), inset -1px -1px 2px hsl(var(--primary) / 0.04);
-    --clay-shadow-sm: 4px 4px 10px hsl(var(--primary) / 0.10), -3px -3px 8px hsl(0 0% 100% / 0.7), inset 1px 1px 2px hsl(0 0% 100% / 0.5);
-    --clay-shadow-lg: 16px 16px 36px hsl(var(--primary) / 0.15), -10px -10px 28px hsl(0 0% 100% / 0.8), inset 2px 2px 4px hsl(0 0% 100% / 0.55), inset -2px -2px 4px hsl(var(--primary) / 0.05);
-    --clay-shadow-primary: 8px 8px 20px hsl(var(--primary) / 0.4), -4px -4px 12px hsl(0 0% 100% / 0.45), inset 2px 2px 3px hsl(0 0% 100% / 0.4), inset -2px -2px 3px hsl(var(--primary) / 0.4);
-    --clay-shadow-secondary: 8px 8px 20px hsl(var(--secondary) / 0.4), -4px -4px 12px hsl(0 0% 100% / 0.45), inset 2px 2px 3px hsl(0 0% 100% / 0.4), inset -2px -2px 3px hsl(var(--secondary) / 0.4);
-    --clay-shadow-inset: inset 4px 4px 10px hsl(var(--primary) / 0.15), inset -4px -4px 10px hsl(0 0% 100% / 0.7);
+    --clay-shadow: 0 2px 4px hsl(var(--foreground) / 0.04), 0 12px 28px hsl(var(--foreground) / 0.04);
+    --clay-shadow-sm: 0 1px 3px hsl(var(--foreground) / 0.06);
+    --clay-shadow-lg: 0 6px 12px hsl(var(--foreground) / 0.05), 0 20px 40px hsl(var(--foreground) / 0.08);
+    --clay-shadow-primary: 0 2px 4px hsl(var(--primary) / 0.16), 0 8px 18px hsl(var(--primary) / 0.12), inset 0 1px 0 hsl(0 0% 100% / 0.15);
+    --clay-shadow-secondary: 0 2px 4px hsl(var(--secondary) / 0.12), 0 8px 18px hsl(var(--secondary) / 0.12);
+    --clay-shadow-inset: inset 0 2px 4px hsl(var(--foreground) / 0.08);
     
-    --gradient-primary: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(262 70% 68%) 100%);
-    --gradient-secondary: linear-gradient(135deg, hsl(24 100% 62%) 0%, hsl(30 100% 70%) 100%);
-    --gradient-uds: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(24 100% 62%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(250 100% 99%) 0%, hsl(250 50% 97%) 50%, hsl(250 100% 99%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(250 50% 99%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(168 80% 24%) 0%, hsl(168 62% 38%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(40 94% 55%) 0%, hsl(45 96% 66%) 100%);
+    --gradient-uds: linear-gradient(135deg, hsl(168 80% 24%) 0%, hsl(40 94% 55%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(160 20% 98%) 0%, hsl(160 12% 96%) 50%, hsl(160 20% 98%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(160 14% 99%) 100%);
     
     --transition-base: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 260 50% 15%;
-    --sidebar-primary: 262 83% 58%;
+    --sidebar-foreground: 170 16% 12%;
+    --sidebar-primary: 168 80% 24%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 250 50% 96%;
-    --sidebar-accent-foreground: 260 50% 15%;
-    --sidebar-border: 250 35% 92%;
-    --sidebar-ring: 262 83% 58%;
+    --sidebar-accent: 160 12% 95%;
+    --sidebar-accent-foreground: 170 16% 12%;
+    --sidebar-border: 160 10% 88%;
+    --sidebar-ring: 168 80% 24%;
     
-    --uds-purple: 262 83% 58%;
-    --uds-purple-light: 262 70% 68%;
-    --uds-purple-dark: 260 45% 35%;
-    --uds-orange: 24 100% 62%;
-    --uds-orange-light: 30 100% 70%;
-    --uds-lavender: 250 50% 96%;
-    --uds-lavender-light: 250 100% 99%;
+    --uds-purple: 168 80% 24%;
+    --uds-purple-light: 168 62% 38%;
+    --uds-purple-dark: 168 70% 18%;
+    --uds-orange: 40 94% 55%;
+    --uds-orange-light: 45 96% 66%;
+    --uds-lavender: 160 12% 95%;
+    --uds-lavender-light: 160 20% 98%;
   }
 
   .dark {
-    --background: 260 45% 10%;
-    --foreground: 250 55% 95%;
-    --card: 260 40% 13%;
-    --card-foreground: 250 55% 95%;
-    --popover: 260 40% 13%;
-    --popover-foreground: 250 55% 95%;
-    --primary: 262 70% 68%;
-    --primary-foreground: 260 50% 10%;
-    --secondary: 24 95% 65%;
-    --secondary-foreground: 260 50% 10%;
-    --muted: 260 35% 18%;
-    --muted-foreground: 250 30% 60%;
-    --accent: 262 60% 55%;
-    --accent-foreground: 250 55% 95%;
+    --scene-silver: 165 10% 78%;
+    --background: 170 12% 7%;
+    --foreground: 160 12% 94%;
+    --card: 170 10% 11%;
+    --card-foreground: 160 12% 94%;
+    --popover: 170 10% 11%;
+    --popover-foreground: 160 12% 94%;
+    --primary: 168 62% 38%;
+    --primary-foreground: 170 12% 7%;
+    --secondary: 40 94% 60%;
+    --secondary-foreground: 170 12% 7%;
+    --muted: 170 8% 16%;
+    --muted-foreground: 165 8% 65%;
+    --accent: 168 55% 30%;
+    --accent-foreground: 160 12% 94%;
     --destructive: 0 65% 52%;
-    --destructive-foreground: 250 55% 95%;
-    --border: 260 30% 22%;
-    --input: 260 30% 22%;
-    --ring: 262 70% 68%;
+    --destructive-foreground: 160 12% 94%;
+    --border: 170 7% 23%;
+    --input: 170 7% 23%;
+    --ring: 168 62% 38%;
     --success: 142 60% 50%;
-    --success-foreground: 260 50% 10%;
+    --success-foreground: 170 12% 7%;
     
     --shadow-soft: 0 1px 2px 0 rgb(0 0 0 / 0.3);
     --shadow-medium: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
     --shadow-large: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
-    --shadow-glow: 0 0 30px rgb(262 70% 68% / 0.3);
-    --shadow-glow-orange: 0 0 30px rgb(24 95% 65% / 0.3);
+    --shadow-glow: 0 0 30px rgb(168 62% 38% / 0.3);
+    --shadow-glow-orange: 0 0 30px rgb(40 94% 60% / 0.3);
 
     /* Clay shadows (dark) — softer, deeper */
-    --clay-shadow: 8px 8px 20px hsl(260 50% 4% / 0.6), -4px -4px 14px hsl(var(--primary) / 0.08), inset 1px 1px 2px hsl(var(--primary) / 0.15), inset -1px -1px 2px hsl(260 50% 4% / 0.5);
-    --clay-shadow-sm: 4px 4px 10px hsl(260 50% 4% / 0.55), -2px -2px 8px hsl(var(--primary) / 0.06), inset 1px 1px 2px hsl(var(--primary) / 0.12);
-    --clay-shadow-lg: 16px 16px 36px hsl(260 50% 4% / 0.7), -8px -8px 24px hsl(var(--primary) / 0.10), inset 2px 2px 4px hsl(var(--primary) / 0.18), inset -2px -2px 4px hsl(260 50% 4% / 0.55);
-    --clay-shadow-primary: 8px 8px 20px hsl(var(--primary) / 0.5), -4px -4px 12px hsl(var(--primary) / 0.15), inset 2px 2px 3px hsl(0 0% 100% / 0.18), inset -2px -2px 3px hsl(260 50% 4% / 0.4);
-    --clay-shadow-secondary: 8px 8px 20px hsl(var(--secondary) / 0.5), -4px -4px 12px hsl(var(--secondary) / 0.15), inset 2px 2px 3px hsl(0 0% 100% / 0.18), inset -2px -2px 3px hsl(260 50% 4% / 0.4);
-    --clay-shadow-inset: inset 4px 4px 10px hsl(260 50% 4% / 0.55), inset -4px -4px 10px hsl(var(--primary) / 0.10);
+    --clay-shadow: 0 2px 4px hsl(var(--foreground) / 0.04), 0 12px 28px hsl(var(--foreground) / 0.04);
+    --clay-shadow-sm: 0 1px 3px hsl(var(--foreground) / 0.06);
+    --clay-shadow-lg: 0 6px 12px hsl(var(--foreground) / 0.05), 0 20px 40px hsl(var(--foreground) / 0.08);
+    --clay-shadow-primary: 0 2px 4px hsl(var(--primary) / 0.16), 0 8px 18px hsl(var(--primary) / 0.12), inset 0 1px 0 hsl(0 0% 100% / 0.15);
+    --clay-shadow-secondary: 0 2px 4px hsl(var(--secondary) / 0.12), 0 8px 18px hsl(var(--secondary) / 0.12);
+    --clay-shadow-inset: inset 0 2px 4px hsl(var(--foreground) / 0.08);
     
-    --gradient-primary: linear-gradient(135deg, hsl(262 70% 68%) 0%, hsl(262 60% 55%) 100%);
-    --gradient-secondary: linear-gradient(135deg, hsl(24 95% 65%) 0%, hsl(30 95% 72%) 100%);
-    --gradient-uds: linear-gradient(135deg, hsl(262 70% 68%) 0%, hsl(24 95% 65%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(260 45% 10%) 0%, hsl(260 40% 13%) 50%, hsl(260 45% 10%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(260 40% 13%) 0%, hsl(260 35% 15%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(168 62% 38%) 0%, hsl(168 55% 30%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(40 94% 60%) 0%, hsl(45 95% 70%) 100%);
+    --gradient-uds: linear-gradient(135deg, hsl(168 62% 38%) 0%, hsl(40 94% 60%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(170 12% 7%) 0%, hsl(170 10% 11%) 50%, hsl(170 12% 7%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(170 10% 11%) 0%, hsl(170 8% 14%) 100%);
     
-    --sidebar-background: 260 45% 10%;
-    --sidebar-foreground: 250 55% 95%;
-    --sidebar-primary: 262 70% 68%;
-    --sidebar-primary-foreground: 260 50% 10%;
-    --sidebar-accent: 260 35% 18%;
-    --sidebar-accent-foreground: 250 55% 95%;
-    --sidebar-border: 260 30% 22%;
-    --sidebar-ring: 262 70% 68%;
+    --sidebar-background: 170 12% 7%;
+    --sidebar-foreground: 160 12% 94%;
+    --sidebar-primary: 168 62% 38%;
+    --sidebar-primary-foreground: 170 12% 7%;
+    --sidebar-accent: 170 8% 16%;
+    --sidebar-accent-foreground: 160 12% 94%;
+    --sidebar-border: 170 7% 23%;
+    --sidebar-ring: 168 62% 38%;
     
-    --uds-purple: 262 70% 68%;
-    --uds-purple-light: 262 65% 75%;
-    --uds-purple-dark: 260 40% 35%;
-    --uds-orange: 24 95% 65%;
-    --uds-orange-light: 30 95% 72%;
-    --uds-lavender: 260 35% 18%;
-    --uds-lavender-light: 260 30% 22%;
+    --uds-purple: 168 62% 38%;
+    --uds-purple-light: 168 60% 65%;
+    --uds-purple-dark: 168 50% 30%;
+    --uds-orange: 40 94% 60%;
+    --uds-orange-light: 45 95% 70%;
+    --uds-lavender: 170 8% 16%;
+    --uds-lavender-light: 170 7% 23%;
   }
 }
 
@@ -207,15 +209,14 @@ All colors MUST be HSL.
   
   /* Any block using bg-gradient-card automatically gets the 3D claymorphism look */
   .bg-gradient-card {
-    background: var(--gradient-card);
+    background: hsl(var(--card));
     box-shadow: var(--clay-shadow);
-    border-color: transparent !important;
+    border-color: hsl(var(--border));
     transition: var(--transition-smooth);
   }
   .bg-gradient-card.hover-lift:hover,
   .bg-gradient-card:hover {
-    box-shadow: var(--clay-shadow-lg);
-    transform: translateY(-2px);
+    box-shadow: var(--clay-shadow);
   }
   
   /* Shadow utilities */
@@ -283,8 +284,8 @@ All colors MUST be HSL.
   }
   
   @keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 20px hsl(270 80% 60% / 0.4); }
-    50% { box-shadow: 0 0 40px hsl(270 80% 60% / 0.8), 0 0 60px hsl(30 100% 60% / 0.6); }
+    0%, 100% { box-shadow: 0 0 20px hsl(168 80% 24% / 0.4); }
+    50% { box-shadow: 0 0 40px hsl(168 80% 24% / 0.8), 0 0 60px hsl(40 94% 55% / 0.6); }
   }
   
   .animate-blob {
@@ -369,5 +370,28 @@ All colors MUST be HSL.
   
   .bg-gradient-uds-lavender {
     background: var(--gradient-lavender);
+  }
+}
+
+/* Design-only scene and shared surface refinement. */
+@layer base {
+  :root { --gradient-hero: none; --gradient-card: none; }
+  .dark { --gradient-hero: none; --gradient-card: none; }
+  h1, h2, h3, h4, h5, h6 { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; letter-spacing: 0; }
+}
+@layer utilities {
+  .bg-gradient-hero { background: hsl(var(--background)); }
+  .bg-gradient-uds { background: hsl(var(--primary)); }
+  .tracking-tight, .tracking-tighter, .tracking-wide, .tracking-wider, .tracking-widest { letter-spacing: 0; }
+  .loyalty-scene { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .landing-hero { min-height: 660px; isolation: isolate; }
+  .landing-hero-content { position: relative; z-index: 1; }
+  .landing-hero-content h1 { max-width: 720px; margin-inline: auto; }
+  @media (max-width: 639px) {
+    .landing-hero { min-height: 720px; padding-bottom: 180px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+    .hover-lift:hover, .bg-gradient-card:hover { transform: none; }
   }
 }
