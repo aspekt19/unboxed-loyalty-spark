@@ -79,7 +79,7 @@ function RewardCoin({ reduced }: { reduced: boolean }) {
             metalness={0.85}
             roughness={0.35}
             emissive={SPARK}
-            emissiveIntensity={0.45}
+            emissiveIntensity={0.12}
           />
         </mesh>
         <mesh rotation-x={Math.PI / 2} position={[0, 0, -0.22]}>
