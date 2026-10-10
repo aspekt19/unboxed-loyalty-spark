@@ -311,7 +311,7 @@ const App = () => {
 
   return (
     <AppErrorBoundary scope="root">
-      <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} storageKey="loyal-spark-theme-v3">
+      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} storageKey="loyal-spark-theme-v4">
         <Providers>
           <BrowserRouter>
             <AppErrorBoundary scope="routes">
