@@ -75,6 +75,7 @@ export default {
           lavender: 'hsl(var(--uds-lavender))',
           'lavender-light': 'hsl(var(--uds-lavender-light))'
         },
+        warning: { DEFAULT: 'hsl(var(--warning))', foreground: 'hsl(var(--warning-foreground))' },
         success: {
           DEFAULT: 'hsl(var(--success))',
           foreground: 'hsl(var(--success-foreground))'
@@ -126,8 +127,8 @@ export default {
           '100%': { backgroundPosition: '200% 0' }
         },
         'pulse-glow': {
-          '0%, 100%': { boxShadow: '0 0 0 0 hsl(262 83% 58% / 0.4)' },
-          '50%': { boxShadow: '0 0 20px 10px hsl(262 83% 58% / 0)' }
+          '0%, 100%': { boxShadow: '0 0 0 0 hsl(168 80% 24% / 0.4)' },
+          '50%': { boxShadow: '0 0 20px 10px hsl(168 80% 24% / 0)' }
         },
         'blob': {
           '0%, 100%': { transform: 'translate(0px, 0px) scale(1)' },
@@ -152,8 +153,8 @@ export default {
         'soft': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
         'medium': '0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05)',
         'large': '0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05)',
-        'glow': '0 0 20px rgb(262 83% 58% / 0.15)',
-        'glow-orange': '0 0 20px rgb(24 100% 62% / 0.15)'
+        'glow': '0 0 20px rgb(168 80% 24% / 0.15)',
+        'glow-orange': '0 0 20px rgb(40 94% 55% / 0.15)'
       },
       spacing: {
         '18': '4.5rem',

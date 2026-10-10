@@ -1,29 +1,16 @@
 import { motion } from 'framer-motion';
+import { lazy, Suspense } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
+const LoyaltyScene = lazy(() => import('./LoyaltyScene'));
+
 const LandingHero = () => {
   return (
-    <section className="pt-12 pb-12 sm:pt-20 sm:pb-16 md:pt-32 md:pb-24 text-center relative">
-      {/* Animated background elements */}
-      <motion.div 
-        className="absolute top-0 left-0 w-full h-full pointer-events-none"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1 }}
-      >
-        <motion.div 
-          className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl"
-          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div 
-          className="absolute top-40 right-10 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl"
-          animate={{ scale: [1.2, 1, 1.2], opacity: [0.3, 0.5, 0.3] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-        />
-      </motion.div>
+    <section className="landing-hero pt-12 pb-10 sm:pt-20 sm:pb-12 text-center relative">
+      <Suspense fallback={null}><LoyaltyScene /></Suspense>
+      <div className="landing-hero-content">
 
       <motion.p
         className="text-xs sm:text-sm text-primary font-semibold uppercase tracking-wider mb-4"
@@ -35,12 +22,12 @@ const LandingHero = () => {
       </motion.p>
       
       <motion.h1 
-        className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-bold mb-4 sm:mb-6 leading-[1.15] tracking-tight text-balance px-4 sm:px-6 pb-2 bg-clip-text text-transparent bg-gradient-to-r from-foreground via-primary to-foreground overflow-visible"
+        className="text-4xl sm:text-6xl md:text-7xl font-bold mb-4 sm:mb-6 leading-[1.1] text-balance px-4 sm:px-6 pb-2 text-foreground"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
       >
-        Earn rewards. Yours to keep.
+         Loyal Spark
       </motion.h1>
       
       <motion.p 
@@ -81,7 +68,7 @@ const LandingHero = () => {
       </motion.div>
 
       <motion.div 
-        className="mt-16 sm:mt-24"
+        className="mt-10 sm:mt-16"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6, delay: 0.8 }}
@@ -89,8 +76,6 @@ const LandingHero = () => {
         <p className="text-[10px] sm:text-xs text-muted-foreground mb-4 sm:mb-6 uppercase tracking-wider font-medium">Powered by</p>
         <motion.div 
           className="flex flex-wrap items-center justify-center gap-4 sm:gap-8"
-          animate={{ y: [0, -5, 0] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
         >
           <div className="grayscale hover:grayscale-0 transition-smooth opacity-60 hover:opacity-100">
             <img src="/media-kit/logo-horizontal.png" alt="BASE Network" width="200" height="56" fetchPriority="high" className="h-10 sm:h-14 w-auto" />
@@ -100,6 +85,7 @@ const LandingHero = () => {
           <span className="text-[10px] sm:text-xs font-semibold text-primary uppercase tracking-wider">Built on BASE Network</span>
         </div>
       </motion.div>
+      </div>
     </section>
   );
 };
