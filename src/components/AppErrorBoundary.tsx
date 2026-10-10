@@ -44,7 +44,7 @@ export class AppErrorBoundary extends Component<Props, State> {
     if (!this.state.error) return this.props.children;
 
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-6 py-10">
+      <div className="min-h-screen flex items-center justify-center px-6 py-10">
         <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 text-center shadow-sm">
           <img
             src="/new-favicon.png"

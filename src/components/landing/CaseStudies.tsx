@@ -28,7 +28,7 @@ const previewCases = [
 
 const CaseStudies = () => {
   return (
-    <section className="py-12 sm:py-16 md:py-24 bg-background">
+    <section className="py-12 sm:py-16 md:py-24">
       <div className="max-w-5xl mx-auto px-4">
         <motion.div
           className="text-center mb-10 sm:mb-14"

@@ -294,7 +294,7 @@ const App = () => {
     // Branded placeholder instead of a blank page, so a slow handshake never
     // reads as a white screen.
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center">
         <img
           src="/new-favicon.png"
           alt="Loyal Spark"
