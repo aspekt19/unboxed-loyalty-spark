@@ -199,30 +199,17 @@ All colors MUST be HSL.
     font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
   }
 
-  /* Fixed viewport surface so every page reads as ink-warm, not flat white */
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    background-image: var(--surface-glow-a), var(--surface-glow-b), var(--surface-glow-c), var(--surface-grid);
-    background-size: auto, auto, auto, 26px 26px;
-    background-position: center top, center bottom, center right, center top;
-    background-repeat: no-repeat, no-repeat, no-repeat, repeat;
-  }
-
-  /* App content sits above the fixed surface layer */
-  #root {
-    position: relative;
-    z-index: 1;
-  }
   
   /* Smooth scroll behavior */
   html {
     scroll-behavior: smooth;
-    /* Root surface color: body stays transparent so the fixed glow layer shows */
+    /* Page surface for every page: warm spark glow, graphite haze, faint dot mesh */
     background-color: hsl(var(--background));
+    background-image: var(--surface-glow-a), var(--surface-glow-b), var(--surface-glow-c), var(--surface-grid);
+    background-size: auto, auto, auto, 26px 26px;
+    background-position: center top, center bottom, center right, center top;
+    background-repeat: no-repeat, no-repeat, no-repeat, repeat;
+    background-attachment: fixed, fixed, fixed, scroll;
   }
   
   /* Better touch targets for mobile */
