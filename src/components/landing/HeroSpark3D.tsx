@@ -22,40 +22,15 @@ function usePrefersReducedMotion() {
   return reduced;
 }
 
-/** A reward coin: a thick disc with a five-point star embossed on its face. */
+/** A reward coin: a thick graphite disc with a spark rim and an inner ring. */
 function RewardCoin({ reduced }: { reduced: boolean }) {
   const group = useRef<THREE.Group>(null);
-
-  const starGeometry = useMemo(() => {
-    const shape = new THREE.Shape();
-    const spikes = 5;
-    const outer = 0.6;
-    const inner = 0.25;
-    for (let i = 0; i < spikes * 2; i++) {
-      const radius = i % 2 === 0 ? outer : inner;
-      const angle = (i / (spikes * 2)) * Math.PI * 2 - Math.PI / 2;
-      const x = Math.cos(angle) * radius;
-      const y = Math.sin(angle) * radius;
-      if (i === 0) shape.moveTo(x, y);
-      else shape.lineTo(x, y);
-    }
-    shape.closePath();
-    return new THREE.ExtrudeGeometry(shape, {
-      depth: 0.14,
-      bevelEnabled: true,
-      bevelSize: 0.03,
-      bevelThickness: 0.02,
-      bevelSegments: 2,
-    });
-  }, []);
-
-  useEffect(() => () => starGeometry.dispose(), [starGeometry]);
 
   useFrame((state, delta) => {
     if (!group.current) return;
     const dt = Math.min(delta, 0.05);
     if (reduced) return;
-    // Rock the coin instead of a full spin so the star keeps facing the reader.
+    // Rock the coin instead of a full spin so the face keeps facing the reader.
     group.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.55) * 0.5;
     group.current.rotation.z += dt * 0.05;
   });
@@ -73,13 +48,14 @@ function RewardCoin({ reduced }: { reduced: boolean }) {
             emissiveIntensity={0.1}
           />
         </mesh>
-        <mesh geometry={starGeometry} position={[0, 0, 0.22]}>
+        <mesh position={[0, 0, 0.21]}>
+          <torusGeometry args={[0.95, 0.07, 16, 64]} />
           <meshStandardMaterial
-            color={SPARK}
-            metalness={0.85}
-            roughness={0.35}
+            color="#3a4452"
+            metalness={0.8}
+            roughness={0.3}
             emissive={SPARK}
-            emissiveIntensity={0.12}
+            emissiveIntensity={0.08}
           />
         </mesh>
         <mesh rotation-x={Math.PI / 2} position={[0, 0, -0.22]}>
