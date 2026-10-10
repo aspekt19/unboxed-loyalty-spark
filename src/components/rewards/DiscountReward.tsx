@@ -47,11 +47,10 @@ export function DiscountReward() {
       const existing = rewards.find(
         (reward) =>
           reward.tokenAddress.toLowerCase() === tokenAddress.toLowerCase() &&
-          reward.description === DISCOUNT_DESCRIPTION,
+          reward.description === DISCOUNT_DESCRIPTION &&
+          reward.name === `${percent}% off`,
       );
       if (!existing) return;
-      const match = existing.name.match(/^(\d+)% off$/);
-      if (match) setPercent(Number(match[1]));
       setCost(existing.cost);
     });
     return () => {
