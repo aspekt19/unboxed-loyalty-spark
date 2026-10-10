@@ -56,7 +56,7 @@ export function DiscountReward() {
     return () => {
       cancelled = true;
     };
-  }, [address, tokenAddress]);
+  }, [address, tokenAddress, percent]);
 
   if (!address) return null;
 
@@ -84,7 +84,8 @@ export function DiscountReward() {
       const existing = (await getMerchantRewards(address)).find(
         (reward) =>
           reward.tokenAddress.toLowerCase() === tokenAddress.toLowerCase() &&
-          reward.description === DISCOUNT_DESCRIPTION,
+          reward.description === DISCOUNT_DESCRIPTION &&
+          reward.name === name,
       );
       const saved = existing
         ? await updateReward(existing.id, { name, description: DISCOUNT_DESCRIPTION, cost }, tokenAddress)
