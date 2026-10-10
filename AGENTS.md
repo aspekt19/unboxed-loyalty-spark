@@ -1,5 +1,9 @@
 # AI agents — where to look
 
+<!-- LOVABLE:BEGIN -->
+- Keep landing decoration lazy-loaded in R3F, using CSS-token materials and reduced-motion support — isolates visual changes from product behavior.
+<!-- LOVABLE:END -->
+
 This file is the **entry point** for coding agents (Cursor, OpenServ, Claude Code, and so on). Human product copy stays in the root [README.md](./README.md); machine-oriented discovery lives under `public/.well-known/`.
 
 ## Read first

@@ -67,9 +67,9 @@ function GiftCard({ reduced, palette }: { reduced: boolean; palette: { face: str
   });
 
   return (
-    <group ref={group} position={[0, 0.6, -0.5]} rotation={[0.08, -0.18, -0.08]}>
+    <group ref={group} position={[0, 0.6, -0.5]} rotation={[0.08, -0.18, -0.08]} scale={0.85}>
       <RoundedBox args={[6, 3.75, 0.12]} radius={0.22} smoothness={4}>
-        <meshStandardMaterial color={palette.spark} metalness={0.65} roughness={0.4} />
+        <meshStandardMaterial color={palette.face} metalness={0.2} roughness={0.65} />
       </RoundedBox>
       <RoundedBox args={[5.96, 3.71, 0.12]} radius={0.2} smoothness={4} position={[0, 0, 0.015]}>
         <meshStandardMaterial color={palette.face} metalness={0.35} roughness={0.58} />
