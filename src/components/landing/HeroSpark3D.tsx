@@ -129,13 +129,21 @@ class SceneBoundary extends Component<{ children: ReactNode }, { failed: boolean
 
 export default function HeroSpark3D() {
   const reduced = usePrefersReducedMotion();
+  // Phones skip the 3D scene entirely: the card crowds the narrow hero copy.
+  const [mobile, setMobile] = useState(() => window.matchMedia("(max-width: 639px)").matches);
   const [palette, setPalette] = useState<{ face: string; spark: string; detail: string }>();
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    const onChange = (event: MediaQueryListEvent) => setMobile(event.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
   useEffect(() => {
     const style = getComputedStyle(document.documentElement);
     const token = (name: string) => `hsl(${style.getPropertyValue(name).trim()})`;
     setPalette({ face: token("--hero-card-face"), spark: token("--secondary"), detail: token("--hero-card-detail") });
   }, []);
-  if (!palette) return null;
+  if (mobile || !palette) return null;
 
   return (
     <SceneBoundary>
