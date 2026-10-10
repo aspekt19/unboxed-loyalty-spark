@@ -77,9 +77,9 @@ function RewardCoin({ reduced }: { reduced: boolean }) {
           <meshStandardMaterial
             color={SPARK}
             metalness={0.85}
-            roughness={0.3}
+            roughness={0.35}
             emissive={SPARK}
-            emissiveIntensity={0.8}
+            emissiveIntensity={0.45}
           />
         </mesh>
         <mesh rotation-x={Math.PI / 2} position={[0, 0, -0.22]}>
@@ -117,7 +117,7 @@ function StampCard({ reduced }: { reduced: boolean }) {
       const next = mesh.scale.x + (target - mesh.scale.x) * Math.min(1, dt * 7);
       mesh.scale.setScalar(next);
       const material = mesh.material as THREE.MeshStandardMaterial;
-      const glow = earned ? 0.85 : 0.05;
+      const glow = earned ? 0.55 : 0.05;
       material.emissiveIntensity += (glow - material.emissiveIntensity) * Math.min(1, dt * 7);
     });
   });
